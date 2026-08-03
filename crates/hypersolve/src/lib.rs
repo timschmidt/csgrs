@@ -99,6 +99,7 @@ pub use algebraic_fiber::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
+    count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,

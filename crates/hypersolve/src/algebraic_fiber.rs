@@ -93,6 +93,131 @@ pub fn count_bivariate_fiber_roots_at_algebraic_parameter(
     )
 }
 
+/// Count distinct roots in several open intervals of one algebraic fiber.
+///
+/// This is the amortized counterpart to
+/// [`count_bivariate_fiber_roots_at_algebraic_parameter`]. The bivariate
+/// polynomial is specialized once, one local-field Sturm sequence is built,
+/// and coefficient signs learned while evaluating one interval are reused by
+/// the remaining intervals. Reports retain the input order and preserve the
+/// ordinary per-interval endpoint and validation statuses.
+///
+/// All polynomial coefficients and interval endpoints must be exact
+/// rationals. The intervals need not be disjoint or sorted.
+pub fn count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    fiber_intervals: &[(&Real, &Real)],
+    policy: PredicatePolicy,
+) -> Vec<AlgebraicFiberRootCountReport> {
+    if fiber_intervals.is_empty() {
+        return Vec::new();
+    }
+    if polynomial
+        .coefficients
+        .iter()
+        .flatten()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return fiber_intervals
+            .iter()
+            .map(|_| {
+                fiber_root_count_report(
+                    AlgebraicFiberRootCountStatus::UnsupportedCoefficient,
+                    None,
+                    0,
+                    0,
+                    Certainty::Exact,
+                    Some("fiber root counting requires exact-rational coefficients and endpoints"),
+                )
+            })
+            .collect();
+    }
+
+    let mut field = match LocalAlgebraicField::new(retained_root, policy) {
+        Ok(field) => field,
+        Err(error) => {
+            return fiber_intervals
+                .iter()
+                .map(|_| fiber_root_count_error_report(error, 0, 0, Certainty::Exact))
+                .collect();
+        }
+    };
+    let first = match local_fiber_polynomial(polynomial, retained_parameter, &mut field) {
+        Ok(first) => first,
+        Err(error) => {
+            return fiber_intervals
+                .iter()
+                .map(|_| {
+                    fiber_root_count_error_report(error, 0, field.refinement_steps, field.certainty)
+                })
+                .collect();
+        }
+    };
+    let kernel = match prepare_local_open_interval_root_count(first, &mut field) {
+        Ok(kernel) => kernel,
+        Err(error) => {
+            return fiber_intervals
+                .iter()
+                .map(|_| {
+                    fiber_root_count_error_report(error, 0, field.refinement_steps, field.certainty)
+                })
+                .collect();
+        }
+    };
+
+    fiber_intervals
+        .iter()
+        .map(|(fiber_lower, fiber_upper)| {
+            if fiber_lower.exact_rational_ref().is_none()
+                || fiber_upper.exact_rational_ref().is_none()
+            {
+                return fiber_root_count_report(
+                    AlgebraicFiberRootCountStatus::UnsupportedCoefficient,
+                    None,
+                    kernel.sequence_length(),
+                    field.refinement_steps,
+                    field.certainty,
+                    Some("fiber root counting requires exact-rational coefficients and endpoints"),
+                );
+            }
+            match field.compare(fiber_lower, fiber_upper) {
+                Ok(Ordering::Less) => {}
+                Ok(Ordering::Equal | Ordering::Greater) => {
+                    return fiber_root_count_error_report(
+                        LocalFieldError::InvalidInterval,
+                        kernel.sequence_length(),
+                        field.refinement_steps,
+                        field.certainty,
+                    );
+                }
+                Err(error) => {
+                    return fiber_root_count_error_report(
+                        error,
+                        kernel.sequence_length(),
+                        field.refinement_steps,
+                        field.certainty,
+                    );
+                }
+            }
+            let outcome = match &kernel {
+                LocalOpenIntervalRootCount::IdenticallyZeroFiber => {
+                    Ok(LocalRootCountOutcome::IdenticallyZeroFiber)
+                }
+                LocalOpenIntervalRootCount::Constant => Ok(LocalRootCountOutcome::Counted {
+                    count: 0,
+                    sequence_length: 1,
+                }),
+                LocalOpenIntervalRootCount::Sturm(sequence) => {
+                    count_local_sturm_sequence_roots(sequence, fiber_lower, fiber_upper, &mut field)
+                }
+            };
+            fiber_root_count_outcome_report(outcome, &field)
+        })
+        .collect()
+}
+
 /// Count distinct roots in one closed exact bivariate fiber interval.
 ///
 /// This is the endpoint-owning counterpart to
@@ -227,6 +352,13 @@ fn count_bivariate_fiber_system_roots(
         ),
         _ => Err(LocalFieldError::Undecided),
     };
+    fiber_root_count_outcome_report(outcome, &field)
+}
+
+fn fiber_root_count_outcome_report(
+    outcome: Result<LocalRootCountOutcome, LocalFieldError>,
+    field: &LocalAlgebraicField,
+) -> AlgebraicFiberRootCountReport {
     match outcome {
         Ok(LocalRootCountOutcome::Counted {
             count,
@@ -271,6 +403,22 @@ enum LocalRootCountOutcome {
     EndpointRoot {
         sequence_length: usize,
     },
+}
+
+enum LocalOpenIntervalRootCount {
+    IdenticallyZeroFiber,
+    Constant,
+    Sturm(Vec<Vec<LocalFieldElement>>),
+}
+
+impl LocalOpenIntervalRootCount {
+    fn sequence_length(&self) -> usize {
+        match self {
+            Self::IdenticallyZeroFiber => 0,
+            Self::Constant => 1,
+            Self::Sturm(sequence) => sequence.len(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -418,6 +566,46 @@ fn count_local_polynomial_roots(
         }
     }
 
+    let sequence = local_sturm_sequence(first, field)?;
+
+    let sequence_length = sequence.len();
+    if endpoints == FiberIntervalEndpoints::RejectRoots
+        && (local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
+            || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal)
+    {
+        return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
+    }
+    let lower_variations = local_sign_variations(&sequence, fiber_lower, field)?;
+    let upper_variations = local_sign_variations(&sequence, fiber_upper, field)?;
+    let count = lower_variations
+        .checked_sub(upper_variations)
+        .and_then(|count| count.checked_add(endpoint_root_count))
+        .ok_or(LocalFieldError::Undecided)?;
+    Ok(LocalRootCountOutcome::Counted {
+        count,
+        sequence_length,
+    })
+}
+
+fn prepare_local_open_interval_root_count(
+    first: Vec<LocalFieldElement>,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalOpenIntervalRootCount, LocalFieldError> {
+    if local_polynomial_is_zero(&first, field)? {
+        return Ok(LocalOpenIntervalRootCount::IdenticallyZeroFiber);
+    }
+    if first.len() == 1 {
+        return Ok(LocalOpenIntervalRootCount::Constant);
+    }
+    Ok(LocalOpenIntervalRootCount::Sturm(local_sturm_sequence(
+        first, field,
+    )?))
+}
+
+fn local_sturm_sequence(
+    first: Vec<LocalFieldElement>,
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<Vec<LocalFieldElement>>, LocalFieldError> {
     let second = derivative_local_polynomial(&first, field)?;
     let mut sequence = vec![first, second];
     loop {
@@ -440,19 +628,25 @@ fn count_local_polynomial_roots(
         }
         sequence.push(remainder);
     }
+    Ok(sequence)
+}
 
+fn count_local_sturm_sequence_roots(
+    sequence: &[Vec<LocalFieldElement>],
+    fiber_lower: &Real,
+    fiber_upper: &Real,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalRootCountOutcome, LocalFieldError> {
     let sequence_length = sequence.len();
-    if endpoints == FiberIntervalEndpoints::RejectRoots
-        && (local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
-            || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal)
+    if local_polynomial_sign_at(&sequence[0], fiber_lower, field)? == Ordering::Equal
+        || local_polynomial_sign_at(&sequence[0], fiber_upper, field)? == Ordering::Equal
     {
         return Ok(LocalRootCountOutcome::EndpointRoot { sequence_length });
     }
-    let lower_variations = local_sign_variations(&sequence, fiber_lower, field)?;
-    let upper_variations = local_sign_variations(&sequence, fiber_upper, field)?;
+    let lower_variations = local_sign_variations(sequence, fiber_lower, field)?;
+    let upper_variations = local_sign_variations(sequence, fiber_upper, field)?;
     let count = lower_variations
         .checked_sub(upper_variations)
-        .and_then(|count| count.checked_add(endpoint_root_count))
         .ok_or(LocalFieldError::Undecided)?;
     Ok(LocalRootCountOutcome::Counted {
         count,
@@ -1236,6 +1430,77 @@ mod tests {
                 AlgebraicFiberRootCountStatus::Counted
             );
             assert_eq!(empty_interval.distinct_root_count, Some(0));
+        }
+    }
+
+    #[test]
+    fn local_field_sturm_batches_candidate_intervals_without_changing_reports() {
+        // At alpha = cbrt(1/2), this relation specializes to
+        // (beta-alpha^2)^2. The sole distinct beta root is cbrt(1/4).
+        let relation = BivariatePolynomial::new(vec![
+            vec![real(0), real(0), real(1)],
+            vec![],
+            vec![real(0), real(-2)],
+            vec![],
+            vec![real(1)],
+        ]);
+        let zero = real(0);
+        let half = rational(1, 2);
+        let three_fifths = rational(3, 5);
+        let two_thirds = rational(2, 3);
+        let one = real(1);
+        let reversed_lower = rational(4, 5);
+        let reversed_upper = rational(3, 4);
+        let intervals = [
+            (&zero, &half),
+            (&three_fifths, &two_thirds),
+            (&two_thirds, &one),
+            (&reversed_lower, &reversed_upper),
+        ];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-1), real(0), real(0), real(2)],
+                rational(3, 4),
+                rational(4, 5),
+                policy,
+            );
+            let batched = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+                &relation,
+                CurveResultantParameter::First,
+                &alpha,
+                &intervals,
+                policy,
+            );
+            assert_eq!(batched.len(), intervals.len());
+            for ((lower, upper), batch_report) in intervals.iter().zip(&batched) {
+                let independent = count_bivariate_fiber_roots_at_algebraic_parameter(
+                    &relation,
+                    CurveResultantParameter::First,
+                    &alpha,
+                    lower,
+                    upper,
+                    policy,
+                );
+                assert_eq!(batch_report.status, independent.status);
+                assert_eq!(
+                    batch_report.distinct_root_count,
+                    independent.distinct_root_count
+                );
+                if batch_report.status != AlgebraicFiberRootCountStatus::InvalidInterval {
+                    assert_eq!(
+                        batch_report.sturm_sequence_length,
+                        independent.sturm_sequence_length
+                    );
+                }
+                assert_eq!(batch_report.certainty, independent.certainty);
+            }
+            assert_eq!(batched[0].distinct_root_count, Some(0));
+            assert_eq!(batched[1].distinct_root_count, Some(1));
+            assert_eq!(batched[2].distinct_root_count, Some(0));
+            assert_eq!(
+                batched[3].status,
+                AlgebraicFiberRootCountStatus::InvalidInterval
+            );
         }
     }
 

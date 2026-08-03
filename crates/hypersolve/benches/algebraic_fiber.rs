@@ -9,6 +9,7 @@ use hypersolve::{
     IsolatedRootInterval, PredicatePolicy, SymbolId,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
+    count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
     parameter_component_bivariate_polynomial_system,
 };
 
@@ -95,6 +96,65 @@ fn main() {
         "algebraic_fiber_even_multiplicity: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={root_count}, refinement_checksum={refinement_steps}",
         elapsed / iterations
     );
+
+    let batch_interval_values = [
+        (q(0, 1), q(1, 2)),
+        (q(3, 5), q(2, 3)),
+        (q(2, 3), q(1, 1)),
+        (q(1, 10), q(11, 20)),
+        (q(31, 50), q(13, 20)),
+        (q(7, 10), q(9, 10)),
+        (q(29, 50), q(33, 50)),
+        (q(1, 4), q(3, 4)),
+    ];
+    let batch_intervals = batch_interval_values
+        .iter()
+        .map(|(lower, upper)| (lower, upper))
+        .collect::<Vec<_>>();
+    let started = Instant::now();
+    let mut independent_checksum = 0_usize;
+    for _ in 0..iterations {
+        for (lower, upper) in &batch_intervals {
+            let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+                black_box(&fiber),
+                CurveResultantParameter::First,
+                black_box(&retained_root),
+                black_box(lower),
+                black_box(upper),
+                PredicatePolicy::STRICT,
+            );
+            assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+            independent_checksum += black_box(report.distinct_root_count.unwrap_or(0));
+        }
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "algebraic_fiber_eight_independent_intervals: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={independent_checksum}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut batch_checksum = 0_usize;
+    for _ in 0..iterations {
+        let reports = count_bivariate_fiber_roots_at_algebraic_parameter_intervals(
+            black_box(&fiber),
+            CurveResultantParameter::First,
+            black_box(&retained_root),
+            black_box(&batch_intervals),
+            PredicatePolicy::STRICT,
+        );
+        assert_eq!(reports.len(), batch_intervals.len());
+        for report in reports {
+            assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+            batch_checksum += black_box(report.distinct_root_count.unwrap_or(0));
+        }
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "algebraic_fiber_eight_batched_intervals: {iterations} iterations in {elapsed:?} ({:?}/iter), root_checksum={batch_checksum}",
+        elapsed / iterations
+    );
+    assert_eq!(batch_checksum, independent_checksum);
 
     let second = BivariatePolynomial::new(vec![
         vec![r(1), r(2), r(0), r(-4)],
