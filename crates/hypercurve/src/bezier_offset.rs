@@ -500,6 +500,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleParallelParameterMap2 {
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+    parallel: BezierParallel2,
     cusp_parameter: BezierParameter2,
     /// A nondegenerate relation selecting correlated parallel parameters
     /// jointly with the cusp root. Independently authored range endpoints
@@ -763,6 +764,35 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     contact,
                     first,
                     &target.data.curve,
+                    target_reversed,
+                    policy,
+                )? {
+                    Classification::Decided(candidates) => candidates,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return retain_unique_overlap_parameter(
+                    candidates,
+                    &self.other_range,
+                    self.map_reversed,
+                    policy,
+                    |_| Ok(Classification::Decided(RealSign::Zero)),
+                );
+            }
+
+            if let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) =
+                &self.parameter_map
+                && let Some((source, contact, first, source_reversed)) =
+                    data.coincident_pair_source()
+            {
+                let target_reversed = source_reversed
+                    ^ (self.orientation == RationalBezierOverlapOrientation2::Reversed)
+                    ^ self.map_reversed;
+                let candidates = match source.parallel_parameters_for_contact(
+                    contact,
+                    first,
+                    &target.data.parallel,
                     target_reversed,
                     policy,
                 )? {
@@ -2776,6 +2806,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierAlgebraicCuspFiberProjection2::Parameters(parameters) => parameters,
             BezierAlgebraicCuspFiberProjection2::IdenticallyZero => {
                 match self.replay_positive_dimensional_parallel_circle(
+                    other,
                     range,
                     &circle,
                     &selected_half_plane,
@@ -2955,6 +2986,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     #[allow(clippy::too_many_arguments)]
     fn replay_positive_dimensional_parallel_circle(
         &self,
+        other: &BezierParallel2,
         range: Option<&BezierParameterRange2>,
         circle: &BezierAlgebraicCuspTwoTermExpression2,
         selected_half_plane: &BezierAlgebraicCuspTwoTermExpression2,
@@ -3243,6 +3275,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let parameter_map = self.parallel_parameter_map_from_reduced(
+            other,
             half_incidence.clone(),
             diameter_side.clone(),
             radius_squared_denominator,
@@ -3510,6 +3543,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         Ok(Classification::Decided(
             self.parallel_parameter_map_from_reduced(
+                other,
                 incidence,
                 BezierAlgebraicCuspTwoTermExpression2 {
                     rational: diameter_rational,
@@ -3524,6 +3558,7 @@ impl BezierAlgebraicCuspSemicircle2 {
 
     fn parallel_parameter_map_from_reduced(
         &self,
+        other: &BezierParallel2,
         incidence: BivariatePolynomial,
         diameter_side: BezierAlgebraicCuspTwoTermExpression2,
         radius_squared_denominator: BivariatePolynomial,
@@ -3532,6 +3567,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+                parallel: other.clone(),
                 cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
                 incidence,
                 diameter_side,
@@ -5156,6 +5192,21 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
+    fn opposite_contact_carrier(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+    ) -> (
+        &BezierAlgebraicCuspSemicircle2,
+        BezierAlgebraicCuspSemicircleContactLocation2,
+    ) {
+        if first {
+            (&self.data.second_semicircle, contact.second_location)
+        } else {
+            (&self.data.first_semicircle, contact.first_location)
+        }
+    }
+
     /// Replays one retained circle-circle contact against a rational carrier
     /// of either participating circle.
     ///
@@ -5177,11 +5228,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 "cusp-pair parameter map was replayed under a different predicate policy".into(),
             ));
         }
-        let (opposite, expected_location) = if first {
-            (&self.data.second_semicircle, contact.second_location)
-        } else {
-            (&self.data.first_semicircle, contact.first_location)
-        };
+        let (opposite, expected_location) = self.opposite_contact_carrier(contact, first);
         let tangent_factor = if first == target_reversed_from_pair_carrier {
             RealSign::Positive
         } else {
@@ -5217,6 +5264,60 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                         && candidate.tangent_cross_sign == expected_tangent
                 })
                 .map(|candidate| candidate.other_parameter)
+                .collect(),
+        ))
+    }
+
+    /// Replays the same pair contact against a genuinely analytic carrier.
+    fn parallel_parameters_for_contact(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+        target: &BezierParallel2,
+        target_reversed_from_pair_carrier: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "cusp-pair parameter map was replayed under a different predicate policy".into(),
+            ));
+        }
+        let (opposite, expected_location) = self.opposite_contact_carrier(contact, first);
+        let tangent_factor = if first == target_reversed_from_pair_carrier {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        };
+        let expected_tangent = product_sign(contact.tangent_cross_sign, tangent_factor);
+        let intersections = match opposite.parallel_intersections(target, policy)? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) = intersections
+        else {
+            return match intersections {
+                BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(_) => {
+                    Err(CurveError::Topology(
+                        "a transverse cusp-pair contact replayed as a coincident analytic circle"
+                            .into(),
+                    ))
+                }
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(_) => unreachable!(),
+            };
+        };
+        Ok(Classification::Decided(
+            contacts
+                .into_iter()
+                .filter(|candidate| {
+                    candidate.location == expected_location
+                        && candidate.tangent_cross_sign == Some(expected_tangent)
+                })
+                .map(|candidate| candidate.parallel_parameter)
                 .collect(),
         ))
     }
@@ -21781,6 +21882,106 @@ mod conversion_tests {
             assert_eq!(
                 mapped_pair_contact
                     .same_value(&rational_contact.other_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let analytic_source = RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(Real::from(2_i8), Real::zero()),
+                    Point2::new(Real::from(2_i8), Real::from(2_i8)),
+                    Point2::new(Real::zero(), Real::from(2_i8)),
+                    Real::one(),
+                    Real::one(),
+                    Real::from(2_i8),
+                )
+                .unwrap(),
+            );
+            let analytic_quarter = analytic_source.parallel_left(Real::one()).unwrap();
+            assert!(analytic_quarter.data.certified_ph_offset.set(None).is_ok());
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(analytic_contacts),
+            ) = second
+                .parallel_intersections(&analytic_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic first-circle quarter must meet the second cusp circle");
+            };
+            let [analytic_contact] = analytic_contacts.as_slice() else {
+                panic!("the selected analytic quarter must retain the unique upper contact");
+            };
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(analytic_overlaps),
+            ) = first
+                .parallel_intersections(&analytic_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic first-circle quarter must retain its overlap");
+            };
+            let analytic_overlap = analytic_overlaps
+                .iter()
+                .find(|overlap| {
+                    matches!(
+                        overlap_parameter_is_in_range(
+                            &analytic_contact.parallel_parameter,
+                            overlap.other_range(),
+                            &policy,
+                        ),
+                        Ok(Classification::Decided(true))
+                    )
+                })
+                .expect("the pair contact must lie in one analytic overlap cell");
+            assert!(matches!(
+                analytic_overlap.parameter_map,
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(_)
+            ));
+            let Classification::Decided(mapped_analytic_pair_contact) = analytic_overlap
+                .other_parameter_for_cusp(&first_parameter, &policy)
+                .unwrap()
+            else {
+                panic!("a standalone pair cut must project to its analytic carrier");
+            };
+            assert_eq!(
+                mapped_analytic_pair_contact
+                    .same_value(&analytic_contact.parallel_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let reversed_analytic_quarter = analytic_quarter.reversed();
+            let reversed_analytic_expected = analytic_contact.parallel_parameter.unit_complement();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+                    reversed_analytic_overlaps,
+                ),
+            ) = first
+                .parallel_intersections(&reversed_analytic_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the reversed analytic quarter must retain its overlap");
+            };
+            let reversed_analytic_overlap = reversed_analytic_overlaps
+                .iter()
+                .find(|overlap| {
+                    matches!(
+                        overlap_parameter_is_in_range(
+                            &reversed_analytic_expected,
+                            overlap.other_range(),
+                            &policy,
+                        ),
+                        Ok(Classification::Decided(true))
+                    )
+                })
+                .expect("the pair contact must lie in one reversed analytic overlap cell");
+            let Classification::Decided(reversed_analytic_pair_contact) = reversed_analytic_overlap
+                .other_parameter_for_cusp(&first_parameter, &policy)
+                .unwrap()
+            else {
+                panic!("a pair cut must preserve analytic-carrier reversal");
+            };
+            assert_eq!(
+                reversed_analytic_pair_contact
+                    .same_value(&reversed_analytic_expected, &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
