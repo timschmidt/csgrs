@@ -776,6 +776,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     candidates,
                     &self.other_range,
                     self.map_reversed,
+                    true,
                     policy,
                     |_| Ok(Classification::Decided(RealSign::Zero)),
                 );
@@ -805,6 +806,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     candidates,
                     &self.other_range,
                     self.map_reversed,
+                    true,
                     policy,
                     |_| Ok(Classification::Decided(RealSign::Zero)),
                 );
@@ -846,6 +848,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     candidates,
                     &self.other_range,
                     self.map_reversed,
+                    true,
                     policy,
                     |_| Ok(Classification::Decided(RealSign::Zero)),
                 );
@@ -909,6 +912,48 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     parameter
                 };
                 return retain_direct_overlap_parameter(parameter, &self.other_range, policy);
+            }
+
+            if let Some(source) = data.coincident_tangent_source() {
+                if source.policy() != *policy {
+                    return Err(CurveError::Topology(
+                        "mapped tangent source used a different predicate policy".into(),
+                    ));
+                }
+                let source_tangent = source.tangent_power_basis()?;
+                let target_tangent = match &self.parameter_map {
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
+                        rational_parametric_tangent_numerator(
+                            target.data.curve.homogeneous_power_basis()?,
+                        )
+                    }
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                        let differential = target.data.parallel.differential()?;
+                        [
+                            differential.tangent_x.clone(),
+                            differential.tangent_y.clone(),
+                        ]
+                    }
+                };
+                let candidates = match mapped_circle_tangent_parameter_candidates(
+                    source.parameter(),
+                    &source_tangent,
+                    &target_tangent,
+                    policy,
+                )? {
+                    Classification::Decided(candidates) => candidates,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return retain_unique_overlap_parameter(
+                    candidates,
+                    &self.other_range,
+                    self.map_reversed,
+                    false,
+                    policy,
+                    |_| Ok(Classification::Decided(RealSign::Zero)),
+                );
             }
 
             match parameter.represented_rational_value(policy)? {
@@ -999,7 +1044,7 @@ fn rational_overlap_parameter_for_exact_cusp(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-    retain_unique_overlap_parameter(candidates, range, map_reversed, policy, |_| {
+    retain_unique_overlap_parameter(candidates, range, map_reversed, true, policy, |_| {
         Ok(Classification::Decided(RealSign::Zero))
     })
 }
@@ -1078,16 +1123,23 @@ fn parallel_overlap_parameter_for_exact_cusp(
             }
         }
     };
-    retain_unique_overlap_parameter(candidates, range, map_reversed, policy, |map_parameter| {
-        algebraic_cusp_correlated_radical_sum_sign(
-            &incidence,
-            &predicate,
-            &map.speed_squared,
-            &map.cusp_parameter,
-            map_parameter,
-            policy,
-        )
-    })
+    retain_unique_overlap_parameter(
+        candidates,
+        range,
+        map_reversed,
+        true,
+        policy,
+        |map_parameter| {
+            algebraic_cusp_correlated_radical_sum_sign(
+                &incidence,
+                &predicate,
+                &map.speed_squared,
+                &map.cusp_parameter,
+                map_parameter,
+                policy,
+            )
+        },
+    )
 }
 
 fn rational_mapped_cusp_represented_rational(
@@ -1435,6 +1487,7 @@ fn retain_unique_overlap_parameter<F>(
     candidates: Vec<BezierParameter2>,
     range: &BezierParameterRange2,
     map_reversed: bool,
+    include_boundaries: bool,
     policy: &CurveContext,
     mut predicate_sign: F,
 ) -> CurveResult<Classification<BezierParameter2>>
@@ -1457,12 +1510,13 @@ where
         } else {
             map_parameter
         };
-        let in_range = match overlap_parameter_is_in_range(&candidate, range, policy)? {
-            Classification::Decided(in_range) => in_range,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let in_range =
+            match overlap_parameter_is_in_range(&candidate, range, include_boundaries, policy)? {
+                Classification::Decided(in_range) => in_range,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         if in_range && retained.replace(candidate).is_some() {
             return Err(CurveError::Topology(
                 "one cusp cut mapped to multiple parameters in one regular overlap cell".into(),
@@ -1482,7 +1536,7 @@ fn retain_direct_overlap_parameter(
     range: &BezierParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParameter2>> {
-    match overlap_parameter_is_in_range(&parameter, range, policy)? {
+    match overlap_parameter_is_in_range(&parameter, range, true, policy)? {
         Classification::Decided(true) => Ok(Classification::Decided(parameter)),
         Classification::Decided(false) => Err(CurveError::Topology(
             "cusp cut had no parameter on its published mapped overlap".into(),
@@ -1494,16 +1548,19 @@ fn retain_direct_overlap_parameter(
 fn overlap_parameter_is_in_range(
     parameter: &BezierParameter2,
     range: &BezierParameterRange2,
+    include_boundaries: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
         Classification::Decided(std::cmp::Ordering::Less) => false,
-        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => true,
+        Classification::Decided(std::cmp::Ordering::Equal) => include_boundaries,
+        Classification::Decided(std::cmp::Ordering::Greater) => true,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let before_end = match parameter.cmp_by_refinement(range.end(), policy)? {
         Classification::Decided(std::cmp::Ordering::Greater) => false,
-        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => true,
+        Classification::Decided(std::cmp::Ordering::Equal) => include_boundaries,
+        Classification::Decided(std::cmp::Ordering::Less) => true,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     Ok(Classification::Decided(after_start && before_end))
@@ -1604,6 +1661,65 @@ fn parallel_parameters_for_cusp_endpoint(
         )),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+/// Maps one interior point between exact carriers of the same selected circle
+/// by their tangent line. On a circle, a tangent line identifies only the
+/// point and its antipode; one published semicircle overlap range contains at
+/// most one of those interior points.
+fn mapped_circle_tangent_parameter_candidates(
+    source_parameter: &BezierParameter2,
+    source_tangent: &[Vec<Real>; 2],
+    target_tangent: &[Vec<Real>; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let incidence = bivariate_subtract(
+        &bivariate_outer_product(&source_tangent[0], &target_tangent[1]),
+        &bivariate_outer_product(&source_tangent[1], &target_tangent[0]),
+    );
+    let candidates = match source_parameter {
+        BezierParameter2::Exact(parameter) => {
+            let coefficients = bivariate_specialize_first(&incidence, parameter);
+            let mut nonzero = false;
+            for coefficient in &coefficients {
+                match real_sign(coefficient, policy) {
+                    Some(RealSign::Positive | RealSign::Negative) => nonzero = true,
+                    Some(RealSign::Zero) => {}
+                    None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                    }
+                }
+            }
+            if !nonzero {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            let polynomial = match polynomial_from_coefficients(coefficients, policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => {
+                    return Err(CurveError::Topology(
+                        "nonzero tangent correspondence had no parameter polynomial".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            polynomial.isolate_unit_interval_roots(policy)?
+        }
+        BezierParameter2::Algebraic(parameter) => {
+            match algebraic_cusp_projected_fiber_parameters(&incidence, parameter, policy)? {
+                Classification::Decided(BezierAlgebraicCuspFiberProjection2::Parameters(
+                    parameters,
+                )) => Classification::Decided(parameters),
+                Classification::Decided(
+                    BezierAlgebraicCuspFiberProjection2::IdenticallyZero
+                    | BezierAlgebraicCuspFiberProjection2::Degenerate,
+                ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
+        }
+    };
+    Ok(candidates)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1742,6 +1858,48 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     },
 }
 
+enum BezierAlgebraicCuspSemicircleMappedTangentSource2<'a> {
+    Rational {
+        curve: &'a RationalBezier2,
+        parameter: &'a BezierParameter2,
+        policy: CurveContext,
+    },
+    Parallel {
+        parallel: &'a BezierParallel2,
+        parameter: &'a BezierParameter2,
+        policy: CurveContext,
+    },
+}
+
+impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
+    fn policy(&self) -> CurveContext {
+        match self {
+            Self::Rational { policy, .. } | Self::Parallel { policy, .. } => *policy,
+        }
+    }
+
+    fn parameter(&self) -> &BezierParameter2 {
+        match self {
+            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => parameter,
+        }
+    }
+
+    fn tangent_power_basis(&self) -> CurveResult<[Vec<Real>; 2]> {
+        match self {
+            Self::Rational { curve, .. } => Ok(rational_parametric_tangent_numerator(
+                curve.homogeneous_power_basis()?,
+            )),
+            Self::Parallel { parallel, .. } => {
+                let differential = parallel.differential()?;
+                Ok([
+                    differential.tangent_x.clone(),
+                    differential.tangent_y.clone(),
+                ])
+            }
+        }
+    }
+}
+
 impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// Recovers the rational carrier at the base of any exact coincident-circle
     /// pair-overlap transports.
@@ -1847,6 +2005,38 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source.coincident_pair_endpoint_source()
             }
             Self::Rational { .. } | Self::Parallel { .. } | Self::Pair { .. } => None,
+        }
+    }
+
+    /// Recovers a regular mapped carrier beneath coincident-circle wrappers.
+    /// Its tangent line identifies an interior point of one selected
+    /// semicircle up to the antipode, which the destination overlap range
+    /// excludes exactly.
+    fn coincident_tangent_source(
+        &self,
+    ) -> Option<BezierAlgebraicCuspSemicircleMappedTangentSource2<'_>> {
+        match self {
+            Self::Rational { map, contact } => Some(
+                BezierAlgebraicCuspSemicircleMappedTangentSource2::Rational {
+                    curve: &map.data.curve,
+                    parameter: &contact.other_parameter,
+                    policy: map.data.policy,
+                },
+            ),
+            Self::Parallel { map, contact } => Some(
+                BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
+                    parallel: &map.data.parallel,
+                    parameter: &contact.parallel_parameter,
+                    policy: map.data.policy,
+                },
+            ),
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.coincident_tangent_source()
+            }
+            Self::Pair { .. } | Self::PairOverlap { .. } => None,
         }
     }
 }
@@ -21696,6 +21886,153 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(true),
             );
+
+            let nonlinear_analytic_source = RationalBezier2::try_new_with_implicit_quadratic_conic(
+                vec![
+                    Point2::new(Real::from(2_i8), Real::zero()),
+                    Point2::new(Real::from(2_i8), (Real::one() / Real::from(2_i8)).unwrap()),
+                    Point2::new(
+                        (Real::from(46_i8) / Real::from(25_i8)).unwrap(),
+                        (Real::from(32_i8) / Real::from(25_i8)).unwrap(),
+                    ),
+                    Point2::new(
+                        (Real::from(6_i8) / Real::from(5_i8)).unwrap(),
+                        Real::from(2_i8),
+                    ),
+                    Point2::new(Real::zero(), Real::from(2_i8)),
+                ],
+                vec![
+                    Real::from(24_i8),
+                    Real::from(24_i8),
+                    Real::from(25_i8),
+                    Real::from(30_i8),
+                    Real::from(48_i8),
+                ],
+                Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::from(-4_i8),
+                ]),
+                source.retained_circular_conic().cloned(),
+            )
+            .unwrap();
+            let nonlinear_analytic_quarter = nonlinear_analytic_source
+                .parallel_left(Real::one())
+                .unwrap();
+            assert!(
+                nonlinear_analytic_quarter
+                    .data
+                    .certified_ph_offset
+                    .set(None)
+                    .is_ok()
+            );
+            let nonlinear_analytic_result = semicircle
+                .parallel_intersections(&nonlinear_analytic_quarter, &policy)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+                    nonlinear_analytic_overlaps,
+                ),
+            ) = nonlinear_analytic_result
+            else {
+                panic!(
+                    "the nonlinear analytic circle must remain an overlap: {nonlinear_analytic_result:?}"
+                );
+            };
+            let [nonlinear_analytic_overlap] = nonlinear_analytic_overlaps.as_slice() else {
+                panic!("the nonlinear analytic circle must retain one selected cell");
+            };
+            assert!(matches!(
+                nonlinear_analytic_overlap.parameter_map,
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(_)
+            ));
+            let nonlinear_analytic_expected = algebraic_parameter(vec![
+                Real::from(-2_i8),
+                Real::zero(),
+                Real::one(),
+                Real::from(2_i8),
+                Real::one(),
+            ]);
+            let Classification::Decided(nonlinear_analytic_cut) = nonlinear_analytic_overlap
+                .other_parameter_for_cusp(&algebraic_parallel_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("a nonlinear analytic carrier must transport an analytic-authored cut");
+            };
+            assert_eq!(
+                nonlinear_analytic_cut
+                    .same_value(&nonlinear_analytic_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(rational_to_nonlinear_analytic_cut) =
+                nonlinear_analytic_overlap
+                    .other_parameter_for_cusp(&algebraic_rational_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("a nonlinear analytic carrier must transport a rational-authored cut");
+            };
+            assert_eq!(
+                rational_to_nonlinear_analytic_cut
+                    .same_value(&nonlinear_analytic_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(analytic_to_nonlinear_rational_cut) =
+                nonlinear_rational_overlap
+                    .other_parameter_for_cusp(&algebraic_parallel_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("a nonlinear rational carrier must transport an analytic-authored cut");
+            };
+            assert_eq!(
+                analytic_to_nonlinear_rational_cut
+                    .same_value(&nonlinear_expected, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            let reversed_range = BezierParameterRange2::new_validated(
+                nonlinear_analytic_overlap
+                    .other_range()
+                    .end()
+                    .unit_complement(),
+                nonlinear_analytic_overlap
+                    .other_range()
+                    .start()
+                    .unit_complement(),
+            );
+            let reversed_nonlinear_analytic_overlap = BezierAlgebraicCuspSemicircleMappedOverlap2 {
+                other_range: reversed_range,
+                cusp_start: nonlinear_analytic_overlap.cusp_start_parameter(),
+                cusp_end: nonlinear_analytic_overlap.cusp_end_parameter(),
+                orientation: match nonlinear_analytic_overlap.orientation() {
+                    RationalBezierOverlapOrientation2::Same => {
+                        RationalBezierOverlapOrientation2::Reversed
+                    }
+                    RationalBezierOverlapOrientation2::Reversed => {
+                        RationalBezierOverlapOrientation2::Same
+                    }
+                },
+                parameter_map: nonlinear_analytic_overlap.parameter_map.clone(),
+                map_reversed: !nonlinear_analytic_overlap.map_reversed,
+            };
+            let Classification::Decided(reversed_nonlinear_analytic_cut) =
+                reversed_nonlinear_analytic_overlap
+                    .other_parameter_for_cusp(&algebraic_parallel_cusp_cut, &policy)
+                    .unwrap()
+            else {
+                panic!("nonlinear analytic transport must preserve reversal");
+            };
+            assert_eq!(
+                reversed_nonlinear_analytic_cut
+                    .same_value(&nonlinear_analytic_expected.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
             let cross_field_parallel_evidence = cross_field_cusp_region
                 .intersect_region(&parallel_region, &policy)
                 .expect("a rational-authored cusp cut must clip an analytic overlap")
@@ -22055,6 +22392,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &rational_contact.other_parameter,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22113,6 +22451,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &analytic_contact.parallel_parameter,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22155,6 +22494,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &reversed_analytic_expected,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22191,6 +22531,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &reversed_expected,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22249,6 +22590,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &second_rational_contact.other_parameter,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22306,6 +22648,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &rational_contact.other_parameter,
                             overlap.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22619,6 +22962,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &expected_wide_parameter,
                             candidate.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22675,6 +23019,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &expected_wide_parameter,
                             candidate.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
@@ -22730,6 +23075,7 @@ mod conversion_tests {
                         overlap_parameter_is_in_range(
                             &expected_wide_parameter,
                             candidate.other_range(),
+                            true,
                             &policy,
                         ),
                         Ok(Classification::Decided(true))
