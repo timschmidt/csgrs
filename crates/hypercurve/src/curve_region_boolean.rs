@@ -2869,21 +2869,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     if classified_split_fragments[carrier_index][split_index]
                         .location
                         .is_some()
-                    {
-                        if !propagate_boolean_locations_from_seed(
+                        && !propagate_boolean_locations_from_seed(
                             &mut classified_split_fragments,
                             loop_range.clone(),
                             (carrier_index, split_index),
                             &transverse_vertices,
                             &reclassification_vertices,
-                        ) {
-                            return Err(self.invalid(
-                                carrier_index,
-                                CurveError::Topology(
-                                    "Boolean topology produced inconsistent face labels".into(),
-                                ),
-                            ));
-                        }
+                        )
+                    {
+                        return Err(self.invalid(
+                            carrier_index,
+                            CurveError::Topology(
+                                "Boolean topology produced inconsistent face labels".into(),
+                            ),
+                        ));
                     }
                 }
             }
