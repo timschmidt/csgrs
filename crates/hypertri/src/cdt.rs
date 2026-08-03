@@ -276,10 +276,37 @@ pub fn constrained_delaunay(
     Ok(kernel.finish(triangulation))
 }
 
+/// Triangulate a planar straight-line graph over its complete convex hull.
+///
+/// Unlike [`constrained_delaunay`], this entry point does not interpret closed
+/// constraint cycles as a polygon boundary with holes. Every bounded region on
+/// either side of every protected cycle remains triangulated. This is the
+/// appropriate domain for surface corefinement and other planar-complex work
+/// where an interior ring separates cells instead of removing material.
+pub fn constrained_delaunay_convex_hull(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
+    let kernel = ExactKernel::new(context);
+    let triangulation =
+        constrained_delaunay_inner_with_polygon_dispatch(&kernel, points, constraints, false)?;
+    Ok(kernel.finish(triangulation))
+}
+
 pub(crate) fn constrained_delaunay_inner(
     kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
+) -> Result<ConstrainedDelaunayTriangulation> {
+    constrained_delaunay_inner_with_polygon_dispatch(kernel, points, constraints, true)
+}
+
+fn constrained_delaunay_inner_with_polygon_dispatch(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+    dispatch_closed_polygon: bool,
 ) -> Result<ConstrainedDelaunayTriangulation> {
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(kernel, points)?;
@@ -306,8 +333,12 @@ pub(crate) fn constrained_delaunay_inner(
     let internal_constraints = planar.constraints;
     validate_constraint_geometry(kernel, &points, &internal_constraints)?;
 
-    if let Some(polygon) =
-        cdt_constraints::polygon_from_closed_constraints(kernel, &points, &internal_constraints)?
+    if dispatch_closed_polygon
+        && let Some(polygon) = cdt_constraints::polygon_from_closed_constraints(
+            kernel,
+            &points,
+            &internal_constraints,
+        )?
     {
         // Closed-constraint recognition has already proved ring topology.
         // Policy-independent structural facts can guide later scheduling;
@@ -1657,6 +1688,54 @@ mod tests {
                 .flatten()
                 .all(|&index| index < points.len())
         );
+    }
+
+    #[test]
+    fn convex_hull_pslg_keeps_both_sides_of_an_interior_ring() {
+        let points = vec![
+            p(0, 0),
+            p(6, 0),
+            p(6, 6),
+            p(0, 6),
+            p(2, 2),
+            p(4, 2),
+            p(4, 4),
+            p(2, 4),
+        ];
+        let constraints = vec![
+            Constraint::new(0, 1),
+            Constraint::new(1, 2),
+            Constraint::new(2, 3),
+            Constraint::new(3, 0),
+            Constraint::new(4, 5),
+            Constraint::new(5, 6),
+            Constraint::new(6, 7),
+            Constraint::new(7, 4),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let outcome = constrained_delaunay_convex_hull(&context, &points, &constraints)
+                .expect("the bounded PSLG is exactly triangulable");
+
+            assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+            assert_eq!(outcome.value.points(), points);
+            assert_eq!(outcome.value.triangles().len(), 10);
+            assert!(
+                constraints.iter().all(|constraint| triangulation_has_edge(
+                    outcome.value.triangles(),
+                    *constraint
+                ))
+            );
+            outcome.value.validate(&context).unwrap();
+            outcome
+                .value
+                .validate_unconstrained_edges_are_delaunay(&context)
+                .unwrap();
+        }
     }
 
     #[test]
