@@ -690,7 +690,7 @@ pub fn compare_algebraic_root_representations_by_difference(
             None,
         );
     }
-    if let Some(difference_value) = represented_root_translation_difference(
+    if let Some(difference_value) = translated_algebraic_root_difference(
         &refinement.refined_left,
         &refinement.refined_right,
         config.policy,
@@ -792,7 +792,7 @@ pub fn compare_algebraic_root_representations_by_difference(
 /// candidate is accepted only after affine construction and an exact
 /// common-root proof on the translated isolator, so unrelated polynomials
 /// cannot turn the coefficient heuristic into topology evidence.
-fn represented_root_translation_difference(
+pub fn translated_algebraic_root_difference(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
@@ -2989,6 +2989,14 @@ mod tests {
         };
 
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            assert_eq!(
+                translated_algebraic_root_difference(&left, &right, policy),
+                Some(-epsilon.clone())
+            );
+            assert_eq!(
+                translated_algebraic_root_difference(&right, &left, policy),
+                Some(epsilon.clone())
+            );
             let report = compare_algebraic_root_representations_by_difference(
                 &left,
                 &right,
