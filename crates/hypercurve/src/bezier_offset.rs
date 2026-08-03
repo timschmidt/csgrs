@@ -810,6 +810,47 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 );
             }
 
+            if let Some((source, start, evidence_policy)) = data.coincident_pair_endpoint_source() {
+                if evidence_policy != *policy {
+                    return Err(CurveError::Topology(
+                        "cusp-pair overlap endpoint was replayed under a different predicate policy"
+                            .into(),
+                    ));
+                }
+                let parameter = if start { Real::zero() } else { Real::one() };
+                let candidates = match &self.parameter_map {
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
+                        rational_parameters_for_cusp_endpoint(
+                            source,
+                            &parameter,
+                            &target.data.curve,
+                            policy,
+                        )?
+                    }
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                        parallel_parameters_for_cusp_endpoint(
+                            source,
+                            &parameter,
+                            &target.data.parallel,
+                            policy,
+                        )?
+                    }
+                };
+                let candidates = match candidates {
+                    Classification::Decided(candidates) => candidates,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return retain_unique_overlap_parameter(
+                    candidates,
+                    &self.other_range,
+                    self.map_reversed,
+                    policy,
+                    |_| Ok(Classification::Decided(RealSign::Zero)),
+                );
+            }
+
             let equivalent_cross_map_parameter = match (&self.parameter_map, data.as_ref()) {
                 (
                     BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target),
@@ -1468,6 +1509,103 @@ fn overlap_parameter_is_in_range(
     Ok(Classification::Decided(after_start && before_end))
 }
 
+fn mapped_overlap_parameters_for_exact_cusp(
+    overlaps: Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>,
+    parameter: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let parameter = BezierAlgebraicCuspSemicircleParameter2::Exact(parameter.clone());
+    let mut candidates: Vec<BezierParameter2> = Vec::new();
+    for overlap in overlaps {
+        let after_start = match parameter.cmp_by_refinement(&overlap.cusp_start, policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => false,
+            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
+                true
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let before_end = match parameter.cmp_by_refinement(&overlap.cusp_end, policy)? {
+            Classification::Decided(std::cmp::Ordering::Greater) => false,
+            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => true,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if !after_start || !before_end {
+            continue;
+        }
+        let candidate = match overlap.other_parameter_for_cusp(&parameter, policy)? {
+            Classification::Decided(candidate) => candidate,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut duplicate = false;
+        for existing in &candidates {
+            match existing.same_value(&candidate, policy)? {
+                Classification::Decided(true) => {
+                    duplicate = true;
+                    break;
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if !duplicate {
+            candidates.push(candidate);
+        }
+    }
+    Ok(Classification::Decided(candidates))
+}
+
+fn rational_parameters_for_cusp_endpoint(
+    source: &BezierAlgebraicCuspSemicircle2,
+    parameter: &Real,
+    target: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    match source.rational_intersections(target, policy)? {
+        Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+            overlaps,
+        )) => mapped_overlap_parameters_for_exact_cusp(overlaps, parameter, policy),
+        Classification::Decided(
+            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+        ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+            _,
+        )) => Err(CurveError::Topology(
+            "a coincident cusp endpoint replayed against a noncoincident rational carrier".into(),
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn parallel_parameters_for_cusp_endpoint(
+    source: &BezierAlgebraicCuspSemicircle2,
+    parameter: &Real,
+    target: &BezierParallel2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    match source.parallel_intersections(target, policy)? {
+        Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+            overlaps,
+        )) => mapped_overlap_parameters_for_exact_cusp(overlaps, parameter, policy),
+        Classification::Decided(
+            BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
+        ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
+            _,
+        )) => Err(CurveError::Topology(
+            "a coincident cusp endpoint replayed against a noncoincident analytic carrier".into(),
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
@@ -1666,6 +1804,51 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             Self::Rational { .. } | Self::Parallel { .. } | Self::PairOverlap { .. } => None,
         }
     }
+
+    /// Recovers the exact endpoint carrier beneath coincident-circle overlap
+    /// transports. A standalone overlap boundary is always endpoint zero or
+    /// one of one participating semicircle, even when its parameter on the
+    /// other carrier is non-rational.
+    fn coincident_pair_endpoint_source(
+        &self,
+    ) -> Option<(&BezierAlgebraicCuspSemicircle2, bool, CurveContext)> {
+        match self {
+            Self::PairOverlap {
+                overlap, endpoint, ..
+            } => {
+                let BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated {
+                    first_semicircle,
+                    second_semicircle,
+                    ..
+                } = &overlap.data.parameter_map
+                else {
+                    return None;
+                };
+                let (semicircle, start) = match endpoint {
+                    BezierAlgebraicCuspSemicirclePairEndpoint2::FirstStart => {
+                        (first_semicircle, true)
+                    }
+                    BezierAlgebraicCuspSemicirclePairEndpoint2::FirstEnd => {
+                        (first_semicircle, false)
+                    }
+                    BezierAlgebraicCuspSemicirclePairEndpoint2::SecondStart => {
+                        (second_semicircle, true)
+                    }
+                    BezierAlgebraicCuspSemicirclePairEndpoint2::SecondEnd => {
+                        (second_semicircle, false)
+                    }
+                };
+                Some((semicircle, start, overlap.data.policy))
+            }
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.coincident_pair_endpoint_source()
+            }
+            Self::Rational { .. } | Self::Parallel { .. } | Self::Pair { .. } => None,
+        }
+    }
 }
 
 /// One-word exact subfragment of an algebraic-cusp semicircle.
@@ -1714,6 +1897,8 @@ struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
 enum BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2 {
     ExactEndpoints,
     Correlated {
+        first_semicircle: BezierAlgebraicCuspSemicircle2,
+        second_semicircle: BezierAlgebraicCuspSemicircle2,
         first_cusp_parameter: BezierParameter2,
         second_cusp_parameter: BezierParameter2,
         incidence: BivariatePolynomial,
@@ -3956,6 +4141,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints
         } else {
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
                 first_cusp_parameter: first_parameter,
                 second_cusp_parameter: second_parameter,
                 incidence: system.incidence,
@@ -5753,6 +5940,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             first_radius_squared_denominator,
             second_radius_squared_denominator,
             first_clockwise,
+            ..
         } = &self.data.parameter_map
         else {
             let mapped = if self.data.orientation == RationalBezierOverlapOrientation2::Same {
@@ -22394,6 +22582,177 @@ mod conversion_tests {
                     half.clone(),
                 )),
             );
+
+            let pair_endpoint = overlap.first_start_parameter();
+            assert!(matches!(
+                &pair_endpoint,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
+                    )
+            ));
+            let rational_wide_arc = RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(three_fifths.clone(), four_fifths.clone()),
+                    Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(4_i8)).unwrap()),
+                    Point2::new(-three_fifths.clone(), four_fifths.clone()),
+                    Real::from(5_i8),
+                    Real::from(8_i8),
+                    Real::from(20_i8),
+                )
+                .unwrap(),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(wide_overlaps),
+            ) = first
+                .rational_intersections(&rational_wide_arc, &policy)
+                .unwrap()
+            else {
+                panic!("the wide rational arc must overlap the first cusp circle");
+            };
+            let expected_wide_parameter = BezierParameter2::Exact(third.clone());
+            let wide_overlap = wide_overlaps
+                .iter()
+                .find(|candidate| {
+                    matches!(
+                        overlap_parameter_is_in_range(
+                            &expected_wide_parameter,
+                            candidate.other_range(),
+                            &policy,
+                        ),
+                        Ok(Classification::Decided(true))
+                    )
+                })
+                .expect("the mapped overlap endpoint must lie inside the wide rational arc");
+            let Classification::Decided(mapped_pair_endpoint) = wide_overlap
+                .other_parameter_for_cusp(&pair_endpoint, &policy)
+                .unwrap()
+            else {
+                panic!("a standalone pair-overlap endpoint must project rationally");
+            };
+            assert_eq!(
+                mapped_pair_endpoint
+                    .same_value(&expected_wide_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let independent_reversed =
+                synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy).reversed();
+            let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                independent_pair_overlap,
+            )) = first
+                .pair_intersections(&independent_reversed, &policy)
+                .unwrap()
+            else {
+                panic!("the independent reversed cusp must overlap the first circle");
+            };
+            let wrapped_pair_endpoint =
+                independent_pair_overlap.map_parameter(&pair_endpoint, true);
+            assert!(matches!(
+                &wrapped_pair_endpoint,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. }
+                    )
+            ));
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                    independent_wide_overlaps,
+                ),
+            ) = independent_reversed
+                .rational_intersections(&rational_wide_arc, &policy)
+                .unwrap()
+            else {
+                panic!("the independent reversed cusp must retain the wide rational overlap");
+            };
+            let independent_wide_overlap = independent_wide_overlaps
+                .iter()
+                .find(|candidate| {
+                    matches!(
+                        overlap_parameter_is_in_range(
+                            &expected_wide_parameter,
+                            candidate.other_range(),
+                            &policy,
+                        ),
+                        Ok(Classification::Decided(true))
+                    )
+                })
+                .expect("the wrapped endpoint must lie inside the wide rational arc");
+            let Classification::Decided(mapped_wrapped_endpoint) = independent_wide_overlap
+                .other_parameter_for_cusp(&wrapped_pair_endpoint, &policy)
+                .unwrap()
+            else {
+                panic!("a pair-overlap endpoint must survive a second cusp-field transport");
+            };
+            assert_eq!(
+                mapped_wrapped_endpoint
+                    .same_value(&expected_wide_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            let analytic_wide_source = RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(
+                        Real::from(2_i8) * &three_fifths,
+                        Real::from(2_i8) * &four_fifths,
+                    ),
+                    Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap()),
+                    Point2::new(
+                        Real::from(-2_i8) * &three_fifths,
+                        Real::from(2_i8) * &four_fifths,
+                    ),
+                    Real::from(5_i8),
+                    Real::from(8_i8),
+                    Real::from(20_i8),
+                )
+                .unwrap(),
+            );
+            let analytic_wide_arc = analytic_wide_source.parallel_left(Real::one()).unwrap();
+            assert!(analytic_wide_arc.data.certified_ph_offset.set(None).is_ok());
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+                    analytic_wide_overlaps,
+                ),
+            ) = first
+                .parallel_intersections(&analytic_wide_arc, &policy)
+                .unwrap()
+            else {
+                panic!("the wide analytic arc must overlap the first cusp circle");
+            };
+            let analytic_wide_overlap = analytic_wide_overlaps
+                .iter()
+                .find(|candidate| {
+                    matches!(
+                        overlap_parameter_is_in_range(
+                            &expected_wide_parameter,
+                            candidate.other_range(),
+                            &policy,
+                        ),
+                        Ok(Classification::Decided(true))
+                    )
+                })
+                .expect("the mapped overlap endpoint must lie inside the wide analytic arc");
+            assert!(matches!(
+                analytic_wide_overlap.parameter_map,
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(_)
+            ));
+            let Classification::Decided(mapped_analytic_pair_endpoint) = analytic_wide_overlap
+                .other_parameter_for_cusp(&pair_endpoint, &policy)
+                .unwrap()
+            else {
+                panic!("a standalone pair-overlap endpoint must project analytically");
+            };
+            assert_eq!(
+                mapped_analytic_pair_endpoint
+                    .same_value(&expected_wide_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
             let mapped_quadrant_parameter = overlap.map_parameter(
                 &BezierAlgebraicCuspSemicircleParameter2::Exact(three_quarters.clone()),
                 true,
