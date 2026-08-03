@@ -717,14 +717,15 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 }));
             }
 
-            if let (
-                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target),
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
-                    map: source,
-                    contact,
-                },
-            ) = (&self.parameter_map, data.as_ref())
+            if let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) =
+                &self.parameter_map
+                && let Some((source, contact)) = data.coincident_rational_source()
             {
+                if source.data.policy != *policy {
+                    return Err(CurveError::Topology(
+                        "mapped rational source used a different predicate policy".into(),
+                    ));
+                }
                 match RationalBezierOverlapParameterCorrespondence2::map_parameter_between_curves(
                     &source.data.curve,
                     &target.data.curve,
@@ -1540,6 +1541,35 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         source: BezierAlgebraicCuspSemicircleParameter2,
         source_first: bool,
     },
+}
+
+impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
+    /// Recovers the rational carrier at the base of any exact coincident-circle
+    /// pair-overlap transports.
+    ///
+    /// A pair-overlap map changes only which cusp semicircle parameterizes the
+    /// point; its two supporting circles and the geometric point are certified
+    /// identical. Peeling that wrapper is therefore sound for a rational
+    /// carrier-to-carrier correspondence and avoids constructing a field for
+    /// either cusp root. Other pair evidence does not retain a rational source
+    /// point and deliberately remains explicit.
+    fn coincident_rational_source(
+        &self,
+    ) -> Option<(
+        &BezierAlgebraicCuspSemicircleRationalParameterMap2,
+        &BezierAlgebraicCuspSemicircleRationalMapContact2,
+    )> {
+        match self {
+            Self::Rational { map, contact } => Some((map, contact)),
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.coincident_rational_source()
+            }
+            Self::Parallel { .. } | Self::Pair { .. } | Self::PairOverlap { .. } => None,
+        }
+    }
 }
 
 /// One-word exact subfragment of an algebraic-cusp semicircle.
@@ -20896,6 +20926,45 @@ mod conversion_tests {
             assert_eq!(
                 reversed_nonlinear_algebraic_rational_cut
                     .same_value(&nonlinear_expected.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+
+            // A coincident pair-overlap map changes the owning cusp field and
+            // local semicircle parameter but preserves the geometric point.
+            // Recover the exact rational carrier beneath that wrapper, then
+            // reuse the nonlinear carrier correspondence without constructing
+            // a primitive element for either selected cusp root.
+            let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                pair_overlap,
+            )) = semicircle
+                .pair_intersections(&independent_semicircle.reversed(), &policy)
+                .unwrap()
+            else {
+                panic!("independent reversed cusp fields must retain their coincident overlap");
+            };
+            assert_eq!(
+                pair_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed,
+            );
+            let pair_mapped_cut = pair_overlap.map_parameter(&algebraic_rational_cusp_cut, true);
+            assert!(matches!(
+                &pair_mapped_cut,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. }
+                    )
+            ));
+            let Classification::Decided(pair_nonlinear_cut) = nonlinear_rational_overlap
+                .other_parameter_for_cusp(&pair_mapped_cut, &policy)
+                .unwrap()
+            else {
+                panic!("a pair-overlap cut must retain its rational source across cusp fields");
+            };
+            assert_eq!(
+                pair_nonlinear_cut
+                    .same_value(&nonlinear_expected, &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
