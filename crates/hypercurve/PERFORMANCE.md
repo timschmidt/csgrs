@@ -7884,6 +7884,51 @@ Clippy matrices, benchmark compilation, formatting, and diff checks pass.
 Hypermesh was not modified. Complete machine-readable evidence is in
 [`2026-08-02-exact-parallel-pair-components.json`](benchmarks/checkpoints/2026-08-02-exact-parallel-pair-components.json).
 
+## Policy-complete algebraic parameter ordering checkpoint (2026-08-02)
+
+Hypercurve now has one policy-aware bridge for represented-root comparison and
+arithmetic. Arrangement endpoint identity, algebraic tangent order, rational
+Bezier coordinate equality, and parameter ordering no longer call Hypersolve
+through independent policy assumptions. Each bridge runs STRICT evidence first;
+if only APPROXIMATE_512 succeeds, it records terminal consumption in the
+enclosing curve operation before returning the result. Hypersolve arithmetic
+itself now requires an explicit policy at every caller, with no compatibility
+overload.
+
+For exact-rational selected roots, Hypersolve can prove an exact translation
+from normalized polynomial coefficients, affine-transform the selected
+isolator, and accept the candidate only after an exact common-root proof. Two
+quadratic roots separated by `2^-600` therefore order exactly under STRICT and
+remain Certified under APPROXIMATE_512. A companion nested-radical fixture is
+outside the bounded rational algebraic package: it stays explicit uncertainty
+under STRICT and reaches equality only at APPROXIMATE_512's 512-bit terminal,
+with `Approximate512Consumed`. STRICT retains the historical 64 exact
+bisections before symbolic difference construction; only approximate policy
+pays its specified 512-step terminal. Unit isolators touching zero also gain an
+exact constant-coefficient sign proof instead of needless endpoint refinement.
+
+The matched common-path performance gate is effectively neutral. Ten shared
+analytic-square all-four Boolean batches move from 71,626,820 to 71,661,655
+Callgrind instructions (+0.0486%). Three alternating pinned process medians for
+the exact line/arc capsule batch move from 383.713 to 377.705 us (-1.57%). A
+current competitive sample measures 376.729 us for the exact batch and 9.019 us
+for four Cavalier finite calls; the 41.77x ratio is a contract difference, not
+parity, because the latter has no canonical-Real witnesses or strict policy.
+The hard polynomial-graph replay is likewise neutral at 32.31 versus 32.55
+seconds in optimized tests.
+
+Heaptrack is exactly unchanged on 25 analytic batches: both artifacts record
+132,323 allocation calls, 9,596 temporary allocations, and 154.91 KiB peak
+heap. The representative production artifact adds 23,456 `.text` bytes
+(0.530%) and 25,360 stripped bytes (0.408%), with no public-carrier growth. The
+Hypercurve/Hypersolve static graph contains 32,268 nodes and 59,743 edges, up
+64 and 137 from the preceding checkpoint. All 210 Hypersolve and 375 Hypercurve
+all-feature unit tests, Hypersolve's README/property/smoke suites, the directly
+affected Hypercurve integration suites, both warning-denied Clippy matrices,
+formatting, and both feature build matrices pass. Hypermesh was not modified.
+Complete evidence is in
+[`2026-08-02-algebraic-parameter-policy-ordering.json`](benchmarks/checkpoints/2026-08-02-algebraic-parameter-policy-ordering.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
