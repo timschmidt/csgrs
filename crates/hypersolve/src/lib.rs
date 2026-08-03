@@ -215,7 +215,10 @@ pub use failed_constraints::{
     search_failed_constraint_set_removals_with_config, search_failed_constraint_single_removals,
     search_failed_constraint_single_removals_with_config,
 };
-pub use hyperlimit::{Certainty as PredicateCertainty, PredicatePolicy};
+pub use hyperlimit::{
+    Certainty as PredicateCertainty, PredicateOutcome, PredicatePolicy, Sign as PredicateSign,
+    classify_real_sign as classify_real_sign_predicate, compare_reals as compare_real_predicate,
+};
 pub use interval::{
     AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,
     IntervalBoxCertificationPackage, IntervalBoxCertificationReport,
