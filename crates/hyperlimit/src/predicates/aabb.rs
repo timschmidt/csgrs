@@ -802,8 +802,7 @@ fn ordered_aabb3_pairwise_relation(
             ],
         };
         for (left, right, rejecting_ordering) in comparisons {
-            let ordering = match decided(compare_reals_with_policy(left, right, policy), &mut trace)
-            {
+            let ordering = match decided(compare_aabb_reals(left, right, policy), &mut trace) {
                 Ok(ordering) => ordering,
                 Err(unknown) => return unknown.into_outcome(),
             };
@@ -813,6 +812,18 @@ fn ordered_aabb3_pairwise_relation(
         }
     }
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
+}
+
+#[inline(never)]
+fn compare_aabb_reals(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Ordering> {
+    // Keep the complete comparison cascade behind one stable call boundary.
+    // Otherwise consumer-side inlining can expand it into the six-comparison
+    // AABB loop, increasing broad-phase instructions and linked code.
+    compare_reals_with_policy(left, right, policy)
 }
 
 /// Return whether two closed 3D axis-aligned boxes intersect with an explicit
