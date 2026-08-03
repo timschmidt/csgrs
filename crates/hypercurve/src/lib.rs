@@ -107,8 +107,8 @@ pub use bezier_flatten::{
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub use bezier_offset::{
-    BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2,
-    BezierParallelApproximationCurve2, BezierParallelIncidence2,
+    BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2, BezierOffsetPreflight2,
+    BezierOffsetRisk, BezierParallel2, BezierParallelApproximationCurve2, BezierParallelIncidence2,
     BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
     BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
     BezierParallelPairIntersectionCandidates2, BezierParallelPairIntersectionContact2,
@@ -150,6 +150,7 @@ pub use bezier_retained_overlap::{
 };
 pub use bezier_split::{
     BezierParallelFragment2, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
+    CurveRegionParameter2, CurveRegionParameterRange2,
 };
 pub use bezier_split_endpoint::{
     BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,

@@ -2391,7 +2391,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let location = match propagated {
                     Some(location) => location,
                     None => {
-                        let (start, end) = fragment_range(&split.fragment);
+                        let Some((start, end)) = fragment_range(&split.fragment) else {
+                            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+                        };
                         let mut shared = false;
                         for overlap in &overlaps {
                             let range = if overlap.first_carrier_index == carrier_index {
@@ -2524,7 +2526,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut arrangement_directions = Vec::new();
         for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
             for (split_fragment_index, split) in splits.iter().enumerate() {
-                let (source_start, source_end) = split.fragment.parameter_range();
+                let Some((source_start, source_end)) = split.fragment.parameter_range() else {
+                    return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+                };
                 let source_start_branch = self.transition_contact_branch(
                     &topology,
                     carrier_index,
@@ -2702,7 +2706,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             RegionCarrierGeometry::AnalyticParallel(_) => 4,
         };
-        let (start, end) = fragment_range(fragment);
+        let Some((start, end)) = fragment_range(fragment) else {
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        };
         let mut upper = end.clone();
         let mut last_reason = UncertaintyReason::Boundary;
         let local_circular_curve = match fragment {
@@ -2714,6 +2720,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierSplitFragment2::Materialized { .. }
             | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
         };
         // Retained circular-conic provenance is a construction certificate for
@@ -2947,7 +2954,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         fragment: &BezierSplitFragment2,
         overlaps: &[CarrierOverlap],
     ) -> ExactCurveResult<bool> {
-        let (start, end) = fragment_range(fragment);
+        let Some((start, end)) = fragment_range(fragment) else {
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        };
         for overlap in overlaps {
             let (own_range, other_carrier_index) = if overlap.first_carrier_index == carrier_index {
                 (&overlap.first_range, overlap.second_carrier_index)
@@ -3332,7 +3341,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         fragment: &BezierSplitFragment2,
     ) -> ExactCurveResult<(crate::Real, crate::Point2)> {
         let carrier = &self.data.carriers[carrier_index];
-        let (start, end) = fragment_range(fragment);
+        let Some((start, end)) = fragment_range(fragment) else {
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        };
         let parameter = match start
             .strict_rational_between_ordered(end, &self.data.policy)
             .map_err(|cause| self.invalid(carrier_index, cause))?
@@ -3390,7 +3401,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         overlaps: &[CarrierOverlap],
         operation: BooleanOp,
     ) -> ExactCurveResult<RegionFragmentAction> {
-        let (start, end) = fragment_range(fragment);
+        let Some((start, end)) = fragment_range(fragment) else {
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        };
         let mut matching_overlap = None;
         for overlap in overlaps {
             let range = if overlap.first_carrier_index == carrier_index {
@@ -3758,6 +3771,13 @@ fn build_region_carriers(
                     fragment.range().end().clone(),
                     fragment.is_reversed(),
                 ),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Boolean,
+                        CurveFamily2::RationalBezier,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
             };
             let family = geometry.family();
             if matches!(
@@ -3857,7 +3877,11 @@ fn split_carrier_with_refinement(
     };
     let mut output = Vec::new();
     for fragment in materialization.fragments() {
-        let (start, end) = fragment_range(fragment);
+        let Some((start, end)) = fragment_range(fragment) else {
+            return Err(CurveError::Topology(
+                "algebraic cusp carrier reached the Bezier split path".into(),
+            ));
+        };
         if !parameter_range_inside_carrier(start, end, carrier, policy)? {
             continue;
         }
@@ -5450,14 +5474,17 @@ fn decided_parameter_cmp(
     }
 }
 
-fn fragment_range(fragment: &BezierSplitFragment2) -> (&BezierParameter2, &BezierParameter2) {
+fn fragment_range(
+    fragment: &BezierSplitFragment2,
+) -> Option<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        | BezierSplitFragment2::Unresolved { start, end } => Some((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
-            (fragment.range().start(), fragment.range().end())
+            Some((fragment.range().start(), fragment.range().end()))
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
     }
 }
 

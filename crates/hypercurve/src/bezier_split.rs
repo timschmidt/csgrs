@@ -21,12 +21,168 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
+use crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParallel2, BezierParameter2,
-    BezierParameterRange2, Classification, CubicBezier2, CurveContext, CurveError, CurveResult,
-    Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
+    BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicEndpointImage2,
+    BezierAlgebraicParameter2, BezierParallel2, BezierParameter2, BezierParameterRange2,
+    Classification, CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
+
+/// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
+///
+/// Ordinary Bezier and analytic-parallel carriers expose their canonical
+/// [`BezierParameter2`]. Algebraic cusp joins keep their compact correlated
+/// predicate evidence private; callers can still retain, compare, and inspect
+/// whether a parameter belongs to the ordinary Bezier domain without forcing
+/// an unrelated selected-root tower.
+#[derive(Clone, Debug)]
+pub struct CurveRegionParameter2 {
+    data: CurveRegionParameterData2,
+}
+
+#[derive(Clone, Debug)]
+enum CurveRegionParameterData2 {
+    Bezier(BezierParameter2),
+    AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
+}
+
+impl PartialEq for CurveRegionParameter2 {
+    fn eq(&self, other: &Self) -> bool {
+        match (&self.data, &other.data) {
+            (
+                CurveRegionParameterData2::Bezier(first),
+                CurveRegionParameterData2::Bezier(second),
+            ) => first == second,
+            (
+                CurveRegionParameterData2::AlgebraicCusp(first),
+                CurveRegionParameterData2::AlgebraicCusp(second),
+            ) => first.shares_exact_evidence(second),
+            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
+            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
+                false
+            }
+        }
+    }
+}
+
+impl CurveRegionParameter2 {
+    pub(crate) fn from_bezier(parameter: BezierParameter2) -> Self {
+        Self {
+            data: CurveRegionParameterData2::Bezier(parameter),
+        }
+    }
+
+    pub(crate) fn from_algebraic_cusp(parameter: BezierAlgebraicCuspSemicircleParameter2) -> Self {
+        Self {
+            data: CurveRegionParameterData2::AlgebraicCusp(parameter),
+        }
+    }
+
+    /// Returns the ordinary Bezier/source parameter, when this is not an
+    /// algebraic-cusp local cut.
+    pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
+            CurveRegionParameterData2::AlgebraicCusp(_) => None,
+        }
+    }
+
+    /// Returns a directly represented local value for either carrier kind.
+    pub const fn as_exact(&self) -> Option<&Real> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => parameter.as_exact(),
+            CurveRegionParameterData2::AlgebraicCusp(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
+            ) => Some(parameter),
+            CurveRegionParameterData2::AlgebraicCusp(
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
+            ) => None,
+        }
+    }
+
+    /// Returns true for a compact local cut on an algebraic cusp semicircle.
+    pub const fn is_algebraic_cusp(&self) -> bool {
+        matches!(self.data, CurveRegionParameterData2::AlgebraicCusp(_))
+    }
+
+    pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::AlgebraicCusp(parameter) => Some(parameter),
+            CurveRegionParameterData2::Bezier(_) => None,
+        }
+    }
+
+    pub(crate) fn cmp_by_refinement(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        match (&self.data, &other.data) {
+            (
+                CurveRegionParameterData2::Bezier(first),
+                CurveRegionParameterData2::Bezier(second),
+            ) => first.cmp_by_refinement(second, policy),
+            (
+                CurveRegionParameterData2::AlgebraicCusp(first),
+                CurveRegionParameterData2::AlgebraicCusp(second),
+            ) => first.cmp_by_refinement(second, policy),
+            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
+            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
+                Err(CurveError::Topology(
+                    "cannot compare parameters from distinct carrier domains".into(),
+                ))
+            }
+        }
+    }
+
+    pub(crate) fn strict_rational_between_ordered(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        match (&self.data, &other.data) {
+            (
+                CurveRegionParameterData2::Bezier(first),
+                CurveRegionParameterData2::Bezier(second),
+            ) => first.strict_rational_between_ordered(second, policy),
+            (
+                CurveRegionParameterData2::AlgebraicCusp(first),
+                CurveRegionParameterData2::AlgebraicCusp(second),
+            ) => first.strict_rational_between(second, policy),
+            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
+            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
+                Err(CurveError::Topology(
+                    "cannot separate parameters from distinct carrier domains".into(),
+                ))
+            }
+        }
+    }
+}
+
+/// Ascending exact parameter range on one retained curved-region carrier.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveRegionParameterRange2 {
+    start: CurveRegionParameter2,
+    end: CurveRegionParameter2,
+}
+
+impl CurveRegionParameterRange2 {
+    pub(crate) fn new_validated(start: CurveRegionParameter2, end: CurveRegionParameter2) -> Self {
+        Self { start, end }
+    }
+
+    /// Returns the ascending range start.
+    pub const fn start(&self) -> &CurveRegionParameter2 {
+        &self.start
+    }
+
+    /// Returns the ascending range end.
+    pub const fn end(&self) -> &CurveRegionParameter2 {
+        &self.end
+    }
+}
 
 /// A native Bezier subcurve produced by exact split materialization.
 #[allow(clippy::large_enum_variant)]
@@ -93,6 +249,13 @@ pub enum BezierSplitFragment2 {
     },
     /// Exact analytic parallel retained over represented or algebraic source parameters.
     AnalyticParallel(BezierParallelFragment2),
+    /// Exact semicircular join centered at a selected algebraic cusp.
+    ///
+    /// Its local monotone parameter is retained by the carrier rather than
+    /// coerced into [`BezierParameter2`]. Interior cuts may depend on two
+    /// independent selected roots and therefore deliberately remain compact
+    /// predicate evidence instead of an artificial primitive-element scalar.
+    AlgebraicCuspSemicircle(BezierAlgebraicCuspSemicircleFragment2),
     /// At least one boundary is algebraic and must be carried forward.
     Unresolved {
         /// Start split boundary in the original parameter space.
@@ -153,12 +316,34 @@ impl BezierSplitMaterialization2 {
 
 impl BezierSplitFragment2 {
     /// Returns this fragment's boundaries in its promoted native span.
-    pub const fn parameter_range(&self) -> (&BezierParameter2, &BezierParameter2) {
+    pub const fn parameter_range(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
         match self {
             Self::Materialized { start, end, .. }
             | Self::AlgebraicEndpointImages { start, end, .. }
-            | Self::Unresolved { start, end } => (start, end),
-            Self::AnalyticParallel(fragment) => (fragment.range.start(), fragment.range.end()),
+            | Self::Unresolved { start, end } => Some((start, end)),
+            Self::AnalyticParallel(fragment) => {
+                Some((fragment.range.start(), fragment.range.end()))
+            }
+            Self::AlgebraicCuspSemicircle(_) => None,
+        }
+    }
+
+    pub(crate) fn curve_region_parameter_range(&self) -> CurveRegionParameterRange2 {
+        match self {
+            Self::Materialized { start, end, .. }
+            | Self::AlgebraicEndpointImages { start, end, .. }
+            | Self::Unresolved { start, end } => CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_bezier(start.clone()),
+                CurveRegionParameter2::from_bezier(end.clone()),
+            ),
+            Self::AnalyticParallel(fragment) => CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_bezier(fragment.range.start().clone()),
+                CurveRegionParameter2::from_bezier(fragment.range.end().clone()),
+            ),
+            Self::AlgebraicCuspSemicircle(fragment) => CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+                CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+            ),
         }
     }
 }
@@ -545,6 +730,9 @@ impl BezierSplitFragment2 {
                 Ok(curve.point_at(&half, policy))
             }
             Self::AnalyticParallel(fragment) => fragment.representative_point(policy),
+            Self::AlgebraicCuspSemicircle(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
             Self::AlgebraicEndpointImages {
                 start,
                 end,
@@ -597,6 +785,9 @@ impl BezierSplitFragment2 {
                 end_image: end_image.clone(),
             }),
             Self::AnalyticParallel(fragment) => Ok(Self::AnalyticParallel(fragment.reversed())),
+            Self::AlgebraicCuspSemicircle(fragment) => {
+                Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
+            }
             Self::Unresolved { .. } => Err(CurveError::Topology(
                 "reversing an unresolved Bezier split fragment requires endpoint evidence"
                     .to_owned(),
@@ -635,8 +826,8 @@ fn validate_bezier_split_coverage(
     fragments: &[BezierSplitFragment2],
     policy: &CurveContext,
 ) -> CurveResult<()> {
-    let (first_start, _) = bezier_split_fragment_range(&fragments[0]);
-    let (_, last_end) = bezier_split_fragment_range(&fragments[fragments.len() - 1]);
+    let (first_start, _) = bezier_split_fragment_range(&fragments[0])?;
+    let (_, last_end) = bezier_split_fragment_range(&fragments[fragments.len() - 1])?;
     validate_bezier_boundary_equals(first_start, &BezierParameter2::Exact(Real::zero()), policy)?;
     validate_bezier_boundary_equals(last_end, &BezierParameter2::Exact(Real::one()), policy)?;
     Ok(())
@@ -662,7 +853,7 @@ fn validate_bezier_split_fragment(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> CurveResult<()> {
-    let (start, end) = bezier_split_fragment_range(fragment);
+    let (start, end) = bezier_split_fragment_range(fragment)?;
     validate_parameter(start, policy)?;
     validate_parameter(end, policy)?;
     validate_bezier_parameter_order(start, end, policy)?;
@@ -710,6 +901,12 @@ fn validate_bezier_split_fragment(
                     .into(),
             ));
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+            return Err(CurveError::Topology(
+                "algebraic cusp semicircles are region carriers, not native Bezier split materialization"
+                    .into(),
+            ));
+        }
         BezierSplitFragment2::Unresolved { start, end } => {
             if start.is_exact() && end.is_exact() {
                 return Err(CurveError::Topology(
@@ -726,8 +923,8 @@ fn validate_adjacent_bezier_split_fragments(
     left: &BezierSplitFragment2,
     right: &BezierSplitFragment2,
 ) -> CurveResult<()> {
-    let (_, left_end) = bezier_split_fragment_range(left);
-    let (right_start, _) = bezier_split_fragment_range(right);
+    let (_, left_end) = bezier_split_fragment_range(left)?;
+    let (right_start, _) = bezier_split_fragment_range(right)?;
     if left_end != right_start {
         return Err(CurveError::Topology(
             "Bezier split materialization fragments must be contiguous and ordered".into(),
@@ -759,14 +956,17 @@ fn certified_split_points_equal(left: &Point2, right: &Point2, policy: &CurveCon
 
 fn bezier_split_fragment_range(
     fragment: &BezierSplitFragment2,
-) -> (&BezierParameter2, &BezierParameter2) {
+) -> CurveResult<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        | BezierSplitFragment2::Unresolved { start, end } => Ok((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
-            (fragment.range().start(), fragment.range().end())
+            Ok((fragment.range().start(), fragment.range().end()))
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Err(CurveError::Topology(
+            "algebraic cusp semicircle has a distinct local parameter domain".into(),
+        )),
     }
 }
 

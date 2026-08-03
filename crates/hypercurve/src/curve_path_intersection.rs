@@ -1139,7 +1139,13 @@ fn append_boolean_fragments(
         let curve = &path.curves()[split.curve_index()];
         for (promoted_span_index, materialization) in split.materializations().iter().enumerate() {
             for (split_fragment_index, fragment) in materialization.fragments().iter().enumerate() {
-                let (start, end) = split_fragment_parameter_range(fragment);
+                let Some((start, end)) = split_fragment_parameter_range(fragment) else {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Boolean,
+                        curve.family(),
+                        UncertaintyReason::Unsupported,
+                    ));
+                };
                 let overlap_action = match overlap_action_for_fragment(
                     operand,
                     split.curve_index(),
@@ -1329,14 +1335,15 @@ fn classify_retained_same_circle_fragment(
 
 fn split_fragment_parameter_range(
     fragment: &BezierSplitFragment2,
-) -> (&BezierParameter2, &BezierParameter2) {
+) -> Option<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
+        | BezierSplitFragment2::Unresolved { start, end } => Some((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
-            (fragment.range().start(), fragment.range().end())
+            Some((fragment.range().start(), fragment.range().end()))
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
     }
 }
 

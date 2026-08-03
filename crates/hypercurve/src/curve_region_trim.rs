@@ -106,7 +106,7 @@ impl CurveRegionTrimFragment2 {
     /// Returns the retained boundaries in the top-level public parameter space
     /// when both promoted-span boundaries are represented by [`Real`].
     pub fn represented_parameter_range(&self) -> Option<(Real, Real)> {
-        let (local_start, local_end) = self.fragment.parameter_range();
+        let (local_start, local_end) = self.fragment.parameter_range()?;
         let (local_start, local_end) = (local_start.as_exact()?, local_end.as_exact()?);
         let (span_start, span_end) = self.span_range.endpoints();
         let span = span_end - span_start;
@@ -251,7 +251,13 @@ impl Curve2 {
                     };
                 match region.classify_point(&representative, policy) {
                     Classification::Decided(RegionPointLocation::Inside) => {
-                        let (start, end) = fragment.parameter_range();
+                        let Some((start, end)) = fragment.parameter_range() else {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Arrangement,
+                                self.family(),
+                                UncertaintyReason::Unsupported,
+                            ));
+                        };
                         retained.push(CurveRegionTrimFragment2 {
                             promoted_span_index,
                             span_range: native.span_range().clone(),

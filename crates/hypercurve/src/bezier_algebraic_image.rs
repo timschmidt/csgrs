@@ -29,11 +29,11 @@ use hypersolve::{
     transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
-use crate::bezier_parameter::signed_coefficients_at_parameter;
+use crate::bezier_parameter::{evaluate_coefficients, signed_coefficients_at_parameter};
 use crate::classify::compare_reals;
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
-    CurveError, CurveResult, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
     UncertaintyReason,
 };
 use std::cmp::Ordering;
@@ -694,6 +694,35 @@ impl RationalBezierAlgebraicPointImage2 {
         Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
 
+    pub(crate) fn exact_rational_point(&self, policy: &CurveContext) -> Option<Point2> {
+        if let Some(expression) = self.data.retained_expression.as_ref()
+            && let Ok(Classification::Decided(Some(parameter))) =
+                expression.parameter.represented_rational_root(policy)
+        {
+            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
+            if let (Ok(x), Ok(y)) = (
+                evaluate_coefficients(&expression.x_numerator, &parameter) / &denominator,
+                evaluate_coefficients(&expression.y_numerator, &parameter) / denominator,
+            ) {
+                return Some(Point2::new(x, y));
+            }
+        }
+
+        let point = self.resolved(policy)?;
+        Some(Point2::new(
+            point
+                .x()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+            point
+                .y()?
+                .representation()?
+                .exact_rational_witness()?
+                .clone(),
+        ))
+    }
+
     /// Returns a compact diagnostic message for failed construction.
     pub fn message(&self) -> Option<&str> {
         self.data.message.as_deref()
@@ -1115,6 +1144,20 @@ fn rational_point_image(
     policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     let parameter_root = parameter_representation(parameter, policy);
+    rational_point_image_with_parameter_representation(
+        parameter,
+        parameter_root,
+        coefficients,
+        policy,
+    )
+}
+
+fn rational_point_image_with_parameter_representation(
+    parameter: &BezierAlgebraicParameter2,
+    parameter_root: AlgebraicRootRepresentation,
+    coefficients: RationalCoordinatePolynomials,
+    policy: &CurveContext,
+) -> CurveResult<RationalBezierAlgebraicPointImage2> {
     if !parameter_root.is_valid() {
         let RationalCoordinatePolynomials {
             x_numerator,
@@ -1179,7 +1222,7 @@ pub(crate) fn rational_point_image_from_power_basis(
     denominator: Vec<Real>,
     policy: &CurveContext,
 ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
-    let parameter_root = parameter_representation(parameter, policy);
+    let mut parameter_root = parameter_representation(parameter, policy);
     if !parameter_root.is_valid() {
         return Ok(RationalBezierAlgebraicPointImage2::new(
             BezierAlgebraicImageStatus::RetainedRationalExpression,
@@ -1198,8 +1241,21 @@ pub(crate) fn rational_point_image_from_power_basis(
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, policy)?;
     let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, policy)?;
     let denominator = reduce_algebraic_image_polynomial(parameter, denominator, policy)?;
-    rational_point_image(
+    if let Classification::Decided(Some(exact_root)) =
+        parameter.represented_rational_root(policy)?
+    {
+        parameter_root.interval = IsolatedRootInterval {
+            lower: exact_root.clone(),
+            upper: exact_root.clone(),
+            exact_root: Some(exact_root),
+            distinct_root_count: 1,
+        };
+        parameter_root.kind = AlgebraicRootKind::ExactRationalWitness;
+        validate_parameter_representation(&mut parameter_root, policy);
+    }
+    rational_point_image_with_parameter_representation(
         parameter,
+        parameter_root,
         RationalCoordinatePolynomials {
             x_numerator,
             y_numerator,

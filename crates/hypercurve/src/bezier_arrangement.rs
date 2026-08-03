@@ -545,6 +545,9 @@ fn validate_arrangement_fragment_source_range(
                 }
             }
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            fragment.validate_policy(policy)?;
+        }
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
         }
@@ -626,9 +629,12 @@ fn validate_reused_source_fragment_ranges(
     second: &BezierArrangementFragment2,
     policy: &CurveContext,
 ) -> CurveResult<()> {
-    let (first_start, first_end) = arrangement_fragment_source_range(first.fragment());
-    let (second_start, second_end) = arrangement_fragment_source_range(second.fragment());
-    match first_end.cmp_by_interval(second_start, policy)? {
+    let first_range = first.fragment().curve_region_parameter_range();
+    let second_range = second.fragment().curve_region_parameter_range();
+    match first_range
+        .end()
+        .cmp_by_refinement(second_range.start(), policy)?
+    {
         Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
             return Ok(());
         }
@@ -639,7 +645,10 @@ fn validate_reused_source_fragment_ranges(
             )));
         }
     }
-    match second_end.cmp_by_interval(first_start, policy)? {
+    match second_range
+        .end()
+        .cmp_by_refinement(first_range.start(), policy)?
+    {
         Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(()),
         Classification::Decided(std::cmp::Ordering::Greater) => Err(CurveError::Topology(
             "retained Bezier arrangement graph must not overlap reused source fragment evidence"
@@ -648,19 +657,6 @@ fn validate_reused_source_fragment_ranges(
         Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
             "retained Bezier arrangement graph cannot certify reused source fragment ranges are disjoint: {reason:?}"
         ))),
-    }
-}
-
-fn arrangement_fragment_source_range(
-    fragment: &BezierSplitFragment2,
-) -> (&BezierParameter2, &BezierParameter2) {
-    match fragment {
-        BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => (start, end),
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            (fragment.range().start(), fragment.range().end())
-        }
     }
 }
 
@@ -794,6 +790,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
             analytic_parallel_exact_endpoints(fragment, &CurveContext::STRICT)
         }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
 }
@@ -1043,6 +1040,7 @@ fn materialized_endpoint_data(
             Some(analytic_parallel_endpoint_data(fragment, policy))
         }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
 }
@@ -1209,6 +1207,9 @@ fn retained_endpoint_data(
                 end_derivative_source: None,
             }))
         }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Some(Classification::Decided(
+            retained_topology_endpoint_data(arrangement_fragment),
+        )),
         BezierSplitFragment2::Unresolved { .. } => None,
     }
 }

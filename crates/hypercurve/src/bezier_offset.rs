@@ -303,7 +303,6 @@ impl PartialEq for BezierParallelAlgebraicCuspFrame2 {
 /// one word: its center, radius direction, parameter proof, and all polynomial
 /// products are shared through the cusp frame.
 #[derive(Clone, Debug)]
-#[allow(dead_code)] // Admitted only after its complete arrangement operations land.
 pub(crate) struct BezierAlgebraicCuspSemicircle2 {
     data: Arc<BezierAlgebraicCuspSemicircleData2>,
 }
@@ -587,9 +586,19 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
 /// range may use exact represented endpoints or mapped contact cuts without
 /// materializing the selected cusp fields into a high-degree scalar tower.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
-pub(crate) struct BezierAlgebraicCuspSemicircleFragment2 {
+pub struct BezierAlgebraicCuspSemicircleFragment2 {
     data: Arc<BezierAlgebraicCuspSemicircleFragmentData2>,
+}
+
+impl PartialEq for BezierAlgebraicCuspSemicircleFragment2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+            || (self.data.semicircle == other.data.semicircle
+                && self.data.start.shares_exact_evidence(&other.data.start)
+                && self.data.end.shares_exact_evidence(&other.data.end)
+                && self.data.reversed == other.data.reversed
+                && self.data.policy == other.data.policy)
+    }
 }
 
 #[derive(Debug)]
@@ -797,6 +806,22 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Returns the retained cusp parameter shared by all curve coefficients.
     pub(crate) fn cusp_parameter(&self) -> &BezierAlgebraicParameter2 {
         &self.data.frame.data.parameter
+    }
+
+    pub(crate) fn start_parallel(&self) -> BezierParallel2 {
+        self.data
+            .frame
+            .data
+            .parallel
+            .with_distance(self.data.frame.data.parallel.distance() + &self.data.radial_distance)
+    }
+
+    pub(crate) fn end_parallel(&self) -> BezierParallel2 {
+        self.data
+            .frame
+            .data
+            .parallel
+            .with_distance(self.data.frame.data.parallel.distance() - &self.data.radial_distance)
     }
 
     /// Returns the signed radius along the cusp frame's unit left normal.
@@ -3180,7 +3205,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         Ok(())
     }
 
-    fn shares_exact_evidence(&self, other: &Self) -> bool {
+    pub(crate) fn shares_exact_evidence(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => first == second,
             (Self::Mapped(first), Self::Mapped(second)) => {
@@ -3458,7 +3483,7 @@ fn cusp_semicircle_parameter_bracket_bounds(
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleFragment2 {
-    fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
+    pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if self.data.policy != *policy {
             return Err(CurveError::Topology(
                 "algebraic cusp fragment was replayed under a different predicate policy".into(),
@@ -3548,6 +3573,18 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
+    pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        Ok(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
+                semicircle: self.data.semicircle.transform_similarity(transform)?,
+                start: self.data.start.clone(),
+                end: self.data.end.clone(),
+                reversed: self.data.reversed,
+                policy: self.data.policy,
+            }),
+        })
+    }
+
     pub(crate) fn representative_parameter(&self) -> CurveResult<Classification<Real>> {
         self.data
             .start
@@ -3568,6 +3605,117 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     pub(crate) fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
         self.data.semicircle.conservative_bounds(&self.data.policy)
+    }
+
+    pub(crate) fn endpoint_analytic_source(
+        &self,
+        start_endpoint: bool,
+    ) -> Option<(BezierParallel2, BezierParameter2)> {
+        let source_start = start_endpoint != self.data.reversed;
+        let parameter = if source_start {
+            &self.data.start
+        } else {
+            &self.data.end
+        };
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = parameter else {
+            return None;
+        };
+        let parallel = if parameter == &Real::zero() {
+            self.data.semicircle.start_parallel()
+        } else if parameter == &Real::one() {
+            self.data.semicircle.end_parallel()
+        } else {
+            return None;
+        };
+        Some((
+            parallel,
+            BezierParameter2::Algebraic(self.data.semicircle.cusp_parameter().clone()),
+        ))
+    }
+
+    pub(crate) fn endpoint_point_image(
+        &self,
+        start_endpoint: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
+        self.validate_policy(policy)?;
+        let source_start = start_endpoint != self.data.reversed;
+        let parameter = if source_start {
+            &self.data.start
+        } else {
+            &self.data.end
+        };
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = parameter else {
+            return Ok(None);
+        };
+        match self.data.semicircle.point_at(parameter, policy)? {
+            Classification::Decided(point) => Ok(Some(point)),
+            Classification::Uncertain(_) => Ok(None),
+        }
+    }
+
+    pub(crate) fn endpoint_exact_point(
+        &self,
+        start_endpoint: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Point2>> {
+        if let Some(point) = self
+            .endpoint_point_image(start_endpoint, policy)?
+            .and_then(|point| point.exact_rational_point(policy))
+        {
+            return Ok(Some(point));
+        }
+        let Some((parallel, BezierParameter2::Algebraic(parameter))) =
+            self.endpoint_analytic_source(start_endpoint)
+        else {
+            return Ok(None);
+        };
+        let parameter = match parameter.represented_rational_root(policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        Ok(match parallel.point_at(&parameter, policy)? {
+            Classification::Decided(point) => Some(point),
+            Classification::Uncertain(_) => None,
+        })
+    }
+
+    pub(crate) fn endpoint_parameter(
+        &self,
+        start_endpoint: bool,
+    ) -> &BezierAlgebraicCuspSemicircleParameter2 {
+        let source_start = start_endpoint != self.data.reversed;
+        if source_start {
+            &self.data.start
+        } else {
+            &self.data.end
+        }
+    }
+
+    pub(crate) fn shares_endpoint_evidence(
+        &self,
+        start_endpoint: bool,
+        other: &Self,
+        other_start_endpoint: bool,
+    ) -> bool {
+        self.data.semicircle == other.data.semicircle
+            && self
+                .endpoint_parameter(start_endpoint)
+                .shares_exact_evidence(other.endpoint_parameter(other_start_endpoint))
+    }
+
+    pub(crate) fn contains_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        match self.forward_ray_winding_delta(point, &Real::one(), &Real::zero(), policy)? {
+            Classification::Decided(_) => Ok(Classification::Decided(false)),
+            Classification::Uncertain(UncertaintyReason::Boundary) => {
+                Ok(Classification::Decided(true))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     fn contains_parameter(
@@ -17682,6 +17830,83 @@ mod conversion_tests {
                 radial_distance: Real::one(),
                 clockwise: false,
             }),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let center = semicircle
+                .center_point_image(&policy)
+                .unwrap()
+                .exact_rational_point(&policy)
+                .expect("the synthetic rational cusp center must materialize exactly");
+            let Classification::Decided(boundary_point) =
+                semicircle.point_at(&half, &policy).unwrap()
+            else {
+                panic!("the synthetic rational cusp midpoint must complete");
+            };
+            let boundary_point = boundary_point
+                .exact_rational_point(&policy)
+                .expect("the synthetic rational cusp midpoint must materialize exactly");
+            let cusp = crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                BezierAlgebraicCuspSemicircleFragment2::full(semicircle, &policy),
+            );
+            let crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = &cusp else {
+                unreachable!();
+            };
+            let start = fragment
+                .endpoint_exact_point(true, &policy)
+                .unwrap()
+                .expect("the synthetic rational cusp start must materialize exactly");
+            let end = fragment
+                .endpoint_exact_point(false, &policy)
+                .unwrap()
+                .expect("the synthetic rational cusp end must materialize exactly");
+            let diameter = crate::BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(end, start).unwrap(),
+                )),
+            };
+            let boundary = crate::CurveRegionBoundaryLoop2::new(vec![cusp, diameter], &policy)
+                .expect("rational cusp endpoints must connect to the exact diameter");
+            let region = crate::CurveRegion2::new(vec![boundary]).unwrap();
+            let radial_x = boundary_point.x() - center.x();
+            let radial_y = boundary_point.y() - center.y();
+            let inside = Point2::new(
+                center.x() + (&radial_x * &half),
+                center.y() + (&radial_y * &half),
+            );
+            let outside = Point2::new(
+                center.x() - (&radial_x * &half),
+                center.y() - (&radial_y * &half),
+            );
+            assert_eq!(
+                region
+                    .classify_point(&inside, &policy)
+                    .map(crate::CurveOutcome::into_value),
+                Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
+            );
+            assert_eq!(
+                region
+                    .classify_point(&outside, &policy)
+                    .map(crate::CurveOutcome::into_value),
+                Ok(Classification::Decided(crate::RegionPointLocation::Outside)),
+            );
+            assert_eq!(
+                region
+                    .classify_point(&boundary_point, &policy)
+                    .map(crate::CurveOutcome::into_value),
+                Ok(Classification::Decided(
+                    crate::RegionPointLocation::Boundary
+                )),
+            );
+            assert!(region.has_algebraic_fragments());
         }
     }
 
