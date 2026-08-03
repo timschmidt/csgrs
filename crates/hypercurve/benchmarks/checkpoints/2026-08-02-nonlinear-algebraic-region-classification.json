@@ -1,0 +1,235 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact nonlinear retained-loop algebraic classification with interval-sign acceleration",
+  "source_revision": "950422802c95e062dcb0e607497ed8a05184dc0a",
+  "semantic_revisions": [
+    "0e9315aedf23442f891bc70ed1fe11aa1d15b44f",
+    "950422802c95e062dcb0e607497ed8a05184dc0a"
+  ],
+  "comparison_revision": "ec8d33b6658c9663ba360483ddd13e7173817e60",
+  "optimization_comparison_revision": "0e9315aedf23442f891bc70ed1fe11aa1d15b44f",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+  },
+  "scope": {
+    "included": [
+      "public policy-explicit CurveRegion2 classification of a retained algebraic point against supported nonlinear exact-rational loops",
+      "one retained-root predicate evaluator shared by endpoint ordering, boundary incidence, and winding",
+      "exact rational-Bezier lowering for materialized fragments and represented subranges",
+      "an exact ray direction selected to avoid every retained fragment endpoint",
+      "Hypersolve local-algebraic-field common-fiber counting for exact boundary incidence",
+      "adaptive homogeneous Bernstein winding with exact half-open ownership at dyadic subdivision crossings",
+      "affine-line specialization retained ahead of the general nonlinear kernel",
+      "one STRICT isolator bisection and strict Bernstein interval signs as an allocation-bounded fast proof",
+      "complete algebraic GCD/sign fallback under the caller's STRICT or APPROXIMATE_512 policy",
+      "inside, outside, exact boundary, dyadic crossing, and non-dyadic grazing-tangency tests under both policies",
+      "matched semantic, historical, competitive, allocation, linked-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "independent algebraic endpoint ranges that cannot yet lower to an exact represented subcurve",
+      "direct winding against an algebraic-cusp semicircle carrier",
+      "mixed-sign rational weight polygons",
+      "selected positive-dimensional analytic radical overlap replay",
+      "finite projection and export of algebraic-cusp carriers",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "ray_selection": "The kernel tries exact directions (1,m) from a bounded integer set larger than the endpoint count. A candidate is accepted only when the retained algebraic point has a decided nonzero homogeneous side sign against every endpoint; an endpoint equal to the point is Boundary.",
+    "boundary_incidence": "For query coordinates Nx(a)/D(a), Ny(a)/D(a) and rational curve homogeneous coordinates X(t),Y(t),W(t), the two bivariate equations D(a)X(t)-Nx(a)W(t)=0 and D(a)Y(t)-Ny(a)W(t)=0 are counted on t in [0,1] by Hypersolve's selected local-field common-fiber authority. A counted root or identically-zero/endpoint fiber is Boundary; unsupported coefficient fields remain explicit.",
+    "winding": "Each same-sign-weight rational Bezier is tested in homogeneous coordinates. Bernstein sign hulls exclude cells wholly on one ray side or wholly behind the query. A sign-changing cell wholly ahead contributes its oriented crossing. Otherwise exact de Casteljau subdivision at 1/2 continues; a crossing exactly at the shared midpoint is owned once from its before/after signs, and a grazing tangency contributes zero.",
+    "fill_and_roles": "Per-loop EvenOdd or NonZero winding is decided first; certified material/hole roles then compose the CurveRegion2 signed depth through the existing authoritative classification graph.",
+    "optimization": "A predicate evaluator refines its retained isolator by exactly one STRICT bisection, reused across all geometric signs. A common strict Bernstein-control sign over that bracket proves only nonzero signs. Mixed hulls and every equality fall through to the complete algebraic-root evaluator.",
+    "policy": "The optional interval proof always executes under STRICT and therefore cannot consume an APPROXIMATE_512 terminal. The authoritative fallback alone receives the caller's policy. STRICT accepts exact proofs only; APPROXIMATE_512 may terminate only at the shared Hyperlimit 512-bit equality boundary while retaining exact geometry."
+  },
+  "capability": {
+    "comparison_revision": "An algebraic point inside a nonlinear retained loop's conservative bounds returned Unsupported, so a nonlinear Boolean face could not be seeded from that representative.",
+    "source_revision": "Supported materialized polynomial/general-rational loops and exact-rational analytic-parallel fragments classify retained algebraic points exactly, including nonlinear boundary incidence and ray winding, through CurveRegion2's sole classifier.",
+    "public_surface": "CurveRegion2::classify_algebraic_point returns one CurveOutcome and preserves Certified certainty for exact results under both policies.",
+    "bounded_failure": "Independent algebraic subranges, direct cusp-circle winding, unsupported scalar fields, and mixed-sign rational weights return explicit uncertainty instead of negative incidence or fabricated winding.",
+    "historical_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release unit-test executables pinned to CPU 11; seven perf-stat process repetitions; deterministic instructions and branches are the primary comparison",
+    "nonlinear_classifier_matrix": {
+      "workload": "both-policy curved-cap inside/outside classification, exact parabola boundary incidence, a dyadic subdivision-midpoint crossing, a non-dyadic grazing tangency, and the retained affine/cusp matrix",
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field",
+      "semantic_checkpoint": {
+        "revision": "0e9315aedf23442f891bc70ed1fe11aa1d15b44f",
+        "task_clock_ms": 9.39,
+        "cycles": 34077893,
+        "instructions": 85102807,
+        "branches": 17103543,
+        "branch_misses": 149517
+      },
+      "optimized_checkpoint": {
+        "revision": "950422802c95e062dcb0e607497ed8a05184dc0a",
+        "task_clock_ms": 6.20,
+        "cycles": 19405988,
+        "instructions": 42658268,
+        "branches": 8808526,
+        "branch_misses": 111052
+      },
+      "change_percent": {
+        "task_clock": -33.972311,
+        "cycles": -43.054026,
+        "instructions": -49.874429,
+        "branches": -48.498823,
+        "branch_misses": -25.726172
+      },
+      "tuning": {
+        "unrefined_instructions": 43712805,
+        "one_bisection_instructions": 42658268,
+        "two_bisections_instructions": 44409656,
+        "four_bisections_instructions": 48722780,
+        "eight_bisections_instructions": 50101307,
+        "sixteen_bisections_instructions": 52540077,
+        "selection": "One shared strict bisection minimizes measured deterministic work; deeper eager refinement costs more than the GCD fallbacks it avoids."
+      },
+      "historical_exact_peer": false
+    },
+    "matched_existing_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_revision": "ec8d33b6658c9663ba360483ddd13e7173817e60",
+      "current_instructions": 28739510,
+      "comparison_instructions": 28767790,
+      "instruction_change_percent": -0.098304,
+      "current_branches": 5412332,
+      "comparison_branches": 5418215,
+      "branch_change_percent": -0.108578
+    },
+    "matched_correlated_overlap": {
+      "workload": "curve_region_boolean_clips_correlated_partial_cusp_overlaps",
+      "comparison_revision": "ec8d33b6658c9663ba360483ddd13e7173817e60",
+      "current_instructions": 1457980945,
+      "comparison_instructions": 1461066932,
+      "instruction_change_percent": -0.211215,
+      "current_branches": 270534416,
+      "comparison_branches": 271143421,
+      "branch_change_percent": -0.224606
+    },
+    "competitive_context": {
+      "method": "current all-feature comparative executable pinned to CPU 11; eleven adaptive samples targeted at 100 ms; fixture construction excluded; finite libraries are throughput targets rather than guarantee-equivalent peers",
+      "open_cubic": {
+        "hypercurve_certified_median_ns": 31186403.5,
+        "hypercurve_chord_fallback_median_ns": 1034140.5,
+        "curvo_heuristic_median_ns": 13905.1
+      },
+      "line_arc_capsule_inward": {
+        "hypercurve_exact_median_ns": 20761.8,
+        "cavalier_contours_median_ns": 991.7
+      },
+      "direct_guarantee_equivalent": false,
+      "interpretation": "The binary64 competitors cannot retain the selected algebraic query field, certify exact boundary GCD incidence, or preserve STRICT/APPROXIMATE_512 outcome semantics. They remain important throughput targets."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces; heaptrack_print summaries are authoritative",
+    "workload": "nonlinear_classifier_matrix",
+    "semantic_checkpoint": {
+      "profile": "/tmp/heaptrack.hypercurve-nonlinear-0e9315a.zst",
+      "allocation_calls": 189481,
+      "temporary_allocations": 40922,
+      "peak_heap_kib": 271.20,
+      "recorder_peak_rss_mib": 13.78,
+      "instrumented_runtime_seconds": 0.12
+    },
+    "optimized_checkpoint": {
+      "profile": "/tmp/heaptrack.hypercurve-nonlinear-fast-strict-final.zst.zst",
+      "allocation_calls": 61828,
+      "temporary_allocations": 6502,
+      "peak_heap_kib": 445.40,
+      "recorder_peak_rss_mib": 13.62,
+      "instrumented_runtime_seconds": 0.07
+    },
+    "change_percent": {
+      "allocation_calls": -67.369815,
+      "temporary_allocations": -84.111236,
+      "peak_heap": 64.233038,
+      "recorder_peak_rss": -1.161103
+    },
+    "interpretation": "Reusing one refined proof bracket removes 127,653 allocation calls and 34,420 analyzer-classified temporaries. Peak live heap rises by 174.2 KiB because the refined retained-root/Sturm state remains cached for the evaluator; this is accepted under the stated performance-first priority and remains explicit memory debt."
+  },
+  "release_size": {
+    "method": "matched default-feature and no-default-feature curve_region_boolean_batch release executables against the semantic checkpoint and its parent, with identical live dependency revisions",
+    "default_features": {
+      "current_file_bytes": 8062000,
+      "current_text_bytes": 6130121,
+      "current_data_bytes": 268864,
+      "current_bss_bytes": 4800,
+      "semantic_checkpoint_file_bytes": 8061904,
+      "semantic_checkpoint_text_bytes": 6130417,
+      "optimization_file_change_bytes": 96,
+      "optimization_text_change_bytes": -296,
+      "optimization_text_change_percent": -0.004828,
+      "presemantic_file_bytes": 8039024,
+      "presemantic_text_bytes": 6108701,
+      "total_file_change_bytes": 22976,
+      "total_text_change_bytes": 21420,
+      "total_text_change_percent": 0.350647
+    },
+    "no_default_features": {
+      "current_file_bytes": 7832976,
+      "current_text_bytes": 5945853,
+      "current_data_bytes": 267216,
+      "current_bss_bytes": 2288,
+      "semantic_checkpoint_file_bytes": 7832856,
+      "semantic_checkpoint_text_bytes": 5945853,
+      "presemantic_file_bytes": 7832864,
+      "presemantic_text_bytes": 5945853,
+      "text_change_bytes": 0
+    },
+    "interpretation": "The fast proof removes 296 linked text bytes from the semantic implementation. The complete nonlinear classifier costs 20.9 KiB of default-feature text versus its parent, while the minimal build remains text-byte-identical and receives only non-loadable metadata movement. No compatibility shim or second classification engine is linked."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-nonlinear-fast-final --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-callgraph-nonlinear-fast-final/callgraph.json",
+    "discovered_crates": 11,
+    "nodes": 32877,
+    "edges": 61073,
+    "semantic_checkpoint_nodes": 32872,
+    "semantic_checkpoint_edges": 61061,
+    "confirmed_paths": [
+      "CurveRegion2::classify_algebraic_point -> CurveRegion2::classify_algebraic_point_with_boundary_contract",
+      "CurveRegion2::classify_algebraic_point_with_boundary_contract -> classify_algebraic_point_against_retained_loop",
+      "classify_algebraic_point_against_retained_loop -> retained_fragment_algebraic_ray_curve -> algebraic_ray_direction",
+      "classify_algebraic_point_against_retained_loop -> algebraic_point_on_rational_curve -> count_bivariate_common_fiber_roots_at_algebraic_parameter",
+      "classify_algebraic_point_against_retained_loop -> algebraic_point_rational_curve_ray_winding",
+      "algebraic_point_rational_curve_ray_winding -> RationalBezierAlgebraicPointPredicate2::homogeneous_linear_difference_sign -> RationalBezierAlgebraicPointPredicate2::geometric_sign",
+      "RationalBezierAlgebraicPointPredicate2::geometric_sign -> strict_coefficients_sign_on_parameter_interval",
+      "RationalBezierAlgebraicPointPredicate2::geometric_sign -> signed_coefficients_at_parameter"
+    ],
+    "parser_note": "The static parser records the imported Hypersolve common-fiber function as a Hypercurve-local alias, so the source-level call and dependency revision are authoritative for that cross-crate edge."
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 382 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_all_features_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed all-feature library unit test, comparative, and default/no-default curve_region_boolean_batch builds",
+    "strict_and_approximate": "passed curved-cap inside/outside, exact parabola boundary, dyadic crossing ownership, non-dyadic grazing tangency, affine/hole classification, and public Certified outcome assertions under both policies",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "replay selected positive-dimensional analytic radical overlaps on the retained branch instead of treating a squared support component as unresolved",
+    "support independent algebraic endpoint ranges without finite parameter collapse",
+    "classify directly against algebraic-cusp semicircle fragments or lower them into the same rational authority when exact and cheaper",
+    "support every required rational weight topology and remaining scalar coefficient tower",
+    "reduce the 445.40 KiB peak retained evaluator footprint while preserving the instruction and allocation gains",
+    "broaden non-monotone, tangency, self-contact, overlap, and randomized differential coverage",
+    "complete finite projection/export and distinct-carrier general algebraic joins",
+    "implement radius-driven fillet and corner-enum chamfer solvers in the authoritative CurveRegion2 engine",
+    "delete displaced historical Boolean/offset/corner machinery after differential coverage passes"
+  ]
+}
