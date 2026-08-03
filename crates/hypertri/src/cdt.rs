@@ -617,7 +617,7 @@ fn incremental_delaunay_attempt(
     for &point in insertion_order {
         let mut bad = vec![false; triangles.len()];
         if triangles.len() >= LOCATED_CAVITY_THRESHOLD {
-            let neighbors = triangle_neighbors(&triangles);
+            let neighbors = triangle_neighbors(&triangles)?;
             if let Some(seed) = locate_triangle(
                 kernel,
                 &work_points,
@@ -816,9 +816,35 @@ fn mark_bad_triangles_exhaustive(
     Ok(())
 }
 
-fn triangle_neighbors(triangles: &[Triangle]) -> Vec<[Option<usize>; 3]> {
-    let mut edges = Vec::with_capacity(triangles.len() * 3);
+fn triangle_neighbors(triangles: &[Triangle]) -> Result<Vec<[Option<usize>; 3]>> {
+    let mut neighbors = vec![[None; 3]; triangles.len()];
+    if triangles.is_empty() {
+        return Ok(neighbors);
+    }
+    let table_capacity = triangles
+        .len()
+        .checked_mul(2)
+        .and_then(usize::checked_next_power_of_two)
+        .ok_or(Error::InvalidInput {
+            reason: "triangle adjacency capacity overflow",
+        })?
+        .max(8);
+    // Bowyer-Watson keeps one connected triangulated disk with the three
+    // super-triangle boundary edges, so fewer than two edge records exist per
+    // triangle. Keep the table sparse without paying to sort all three edge
+    // occurrences after every insertion. The bounded probe below turns any
+    // violated internal occupancy invariant into a typed error rather than an
+    // unbounded search.
+    let mut table = vec![NeighborEdgeSlot::EMPTY; table_capacity];
+    let mask = table_capacity - 1;
+
     for (triangle_index, triangle) in triangles.iter().enumerate() {
+        let owner_base = triangle_index
+            .checked_mul(3)
+            .filter(|owner| *owner <= NeighborEdgeSlot::PAIRED - 3)
+            .ok_or(Error::InvalidInput {
+                reason: "triangle adjacency owner overflow",
+            })?;
         for (edge_index, (from, to)) in [
             (triangle[0], triangle[1]),
             (triangle[1], triangle[2]),
@@ -827,28 +853,61 @@ fn triangle_neighbors(triangles: &[Triangle]) -> Vec<[Option<usize>; 3]> {
         .into_iter()
         .enumerate()
         {
-            edges.push((from.min(to), from.max(to), triangle_index, edge_index));
+            let (from, to) = (from.min(to), from.max(to));
+            let mut position = neighbor_edge_hash(from, to) & mask;
+            let owner = owner_base + edge_index;
+            let mut probes = 0;
+            loop {
+                let slot = &mut table[position];
+                if slot.owner == usize::MAX {
+                    *slot = NeighborEdgeSlot { from, to, owner };
+                    break;
+                }
+                if slot.from == from && slot.to == to {
+                    if slot.owner == NeighborEdgeSlot::PAIRED {
+                        return Err(Error::InvalidInput {
+                            reason: "Delaunay edge has more than two incident faces",
+                        });
+                    }
+                    let first_triangle = slot.owner / 3;
+                    let first_edge = slot.owner % 3;
+                    neighbors[first_triangle][first_edge] = Some(triangle_index);
+                    neighbors[triangle_index][edge_index] = Some(first_triangle);
+                    slot.owner = NeighborEdgeSlot::PAIRED;
+                    break;
+                }
+                probes += 1;
+                if probes == table_capacity {
+                    return Err(Error::InvalidInput {
+                        reason: "triangle adjacency table occupancy invariant failed",
+                    });
+                }
+                position = (position + 1) & mask;
+            }
         }
     }
-    edges.sort_unstable();
+    Ok(neighbors)
+}
 
-    let mut neighbors = vec![[None; 3]; triangles.len()];
-    let mut start = 0;
-    while start < edges.len() {
-        let mut end = start + 1;
-        while end < edges.len() && edges[end].0 == edges[start].0 && edges[end].1 == edges[start].1
-        {
-            end += 1;
-        }
-        if end - start == 2 {
-            let (_, _, first_triangle, first_edge) = edges[start];
-            let (_, _, second_triangle, second_edge) = edges[start + 1];
-            neighbors[first_triangle][first_edge] = Some(second_triangle);
-            neighbors[second_triangle][second_edge] = Some(first_triangle);
-        }
-        start = end;
-    }
-    neighbors
+#[derive(Clone, Copy)]
+struct NeighborEdgeSlot {
+    from: usize,
+    to: usize,
+    owner: usize,
+}
+
+impl NeighborEdgeSlot {
+    const PAIRED: usize = usize::MAX - 1;
+    const EMPTY: Self = Self {
+        from: 0,
+        to: 0,
+        owner: usize::MAX,
+    };
+}
+
+fn neighbor_edge_hash(from: usize, to: usize) -> usize {
+    splitmix64((from as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15) ^ (to as u64).rotate_left(32))
+        as usize
 }
 
 fn locate_triangle(
@@ -1230,6 +1289,24 @@ mod tests {
 
     fn p(x: i32, y: i32) -> ExactPoint {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn sparse_triangle_adjacency_matches_shared_half_edges() {
+        assert_eq!(
+            triangle_neighbors(&[[0, 1, 2], [1, 0, 3]]).unwrap(),
+            vec![[Some(1), None, None], [Some(0), None, None]]
+        );
+    }
+
+    #[test]
+    fn sparse_triangle_adjacency_rejects_non_manifold_edges() {
+        assert_eq!(
+            triangle_neighbors(&[[0, 1, 2], [1, 0, 3], [0, 1, 4]]),
+            Err(Error::InvalidInput {
+                reason: "Delaunay edge has more than two incident faces",
+            })
+        );
     }
 
     #[test]
