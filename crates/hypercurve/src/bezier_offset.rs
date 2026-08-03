@@ -7132,14 +7132,14 @@ fn trivariate_restrict_to_parameter_box(
 
 #[cfg(feature = "predicates")]
 fn trivariate_unit_cube_strict_bernstein_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: TrivariatePolynomial2,
     policy: &CurveContext,
 ) -> CurveResult<Option<RealSign>> {
     let (a_count, b_count, c_count) = polynomial.dimensions();
     if a_count == 0 || b_count == 0 || c_count == 0 {
         return Ok(None);
     }
-    let mut controls = polynomial.coefficients.clone();
+    let mut controls = polynomial.coefficients;
     for rows in &mut controls {
         for row in rows {
             *row = power_to_bernstein_coefficients(row, c_count - 1)?;
@@ -7216,7 +7216,7 @@ fn trivariate_parameter_triple_sign_by_refinement(
             second_refinement.refine_to(target_steps),
             third_refinement.refine_to(target_steps),
         );
-        if let Some(sign) = trivariate_unit_cube_strict_bernstein_sign(&restricted, policy)? {
+        if let Some(sign) = trivariate_unit_cube_strict_bernstein_sign(restricted, policy)? {
             return Ok(Classification::Decided(sign));
         }
     }
