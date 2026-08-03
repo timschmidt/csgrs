@@ -342,6 +342,11 @@ impl PairwiseIntersectionGraph {
         self.events.len()
     }
 
+    #[cfg(test)]
+    pub(crate) fn construction_point_count(&self) -> usize {
+        self.points.len()
+    }
+
     pub(crate) fn row(&self, face: usize) -> PairwiseIntersectionRow<'_> {
         debug_assert!(face < self.len());
         let next_face = face.checked_add(1);
@@ -1439,12 +1444,26 @@ pub(crate) fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
     polygons: &[ConvexPolygon],
     certified_embedded_inputs: &[bool],
 ) -> HypermeshResult<PairwiseIntersectionGraph> {
-    let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len())?;
     let bvh = ExactBvh::build_decision(decisions, polygons)?;
+    pairwise_intersections_by_polygon_from_bvh(decisions, polygons, certified_embedded_inputs, &bvh)
+}
+
+pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
+    bvh: &ExactBvh,
+) -> HypermeshResult<PairwiseIntersectionGraph> {
+    if bvh.len() != polygons.len() {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "intersection hierarchy and source-face counts differ",
+        });
+    }
+    let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len())?;
     let vertices = PolygonVertexArena::build(decisions, polygons)?;
     let mut failure = None;
 
-    bvh.intersect_pairs_decision(decisions, &bvh, |global_i, global_j| {
+    bvh.intersect_pairs_decision(decisions, bvh, |global_i, global_j| {
         if global_i >= global_j || failure.is_some() {
             return;
         }
@@ -2544,8 +2563,10 @@ mod tests {
     use super::{
         ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventRef, PairwiseIntersectionGraphBuilder,
-        PolygonVertexArena, StoredIntersectionKind,
+        PolygonVertexArena, StoredIntersectionKind, pairwise_intersections_by_polygon_from_bvh,
     };
+    use crate::bvh::ExactBvh;
+    use crate::error::HypermeshError;
     use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
 
     #[test]
@@ -2599,6 +2620,14 @@ mod tests {
             points: vec![Point3::origin()],
         };
         assert!(invalid.row(0).is_err());
+
+        let bvh = ExactBvh::build_decision(&decisions, &[first]).unwrap();
+        assert_eq!(
+            pairwise_intersections_by_polygon_from_bvh(&decisions, &[], &[], &bvh).unwrap_err(),
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "intersection hierarchy and source-face counts differ",
+            }
+        );
     }
 
     #[test]

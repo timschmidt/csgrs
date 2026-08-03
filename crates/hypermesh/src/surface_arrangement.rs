@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use hyperlattice::{Point3, Real, Vector3};
 
-use crate::bvh::ExactBvh;
+use crate::bvh::{ExactBvh, ExactBvhQueryHierarchy};
 use crate::context::{DecisionContext, MeshCertainty};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, axis_mut, axis_ref, compare_real_decision};
@@ -440,6 +440,7 @@ fn assemble_surface_cells(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
+    source_bvh: &ExactBvhQueryHierarchy,
 ) -> HypermeshResult<SurfaceCellComplex> {
     if surface.face_offsets.len() != polygons.len().saturating_add(1)
         || surface.identities.len() != surface.points.len()
@@ -546,13 +547,12 @@ fn assemble_surface_cells(
             cells: [side_cells[facet * 2], side_cells[facet * 2 + 1]],
         })
         .collect::<Vec<_>>();
-    let source_bvh = ExactBvh::build_decision(decisions, polygons)?;
     let bounds = surface_bounds(decisions, &surface.points)?;
     let (cell_windings, component_count) = classify_surface_cells(
         decisions,
         polygons,
         surface,
-        &source_bvh,
+        source_bvh,
         &bounds,
         &surface.points,
         &facets,
@@ -982,7 +982,7 @@ fn classify_surface_cells(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
-    source_bvh: &ExactBvh,
+    source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
     facets: &[SurfaceFacet],
@@ -1122,7 +1122,7 @@ fn seed_surface_cell_winding(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
-    source_bvh: &ExactBvh,
+    source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
     facets: &[SurfaceFacet],
@@ -1261,7 +1261,7 @@ fn try_seed_surface_cell_winding(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
-    source_bvh: &ExactBvh,
+    source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     primary_axis: usize,
     points: &[Point3],
@@ -1291,8 +1291,8 @@ fn try_seed_surface_cell_winding(
     );
     let bounds = ApproxBounds::new(point.clone(), endpoint);
     let mut candidate_faces = Vec::new();
-    source_bvh.query_bounds_decision(decisions, &bounds, |face| {
-        candidate_faces.push(face);
+    source_bvh.query_bounds_decision(decisions, polygons, &bounds, |face| {
+        candidate_faces.push(face)
     })?;
 
     let mut winding = vec![0_i32; operand_count];
@@ -1406,14 +1406,30 @@ fn corefine_surface(
             reason: "intersection graph and source-face counts differ",
         });
     }
-    let initial_points = polygons.iter().try_fold(0usize, |total, polygon| {
-        total.checked_add(polygon.vertex_count())
-    });
-    let mut arena = ArrangementPointArena::with_capacity(initial_points.ok_or(
-        HypermeshError::CapacityOverflow {
-            operation: "surface arrangement source vertices",
-        },
-    )?)?;
+    let initial_points = {
+        let mut identities = StorageHashMap::<ConstructionVertexIdentity, ()>::default();
+        for polygon in polygons {
+            if let Some(vertices) = polygon.known_vertex_identities() {
+                for identity in vertices {
+                    if !identities.contains_key(&identity) {
+                        identities.try_reserve(1).map_err(|_| {
+                            HypermeshError::CapacityOverflow {
+                                operation: "surface arrangement source identity count",
+                            }
+                        })?;
+                        identities.insert(identity, ());
+                    }
+                }
+            }
+        }
+        identities
+            .len()
+            .checked_add(intersections.construction_point_count())
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface arrangement initial points",
+            })?
+    };
+    let mut arena = ArrangementPointArena::with_capacity(initial_points)?;
     let mut work = Vec::new();
     work.try_reserve_exact(polygons.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
@@ -2515,6 +2531,31 @@ fn sorted_edge(mut edge: [u32; 2]) -> [u32; 2] {
     edge
 }
 
+struct ExactSurfaceArrangement {
+    corefinement: SurfaceCorefinement,
+    cells: SurfaceCellComplex,
+}
+
+fn build_surface_arrangement(
+    decisions: &DecisionContext,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<ExactSurfaceArrangement> {
+    let source_bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons)?;
+    let graph = crate::intersection::pairwise_intersections_by_polygon_from_bvh(
+        decisions,
+        polygons,
+        &[],
+        &source_bvh,
+    )?;
+    let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
+    let corefinement = corefine_surface(decisions, polygons, &graph)?;
+    let cells = assemble_surface_cells(decisions, polygons, &corefinement, &source_bvh)?;
+    Ok(ExactSurfaceArrangement {
+        corefinement,
+        cells,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2681,10 +2722,12 @@ mod tests {
     ) -> (MeshCertainty, SurfaceCorefinement, SurfaceCellComplex) {
         let context = MeshContext::new(policy);
         let decisions = DecisionContext::new(&context);
-        let graph = pairwise_intersections_by_polygon(&decisions, polygons).unwrap();
-        let surface = corefine_surface(&decisions, polygons, &graph).unwrap();
-        let cells = assemble_surface_cells(&decisions, polygons, &surface).unwrap();
-        (decisions.certainty(), surface, cells)
+        let arrangement = build_surface_arrangement(&decisions, polygons).unwrap();
+        (
+            decisions.certainty(),
+            arrangement.corefinement,
+            arrangement.cells,
+        )
     }
 
     fn triangle_edges(triangle: [u32; 3]) -> [[u32; 2]; 3] {
@@ -3414,8 +3457,12 @@ mod tests {
             let decisions = DecisionContext::new(&context);
             let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
             let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+            let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+                .unwrap()
+                .into_query_hierarchy(&polygons)
+                .unwrap();
             assert_eq!(
-                assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+                assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "surface radial edge has fewer than two geometric rays",
                 }
@@ -3431,10 +3478,14 @@ mod tests {
         let decisions = DecisionContext::new(&context);
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
         let mut surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
 
         polygons[1].delta_w.pop();
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
             HypermeshError::WindingDimensionMismatch {
                 expected: 2,
                 actual: 1,
@@ -3444,7 +3495,7 @@ mod tests {
 
         surface.triangles[0][0] = u32::MAX;
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
             HypermeshError::SurfaceArrangementFailed {
                 reason: "surface facet references an absent arrangement point",
             }
@@ -3459,6 +3510,10 @@ mod tests {
         let decisions = DecisionContext::new(&context);
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
         let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
         for polygon in &mut polygons[..4] {
             polygon.delta_w[0] = i32::MAX;
         }
@@ -3466,7 +3521,7 @@ mod tests {
             polygon.delta_w[0] = 1;
         }
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
             HypermeshError::WindingOverflow
         );
     }

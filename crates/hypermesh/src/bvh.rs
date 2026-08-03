@@ -14,6 +14,10 @@ use crate::predicate::{classify_point_decision, compare_real_decision};
 
 const LEAF_SIZE: usize = 8;
 
+fn compact_bvh_index(value: usize, operation: &'static str) -> HypermeshResult<u32> {
+    u32::try_from(value).map_err(|_| HypermeshError::CapacityOverflow { operation })
+}
+
 /// Bounds for one polygon in a polygon set.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonBounds {
@@ -34,12 +38,22 @@ struct BvhNode {
 struct BoundsBvh {
     order: Vec<usize>,
     nodes: Vec<BvhNode>,
+    #[cfg(test)]
+    primitive_extrema: Option<Vec<[u32; 6]>>,
 }
 
 impl BoundsBvh {
-    fn build(decisions: &DecisionContext, primitives: &[PolygonBounds]) -> HypermeshResult<Self> {
+    fn build(
+        decisions: &DecisionContext,
+        primitives: &[PolygonBounds],
+        _retain_primitive_extrema: bool,
+    ) -> HypermeshResult<Self> {
         if primitives.is_empty() {
-            return Ok(Self::default());
+            return Ok(Self {
+                #[cfg(test)]
+                primitive_extrema: _retain_primitive_extrema.then(Vec::new),
+                ..Self::default()
+            });
         }
         let approximate_centers = primitives
             .iter()
@@ -50,6 +64,9 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..primitives.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(primitives.len())),
+            #[cfg(test)]
+            primitive_extrema: _retain_primitive_extrema
+                .then(|| Vec::with_capacity(bvh_node_capacity(primitives.len()))),
         };
         tree.build_node(
             decisions,
@@ -86,6 +103,8 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..points.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
+            #[cfg(test)]
+            primitive_extrema: None,
         };
         tree.build_point_node(decisions, points, approximate_points, 0, points.len())?;
         Ok(tree)
@@ -99,11 +118,21 @@ impl BoundsBvh {
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
-        let bounds = union_bounds(
+        let (bounds, _extrema) = union_bounds(
             decisions,
             self.order[start..end]
                 .iter()
-                .map(|&index| &primitives[index].bounds),
+                .map(|&index| (index, &primitives[index].bounds)),
+            {
+                #[cfg(test)]
+                {
+                    self.primitive_extrema.is_some()
+                }
+                #[cfg(not(test))]
+                {
+                    false
+                }
+            },
         )?;
         let children_axis = (end - start > LEAF_SIZE)
             .then(|| longest_axis(decisions, &bounds))
@@ -114,6 +143,10 @@ impl BoundsBvh {
             range: start..end,
             children: None,
         });
+        #[cfg(test)]
+        if let Some(retained) = &mut self.primitive_extrema {
+            retained.push(_extrema.expect("requested primitive extrema are returned"));
+        }
         let Some(axis) = children_axis else {
             return Ok(node_index);
         };
@@ -174,6 +207,23 @@ impl BoundsBvh {
     where
         F: FnMut(usize),
     {
+        self.query_leaf_candidates(decisions, query_bounds, |item_index| {
+            if bounds_overlap_decision(decisions, &primitives[item_index].bounds, query_bounds)? {
+                callback(item_index);
+            }
+            Ok(())
+        })
+    }
+
+    fn query_leaf_candidates<F>(
+        &self,
+        decisions: &DecisionContext,
+        query_bounds: &ApproxBounds,
+        mut callback: F,
+    ) -> HypermeshResult<()>
+    where
+        F: FnMut(usize) -> HypermeshResult<()>,
+    {
         if self.nodes.is_empty() {
             return Ok(());
         }
@@ -188,13 +238,7 @@ impl BoundsBvh {
                 stack.push(left);
             } else {
                 for &item_index in &self.order[node.range.clone()] {
-                    if bounds_overlap_decision(
-                        decisions,
-                        &primitives[item_index].bounds,
-                        query_bounds,
-                    )? {
-                        callback(item_index);
-                    }
+                    callback(item_index)?;
                 }
             }
         }
@@ -217,6 +261,21 @@ pub struct ExactBvh {
     tree: BoundsBvh,
 }
 
+#[cfg(test)]
+#[derive(Clone, Copy)]
+struct CompactBvhNode {
+    range: [u32; 2],
+    right_child: u32,
+}
+
+#[cfg(test)]
+pub(crate) struct ExactBvhQueryHierarchy {
+    order: Box<[u32]>,
+    nodes: Box<[CompactBvhNode]>,
+    extrema: Box<[[u32; 6]]>,
+    missing_bounds: Box<[(u32, ApproxBounds)]>,
+}
+
 impl ExactBvh {
     /// Builds an exact broad-phase from borrowed polygons.
     pub fn build(
@@ -232,6 +291,22 @@ impl ExactBvh {
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
     ) -> HypermeshResult<Self> {
+        Self::build_decision_with_extrema(decisions, polygons, false)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn build_for_query_hierarchy_decision(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<Self> {
+        Self::build_decision_with_extrema(decisions, polygons, true)
+    }
+
+    fn build_decision_with_extrema(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        retain_primitive_extrema: bool,
+    ) -> HypermeshResult<Self> {
         let mut primitives = Vec::with_capacity(polygons.len());
         for (polygon_index, polygon) in polygons.iter().enumerate() {
             let polygon_bounds = polygon_bounds(decisions, polygon)?;
@@ -240,8 +315,113 @@ impl ExactBvh {
                 bounds: polygon_bounds,
             });
         }
-        let tree = BoundsBvh::build(decisions, &primitives)?;
+        let tree = BoundsBvh::build(decisions, &primitives, retain_primitive_extrema)?;
         Ok(Self { primitives, tree })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn into_query_hierarchy(
+        mut self,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<ExactBvhQueryHierarchy> {
+        let mut extrema =
+            self.tree
+                .primitive_extrema
+                .take()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "exact source hierarchy retained no primitive extrema",
+                })?;
+        if extrema.len() != self.tree.nodes.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact source hierarchy extrema and node counts differ",
+            });
+        }
+        for node in &mut extrema {
+            for source in node {
+                let primitive = self.primitives.get(*source as usize).ok_or(
+                    HypermeshError::SurfaceArrangementFailed {
+                        reason: "compact source hierarchy references an absent primitive",
+                    },
+                )?;
+                *source = compact_bvh_index(
+                    primitive.polygon_index,
+                    "compact source hierarchy polygon IDs",
+                )?;
+            }
+        }
+        let mut order = Vec::new();
+        order
+            .try_reserve_exact(self.tree.order.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "compact source hierarchy face order",
+            })?;
+        for item_index in self.tree.order {
+            let polygon = self
+                .primitives
+                .get(item_index)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "compact source hierarchy references an absent primitive",
+                })?
+                .polygon_index;
+            order.push(compact_bvh_index(
+                polygon,
+                "compact source hierarchy polygon IDs",
+            )?);
+        }
+        let mut nodes = Vec::new();
+        nodes
+            .try_reserve_exact(self.tree.nodes.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "compact source hierarchy nodes",
+            })?;
+        for (index, node) in self.tree.nodes.into_iter().enumerate() {
+            let right_child = match node.children {
+                Some([left, right]) => {
+                    if left != index.saturating_add(1) {
+                        return Err(HypermeshError::SurfaceArrangementFailed {
+                            reason: "exact source hierarchy is not in preorder",
+                        });
+                    }
+                    compact_bvh_index(right, "compact source hierarchy node IDs")?
+                }
+                None => 0,
+            };
+            nodes.push(CompactBvhNode {
+                range: [
+                    compact_bvh_index(node.range.start, "compact source hierarchy leaf offsets")?,
+                    compact_bvh_index(node.range.end, "compact source hierarchy leaf offsets")?,
+                ],
+                right_child,
+            });
+        }
+        let mut missing_bounds = Vec::new();
+        for primitive in self.primitives {
+            let polygon = polygons.get(primitive.polygon_index).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "compact source hierarchy references an absent polygon",
+                },
+            )?;
+            if polygon.approx_bounds.is_none() {
+                missing_bounds
+                    .try_reserve(1)
+                    .map_err(|_| HypermeshError::CapacityOverflow {
+                        operation: "compact source hierarchy sparse bounds",
+                    })?;
+                missing_bounds.push((
+                    compact_bvh_index(
+                        primitive.polygon_index,
+                        "compact source hierarchy polygon IDs",
+                    )?,
+                    primitive.bounds,
+                ));
+            }
+        }
+        Ok(ExactBvhQueryHierarchy {
+            order: order.into_boxed_slice(),
+            nodes: nodes.into_boxed_slice(),
+            extrema: extrema.into_boxed_slice(),
+            missing_bounds: missing_bounds.into_boxed_slice(),
+        })
     }
 
     /// Returns the number of indexed primitives.
@@ -331,6 +511,124 @@ impl ExactBvh {
             })?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+impl ExactBvhQueryHierarchy {
+    pub(crate) fn query_bounds_decision<F>(
+        &self,
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        bounds: &ApproxBounds,
+        mut callback: F,
+    ) -> HypermeshResult<()>
+    where
+        F: FnMut(usize),
+    {
+        if self.nodes.is_empty() {
+            return Ok(());
+        }
+        let mut matches = Vec::new();
+        let mut stack = vec![0_usize];
+        while let Some(node_index) = stack.pop() {
+            let node =
+                self.nodes
+                    .get(node_index)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "compact source hierarchy traversal reached an absent node",
+                    })?;
+            let node_extrema =
+                self.extrema
+                    .get(node_index)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "compact source hierarchy node has no exact extrema",
+                    })?;
+            if !self.compact_bounds_overlap(decisions, polygons, node_extrema, bounds)? {
+                continue;
+            }
+            if node.right_child != 0 {
+                stack.push(node.right_child as usize);
+                stack.push(
+                    node_index
+                        .checked_add(1)
+                        .ok_or(HypermeshError::CapacityOverflow {
+                            operation: "compact source hierarchy traversal",
+                        })?,
+                );
+            } else {
+                let faces = self
+                    .order
+                    .get(node.range[0] as usize..node.range[1] as usize)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "compact source hierarchy leaf range is invalid",
+                    })?;
+                for &face in faces {
+                    let face_bounds = self.primitive_bounds(polygons, face)?;
+                    if bounds_overlap_decision(decisions, face_bounds, bounds)? {
+                        matches.push(face);
+                    }
+                }
+            }
+        }
+        matches.sort_unstable();
+        for polygon in matches {
+            callback(polygon as usize);
+        }
+        Ok(())
+    }
+
+    fn compact_bounds_overlap(
+        &self,
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        extrema: &[u32; 6],
+        query: &ApproxBounds,
+    ) -> HypermeshResult<bool> {
+        for axis in 0..3 {
+            let minimum = self.primitive_bounds(polygons, extrema[axis])?;
+            let maximum = self.primitive_bounds(polygons, extrema[axis + 3])?;
+            if compare_real_decision(
+                decisions,
+                axis_ref(&minimum.min, axis),
+                axis_ref(&query.max, axis),
+            )?
+            .is_gt()
+                || compare_real_decision(
+                    decisions,
+                    axis_ref(&maximum.max, axis),
+                    axis_ref(&query.min, axis),
+                )?
+                .is_lt()
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    fn primitive_bounds<'a>(
+        &'a self,
+        polygons: &'a [ConvexPolygon],
+        polygon: u32,
+    ) -> HypermeshResult<&'a ApproxBounds> {
+        if let Some(bounds) = polygons
+            .get(polygon as usize)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent polygon",
+            })?
+            .approx_bounds
+            .as_deref()
+        {
+            return Ok(bounds);
+        }
+        self.missing_bounds
+            .binary_search_by_key(&polygon, |(face, _)| *face)
+            .ok()
+            .map(|index| &self.missing_bounds[index].1)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy has no exact primitive bounds",
+            })
     }
 }
 
@@ -682,11 +980,18 @@ pub(crate) fn bounds_overlap_decision(
 
 fn union_bounds<'a>(
     decisions: &DecisionContext,
-    mut bounds: impl Iterator<Item = &'a ApproxBounds>,
-) -> HypermeshResult<ApproxBounds> {
-    let first = bounds.next().ok_or(HypermeshError::EmptyInput)?;
+    mut bounds: impl Iterator<Item = (usize, &'a ApproxBounds)>,
+    retain_extrema: bool,
+) -> HypermeshResult<(ApproxBounds, Option<[u32; 6]>)> {
+    let (first_index, first) = bounds.next().ok_or(HypermeshError::EmptyInput)?;
     let mut result = first.clone();
-    for current in bounds {
+    let mut extrema = retain_extrema
+        .then(|| {
+            compact_bvh_index(first_index, "exact source hierarchy primitive IDs")
+                .map(|first| [first; 6])
+        })
+        .transpose()?;
+    for (current_index, current) in bounds {
         for axis in 0..3 {
             if compare_real_decision(
                 decisions,
@@ -696,6 +1001,10 @@ fn union_bounds<'a>(
             .is_lt()
             {
                 *axis_mut(&mut result.min, axis) = axis_ref(&current.min, axis).clone();
+                if let Some(extrema) = &mut extrema {
+                    extrema[axis] =
+                        compact_bvh_index(current_index, "exact source hierarchy primitive IDs")?;
+                }
             }
             if compare_real_decision(
                 decisions,
@@ -705,10 +1014,14 @@ fn union_bounds<'a>(
             .is_gt()
             {
                 *axis_mut(&mut result.max, axis) = axis_ref(&current.max, axis).clone();
+                if let Some(extrema) = &mut extrema {
+                    extrema[axis + 3] =
+                        compact_bvh_index(current_index, "exact source hierarchy primitive IDs")?;
+                }
             }
         }
     }
-    Ok(result)
+    Ok((result, extrema))
 }
 
 fn bounds_for_ordered_points(
@@ -789,4 +1102,239 @@ fn polygon_bounds(
     let vertices = polygon.vertices_decision(decisions)?;
     let refs = vertices.iter().collect::<Vec<_>>();
     ApproxBounds::for_points_decision(decisions, &refs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Real;
+    use crate::context::MeshCertainty;
+    use crate::test_support::approximate_convex_triangle;
+
+    fn point(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn separated_triangles() -> Vec<ConvexPolygon> {
+        (0_i64..20)
+            .map(|index| {
+                let x = index * 3;
+                approximate_convex_triangle(
+                    &point(x, 0, 0),
+                    &point(x + 2, 0, 0),
+                    &point(x, 2, 0),
+                    0,
+                    index as isize,
+                )
+            })
+            .collect()
+    }
+
+    fn query_matches(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        full: &ExactBvh,
+        compact: &ExactBvhQueryHierarchy,
+        bounds: &ApproxBounds,
+    ) {
+        let mut expected = Vec::new();
+        full.query_bounds_decision(decisions, bounds, |face| expected.push(face))
+            .unwrap();
+        let mut actual = Vec::new();
+        compact
+            .query_bounds_decision(decisions, polygons, bounds, |face| actual.push(face))
+            .unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn compact_query_hierarchy_matches_full_bvh_under_both_policies() {
+        assert_eq!(std::mem::size_of::<CompactBvhNode>(), 12);
+        let mut polygons = separated_triangles();
+        polygons[9].approx_bounds = None;
+        let queries = [
+            ApproxBounds::new(point(-8, -8, -8), point(-1, 8, 8)),
+            ApproxBounds::new(point(0, 0, 0), point(0, 0, 0)),
+            ApproxBounds::new(point(8, -1, -1), point(31, 3, 1)),
+            ApproxBounds::new(point(27, 0, 0), point(29, 2, 0)),
+            ApproxBounds::new(point(-1, -1, -1), point(80, 3, 1)),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let full = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+            let retained =
+                ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons).unwrap();
+            let before_compaction = decisions.certainty();
+            let compact = retained.into_query_hierarchy(&polygons).unwrap();
+            assert_eq!(decisions.certainty(), before_compaction);
+            assert_eq!(compact.nodes.len(), compact.extrema.len());
+            assert_eq!(compact.missing_bounds.len(), 1);
+            for query in &queries {
+                query_matches(&decisions, &polygons, &full, &compact, query);
+            }
+            for start in -4_i64..64 {
+                for width in 0_i64..=4 {
+                    let query = ApproxBounds::new(point(start, -1, -1), point(start + width, 3, 1));
+                    query_matches(&decisions, &polygons, &full, &compact, &query);
+                }
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn compact_query_hierarchy_handles_empty_input() {
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &[])
+                .unwrap()
+                .into_query_hierarchy(&[])
+                .unwrap();
+            let mut matches = Vec::new();
+            compact
+                .query_bounds_decision(
+                    &decisions,
+                    &[],
+                    &ApproxBounds::new(point(-1, -1, -1), point(1, 1, 1)),
+                    |face| matches.push(face),
+                )
+                .unwrap();
+            assert!(matches.is_empty());
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn compact_query_hierarchy_rejects_missing_or_malformed_provenance() {
+        let polygons = separated_triangles();
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+
+        let result = ExactBvh::build_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons);
+        assert!(matches!(
+            result,
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact source hierarchy retained no primitive extrema"
+            })
+        ));
+
+        let mut missing_node =
+            ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons).unwrap();
+        missing_node.tree.primitive_extrema.as_mut().unwrap().pop();
+        assert!(matches!(
+            missing_node.into_query_hierarchy(&polygons),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact source hierarchy extrema and node counts differ"
+            })
+        ));
+
+        let mut absent_primitive =
+            ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons).unwrap();
+        absent_primitive.tree.primitive_extrema.as_mut().unwrap()[0][0] = u32::MAX;
+        assert!(matches!(
+            absent_primitive.into_query_hierarchy(&polygons),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent primitive"
+            })
+        ));
+
+        let mut non_preorder =
+            ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons).unwrap();
+        non_preorder.tree.nodes[0].children.as_mut().unwrap()[0] += 1;
+        assert!(matches!(
+            non_preorder.into_query_hierarchy(&polygons),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact source hierarchy is not in preorder"
+            })
+        ));
+
+        assert!(matches!(
+            ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+                .unwrap()
+                .into_query_hierarchy(&polygons[..polygons.len() - 1]),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent polygon"
+            })
+        ));
+    }
+
+    #[test]
+    fn compact_query_hierarchy_rejects_stale_polygon_storage() {
+        let polygons = separated_triangles();
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let mut compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        let bounds = ApproxBounds::new(point(-1, -1, -1), point(80, 3, 1));
+
+        compact.extrema = Box::new([]);
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &polygons, &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy node has no exact extrema"
+            })
+        ));
+
+        let compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &polygons[..1], &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent polygon"
+            })
+        ));
+
+        let compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        let mut stale_polygons = polygons.clone();
+        stale_polygons[0].approx_bounds = None;
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &stale_polygons, &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy has no exact primitive bounds"
+            })
+        ));
+
+        let mut compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        compact.nodes[0].right_child = u32::MAX;
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &polygons, &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy traversal reached an absent node"
+            })
+        ));
+
+        let mut compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        compact.nodes[0].right_child = 0;
+        compact.nodes[0].range = [0, u32::MAX];
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &polygons, &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy leaf range is invalid"
+            })
+        ));
+    }
 }
