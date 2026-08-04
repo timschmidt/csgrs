@@ -2,9 +2,7 @@
 
 use std::hash::{Hash, Hasher};
 
-use hyperlattice::{
-    HomogeneousPoint3, Point3, Real, intersect_homogeneous_line_plane, intersect_two_planes,
-};
+use hyperlattice::{Point3, Real};
 
 use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
@@ -13,8 +11,7 @@ use crate::geometry::{Classification, Plane, compare_real_decision};
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
-    Point3PredicateQuery, classify_point_decision, classify_projective_point_decision,
-    classify_real, exact_rational_points_contradict,
+    Point3PredicateQuery, classify_point_decision, classify_real, exact_rational_points_contradict,
 };
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
@@ -75,6 +72,59 @@ struct ConstructedIntersectionPoint {
 struct ConstructedIntersectionSegment {
     v0: ConstructedIntersectionPoint,
     v1: ConstructedIntersectionPoint,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum SupportLineAxis {
+    X,
+    Y,
+    Z,
+}
+
+impl SupportLineAxis {
+    fn coordinate(self, point: &Point3) -> &Real {
+        match self {
+            Self::X => &point.x,
+            Self::Y => &point.y,
+            Self::Z => &point.z,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum DeferredIntersectionGeometry<'a> {
+    Affine {
+        point: Point3,
+        axis: SupportLineAxis,
+        enclosure: Option<[f64; 2]>,
+    },
+    SegmentPlane {
+        coordinate_numerator: Real,
+        denominator: Real,
+        denominator_is_positive: bool,
+        enclosure: Option<[f64; 2]>,
+        start: &'a Point3,
+        end: &'a Point3,
+        parameter_numerator: Real,
+    },
+}
+
+#[derive(Clone, Debug)]
+struct DeferredIntersectionPoint<'a> {
+    geometry: DeferredIntersectionGeometry<'a>,
+    identity: Option<ConstructionVertexIdentity>,
+    discovery_order: (bool, usize),
+}
+
+#[derive(Default)]
+struct DeferredIntersectionSpan<'a> {
+    minimum: Option<DeferredIntersectionPoint<'a>>,
+    maximum: Option<DeferredIntersectionPoint<'a>>,
+}
+
+struct DeferredIntersectionEndpoint<'span, 'point> {
+    source: &'span DeferredIntersectionPoint<'point>,
+    identity: Option<ConstructionVertexIdentity>,
 }
 
 #[derive(Clone, Debug)]
@@ -1082,11 +1132,11 @@ fn intersect_polygons_with_vertices_constructed(
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
         return Ok(ConstructedPairwiseIntersection::Disjoint);
     }
-    let retain_construction =
-        polygon_support_identity.is_some() && other_support_identity.is_some();
-
-    let supports_parallel = supports_are_parallel(decisions, &polygon.support, &other.support)?;
-    if supports_parallel {
+    let Some(support_line_axis) =
+        support_line_order_axis(decisions, &polygon.support, &other.support)?
+    else {
+        let retain_construction =
+            polygon_support_identity.is_some() && other_support_identity.is_some();
         crate::trace_dispatch!("intersect-polygons", "parallel-supports");
         let other_vertex = other_vertices
             .first()
@@ -1106,8 +1156,30 @@ fn intersect_polygons_with_vertices_constructed(
         } else {
             Ok(ConstructedPairwiseIntersection::Disjoint)
         };
-    }
+    };
 
+    intersect_nonparallel_polygons_constructed(
+        decisions,
+        polygon,
+        polygon_vertices,
+        polygon_support_identity,
+        other,
+        other_vertices,
+        other_support_identity,
+        support_line_axis,
+    )
+}
+
+fn intersect_nonparallel_polygons_constructed<'point>(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    polygon_vertices: &'point [Point3],
+    polygon_support_identity: Option<ConstructionPlaneIdentity>,
+    other: &ConvexPolygon,
+    other_vertices: &'point [Point3],
+    other_support_identity: Option<ConstructionPlaneIdentity>,
+    support_line_axis: SupportLineAxis,
+) -> HypermeshResult<ConstructedPairwiseIntersection> {
     // A closed triangle reaches a plane only through an on-plane vertex or a
     // pair of vertices on opposite sides. Certifying this symmetric support
     // separator before constructing crossings avoids exact points that the
@@ -1139,51 +1211,30 @@ fn intersect_polygons_with_vertices_constructed(
         None
     };
 
-    let point_capacity = polygon_vertices
-        .len()
-        .checked_add(other_vertices.len())
-        .ok_or(HypermeshError::CapacityOverflow {
-            operation: "polygon intersection point scratch",
-        })?;
-    scratch
-        .points
-        .try_reserve_exact(point_capacity)
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "polygon intersection point scratch",
-        })?;
-    crate::trace_dispatch!("intersect-polygons", "edge-crossings-forward");
-    collect_edge_plane_crossings(
+    crate::trace_dispatch!("intersect-polygons", "support-line-slice-forward");
+    let polygon_span = collect_polygon_plane_slice(
         decisions,
         polygon,
         polygon_vertices,
         triangle_classes.as_ref().map(|classes| &classes[0]),
-        other,
+        &other.support,
         other_support_identity,
-        &mut scratch.points,
+        support_line_axis,
+        false,
     )?;
-    crate::trace_dispatch!("intersect-polygons", "edge-crossings-reverse");
-    collect_edge_plane_crossings(
+
+    crate::trace_dispatch!("intersect-polygons", "support-line-slice-reverse");
+    let other_span = collect_polygon_plane_slice(
         decisions,
         other,
         other_vertices,
         triangle_classes.as_ref().map(|classes| &classes[1]),
-        polygon,
+        &polygon.support,
         polygon_support_identity,
-        &mut scratch.points,
+        support_line_axis,
+        true,
     )?;
-    dedup_constructed_points(decisions, &mut scratch.points)?;
-
-    match exact_constructed_intersection_span(decisions, &polygon.support, &scratch.points)? {
-        ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
-        ConstructedIntersectionSpan::Point(point) => {
-            Ok(ConstructedPairwiseIntersection::NonCoplanarPoint(point))
-        }
-        ConstructedIntersectionSpan::Segment { v0, v1 } => {
-            Ok(ConstructedPairwiseIntersection::NonCoplanarSegment(
-                ConstructedIntersectionSegment { v0, v1 },
-            ))
-        }
-    }
+    intersect_deferred_spans(decisions, polygon_span, other_span)
 }
 
 /// Operation-local affine vertices in one checked face-indexed range arena.
@@ -2038,6 +2089,432 @@ fn exact_constructed_intersection_span(
     })
 }
 
+/// Intersects two closed convex slices on the line shared by nonparallel
+/// polygon supports, then materializes only the surviving endpoints.
+///
+/// Any coordinate with a certified nonzero support-line direction is a
+/// one-to-one affine parameter on that line. Comparing the retained rational
+/// numerators and denominators therefore orders each complete closed slice
+/// without performing three coordinate divisions for candidates that the
+/// interval intersection will reject.
+fn intersect_deferred_spans<'point>(
+    decisions: &DecisionContext,
+    left: DeferredIntersectionSpan<'point>,
+    right: DeferredIntersectionSpan<'point>,
+) -> HypermeshResult<ConstructedPairwiseIntersection> {
+    let Some([left_minimum, left_maximum]) = deferred_span_interval(&left) else {
+        return Ok(ConstructedPairwiseIntersection::Disjoint);
+    };
+    let Some([right_minimum, right_maximum]) = deferred_span_interval(&right) else {
+        return Ok(ConstructedPairwiseIntersection::Disjoint);
+    };
+
+    let minimum = deferred_point_maximum(decisions, left_minimum, right_minimum)?;
+    let maximum = deferred_point_minimum(decisions, left_maximum, right_maximum)?;
+    match compare_deferred_points(decisions, minimum.source, maximum.source)? {
+        std::cmp::Ordering::Greater => Ok(ConstructedPairwiseIntersection::Disjoint),
+        std::cmp::Ordering::Equal => {
+            let point =
+                materialize_deferred_point(merge_equal_deferred_endpoints(minimum, maximum))?;
+            Ok(ConstructedPairwiseIntersection::NonCoplanarPoint(point))
+        }
+        std::cmp::Ordering::Less => {
+            let (v0, v1) = if minimum.source.discovery_order <= maximum.source.discovery_order {
+                (minimum, maximum)
+            } else {
+                (maximum, minimum)
+            };
+            Ok(ConstructedPairwiseIntersection::NonCoplanarSegment(
+                ConstructedIntersectionSegment {
+                    v0: materialize_deferred_point(v0)?,
+                    v1: materialize_deferred_point(v1)?,
+                },
+            ))
+        }
+    }
+}
+
+fn deferred_span_interval<'span, 'point>(
+    span: &'span DeferredIntersectionSpan<'point>,
+) -> Option<[&'span DeferredIntersectionPoint<'point>; 2]> {
+    let minimum = span.minimum.as_ref()?;
+    let maximum = span.maximum.as_ref().unwrap_or(minimum);
+    Some([minimum, maximum])
+}
+
+fn deferred_point_maximum<'span, 'point>(
+    decisions: &DecisionContext,
+    left: &'span DeferredIntersectionPoint<'point>,
+    right: &'span DeferredIntersectionPoint<'point>,
+) -> HypermeshResult<DeferredIntersectionEndpoint<'span, 'point>> {
+    Ok(match compare_deferred_points(decisions, left, right)? {
+        std::cmp::Ordering::Less => deferred_endpoint(right),
+        std::cmp::Ordering::Greater => deferred_endpoint(left),
+        std::cmp::Ordering::Equal => merge_equal_deferred_sources(left, right),
+    })
+}
+
+fn deferred_point_minimum<'span, 'point>(
+    decisions: &DecisionContext,
+    left: &'span DeferredIntersectionPoint<'point>,
+    right: &'span DeferredIntersectionPoint<'point>,
+) -> HypermeshResult<DeferredIntersectionEndpoint<'span, 'point>> {
+    Ok(match compare_deferred_points(decisions, left, right)? {
+        std::cmp::Ordering::Less => deferred_endpoint(left),
+        std::cmp::Ordering::Greater => deferred_endpoint(right),
+        std::cmp::Ordering::Equal => merge_equal_deferred_sources(left, right),
+    })
+}
+
+fn extend_deferred_span<'point>(
+    decisions: &DecisionContext,
+    span: &mut DeferredIntersectionSpan<'point>,
+    candidate: DeferredIntersectionPoint<'point>,
+) -> HypermeshResult<()> {
+    let Some(minimum) = span.minimum.as_ref() else {
+        span.minimum = Some(candidate);
+        return Ok(());
+    };
+    if span.maximum.is_none() {
+        match compare_deferred_points(decisions, &candidate, minimum)? {
+            std::cmp::Ordering::Less => {
+                span.maximum = span.minimum.take();
+                span.minimum = Some(candidate);
+            }
+            std::cmp::Ordering::Equal => merge_equal_deferred_point(
+                span.minimum
+                    .as_mut()
+                    .expect("the deferred point span has a minimum"),
+                candidate,
+            ),
+            std::cmp::Ordering::Greater => span.maximum = Some(candidate),
+        }
+        return Ok(());
+    }
+
+    match compare_deferred_points(decisions, &candidate, minimum)? {
+        std::cmp::Ordering::Less => span.minimum = Some(candidate),
+        std::cmp::Ordering::Equal => merge_equal_deferred_point(
+            span.minimum
+                .as_mut()
+                .expect("the deferred segment has a minimum"),
+            candidate,
+        ),
+        std::cmp::Ordering::Greater => {
+            let maximum = span
+                .maximum
+                .as_mut()
+                .expect("the deferred segment has a maximum");
+            match compare_deferred_points(decisions, &candidate, maximum)? {
+                std::cmp::Ordering::Less => {}
+                std::cmp::Ordering::Equal => merge_equal_deferred_point(maximum, candidate),
+                std::cmp::Ordering::Greater => {
+                    *maximum = candidate;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn compare_deferred_points(
+    decisions: &DecisionContext,
+    left: &DeferredIntersectionPoint<'_>,
+    right: &DeferredIntersectionPoint<'_>,
+) -> HypermeshResult<std::cmp::Ordering> {
+    match (&left.geometry, &right.geometry) {
+        (
+            DeferredIntersectionGeometry::Affine {
+                point: left,
+                axis: left_axis,
+                enclosure: left_enclosure,
+            },
+            DeferredIntersectionGeometry::Affine {
+                point: right,
+                axis: right_axis,
+                enclosure: right_enclosure,
+            },
+        ) => {
+            if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
+                && let Some(ordering) = certified_enclosure_ordering(*left, *right)
+            {
+                return Ok(ordering);
+            }
+            compare_real_decision(
+                decisions,
+                left_axis.coordinate(left),
+                right_axis.coordinate(right),
+            )
+        }
+        (
+            DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator: left_numerator,
+                denominator: left_denominator,
+                denominator_is_positive: left_positive,
+                enclosure: left_enclosure,
+                ..
+            },
+            DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator: right_numerator,
+                denominator: right_denominator,
+                denominator_is_positive: right_positive,
+                enclosure: right_enclosure,
+                ..
+            },
+        ) => {
+            if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
+                && let Some(ordering) = certified_enclosure_ordering(*left, *right)
+            {
+                return Ok(ordering);
+            }
+            let ordering = classification_ordering(classify_two_product_difference(
+                decisions,
+                left_numerator,
+                right_denominator,
+                right_numerator,
+                left_denominator,
+            )?);
+            Ok(if left_positive == right_positive {
+                ordering
+            } else {
+                ordering.reverse()
+            })
+        }
+        (
+            DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator,
+                denominator,
+                denominator_is_positive,
+                enclosure,
+                ..
+            },
+            DeferredIntersectionGeometry::Affine {
+                point: affine,
+                axis,
+                enclosure: affine_enclosure,
+            },
+        ) => {
+            if let (Some(left), Some(right)) = (*enclosure, *affine_enclosure)
+                && let Some(ordering) = certified_enclosure_ordering(left, right)
+            {
+                return Ok(ordering);
+            }
+            compare_ratio_to_affine(
+                decisions,
+                coordinate_numerator,
+                denominator,
+                *denominator_is_positive,
+                axis.coordinate(affine),
+            )
+        }
+        (
+            DeferredIntersectionGeometry::Affine {
+                point: affine,
+                axis,
+                enclosure: affine_enclosure,
+            },
+            DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator,
+                denominator,
+                denominator_is_positive,
+                enclosure,
+                ..
+            },
+        ) => {
+            if let (Some(left), Some(right)) = (*affine_enclosure, *enclosure)
+                && let Some(ordering) = certified_enclosure_ordering(left, right)
+            {
+                return Ok(ordering);
+            }
+            compare_ratio_to_affine(
+                decisions,
+                coordinate_numerator,
+                denominator,
+                *denominator_is_positive,
+                axis.coordinate(affine),
+            )
+            .map(std::cmp::Ordering::reverse)
+        }
+    }
+}
+
+fn certified_enclosure_ordering(left: [f64; 2], right: [f64; 2]) -> Option<std::cmp::Ordering> {
+    if left[1] < right[0] {
+        Some(std::cmp::Ordering::Less)
+    } else if left[0] > right[1] {
+        Some(std::cmp::Ordering::Greater)
+    } else if left[0] == left[1] && right[0] == right[1] && left[0] == right[0] {
+        Some(std::cmp::Ordering::Equal)
+    } else {
+        None
+    }
+}
+
+fn certified_real_enclosure(value: &Real) -> Option<[f64; 2]> {
+    if let Some(exact) = value.to_f64_exact_dyadic() {
+        return Some([exact, exact]);
+    }
+    value.exact_rational_ref()?.to_f64_enclosure()
+}
+
+fn affine_deferred_geometry(
+    point: Point3,
+    axis: SupportLineAxis,
+) -> DeferredIntersectionGeometry<'static> {
+    let enclosure = certified_real_enclosure(axis.coordinate(&point));
+    DeferredIntersectionGeometry::Affine {
+        point,
+        axis,
+        enclosure,
+    }
+}
+
+fn certified_ratio_enclosure(
+    numerator: &Real,
+    denominator: &Real,
+    denominator_is_positive: bool,
+) -> Option<[f64; 2]> {
+    let numerator = certified_real_enclosure(numerator)?;
+    let denominator = certified_real_enclosure(denominator)?;
+    if (denominator_is_positive && denominator[0] <= 0.0)
+        || (!denominator_is_positive && denominator[1] >= 0.0)
+    {
+        return None;
+    }
+    let quotients = [
+        numerator[0] / denominator[0],
+        numerator[0] / denominator[1],
+        numerator[1] / denominator[0],
+        numerator[1] / denominator[1],
+    ];
+    if quotients.iter().any(|value| value.is_nan()) {
+        return None;
+    }
+    let lower = quotients.into_iter().fold(f64::INFINITY, f64::min);
+    let upper = quotients.into_iter().fold(f64::NEG_INFINITY, f64::max);
+    Some([lower.next_down(), upper.next_up()])
+}
+
+fn compare_ratio_to_affine(
+    decisions: &DecisionContext,
+    numerator: &Real,
+    denominator: &Real,
+    denominator_is_positive: bool,
+    affine: &Real,
+) -> HypermeshResult<std::cmp::Ordering> {
+    let classification = if let [Some(numerator), Some(denominator), Some(affine)] =
+        [numerator, denominator, affine].map(Real::exact_rational_ref)
+    {
+        let one = hyperlattice::Rational::one_ref();
+        match hyperlattice::Rational::signed_product_sum_ordering(
+            [true, false],
+            [[numerator, one], [denominator, affine]],
+        ) {
+            std::cmp::Ordering::Less => Classification::Negative,
+            std::cmp::Ordering::Equal => Classification::On,
+            std::cmp::Ordering::Greater => Classification::Positive,
+        }
+    } else {
+        classify_real(decisions, &(numerator - &(denominator * affine)))?
+    };
+    let ordering = classification_ordering(classification);
+    Ok(if denominator_is_positive {
+        ordering
+    } else {
+        ordering.reverse()
+    })
+}
+
+fn classification_ordering(classification: Classification) -> std::cmp::Ordering {
+    match classification {
+        Classification::Negative => std::cmp::Ordering::Less,
+        Classification::On => std::cmp::Ordering::Equal,
+        Classification::Positive => std::cmp::Ordering::Greater,
+    }
+}
+
+fn deferred_endpoint<'span, 'point>(
+    point: &'span DeferredIntersectionPoint<'point>,
+) -> DeferredIntersectionEndpoint<'span, 'point> {
+    DeferredIntersectionEndpoint {
+        source: point,
+        identity: point.identity.clone(),
+    }
+}
+
+fn merge_equal_deferred_sources<'span, 'point>(
+    left: &'span DeferredIntersectionPoint<'point>,
+    right: &'span DeferredIntersectionPoint<'point>,
+) -> DeferredIntersectionEndpoint<'span, 'point> {
+    DeferredIntersectionEndpoint {
+        source: if right.discovery_order < left.discovery_order {
+            right
+        } else {
+            left
+        },
+        identity: canonical_deferred_identity(left.identity.as_ref(), right.identity.as_ref()),
+    }
+}
+
+fn merge_equal_deferred_endpoints<'span, 'point>(
+    mut left: DeferredIntersectionEndpoint<'span, 'point>,
+    mut right: DeferredIntersectionEndpoint<'span, 'point>,
+) -> DeferredIntersectionEndpoint<'span, 'point> {
+    let identity = canonical_deferred_identity(left.identity.as_ref(), right.identity.as_ref());
+    if right.source.discovery_order < left.source.discovery_order {
+        right.identity = identity;
+        right
+    } else {
+        left.identity = identity;
+        left
+    }
+}
+
+fn merge_equal_deferred_point<'point>(
+    existing: &mut DeferredIntersectionPoint<'point>,
+    mut candidate: DeferredIntersectionPoint<'point>,
+) {
+    let identity =
+        canonical_deferred_identity(existing.identity.as_ref(), candidate.identity.as_ref());
+    if candidate.discovery_order < existing.discovery_order {
+        candidate.identity = identity;
+        *existing = candidate;
+    } else {
+        existing.identity = identity;
+    }
+}
+
+fn canonical_deferred_identity(
+    left: Option<&ConstructionVertexIdentity>,
+    right: Option<&ConstructionVertexIdentity>,
+) -> Option<ConstructionVertexIdentity> {
+    match (left, right) {
+        (Some(left), Some(right)) => Some(left.min(right).clone()),
+        (Some(left), None) => Some(left.clone()),
+        (None, Some(right)) => Some(right.clone()),
+        (None, None) => None,
+    }
+}
+
+fn materialize_deferred_point(
+    point: DeferredIntersectionEndpoint<'_, '_>,
+) -> HypermeshResult<ConstructedIntersectionPoint> {
+    let affine = match &point.source.geometry {
+        DeferredIntersectionGeometry::Affine { point, .. } => point.clone(),
+        DeferredIntersectionGeometry::SegmentPlane {
+            start,
+            end,
+            parameter_numerator,
+            denominator,
+            ..
+        } => intersect_segment_plane_from_ratio(start, end, parameter_numerator, denominator)?,
+    };
+    Ok(ConstructedIntersectionPoint {
+        point: affine,
+        identity: point.identity,
+    })
+}
+
 fn compare_points_lexicographically(
     decisions: &DecisionContext,
     left: &Point3,
@@ -2067,34 +2544,43 @@ fn triangle_has_two_proper_plane_crossings([c0, c1, c2]: [Classification; 3]) ->
         && (c0 != c1 || c1 != c2)
 }
 
-fn collect_edge_plane_crossings(
+/// Computes the closed slice of one convex polygon by a nonparallel plane.
+///
+/// Every emitted point lies on a polygon boundary edge and on `plane`. The
+/// slice is therefore complete without testing those points against a second
+/// polygon; the caller intersects the two convex slice intervals afterward.
+fn collect_polygon_plane_slice<'point>(
     decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
-    vertices: &[Point3],
+    vertices: &'point [Point3],
     retained_classifications: Option<&[Classification; 3]>,
-    plane_polygon: &ConvexPolygon,
+    plane: &Plane,
     plane_identity: Option<ConstructionPlaneIdentity>,
-    points: &mut Vec<ConstructedIntersectionPoint>,
-) -> HypermeshResult<()> {
+    axis: SupportLineAxis,
+    reverse_slice: bool,
+) -> HypermeshResult<DeferredIntersectionSpan<'point>> {
+    let mut span = DeferredIntersectionSpan::default();
     if let [v0, v1, v2] = vertices {
         let [c0, c1, c2] = match retained_classifications {
             Some(classifications) => *classifications,
             None => [
-                classify_point_decision(decisions, v0, &plane_polygon.support)?,
-                classify_point_decision(decisions, v1, &plane_polygon.support)?,
-                classify_point_decision(decisions, v2, &plane_polygon.support)?,
+                classify_point_decision(decisions, v0, plane)?,
+                classify_point_decision(decisions, v1, plane)?,
+                classify_point_decision(decisions, v2, plane)?,
             ],
         };
         let support_values = triangle_has_two_proper_plane_crossings([c0, c1, c2]).then(|| {
             [
-                plane_polygon.support.expression_at_point(v0),
-                plane_polygon.support.expression_at_point(v1),
-                plane_polygon.support.expression_at_point(v2),
+                plane.expression_at_point(v0),
+                plane.expression_at_point(v1),
+                plane.expression_at_point(v2),
             ]
         });
-        collect_edge_plane_crossing(
+        extend_polygon_plane_slice_edge(
             decisions,
+            &mut span,
             edge_polygon,
+            0,
             0,
             v0,
             v1,
@@ -2103,14 +2589,17 @@ fn collect_edge_plane_crossings(
             support_values
                 .as_ref()
                 .map(|values| (&values[0], &values[1])),
-            plane_polygon,
+            plane,
             plane_identity,
-            points,
+            axis,
+            reverse_slice,
         )?;
-        collect_edge_plane_crossing(
+        extend_polygon_plane_slice_edge(
             decisions,
+            &mut span,
             edge_polygon,
             1,
+            usize::from(c0 == Classification::On),
             v1,
             v2,
             c1,
@@ -2118,14 +2607,17 @@ fn collect_edge_plane_crossings(
             support_values
                 .as_ref()
                 .map(|values| (&values[1], &values[2])),
-            plane_polygon,
+            plane,
             plane_identity,
-            points,
+            axis,
+            reverse_slice,
         )?;
-        collect_edge_plane_crossing(
+        extend_polygon_plane_slice_edge(
             decisions,
+            &mut span,
             edge_polygon,
             2,
+            if c1 == Classification::On { 2 } else { 1 },
             v2,
             v0,
             c2,
@@ -2133,150 +2625,148 @@ fn collect_edge_plane_crossings(
             support_values
                 .as_ref()
                 .map(|values| (&values[2], &values[0])),
-            plane_polygon,
+            plane,
             plane_identity,
-            points,
+            axis,
+            reverse_slice,
         )?;
-        return Ok(());
+        return Ok(span);
     }
 
+    let Some(first) = vertices.first() else {
+        return Ok(span);
+    };
+    let first_class = classify_point_decision(decisions, first, plane)?;
+    let last_class = if vertices.len() == 1 {
+        first_class
+    } else {
+        classify_point_decision(
+            decisions,
+            vertices
+                .last()
+                .expect("the nonempty polygon slice has a final vertex"),
+            plane,
+        )?
+    };
+    let mut previous_class = last_class;
+    let mut start_class = first_class;
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
-        let start_class = classify_point_decision(decisions, start, &plane_polygon.support)?;
-        let end_class = classify_point_decision(decisions, end, &plane_polygon.support)?;
-        collect_edge_plane_crossing(
+        let end_class = if index + 1 == vertices.len() {
+            first_class
+        } else if index + 2 == vertices.len() {
+            last_class
+        } else {
+            classify_point_decision(decisions, end, plane)?
+        };
+        let vertex_discovery_edge = if index == 0 || previous_class == Classification::On {
+            index
+        } else {
+            index - 1
+        };
+        extend_polygon_plane_slice_edge(
             decisions,
+            &mut span,
             edge_polygon,
             index,
+            vertex_discovery_edge,
             start,
             end,
             start_class,
             end_class,
             None,
-            plane_polygon,
+            plane,
             plane_identity,
-            points,
+            axis,
+            reverse_slice,
         )?;
+        previous_class = start_class;
+        start_class = end_class;
     }
-    Ok(())
+    Ok(span)
 }
 
 #[inline]
-fn collect_edge_plane_crossing(
+fn extend_polygon_plane_slice_edge<'point>(
     decisions: &DecisionContext,
+    span: &mut DeferredIntersectionSpan<'point>,
     edge_polygon: &ConvexPolygon,
     edge_index: usize,
-    start: &Point3,
-    end: &Point3,
+    vertex_discovery_edge: usize,
+    start: &'point Point3,
+    end: &'point Point3,
     start_class: Classification,
     end_class: Classification,
     support_values: Option<(&Real, &Real)>,
-    plane_polygon: &ConvexPolygon,
+    plane: &Plane,
     plane_identity: Option<ConstructionPlaneIdentity>,
-    points: &mut Vec<ConstructedIntersectionPoint>,
+    axis: SupportLineAxis,
+    reverse_slice: bool,
 ) -> HypermeshResult<()> {
-    let candidate = match (start_class, end_class) {
-        (Classification::On, _) => {
-            affine_point_in_polygon_on_support(decisions, start, plane_polygon)?.then(|| {
-                ConstructedIntersectionPoint {
-                    point: start.clone(),
-                    identity: plane_identity
-                        .and_then(|_| polygon_vertex_identity(edge_polygon, edge_index)),
-                }
-            })
-        }
-        (_, Classification::On) => {
-            affine_point_in_polygon_on_support(decisions, end, plane_polygon)?.then(|| {
-                ConstructedIntersectionPoint {
-                    point: end.clone(),
-                    identity: plane_identity.and_then(|_| {
-                        polygon_vertex_identity(
-                            edge_polygon,
-                            (edge_index + 1) % edge_polygon.vertex_count(),
-                        )
-                    }),
-                }
-            })
-        }
+    if start_class == Classification::On {
+        extend_deferred_span(
+            decisions,
+            span,
+            DeferredIntersectionPoint {
+                geometry: affine_deferred_geometry(start.clone(), axis),
+                identity: plane_identity
+                    .and_then(|_| polygon_vertex_identity(edge_polygon, edge_index)),
+                discovery_order: (reverse_slice, vertex_discovery_edge),
+            },
+        )?;
+    }
+
+    if !matches!(
+        (start_class, end_class),
         (Classification::Negative, Classification::Positive)
-        | (Classification::Positive, Classification::Negative) => {
-            let owned_support_values;
-            let (start_support, end_support) = match support_values {
-                Some(values) => values,
-                None => {
-                    owned_support_values = (
-                        plane_polygon.support.expression_at_point(start),
-                        plane_polygon.support.expression_at_point(end),
-                    );
-                    (&owned_support_values.0, &owned_support_values.1)
-                }
-            };
-            let point = match segment_plane_intersection_in_polygon(
-                decisions,
+            | (Classification::Positive, Classification::Negative)
+    ) {
+        return Ok(());
+    }
+
+    let owned_support_values;
+    let (start_support, end_support) = match support_values {
+        Some(values) => values,
+        None => {
+            owned_support_values = (
+                plane.expression_at_point(start),
+                plane.expression_at_point(end),
+            );
+            (&owned_support_values.0, &owned_support_values.1)
+        }
+    };
+    let parameter_denominator = start_support - end_support;
+    let coordinate_numerator = Real::signed_product_sum(
+        [true, false],
+        [
+            [start_support, axis.coordinate(end)],
+            [end_support, axis.coordinate(start)],
+        ],
+    );
+    let denominator_is_positive = start_class == Classification::Positive;
+    let enclosure = certified_ratio_enclosure(
+        &coordinate_numerator,
+        &parameter_denominator,
+        denominator_is_positive,
+    );
+    extend_deferred_span(
+        decisions,
+        span,
+        DeferredIntersectionPoint {
+            geometry: DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator,
+                denominator: parameter_denominator,
+                denominator_is_positive,
+                enclosure,
                 start,
                 end,
-                start_class,
-                start_support,
-                end_support,
-                plane_polygon,
-            ) {
-                Ok(false) => None,
-                Ok(true) => Some(intersect_segment_plane_from_values(
-                    start,
-                    end,
-                    start_support,
-                    end_support,
-                )?),
-                Err(undecided @ HypermeshError::PredicateUndecided { .. }) => {
-                    let point = intersect_segment_plane_from_values(
-                        start,
-                        end,
-                        start_support,
-                        end_support,
-                    )?;
-                    let contained = match affine_point_in_polygon_on_support(
-                        decisions,
-                        &point,
-                        plane_polygon,
-                    ) {
-                        Ok(contained) => contained,
-                        Err(HypermeshError::PredicateUndecided { .. }) => {
-                            match projective_edge_plane_intersection_in_polygon(
-                                decisions,
-                                edge_polygon,
-                                edge_index,
-                                plane_polygon,
-                            ) {
-                                Ok(contained) => contained,
-                                Err(HypermeshError::PredicateUndecided { .. }) => {
-                                    return Err(undecided);
-                                }
-                                Err(error) => return Err(error),
-                            }
-                        }
-                        Err(error) => return Err(error),
-                    };
-                    contained.then_some(point)
-                }
-                Err(error) => return Err(error),
-            };
-            point.map(|point| ConstructedIntersectionPoint {
-                point,
-                identity: edge_plane_intersection_identity(
-                    edge_polygon,
-                    edge_index,
-                    plane_identity,
-                ),
-            })
-        }
-        _ => None,
-    };
-
-    if let Some(point) = candidate {
-        points.push(point);
-    }
-    Ok(())
+                parameter_numerator: start_support.clone(),
+            },
+            identity: edge_plane_intersection_identity(edge_polygon, edge_index, plane_identity),
+            discovery_order: (reverse_slice, edge_index),
+        },
+    )
 }
 
 fn polygon_vertex_identity(
@@ -2299,225 +2789,12 @@ fn edge_plane_intersection_identity(
     )
 }
 
-fn projective_edge_plane_intersection_in_polygon(
-    decisions: &DecisionContext,
-    edge_polygon: &ConvexPolygon,
-    edge_index: usize,
-    plane_polygon: &ConvexPolygon,
-) -> HypermeshResult<bool> {
-    let edge_plane = edge_polygon
-        .edges
-        .get(edge_index)
-        .ok_or(HypermeshError::UnknownClassification)?;
-    let line = intersect_two_planes(&edge_polygon.support, edge_plane);
-    let point = intersect_homogeneous_line_plane(&line, &plane_polygon.support);
-    let mut saw_unknown = false;
-    for edge in plane_polygon.edges.iter() {
-        match classify_projective_point_decision(decisions, &point, edge) {
-            Ok(Classification::Positive) => return Ok(false),
-            Ok(Classification::Negative | Classification::On) => {}
-            Err(HypermeshError::PredicateUndecided { .. }) => {
-                if homogeneous_point_certifiably_nonzero(decisions, &point)
-                    && crate::predicate::classify_real(
-                        decisions,
-                        &four_plane_determinant(
-                            &edge_polygon.support,
-                            edge_plane,
-                            &plane_polygon.support,
-                            edge,
-                        ),
-                    ) == Ok(Classification::On)
-                {
-                    continue;
-                }
-                saw_unknown = true;
-            }
-            Err(error) => return Err(error),
-        }
-    }
-    if saw_unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "projective edge/polygon containment",
-        })
-    } else {
-        Ok(true)
-    }
-}
-
-fn homogeneous_point_certifiably_nonzero(
-    decisions: &DecisionContext,
-    point: &HomogeneousPoint3,
-) -> bool {
-    [&point.x, &point.y, &point.z, &point.w]
-        .into_iter()
-        .any(|coordinate| {
-            matches!(
-                crate::predicate::classify_real(decisions, coordinate),
-                Ok(Classification::Negative | Classification::Positive)
-            )
-        })
-}
-
-pub(crate) fn four_plane_determinant(
-    a: &Plane,
-    b: &Plane,
-    c: &Plane,
-    d: &Plane,
-) -> hyperlattice::Real {
-    const PERMUTATIONS: [[usize; 4]; 24] = [
-        [0, 1, 2, 3],
-        [0, 1, 3, 2],
-        [0, 2, 1, 3],
-        [0, 2, 3, 1],
-        [0, 3, 1, 2],
-        [0, 3, 2, 1],
-        [1, 0, 2, 3],
-        [1, 0, 3, 2],
-        [1, 2, 0, 3],
-        [1, 2, 3, 0],
-        [1, 3, 0, 2],
-        [1, 3, 2, 0],
-        [2, 0, 1, 3],
-        [2, 0, 3, 1],
-        [2, 1, 0, 3],
-        [2, 1, 3, 0],
-        [2, 3, 0, 1],
-        [2, 3, 1, 0],
-        [3, 0, 1, 2],
-        [3, 0, 2, 1],
-        [3, 1, 0, 2],
-        [3, 1, 2, 0],
-        [3, 2, 0, 1],
-        [3, 2, 1, 0],
-    ];
-    const POSITIVE: [bool; 24] = [
-        true, false, false, true, true, false, false, true, true, false, false, true, true, false,
-        false, true, true, false, false, true, true, false, false, true,
-    ];
-    let rows = [
-        [&a.normal.x, &a.normal.y, &a.normal.z, &a.offset],
-        [&b.normal.x, &b.normal.y, &b.normal.z, &b.offset],
-        [&c.normal.x, &c.normal.y, &c.normal.z, &c.offset],
-        [&d.normal.x, &d.normal.y, &d.normal.z, &d.offset],
-    ];
-    let terms: [[&hyperlattice::Real; 4]; 24] =
-        std::array::from_fn(|term| std::array::from_fn(|row| rows[row][PERMUTATIONS[term][row]]));
-    hyperlattice::Real::signed_product_sum(POSITIVE, terms)
-}
-
-/// Certifies containment of a proper segment/plane intersection without first
-/// expanding the affine intersection point.
-///
-/// For support values `a`, `b` at the segment endpoints and edge-plane values
-/// `q0`, `q1`, the edge value at the intersection is
-/// `(a*q1 - b*q0) / (a - b)`. The endpoints are known to be on opposite sides,
-/// so the denominator sign is already certified by `start_class`. Keeping this
-/// predicate as a two-term determinant preserves cancellations that can become
-/// opaque after all three affine coordinates are materialized.
-fn segment_plane_intersection_in_polygon(
-    decisions: &DecisionContext,
+fn intersect_segment_plane_from_ratio(
     start: &Point3,
     end: &Point3,
-    start_class: Classification,
-    start_support: &Real,
-    end_support: &Real,
-    polygon: &ConvexPolygon,
-) -> HypermeshResult<bool> {
-    debug_assert!(matches!(
-        start_class,
-        Classification::Negative | Classification::Positive
-    ));
-
-    let denominator_is_positive = start_class == Classification::Positive;
-    let mut saw_unknown = false;
-
-    for edge in polygon.edges.iter() {
-        let candidate_class = match classify_segment_plane_edge_numerator(
-            decisions,
-            start,
-            end,
-            start_support,
-            end_support,
-            edge,
-        ) {
-            Ok(classification) if denominator_is_positive => classification,
-            Ok(Classification::Negative) => Classification::Positive,
-            Ok(Classification::Positive) => Classification::Negative,
-            Ok(Classification::On) => Classification::On,
-            Err(HypermeshError::PredicateUndecided { .. }) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(error) => return Err(error),
-        };
-        if candidate_class == Classification::Positive {
-            return Ok(false);
-        }
-    }
-
-    if saw_unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "segment-plane intersection containment",
-        })
-    } else {
-        Ok(true)
-    }
-}
-
-fn classify_segment_plane_edge_numerator(
-    decisions: &DecisionContext,
-    start: &Point3,
-    end: &Point3,
-    start_support: &Real,
-    end_support: &Real,
-    edge: &Plane,
-) -> HypermeshResult<Classification> {
-    if let (Some(start_support), Some(end_support)) = (
-        start_support.exact_rational_ref(),
-        end_support.exact_rational_ref(),
-    ) && let [Some(a), Some(b), Some(c), Some(d)] =
-        [&edge.normal.x, &edge.normal.y, &edge.normal.z, &edge.offset].map(Real::exact_rational_ref)
-        && let [Some(sx), Some(sy), Some(sz), Some(ex), Some(ey), Some(ez)] =
-            [&start.x, &start.y, &start.z, &end.x, &end.y, &end.z].map(Real::exact_rational_ref)
-    {
-        let one = hyperlattice::Rational::one_ref();
-        return Ok(
-            match hyperlattice::Rational::signed_product_sum_ordering(
-                [true, true, true, true, false, false, false, false],
-                [
-                    [start_support, a, ex],
-                    [start_support, b, ey],
-                    [start_support, c, ez],
-                    [start_support, d, one],
-                    [end_support, a, sx],
-                    [end_support, b, sy],
-                    [end_support, c, sz],
-                    [end_support, d, one],
-                ],
-            ) {
-                std::cmp::Ordering::Less => Classification::Negative,
-                std::cmp::Ordering::Equal => Classification::On,
-                std::cmp::Ordering::Greater => Classification::Positive,
-            },
-        );
-    }
-
-    let start_edge = edge.expression_at_point(start);
-    let end_edge = edge.expression_at_point(end);
-    let numerator = Real::signed_product_sum(
-        [true, false],
-        [[start_support, &end_edge], [end_support, &start_edge]],
-    );
-    classify_real(decisions, &numerator)
-}
-
-fn intersect_segment_plane_from_values(
-    start: &Point3,
-    end: &Point3,
-    start_value: &Real,
-    end_value: &Real,
+    numerator: &Real,
+    denominator: &Real,
 ) -> HypermeshResult<Point3> {
-    let denom = start_value - end_value;
     if [
         &start.x,
         &start.y,
@@ -2525,8 +2802,8 @@ fn intersect_segment_plane_from_values(
         &end.x,
         &end.y,
         &end.z,
-        start_value,
-        end_value,
+        numerator,
+        denominator,
     ]
     .into_iter()
     .all(Real::is_exact_dyadic_rational)
@@ -2534,13 +2811,13 @@ fn intersect_segment_plane_from_values(
         let [x, y, z] = Real::exact_rational_interpolate_point3_known_dyadic(
             [&start.x, &start.y, &start.z],
             [&end.x, &end.y, &end.z],
-            start_value,
-            &denom,
+            numerator,
+            denominator,
         )
         .map_err(|_| HypermeshError::UnknownClassification)?;
         return Ok(Point3::new(x, y, z));
     }
-    let t = (start_value / denom).map_err(|_| HypermeshError::UnknownClassification)?;
+    let t = (numerator / denominator).map_err(|_| HypermeshError::UnknownClassification)?;
 
     Ok(Point3::new(
         &start.x + &(t.clone() * (&end.x - &start.x)),
@@ -2549,72 +2826,104 @@ fn intersect_segment_plane_from_values(
     ))
 }
 
-fn affine_point_in_polygon_on_support(
-    decisions: &DecisionContext,
-    point: &Point3,
-    polygon: &ConvexPolygon,
-) -> HypermeshResult<bool> {
-    if polygon.has_retained_vertex(point) {
-        return Ok(true);
-    }
-    let mut saw_unknown = false;
-    for edge in polygon.edges.iter() {
-        match classify_point_decision(decisions, point, edge) {
-            Ok(Classification::Positive) => return Ok(false),
-            Ok(Classification::Negative | Classification::On) => {}
-            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
-            Err(error) => return Err(error),
-        }
-    }
-    if saw_unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "affine point/polygon containment",
-        })
-    } else {
-        Ok(true)
-    }
-}
-
-fn supports_are_parallel(
+fn support_line_order_axis(
     decisions: &DecisionContext,
     left: &Plane,
     right: &Plane,
-) -> HypermeshResult<bool> {
-    let mut saw_unknown = false;
-    for [a, b, c, d] in [
-        [
+) -> HypermeshResult<Option<SupportLineAxis>> {
+    let components = [
+        (
+            SupportLineAxis::X,
             &left.normal.y,
             &right.normal.z,
             &left.normal.z,
             &right.normal.y,
-        ],
-        [
+        ),
+        (
+            SupportLineAxis::Y,
             &left.normal.z,
             &right.normal.x,
             &left.normal.x,
             &right.normal.z,
-        ],
-        [
+        ),
+        (
+            SupportLineAxis::Z,
             &left.normal.x,
             &right.normal.y,
             &left.normal.y,
             &right.normal.x,
-        ],
-    ] {
-        match classify_two_product_difference(decisions, a, b, c, d) {
-            Ok(Classification::On) => {}
-            Ok(Classification::Negative | Classification::Positive) => return Ok(false),
-            Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
-            Err(error) => return Err(error),
+        ),
+    ];
+    let mut unresolved = 0_u8;
+    for (index, &(axis, a, b, c, d)) in components.iter().enumerate() {
+        match probe_two_product_difference_strict(decisions, a, b, c, d) {
+            Some(Classification::Negative | Classification::Positive) => return Ok(Some(axis)),
+            Some(Classification::On) => {}
+            None => unresolved |= 1 << index,
         }
     }
-    if saw_unknown {
-        Err(HypermeshError::PredicateUndecided {
-            predicate: "polygon support-plane parallelism",
-        })
-    } else {
-        Ok(true)
+    if unresolved == 0 {
+        return Ok(None);
     }
+    if decisions.policy() == hyperlimit::PredicatePolicy::STRICT {
+        return Err(HypermeshError::PredicateUndecided {
+            predicate: "polygon support-plane parallelism",
+        });
+    }
+
+    // Parallelism is a composite predicate. Only after every component has
+    // exhausted its strict proof path may APPROXIMATE_512 resolve the still
+    // unknown components. A later certified nonzero component therefore keeps
+    // the whole support-line decision certified.
+    for (index, &(axis, a, b, c, d)) in components.iter().enumerate() {
+        if unresolved & (1 << index) != 0
+            && classify_two_product_difference(decisions, a, b, c, d)? != Classification::On
+        {
+            return Ok(Some(axis));
+        }
+    }
+    Ok(None)
+}
+
+fn probe_two_product_difference_strict(
+    decisions: &DecisionContext,
+    a: &Real,
+    b: &Real,
+    c: &Real,
+    d: &Real,
+) -> Option<Classification> {
+    if let Some(classification) = classify_exact_two_product_difference(a, b, c, d) {
+        return Some(classification);
+    }
+    let value = Real::signed_product_sum([true, false], [[a, b], [c, d]]);
+    decisions
+        .probe(hyperlimit::classify_real_sign(
+            &value,
+            hyperlimit::PredicatePolicy::STRICT,
+        ))
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => Classification::Negative,
+            hyperlimit::Sign::Zero => Classification::On,
+            hyperlimit::Sign::Positive => Classification::Positive,
+        })
+}
+
+fn classify_exact_two_product_difference(
+    a: &Real,
+    b: &Real,
+    c: &Real,
+    d: &Real,
+) -> Option<Classification> {
+    let [Some(a), Some(b), Some(c), Some(d)] = [a, b, c, d].map(Real::exact_rational_ref) else {
+        return None;
+    };
+    Some(
+        match hyperlattice::Rational::signed_product_sum_ordering([true, false], [[a, b], [c, d]]) {
+            std::cmp::Ordering::Less => Classification::Negative,
+            std::cmp::Ordering::Equal => Classification::On,
+            std::cmp::Ordering::Greater => Classification::Positive,
+        },
+    )
 }
 
 fn classify_two_product_difference(
@@ -2624,17 +2933,8 @@ fn classify_two_product_difference(
     c: &Real,
     d: &Real,
 ) -> HypermeshResult<Classification> {
-    if let [Some(a), Some(b), Some(c), Some(d)] = [a, b, c, d].map(Real::exact_rational_ref) {
-        return Ok(
-            match hyperlattice::Rational::signed_product_sum_ordering(
-                [true, false],
-                [[a, b], [c, d]],
-            ) {
-                std::cmp::Ordering::Less => Classification::Negative,
-                std::cmp::Ordering::Equal => Classification::On,
-                std::cmp::Ordering::Greater => Classification::Positive,
-            },
-        );
+    if let Some(classification) = classify_exact_two_product_difference(a, b, c, d) {
+        return Ok(classification);
     }
     classify_real(
         decisions,
@@ -2690,20 +2990,55 @@ mod tests {
 
     use super::{
         ConstructedIntersectionPoint, ConstructedIntersectionSegment,
-        ConstructedPairwiseIntersection, CoplanarClassificationMatrix, PairwiseIntersection,
-        PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
-        PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
-        classify_segment_plane_edge_numerator, classify_two_product_difference,
-        dedup_constructed_points, intersect_polygons_with_vertices_constructed,
-        pairwise_intersections_by_polygon_from_bvh,
+        ConstructedPairwiseIntersection, CoplanarClassificationMatrix,
+        DeferredIntersectionGeometry, DeferredIntersectionPoint, DeferredIntersectionSpan,
+        PairwiseIntersection, PairwiseIntersectionEvent, PairwiseIntersectionEventIds,
+        PairwiseIntersectionGraphBuilder, PairwiseIntersectionScratch, PolygonVertexArena,
+        StoredIntersectionKind, affine_deferred_geometry, certified_enclosure_ordering,
+        certified_ratio_enclosure, classify_two_product_difference, compare_deferred_points,
+        dedup_constructed_points, intersect_deferred_spans,
+        intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
-        supports_are_parallel, triangle_has_two_proper_plane_crossings, triangle_reaches_plane,
+        support_line_order_axis, triangle_has_two_proper_plane_crossings, triangle_reaches_plane,
     };
     use crate::bvh::ExactBvh;
     use crate::context::{DecisionContext, MeshContext};
     use crate::error::HypermeshError;
     use crate::geometry::{Classification, Plane};
     use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
+
+    fn deferred_point_span<'point>(
+        point: DeferredIntersectionPoint<'point>,
+    ) -> DeferredIntersectionSpan<'point> {
+        DeferredIntersectionSpan {
+            minimum: Some(point),
+            maximum: None,
+        }
+    }
+
+    fn deferred_segment_span<'point>(
+        minimum: DeferredIntersectionPoint<'point>,
+        maximum: DeferredIntersectionPoint<'point>,
+    ) -> DeferredIntersectionSpan<'point> {
+        DeferredIntersectionSpan {
+            minimum: Some(minimum),
+            maximum: Some(maximum),
+        }
+    }
+
+    #[test]
+    fn deferred_support_line_carrier_stays_stack_compact() {
+        let point_bytes = core::mem::size_of::<DeferredIntersectionPoint<'static>>();
+        let span_bytes = core::mem::size_of::<DeferredIntersectionSpan<'static>>();
+        assert!(
+            point_bytes <= 256,
+            "deferred point grew to {point_bytes} bytes"
+        );
+        assert!(
+            span_bytes <= 528,
+            "deferred span grew to {span_bytes} bytes"
+        );
+    }
 
     #[test]
     fn triangle_plane_prepass_rejects_only_one_open_halfspace() {
@@ -2774,6 +3109,74 @@ mod tests {
     }
 
     #[test]
+    fn certified_deferred_ratio_order_matches_materialized_exact_rationals() {
+        let decisions = crate::test_support::approximate_decisions();
+        let origin = Point3::origin();
+        let endpoint = |numerator: i64, denominator: i64| {
+            let denominator_is_positive = denominator > 0;
+            let numerator = Real::from(numerator);
+            let denominator = Real::from(denominator);
+            let enclosure =
+                certified_ratio_enclosure(&numerator, &denominator, denominator_is_positive);
+            DeferredIntersectionPoint {
+                geometry: DeferredIntersectionGeometry::SegmentPlane {
+                    coordinate_numerator: numerator,
+                    denominator,
+                    denominator_is_positive,
+                    enclosure,
+                    start: &origin,
+                    end: &origin,
+                    parameter_numerator: Real::zero(),
+                },
+                identity: None,
+                discovery_order: (false, 0),
+            }
+        };
+
+        let mut enclosure_decisions = 0;
+        for seed in 0_i64..1_024 {
+            let nonzero = |value: i64| if value == 0 { 1 } else { value };
+            let left_numerator = (seed * 5 + 3).rem_euclid(47) - 23;
+            let left_denominator = nonzero((seed * 7 + 1).rem_euclid(37) - 18);
+            let right_numerator = (seed * 11 + 5).rem_euclid(43) - 21;
+            let right_denominator = nonzero((seed * 13 + 2).rem_euclid(41) - 20);
+            let left_value = (&Real::from(left_numerator) / &Real::from(left_denominator)).unwrap();
+            let right_value =
+                (&Real::from(right_numerator) / &Real::from(right_denominator)).unwrap();
+            let expected = left_value
+                .exact_rational_ref()
+                .unwrap()
+                .partial_cmp(right_value.exact_rational_ref().unwrap())
+                .unwrap();
+            let left = endpoint(left_numerator, left_denominator);
+            let right = endpoint(right_numerator, right_denominator);
+            if let (
+                DeferredIntersectionGeometry::SegmentPlane {
+                    enclosure: Some(left),
+                    ..
+                },
+                DeferredIntersectionGeometry::SegmentPlane {
+                    enclosure: Some(right),
+                    ..
+                },
+            ) = (&left.geometry, &right.geometry)
+                && let Some(filtered) = certified_enclosure_ordering(*left, *right)
+            {
+                enclosure_decisions += 1;
+                assert_eq!(filtered, expected, "enclosure seed={seed}");
+            }
+
+            assert_eq!(
+                compare_deferred_points(&decisions, &left, &right).unwrap(),
+                expected,
+                "seed={seed}",
+            );
+        }
+        assert!(enclosure_decisions > 900);
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
     fn symbolic_support_parallelism_obeys_terminal_policy() {
         let left_value = Real::pi() + Real::e();
         let right_value = Real::e() + Real::pi();
@@ -2783,14 +3186,18 @@ mod tests {
         let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let strict = DecisionContext::new(&strict_context);
         assert!(matches!(
-            supports_are_parallel(&strict, &left, &right),
+            support_line_order_axis(&strict, &left, &right),
             Err(HypermeshError::PredicateUndecided { .. })
         ));
         assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
 
         let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
         let approximate = DecisionContext::new(&approximate_context);
-        assert!(supports_are_parallel(&approximate, &left, &right).unwrap());
+        assert!(
+            support_line_order_axis(&approximate, &left, &right)
+                .unwrap()
+                .is_none()
+        );
         assert_eq!(
             approximate.certainty(),
             crate::MeshCertainty::Approximate512Consumed
@@ -2798,82 +3205,254 @@ mod tests {
     }
 
     #[test]
-    fn sign_only_segment_plane_edge_numerator_matches_materialized_polynomial() {
-        let decisions = crate::test_support::approximate_decisions();
-        for seed in 0_i64..512 {
-            let value = |multiplier: i64, addend: i64| {
-                Real::from((seed * multiplier + addend).rem_euclid(23) - 11)
-            };
-            let start = Point3::new(value(3, 1), value(5, 2), value(7, 3));
-            let end = Point3::new(value(11, 4), value(13, 5), value(17, 6));
-            let edge =
-                Plane::from_coefficients(value(19, 7), value(23, 8), value(29, 9), value(31, 10));
-            let start_support = value(37, 11);
-            let end_support = value(41, 12);
-            let start_edge = edge.expression_at_point(&start);
-            let end_edge = edge.expression_at_point(&end);
-            let materialized = Real::signed_product_sum(
-                [true, false],
-                [[&start_support, &end_edge], [&end_support, &start_edge]],
-            );
-            let expected = crate::predicate::classify_real(&decisions, &materialized).unwrap();
-            assert_eq!(
-                classify_segment_plane_edge_numerator(
-                    &decisions,
-                    &start,
-                    &end,
-                    &start_support,
-                    &end_support,
-                    &edge,
-                )
-                .unwrap(),
-                expected,
-                "seed={seed}",
-            );
+    fn later_certified_support_component_avoids_terminal_approximation() {
+        let first = Real::pi() + Real::e();
+        let equivalent = Real::e() + Real::pi();
+        let left = Plane::from_coefficients(Real::one(), first, equivalent, Real::zero());
+        let right = Plane::from_coefficients(Real::zero(), Real::one(), Real::one(), Real::zero());
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(matches!(
+                support_line_order_axis(&decisions, &left, &right),
+                Ok(Some(super::SupportLineAxis::Y))
+            ));
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
         }
     }
 
     #[test]
-    fn symbolic_segment_plane_edge_numerator_obeys_terminal_policy() {
-        let left = Real::pi() + Real::e();
-        let right = Real::e() + Real::pi();
-        let start = Point3::new(left, Real::zero(), Real::zero());
-        let end = Point3::new(right, Real::zero(), Real::zero());
-        let edge = Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::zero());
+    fn exact_closed_slice_intervals_cover_every_overlap_dimension_and_order() {
+        fn point<'point>(
+            positions: &'point [Point3; 6],
+            x: i64,
+            negative_denominator: bool,
+        ) -> DeferredIntersectionPoint<'point> {
+            let point = &positions[x as usize];
+            DeferredIntersectionPoint {
+                geometry: if negative_denominator {
+                    DeferredIntersectionGeometry::SegmentPlane {
+                        coordinate_numerator: Real::from(-x),
+                        denominator: Real::from(-1),
+                        denominator_is_positive: false,
+                        enclosure: None,
+                        start: point,
+                        end: point,
+                        parameter_numerator: Real::zero(),
+                    }
+                } else {
+                    affine_deferred_geometry(point.clone(), super::SupportLineAxis::X)
+                },
+                identity: None,
+                discovery_order: (false, x as usize),
+            }
+        }
 
-        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
-        let strict = DecisionContext::new(&strict_context);
-        assert!(matches!(
-            classify_segment_plane_edge_numerator(
-                &strict,
-                &start,
-                &end,
-                &Real::one(),
-                &Real::one(),
-                &edge,
+        fn span<'point>(
+            positions: &'point [Point3; 6],
+            interval: Option<(i64, i64)>,
+            negative_denominator: bool,
+        ) -> DeferredIntersectionSpan<'point> {
+            match interval {
+                None => DeferredIntersectionSpan::default(),
+                Some((minimum, maximum)) if minimum == maximum => {
+                    deferred_point_span(point(positions, minimum, negative_denominator))
+                }
+                Some((minimum, maximum)) => deferred_segment_span(
+                    point(positions, minimum, negative_denominator),
+                    point(positions, maximum, negative_denominator),
+                ),
+            }
+        }
+
+        let cases = [
+            (None, Some((0, 1)), None),
+            (Some((0, 1)), Some((2, 3)), None),
+            (Some((1, 1)), Some((1, 1)), Some((1, 1))),
+            (Some((1, 1)), Some((0, 2)), Some((1, 1))),
+            (Some((0, 1)), Some((1, 2)), Some((1, 1))),
+            (Some((0, 3)), Some((1, 2)), Some((1, 2))),
+            (Some((0, 3)), Some((2, 5)), Some((2, 3))),
+            (Some((4, 4)), Some((0, 3)), None),
+        ];
+        let positions =
+            std::array::from_fn(|x| Point3::new(Real::from(x as i64), Real::zero(), Real::zero()));
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            for &(left, right, expected) in &cases {
+                for (left, right) in [(left, right), (right, left)] {
+                    for (left_negative, right_negative) in
+                        [(false, false), (false, true), (true, false), (true, true)]
+                    {
+                        let context = MeshContext::new(policy);
+                        let decisions = DecisionContext::new(&context);
+                        let actual = intersect_deferred_spans(
+                            &decisions,
+                            span(&positions, left, left_negative),
+                            span(&positions, right, right_negative),
+                        )
+                        .unwrap();
+                        let actual = match actual {
+                            ConstructedPairwiseIntersection::Disjoint => None,
+                            ConstructedPairwiseIntersection::NonCoplanarPoint(point) => {
+                                Some((point.point.x.clone(), point.point.x))
+                            }
+                            ConstructedPairwiseIntersection::NonCoplanarSegment(segment) => {
+                                Some((segment.v0.point.x, segment.v1.point.x))
+                            }
+                            _ => {
+                                panic!(
+                                    "closed support-line slices cannot produce a coplanar result"
+                                )
+                            }
+                        };
+                        assert_eq!(
+                            actual,
+                            expected.map(|(minimum, maximum)| {
+                                (Real::from(minimum), Real::from(maximum))
+                            }),
+                            "left={left:?}, right={right:?}, policy={policy:?}",
+                        );
+                        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn surviving_deferred_crossing_materializes_from_its_retained_ratio() {
+        let start = Point3::origin();
+        let end = Point3::new(Real::from(10), Real::zero(), Real::zero());
+        let crossing = DeferredIntersectionPoint {
+            geometry: DeferredIntersectionGeometry::SegmentPlane {
+                coordinate_numerator: Real::from(-50),
+                denominator: Real::from(-10),
+                denominator_is_positive: false,
+                enclosure: None,
+                start: &start,
+                end: &end,
+                parameter_numerator: Real::from(-5),
+            },
+            identity: None,
+            discovery_order: (false, 0),
+        };
+        let affine = DeferredIntersectionPoint {
+            geometry: affine_deferred_geometry(
+                Point3::new(Real::from(5), Real::zero(), Real::zero()),
+                super::SupportLineAxis::X,
             ),
-            Err(HypermeshError::PredicateUndecided { .. })
-        ));
-        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+            identity: None,
+            discovery_order: (true, 0),
+        };
+        let decisions = crate::test_support::approximate_decisions();
 
-        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
-        let approximate = DecisionContext::new(&approximate_context);
+        let result = intersect_deferred_spans(
+            &decisions,
+            deferred_point_span(crossing),
+            deferred_point_span(affine),
+        )
+        .unwrap();
+        let ConstructedPairwiseIntersection::NonCoplanarPoint(point) = result else {
+            panic!("equal deferred endpoints must produce one materialized point");
+        };
         assert_eq!(
-            classify_segment_plane_edge_numerator(
-                &approximate,
-                &start,
-                &end,
-                &Real::one(),
-                &Real::one(),
-                &edge,
+            point.point,
+            Point3::new(Real::from(5), Real::zero(), Real::zero())
+        );
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn equal_slice_endpoints_choose_the_canonical_construction_identity() {
+        let identity = |vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex };
+        let point = |vertex| DeferredIntersectionPoint {
+            geometry: affine_deferred_geometry(Point3::origin(), super::SupportLineAxis::X),
+            identity: Some(identity(vertex)),
+            discovery_order: (false, 0),
+        };
+        let decisions = crate::test_support::approximate_decisions();
+
+        for (left, right) in [(9, 2), (2, 9)] {
+            let result = intersect_deferred_spans(
+                &decisions,
+                deferred_point_span(point(left)),
+                deferred_point_span(point(right)),
             )
-            .unwrap(),
-            Classification::On,
-        );
-        assert_eq!(
-            approximate.certainty(),
-            crate::MeshCertainty::Approximate512Consumed
-        );
+            .unwrap();
+            let ConstructedPairwiseIntersection::NonCoplanarPoint(result) = result else {
+                panic!("equal point slices must intersect in one point");
+            };
+            assert_eq!(result.identity, Some(identity(2)));
+        }
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn symbolic_slice_endpoint_equality_obeys_terminal_policy() {
+        let origin = Point3::origin();
+        let point = |x: Real, ratio: bool| {
+            deferred_point_span(DeferredIntersectionPoint {
+                geometry: if ratio {
+                    DeferredIntersectionGeometry::SegmentPlane {
+                        coordinate_numerator: x.clone(),
+                        denominator: Real::one(),
+                        denominator_is_positive: true,
+                        enclosure: None,
+                        start: &origin,
+                        end: &origin,
+                        parameter_numerator: Real::zero(),
+                    }
+                } else {
+                    affine_deferred_geometry(
+                        Point3::new(x, Real::zero(), Real::zero()),
+                        super::SupportLineAxis::X,
+                    )
+                },
+                identity: None,
+                discovery_order: (false, 0),
+            })
+        };
+
+        for (left_ratio, right_ratio) in
+            [(false, false), (false, true), (true, false), (true, true)]
+        {
+            let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+            let strict = DecisionContext::new(&strict_context);
+            assert!(matches!(
+                intersect_deferred_spans(
+                    &strict,
+                    point(Real::pi() + Real::e(), left_ratio),
+                    point(Real::e() + Real::pi(), right_ratio),
+                ),
+                Err(HypermeshError::PredicateUndecided { .. })
+            ));
+            assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+
+            let approximate_context =
+                MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+            let approximate = DecisionContext::new(&approximate_context);
+            assert!(matches!(
+                intersect_deferred_spans(
+                    &approximate,
+                    point(Real::pi() + Real::e(), left_ratio),
+                    point(Real::e() + Real::pi(), right_ratio),
+                )
+                .unwrap(),
+                ConstructedPairwiseIntersection::NonCoplanarPoint(_)
+            ));
+            assert_eq!(
+                approximate.certainty(),
+                crate::MeshCertainty::Approximate512Consumed
+            );
+        }
     }
 
     #[test]

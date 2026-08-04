@@ -40,6 +40,36 @@ const CASES: &[Case] = &[
         expected: Expected::NonCoplanarSegment([[1, 0, 0], [1, 2, 0]]),
     },
     Case {
+        id: "noncoplanar_disjoint_support_line_intervals",
+        left: &[[0, 0, 0], [4, 0, 0], [0, 4, 0]],
+        right: &[[1, 5, -1], [1, 9, -1], [1, 7, 1]],
+        expected: Expected::Disjoint,
+    },
+    Case {
+        id: "noncoplanar_crossing_crossing_point_contact",
+        left: &[[0, 0, 0], [4, 0, 0], [0, 4, 0]],
+        right: &[[1, 2, -1], [1, 4, 1], [1, 6, -1]],
+        expected: Expected::NonCoplanarPoint([1, 3, 0]),
+    },
+    Case {
+        id: "noncoplanar_contained_support_line_interval",
+        left: &[[0, 0, 0], [4, 0, 0], [0, 4, 0]],
+        right: &[[1, 0, -1], [1, 2, -1], [1, 2, 1]],
+        expected: Expected::NonCoplanarSegment([[1, 1, 0], [1, 2, 0]]),
+    },
+    Case {
+        id: "noncoplanar_z_axis_support_line",
+        left: &[[0, -1, 0], [0, 1, 0], [0, 0, 4]],
+        right: &[[-1, 0, 1], [1, 0, 1], [0, 0, 3]],
+        expected: Expected::NonCoplanarSegment([[0, 0, 1], [0, 0, 3]]),
+    },
+    Case {
+        id: "noncoplanar_convex_quad_containment",
+        left: &[[0, 0, 0], [2, 0, 0], [2, 4, 0], [0, 4, 0]],
+        right: &[[1, 1, -1], [1, 3, -1], [1, 3, 1], [1, 1, 1]],
+        expected: Expected::NonCoplanarSegment([[1, 1, 0], [1, 3, 0]]),
+    },
+    Case {
         id: "noncoplanar_shared_edge",
         left: &[[0, 0, 0], [2, 0, 0], [0, 2, 0]],
         right: &[[2, 0, 0], [0, 0, 0], [1, 0, 2]],
@@ -178,6 +208,18 @@ fn rectangle(context: &MeshContext, x0: i32, x1: i32, y0: i32, y1: i32) -> Conve
     polygon(context, &vertices, false)
 }
 
+fn vertical_rectangle(
+    context: &MeshContext,
+    x: i32,
+    y0: i32,
+    y1: i32,
+    z0: i32,
+    z1: i32,
+) -> ConvexPolygon {
+    let vertices = [[x, y0, z0], [x, y1, z0], [x, y1, z1], [x, y0, z1]];
+    polygon(context, &vertices, false)
+}
+
 proptest! {
     #![proptest_config(ProptestConfig {
         cases: 256,
@@ -224,6 +266,87 @@ proptest! {
                             matches!(outcome.value, PairwiseIntersection::CoplanarOverlap(_)),
                             expected_area,
                         );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn noncoplanar_rectangle_slices_match_exact_closed_interval_oracle(
+        x in -8i32..8,
+        left_x_margin in 1i32..8,
+        right_x_margin in 1i32..8,
+        ay0 in -8i32..8,
+        ay1 in -8i32..8,
+        by0 in -8i32..8,
+        by1 in -8i32..8,
+        negative_z in 1i32..8,
+        positive_z in 1i32..8,
+    ) {
+        prop_assume!(ay0 != ay1 && by0 != by1);
+        let [ay0, ay1] = [ay0.min(ay1), ay0.max(ay1)];
+        let [by0, by1] = [by0.min(by1), by0.max(by1)];
+        let overlap_minimum = ay0.max(by0);
+        let overlap_maximum = ay1.min(by1);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let context = MeshContext::new(policy);
+            let left = rectangle(
+                &context,
+                x - left_x_margin,
+                x + right_x_margin,
+                ay0,
+                ay1,
+            );
+            let right = vertical_rectangle(
+                &context,
+                x,
+                by0,
+                by1,
+                -negative_z,
+                positive_z,
+            );
+            for invert_left in [false, true] {
+                for invert_right in [false, true] {
+                    let left = if invert_left { left.inverted() } else { left.clone() };
+                    let right = if invert_right { right.inverted() } else { right.clone() };
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (&right, &left)
+                        } else {
+                            (&left, &right)
+                        };
+                        let outcome =
+                            hypermesh::intersect_polygons(&context, first, second, 1).unwrap();
+                        prop_assert_eq!(outcome.certainty, MeshCertainty::Certified);
+                        match overlap_minimum.cmp(&overlap_maximum) {
+                            std::cmp::Ordering::Greater => {
+                                prop_assert!(matches!(
+                                    outcome.value,
+                                    PairwiseIntersection::Disjoint
+                                ));
+                            }
+                            std::cmp::Ordering::Equal => {
+                                let PairwiseIntersection::NonCoplanarPoint(actual) = outcome.value
+                                else {
+                                    prop_assert!(false, "expected one closed-interval contact");
+                                    unreachable!();
+                                };
+                                prop_assert_eq!(actual.point, point([x, overlap_minimum, 0]));
+                            }
+                            std::cmp::Ordering::Less => {
+                                let PairwiseIntersection::NonCoplanarSegment(actual) = outcome.value
+                                else {
+                                    prop_assert!(false, "expected one closed-interval segment");
+                                    unreachable!();
+                                };
+                                prop_assert!(unordered_segment_matches(
+                                    [&actual.v0, &actual.v1],
+                                    [[x, overlap_minimum, 0], [x, overlap_maximum, 0]],
+                                ));
+                            }
+                        }
                     }
                 }
             }
