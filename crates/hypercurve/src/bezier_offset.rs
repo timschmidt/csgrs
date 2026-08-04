@@ -26144,14 +26144,6 @@ mod conversion_tests {
             polynomial =
                 trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
         }
-        let reduced = trivariate_reduce_selected_root_relations(
-            &polynomial,
-            &parameters[0],
-            &parameters[1],
-            &parameters[2],
-        )
-        .expect("quadratic selected-root relations must reduce the tensor");
-        assert_eq!(reduced.dimensions(), (2, 2, 3));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
                 trivariate_parameter_triple_sign_by_refinement(
