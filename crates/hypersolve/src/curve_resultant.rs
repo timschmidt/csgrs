@@ -2318,6 +2318,35 @@ fn primitive_common_fiber_component(
     (!exact_bivariate_is_zero(&component)).then_some(component)
 }
 
+/// Returns the monic exact GCD of two univariate polynomials.
+///
+/// Coefficients are in ascending power order. The Euclidean/subresultant
+/// package uses only exact `Real` arithmetic and the `STRICT` zero predicate;
+/// a coefficient that cannot be decided exactly makes the operation
+/// unsupported rather than approximate.
+pub fn greatest_common_divisor_univariate_polynomials_exact(
+    left: &[Real],
+    right: &[Real],
+) -> Option<Vec<Real>> {
+    polynomial_gcd(
+        left.to_vec(),
+        right.to_vec(),
+        hyperlimit::PredicatePolicy::STRICT,
+    )
+}
+
+/// Returns the exact quotient when one univariate polynomial divides another.
+///
+/// Coefficients are in ascending power order. Division uses the canonical
+/// exact `Real` field and accepts the quotient only when every remainder
+/// coefficient is certified zero under `STRICT`.
+pub fn divide_univariate_polynomial_exact(
+    dividend: &[Real],
+    divisor: &[Real],
+) -> Option<Vec<Real>> {
+    divide_polynomial_exact(dividend.to_vec(), divisor)
+}
+
 /// Returns the exact quotient when one bivariate polynomial divides another.
 ///
 /// The divisor and dividend are canonicalized first. Multivariate long
@@ -4116,6 +4145,21 @@ mod tests {
                 .expect("the exact Real divisor must replay"),
             &quotient,
         );
+    }
+
+    #[test]
+    fn exact_univariate_gcd_and_division_replay_axis_content() {
+        let left = vec![real(2), real(3), real(1)];
+        let right = vec![real(1), real(1), real(1), real(1)];
+        let factor = greatest_common_divisor_univariate_polynomials_exact(&left, &right)
+            .expect("the exact common axis factor must be recovered");
+
+        assert_eq!(factor, vec![real(1), real(1)]);
+        assert_eq!(
+            divide_univariate_polynomial_exact(&left, &factor),
+            Some(vec![real(2), real(1)])
+        );
+        assert!(divide_univariate_polynomial_exact(&left, &right).is_none());
     }
 
     #[test]
