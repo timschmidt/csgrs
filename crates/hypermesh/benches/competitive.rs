@@ -7,7 +7,7 @@ use std::{hint::black_box, time::Duration};
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use support::{
     Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
-    run_hypermesh_polygon, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
+    run_hypermesh_batch, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
     to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh,
     yeahright_enabled,
 };
@@ -102,10 +102,10 @@ fn competitive(c: &mut Criterion) {
         yeahright_immediate_group.measurement_time(Duration::from_secs(5));
         for operation in Operation::ALL {
             yeahright_immediate_group.bench_function(
-                BenchmarkId::new("polygon", operation.name()),
+                BenchmarkId::new("exact_batch", operation.name()),
                 |benchmark| {
                     benchmark.iter(|| {
-                        run_hypermesh_polygon(black_box(&yeahright_inputs.hypermesh), operation)
+                        run_hypermesh_batch(black_box(&yeahright_inputs.hypermesh), operation)
                     });
                 },
             );

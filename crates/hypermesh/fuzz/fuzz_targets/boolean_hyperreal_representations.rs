@@ -3,14 +3,14 @@
 mod support;
 
 use hypermesh::{
-    BooleanMesh, EmberConfig, HypermeshError, Point3, Real, Triangle, TriangleMesh, boolean_mesh,
-    TriangleMeshRef, boolean_operation, certify_convex_mesh,
+    BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, HypermeshError, Point3, Real,
+    Triangle, TriangleMesh, TriangleMeshRef, boolean, certify_convex_mesh,
 };
 use hyperreal::{Rational, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, CONTEXT, operation, r, representative_hyperreal_values, validate_result, validate_soup,
-    value, volume_numerator,
+    Bytes, CONTEXT, operation, r, representative_hyperreal_values, validate_batch, value,
+    volume_numerator,
 };
 
 fn translated_box(base: &Real, offset: [i64; 3], extent: i64) -> TriangleMesh {
@@ -95,16 +95,14 @@ fn accept_certification_boundary(error: HypermeshError) {
             error,
             HypermeshError::PredicateUndecided { .. }
                 | HypermeshError::UnknownClassification
-                | HypermeshError::ReferencePropagationFailed
                 | HypermeshError::PointAtInfinity
-                | HypermeshError::SubdivisionDepthLimit { .. }
         ),
         "symbolic-coordinate Boolean returned a non-certification error: {error:?}",
     );
 }
 
-fn assert_oracle_volume(soup: &BooleanMesh, expected: i64) {
-    let actual = volume_numerator(soup);
+fn assert_oracle_volume(batch: &BooleanMeshBatch, output: usize, expected: i64) {
+    let actual = volume_numerator(&batch.vertices, &batch.results[output]);
     let expected = Rational::new(6 * expected);
     if let Some(actual) = actual.exact_rational() {
         assert_eq!(actual, expected);
@@ -138,7 +136,7 @@ fuzz_target!(|data: [u8; 8]| {
             bytes.bounded_i64(4),
         ]
     };
-    let mut meshes = [
+    let meshes = [
         translated_box(base, [0, 0, 0], 3),
         translated_box(base, shift, 3),
     ];
@@ -148,34 +146,46 @@ fuzz_target!(|data: [u8; 8]| {
             return;
         }
     }
-    if api == 2 {
-        meshes = meshes.map(TriangleMesh::with_certified_convexity);
-    }
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
     let raw_refs = [
         TriangleMeshRef::new(&meshes[0].positions, &meshes[0].triangles),
         TriangleMeshRef::new(&meshes[1].positions, &meshes[1].triangles),
     ];
 
-    let soup: Result<BooleanMesh, HypermeshError> = match api {
-        0 => value(boolean_operation(
-            &CONTEXT,
-            &raw_refs,
-            op,
-            EmberConfig::default(),
-        ))
-        .map(|result| validate_result(&result, op, raw_refs.len())),
-        1 => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
-            validate_soup(soup);
-        }),
-        _ => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
-            validate_soup(soup);
-        }),
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let roots = [0, 1, 2, 3];
+    let (views, program, output) = match api {
+        0 => (
+            raw_refs.as_slice(),
+            BooleanProgram::Operation(op),
+            0,
+        ),
+        1 => (refs.as_slice(), BooleanProgram::Operation(op), 0),
+        _ => (
+            refs.as_slice(),
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
+            match op {
+                BooleanOp::Union => 0,
+                BooleanOp::Intersection => 1,
+                BooleanOp::Difference => 2,
+                BooleanOp::SymmetricDifference => 3,
+            },
+        ),
     };
+    let soup: Result<BooleanMeshBatch, HypermeshError> =
+        value(boolean(&CONTEXT, views, program)).inspect(validate_batch);
 
     match soup {
         Ok(soup) => {
-            assert_oracle_volume(&soup, expected_volume(op, shift));
+            assert_oracle_volume(&soup, output, expected_volume(op, shift));
         }
         Err(error) => accept_certification_boundary(error),
     }

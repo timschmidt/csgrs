@@ -1,7 +1,6 @@
 //! Convex polygon representation backed by hyperreal planes.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
-use hyperreal::RealSign;
+use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use std::sync::Arc;
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
@@ -45,37 +44,7 @@ pub(crate) enum ConstructionVertexIdentity {
     },
 }
 
-impl ConstructionPlaneIdentity {
-    pub(crate) fn try_new(mesh: usize, plane: usize) -> HypermeshResult<Self> {
-        Ok(Self {
-            mesh: compact_construction_index(mesh, "construction plane mesh ID")?,
-            plane: compact_construction_index(plane, "construction plane ID")?,
-        })
-    }
-
-    pub(crate) const fn mesh(self) -> usize {
-        self.mesh as usize
-    }
-
-    pub(crate) const fn plane(self) -> usize {
-        self.plane as usize
-    }
-}
-
 impl ConstructionEdgeIdentity {
-    pub(crate) fn try_source(mesh: usize, endpoints: [usize; 2]) -> HypermeshResult<Self> {
-        let [start, end] = endpoints;
-        let mut endpoints = [
-            compact_construction_index(start, "construction edge vertex ID")?,
-            compact_construction_index(end, "construction edge vertex ID")?,
-        ];
-        endpoints.sort_unstable();
-        Ok(Self::Source {
-            mesh: compact_construction_index(mesh, "construction edge mesh ID")?,
-            endpoints,
-        })
-    }
-
     pub(crate) fn intersection_identity(
         &self,
         plane: ConstructionPlaneIdentity,
@@ -95,40 +64,8 @@ impl ConstructionEdgeIdentity {
     }
 }
 
-impl ConstructionVertexIdentity {
-    pub(crate) fn try_source(mesh: usize, vertex: usize) -> HypermeshResult<Self> {
-        Ok(Self::Source {
-            mesh: compact_construction_index(mesh, "construction vertex mesh ID")?,
-            vertex: compact_construction_index(vertex, "construction vertex ID")?,
-        })
-    }
-}
-
 fn compact_construction_index(value: usize, operation: &'static str) -> HypermeshResult<u32> {
     u32::try_from(value).map_err(|_| crate::error::HypermeshError::CapacityOverflow { operation })
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct InputTrianglePlanes {
-    pub(crate) support: Plane,
-    pub(crate) edges: [Plane; 3],
-}
-
-impl InputTrianglePlanes {
-    pub(crate) fn from_points_decision(
-        decisions: &DecisionContext,
-        p0: &Point3,
-        p1: &Point3,
-        p2: &Point3,
-    ) -> HypermeshResult<Self> {
-        let support = Plane::from_points(p0, p1, p2);
-        let edges = [
-            edge_plane(decisions, p0, p1, p2, &support)?,
-            edge_plane(decisions, p1, p2, p0, &support)?,
-            edge_plane(decisions, p2, p0, p1, &support)?,
-        ];
-        Ok(Self { support, edges })
-    }
 }
 
 /// Approximate exact-coordinate bounds for fast spatial rejection.
@@ -141,51 +78,15 @@ pub struct ApproxBounds {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum RetainedVertexCycle {
-    Owned(Arc<[Point3]>),
-    IndexedTriangle {
-        positions: Arc<[Point3]>,
-        indices: [usize; 3],
-    },
-    SourceIndexed {
-        positions: Arc<[Point3]>,
-        identities: Arc<[ConstructionVertexIdentity]>,
-    },
-}
+pub(crate) struct RetainedVertexCycle(Arc<[Point3]>);
 
 impl RetainedVertexCycle {
     pub(crate) fn len(&self) -> usize {
-        match self {
-            Self::Owned(vertices) => vertices.len(),
-            Self::IndexedTriangle { .. } => 3,
-            Self::SourceIndexed { identities, .. } => identities.len(),
-        }
+        self.0.len()
     }
 
     pub(crate) fn get(&self, index: usize) -> Option<&Point3> {
-        match self {
-            Self::Owned(vertices) => vertices.get(index),
-            Self::IndexedTriangle { positions, indices } => positions.get(*indices.get(index)?),
-            Self::SourceIndexed {
-                positions,
-                identities,
-            } => {
-                let ConstructionVertexIdentity::Source { vertex, .. } = identities.get(index)?
-                else {
-                    return None;
-                };
-                positions.get(*vertex as usize)
-            }
-        }
-    }
-
-    pub(crate) fn source_positions(&self) -> Option<&Arc<[Point3]>> {
-        match self {
-            Self::IndexedTriangle { positions, .. } | Self::SourceIndexed { positions, .. } => {
-                Some(positions)
-            }
-            Self::Owned(_) => None,
-        }
+        self.0.get(index)
     }
 
     pub(crate) fn iter(&self) -> impl DoubleEndedIterator<Item = &Point3> + ExactSizeIterator {
@@ -528,7 +429,7 @@ impl ConvexPolygon {
         result.support = self.support.inverted();
         result.edges = Arc::new(self.edges.iter().rev().cloned().collect::<Vec<_>>());
         result.known_vertices = self.known_vertices.as_ref().map(|vertices| {
-            RetainedVertexCycle::Owned(Arc::from(
+            RetainedVertexCycle(Arc::from(
                 vertices.iter().rev().cloned().collect::<Vec<_>>(),
             ))
         });
@@ -550,65 +451,6 @@ impl ConvexPolygon {
         result
     }
 
-    pub(crate) fn with_known_vertex_cycle_and_edges(
-        &self,
-        decisions: &DecisionContext,
-        vertices: Vec<Point3>,
-        vertex_identities: Vec<ConstructionVertexIdentity>,
-        edges: Vec<Plane>,
-        edge_identities: Vec<ConstructionEdgeIdentity>,
-    ) -> HypermeshResult<Self> {
-        debug_assert_eq!(vertices.len(), edges.len());
-        debug_assert_eq!(vertices.len(), vertex_identities.len());
-        debug_assert_eq!(vertices.len(), edge_identities.len());
-        let approx_bounds = if vertices.is_empty() {
-            None
-        } else {
-            Some(Box::new(bounds_for_owned_points(
-                decisions,
-                vertices.as_slice(),
-            )?))
-        };
-        let mut result = self.clone();
-        result.edges = Arc::new(edges);
-        result.approx_bounds = approx_bounds;
-        result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
-        result.known_identities = Some(RetainedIdentityCycles::Owned {
-            vertices: Arc::from(vertex_identities),
-            edges: Arc::from(edge_identities),
-        });
-        Ok(result)
-    }
-
-    pub(crate) fn with_known_vertex_cycle_and_identities(
-        &self,
-        decisions: &DecisionContext,
-        vertices: Vec<Point3>,
-        vertex_identities: Vec<ConstructionVertexIdentity>,
-    ) -> HypermeshResult<Self> {
-        let edge_identities = self
-            .known_edge_identities()
-            .expect("known vertex identities have an aligned edge cycle");
-        debug_assert_eq!(vertices.len(), vertex_identities.len());
-        debug_assert_eq!(vertices.len(), edge_identities.len());
-        let approx_bounds = if vertices.is_empty() {
-            None
-        } else {
-            Some(Box::new(bounds_for_owned_points(
-                decisions,
-                vertices.as_slice(),
-            )?))
-        };
-        let mut result = self.clone();
-        result.approx_bounds = approx_bounds;
-        result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
-        result.known_identities = Some(RetainedIdentityCycles::Owned {
-            vertices: Arc::from(vertex_identities),
-            edges: Arc::from(edge_identities.iter().collect::<Vec<_>>()),
-        });
-        Ok(result)
-    }
-
     #[inline]
     pub(crate) fn set_source_triangle_edge_identities(
         &mut self,
@@ -624,87 +466,6 @@ impl ConvexPolygon {
         ];
         self.known_identities = Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices });
         Ok(())
-    }
-
-    pub(crate) fn from_certified_convex_face(
-        support: Plane,
-        vertices: &[&Point3],
-        indexed_positions: Option<Arc<[Point3]>>,
-        vertex_identities: Vec<ConstructionVertexIdentity>,
-        edges: Vec<Plane>,
-        edge_identities: Vec<ConstructionEdgeIdentity>,
-        mesh_index: isize,
-        polygon_index: isize,
-        delta_w: WindingNumberTransitionVector,
-    ) -> Self {
-        debug_assert_eq!(vertices.len(), vertex_identities.len());
-        debug_assert!(edges.is_empty() || vertices.len() == edges.len());
-        debug_assert_eq!(vertices.len(), edge_identities.len());
-        debug_assert!(indexed_positions.as_ref().is_none_or(|positions| {
-            vertices
-                .iter()
-                .zip(&vertex_identities)
-                .all(|(point, identity)| {
-                    let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
-                        return false;
-                    };
-                    positions.get(*vertex as usize) == Some(*point)
-                })
-        }));
-        let vertex_identities = Arc::from(vertex_identities);
-        let known_vertices = match indexed_positions {
-            Some(positions) => RetainedVertexCycle::SourceIndexed {
-                positions,
-                identities: Arc::clone(&vertex_identities),
-            },
-            None => RetainedVertexCycle::Owned(Arc::from(
-                vertices
-                    .iter()
-                    .map(|point| (*point).clone())
-                    .collect::<Vec<_>>(),
-            )),
-        };
-        Self {
-            support,
-            edges: Arc::new(edges),
-            mesh_index,
-            polygon_index,
-            delta_w,
-            // Certified convex faces are consumed only by the projective
-            // two-input candidate, which classifies directly against support
-            // planes. A failed candidate rebuilds ordinary input polygons
-            // before any BVH or subdivision query.
-            approx_bounds: None,
-            known_vertices: Some(known_vertices),
-            known_identities: Some(RetainedIdentityCycles::Owned {
-                vertices: vertex_identities,
-                edges: Arc::from(edge_identities),
-            }),
-        }
-    }
-
-    pub(crate) fn with_rebuilt_edge_planes(
-        &self,
-        decisions: &DecisionContext,
-    ) -> HypermeshResult<Self> {
-        let vertices = self.vertices_decision(decisions)?;
-        if vertices.len() < 3 {
-            return Ok(self.clone());
-        }
-        let edges = (0..vertices.len())
-            .map(|index| {
-                edge_plane(
-                    decisions,
-                    &vertices[index],
-                    &vertices[(index + 1) % vertices.len()],
-                    &vertices[(index + 2) % vertices.len()],
-                    &self.support,
-                )
-            })
-            .collect::<HypermeshResult<Vec<_>>>()?;
-        let mut result = self.clone();
-        result.edges = Arc::new(edges);
-        Ok(result)
     }
 
     /// Returns true if a homogeneous point lies on or inside the polygon.
@@ -802,185 +563,13 @@ pub(crate) fn convex_triangle_decision(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
-        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+        known_vertices: Some(RetainedVertexCycle(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
         ]))),
         known_identities: None,
     })
-}
-
-pub(crate) fn make_triangle_with_input_planes(
-    decisions: &DecisionContext,
-    p0: &Point3,
-    p1: &Point3,
-    p2: &Point3,
-    planes: InputTrianglePlanes,
-    mesh_index: isize,
-    polygon_index: isize,
-) -> HypermeshResult<ConvexPolygon> {
-    Ok(ConvexPolygon {
-        support: planes.support,
-        edges: Arc::new(Vec::from(planes.edges)),
-        mesh_index,
-        polygon_index,
-        delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
-        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
-            p0.clone(),
-            p1.clone(),
-            p2.clone(),
-        ]))),
-        known_identities: None,
-    })
-}
-
-#[cfg(test)]
-pub(crate) fn make_triangle_with_deferred_edges(
-    decisions: &DecisionContext,
-    p0: &Point3,
-    p1: &Point3,
-    p2: &Point3,
-    mesh_index: isize,
-    polygon_index: isize,
-) -> HypermeshResult<ConvexPolygon> {
-    let support = Plane::from_points(p0, p1, p2);
-    Ok(ConvexPolygon {
-        // Certified two-convex preparation needs only aligned placeholders
-        // for source edges that actually reach projective clipping. The
-        // support already carries that deferred plane, so keep this empty and
-        // expand it at the narrower projective boundary.
-        edges: Arc::new(Vec::new()),
-        support,
-        mesh_index,
-        polygon_index,
-        delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
-        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
-            p0.clone(),
-            p1.clone(),
-            p2.clone(),
-        ]))),
-        known_identities: None,
-    })
-}
-
-pub(crate) fn make_indexed_triangle_with_deferred_edges(
-    positions: Arc<[Point3]>,
-    indices: [usize; 3],
-    support_hint: Option<Plane>,
-    deferred_edges: Arc<Vec<Plane>>,
-    mesh_index: isize,
-    polygon_index: isize,
-) -> ConvexPolygon {
-    debug_assert!(deferred_edges.is_empty());
-    let [i0, i1, i2] = indices;
-    let p0 = &positions[i0];
-    let p1 = &positions[i1];
-    let p2 = &positions[i2];
-    let support = support_hint.unwrap_or_else(|| Plane::from_points(p0, p1, p2));
-    ConvexPolygon {
-        edges: deferred_edges,
-        support,
-        mesh_index,
-        polygon_index,
-        delta_w: Vec::new(),
-        // The indexed carrier is used only by the certified two-convex
-        // projective candidate, which classifies directly against support
-        // planes and never queries polygon AABBs. A failed candidate rebuilds
-        // ordinary input polygons before entering BVH/subdivision code.
-        approx_bounds: None,
-        known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
-        known_identities: None,
-    }
-}
-
-pub(crate) fn exact_axis_aligned_triangle_support(
-    p0: &Point3,
-    p1: &Point3,
-    p2: &Point3,
-    axis: usize,
-    orientation_hint: Option<RealSign>,
-) -> Option<Plane> {
-    let points = [
-        [&p0.x, &p0.y, &p0.z],
-        [&p1.x, &p1.y, &p1.z],
-        [&p2.x, &p2.y, &p2.z],
-    ];
-    let [Some(value), Some(second), Some(third)] =
-        points.map(|point| point.get(axis)?.exact_rational_ref())
-    else {
-        return None;
-    };
-    if value != second || value != third {
-        return None;
-    }
-    // For a triangle in an axis plane, the cyclic complementary-coordinate
-    // determinant is exactly the corresponding component of its cross
-    // product. Its sign therefore supplies the original support orientation
-    // without materializing any coordinate differences or plane scale.
-    let u = (axis + 1) % 3;
-    let v = (axis + 2) % 3;
-    let orientation = match orientation_hint.or_else(|| {
-        Real::certified_affine_det2_sign(
-            [points[0][u], points[0][v]],
-            [points[1][u], points[1][v]],
-            [points[2][u], points[2][v]],
-        )
-    }) {
-        Some(RealSign::Negative) => std::cmp::Ordering::Less,
-        Some(RealSign::Positive) => std::cmp::Ordering::Greater,
-        Some(RealSign::Zero) | None => {
-            let [Some(p0u), Some(p1u), Some(p2u)] =
-                points.map(|point| point[u].exact_rational_ref())
-            else {
-                return None;
-            };
-            let [Some(p0v), Some(p1v), Some(p2v)] =
-                points.map(|point| point[v].exact_rational_ref())
-            else {
-                return None;
-            };
-            Rational::signed_product_sum_ordering(
-                [true, true, true, false, false, false],
-                [
-                    [p0u, p1v],
-                    [p1u, p2v],
-                    [p2u, p0v],
-                    [p0u, p2v],
-                    [p1u, p0v],
-                    [p2u, p1v],
-                ],
-            )
-        }
-    };
-    match orientation {
-        std::cmp::Ordering::Less => {
-            Some(Plane::axis_aligned(axis, points[0][axis].clone()).inverted())
-        }
-        std::cmp::Ordering::Equal => None,
-        std::cmp::Ordering::Greater => Some(Plane::axis_aligned(axis, points[0][axis].clone())),
-    }
-}
-
-pub(crate) fn make_indexed_triangle_with_deferred_edges_and_input_planes(
-    positions: Arc<[Point3]>,
-    indices: [usize; 3],
-    planes: InputTrianglePlanes,
-    mesh_index: isize,
-    polygon_index: isize,
-) -> ConvexPolygon {
-    ConvexPolygon {
-        edges: Arc::new(Vec::from(planes.edges)),
-        support: planes.support,
-        mesh_index,
-        polygon_index,
-        delta_w: Vec::new(),
-        approx_bounds: None,
-        known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
-        known_identities: None,
-    }
 }
 
 /// Returns a convex quad from four coplanar exact positions in winding order.
@@ -1019,7 +608,7 @@ pub(crate) fn convex_quad_decision(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2, p3])?)),
-        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+        known_vertices: Some(RetainedVertexCycle(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
@@ -1060,18 +649,6 @@ fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
 fn bounds_for_points(
     decisions: &DecisionContext,
     points: &[&Point3],
-) -> HypermeshResult<ApproxBounds> {
-    let (min_x, max_x) = min_max_real(decisions, points.iter().map(|point| &point.x))?;
-    let (min_y, max_y) = min_max_real(decisions, points.iter().map(|point| &point.y))?;
-    let (min_z, max_z) = min_max_real(decisions, points.iter().map(|point| &point.z))?;
-    let min = Point3::new(min_x, min_y, min_z);
-    let max = Point3::new(max_x, max_y, max_z);
-    Ok(ApproxBounds::new(min, max))
-}
-
-fn bounds_for_owned_points(
-    decisions: &DecisionContext,
-    points: &[Point3],
 ) -> HypermeshResult<ApproxBounds> {
     let (min_x, max_x) = min_max_real(decisions, points.iter().map(|point| &point.x))?;
     let (min_y, max_y) = min_max_real(decisions, points.iter().map(|point| &point.y))?;
@@ -1212,12 +789,7 @@ mod tests {
 
     #[cfg(target_pointer_width = "64")]
     #[test]
-    fn compact_construction_identity_overflow_is_rejected_before_mutation() {
-        assert!(ConstructionPlaneIdentity::try_new(usize::MAX, 0).is_err());
-        assert!(ConstructionPlaneIdentity::try_new(0, usize::MAX).is_err());
-        assert!(ConstructionVertexIdentity::try_source(0, usize::MAX).is_err());
-        assert!(ConstructionEdgeIdentity::try_source(0, [0, usize::MAX]).is_err());
-
+    fn compact_source_triangle_identity_overflow_is_rejected_before_mutation() {
         let mut polygon = ConvexPolygon::empty();
         assert!(
             polygon
@@ -1225,126 +797,5 @@ mod tests {
                 .is_err()
         );
         assert!(polygon.known_identities.is_none());
-    }
-
-    #[test]
-    fn certified_source_face_reuses_position_and_identity_arenas() {
-        let positions: Arc<[Point3]> = Arc::new([
-            point(0, 0, 0),
-            point(1, 0, 0),
-            point(1, 1, 0),
-            point(0, 1, 0),
-        ]);
-        let indices = [0_u32, 1, 2, 3];
-        let vertex_identities = indices
-            .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
-            .to_vec();
-        let edge_identities = [[0, 1], [1, 2], [2, 3], [0, 3]]
-            .map(|endpoints| ConstructionEdgeIdentity::Source { mesh: 0, endpoints })
-            .to_vec();
-        let polygon = ConvexPolygon::from_certified_convex_face(
-            Plane::axis_aligned(2, Real::zero()),
-            &indices.map(|index| &positions[index as usize]),
-            Some(Arc::clone(&positions)),
-            vertex_identities,
-            Vec::new(),
-            edge_identities,
-            0,
-            0,
-            vec![1],
-        );
-
-        let Some(RetainedVertexCycle::SourceIndexed {
-            positions: retained_positions,
-            identities: vertex_positions,
-        }) = &polygon.known_vertices
-        else {
-            panic!("certified source face should retain indexed positions");
-        };
-        let Some(RetainedIdentityCycles::Owned { vertices, edges: _ }) = &polygon.known_identities
-        else {
-            panic!("certified source face should retain expanded identities");
-        };
-        assert!(Arc::ptr_eq(retained_positions, &positions));
-        assert!(Arc::ptr_eq(vertex_positions, vertices));
-        assert_eq!(
-            polygon
-                .vertices(&crate::test_support::APPROXIMATE_CONTEXT)
-                .unwrap()
-                .into_value(),
-            positions.as_ref()
-        );
-    }
-
-    #[test]
-    fn pairwise_bounds_preserve_exact_extrema_for_odd_even_and_equal_coordinates() {
-        for points in [
-            vec![
-                point(3, -2, 7),
-                point(-4, 9, 7),
-                point(3, 1, -5),
-                point(8, 9, 2),
-            ],
-            vec![
-                point(3, -2, 7),
-                point(-4, 9, 7),
-                point(3, 1, -5),
-                point(8, 9, 2),
-                point(0, -2, 4),
-            ],
-        ] {
-            let bounds =
-                bounds_for_owned_points(&crate::test_support::approximate_decisions(), &points)
-                    .unwrap();
-            assert_eq!(bounds.min, point(-4, -2, -5));
-            assert_eq!(bounds.max, point(8, 9, 7));
-        }
-    }
-
-    #[test]
-    fn exact_axis_aligned_triangle_support_preserves_every_normal_orientation() {
-        for (axis, points, expected) in [
-            (
-                0,
-                [point(2, 0, 0), point(2, 1, 0), point(2, 0, 1)],
-                Plane::axis_aligned(0, Real::from(2)),
-            ),
-            (
-                1,
-                [point(0, 2, 0), point(0, 2, 1), point(1, 2, 0)],
-                Plane::axis_aligned(1, Real::from(2)),
-            ),
-            (
-                2,
-                [point(0, 0, 2), point(1, 0, 2), point(0, 1, 2)],
-                Plane::axis_aligned(2, Real::from(2)),
-            ),
-        ] {
-            assert_eq!(
-                exact_axis_aligned_triangle_support(&points[0], &points[1], &points[2], axis, None),
-                Some(expected.clone())
-            );
-            assert_eq!(
-                exact_axis_aligned_triangle_support(&points[0], &points[2], &points[1], axis, None),
-                Some(expected.inverted())
-            );
-        }
-
-        let non_axis = [point(0, 0, 0), point(1, 0, 0), point(0, 1, 1)];
-        assert_eq!(
-            exact_axis_aligned_triangle_support(&non_axis[0], &non_axis[1], &non_axis[2], 0, None),
-            None
-        );
-        let degenerate = [point(0, 0, 0), point(0, 0, 1), point(0, 0, 2)];
-        assert_eq!(
-            exact_axis_aligned_triangle_support(
-                &degenerate[0],
-                &degenerate[1],
-                &degenerate[2],
-                0,
-                None,
-            ),
-            None
-        );
     }
 }

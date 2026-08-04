@@ -10,7 +10,7 @@ use std::fmt;
 use hyperlattice::{Point3, Real};
 
 use crate::TriangleMesh;
-use crate::output::BooleanMesh;
+use crate::output::BooleanMeshResult;
 
 /// One exact render vertex stored as `(position, normal)` rows.
 pub type ExactGpuVertex = ([Real; 3], [Real; 3]);
@@ -332,17 +332,21 @@ pub fn approximate_gpu_mesh_f64_or_zero(
     })
 }
 
-impl BooleanMesh {
-    /// Builds exact flat-shaded render rows and `u32` indices.
-    pub fn to_exact_gpu_mesh_buffers(&self) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
+impl BooleanMeshResult {
+    /// Builds exact flat-shaded render rows from this result and its batch's
+    /// shared vertex arena.
+    pub fn to_exact_gpu_mesh_buffers(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
         for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
             for (corner, &index) in triangle.iter().enumerate() {
-                if index >= self.vertices.len() {
+                if index as usize >= vertices.len() {
                     return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
                         triangle: triangle_offset,
                         corner,
-                        index,
-                        vertex_count: self.vertices.len(),
+                        index: index as usize,
+                        vertex_count: vertices.len(),
                     });
                 }
             }
@@ -353,35 +357,48 @@ impl BooleanMesh {
             .iter()
             .enumerate()
             .map(|(triangle_index, triangle)| {
-                let [a, b, c] = triangle.map(|index| {
-                    let vertex = &self.vertices[index];
-                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
-                });
+                let [a, b, c] = triangle.map(|index| vertices[index as usize].clone());
                 exact_gpu_triangle(triangle_index, a, b, c)
             });
         ExactGpuMeshBuffers::from_fallible_triangle_iterator(self.triangles.len(), triangles)
     }
 
     /// Produces strict finite-`f32` GPU buffers from this exact triangle soup.
-    pub fn try_to_gpu_mesh_f32(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers()?.try_approximate_f32()
+    pub fn try_to_gpu_mesh_f32(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .try_approximate_f32()
     }
 
     /// Produces finite-`f32` GPU buffers, using zero for an unrepresentable
     /// position row or normal component.
-    pub fn to_gpu_mesh_f32_or_zero(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers()?.approximate_f32_or_zero()
+    pub fn to_gpu_mesh_f32_or_zero(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .approximate_f32_or_zero()
     }
 
     /// Produces strict finite-`f64` GPU buffers from this exact triangle soup.
-    pub fn try_to_gpu_mesh_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers()?.try_approximate_f64()
+    pub fn try_to_gpu_mesh_f64(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .try_approximate_f64()
     }
 
     /// Produces finite-`f64` GPU buffers, using zero for an unrepresentable
     /// position row or normal component.
-    pub fn to_gpu_mesh_f64_or_zero(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
-        self.to_exact_gpu_mesh_buffers()?.approximate_f64_or_zero()
+    pub fn to_gpu_mesh_f64_or_zero(
+        &self,
+        vertices: &[Point3],
+    ) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        self.to_exact_gpu_mesh_buffers(vertices)?
+            .approximate_f64_or_zero()
     }
 }
 
@@ -554,8 +571,7 @@ fn validate_indices(vertex_count: usize, indices: &[u32]) -> Result<(), GpuMeshE
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Triangle;
-    use crate::mesh::OutputVertex;
+    use crate::{BooleanMeshResult, Triangle};
 
     fn exact_vertex(position: [i64; 3], normal: [i64; 3]) -> ExactGpuVertex {
         (position.map(Real::from), normal.map(Real::from))
@@ -689,18 +705,15 @@ mod tests {
 
     #[test]
     fn boolean_mesh_rejects_an_invalid_source_index() {
-        let soup = BooleanMesh {
-            vertices: vec![OutputVertex {
-                x: 0.into(),
-                y: 0.into(),
-                z: 0.into(),
-            }],
+        let vertices = vec![Point3::origin()];
+        let result = BooleanMeshResult {
             triangles: vec![[0, 4, 0]],
             sources: Vec::new(),
+            exterior_inside: false,
         };
 
         assert_eq!(
-            soup.to_exact_gpu_mesh_buffers(),
+            result.to_exact_gpu_mesh_buffers(&vertices),
             Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
                 triangle: 0,
                 corner: 1,
@@ -723,50 +736,32 @@ mod tests {
             Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
         );
 
-        let soup = BooleanMesh {
-            vertices: positions
-                .into_iter()
-                .map(|point| OutputVertex {
-                    x: point.x,
-                    y: point.y,
-                    z: point.z,
-                })
-                .collect(),
+        let result = BooleanMeshResult {
             triangles: vec![[0, 1, 2]],
             sources: Vec::new(),
+            exterior_inside: false,
         };
         assert_eq!(
-            soup.to_exact_gpu_mesh_buffers(),
+            result.to_exact_gpu_mesh_buffers(&positions),
             Err(GpuMeshError::TriangleNormalUnavailable { triangle: 0 })
         );
     }
 
     #[test]
     fn boolean_mesh_exports_flat_shaded_gpu_rows() {
-        let soup = BooleanMesh {
-            vertices: vec![
-                OutputVertex {
-                    x: 0.into(),
-                    y: 0.into(),
-                    z: 0.into(),
-                },
-                OutputVertex {
-                    x: 2.into(),
-                    y: 0.into(),
-                    z: 0.into(),
-                },
-                OutputVertex {
-                    x: 0.into(),
-                    y: 2.into(),
-                    z: 0.into(),
-                },
-            ],
+        let vertices = vec![
+            Point3::origin(),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::from(2), Real::zero()),
+        ];
+        let result = BooleanMeshResult {
             triangles: vec![[0, 1, 2]],
             sources: Vec::new(),
+            exterior_inside: false,
         };
 
-        let gpu = soup.try_to_gpu_mesh_f32().unwrap();
-        let gpu_f64 = soup.try_to_gpu_mesh_f64().unwrap();
+        let gpu = result.try_to_gpu_mesh_f32(&vertices).unwrap();
+        let gpu_f64 = result.try_to_gpu_mesh_f64(&vertices).unwrap();
         assert_eq!(
             gpu.positions,
             [[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 2.0, 0.0]]

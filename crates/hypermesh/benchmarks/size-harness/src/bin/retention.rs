@@ -5,7 +5,7 @@ mod cube_fixture;
 
 use cube_fixture::cube;
 use hypermesh::{
-    BooleanOp, EmberConfig, MeshContext, PredicatePolicy, TriangleMeshRef, boolean_operation,
+    BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, TriangleMeshRef, boolean,
 };
 
 fn main() -> hypermesh::HypermeshResult<()> {
@@ -22,16 +22,16 @@ fn main() -> hypermesh::HypermeshResult<()> {
     ];
     let mut polygons = 0;
     for _ in 0..iterations {
-        polygons = black_box(boolean_operation(
+        polygons = black_box(boolean(
             black_box(&context),
             black_box(&meshes),
-            BooleanOp::Union,
-            EmberConfig::default(),
+            BooleanProgram::Operation(BooleanOp::Union),
         )?)
         .value
-        .classifications()
+        .results[0]
+        .triangles
         .len();
     }
-    println!("{iterations} operations, {polygons} final polygons");
+    println!("{iterations} operations, {polygons} final triangles");
     Ok(())
 }

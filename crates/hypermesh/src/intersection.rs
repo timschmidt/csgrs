@@ -223,78 +223,6 @@ struct PairwiseIntersectionSegment {
     endpoints: [u32; 2],
 }
 
-#[derive(Clone, Copy)]
-pub(crate) enum PairwiseIntersectionEventRef<'a> {
-    NonCoplanarPoint {
-        point: &'a Point3,
-        other_polygon_idx: usize,
-    },
-    NonCoplanarSegment {
-        segment: PairwiseIntersectionSegmentRef<'a>,
-        other_polygon_idx: usize,
-    },
-    CoplanarPoint {
-        point: &'a Point3,
-        other_polygon_idx: usize,
-    },
-    CoplanarSegment {
-        segment: PairwiseIntersectionSegmentRef<'a>,
-        other_polygon_idx: usize,
-    },
-    CoplanarOverlap {
-        other_polygon_idx: usize,
-    },
-}
-
-impl PairwiseIntersectionEventRef<'_> {
-    pub(crate) const fn other_polygon_idx(self) -> usize {
-        match self {
-            Self::NonCoplanarPoint {
-                other_polygon_idx, ..
-            }
-            | Self::NonCoplanarSegment {
-                other_polygon_idx, ..
-            }
-            | Self::CoplanarPoint {
-                other_polygon_idx, ..
-            }
-            | Self::CoplanarSegment {
-                other_polygon_idx, ..
-            }
-            | Self::CoplanarOverlap { other_polygon_idx } => other_polygon_idx,
-        }
-    }
-
-    pub(crate) const fn is_coplanar_overlap(self) -> bool {
-        matches!(self, Self::CoplanarOverlap { .. })
-    }
-
-    pub(crate) const fn changes_open_face_partition(self) -> bool {
-        match self {
-            Self::NonCoplanarSegment { segment, .. } => {
-                let _ = segment;
-                true
-            }
-            Self::CoplanarOverlap { .. } => true,
-            Self::NonCoplanarPoint { point, .. } | Self::CoplanarPoint { point, .. } => {
-                let _ = point;
-                false
-            }
-            Self::CoplanarSegment { segment, .. } => {
-                let _ = segment;
-                false
-            }
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct PairwiseIntersectionSegmentRef<'a> {
-    pub(crate) v0: &'a Point3,
-    pub(crate) v1: &'a Point3,
-}
-
-#[cfg(test)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum PairwiseIntersectionEventIds {
     NonCoplanarPoint {
@@ -318,6 +246,10 @@ pub(crate) enum PairwiseIntersectionEventIds {
     },
 }
 
+fn compact_intersection_index(value: usize, operation: &'static str) -> HypermeshResult<u32> {
+    u32::try_from(value).map_err(|_| HypermeshError::CapacityOverflow { operation })
+}
+
 /// Compact face-indexed intersection adjacency backed by contiguous rows.
 ///
 /// Empty faces cost one 32-bit offset rather than a separately allocated `Vec`
@@ -338,39 +270,16 @@ impl PairwiseIntersectionGraph {
         self.offsets.len().saturating_sub(1)
     }
 
-    pub(crate) fn event_count(&self) -> usize {
-        self.events.len()
-    }
-
-    #[cfg(test)]
     pub(crate) fn construction_point_count(&self) -> usize {
         self.points.len()
     }
 
-    pub(crate) fn row(&self, face: usize) -> PairwiseIntersectionRow<'_> {
-        debug_assert!(face < self.len());
-        let next_face = face.checked_add(1);
-        let next = self.offsets.get(face).copied().unwrap_or(0);
-        let end = next_face
-            .and_then(|next_face| self.offsets.get(next_face))
-            .copied()
-            .unwrap_or(next);
-        PairwiseIntersectionRow {
-            graph: self,
-            next,
-            end,
-        }
-    }
-
-    pub(crate) fn iter(&self) -> impl ExactSizeIterator<Item = PairwiseIntersectionRow<'_>> + '_ {
-        (0..self.len()).map(|face| self.row(face))
-    }
-
-    #[cfg(test)]
     pub(crate) fn event_ids(
         &self,
         face: usize,
-    ) -> HypermeshResult<impl ExactSizeIterator<Item = PairwiseIntersectionEventIds> + '_> {
+    ) -> HypermeshResult<
+        impl ExactSizeIterator<Item = HypermeshResult<PairwiseIntersectionEventIds>> + '_,
+    > {
         let end_face = face
             .checked_add(1)
             .ok_or(HypermeshError::SurfaceArrangementFailed {
@@ -388,49 +297,73 @@ impl PairwiseIntersectionGraph {
                 reason: "source-face intersection row terminal is absent",
             },
         )?;
-        Ok(self.events[start as usize..end as usize]
-            .iter()
-            .map(|event| {
-                let (kind, index) = decode_intersection_geometry(event.geometry);
-                match kind {
-                    StoredIntersectionKind::NonCoplanarPoint => {
-                        PairwiseIntersectionEventIds::NonCoplanarPoint {
-                            point: u32::try_from(index.expect("point events carry an index"))
-                                .expect("intersection point indices fit the compact arena"),
-                            other_polygon: event.other_polygon,
-                        }
-                    }
-                    StoredIntersectionKind::NonCoplanarSegment => {
-                        PairwiseIntersectionEventIds::NonCoplanarSegment {
-                            endpoints: self.segments[index.expect("segment events carry an index")]
-                                .endpoints,
-                            other_polygon: event.other_polygon,
-                        }
-                    }
-                    StoredIntersectionKind::CoplanarPoint => {
-                        PairwiseIntersectionEventIds::CoplanarPoint {
-                            point: u32::try_from(index.expect("point events carry an index"))
-                                .expect("intersection point indices fit the compact arena"),
-                            other_polygon: event.other_polygon,
-                        }
-                    }
-                    StoredIntersectionKind::CoplanarSegment => {
-                        PairwiseIntersectionEventIds::CoplanarSegment {
-                            endpoints: self.segments[index.expect("segment events carry an index")]
-                                .endpoints,
-                            other_polygon: event.other_polygon,
-                        }
-                    }
-                    StoredIntersectionKind::CoplanarOverlap => {
-                        PairwiseIntersectionEventIds::CoplanarOverlap {
-                            other_polygon: event.other_polygon,
-                        }
+        let events = self.events.get(start as usize..end as usize).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "source-face intersection row range is invalid",
+            },
+        )?;
+        Ok(events.iter().map(|event| {
+            let (kind, index) = decode_intersection_geometry(event.geometry);
+            Ok(match kind {
+                StoredIntersectionKind::NonCoplanarPoint => {
+                    PairwiseIntersectionEventIds::NonCoplanarPoint {
+                        point: compact_intersection_index(
+                            index.ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "point intersection event has no point index",
+                            })?,
+                            "intersection point event IDs",
+                        )?,
+                        other_polygon: event.other_polygon,
                     }
                 }
-            }))
+                StoredIntersectionKind::NonCoplanarSegment => {
+                    PairwiseIntersectionEventIds::NonCoplanarSegment {
+                        endpoints: self
+                            .segments
+                            .get(index.ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "segment intersection event has no segment index",
+                            })?)
+                            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "intersection event references an absent segment",
+                            })?
+                            .endpoints,
+                        other_polygon: event.other_polygon,
+                    }
+                }
+                StoredIntersectionKind::CoplanarPoint => {
+                    PairwiseIntersectionEventIds::CoplanarPoint {
+                        point: compact_intersection_index(
+                            index.ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "point intersection event has no point index",
+                            })?,
+                            "intersection point event IDs",
+                        )?,
+                        other_polygon: event.other_polygon,
+                    }
+                }
+                StoredIntersectionKind::CoplanarSegment => {
+                    PairwiseIntersectionEventIds::CoplanarSegment {
+                        endpoints: self
+                            .segments
+                            .get(index.ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "segment intersection event has no segment index",
+                            })?)
+                            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                                reason: "intersection event references an absent segment",
+                            })?
+                            .endpoints,
+                        other_polygon: event.other_polygon,
+                    }
+                }
+                StoredIntersectionKind::CoplanarOverlap => {
+                    PairwiseIntersectionEventIds::CoplanarOverlap {
+                        other_polygon: event.other_polygon,
+                    }
+                }
+            })
+        }))
     }
 
-    #[cfg(test)]
     pub(crate) fn construction_point(
         &self,
         point: u32,
@@ -451,225 +384,7 @@ impl PairwiseIntersectionGraph {
             })?;
         Ok((point, identity))
     }
-
-    pub(crate) fn remap_polygon_order(&self, query_to_cached: &[usize]) -> HypermeshResult<Self> {
-        if self.len() != query_to_cached.len() {
-            return Err(HypermeshError::UnknownClassification);
-        }
-        let mut cached_to_query = vec![usize::MAX; query_to_cached.len()];
-        for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
-            if cached_index >= cached_to_query.len() || cached_to_query[cached_index] != usize::MAX
-            {
-                return Err(HypermeshError::UnknownClassification);
-            }
-            cached_to_query[cached_index] = query_index;
-        }
-
-        let mut remapped = PairwiseIntersectionGraphBuilder::new(query_to_cached.len())?;
-        remapped
-            .points
-            .try_reserve(self.points.len())
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "pairwise intersection point remapping",
-            })?;
-        remapped
-            .point_interner
-            .register_unindexed_existing(self.points.len())?;
-        remapped.points.extend(self.points.iter().cloned());
-        remapped
-            .point_identities
-            .try_reserve_exact(self.point_identities.len())
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "pairwise intersection construction remapping",
-            })?;
-        for identity in &self.point_identities {
-            remapped.point_identities.push(
-                identity
-                    .as_ref()
-                    .map(|identity| {
-                        remap_pairwise_construction_identity(identity, &cached_to_query)
-                    })
-                    .transpose()?,
-            );
-        }
-        remapped
-            .segments
-            .try_reserve(self.segments.len())
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "pairwise intersection segment remapping",
-            })?;
-        remapped.segments.extend(self.segments.iter().cloned());
-        for segment in &remapped.segments {
-            if segment
-                .endpoints
-                .iter()
-                .any(|&point| remapped.points.get(point as usize).is_none())
-            {
-                return Err(HypermeshError::UnknownClassification);
-            }
-        }
-        remapped.reserve_events(self.events.len())?;
-        for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
-            let start = *self
-                .offsets
-                .get(cached_index)
-                .ok_or(HypermeshError::UnknownClassification)? as usize;
-            let end = *self
-                .offsets
-                .get(cached_index + 1)
-                .ok_or(HypermeshError::UnknownClassification)? as usize;
-            let row = self
-                .events
-                .get(start..end)
-                .ok_or(HypermeshError::UnknownClassification)?;
-            for entry in row {
-                if !intersection_geometry_exists(entry.geometry, &self.points, &self.segments) {
-                    return Err(HypermeshError::UnknownClassification);
-                }
-                let other_polygon = remapped_face_id(&cached_to_query, entry.other_polygon)?;
-                remapped.append(query_index, other_polygon, entry.geometry)?;
-            }
-        }
-        remapped.finish()
-    }
 }
-
-fn remapped_face_id(cached_to_query: &[usize], cached: u32) -> HypermeshResult<u32> {
-    let query = cached_to_query
-        .get(cached as usize)
-        .copied()
-        .filter(|&query| query != usize::MAX)
-        .ok_or(HypermeshError::UnknownClassification)?;
-    u32::try_from(query).map_err(|_| HypermeshError::CapacityOverflow {
-        operation: "pairwise intersection face remapping",
-    })
-}
-
-fn remap_pairwise_construction_plane(
-    plane: ConstructionPlaneIdentity,
-    cached_to_query: &[usize],
-) -> HypermeshResult<ConstructionPlaneIdentity> {
-    if plane.mesh != PAIRWISE_FACE_PLANE_NAMESPACE {
-        return Ok(plane);
-    }
-    Ok(ConstructionPlaneIdentity {
-        mesh: PAIRWISE_FACE_PLANE_NAMESPACE,
-        plane: remapped_face_id(cached_to_query, plane.plane)?,
-    })
-}
-
-fn remap_pairwise_construction_identity(
-    identity: &ConstructionVertexIdentity,
-    cached_to_query: &[usize],
-) -> HypermeshResult<ConstructionVertexIdentity> {
-    Ok(match identity {
-        ConstructionVertexIdentity::Source { mesh, vertex } => ConstructionVertexIdentity::Source {
-            mesh: *mesh,
-            vertex: *vertex,
-        },
-        ConstructionVertexIdentity::SourceEdgePlane {
-            mesh,
-            endpoints,
-            plane,
-        } => ConstructionVertexIdentity::SourceEdgePlane {
-            mesh: *mesh,
-            endpoints: *endpoints,
-            plane: remap_pairwise_construction_plane(*plane, cached_to_query)?,
-        },
-        ConstructionVertexIdentity::PlaneTriple { planes } => {
-            let mut planes = [
-                remap_pairwise_construction_plane(planes[0], cached_to_query)?,
-                remap_pairwise_construction_plane(planes[1], cached_to_query)?,
-                remap_pairwise_construction_plane(planes[2], cached_to_query)?,
-            ];
-            planes.sort_unstable();
-            ConstructionVertexIdentity::PlaneTriple { planes }
-        }
-    })
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct PairwiseIntersectionRow<'a> {
-    graph: &'a PairwiseIntersectionGraph,
-    next: u32,
-    end: u32,
-}
-
-impl PairwiseIntersectionRow<'_> {
-    #[cfg(test)]
-    pub(crate) fn is_empty(&self) -> bool {
-        self.next == self.end
-    }
-
-    pub(crate) fn iter(&self) -> Self {
-        *self
-    }
-
-    pub(crate) fn open_face_partition_count(self) -> usize {
-        self.filter(|event| event.changes_open_face_partition())
-            .count()
-    }
-}
-
-impl<'a> Iterator for PairwiseIntersectionRow<'a> {
-    type Item = PairwiseIntersectionEventRef<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.next == self.end {
-            return None;
-        }
-        let event = &self.graph.events[self.next as usize];
-        self.next += 1;
-        let other_polygon_idx = event.other_polygon as usize;
-        let (kind, index) = decode_intersection_geometry(event.geometry);
-        Some(match kind {
-            StoredIntersectionKind::NonCoplanarPoint => {
-                let index = index.expect("point events carry an index");
-                PairwiseIntersectionEventRef::NonCoplanarPoint {
-                    point: &self.graph.points[index],
-                    other_polygon_idx,
-                }
-            }
-            StoredIntersectionKind::NonCoplanarSegment => {
-                let segment = &self.graph.segments[index.expect("segment events carry an index")];
-                PairwiseIntersectionEventRef::NonCoplanarSegment {
-                    segment: PairwiseIntersectionSegmentRef {
-                        v0: &self.graph.points[segment.endpoints[0] as usize],
-                        v1: &self.graph.points[segment.endpoints[1] as usize],
-                    },
-                    other_polygon_idx,
-                }
-            }
-            StoredIntersectionKind::CoplanarPoint => {
-                let index = index.expect("point events carry an index");
-                PairwiseIntersectionEventRef::CoplanarPoint {
-                    point: &self.graph.points[index],
-                    other_polygon_idx,
-                }
-            }
-            StoredIntersectionKind::CoplanarSegment => {
-                let segment = &self.graph.segments[index.expect("segment events carry an index")];
-                PairwiseIntersectionEventRef::CoplanarSegment {
-                    segment: PairwiseIntersectionSegmentRef {
-                        v0: &self.graph.points[segment.endpoints[0] as usize],
-                        v1: &self.graph.points[segment.endpoints[1] as usize],
-                    },
-                    other_polygon_idx,
-                }
-            }
-            StoredIntersectionKind::CoplanarOverlap => {
-                PairwiseIntersectionEventRef::CoplanarOverlap { other_polygon_idx }
-            }
-        })
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let remaining = (self.end - self.next) as usize;
-        (remaining, Some(remaining))
-    }
-}
-
-impl ExactSizeIterator for PairwiseIntersectionRow<'_> {}
 
 struct ConstructionPointAlias {
     identity: ConstructionVertexIdentity,
@@ -773,6 +488,7 @@ impl PairwiseIntersectionGraphBuilder {
         });
     }
 
+    #[cfg(test)]
     fn append(&mut self, face: usize, other_polygon: u32, geometry: u32) -> HypermeshResult<()> {
         let face_id = self.face_id(face)?;
         self.check_row_capacity(face, 1)?;
@@ -1439,15 +1155,6 @@ impl PolygonVertexArena {
 /// a global candidate-pair vector. Rows remain in deterministic polygon order
 /// and retain every exact point, segment, and positive-area overlap incidence
 /// required by a complete face arrangement.
-pub(crate) fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
-    decisions: &DecisionContext,
-    polygons: &[ConvexPolygon],
-    certified_embedded_inputs: &[bool],
-) -> HypermeshResult<PairwiseIntersectionGraph> {
-    let bvh = ExactBvh::build_decision(decisions, polygons)?;
-    pairwise_intersections_by_polygon_from_bvh(decisions, polygons, certified_embedded_inputs, &bvh)
-}
-
 pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
@@ -1490,7 +1197,8 @@ pub(crate) fn pairwise_intersections_by_polygon(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<PairwiseIntersectionGraph> {
-    pairwise_intersections_by_polygon_with_certified_embedded_inputs(decisions, polygons, &[])
+    let bvh = ExactBvh::build_decision(decisions, polygons)?;
+    pairwise_intersections_by_polygon_from_bvh(decisions, polygons, &[], &bvh)
 }
 
 fn append_pairwise_intersection(
@@ -2562,7 +2270,7 @@ mod tests {
 
     use super::{
         ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
-        PairwiseIntersectionEvent, PairwiseIntersectionEventRef, PairwiseIntersectionGraphBuilder,
+        PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
         PolygonVertexArena, StoredIntersectionKind, pairwise_intersections_by_polygon_from_bvh,
     };
     use crate::bvh::ExactBvh;
@@ -2639,16 +2347,17 @@ mod tests {
         let graph = graph.finish().unwrap();
 
         assert_eq!(graph.len(), 4);
-        assert_eq!(graph.event_count(), 3);
+        assert_eq!(graph.events.len(), 3);
         assert_eq!(&*graph.offsets, &[0, 1, 1, 3, 3]);
-        assert!(graph.row(1).is_empty());
-        assert!(graph.row(3).is_empty());
+        assert_eq!(graph.event_ids(1).unwrap().len(), 0);
+        assert_eq!(graph.event_ids(3).unwrap().len(), 0);
         assert_eq!(
             graph
-                .row(2)
-                .map(|event| match event {
-                    PairwiseIntersectionEventRef::CoplanarOverlap { other_polygon_idx } => {
-                        other_polygon_idx
+                .event_ids(2)
+                .unwrap()
+                .map(|event| match event.unwrap() {
+                    PairwiseIntersectionEventIds::CoplanarOverlap { other_polygon } => {
+                        other_polygon
                     }
                     _ => unreachable!(),
                 })
@@ -2685,20 +2394,20 @@ mod tests {
         assert_eq!(graph.points.len(), 2);
         assert_eq!(graph.segments.len(), 1);
         assert_eq!(size_of::<super::PairwiseIntersectionSegment>(), 8);
-        assert_eq!(graph.event_count(), 2);
+        assert_eq!(graph.events.len(), 2);
         assert!(matches!(
-            graph.row(0).next(),
-            Some(PairwiseIntersectionEventRef::NonCoplanarSegment {
-                other_polygon_idx: 1,
+            graph.event_ids(0).unwrap().next(),
+            Some(Ok(PairwiseIntersectionEventIds::NonCoplanarSegment {
+                other_polygon: 1,
                 ..
-            })
+            }))
         ));
         assert!(matches!(
-            graph.row(1).next(),
-            Some(PairwiseIntersectionEventRef::NonCoplanarSegment {
-                other_polygon_idx: 0,
+            graph.event_ids(1).unwrap().next(),
+            Some(Ok(PairwiseIntersectionEventIds::NonCoplanarSegment {
+                other_polygon: 0,
                 ..
-            })
+            }))
         ));
     }
 
@@ -2719,49 +2428,44 @@ mod tests {
         graph.append_coplanar_overlap_pair(4, 5).unwrap();
         let graph = graph.finish().unwrap();
 
-        assert_eq!(graph.event_count(), 10);
+        assert_eq!(graph.events.len(), 10);
         assert_eq!(size_of::<PairwiseIntersectionEvent>(), 8);
         assert_eq!(size_of::<super::PendingIntersectionEvent>(), 12);
         assert!(matches!(
-            graph.row(0).next(),
-            Some(PairwiseIntersectionEventRef::NonCoplanarPoint {
+            graph.event_ids(0).unwrap().next(),
+            Some(Ok(PairwiseIntersectionEventIds::NonCoplanarPoint {
                 point,
-                other_polygon_idx: 1,
+                other_polygon: 1,
+            })) if graph.points[point as usize] == Point3::origin()
+        ));
+        assert!(matches!(
+            graph.event_ids(1).unwrap().nth(1),
+            Some(Ok(PairwiseIntersectionEventIds::NonCoplanarSegment {
+                other_polygon: 2,
                 ..
-            }) if point == &Point3::origin()
+            }))
         ));
         assert!(matches!(
-            graph.row(1).nth(1),
-            Some(PairwiseIntersectionEventRef::NonCoplanarSegment {
-                other_polygon_idx: 2,
-                ..
-            })
+            graph.event_ids(2).unwrap().nth(1),
+            Some(Ok(PairwiseIntersectionEventIds::CoplanarPoint {
+                point,
+                other_polygon: 3,
+            })) if graph.points[point as usize] == p2(3, 0)
         ));
         assert!(matches!(
-            graph.row(2).nth(1),
-            Some(PairwiseIntersectionEventRef::CoplanarPoint {
-                point: contact,
-                other_polygon_idx: 3,
-                ..
-            }) if contact == &p2(3, 0)
+            graph.event_ids(3).unwrap().nth(1),
+            Some(Ok(PairwiseIntersectionEventIds::CoplanarSegment {
+                endpoints,
+                other_polygon: 4,
+            })) if graph.points[endpoints[0] as usize] == p2(4, 0)
+                && graph.points[endpoints[1] as usize] == p2(5, 0)
         ));
         assert!(matches!(
-            graph.row(3).nth(1),
-            Some(PairwiseIntersectionEventRef::CoplanarSegment {
-                segment,
-                other_polygon_idx: 4,
-            }) if segment.v0 == &p2(4, 0) && segment.v1 == &p2(5, 0)
+            graph.event_ids(5).unwrap().next(),
+            Some(Ok(PairwiseIntersectionEventIds::CoplanarOverlap {
+                other_polygon: 4,
+            }))
         ));
-        assert!(matches!(
-            graph.row(5).next(),
-            Some(PairwiseIntersectionEventRef::CoplanarOverlap {
-                other_polygon_idx: 4,
-            })
-        ));
-        assert_eq!(graph.row(0).open_face_partition_count(), 0);
-        assert_eq!(graph.row(1).open_face_partition_count(), 1);
-        assert_eq!(graph.row(3).open_face_partition_count(), 0);
-        assert_eq!(graph.row(4).open_face_partition_count(), 1);
     }
 
     #[test]
@@ -2812,7 +2516,7 @@ mod tests {
             &[host.clone(), shared_edge, shared_vertex],
         )
         .unwrap();
-        assert_eq!(graph.event_count(), 0);
+        assert_eq!(graph.events.len(), 0);
         assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
 
@@ -2823,13 +2527,13 @@ mod tests {
             .unwrap();
         let graph =
             super::pairwise_intersections_by_polygon(&decisions, &[host, distinct_vertex]).unwrap();
-        assert_eq!(graph.event_count(), 2);
+        assert_eq!(graph.events.len(), 2);
         assert!(matches!(
-            graph.row(0).next(),
-            Some(PairwiseIntersectionEventRef::CoplanarPoint {
-                other_polygon_idx: 1,
+            graph.event_ids(0).unwrap().next(),
+            Some(Ok(PairwiseIntersectionEventIds::CoplanarPoint {
+                other_polygon: 1,
                 ..
-            })
+            }))
         ));
     }
 
@@ -2918,40 +2622,6 @@ mod tests {
                     plane: support,
                 },
             ]
-        );
-
-        let remapped = graph.remap_polygon_order(&[1, 0]).unwrap();
-        let remapped_support = ConstructionPlaneIdentity {
-            mesh: super::PAIRWISE_FACE_PLANE_NAMESPACE,
-            plane: 0,
-        };
-        assert!(remapped.point_identities.iter().all(|identity| matches!(
-            identity,
-            Some(ConstructionVertexIdentity::SourceEdgePlane { plane, .. })
-                if *plane == remapped_support
-        )));
-
-        let persistent = ConstructionPlaneIdentity { mesh: 3, plane: 7 };
-        let mut planes = [
-            persistent,
-            ConstructionPlaneIdentity { mesh: 4, plane: 2 },
-            support,
-        ];
-        planes.sort_unstable();
-        let remapped_triple = super::remap_pairwise_construction_identity(
-            &ConstructionVertexIdentity::PlaneTriple { planes },
-            &[1, 0],
-        )
-        .unwrap();
-        let mut expected = [
-            persistent,
-            ConstructionPlaneIdentity { mesh: 4, plane: 2 },
-            remapped_support,
-        ];
-        expected.sort_unstable();
-        assert_eq!(
-            remapped_triple,
-            ConstructionVertexIdentity::PlaneTriple { planes: expected }
         );
     }
 
@@ -3069,7 +2739,7 @@ mod tests {
         ));
         let graph = graph.finish().unwrap();
         assert_eq!(graph.points.len(), 1);
-        assert_eq!(graph.event_count(), 2);
+        assert_eq!(graph.events.len(), 2);
     }
 
     #[test]
@@ -3110,14 +2780,6 @@ mod tests {
             })]
         );
         assert_eq!(reversed.point_identities, graph.point_identities);
-        let remapped = graph.remap_polygon_order(&[2, 1, 0]).unwrap();
-        assert_eq!(
-            remapped.point_identities,
-            [Some(ConstructionVertexIdentity::Source {
-                mesh: 0,
-                vertex: 2,
-            })]
-        );
     }
 
     #[test]
@@ -3140,45 +2802,12 @@ mod tests {
     }
 
     #[test]
-    fn polygon_order_remap_preserves_compact_endpoint_ids() {
-        let mut graph = PairwiseIntersectionGraphBuilder::new(3).unwrap();
-        graph
-            .append_non_coplanar_segment_pair(
-                0,
-                2,
-                Point3::origin(),
-                Point3::new(Real::one(), Real::zero(), Real::zero()),
-            )
-            .unwrap();
-        let graph = graph
-            .finish()
-            .unwrap()
-            .remap_polygon_order(&[2, 1, 0])
-            .unwrap();
-
-        assert_eq!(graph.points.len(), 2);
-        let Some(PairwiseIntersectionEventRef::NonCoplanarSegment {
-            segment,
-            other_polygon_idx,
-        }) = graph.row(2).next()
-        else {
-            panic!("remapped source face must retain its segment");
-        };
-        assert_eq!(other_polygon_idx, 0);
-        assert_eq!(segment.v0, &Point3::origin());
-        assert_eq!(
-            segment.v1,
-            &Point3::new(Real::one(), Real::zero(), Real::zero())
-        );
-    }
-
-    #[test]
     fn invalid_face_append_fails_without_mutating_the_arena() {
         #[cfg(target_pointer_width = "64")]
         assert!(PairwiseIntersectionGraphBuilder::new(usize::MAX).is_err());
         let mut graph = PairwiseIntersectionGraphBuilder::new(0).unwrap();
         assert!(graph.append_coplanar_overlap(0, 0).is_err());
-        assert_eq!(graph.finish().unwrap().event_count(), 0);
+        assert_eq!(graph.finish().unwrap().events.len(), 0);
     }
 
     #[test]
@@ -3249,7 +2878,7 @@ mod tests {
                 .is_err()
         );
         let graph = graph.finish().unwrap();
-        assert_eq!(graph.event_count(), 0);
+        assert_eq!(graph.events.len(), 0);
         assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
     }

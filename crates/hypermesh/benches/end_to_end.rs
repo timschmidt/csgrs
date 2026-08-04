@@ -5,12 +5,11 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
-    BooleanOp, EmberConfig, ExactGpuMeshBuffers, MeshContext, Point3, PredicatePolicy, Real,
-    TriangleMeshRef, approximate_gpu_mesh_f32, approximate_gpu_mesh_f64,
-    approximate_interleaved_gpu_mesh_f32, approximate_interleaved_gpu_mesh_f64, boolean_mesh,
-    boolean_operation, convex_hull, convex_hull_with_coplanar_groups,
-    convex_hull_with_retained_facts, convex_quad, convex_triangle, extract_output, polygon_soup,
-    triangulate_and_resolve_certified,
+    BooleanExpression, BooleanOp, BooleanProgram, ExactGpuMeshBuffers, MeshContext, Point3,
+    PredicatePolicy, Real, TriangleMeshRef, approximate_gpu_mesh_f32, approximate_gpu_mesh_f64,
+    approximate_interleaved_gpu_mesh_f32, approximate_interleaved_gpu_mesh_f64, boolean,
+    convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_quad,
+    convex_triangle, polygon_soup,
 };
 
 const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
@@ -114,11 +113,10 @@ fn bench_end_to_end(c: &mut Criterion) {
         ] {
             group.bench_with_input(BenchmarkId::new(name, format!("{op:?}")), &op, |b, op| {
                 b.iter(|| {
-                    boolean_operation(
+                    boolean(
                         &CONTEXT,
                         black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
-                        *op,
-                        EmberConfig::default(),
+                        BooleanProgram::Operation(*op),
                     )
                     .expect("benchmark boolean is certified")
                     .into_value()
@@ -138,23 +136,21 @@ fn bench_end_to_end(c: &mut Criterion) {
         TriangleMeshRef::new(&cubes[0].positions, &cubes[0].triangles),
         TriangleMeshRef::new(&cubes[1].positions, &cubes[1].triangles),
     ];
-    let certified_cubes = cubes.clone().map(|mesh| mesh.with_certified_convexity());
-    let certified_cube_refs = [certified_cubes[0].as_ref(), certified_cubes[1].as_ref()];
-    let mut output_group = c.benchmark_group("boolean_immediate_output/cubes");
+    let native_cube_refs = [cubes[0].as_ref(), cubes[1].as_ref()];
+    let mut output_group = c.benchmark_group("boolean_materialization/cubes");
     output_group.sample_size(20);
     output_group.warm_up_time(Duration::from_secs(1));
     output_group.measurement_time(Duration::from_secs(4));
     for operation in operations {
         output_group.bench_with_input(
-            BenchmarkId::new("polygon", format!("{operation:?}")),
+            BenchmarkId::new("raw_views_single", format!("{operation:?}")),
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_operation(
+                    boolean(
                         &CONTEXT,
                         black_box(&cube_refs),
-                        *operation,
-                        EmberConfig::default(),
+                        BooleanProgram::Operation(*operation),
                     )
                     .expect("cube Boolean is certified")
                     .into_value()
@@ -162,38 +158,37 @@ fn bench_end_to_end(c: &mut Criterion) {
             },
         );
         output_group.bench_with_input(
-            BenchmarkId::new("boolean_mesh", format!("{operation:?}")),
+            BenchmarkId::new("cached_native_single", format!("{operation:?}")),
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_mesh(
+                    boolean(
                         &CONTEXT,
-                        black_box(&cube_refs),
-                        *operation,
-                        EmberConfig::default(),
+                        black_box(&native_cube_refs),
+                        BooleanProgram::Operation(*operation),
                     )
-                    .expect("cube triangle soup is certified")
-                    .into_value()
-                })
-            },
-        );
-        output_group.bench_with_input(
-            BenchmarkId::new("certified_convex_boolean_mesh", format!("{operation:?}")),
-            &operation,
-            |b, operation| {
-                b.iter(|| {
-                    boolean_mesh(
-                        &CONTEXT,
-                        black_box(&certified_cube_refs),
-                        *operation,
-                        EmberConfig::default(),
-                    )
-                    .expect("certified-convex cube triangle soup is certified")
+                    .expect("cached-native cube Boolean is certified")
                     .into_value()
                 })
             },
         );
     }
+    let all_nodes = operations.map(BooleanExpression::Operation);
+    let all_roots = [0, 1, 2, 3];
+    output_group.bench_function("shared_arrangement_four_results", |b| {
+        b.iter(|| {
+            boolean(
+                &CONTEXT,
+                black_box(&cube_refs),
+                BooleanProgram::Expressions {
+                    nodes: black_box(&all_nodes),
+                    roots: black_box(&all_roots),
+                },
+            )
+            .expect("four-result cube program is certified")
+            .into_value()
+        })
+    });
     output_group.finish();
 
     let nested_tools = common::nested_tool_cubes();
@@ -203,11 +198,10 @@ fn bench_end_to_end(c: &mut Criterion) {
         .collect::<Vec<_>>();
     c.bench_function("boolean_operation/nested_tools_5/Difference", |b| {
         b.iter(|| {
-            boolean_operation(
+            boolean(
                 &CONTEXT,
                 black_box(&nested_tool_refs),
-                BooleanOp::Difference,
-                EmberConfig::default(),
+                BooleanProgram::Operation(BooleanOp::Difference),
             )
             .expect("benchmark variadic difference is certified")
             .into_value()
@@ -221,11 +215,10 @@ fn bench_end_to_end(c: &mut Criterion) {
     large_group.measurement_time(Duration::from_secs(4));
     large_group.bench_function("Union", |b| {
         b.iter(|| {
-            boolean_operation(
+            boolean(
                 &CONTEXT,
                 black_box(&[subdivided_cubes[0].as_ref(), subdivided_cubes[1].as_ref()]),
-                BooleanOp::Union,
-                EmberConfig::default(),
+                BooleanProgram::Operation(BooleanOp::Union),
             )
             .expect("subdivided cube benchmark is certified")
             .into_value()
@@ -233,32 +226,18 @@ fn bench_end_to_end(c: &mut Criterion) {
     });
     large_group.finish();
 
-    let cube_union = boolean_operation(
+    let cube_union = boolean(
         &CONTEXT,
         &[cubes[0].as_ref(), cubes[1].as_ref()],
-        BooleanOp::Union,
-        EmberConfig::default(),
+        BooleanProgram::Operation(BooleanOp::Union),
     )
     .expect("benchmark boolean is certified")
     .into_value();
-    c.bench_function("output/cube_union_triangulate_certified", |b| {
+    c.bench_function("output/cube_union_into_triangle_mesh", |b| {
         b.iter(|| {
-            triangulate_and_resolve_certified(&CONTEXT, black_box(&cube_union))
-                .expect("benchmark output is certified")
-                .into_value()
-        })
-    });
-    c.bench_function("output/cube_union_extract_public_views", |b| {
-        b.iter(|| {
-            let result = black_box(&cube_union);
-            let owned = extract_output(&CONTEXT, result)
-                .expect("benchmark output extraction is certified")
-                .into_value();
-            let borrowed =
-                hypermesh::output::extract_output_polygons(&CONTEXT, &result.output().polygons)
-                    .expect("benchmark borrowed output extraction is certified")
-                    .into_value();
-            (owned, borrowed)
+            black_box(cube_union.clone())
+                .into_triangle_meshes()
+                .expect("bounded cube union converts to a native mesh")
         })
     });
 

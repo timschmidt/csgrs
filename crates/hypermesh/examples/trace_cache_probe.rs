@@ -4,7 +4,7 @@ mod common;
 
 use std::hint::black_box;
 
-use hypermesh::{BooleanOp, EmberConfig, MeshContext, PredicatePolicy, boolean_operation};
+use hypermesh::{BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, boolean};
 
 const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
 
@@ -13,17 +13,16 @@ fn main() {
         .nth(1)
         .map_or(256, |value| value.parse().expect("valid repetition count"));
     let meshes = common::octahedron_pair();
-    let mut classifications = 0;
+    let mut triangles = 0;
     for _ in 0..repetitions {
-        let result = boolean_operation(
+        let result = boolean(
             &CONTEXT,
             black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
-            BooleanOp::Union,
-            EmberConfig::default(),
+            BooleanProgram::Operation(BooleanOp::Union),
         )
         .expect("octahedron union must remain certified")
         .into_value();
-        classifications += black_box(result.classifications().len());
+        triangles += black_box(result.results[0].triangles.len());
     }
-    println!("{classifications}");
+    println!("{triangles}");
 }

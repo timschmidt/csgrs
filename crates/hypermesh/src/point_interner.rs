@@ -6,7 +6,6 @@ use hyperlattice::{Point3, Rational, Real};
 
 use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::mesh::OutputVertex;
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
 const BROAD_PHASE_PRECISION: i32 = -20;
@@ -28,12 +27,6 @@ pub(crate) trait PointCoordinates {
 }
 
 impl PointCoordinates for Point3 {
-    fn coordinates(&self) -> [&Real; 3] {
-        [&self.x, &self.y, &self.z]
-    }
-}
-
-impl PointCoordinates for OutputVertex {
     fn coordinates(&self) -> [&Real; 3] {
         [&self.x, &self.y, &self.z]
     }
@@ -101,24 +94,6 @@ where
             candidate_marks: Vec::new(),
             candidate_epoch: 0,
         }
-    }
-
-    pub(crate) fn try_from_unique<P>(points: &[P], exact_only: bool) -> HypermeshResult<Self>
-    where
-        P: PointCoordinates,
-    {
-        let mut interner = Self::try_with_capacity(points.len(), exact_only, false)?;
-        if exact_only
-            && points
-                .iter()
-                .any(|point| !point.has_exact_rational_coordinates())
-        {
-            interner.exact_only = false;
-        }
-        for (index, point) in points.iter().enumerate() {
-            interner.register_point(index, point, None)?;
-        }
-        Ok(interner)
     }
 
     #[inline]
@@ -229,18 +204,6 @@ where
         points.push(point);
         self.next_exact.push(None);
         Ok(index)
-    }
-
-    pub(crate) fn register_unindexed_existing(&mut self, additional: usize) -> HypermeshResult<()> {
-        debug_assert!(self.exact_only);
-        let new_len = self.next_exact.len().checked_add(additional).ok_or(
-            HypermeshError::CapacityOverflow {
-                operation: OPERATION,
-            },
-        )?;
-        reserve(self.next_exact.try_reserve(additional))?;
-        self.next_exact.resize(new_len, None);
-        Ok(())
     }
 
     #[inline]
@@ -716,6 +679,14 @@ mod tests {
         (Real::pi() + Real::e()) - (Real::e() + Real::pi())
     }
 
+    fn interner_from_unique(points: &[Point3]) -> PointInterner<()> {
+        let mut interner = PointInterner::try_with_capacity(points.len(), false, false).unwrap();
+        for (index, point) in points.iter().enumerate() {
+            interner.register_point(index, point, None).unwrap();
+        }
+        interner
+    }
+
     #[test]
     fn exact_fingerprint_separates_values_with_identical_f64_keys() {
         let tiny = Rational::fraction(1, 1_u64 << 60).unwrap();
@@ -835,7 +806,7 @@ mod tests {
         let zero = point(Real::zero());
         let retained = point(terminal_zero());
         let mut points = vec![zero, retained.clone()];
-        let mut interner = PointInterner::<()>::try_from_unique(&points, false).unwrap();
+        let mut interner = interner_from_unique(&points);
         let context = MeshContext::new(PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
 
@@ -883,7 +854,7 @@ mod tests {
     fn candidate_epoch_wrap_preserves_general_matches() {
         let retained = point(terminal_zero());
         let mut points = vec![retained.clone()];
-        let mut interner = PointInterner::<()>::try_from_unique(&points, false).unwrap();
+        let mut interner = interner_from_unique(&points);
         interner.candidate_epoch = u32::MAX;
         interner.candidate_marks.fill(u32::MAX);
 
@@ -907,8 +878,7 @@ mod tests {
         let strict_context = MeshContext::new(PredicatePolicy::STRICT);
         let strict = DecisionContext::new(&strict_context);
         let mut strict_points = vec![zero.clone()];
-        let mut strict_interner =
-            PointInterner::<()>::try_from_unique(&strict_points, false).unwrap();
+        let mut strict_interner = interner_from_unique(&strict_points);
         assert!(matches!(
             strict_interner.intern_cloned(&strict, &mut strict_points, &terminal, None),
             Err(HypermeshError::PredicateUndecided { .. })
@@ -919,8 +889,7 @@ mod tests {
         let approximate_context = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
         let approximate = DecisionContext::new(&approximate_context);
         let mut approximate_points = vec![zero];
-        let mut approximate_interner =
-            PointInterner::<()>::try_from_unique(&approximate_points, false).unwrap();
+        let mut approximate_interner = interner_from_unique(&approximate_points);
         assert_eq!(
             approximate_interner
                 .intern_cloned(&approximate, &mut approximate_points, &terminal, None,)

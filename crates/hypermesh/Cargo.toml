@@ -14,12 +14,11 @@ categories = ["mathematics", "graphics", "algorithms"]
 hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
 hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
-hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
 
 [dev-dependencies]
 boolmesh = "=0.1.9"
 criterion = "0.5"
-hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut", "cdt"] }
 manifold-rust = "=0.9.2"
 proptest = "1.7.0"
 three-d-asset = "=0.4.0"

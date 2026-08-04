@@ -3,11 +3,11 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, TriangleMeshRef, boolean_mesh, boolean_operation,
+    BooleanExpression, BooleanOp, BooleanProgram, TriangleMeshRef, boolean,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, CONTEXT, box_mesh, operation, r, validate_result, validate_soup, value, volume_numerator,
+    Bytes, CONTEXT, box_mesh, operation, r, validate_batch, value, volume_numerator,
 };
 
 fn oracle_volume(boxes: &[([i64; 3], [i64; 3])], operation: BooleanOp) -> i64 {
@@ -66,14 +66,7 @@ fuzz_target!(|data: [u8; 32]| {
     }
     let meshes = bounds
         .iter()
-        .map(|(min, max)| {
-            let mesh = box_mesh(*min, *max);
-            if api == 2 {
-                mesh.with_certified_convexity()
-            } else {
-                mesh
-            }
-        })
+        .map(|(min, max)| box_mesh(*min, *max))
         .collect::<Vec<_>>();
     let refs = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
     let raw_refs = meshes
@@ -81,35 +74,40 @@ fuzz_target!(|data: [u8; 32]| {
         .map(|mesh| TriangleMeshRef::new(&mesh.positions, &mesh.triangles))
         .collect::<Vec<_>>();
 
-    let soup = match api {
-        0 => {
-            let result = value(boolean_operation(
-                &CONTEXT,
-                &raw_refs,
-                op,
-                EmberConfig::default(),
-            ))
-            .unwrap_or_else(|error| panic!("integer-box Boolean failed: {error:?}"));
-            validate_result(&result, op, raw_refs.len())
-        }
-        1 => {
-            let soup = value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default()))
-                .unwrap_or_else(|error| panic!("integer-box immediate Boolean failed: {error:?}"));
-            validate_soup(&soup);
-            soup
-        }
-        _ => {
-            let soup = value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default()))
-            .unwrap_or_else(|error| {
-                panic!("certified integer-box immediate Boolean failed: {error:?}")
-            });
-            validate_soup(&soup);
-            soup
-        }
+    let all_nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let all_roots = [0, 1, 2, 3];
+    let (views, program, output) = match api {
+        0 => (
+            raw_refs.as_slice(),
+            BooleanProgram::Operation(op),
+            0,
+        ),
+        1 => (refs.as_slice(), BooleanProgram::Operation(op), 0),
+        _ => (
+            refs.as_slice(),
+            BooleanProgram::Expressions {
+                nodes: &all_nodes,
+                roots: &all_roots,
+            },
+            match op {
+                BooleanOp::Union => 0,
+                BooleanOp::Intersection => 1,
+                BooleanOp::Difference => 2,
+                BooleanOp::SymmetricDifference => 3,
+            },
+        ),
     };
+    let batch = value(boolean(&CONTEXT, views, program))
+        .unwrap_or_else(|error| panic!("integer-box Boolean failed: {error:?}"));
+    validate_batch(&batch);
 
     assert_eq!(
-        volume_numerator(&soup),
+        volume_numerator(&batch.vertices, &batch.results[output]),
         r(6 * oracle_volume(&bounds, op)),
         "exact Boolean volume disagrees with the box-cell oracle",
     );

@@ -33,6 +33,18 @@ pub enum HypermeshError {
         /// Number of source-provenance rows.
         sources: usize,
     },
+    /// A Boolean truth program has no outputs or contains an invalid operand,
+    /// dependency, or root reference.
+    InvalidBooleanProgram {
+        /// Program invariant that was violated.
+        reason: &'static str,
+    },
+    /// A finite triangle mesh was requested for a Boolean result whose
+    /// exterior cell is inside the result.
+    UnboundedBooleanOutput {
+        /// Index of the unbounded result in the requested output batch.
+        output: usize,
+    },
     /// A collection size required by an operation cannot be represented.
     CapacityOverflow {
         /// Operation whose output size overflowed.
@@ -99,17 +111,6 @@ pub enum HypermeshError {
     /// cannot certify the required sign, incidence, or witness exactly, it
     /// returns this error instead of silently using an approximate answer.
     UnknownClassification,
-    /// Subdivision could not construct a certified child-cell reference point
-    /// by the enabled exact reference-propagation path family.
-    ReferencePropagationFailed,
-    /// A task with a remaining exact root-basis arrangement split exhausted the
-    /// configured depth budget before a certified leaf could be produced.
-    SubdivisionDepthLimit {
-        /// Depth at which subdivision stopped.
-        depth: usize,
-        /// Number of polygons remaining in the uncertified task.
-        polygon_count: usize,
-    },
     /// Certified output extraction found singleton or directionally
     /// unbalanced edges.
     OpenOutput {
@@ -120,11 +121,6 @@ pub enum HypermeshError {
         unbalanced_edges: usize,
         /// Number of undirected edges used by more than two triangles.
         non_manifold_edges: usize,
-    },
-    /// Exact planar subdivision of overlapping coplanar output faces failed.
-    OutputPlanarizationFailed {
-        /// Planar triangulation stage that could not be completed.
-        reason: &'static str,
     },
     /// Exact source-face arrangement or bounded-cell triangulation failed.
     SurfaceArrangementFailed {
@@ -153,6 +149,13 @@ impl fmt::Display for HypermeshError {
             Self::TriangleSourceCountMismatch { triangles, sources } => write!(
                 f,
                 "Boolean output contains {triangles} triangles but {sources} provenance rows"
+            ),
+            Self::InvalidBooleanProgram { reason } => {
+                write!(f, "invalid Boolean truth program: {reason}")
+            }
+            Self::UnboundedBooleanOutput { output } => write!(
+                f,
+                "Boolean output {output} contains the exterior cell and cannot become a finite triangle solid"
             ),
             Self::CapacityOverflow { operation } => {
                 write!(f, "{operation} output size exceeds addressable capacity")
@@ -197,16 +200,6 @@ impl fmt::Display for HypermeshError {
             ),
             Self::NonConvexInput => f.write_str("input mesh is not convex"),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
-            Self::ReferencePropagationFailed => {
-                f.write_str("could not construct a certified subdivision reference")
-            }
-            Self::SubdivisionDepthLimit {
-                depth,
-                polygon_count,
-            } => write!(
-                f,
-                "subdivision reached depth {depth} with {polygon_count} uncertified polygons"
-            ),
             Self::OpenOutput {
                 boundary_edges,
                 unbalanced_edges,
@@ -215,9 +208,6 @@ impl fmt::Display for HypermeshError {
                 f,
                 "output has boundary: {boundary_edges} singleton edges, {unbalanced_edges} directed edge imbalances, {non_manifold_edges} non-manifold edges"
             ),
-            Self::OutputPlanarizationFailed { reason } => {
-                write!(f, "could not planarize coplanar output faces: {reason}")
-            }
             Self::SurfaceArrangementFailed { reason } => {
                 write!(f, "could not construct exact surface arrangement: {reason}")
             }

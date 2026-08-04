@@ -592,7 +592,7 @@ fn compact_hull(
             )
         })
         .collect();
-    Ok(TriangleMesh::new(positions, triangles).with_convexity_certainty(certainty))
+    Ok(TriangleMesh::new(positions, triangles).with_valid_pwn_certainty(certainty))
 }
 
 #[cfg(test)]

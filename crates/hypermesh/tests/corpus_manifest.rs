@@ -12,6 +12,13 @@ fn manifest() -> Value {
         .expect("fixture manifest must be valid TOML")
 }
 
+fn migration_ledger() -> Value {
+    toml::from_str(include_str!(
+        "../benchmarks/corpus/implementation-test-migration.toml"
+    ))
+    .expect("implementation-test migration ledger must be valid TOML")
+}
+
 fn string_array<'a>(fixture: &'a Value, field: &str) -> Vec<&'a str> {
     fixture[field]
         .as_array()
@@ -202,4 +209,64 @@ fn large_box_heap_fixture_covers_certified_and_general_paths() {
         ["boxes-3072", "boxes-3072-general"]
     );
     assert_eq!(fixture["input_triangles"].as_integer(), Some(6144));
+}
+
+#[test]
+fn removed_engine_tests_have_complete_pinned_migration_coverage() {
+    let ledger = migration_ledger();
+    assert_eq!(ledger["schema"].as_integer(), Some(1));
+    assert_eq!(ledger["compatibility_code"].as_bool(), Some(false));
+    assert_eq!(
+        ledger["source_commit"].as_str(),
+        Some("f56371ec7eda83518c3960792a42a27a5634f2a4")
+    );
+
+    let mappings = ledger["mapping"]
+        .as_array()
+        .expect("migration ledger requires [[mapping]] records");
+    let mapping_ids = mappings
+        .iter()
+        .map(|mapping| mapping["id"].as_str().expect("mapping requires id"))
+        .collect::<BTreeSet<_>>();
+    assert_eq!(
+        mapping_ids.len(),
+        mappings.len(),
+        "duplicate migration mapping"
+    );
+
+    let sources = ledger["removed_source"]
+        .as_array()
+        .expect("migration ledger requires [[removed_source]] records");
+    assert_eq!(sources.len(), 8);
+    assert_eq!(
+        sources
+            .iter()
+            .map(|source| source["test_count"].as_integer().unwrap())
+            .sum::<i64>(),
+        1_113
+    );
+    for source in sources {
+        let path = source["path"].as_str().expect("removed source path");
+        let hash = source["sha256"].as_str().expect("removed source hash");
+        assert_eq!(hash.len(), 64, "invalid source hash for {path}");
+        let catch_all = source["catch_all_mapping"]
+            .as_str()
+            .expect("removed source catch-all mapping");
+        assert!(
+            mapping_ids.contains(catch_all),
+            "removed source {path} has unknown catch-all mapping {catch_all}"
+        );
+    }
+
+    for mapping in mappings {
+        let id = mapping["id"].as_str().expect("mapping id");
+        assert!(
+            !string_array(mapping, "replacement_tests").is_empty(),
+            "mapping {id} must name current invariant tests"
+        );
+        assert!(
+            !string_array(mapping, "fixture_ids").is_empty(),
+            "mapping {id} must name permanent fixtures"
+        );
+    }
 }

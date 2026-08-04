@@ -3,10 +3,8 @@
 use std::collections::BTreeMap;
 
 use hypermesh::{
-    BooleanMesh, BooleanOp, BooleanResult, HypermeshResult, MeshContext, MeshOutcome, Point3,
-    PredicatePolicy, Real, Triangle, TriangleMesh, boolean_mesh_closure_evidence,
-    certify_output_polygon_closure, classify_polygon_output, extract_output,
-    triangulate_and_resolve_certified,
+    BooleanMeshBatch, BooleanMeshResult, BooleanOp, HypermeshResult, MeshContext, MeshOutcome,
+    Point3, PredicatePolicy, Real, Triangle, TriangleMesh, boolean_mesh_closure_evidence,
 };
 use hyperreal::{Rational, StructuralKind};
 
@@ -245,12 +243,12 @@ pub fn subdivide_once(mesh: TriangleMesh) -> TriangleMesh {
     TriangleMesh::new(positions, triangles)
 }
 
-pub fn signed_volume_numerator(soup: &BooleanMesh) -> Real {
+pub fn signed_volume_numerator(vertices: &[Point3], result: &BooleanMeshResult) -> Real {
     let mut volume = Real::zero();
-    for triangle in &soup.triangles {
-        let v0 = &soup.vertices[triangle[0]];
-        let v1 = &soup.vertices[triangle[1]];
-        let v2 = &soup.vertices[triangle[2]];
+    for triangle in &result.triangles {
+        let v0 = &vertices[triangle[0] as usize];
+        let v1 = &vertices[triangle[1] as usize];
+        let v2 = &vertices[triangle[2] as usize];
         volume += &v0.x * &((&v1.y * &v2.z) - (&v1.z * &v2.y))
             + &v0.y * &((&v1.z * &v2.x) - (&v1.x * &v2.z))
             + &v0.z * &((&v1.x * &v2.y) - (&v1.y * &v2.x));
@@ -258,70 +256,38 @@ pub fn signed_volume_numerator(soup: &BooleanMesh) -> Real {
     volume
 }
 
-pub fn volume_numerator(soup: &BooleanMesh) -> Real {
-    signed_volume_numerator(soup).abs()
+pub fn volume_numerator(vertices: &[Point3], result: &BooleanMeshResult) -> Real {
+    signed_volume_numerator(vertices, result).abs()
 }
 
-pub fn validate_soup(soup: &BooleanMesh) {
-    assert_eq!(soup.sources.len(), soup.triangles.len());
-    assert!(
-        soup.triangles
-            .iter()
-            .all(|triangle| { triangle.iter().all(|vertex| *vertex < soup.vertices.len()) })
-    );
-    assert!(
-        soup.has_unique_nondegenerate_triangles(&CONTEXT)
-            .unwrap()
-            .into_value()
-    );
-    assert!(boolean_mesh_closure_evidence(soup).has_no_boundary());
-}
-
-pub fn validate_result(
-    result: &BooleanResult,
-    operation: BooleanOp,
-    mesh_count: usize,
-) -> BooleanMesh {
-    assert_eq!(result.output().num_meshes, mesh_count);
-    assert_eq!(
-        result.output().polygons.len(),
-        result.classifications().len()
-    );
-    assert_eq!(result.output().polygons.len(), result.winding_pairs().len());
-    assert!(result.output().polygons.iter().all(|polygon| {
-        polygon
-            .is_valid(&CONTEXT)
-            .is_ok_and(MeshOutcome::into_value)
-    }));
-    assert!(
-        result
-            .classifications()
-            .iter()
-            .all(|value| matches!(value, -1 | 1))
-    );
-    for (classification, winding) in result.classifications().iter().zip(result.winding_pairs()) {
-        if let Some(winding) = winding {
-            assert_eq!(winding.w_front.len(), mesh_count);
-            assert_eq!(winding.w_back.len(), mesh_count);
-            assert_eq!(
-                classify_polygon_output(&winding.w_front, &winding.w_back, operation),
-                *classification,
-            );
-        }
+pub fn validate_batch(batch: &BooleanMeshBatch) {
+    batch.validate().unwrap();
+    for result in &batch.results {
+        assert!(
+            result
+                .sources
+                .iter()
+                .all(|source| matches!(source.orientation, -1 | 1))
+        );
+        assert!(boolean_mesh_closure_evidence(result).has_no_boundary());
+        let mesh = TriangleMesh::new(
+            batch.vertices.clone(),
+            result
+                .triangles
+                .iter()
+                .map(|triangle| {
+                    Triangle::new(
+                        triangle[0] as usize,
+                        triangle[1] as usize,
+                        triangle[2] as usize,
+                    )
+                })
+                .collect(),
+        );
+        assert!(
+            mesh.has_unique_nondegenerate_triangles(&CONTEXT)
+                .unwrap()
+                .into_value()
+        );
     }
-    assert!(
-        certify_output_polygon_closure(&CONTEXT, result)
-            .unwrap()
-            .into_value()
-            .has_no_boundary()
-    );
-    assert_eq!(
-        extract_output(&CONTEXT, result).unwrap().into_value().len(),
-        result.output().polygons.len()
-    );
-    let soup = triangulate_and_resolve_certified(&CONTEXT, result)
-        .unwrap()
-        .into_value();
-    validate_soup(&soup);
-    soup
 }

@@ -9,8 +9,8 @@ use hypergraphics::{
     axes_mesh, grid_mesh,
 };
 use hypermesh::{
-    BooleanMesh, BooleanOp, EmberConfig, MeshCertainty, MeshContext, MeshOutcome, OutputVertex,
-    Point3, PredicatePolicy, Real, Triangle, TriangleMesh, TriangleMeshRef, boolean_mesh,
+    BooleanMeshBatch, BooleanOp, BooleanProgram, MeshCertainty, MeshContext, MeshOutcome, Point3,
+    PredicatePolicy, Real, Triangle, TriangleMesh, TriangleMeshRef, boolean,
 };
 use web_time::{Duration, Instant};
 
@@ -27,7 +27,7 @@ pub struct MainApp {
     offset_quarters: i32,
     spin: f32,
     last_frame: Instant,
-    result: Option<BooleanMesh>,
+    result: Option<BooleanMeshBatch>,
     render_scene: RenderScene,
     render_resources: Arc<Mutex<Option<RenderResources>>>,
     stats: DemoStats,
@@ -83,9 +83,7 @@ impl MainApp {
             DemoOperation::SymmetricDifference => BooleanOp::SymmetricDifference,
         };
 
-        let config = EmberConfig { max_depth: 8 };
-
-        match run_boolean(&refs, op, config) {
+        match run_boolean(&refs, op) {
             Ok(result) => {
                 self.stats = DemoStats::ok(
                     started.elapsed(),
@@ -273,7 +271,7 @@ impl RenderScene {
     fn from_demo(
         cube_a: &TriangleMesh,
         cube_b: &TriangleMesh,
-        result: Option<&BooleanMesh>,
+        result: Option<&BooleanMeshBatch>,
     ) -> Self {
         let blue = Color3::new(0.31, 0.67, 1.0).expect("finite input color");
         let red = Color3::new(1.0, 0.47, 0.40).expect("finite input color");
@@ -575,14 +573,18 @@ impl DemoStats {
         elapsed: Duration,
         cube_a: &TriangleMesh,
         cube_b: &TriangleMesh,
-        result: &BooleanMesh,
+        result: &BooleanMeshBatch,
         certainty: MeshCertainty,
     ) -> Self {
+        let output = result
+            .results
+            .first()
+            .expect("one operation produces one output row");
         Self {
             elapsed,
             cube_a_triangles: cube_a.triangles.len(),
             cube_b_triangles: cube_b.triangles.len(),
-            result_triangles: result.triangles.len(),
+            result_triangles: output.triangles.len(),
             result_vertices: result.vertices.len(),
             certainty: Some(certainty),
             error: None,
@@ -601,9 +603,12 @@ impl DemoStats {
 fn run_boolean(
     meshes: &[TriangleMeshRef<'_>],
     op: BooleanOp,
-    config: EmberConfig,
-) -> hypermesh::HypermeshResult<MeshOutcome<BooleanMesh>> {
-    boolean_mesh(&GEOMETRY_CONTEXT, meshes, op, config)
+) -> hypermesh::HypermeshResult<MeshOutcome<BooleanMeshBatch>> {
+    boolean(
+        &GEOMETRY_CONTEXT,
+        meshes,
+        BooleanProgram::Operation(op),
+    )
 }
 
 fn certainty_label(certainty: MeshCertainty) -> &'static str {
@@ -696,11 +701,14 @@ fn input_mesh_wire(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
     out
 }
 
-fn boolean_mesh_faces(soup: &BooleanMesh, color: Color3) -> ExactMesh {
+fn boolean_mesh_faces(batch: &BooleanMeshBatch, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
-    for triangle in &soup.triangles {
+    let Some(result) = batch.results.first() else {
+        return out;
+    };
+    for triangle in &result.triangles {
         let [Some(a), Some(b), Some(c)] =
-            triangle.map(|index| soup.vertices.get(index).map(output_vertex_point))
+            triangle.map(|index| batch.vertices.get(index as usize).cloned())
         else {
             continue;
         };
@@ -753,12 +761,15 @@ fn flat_shaded_color(base: Color3, [a, b, c]: [&Point3; 3]) -> Color3 {
     .unwrap_or(base)
 }
 
-fn boolean_mesh_wire(soup: &BooleanMesh, color: Color3) -> ExactMesh {
+fn boolean_mesh_wire(batch: &BooleanMeshBatch, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Lines);
-    for triangle in &soup.triangles {
+    let Some(result) = batch.results.first() else {
+        return out;
+    };
+    for triangle in &result.triangles {
         push_wire_triangle(
             &mut out,
-            triangle.map(|index| soup.vertices.get(index).map(output_vertex_point)),
+            triangle.map(|index| batch.vertices.get(index as usize).cloned()),
             color,
         );
     }
@@ -775,10 +786,6 @@ fn push_wire_triangle(out: &mut ExactMesh, vertices: [Option<Point3>; 3], color:
     out.push(ExactVertex::new(c.clone(), color));
     out.push(ExactVertex::new(c, color));
     out.push(ExactVertex::new(a, color));
-}
-
-fn output_vertex_point(vertex: &OutputVertex) -> Point3 {
-    point(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
 }
 
 fn p(x: i32, y: i32, z: i32) -> Point3 {
@@ -858,7 +865,6 @@ mod tests {
     fn demo_boolean_operations_materialize() {
         let cube_a = cube_mesh(-1, 1);
         let cube_b = shifted_cube_mesh(4);
-        let config = EmberConfig { max_depth: 8 };
 
         for operation in DemoOperation::ALL {
             let refs = match operation {
@@ -871,7 +877,7 @@ mod tests {
                 DemoOperation::CubeAMinusB | DemoOperation::CubeBMinusA => BooleanOp::Difference,
                 DemoOperation::SymmetricDifference => BooleanOp::SymmetricDifference,
             };
-            let result = run_boolean(&refs, op, config)
+            let result = run_boolean(&refs, op)
                 .unwrap_or_else(|error| panic!("{} failed: {error}", operation.label()));
             assert_eq!(result.certainty, MeshCertainty::Certified);
         }
@@ -912,14 +918,14 @@ mod tests {
         let result = run_boolean(
             &[cube_a.as_ref(), cube_b.as_ref()],
             BooleanOp::Union,
-            EmberConfig { max_depth: 8 },
         )
         .unwrap();
         assert_eq!(result.certainty, MeshCertainty::Certified);
         let result = result.value;
+        let output = &result.results[0];
 
-        for triangle in &result.triangles {
-            let vertices = triangle.map(|index| &result.vertices[index]);
+        for triangle in &output.triangles {
+            let vertices = triangle.map(|index| &result.vertices[index as usize]);
             let on_boundary = [
                 vertices.iter().all(|vertex| vertex.x == r(-1)),
                 vertices.iter().all(|vertex| vertex.x == r(2)),
@@ -942,7 +948,6 @@ mod tests {
         let result = run_boolean(
             &[cube_a.as_ref(), cube_b.as_ref()],
             BooleanOp::Union,
-            EmberConfig { max_depth: 8 },
         )
         .unwrap();
         assert_eq!(result.certainty, MeshCertainty::Certified);
@@ -950,8 +955,9 @@ mod tests {
         let green = Color3::new(0.41, 0.86, 0.60).unwrap();
         let faces = boolean_mesh_faces(&result, green);
         let mut plane_colors = [None; 6];
+        let output = &result.results[0];
 
-        for (triangle, rendered) in result
+        for (triangle, rendered) in output
             .triangles
             .iter()
             .zip(faces.vertices().chunks_exact(3))
@@ -961,7 +967,7 @@ mod tests {
                     .iter()
                     .all(|vertex| vertex.color == rendered[0].color)
             );
-            let vertices = triangle.map(|index| &result.vertices[index]);
+            let vertices = triangle.map(|index| &result.vertices[index as usize]);
             let plane = [
                 vertices.iter().all(|vertex| vertex.x == r(-1)),
                 vertices.iter().all(|vertex| vertex.x == r(2)),

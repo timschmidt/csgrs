@@ -1,7 +1,5 @@
 //! Winding number vectors and boolean output classification.
 
-use std::collections::HashSet;
-
 use crate::error::{HypermeshError, HypermeshResult};
 
 /// Winding number vector: one integer per input mesh.
@@ -32,6 +30,45 @@ pub enum BooleanOp {
     SymmetricDifference,
 }
 
+/// One node in a topologically ordered Boolean truth DAG.
+///
+/// Node references must name an earlier node. Operand indices address the
+/// ordered mesh slice passed to [`crate::boolean`]. An [`Self::Operation`]
+/// node applies a built-in variadic operation to every input operand.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BooleanExpression {
+    /// Constant false.
+    False,
+    /// Constant true.
+    True,
+    /// Whether one operand's winding number is nonzero.
+    Operand(u32),
+    /// Logical negation of an earlier node.
+    Not(u32),
+    /// Logical conjunction of two earlier nodes.
+    And([u32; 2]),
+    /// Logical disjunction of two earlier nodes.
+    Or([u32; 2]),
+    /// Logical exclusive-or of two earlier nodes.
+    Xor([u32; 2]),
+    /// One built-in variadic operation over all operands.
+    Operation(BooleanOp),
+}
+
+/// Boolean result program evaluated from one shared surface arrangement.
+#[derive(Clone, Copy, Debug)]
+pub enum BooleanProgram<'a> {
+    /// Request one built-in variadic operation.
+    Operation(BooleanOp),
+    /// Request arbitrary DAG roots in the supplied order.
+    Expressions {
+        /// Topologically ordered truth nodes.
+        nodes: &'a [BooleanExpression],
+        /// Node indices to materialize as output results.
+        roots: &'a [u32],
+    },
+}
+
 impl BooleanOp {
     /// Returns whether a winding vector lies inside this Boolean result.
     #[inline]
@@ -48,90 +85,6 @@ impl BooleanOp {
             }
         }
     }
-}
-
-/// Returns true when `op` can classify some winding vector as inside while
-/// each component stays within the inclusive range `[lower, upper]`.
-pub(crate) fn can_boolean_op_be_inside_with_component_ranges(
-    op: BooleanOp,
-    lower: &[i32],
-    upper: &[i32],
-) -> HypermeshResult<bool> {
-    if lower.len() != upper.len() {
-        return Err(HypermeshError::WindingDimensionMismatch {
-            expected: lower.len(),
-            actual: upper.len(),
-        });
-    }
-
-    let can_be_nonzero = |index: usize| !(lower[index] == 0 && upper[index] == 0);
-    let can_be_zero = |index: usize| lower[index] <= 0 && upper[index] >= 0;
-
-    Ok(match op {
-        BooleanOp::Union => (0..lower.len()).any(can_be_nonzero),
-        BooleanOp::Intersection => (0..lower.len()).all(can_be_nonzero),
-        BooleanOp::Difference => {
-            !lower.is_empty() && can_be_nonzero(0) && (1..lower.len()).all(can_be_zero)
-        }
-        BooleanOp::SymmetricDifference => {
-            let required_nonzero = (0..lower.len())
-                .filter(|index| !can_be_zero(*index))
-                .count();
-            let optional_nonzero = (0..lower.len())
-                .filter(|index| can_be_zero(*index) && can_be_nonzero(*index))
-                .count();
-            optional_nonzero > 0 || required_nonzero % 2 == 1
-        }
-    })
-}
-
-/// Returns whether `op` can classify some winding vector as inside among the
-/// exact reachable states formed by applying each transition with coefficient
-/// `-1`, `0`, or `+1`.
-pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
-    op: BooleanOp,
-    ref_wnv: &[i32],
-    transitions: &[WindingNumberTransitionVector],
-) -> HypermeshResult<bool> {
-    if op.contains(ref_wnv) {
-        return Ok(true);
-    }
-
-    let mut states = HashSet::from([ref_wnv.to_vec()]);
-    let remaining_abs_spans = remaining_transition_abs_spans(transitions)?;
-    for (index, transition) in transitions.iter().enumerate() {
-        if transition.len() != ref_wnv.len() {
-            return Err(HypermeshError::WindingDimensionMismatch {
-                expected: ref_wnv.len(),
-                actual: transition.len(),
-            });
-        }
-
-        let mut next = HashSet::with_capacity(states.len().saturating_mul(3));
-        for state in &states {
-            next.insert(state.clone());
-            next.insert(apply_transition(state, -1, transition)?);
-            next.insert(apply_transition(state, 1, transition)?);
-        }
-
-        if next.iter().any(|state| op.contains(state)) {
-            return Ok(true);
-        }
-
-        let remaining = &remaining_abs_spans[index + 1];
-        let mut pruned = HashSet::with_capacity(next.len());
-        for state in next {
-            if state_can_still_satisfy_boolean_op(op, &state, remaining)? {
-                pruned.insert(state);
-            }
-        }
-        states = pruned;
-        if states.is_empty() {
-            return Ok(false);
-        }
-    }
-
-    Ok(false)
 }
 
 /// Classifies a polygon output transition.
@@ -193,70 +146,6 @@ pub(crate) fn apply_transition_in_place(
     Ok(())
 }
 
-fn remaining_transition_abs_spans(
-    transitions: &[WindingNumberTransitionVector],
-) -> HypermeshResult<Vec<Vec<i32>>> {
-    if transitions.is_empty() {
-        return Ok(vec![Vec::new()]);
-    }
-
-    let dims = transitions[0].len();
-    if transitions
-        .iter()
-        .any(|transition| transition.len() != dims)
-    {
-        let actual = transitions
-            .iter()
-            .find(|transition| transition.len() != dims)
-            .map_or(dims, Vec::len);
-        return Err(HypermeshError::WindingDimensionMismatch {
-            expected: dims,
-            actual,
-        });
-    }
-
-    let mut remaining = vec![vec![0i32; dims]; transitions.len() + 1];
-    for index in (0..transitions.len()).rev() {
-        remaining[index] = remaining[index + 1].clone();
-        for (component, delta) in transitions[index].iter().enumerate() {
-            remaining[index][component] = remaining[index][component]
-                .checked_add(delta.checked_abs().ok_or(HypermeshError::WindingOverflow)?)
-                .ok_or(HypermeshError::WindingOverflow)?;
-        }
-    }
-
-    Ok(remaining)
-}
-
-fn state_can_still_satisfy_boolean_op(
-    op: BooleanOp,
-    state: &[i32],
-    remaining_abs: &[i32],
-) -> HypermeshResult<bool> {
-    if state.len() != remaining_abs.len() {
-        return Err(HypermeshError::WindingDimensionMismatch {
-            expected: state.len(),
-            actual: remaining_abs.len(),
-        });
-    }
-
-    let mut lower = Vec::with_capacity(state.len());
-    let mut upper = Vec::with_capacity(state.len());
-    for (&value, &span) in state.iter().zip(remaining_abs) {
-        lower.push(
-            value
-                .checked_sub(span)
-                .ok_or(HypermeshError::WindingOverflow)?,
-        );
-        upper.push(
-            value
-                .checked_add(span)
-                .ok_or(HypermeshError::WindingOverflow)?,
-        );
-    }
-    can_boolean_op_be_inside_with_component_ranges(op, &lower, &upper)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -297,150 +186,5 @@ mod tests {
     #[test]
     fn propagate_wnv_applies_full_transition() {
         assert_eq!(propagate_wnv(&[1, 0], -1, &[1, -2]).unwrap(), vec![0, 2]);
-    }
-
-    #[test]
-    fn reachability_detects_fixed_difference_outside_region() {
-        assert!(
-            !can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[0, 7],
-                &[0, 10],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[-1, 0],
-                &[1, 10],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[3, 0],
-                &[6, 10],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn reachability_is_conservative_for_component_ranges() {
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(BooleanOp::Union, &[0, 0], &[0, 4],)
-                .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Intersection,
-                &[-2, 1],
-                &[3, 4],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::SymmetricDifference,
-                &[2, -1],
-                &[2, 1],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn reachability_rejects_difference_when_zero_is_out_of_range() {
-        assert!(
-            !can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[1, 2],
-                &[5, 4],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[1, -1],
-                &[5, 4],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn symmetric_difference_uses_required_parity_when_no_component_can_toggle_zero() {
-        assert!(
-            !can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::SymmetricDifference,
-                &[2, 3],
-                &[4, 5],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::SymmetricDifference,
-                &[2, 0],
-                &[4, 5],
-            )
-            .unwrap()
-        );
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::SymmetricDifference,
-                &[0, 0],
-                &[4, 0],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn exact_transition_reachability_prunes_correlated_difference_states() {
-        assert!(
-            !can_boolean_op_be_inside_with_transition_reachability(
-                BooleanOp::Difference,
-                &[1, 1],
-                &[vec![1, 1]],
-            )
-            .unwrap()
-        );
-
-        assert!(
-            can_boolean_op_be_inside_with_component_ranges(
-                BooleanOp::Difference,
-                &[0, 0],
-                &[2, 2],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn exact_transition_reachability_handles_independent_transition_grid() {
-        assert!(
-            can_boolean_op_be_inside_with_transition_reachability(
-                BooleanOp::Intersection,
-                &[0, 0, 0],
-                &[vec![1, 0, 0], vec![0, 1, 0], vec![0, 0, 1]],
-            )
-            .unwrap()
-        );
-    }
-
-    #[test]
-    fn exact_transition_reachability_keeps_states_recoverable_by_remaining_transitions() {
-        assert!(
-            can_boolean_op_be_inside_with_transition_reachability(
-                BooleanOp::Difference,
-                &[1, 2],
-                &[vec![0, -3], vec![0, 1]],
-            )
-            .unwrap()
-        );
     }
 }

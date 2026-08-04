@@ -1,0 +1,208 @@
+schema = 1
+status = "cutover-mapped"
+source_commit = "f56371ec7eda83518c3960792a42a27a5634f2a4"
+mapping_rule = "Every #[test] in each pinned source is covered by that source's catch_all_mapping; preserved semantic families additionally name current tests and fixture IDs."
+compatibility_code = false
+
+[[removed_source]]
+path = "src/subdivision/tests.rs"
+sha256 = "2c06178339800e9d9c1decacea830e9b7c9b7ba160a86792ef7e45c059fb998e"
+test_count = 464
+catch_all_mapping = "retired_spatial_search_control_model"
+
+[[removed_source]]
+path = "src/segment_trace/tests.rs"
+sha256 = "240612afa21ba588e79900ec37703c42e61e11a89691e5fa055e48703375b396"
+test_count = 437
+catch_all_mapping = "retired_spatial_search_control_model"
+
+[[removed_source]]
+path = "tests/core.rs"
+sha256 = "9d12eb12e36837442d51eacfc305adad8a785f3953c8b9357407432d05fa947d"
+test_count = 64
+catch_all_mapping = "canonical_public_contract"
+
+[[removed_source]]
+path = "tests/regression.rs"
+sha256 = "d7cb0a2d4e4588d15fb3cef3c823b029bf0a8a04bd6daa626d7c6b3af4ccf843"
+test_count = 49
+catch_all_mapping = "canonical_boolean_regressions"
+
+[[removed_source]]
+path = "src/operations.rs"
+sha256 = "be9dbb17c32f0890b4539ee708c119791932ae0396e2d68a3ba0a19d91adb412"
+test_count = 42
+catch_all_mapping = "canonical_public_contract"
+
+[[removed_source]]
+path = "src/output.rs"
+sha256 = "9d627e70689de18b5dc932664b3d125b9dc8b46090baa3c2c52c43ff6ed08241"
+test_count = 53
+catch_all_mapping = "direct_output_certification"
+
+[[removed_source]]
+path = "src/local_bsp.rs"
+sha256 = "ef0c93649cfae3360fa4375a48817eb8bd7f14fde7918823f975775efea1bb4d"
+test_count = 4
+catch_all_mapping = "retired_spatial_search_control_model"
+
+[[removed_source]]
+path = "src/halfspace.rs"
+sha256 = "4a7c1d25c25b90912d739687afb6e9c8a6eb0bdceb3490b3aefe83f963a75fa6"
+test_count = 0
+catch_all_mapping = "retired_spatial_search_control_model"
+
+[[mapping]]
+id = "retired_spatial_search_control_model"
+disposition = "removed-implementation-specific"
+selectors = ["all tests not named by a stronger semantic mapping in subdivision, segment_trace, local_bsp, and halfspace sources"]
+replacement_tests = [
+  "surface_arrangement::tests::dense_crossing_discovery_exhausts_the_finite_grid_without_a_pass_limit",
+  "surface_arrangement::tests::exact_radial_tetrahedron_builds_two_reciprocal_cells",
+  "surface_arrangement::tests::disconnected_nested_shells_receive_global_absolute_windings",
+  "surface_arrangement::tests::surface_topology_rejects_malformed_incidence_and_winding_dimensions",
+]
+fixture_ids = [
+  "surface_arrangement_negative_cavity",
+  "surface_arrangement_genus_one_voxel_ring",
+  "surface_arrangement_transverse_self_pwn",
+  "surface_arrangement_forty_operand_truth",
+]
+rationale = "Cache-hit ordering, recursive split ranking, reference escape, detour replay, probe budgets, and local-BSP leaf shape were correctness obligations only for the removed spatial-search algorithm. Finite arrangement exhaustion, exact radial incidence, global cell winding, policy propagation, and malformed-state rejection now prove the corresponding public behavior without preserving that control model."
+
+[[mapping]]
+id = "canonical_public_contract"
+disposition = "replaced-by-canonical-api"
+selectors = [
+  "polygon_soup_*",
+  "boolean_operation_*",
+  "general_immediate_*",
+  "certified_convex_*",
+  "convex_certification_*",
+  "algebraic_shortcuts_*",
+]
+replacement_tests = [
+  "tests/boolean.rs::public_boolean_reports_every_program_and_input_rejection",
+  "tests/boolean.rs::one_program_reuses_the_arrangement_for_all_builtin_results",
+  "tests/boolean.rs::unary_disjoint_containment_and_contact_paths_are_total",
+  "mesh::tests::strict_soup_validation_upgrades_an_approximate_cached_pwn_fact",
+]
+fixture_ids = ["overlapping_boxes", "disjoint_boxes", "nested_boxes", "identical_boxes"]
+rationale = "The one context-bearing boolean entry point and compact batch carrier replace the old immediate/reusable/specialized surface. Raw views and native views enter the same engine; only closed-PWN validation facts are cached."
+
+[[mapping]]
+id = "canonical_pairwise_intersections"
+disposition = "retained-as-stronger-matrix"
+selectors = [
+  "intersecting_non_coplanar_*",
+  "non_coplanar_*",
+  "coplanar_*",
+  "exact_bvh_*",
+  "point_bvh_*",
+]
+replacement_tests = [
+  "tests/intersection_corpus.rs::exact_pairwise_intersection_corpus_covers_policy_order_and_orientation",
+  "tests/intersection_corpus.rs::coplanar_rectangle_classifier_matches_exact_open_interval_oracle",
+  "intersection::tests::compact_graph_retains_every_pairwise_intersection_dimension",
+  "bvh::tests::compact_query_hierarchy_matches_full_bvh_under_both_policies",
+]
+fixture_ids = ["exact_pairwise_intersection_microcases", "symbolic_terminal_pairwise_contact"]
+rationale = "The current matrix crosses all six public intersection variants with operand order, polygon orientation, exact geometry payload, both policies, and 256 rectangle-oracle cases."
+
+[[mapping]]
+id = "canonical_boolean_regressions"
+disposition = "retained-as-public-behavior"
+selectors = [
+  "*box*",
+  "*cube*",
+  "*tetrahedra*",
+  "*octahedra*",
+  "*sphere*",
+  "*same_surface*",
+  "*container*",
+  "*borrowed_multi_mesh*",
+]
+replacement_tests = [
+  "tests/boolean.rs::overlapping_boxes_materialize_every_operation_under_both_policies",
+  "tests/boolean.rs::unary_disjoint_containment_and_contact_paths_are_total",
+  "tests/competitive.rs::boolmesh_and_manifold_match_hypermesh_on_shared_boolean_corpus",
+  "surface_arrangement::tests::one_arrangement_materializes_every_builtin_operation_deterministically",
+  "surface_arrangement::tests::exact_embedding_and_operand_permutation_preserve_cell_truth",
+]
+fixture_ids = [
+  "overlapping_boxes",
+  "disjoint_boxes",
+  "nested_boxes",
+  "identical_boxes",
+  "face_touching_boxes",
+  "partial_face_touching_boxes",
+  "overlapping_tetrahedra",
+  "general_nonconvex_regression_suite",
+]
+rationale = "Historical relation and topology cases remain at the public Boolean boundary under both policies, with exact closure, cell truth, volume/differential, determinism, and metamorphic checks rather than engine-path assertions."
+
+[[mapping]]
+id = "direct_output_certification"
+disposition = "retained-as-smaller-stronger-carrier"
+selectors = [
+  "*closure*",
+  "*t_junction*",
+  "*duplicate*",
+  "*triangulat*",
+  "*materializ*",
+  "*output*",
+]
+replacement_tests = [
+  "output::tests::conversion_rejects_every_malformed_carrier_path",
+  "output::tests::closure_evidence_reports_degenerate_duplicate_and_open_topology",
+  "surface_arrangement::tests::direct_materialization_rejects_every_malformed_output_path",
+  "surface_arrangement::tests::direct_materialization_accepts_empty_and_balanced_nonmanifold_outputs",
+]
+fixture_ids = ["surface_arrangement_transverse_self_pwn", "overlapping_boxes"]
+rationale = "The old repair/retry carrier is gone. Direct arrangement facets are independently checked for indices, nondegeneracy, duplicates, directed balance, balanced nonmanifold multiplicity, provenance, and boundedness before conversion."
+
+[[mapping]]
+id = "policy_and_exact_construction"
+disposition = "retained-as-policy-and-identity-invariants"
+selectors = [
+  "*unknown*",
+  "*uncertified*",
+  "*strict*",
+  "*approximate*",
+  "*definition*",
+  "*identity*",
+  "*coincidence*",
+]
+replacement_tests = [
+  "tests/boolean.rs::boolean_terminal_equality_obeys_strict_and_approximate_512",
+  "tests/predicate_policy.rs::multi_comparison_geometry_aggregates_terminal_certainty",
+  "point_interner::tests::terminal_equality_obeys_policy_and_updates_aggregate_certainty",
+  "intersection::tests::retained_graph_points_carry_canonical_crossing_recipes",
+  "surface_arrangement::tests::point_aliasing_obeys_strict_and_approximate_512_terminal_policy",
+]
+fixture_ids = ["symbolic_terminal_box_contact", "symbolic_terminal_pairwise_contact"]
+rationale = "STRICT backtracking is no longer an engine search strategy; undecidable canonical predicates return a typed error. APPROXIMATE_512 alone may consume the terminal, and construction recipes precede numeric equality."
+
+[[mapping]]
+id = "pwn_radial_and_winding"
+disposition = "retained-as-global-topology"
+selectors = [
+  "*winding*",
+  "*non_manifold*",
+  "*leaf_classification*",
+  "*reference*",
+  "*surface_cell*",
+]
+replacement_tests = [
+  "surface_arrangement::tests::coincident_shells_bundle_multiplicity_before_cell_assembly",
+  "surface_arrangement::tests::edge_tangent_closed_shells_build_one_nonmanifold_radial_component",
+  "surface_arrangement::tests::same_operand_transverse_pwn_preserves_winding_multiplicity",
+  "surface_arrangement::tests::genus_one_voxel_ring_has_one_inside_and_one_outside_cell",
+  "winding::tests::propagate_wnv_reports_checked_overflow",
+]
+fixture_ids = [
+  "surface_arrangement_negative_cavity",
+  "surface_arrangement_genus_one_voxel_ring",
+  "surface_arrangement_transverse_self_pwn",
+]
+rationale = "Cell winding is derived once from exact radial topology and checked transitions. This subsumes local reference/probe classification while covering disconnected, nested, coincident, nonmanifold, genus-one, and same-operand transverse PWN cases."

@@ -3,7 +3,7 @@ use std::hint::black_box;
 #[path = "../cube.rs"]
 mod cube_fixture;
 
-use hypermesh::{BooleanOp, EmberConfig, MeshContext, PredicatePolicy, boolean_mesh};
+use hypermesh::{BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, boolean};
 
 use cube_fixture::cube;
 
@@ -21,17 +21,16 @@ fn main() -> hypermesh::HypermeshResult<()> {
     let context = MeshContext::new(policy);
     let left = cube(0, 2);
     let right = cube(1, 3);
-    let result = boolean_mesh(
+    let result = boolean(
         black_box(&context),
         black_box(&[left.as_ref(), right.as_ref()]),
-        black_box(operation),
-        EmberConfig::default(),
+        BooleanProgram::Operation(black_box(operation)),
     )?;
     println!(
         "{:?}: {} vertices, {} triangles",
         result.certainty,
         result.value.vertices.len(),
-        result.value.triangles.len()
+        result.value.results[0].triangles.len()
     );
     Ok(())
 }

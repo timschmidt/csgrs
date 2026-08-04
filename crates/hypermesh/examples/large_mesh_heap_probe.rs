@@ -11,7 +11,9 @@ use competitive_support::{
     MeshPair, box_mesh, large_boolean_case, parse_triangle_obj, to_hypermesh,
     yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
 };
-use hypermesh::{BooleanOp, EmberConfig, MeshContext, PredicatePolicy, boolean_mesh};
+use hypermesh::{
+    BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, boolean, certify_convex_mesh,
+};
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -81,23 +83,20 @@ fn main() {
     let exact_left =
         mesh_common::subdivide_triangles(to_hypermesh(&left), exact_subdivision_levels);
     let exact_right = to_hypermesh(&right);
-    let (exact_left, exact_right) = if certify_convex {
-        (
-            exact_left.with_certified_convexity(),
-            exact_right.with_certified_convexity(),
-        )
-    } else {
-        (exact_left, exact_right)
-    };
+    if certify_convex {
+        certify_convex_mesh(&MeshContext::new(policy), exact_left.as_ref())
+            .expect("left large-mesh fixture must remain convex");
+        certify_convex_mesh(&MeshContext::new(policy), exact_right.as_ref())
+            .expect("right large-mesh fixture must remain convex");
+    }
     drop((left, right));
     let meshes = [exact_left, exact_right];
     let input_triangles = meshes[0].triangles.len() + meshes[1].triangles.len();
 
-    let result = boolean_mesh(
+    let result = boolean(
         &MeshContext::new(policy),
         black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
-        BooleanOp::Union,
-        EmberConfig::default(),
+        BooleanProgram::Operation(BooleanOp::Union),
     )
     .expect("large fixture union must complete under the selected policy");
     println!(
@@ -105,6 +104,6 @@ fn main() {
          output_vertices={}, output_triangles={}",
         result.certainty,
         result.value.vertices.len(),
-        result.value.triangles.len()
+        result.value.results[0].triangles.len()
     );
 }

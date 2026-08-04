@@ -3,41 +3,40 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, TriangleMeshRef, boolean_mesh, boolean_operation,
+    BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, HypermeshError,
+    TriangleMeshRef, boolean,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, CONTEXT, combine_meshes, convex_mesh, operation, subdivide_once, validate_result,
-    validate_soup, value, volume_numerator,
+    Bytes, CONTEXT, combine_meshes, convex_mesh, operation, subdivide_once, validate_batch, value,
+    volume_numerator,
 };
 
-fn require_result(
-    meshes: &[hypermesh::TriangleMeshRef<'_>],
-    operation: BooleanOp,
-) -> hypermesh::BooleanMesh {
-    let result = value(boolean_operation(
-        &CONTEXT,
-        meshes,
-        operation,
-        EmberConfig::default(),
-    ))
-    .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
-    validate_result(&result, operation, meshes.len())
+fn require_program(
+    meshes: &[TriangleMeshRef<'_>],
+    program: BooleanProgram<'_>,
+) -> BooleanMeshBatch {
+    let batch = value(boolean(&CONTEXT, meshes, program))
+        .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
+    validate_batch(&batch);
+    batch
 }
 
-fn require_soup(
-    meshes: &[hypermesh::TriangleMeshRef<'_>],
-    operation: BooleanOp,
-) -> hypermesh::BooleanMesh {
-    let soup = value(boolean_mesh(
-        &CONTEXT,
-        meshes,
-        operation,
-        EmberConfig::default(),
-    ))
-    .unwrap_or_else(|error| panic!("supported exact immediate Boolean input failed: {error:?}"));
-    validate_soup(&soup);
-    soup
+fn require_operation(meshes: &[TriangleMeshRef<'_>], operation: BooleanOp) -> BooleanMeshBatch {
+    require_program(meshes, BooleanProgram::Operation(operation))
+}
+
+fn volume(batch: &BooleanMeshBatch, output: usize) -> hypermesh::Real {
+    volume_numerator(&batch.vertices, &batch.results[output])
+}
+
+fn operation_index(operation: BooleanOp) -> usize {
+    match operation {
+        BooleanOp::Union => 0,
+        BooleanOp::Intersection => 1,
+        BooleanOp::Difference => 2,
+        BooleanOp::SymmetricDifference => 3,
+    }
 }
 
 fuzz_target!(|data: [u8; 48]| {
@@ -60,88 +59,112 @@ fuzz_target!(|data: [u8; 48]| {
     let refs = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
     match mode {
         0 => {
-            require_result(&refs, op);
+            require_operation(&refs, op);
         }
         1 => {
-            require_soup(&refs, op);
+            let nodes = [
+                BooleanExpression::Operation(BooleanOp::Union),
+                BooleanExpression::Operation(BooleanOp::Intersection),
+                BooleanExpression::Operation(BooleanOp::Difference),
+                BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+            ];
+            let roots = [0, 1, 2, 3];
+            let batch = require_program(
+                &refs,
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            );
+            let single = require_operation(&refs, op);
+            assert_eq!(volume(&batch, operation_index(op)), volume(&single, 0));
         }
         2 => {
-            let polygon_soup = require_result(&refs, op);
-            let immediate_soup = require_soup(&refs, op);
+            let raw_refs = meshes
+                .iter()
+                .map(|mesh| TriangleMeshRef::new(&mesh.positions, &mesh.triangles))
+                .collect::<Vec<_>>();
             assert_eq!(
-                volume_numerator(&polygon_soup),
-                volume_numerator(&immediate_soup),
+                volume(&require_operation(&refs, op), 0),
+                volume(&require_operation(&raw_refs, op), 0),
             );
         }
         3 => {
             let pair = [
-                convex_mesh(&mut bytes).with_certified_convexity(),
-                convex_mesh(&mut bytes).with_certified_convexity(),
+                convex_mesh(&mut bytes),
+                convex_mesh(&mut bytes),
             ];
-            let pair_refs = [pair[0].as_ref(), pair[1].as_ref()];
-            let raw_refs = [
+            let retained = [pair[0].as_ref(), pair[1].as_ref()];
+            let raw = [
                 TriangleMeshRef::new(&pair[0].positions, &pair[0].triangles),
                 TriangleMeshRef::new(&pair[1].positions, &pair[1].triangles),
             ];
-            let generic = require_result(&raw_refs, op);
-            let certified =
-                value(boolean_operation(&CONTEXT, &pair_refs, op, EmberConfig::default()))
-            .unwrap_or_else(|error| panic!("certified-convex Boolean failed: {error:?}"));
-            let certified_soup = validate_result(&certified, op, 2);
-            let immediate = value(boolean_mesh(
-                &CONTEXT,
-                &pair_refs,
-                op,
-                EmberConfig::default(),
-            ))
-            .unwrap_or_else(|error| panic!("certified-convex immediate Boolean failed: {error:?}"));
-            validate_soup(&immediate);
             assert_eq!(
-                volume_numerator(&generic),
-                volume_numerator(&certified_soup)
+                volume(&require_operation(&retained, op), 0),
+                volume(&require_operation(&raw, op), 0),
             );
-            assert_eq!(volume_numerator(&generic), volume_numerator(&immediate));
         }
         4 => {
-            let pair_refs = [refs[0], refs[1]];
-            let generic = require_result(&pair_refs, op);
-            let immediate = require_soup(&pair_refs, op);
-            assert_eq!(volume_numerator(&generic), volume_numerator(&immediate));
-        }
-        5 => {
             let commutative = match bytes.next() % 3 {
                 0 => BooleanOp::Union,
                 1 => BooleanOp::Intersection,
                 _ => BooleanOp::SymmetricDifference,
             };
-            let forward = require_soup(&refs, commutative);
-            let reversed_refs = refs.iter().rev().copied().collect::<Vec<_>>();
-            let reversed = require_soup(&reversed_refs, commutative);
-            assert_eq!(volume_numerator(&forward), volume_numerator(&reversed));
+            let reversed = refs.iter().rev().copied().collect::<Vec<_>>();
+            assert_eq!(
+                volume(&require_operation(&refs, commutative), 0),
+                volume(&require_operation(&reversed, commutative), 0),
+            );
         }
-        6 => {
+        5 => {
             let repeated = [refs[0], refs[0]];
-            let result = require_soup(&repeated, op);
-            let source = require_soup(&[refs[0]], BooleanOp::Union);
+            let result = require_operation(&repeated, op);
+            let source = require_operation(&[refs[0]], BooleanOp::Union);
             let expected = match op {
-                BooleanOp::Union | BooleanOp::Intersection => volume_numerator(&source),
+                BooleanOp::Union | BooleanOp::Intersection => volume(&source, 0),
                 BooleanOp::Difference | BooleanOp::SymmetricDifference => hypermesh::Real::zero(),
             };
-            assert_eq!(volume_numerator(&result), expected);
+            assert_eq!(volume(&result, 0), expected);
+        }
+        6 => {
+            let nodes = [
+                BooleanExpression::Operand(0),
+                BooleanExpression::Operand(1),
+                BooleanExpression::Not(0),
+                BooleanExpression::Not(1),
+                BooleanExpression::And([0, 3]),
+                BooleanExpression::And([1, 2]),
+                BooleanExpression::Or([0, 1]),
+                BooleanExpression::Not(6),
+            ];
+            let roots = [4, 5, 7];
+            let batch = require_program(
+                &refs[..2],
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            );
+            let reversed = [refs[1], refs[0]];
+            assert_eq!(
+                volume(&batch, 0),
+                volume(&require_operation(&refs[..2], BooleanOp::Difference), 0),
+            );
+            assert_eq!(
+                volume(&batch, 1),
+                volume(&require_operation(&reversed, BooleanOp::Difference), 0),
+            );
+            assert!(batch.results[2].exterior_inside);
+            assert_eq!(
+                batch.into_triangle_meshes().unwrap_err(),
+                HypermeshError::UnboundedBooleanOutput { output: 2 }
+            );
         }
         7 => {
-            let config = EmberConfig {
-                max_depth: usize::from(bytes.next() % 3),
-            };
-            match value(boolean_operation(&CONTEXT, &refs, op, config)) {
-                Ok(result) => {
-                    validate_result(&result, op, refs.len());
-                }
-                Err(HypermeshError::SubdivisionDepthLimit { depth, .. }) => {
-                    assert!(depth <= config.max_depth);
-                }
-                Err(error) => panic!("bounded exact Boolean returned unexpected error: {error:?}"),
-            }
+            let single = require_operation(&refs, op);
+            let meshes = single.clone().into_triangle_meshes().unwrap();
+            assert_eq!(meshes.len(), 1);
+            assert_eq!(meshes[0].triangles.len(), single.results[0].triangles.len());
         }
         _ => {
             for candidate in [
@@ -150,7 +173,7 @@ fuzz_target!(|data: [u8; 48]| {
                 BooleanOp::Difference,
                 BooleanOp::SymmetricDifference,
             ] {
-                require_soup(&refs, candidate);
+                require_operation(&refs, candidate);
             }
         }
     }

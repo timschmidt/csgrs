@@ -8,33 +8,10 @@ use hyperlattice::{
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
+pub(crate) use crate::predicate::compare_real_decision;
 pub use crate::predicate::{
     Classification, classify_point, classify_projective_point, compare_real,
 };
-pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real, compare_real_decision};
-
-/// Returns the exact equal-weight centroid of a nonempty point set.
-///
-/// A nondegenerate convex polygon's vertex centroid is in its relative
-/// interior, so arrangement code can use this single canonical witness instead
-/// of searching an implementation-specific family of leaf probes.
-pub(crate) fn point_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
-    if points.is_empty() {
-        return Ok(None);
-    }
-    let mut sum = Point3::origin();
-    for point in points {
-        sum.x += point.x.clone();
-        sum.y += point.y.clone();
-        sum.z += point.z.clone();
-    }
-    let denominator = Real::from(points.len() as u64);
-    Ok(Some(Point3::new(
-        (sum.x / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.y / denominator.clone()).map_err(|_| HypermeshError::UnknownClassification)?,
-        (sum.z / denominator).map_err(|_| HypermeshError::UnknownClassification)?,
-    )))
-}
 
 pub(crate) fn affine_projective_point_decision(
     decisions: &DecisionContext,
@@ -295,37 +272,6 @@ impl Plane {
                 -self.normal.z.clone(),
             ),
             -self.offset.clone(),
-        )
-    }
-
-    /// Removes a positive projective scale from an exact plane.
-    ///
-    /// Planes reconstructed around derived intersection coordinates can share
-    /// a very large rational factor across all four coefficients. Dividing by
-    /// one nonzero normal coefficient retains orientation while preventing
-    /// that irrelevant scale from entering later predicates.
-    pub(crate) fn normalized_projective_scale(self) -> Self {
-        let Some(scale) = [&self.normal.x, &self.normal.y, &self.normal.z]
-            .into_iter()
-            .find(|coefficient| {
-                coefficient
-                    .exact_rational_ref()
-                    .is_some_and(|value| !value.is_zero())
-            })
-            .map(|coefficient| coefficient.abs())
-        else {
-            return self;
-        };
-        let divide = |coefficient: Real| {
-            (coefficient / &scale).expect("a selected plane coefficient is nonzero")
-        };
-        Self::new(
-            Point3::new(
-                divide(self.normal.x),
-                divide(self.normal.y),
-                divide(self.normal.z),
-            ),
-            divide(self.offset),
         )
     }
 

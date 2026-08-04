@@ -4,8 +4,8 @@ mod yeahright;
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
-    BooleanMesh, BooleanOp, BooleanResult, EmberConfig, MeshContext, Point3, PredicatePolicy, Real,
-    Triangle, TriangleMesh, boolean_mesh, boolean_operation,
+    BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, Point3, PredicatePolicy, Real,
+    Triangle, TriangleMesh, boolean, certify_convex_mesh,
 };
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -325,53 +325,35 @@ pub fn prepare(case: &Case) -> PreparedInputs {
 
 pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> PreparedInputs {
     PreparedInputs {
-        hypermesh: [
-            to_hypermesh(left).with_certified_convexity(),
-            to_hypermesh(right).with_certified_convexity(),
-        ],
+        hypermesh: [to_hypermesh(left), to_hypermesh(right)],
         boolmesh: [to_boolmesh(left), to_boolmesh(right)],
         manifold: [to_manifold(left), to_manifold(right)],
     }
 }
 
 pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
-    let exact_hull = to_hypermesh(&case.left)
-        .try_certify_convex(&APPROXIMATE_CONTEXT)
-        .expect("the dyadic YeahRight benchmark hull is exactly convex")
-        .into_value();
+    let exact_hull = to_hypermesh(&case.left);
+    certify_convex_mesh(&APPROXIMATE_CONTEXT, exact_hull.as_ref())
+        .expect("the dyadic YeahRight benchmark hull is exactly convex");
     PreparedInputs {
-        hypermesh: [
-            exact_hull,
-            to_hypermesh(&case.right).with_certified_convexity(),
-        ],
+        hypermesh: [exact_hull, to_hypermesh(&case.right)],
         boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
         manifold: [to_manifold(&case.left), to_manifold(&case.right)],
     }
 }
 
 pub fn run_hypermesh(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMesh {
-    raw_from_hypermesh(&run_hypermesh_exact(inputs, operation))
+    let batch = run_hypermesh_batch(inputs, operation);
+    raw_from_hypermesh_batch(&batch, 0)
 }
 
-pub fn run_hypermesh_exact(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanMesh {
-    boolean_mesh(
+pub fn run_hypermesh_batch(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanMeshBatch {
+    boolean(
         &APPROXIMATE_CONTEXT,
         &[inputs[0].as_ref(), inputs[1].as_ref()],
-        operation.hypermesh(),
-        EmberConfig::default(),
+        BooleanProgram::Operation(operation.hypermesh()),
     )
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
-    .into_value()
-}
-
-pub fn run_hypermesh_polygon(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanResult {
-    boolean_operation(
-        &APPROXIMATE_CONTEXT,
-        &[inputs[0].as_ref(), inputs[1].as_ref()],
-        operation.hypermesh(),
-        EmberConfig::default(),
-    )
-    .unwrap_or_else(|error| panic!("hypermesh polygon {} failed: {error}", operation.name()))
     .into_value()
 }
 
@@ -644,9 +626,10 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     }
 }
 
-pub fn raw_from_hypermesh(soup: &BooleanMesh) -> RawMesh {
+pub fn raw_from_hypermesh_batch(batch: &BooleanMeshBatch, output: usize) -> RawMesh {
+    let result = &batch.results[output];
     RawMesh {
-        positions: soup
+        positions: batch
             .vertices
             .iter()
             .map(|vertex| {
@@ -657,7 +640,11 @@ pub fn raw_from_hypermesh(soup: &BooleanMesh) -> RawMesh {
                 ]
             })
             .collect(),
-        triangles: soup.triangles.clone(),
+        triangles: result
+            .triangles
+            .iter()
+            .map(|triangle| triangle.map(|index| index as usize))
+            .collect(),
     }
 }
 

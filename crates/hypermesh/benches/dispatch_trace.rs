@@ -5,11 +5,10 @@ mod competitive_support;
 
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
-    BooleanOp, EmberConfig, ExactBvh, HypermeshResult, MeshContext, Plane, Point3, PredicatePolicy,
-    Real, TriangleMeshRef, boolean_mesh, boolean_operation, classify_polygon_output, convex_hull,
+    BooleanExpression, BooleanOp, BooleanProgram, ExactBvh, HypermeshResult, MeshContext, Plane,
+    Point3, PredicatePolicy, Real, TriangleMeshRef, boolean, convex_hull,
     convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_triangle,
-    extract_output, intersect_polygons, polygon_soup, propagate_wnv, trace_axis_segment,
-    trace_segment,
+    intersect_polygons, polygon_soup,
 };
 
 const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
@@ -40,7 +39,7 @@ fn main() {
         let yeahright_inputs = competitive_support::prepare_yeahright(&yeahright_case);
         hyperreal::dispatch_trace::reset();
         let yeahright_output = hyperreal::dispatch_trace::with_recording(|| {
-            competitive_support::run_hypermesh_exact(
+            competitive_support::run_hypermesh_batch(
                 &yeahright_inputs.hypermesh,
                 competitive_support::Operation::Union,
             )
@@ -49,7 +48,7 @@ fn main() {
         println!(
             "{}/Union: triangles={}, correlation={:?}",
             yeahright_case.name,
-            yeahright_output.triangles.len(),
+            yeahright_output.results[0].triangles.len(),
             trace.correlation_summary(),
         );
         for summary in &trace.dispatch {
@@ -73,11 +72,10 @@ fn main() {
         ] {
             hyperreal::dispatch_trace::reset();
             let result = hyperreal::dispatch_trace::with_recording(|| {
-                boolean_operation(
+                boolean(
                     &CONTEXT,
                     &[meshes[0].as_ref(), meshes[1].as_ref()],
-                    op,
-                    EmberConfig::default(),
+                    BooleanProgram::Operation(op),
                 )
             });
             let output = result
@@ -90,8 +88,8 @@ fn main() {
                 "{name}/{op:?} did not emit an exact-computation path trace"
             );
             println!(
-                "{name}/{op:?}: polygons={}, correlation={:?}",
-                output.classifications().len(),
+                "{name}/{op:?}: triangles={}, correlation={:?}",
+                output.results[0].triangles.len(),
                 correlation
             );
             for summary in &trace.dispatch {
@@ -110,11 +108,10 @@ fn main() {
         .collect::<Vec<_>>();
     hyperreal::dispatch_trace::reset();
     let nested_tool_result = hyperreal::dispatch_trace::with_recording(|| {
-        boolean_operation(
+        boolean(
             &CONTEXT,
             &nested_tool_refs,
-            BooleanOp::Difference,
-            EmberConfig::default(),
+            BooleanProgram::Operation(BooleanOp::Difference),
         )
     })
     .expect("trace variadic difference must remain certified")
@@ -126,8 +123,8 @@ fn main() {
         "nested_tools_5/Difference did not emit an exact-computation path trace"
     );
     println!(
-        "nested_tools_5/Difference: polygons={}, correlation={:?}",
-        nested_tool_result.classifications().len(),
+        "nested_tools_5/Difference: triangles={}, correlation={:?}",
+        nested_tool_result.results[0].triangles.len(),
         correlation
     );
     for summary in &trace.dispatch {
@@ -140,11 +137,10 @@ fn main() {
     let subdivided_cubes = common::subdivided_cube_pair(2);
     hyperreal::dispatch_trace::reset();
     let subdivided_result = hyperreal::dispatch_trace::with_recording(|| {
-        boolean_operation(
+        boolean(
             &CONTEXT,
             &[subdivided_cubes[0].as_ref(), subdivided_cubes[1].as_ref()],
-            BooleanOp::Union,
-            EmberConfig::default(),
+            BooleanProgram::Operation(BooleanOp::Union),
         )
     })
     .expect("subdivided cube union must remain certified")
@@ -156,8 +152,8 @@ fn main() {
         "subdivided_cubes_192/Union did not emit an exact-computation path trace"
     );
     println!(
-        "subdivided_cubes_192/Union: polygons={}, correlation={:?}",
-        subdivided_result.classifications().len(),
+        "subdivided_cubes_192/Union: triangles={}, correlation={:?}",
+        subdivided_result.results[0].triangles.len(),
         correlation
     );
     for summary in &trace.dispatch {
@@ -202,43 +198,44 @@ fn main() {
         TriangleMeshRef::new(&cube_pair[0].positions, &cube_pair[0].triangles),
         TriangleMeshRef::new(&cube_pair[1].positions, &cube_pair[1].triangles),
     ];
-    let certified_cube_pair = cube_pair
-        .clone()
-        .map(|mesh| mesh.with_certified_convexity());
-    let certified_cube_refs = [
-        certified_cube_pair[0].as_ref(),
-        certified_cube_pair[1].as_ref(),
-    ];
+    let native_cube_refs = [cube_pair[0].as_ref(), cube_pair[1].as_ref()];
     let soup = trace_workload("mesh_build_polygon_soup", || {
         Ok(polygon_soup(&CONTEXT, &cube_refs)?.into_value())
     });
     assert_eq!(soup.num_meshes, 2);
     assert!(!soup.polygons.is_empty());
 
-    trace_workload("immediate_certified_convex_polygon", || {
-        let result = boolean_operation(
+    trace_workload("surface_arrangement_single_result", || {
+        let result = boolean(
             &CONTEXT,
-            &certified_cube_refs,
-            BooleanOp::Union,
-            EmberConfig::default(),
+            &native_cube_refs,
+            BooleanProgram::Operation(BooleanOp::Union),
         )?
         .into_value();
-        let owned = extract_output(&CONTEXT, &result)?.into_value();
-        let borrowed =
-            hypermesh::output::extract_output_polygons(&CONTEXT, &result.output().polygons)?
-                .into_value();
-        assert_eq!(owned.len(), borrowed.len());
-        Ok(owned.len())
+        Ok(result.results[0].triangles.len())
     });
-    trace_workload("immediate_certified_convex_boolean_mesh", || {
-        let boolean_mesh = boolean_mesh(
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let roots = [0, 1, 2, 3];
+    trace_workload("surface_arrangement_shared_four_results", || {
+        let batch = boolean(
             &CONTEXT,
-            &certified_cube_refs,
-            BooleanOp::Union,
-            EmberConfig::default(),
+            &native_cube_refs,
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
         )?
         .into_value();
-        Ok(boolean_mesh.triangles.len())
+        Ok(batch
+            .results
+            .iter()
+            .map(|result| result.triangles.len())
+            .sum::<usize>())
     });
 
     let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
@@ -270,25 +267,6 @@ fn main() {
             ),
             pair_count,
         ))
-    });
-
-    let mut wall = convex_triangle(&CONTEXT, &p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0)
-        .expect("wall triangle must be valid")
-        .into_value();
-    wall.delta_w = vec![1];
-    trace_workload("segment_and_winding", || {
-        let axis =
-            trace_axis_segment(&CONTEXT, &p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone()])?
-                .into_value();
-        let winding =
-            trace_segment(&CONTEXT, &p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone()])?.into_value();
-        assert!(axis.valid);
-        assert_eq!(axis.winding, winding);
-
-        let propagated = propagate_wnv(&[0, 1], -1, &[1, -1])?;
-        let operation = BooleanOp::Difference;
-        let classification = classify_polygon_output(&[0, 1], &propagated, operation);
-        Ok((winding, classification))
     });
 
     let retained_points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)];

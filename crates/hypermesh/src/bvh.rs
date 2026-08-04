@@ -38,7 +38,6 @@ struct BvhNode {
 struct BoundsBvh {
     order: Vec<usize>,
     nodes: Vec<BvhNode>,
-    #[cfg(test)]
     primitive_extrema: Option<Vec<[u32; 6]>>,
 }
 
@@ -46,12 +45,11 @@ impl BoundsBvh {
     fn build(
         decisions: &DecisionContext,
         primitives: &[PolygonBounds],
-        _retain_primitive_extrema: bool,
+        retain_primitive_extrema: bool,
     ) -> HypermeshResult<Self> {
         if primitives.is_empty() {
             return Ok(Self {
-                #[cfg(test)]
-                primitive_extrema: _retain_primitive_extrema.then(Vec::new),
+                primitive_extrema: retain_primitive_extrema.then(Vec::new),
                 ..Self::default()
             });
         }
@@ -64,8 +62,7 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..primitives.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(primitives.len())),
-            #[cfg(test)]
-            primitive_extrema: _retain_primitive_extrema
+            primitive_extrema: retain_primitive_extrema
                 .then(|| Vec::with_capacity(bvh_node_capacity(primitives.len()))),
         };
         tree.build_node(
@@ -103,7 +100,6 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..points.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
-            #[cfg(test)]
             primitive_extrema: None,
         };
         tree.build_point_node(decisions, points, approximate_points, 0, points.len())?;
@@ -118,21 +114,12 @@ impl BoundsBvh {
         start: usize,
         end: usize,
     ) -> HypermeshResult<usize> {
-        let (bounds, _extrema) = union_bounds(
+        let (bounds, extrema) = union_bounds(
             decisions,
             self.order[start..end]
                 .iter()
                 .map(|&index| (index, &primitives[index].bounds)),
-            {
-                #[cfg(test)]
-                {
-                    self.primitive_extrema.is_some()
-                }
-                #[cfg(not(test))]
-                {
-                    false
-                }
-            },
+            self.primitive_extrema.is_some(),
         )?;
         let children_axis = (end - start > LEAF_SIZE)
             .then(|| longest_axis(decisions, &bounds))
@@ -143,9 +130,8 @@ impl BoundsBvh {
             range: start..end,
             children: None,
         });
-        #[cfg(test)]
         if let Some(retained) = &mut self.primitive_extrema {
-            retained.push(_extrema.expect("requested primitive extrema are returned"));
+            retained.push(extrema.expect("requested primitive extrema are returned"));
         }
         let Some(axis) = children_axis else {
             return Ok(node_index);
@@ -261,14 +247,12 @@ pub struct ExactBvh {
     tree: BoundsBvh,
 }
 
-#[cfg(test)]
 #[derive(Clone, Copy)]
 struct CompactBvhNode {
     range: [u32; 2],
     right_child: u32,
 }
 
-#[cfg(test)]
 pub(crate) struct ExactBvhQueryHierarchy {
     order: Box<[u32]>,
     nodes: Box<[CompactBvhNode]>,
@@ -294,7 +278,6 @@ impl ExactBvh {
         Self::build_decision_with_extrema(decisions, polygons, false)
     }
 
-    #[cfg(test)]
     pub(crate) fn build_for_query_hierarchy_decision(
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
@@ -319,7 +302,6 @@ impl ExactBvh {
         Ok(Self { primitives, tree })
     }
 
-    #[cfg(test)]
     pub(crate) fn into_query_hierarchy(
         mut self,
         polygons: &[ConvexPolygon],
@@ -514,7 +496,6 @@ impl ExactBvh {
     }
 }
 
-#[cfg(test)]
 impl ExactBvhQueryHierarchy {
     pub(crate) fn query_bounds_decision<F>(
         &self,

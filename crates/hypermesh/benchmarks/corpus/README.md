@@ -23,8 +23,9 @@ Current tiers are intentionally explicit:
 
 `tests/corpus_manifest.rs` rejects duplicate/incomplete records, missing exact
 assets, competitive cases absent from the Rust benchmark corpus, and heap rows
-without a large size tier. The implementation-test migration ledger is filled
-before subdivision/trace tests are deleted.
+without a large size tier. `implementation-test-migration.toml` records the
+committed historical source snapshot and maps the removed engine-specific test
+families to current public behavior cases or stronger arrangement invariants.
 
 `tests/intersection_corpus.rs` permanently exercises every public pairwise
 intersection class across both predicate policies, both operand orders, and
@@ -36,7 +37,8 @@ indices.
 
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
-first retains certified-convex input facts while the second deliberately omits
-them so heap measurements exercise the general arrangement path. Every heap
-gate runs both `STRICT` and `APPROXIMATE_512` and records output certainty and
-topology with the process-memory result.
+first performs explicit convexity validation and primes the native closed-PWN
+fact, while the second uses raw borrowed views so repeated-input cache effects
+are visible without selecting a different engine. Every heap gate runs both
+`STRICT` and `APPROXIMATE_512` and records output certainty and topology with
+the process-memory result.

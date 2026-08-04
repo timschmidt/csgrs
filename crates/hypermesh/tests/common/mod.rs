@@ -1,12 +1,9 @@
 #![allow(dead_code)]
 
 use hypermesh::clip::{ClipResult, clip_polygon};
-use hypermesh::output::ClassifiedPolygon;
 use hypermesh::{
-    Aabb, BooleanMesh, BooleanMeshClosureEvidence, BooleanOp, BooleanResult, Classification,
-    ConvexPolygon, EmberConfig, ExactBvh, ExactPointBvh, HypermeshResult, MeshContext, MeshOutcome,
-    Plane, Point3, PredicatePolicy, SubdivisionConfig, SubdivisionTask, TraceAxisSegmentResult,
-    TriangleMesh, TriangleMeshRef, WindingNumberVector,
+    Aabb, Classification, ConvexPolygon, ExactBvh, ExactPointBvh, HypermeshError, HypermeshResult,
+    MeshContext, MeshOutcome, Plane, Point3, PredicatePolicy, TriangleMeshRef,
 };
 
 pub const APPROXIMATE_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
@@ -57,65 +54,6 @@ pub fn approximate_polygon_soup(
     meshes: &[TriangleMeshRef<'_>],
 ) -> HypermeshResult<hypermesh::PolygonSoup> {
     value(hypermesh::polygon_soup(&APPROXIMATE_CONTEXT, meshes))
-}
-
-pub fn approximate_boolean_operation(
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanResult> {
-    value(hypermesh::boolean_operation(
-        &APPROXIMATE_CONTEXT,
-        meshes,
-        operation,
-        config,
-    ))
-}
-
-pub fn approximate_boolean_mesh(
-    meshes: &[TriangleMeshRef<'_>],
-    operation: BooleanOp,
-    config: EmberConfig,
-) -> HypermeshResult<BooleanMesh> {
-    value(hypermesh::boolean_mesh(
-        &APPROXIMATE_CONTEXT,
-        meshes,
-        operation,
-        config,
-    ))
-}
-
-pub fn approximate_boolean_triangle_meshes(
-    left: &TriangleMesh,
-    right: &TriangleMesh,
-    operation: BooleanOp,
-    config: EmberConfig,
-) -> HypermeshResult<TriangleMesh> {
-    value(hypermesh::boolean_triangle_meshes(
-        &APPROXIMATE_CONTEXT,
-        left,
-        right,
-        operation,
-        config,
-    ))
-}
-
-pub fn approximate_triangulate_and_resolve_certified(
-    result: &BooleanResult,
-) -> HypermeshResult<BooleanMesh> {
-    value(hypermesh::triangulate_and_resolve_certified(
-        &APPROXIMATE_CONTEXT,
-        result,
-    ))
-}
-
-pub fn approximate_certify_output_polygon_closure(
-    result: &BooleanResult,
-) -> HypermeshResult<BooleanMeshClosureEvidence> {
-    value(hypermesh::certify_output_polygon_closure(
-        &APPROXIMATE_CONTEXT,
-        result,
-    ))
 }
 
 pub fn approximate_classify_point(
@@ -229,94 +167,4 @@ where
     F: FnMut(usize),
 {
     value(bvh.query_negative_oriented_plane(&APPROXIMATE_CONTEXT, points, a, b, c, callback))
-}
-
-pub fn approximate_trace_axis_segment(
-    start: &Point3,
-    end: &Point3,
-    axis: usize,
-    start_wnv: &[i32],
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<TraceAxisSegmentResult> {
-    value(hypermesh::trace_axis_segment(
-        &APPROXIMATE_CONTEXT,
-        start,
-        end,
-        axis,
-        start_wnv,
-        polygons,
-    ))
-}
-
-pub fn approximate_trace_segment(
-    start: &Point3,
-    end: &Point3,
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<WindingNumberVector> {
-    value(hypermesh::trace_segment(
-        &APPROXIMATE_CONTEXT,
-        start,
-        end,
-        winding,
-        polygons,
-    ))
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn approximate_classify_leaf_polygon(
-    support: &Plane,
-    leaf_edges: &[Plane],
-    ref_point: &Point3,
-    ref_definitions: &[[Plane; 3]],
-    ref_wnv: &[i32],
-    polygons: &[ConvexPolygon],
-    bounds: &Aabb,
-    host_delta_w: &[i32],
-) -> HypermeshResult<WindingNumberVector> {
-    value(hypermesh::classify_leaf_polygon(
-        &APPROXIMATE_CONTEXT,
-        support,
-        leaf_edges,
-        ref_point,
-        ref_definitions,
-        ref_wnv,
-        polygons,
-        bounds,
-        host_delta_w,
-    ))
-}
-
-pub fn approximate_process_leaf_into(
-    polygons: &[ConvexPolygon],
-    bounds: &Aabb,
-    ref_point: &Point3,
-    ref_definitions: &[[Plane; 3]],
-    ref_wnv: &[i32],
-    operation: BooleanOp,
-    output: &mut Vec<ClassifiedPolygon>,
-) -> HypermeshResult<hypermesh::LeafProcessingStats> {
-    value(hypermesh::process_leaf_into(
-        &APPROXIMATE_CONTEXT,
-        polygons,
-        bounds,
-        ref_point,
-        ref_definitions,
-        ref_wnv,
-        operation,
-        output,
-    ))
-}
-
-pub fn approximate_subdivide(
-    task: SubdivisionTask,
-    operation: BooleanOp,
-    config: SubdivisionConfig,
-) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    value(hypermesh::subdivide(
-        &APPROXIMATE_CONTEXT,
-        task,
-        operation,
-        config,
-    ))
 }

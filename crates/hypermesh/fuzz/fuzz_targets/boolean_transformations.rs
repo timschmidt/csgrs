@@ -4,15 +4,14 @@ mod support;
 
 use hyperlattice::{Matrix4, Matrix4TransformKind};
 use hypermesh::{
-    BooleanMesh, BooleanOp, EmberConfig, HypermeshError, Real, Triangle, TriangleMesh,
-    TriangleMeshRef, boolean_mesh, boolean_operation, certify_convex_mesh,
-    classify_polygon_output,
+    BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, HypermeshError, Real, Triangle,
+    TriangleMesh, TriangleMeshRef, boolean, certify_convex_mesh,
 };
 use hyperreal::StructuralKind;
 use libfuzzer_sys::fuzz_target;
 use support::{
-    Bytes, CONTEXT, convex_mesh, operation, r, representative_hyperreal_values, validate_result,
-    validate_soup, value, volume_numerator,
+    Bytes, CONTEXT, convex_mesh, operation, r, representative_hyperreal_values, validate_batch,
+    value, volume_numerator,
 };
 
 struct TransformPlan {
@@ -157,10 +156,7 @@ fn accept_certification_boundary(error: HypermeshError) {
             error,
             HypermeshError::PredicateUndecided { .. }
                 | HypermeshError::UnknownClassification
-                | HypermeshError::ReferencePropagationFailed
                 | HypermeshError::PointAtInfinity
-                | HypermeshError::OpenOutput { .. }
-                | HypermeshError::SubdivisionDepthLimit { .. }
         ),
         "symbolic-transform Boolean returned a non-certification error: {error:?}",
     );
@@ -170,62 +166,53 @@ fn run_boolean(
     meshes: &[TriangleMesh; 2],
     op: BooleanOp,
     api: u8,
-) -> Result<BooleanMesh, HypermeshError> {
+) -> Result<(BooleanMeshBatch, usize), HypermeshError> {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
     let raw_refs = [
         TriangleMeshRef::new(&meshes[0].positions, &meshes[0].triangles),
         TriangleMeshRef::new(&meshes[1].positions, &meshes[1].triangles),
     ];
-    match api % 3 {
-        0 => value(boolean_operation(
-            &CONTEXT,
-            &raw_refs,
-            op,
-            EmberConfig::default(),
-        ))
-        .map(|result| validate_result(&result, op, raw_refs.len())),
-        1 => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
-            validate_soup(soup);
-        }),
-        _ => value(boolean_mesh(&CONTEXT, &refs, op, EmberConfig::default())).inspect(|soup| {
-            validate_soup(soup);
-        }),
-    }
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let roots = [0, 1, 2, 3];
+    let (views, program, output) = match api % 3 {
+        0 => (
+            raw_refs.as_slice(),
+            BooleanProgram::Operation(op),
+            0,
+        ),
+        1 => (refs.as_slice(), BooleanProgram::Operation(op), 0),
+        _ => (
+            refs.as_slice(),
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
+            match op {
+                BooleanOp::Union => 0,
+                BooleanOp::Intersection => 1,
+                BooleanOp::Difference => 2,
+                BooleanOp::SymmetricDifference => 3,
+            },
+        ),
+    };
+    value(boolean(&CONTEXT, views, program))
+        .inspect(validate_batch)
+        .map(|batch| (batch, output))
 }
 
 fn run_symbolic_boolean(meshes: &[TriangleMesh; 2], op: BooleanOp) -> Result<(), HypermeshError> {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
-    value(boolean_operation(
+    value(boolean(
         &CONTEXT,
         &refs,
-        op,
-        EmberConfig::default(),
+        BooleanProgram::Operation(op),
     ))
-    .map(|result| {
-        assert_eq!(result.output().num_meshes, refs.len());
-        assert_eq!(
-            result.output().polygons.len(),
-            result.classifications().len()
-        );
-        assert_eq!(result.output().polygons.len(), result.winding_pairs().len());
-        assert!(result.output().polygons.iter().all(|polygon| {
-            polygon
-                .is_valid(&CONTEXT)
-                .is_ok_and(hypermesh::MeshOutcome::into_value)
-        }));
-        for (classification, winding) in result.classifications().iter().zip(result.winding_pairs())
-        {
-            assert!(matches!(classification, -1 | 1));
-            if let Some(winding) = winding {
-                assert_eq!(winding.w_front.len(), refs.len());
-                assert_eq!(winding.w_back.len(), refs.len());
-                assert_eq!(
-                    classify_polygon_output(&winding.w_front, &winding.w_back, op),
-                    *classification,
-                );
-            }
-        }
-    })
+    .map(|result| validate_batch(&result))
 }
 
 fuzz_target!(|data: [u8; 48]| {
@@ -269,13 +256,15 @@ fuzz_target!(|data: [u8; 48]| {
         return;
     }
 
-    meshes = meshes.map(TriangleMesh::with_certified_convexity);
     let result = run_boolean(&meshes, op, api);
     match result {
-        Ok(soup) => {
+        Ok((soup, output)) => {
             let alternate = run_boolean(&meshes, op, api.wrapping_add(1))
                 .unwrap_or_else(|error| panic!("alternate exact Boolean API failed: {error:?}"));
-            assert_eq!(volume_numerator(&soup), volume_numerator(&alternate));
+            assert_eq!(
+                volume_numerator(&soup.vertices, &soup.results[output]),
+                volume_numerator(&alternate.0.vertices, &alternate.0.results[alternate.1]),
+            );
         }
         Err(error) => panic!("exact transformed Boolean failed: {error:?}"),
     }

@@ -1,6 +1,6 @@
 use hypermesh::{
-    BooleanOp, EmberConfig, MeshContext, Point3, PredicatePolicy, Real, Triangle, TriangleMesh,
-    boolean_operation, triangulate_and_resolve_certified,
+    BooleanOp, BooleanProgram, MeshContext, Point3, PredicatePolicy, Real, Triangle, TriangleMesh,
+    boolean,
 };
 
 const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
@@ -21,14 +21,15 @@ fn tetrahedron(offset: i64) -> TriangleMesh {
 fn main() -> hypermesh::HypermeshResult<()> {
     let first = tetrahedron(0);
     let second = tetrahedron(3);
-    let result = boolean_operation(
+    let result = boolean(
         &CONTEXT,
         &[first.as_ref(), second.as_ref()],
-        BooleanOp::Union,
-        EmberConfig::default(),
+        BooleanProgram::Operation(BooleanOp::Union),
     )?
     .into_value();
-    let triangles = triangulate_and_resolve_certified(&CONTEXT, &result)?.into_value();
-    println!("{} exact output triangles", triangles.triangles.len());
+    println!(
+        "{} exact output triangles",
+        result.results[0].triangles.len()
+    );
     Ok(())
 }

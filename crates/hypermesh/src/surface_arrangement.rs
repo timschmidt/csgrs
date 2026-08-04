@@ -1,9 +1,8 @@
-//! Exact source-face corefinement prototype.
+//! Exact source-face corefinement, radial cells, winding truth, and output.
 //!
-//! This module is test-only until the new surface-arrangement orchestrator is
-//! atomically substituted for EMBER. It deliberately exercises the production
-//! scalar, predicate-policy, intersection-graph, and Hypertri paths while
-//! adding no shipped second engine.
+//! This is the single production Boolean kernel. It consumes canonical
+//! `hyperreal::Real` geometry through one operation-wide predicate policy and
+//! materializes one or many results from a shared exact arrangement.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -18,8 +17,9 @@ use crate::geometry::{Classification, Plane, axis_mut, axis_ref, compare_real_de
 use crate::intersection::{
     PairwiseIntersectionEventIds, PairwiseIntersectionGraph, pairwise_support_identity,
 };
-use crate::mesh::OutputVertex;
-use crate::output::{BooleanMesh, BooleanMeshClosureEvidence, TriangleSource};
+use crate::output::{
+    BooleanMeshBatch, BooleanMeshClosureEvidence, BooleanMeshResult, TriangleSource,
+};
 use crate::point_interner::PointInterner;
 use crate::polygon::{
     ApproxBounds, ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity,
@@ -29,6 +29,7 @@ use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
 };
 use crate::storage_hash::StorageHashMap;
+use crate::winding::{BooleanExpression, BooleanProgram};
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 enum ArrangementPointIdentity {
@@ -141,9 +142,13 @@ struct SurfaceCorefinement {
     identities: Vec<ArrangementPointIdentity>,
     face_offsets: Box<[u32]>,
     triangles: Vec<[u32; 3]>,
+    #[cfg(test)]
     constraint_offsets: Box<[u32]>,
+    #[cfg(test)]
     constraints: Vec<[u32; 2]>,
+    #[cfg(test)]
     contact_offsets: Box<[u32]>,
+    #[cfg(test)]
     contacts: Vec<u32>,
 }
 
@@ -154,12 +159,14 @@ impl SurfaceCorefinement {
         &self.triangles[start..end]
     }
 
+    #[cfg(test)]
     fn face_constraints(&self, face: usize) -> &[[u32; 2]] {
         let start = self.constraint_offsets[face] as usize;
         let end = self.constraint_offsets[face + 1] as usize;
         &self.constraints[start..end]
     }
 
+    #[cfg(test)]
     fn face_contacts(&self, face: usize) -> &[u32] {
         let start = self.contact_offsets[face] as usize;
         let end = self.contact_offsets[face + 1] as usize;
@@ -187,40 +194,38 @@ struct SurfaceCellComplex {
     facets: Vec<SurfaceFacet>,
     contribution_offsets: Box<[u32]>,
     contributions: Vec<FacetContribution>,
+    #[cfg(test)]
     transitions: Box<[i32]>,
     cell_windings: Box<[i32]>,
     operand_count: usize,
     cell_count: u32,
+    #[cfg(test)]
     component_count: u32,
+    #[cfg(test)]
     radial_edge_count: u32,
+    #[cfg(test)]
     max_radial_degree: u32,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CellTruthNode {
-    False,
-    True,
-    Operand(u32),
-    Not(u32),
-    And([u32; 2]),
-    Or([u32; 2]),
-    Xor([u32; 2]),
-}
+type CellTruthNode = BooleanExpression;
 
 #[derive(Debug, Eq, PartialEq)]
 struct ExpressionClassifications {
     expression_count: usize,
     facet_count: usize,
     classifications: Vec<i8>,
+    exterior_inside: Vec<bool>,
 }
 
 impl ExpressionClassifications {
+    #[cfg(test)]
     fn classification(&self, expression: usize, facet: usize) -> i8 {
         self.classifications[expression * self.facet_count + facet]
     }
 }
 
 impl SurfaceCellComplex {
+    #[cfg(test)]
     fn facet_contributions(&self, facet: usize) -> &[FacetContribution] {
         let start = self.contribution_offsets[facet] as usize;
         let end = self.contribution_offsets[facet + 1] as usize;
@@ -258,6 +263,7 @@ impl SurfaceCellComplex {
             })
     }
 
+    #[cfg(test)]
     fn facet_transition(&self, facet: usize) -> &[i32] {
         let start = facet * self.operand_count;
         &self.transitions[start..start + self.operand_count]
@@ -288,27 +294,23 @@ impl SurfaceCellComplex {
                 operation: "surface cell expression truth table",
             },
         )?;
-        let mut root_truth = vec![0_u8; truth_len];
-        let mut node_truth = vec![0_u8; nodes.len()];
+        let mut root_truth = Vec::new();
+        root_truth
+            .try_reserve_exact(truth_len)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface cell expression truth table",
+            })?;
+        root_truth.resize(truth_len, 0_u8);
+        let mut node_truth = Vec::new();
+        node_truth.try_reserve_exact(nodes.len()).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "surface cell expression node state",
+            }
+        })?;
+        node_truth.resize(nodes.len(), 0_u8);
         for cell in 0..self.cell_count {
             let winding = self.cell_winding(cell);
-            for (node, instruction) in nodes.iter().enumerate() {
-                node_truth[node] = match *instruction {
-                    CellTruthNode::False => 0,
-                    CellTruthNode::True => 1,
-                    CellTruthNode::Operand(operand) => u8::from(winding[operand as usize] != 0),
-                    CellTruthNode::Not(input) => 1 - node_truth[input as usize],
-                    CellTruthNode::And([left, right]) => {
-                        node_truth[left as usize] & node_truth[right as usize]
-                    }
-                    CellTruthNode::Or([left, right]) => {
-                        node_truth[left as usize] | node_truth[right as usize]
-                    }
-                    CellTruthNode::Xor([left, right]) => {
-                        node_truth[left as usize] ^ node_truth[right as usize]
-                    }
-                };
-            }
+            evaluate_cell_truth_nodes(nodes, winding, &mut node_truth);
             let start = cell as usize * roots.len();
             for (expression, root) in roots.iter().copied().enumerate() {
                 root_truth[start + expression] = node_truth[root as usize];
@@ -339,11 +341,42 @@ impl SurfaceCellComplex {
                 });
             }
         }
+        let mut zero_winding = Vec::new();
+        zero_winding
+            .try_reserve_exact(self.operand_count)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface exterior winding state",
+            })?;
+        zero_winding.resize(self.operand_count, 0_i32);
+        evaluate_cell_truth_nodes(nodes, &zero_winding, &mut node_truth);
+        let mut exterior_inside = Vec::new();
+        exterior_inside
+            .try_reserve_exact(roots.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface output exterior classifications",
+            })?;
+        exterior_inside.extend(roots.iter().map(|root| node_truth[*root as usize] != 0));
         Ok(ExpressionClassifications {
             expression_count: roots.len(),
             facet_count: self.facets.len(),
             classifications,
+            exterior_inside,
         })
+    }
+}
+
+fn evaluate_cell_truth_nodes(nodes: &[CellTruthNode], winding: &[i32], truth: &mut [u8]) {
+    for (node, instruction) in nodes.iter().enumerate() {
+        truth[node] = match *instruction {
+            CellTruthNode::False => 0,
+            CellTruthNode::True => 1,
+            CellTruthNode::Operand(operand) => u8::from(winding[operand as usize] != 0),
+            CellTruthNode::Not(input) => 1 - truth[input as usize],
+            CellTruthNode::And([left, right]) => truth[left as usize] & truth[right as usize],
+            CellTruthNode::Or([left, right]) => truth[left as usize] | truth[right as usize],
+            CellTruthNode::Xor([left, right]) => truth[left as usize] ^ truth[right as usize],
+            CellTruthNode::Operation(operation) => u8::from(operation.contains(winding)),
+        };
     }
 }
 
@@ -352,11 +385,22 @@ fn validate_cell_truth_program(
     roots: &[u32],
     operand_count: usize,
 ) -> HypermeshResult<()> {
+    if operand_count == 0 {
+        return Err(HypermeshError::InvalidBooleanProgram {
+            reason: "at least one operand is required",
+        });
+    }
+    if roots.is_empty() {
+        return Err(HypermeshError::InvalidBooleanProgram {
+            reason: "at least one output root is required",
+        });
+    }
     for (node, instruction) in nodes.iter().enumerate() {
         let dependency_is_valid = |dependency: u32| (dependency as usize) < node;
         let valid = match *instruction {
             CellTruthNode::False | CellTruthNode::True => true,
             CellTruthNode::Operand(operand) => (operand as usize) < operand_count,
+            CellTruthNode::Operation(_) => operand_count != 0,
             CellTruthNode::Not(input) => dependency_is_valid(input),
             CellTruthNode::And([left, right])
             | CellTruthNode::Or([left, right])
@@ -365,14 +409,14 @@ fn validate_cell_truth_program(
             }
         };
         if !valid {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface cell truth program is not a valid topological DAG",
+            return Err(HypermeshError::InvalidBooleanProgram {
+                reason: "a node references an absent operand or non-earlier dependency",
             });
         }
     }
     if roots.iter().any(|root| *root as usize >= nodes.len()) {
-        return Err(HypermeshError::SurfaceArrangementFailed {
-            reason: "surface cell truth program references an absent root",
+        return Err(HypermeshError::InvalidBooleanProgram {
+            reason: "an output references an absent root",
         });
     }
     Ok(())
@@ -548,6 +592,7 @@ fn assemble_surface_cells(
     let mut radial = Vec::<RadialUse>::new();
     let mut ray_starts = Vec::<usize>::new();
     let mut edge_start = 0;
+    #[cfg(test)]
     let mut max_radial_degree = 0_u32;
     while edge_start < edge_uses.len() {
         let edge = edge_uses[edge_start].edge;
@@ -556,8 +601,11 @@ fn assemble_surface_cells(
             edge_end += 1;
         }
         edges.push(edge);
-        max_radial_degree =
-            max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
+        #[cfg(test)]
+        {
+            max_radial_degree =
+                max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
+        }
         assemble_radial_ring(
             decisions,
             &surface.points,
@@ -581,7 +629,7 @@ fn assemble_surface_cells(
         })
         .collect::<Vec<_>>();
     let bounds = surface_bounds(decisions, &surface.points)?;
-    let (cell_windings, component_count) = classify_surface_cells(
+    let (cell_windings, _component_count) = classify_surface_cells(
         decisions,
         polygons,
         surface,
@@ -599,12 +647,16 @@ fn assemble_surface_cells(
         facets,
         contribution_offsets,
         contributions,
+        #[cfg(test)]
         transitions: transitions.into_boxed_slice(),
         cell_windings: cell_windings.into_boxed_slice(),
         operand_count,
         cell_count,
-        component_count,
+        #[cfg(test)]
+        component_count: _component_count,
+        #[cfg(test)]
         radial_edge_count: compact_len(edges.len(), "surface radial edge count")?,
+        #[cfg(test)]
         max_radial_degree,
     })
 }
@@ -1483,13 +1535,18 @@ fn corefine_surface(
                 operation: "surface arrangement face offsets",
             })?;
     let mut face_offsets = Vec::new();
+    face_offsets
+        .try_reserve_exact(offset_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface arrangement face offsets",
+        })?;
+    face_offsets.push(0_u32);
+    #[cfg(test)]
     let mut constraint_offsets = Vec::new();
+    #[cfg(test)]
     let mut contact_offsets = Vec::new();
-    for offsets in [
-        &mut face_offsets,
-        &mut constraint_offsets,
-        &mut contact_offsets,
-    ] {
+    #[cfg(test)]
+    for offsets in [&mut constraint_offsets, &mut contact_offsets] {
         offsets.try_reserve_exact(offset_capacity).map_err(|_| {
             HypermeshError::CapacityOverflow {
                 operation: "surface arrangement face offsets",
@@ -1498,7 +1555,9 @@ fn corefine_surface(
         offsets.push(0_u32);
     }
     let mut triangles = Vec::new();
+    #[cfg(test)]
     let mut constraints = Vec::new();
+    #[cfg(test)]
     let mut contacts = Vec::new();
     for (face, (polygon, face_work)) in polygons.iter().zip(&work).enumerate() {
         let result = corefine_face(decisions, face, polygon, face_work, &mut arena)?;
@@ -1507,40 +1566,53 @@ fn corefine_surface(
                 operation: "surface arrangement triangles",
             }
         })?;
-        constraints
-            .try_reserve(result.constraints.len())
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "surface arrangement constraints",
+        #[cfg(test)]
+        {
+            constraints
+                .try_reserve(result.constraints.len())
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "surface arrangement constraints",
+                })?;
+            contacts.try_reserve(result.contacts.len()).map_err(|_| {
+                HypermeshError::CapacityOverflow {
+                    operation: "surface arrangement contacts",
+                }
             })?;
-        contacts.try_reserve(result.contacts.len()).map_err(|_| {
-            HypermeshError::CapacityOverflow {
-                operation: "surface arrangement contacts",
-            }
-        })?;
+        }
         triangles.extend(result.triangles);
-        constraints.extend(result.constraints);
-        contacts.extend(result.contacts);
+        #[cfg(test)]
+        {
+            constraints.extend(result.constraints);
+            contacts.extend(result.contacts);
+        }
         face_offsets.push(compact_len(
             triangles.len(),
             "surface arrangement triangle offsets",
         )?);
-        constraint_offsets.push(compact_len(
-            constraints.len(),
-            "surface arrangement constraint offsets",
-        )?);
-        contact_offsets.push(compact_len(
-            contacts.len(),
-            "surface arrangement contact offsets",
-        )?);
+        #[cfg(test)]
+        {
+            constraint_offsets.push(compact_len(
+                constraints.len(),
+                "surface arrangement constraint offsets",
+            )?);
+            contact_offsets.push(compact_len(
+                contacts.len(),
+                "surface arrangement contact offsets",
+            )?);
+        }
     }
     Ok(SurfaceCorefinement {
         points: arena.points,
         identities: arena.identities,
         face_offsets: face_offsets.into_boxed_slice(),
         triangles,
+        #[cfg(test)]
         constraint_offsets: constraint_offsets.into_boxed_slice(),
+        #[cfg(test)]
         constraints,
+        #[cfg(test)]
         contact_offsets: contact_offsets.into_boxed_slice(),
+        #[cfg(test)]
         contacts,
     })
 }
@@ -1625,7 +1697,7 @@ fn append_intersection_constraints(
 ) -> HypermeshResult<()> {
     for face in 0..polygons.len() {
         for event in intersections.event_ids(face)? {
-            match event {
+            match event? {
                 PairwiseIntersectionEventIds::NonCoplanarPoint {
                     point,
                     other_polygon: _,
@@ -2064,7 +2136,9 @@ fn intersect_arrangement_lines(
 
 struct FaceResult {
     triangles: Vec<[u32; 3]>,
+    #[cfg(test)]
     constraints: Vec<[u32; 2]>,
+    #[cfg(test)]
     contacts: Vec<u32>,
 }
 
@@ -2235,13 +2309,19 @@ fn corefine_face(
         .collect::<BTreeSet<_>>();
     let only_source_boundary = projected.len() == work.boundary.len()
         && split_lines.keys().copied().collect::<BTreeSet<_>>() == boundary_edges;
-    let mut contacts = work.contacts.clone();
-    contacts.sort_unstable();
-    contacts.dedup();
+    #[cfg(test)]
+    let contacts = {
+        let mut contacts = work.contacts.clone();
+        contacts.sort_unstable();
+        contacts.dedup();
+        contacts
+    };
     if !work.changed || only_source_boundary {
         return Ok(FaceResult {
             triangles: triangulate_convex_boundary(&work.boundary),
+            #[cfg(test)]
             constraints: boundary_edges.into_iter().collect(),
+            #[cfg(test)]
             contacts,
         });
     }
@@ -2330,7 +2410,9 @@ fn corefine_face(
     }
     Ok(FaceResult {
         triangles,
+        #[cfg(test)]
         constraints: constraints.into_iter().collect(),
+        #[cfg(test)]
         contacts,
     })
 }
@@ -2564,45 +2646,12 @@ fn sorted_edge(mut edge: [u32; 2]) -> [u32; 2] {
     edge
 }
 
-struct ExactSurfaceArrangement {
+pub(crate) struct ExactSurfaceArrangement {
     corefinement: SurfaceCorefinement,
     cells: SurfaceCellComplex,
 }
 
-#[derive(Debug, PartialEq)]
-struct MaterializedSurfaceOutput {
-    triangles: Vec<[usize; 3]>,
-    sources: Vec<TriangleSource>,
-}
-
-#[derive(Debug, PartialEq)]
-struct MaterializedSurfaceOutputs {
-    vertices: Vec<OutputVertex>,
-    outputs: Vec<MaterializedSurfaceOutput>,
-}
-
-impl MaterializedSurfaceOutputs {
-    fn into_single(mut self) -> HypermeshResult<BooleanMesh> {
-        if self.outputs.len() != 1 {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "single surface output materialization produced the wrong result count",
-            });
-        }
-        let output = self
-            .outputs
-            .pop()
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "single surface output materialization produced no result",
-            })?;
-        Ok(BooleanMesh {
-            vertices: self.vertices,
-            triangles: output.triangles,
-            sources: output.sources,
-        })
-    }
-}
-
-fn build_surface_arrangement(
+pub(crate) fn build_surface_arrangement(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<ExactSurfaceArrangement> {
@@ -2622,13 +2671,64 @@ fn build_surface_arrangement(
     })
 }
 
+pub(crate) fn validate_surface_boolean_program(
+    program: BooleanProgram<'_>,
+    operand_count: usize,
+) -> HypermeshResult<()> {
+    match program {
+        BooleanProgram::Operation(_) if operand_count != 0 => Ok(()),
+        BooleanProgram::Operation(_) => Err(HypermeshError::InvalidBooleanProgram {
+            reason: "at least one operand is required",
+        }),
+        BooleanProgram::Expressions { nodes, roots } => {
+            validate_cell_truth_program(nodes, roots, operand_count)
+        }
+    }
+}
+
 impl ExactSurfaceArrangement {
+    pub(crate) fn materialize_program(
+        &self,
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        program: BooleanProgram<'_>,
+    ) -> HypermeshResult<BooleanMeshBatch> {
+        match program {
+            BooleanProgram::Operation(operation) => {
+                let mut classifications = Vec::new();
+                classifications
+                    .try_reserve_exact(self.cells.facets.len())
+                    .map_err(|_| HypermeshError::CapacityOverflow {
+                        operation: "surface output classifications",
+                    })?;
+                classifications.extend(
+                    (0..self.cells.facets.len())
+                        .map(|facet| self.cells.facet_classification(facet, operation)),
+                );
+                materialize_surface_outputs(
+                    decisions,
+                    polygons,
+                    &self.corefinement,
+                    &self.cells,
+                    1,
+                    &classifications,
+                    &[false],
+                )
+            }
+            BooleanProgram::Expressions { nodes, roots } => {
+                let classifications = self.cells.classify_expressions(nodes, roots)?;
+                self.materialize_expression_classifications(decisions, polygons, &classifications)
+            }
+        }
+    }
+
+    #[cfg(test)]
     fn materialize_operation(
         &self,
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
         operation: crate::winding::BooleanOp,
-    ) -> HypermeshResult<BooleanMesh> {
+    ) -> HypermeshResult<BooleanMeshBatch> {
         let mut classifications = Vec::new();
         classifications
             .try_reserve_exact(self.cells.facets.len())
@@ -2642,12 +2742,13 @@ impl ExactSurfaceArrangement {
         self.materialize_classifications(decisions, polygons, &classifications)
     }
 
+    #[cfg(test)]
     fn materialize_classifications(
         &self,
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
         classifications: &[i8],
-    ) -> HypermeshResult<BooleanMesh> {
+    ) -> HypermeshResult<BooleanMeshBatch> {
         materialize_surface_outputs(
             decisions,
             polygons,
@@ -2655,8 +2756,8 @@ impl ExactSurfaceArrangement {
             &self.cells,
             1,
             classifications,
+            &[false],
         )
-        .and_then(MaterializedSurfaceOutputs::into_single)
     }
 
     fn materialize_expression_classifications(
@@ -2664,7 +2765,7 @@ impl ExactSurfaceArrangement {
         decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
         classifications: &ExpressionClassifications,
-    ) -> HypermeshResult<MaterializedSurfaceOutputs> {
+    ) -> HypermeshResult<BooleanMeshBatch> {
         if classifications.facet_count != self.cells.facets.len() {
             return Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "surface expression classifications and facets differ",
@@ -2677,6 +2778,7 @@ impl ExactSurfaceArrangement {
             &self.cells,
             classifications.expression_count,
             &classifications.classifications,
+            &classifications.exterior_inside,
         )
     }
 }
@@ -2688,7 +2790,8 @@ fn materialize_surface_outputs(
     cells: &SurfaceCellComplex,
     expression_count: usize,
     classifications: &[i8],
-) -> HypermeshResult<MaterializedSurfaceOutputs> {
+    exterior_inside: &[bool],
+) -> HypermeshResult<BooleanMeshBatch> {
     let classification_count = expression_count.checked_mul(cells.facets.len()).ok_or(
         HypermeshError::CapacityOverflow {
             operation: "surface output classification matrix",
@@ -2697,6 +2800,11 @@ fn materialize_surface_outputs(
     if classifications.len() != classification_count {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface output classification matrix has invalid dimensions",
+        });
+    }
+    if exterior_inside.len() != expression_count {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface output exterior classifications have invalid dimensions",
         });
     }
     let mut used = Vec::new();
@@ -2712,7 +2820,7 @@ fn materialize_surface_outputs(
             operation: "surface output triangle counts",
         })?;
     triangle_counts.resize(expression_count, 0_usize);
-    for expression in 0..expression_count {
+    for (expression, triangle_count) in triangle_counts.iter_mut().enumerate() {
         let start = expression * cells.facets.len();
         let row = &classifications[start..start + cells.facets.len()];
         for (facet, &classification) in cells.facets.iter().zip(row) {
@@ -2724,11 +2832,12 @@ fn materialize_surface_outputs(
             if classification == 0 {
                 continue;
             }
-            triangle_counts[expression] = triangle_counts[expression].checked_add(1).ok_or(
-                HypermeshError::CapacityOverflow {
-                    operation: "surface output triangles",
-                },
-            )?;
+            *triangle_count =
+                triangle_count
+                    .checked_add(1)
+                    .ok_or(HypermeshError::CapacityOverflow {
+                        operation: "surface output triangles",
+                    })?;
             for &point in &facet.vertices {
                 *used.get_mut(point as usize).ok_or(
                     HypermeshError::SurfaceArrangementFailed {
@@ -2759,11 +2868,7 @@ fn materialize_surface_outputs(
             continue;
         }
         remap[point] = compact_len(vertices.len(), "surface output vertex IDs")?;
-        vertices.push(OutputVertex {
-            x: source.x.clone(),
-            y: source.y.clone(),
-            z: source.z.clone(),
-        });
+        vertices.push(source.clone());
     }
 
     let mut outputs = Vec::new();
@@ -2785,7 +2890,11 @@ fn materialize_surface_outputs(
                 operation: "surface output provenance",
             }
         })?;
-        outputs.push(MaterializedSurfaceOutput { triangles, sources });
+        outputs.push(BooleanMeshResult {
+            triangles,
+            sources,
+            exterior_inside: exterior_inside[outputs.len()],
+        });
     }
 
     for expression in 0..expression_count {
@@ -2806,7 +2915,6 @@ fn materialize_surface_outputs(
                     .get(point as usize)
                     .copied()
                     .filter(|&output| output != u32::MAX)
-                    .map(|output| output as usize)
                     .ok_or(HypermeshError::SurfaceArrangementFailed {
                         reason: "surface output point has no compact vertex",
                     })
@@ -2840,7 +2948,10 @@ fn materialize_surface_outputs(
             });
         }
     }
-    Ok(MaterializedSurfaceOutputs { vertices, outputs })
+    Ok(BooleanMeshBatch {
+        vertices,
+        results: outputs,
+    })
 }
 
 fn certify_selected_surface_output(
@@ -3218,15 +3329,17 @@ mod tests {
     fn assert_materialized_output(
         _decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
-        output: &BooleanMesh,
+        batch: &BooleanMeshBatch,
         selected_facets: usize,
     ) {
+        assert_eq!(batch.results.len(), 1);
+        let output = &batch.results[0];
         assert_eq!(output.triangles.len(), selected_facets);
         assert_eq!(output.sources.len(), selected_facets);
-        let mut used = vec![false; output.vertices.len()];
+        let mut used = vec![false; batch.vertices.len()];
         for triangle in &output.triangles {
             for &vertex in triangle {
-                used[vertex] = true;
+                used[vertex as usize] = true;
             }
         }
         assert!(used.into_iter().all(|is_used| is_used));
@@ -3243,8 +3356,8 @@ mod tests {
     fn assert_materialized_batch_output(
         _decisions: &DecisionContext,
         polygons: &[ConvexPolygon],
-        vertices: &[OutputVertex],
-        output: &MaterializedSurfaceOutput,
+        vertices: &[Point3],
+        output: &BooleanMeshResult,
         selected_facets: usize,
     ) {
         assert_eq!(output.triangles.len(), selected_facets);
@@ -3254,7 +3367,7 @@ mod tests {
                 .triangles
                 .iter()
                 .flatten()
-                .all(|&vertex| vertex < vertices.len())
+                .all(|&vertex| (vertex as usize) < vertices.len())
         );
         assert!(output.sources.iter().all(|source| {
             matches!(source.orientation, -1 | 1)
@@ -3262,20 +3375,15 @@ mod tests {
                     polygon.mesh_index == source.mesh && polygon.polygon_index == source.triangle
                 })
         }));
-        let view = BooleanMesh {
-            vertices: vertices.to_vec(),
-            triangles: output.triangles.clone(),
-            sources: output.sources.clone(),
-        };
-        assert!(crate::output::boolean_mesh_closure_evidence(&view).has_no_boundary());
+        assert!(crate::output::boolean_mesh_closure_evidence(output).has_no_boundary());
     }
 
-    fn signed_six_volume(mesh: &BooleanMesh) -> Real {
+    fn signed_six_volume(vertices: &[Point3], output: &BooleanMeshResult) -> Real {
         let mut volume = Real::zero();
-        for triangle in &mesh.triangles {
-            let a = &mesh.vertices[triangle[0]];
-            let b = &mesh.vertices[triangle[1]];
-            let c = &mesh.vertices[triangle[2]];
+        for triangle in &output.triangles {
+            let a = &vertices[triangle[0] as usize];
+            let b = &vertices[triangle[1] as usize];
+            let c = &vertices[triangle[2] as usize];
             volume += &a.x * &(&b.y * &c.z - &b.z * &c.y)
                 + &a.y * &(&b.z * &c.x - &b.x * &c.z)
                 + &a.z * &(&b.x * &c.y - &b.y * &c.x);
@@ -3307,12 +3415,20 @@ mod tests {
                     .materialize_operation(&decisions, &polygons, operation)
                     .unwrap();
                 let second = arrangement
-                    .materialize_operation(&decisions, &polygons, operation)
+                    .materialize_program(
+                        &decisions,
+                        &polygons,
+                        BooleanProgram::Operation(operation),
+                    )
                     .unwrap();
                 assert_eq!(first, second);
                 assert_materialized_output(&decisions, &polygons, &first, selected);
                 assert_eq!(
-                    classify_real(&decisions, &signed_six_volume(&first)).unwrap(),
+                    classify_real(
+                        &decisions,
+                        &signed_six_volume(&first.vertices, &first.results[0]),
+                    )
+                    .unwrap(),
                     Classification::Positive
                 );
             }
@@ -3340,6 +3456,7 @@ mod tests {
                 )
                 .unwrap();
             assert!(empty.vertices.is_empty());
+            assert!(empty.results[0].triangles.is_empty());
             assert_materialized_output(&decisions, &disjoint, &empty, 0);
 
             let mut tangent = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 2);
@@ -3356,7 +3473,7 @@ mod tests {
                 .materialize_operation(&decisions, &tangent, crate::winding::BooleanOp::Union)
                 .unwrap();
             assert_materialized_output(&decisions, &tangent, &union, 8);
-            let evidence = crate::output::boolean_mesh_closure_evidence(&union);
+            let evidence = crate::output::boolean_mesh_closure_evidence(&union.results[0]);
             assert_eq!(evidence.non_manifold_edges, 1);
             assert!(!evidence.is_closed());
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
@@ -3391,6 +3508,7 @@ mod tests {
             expression_count: 2,
             facet_count: arrangement.cells.facets.len(),
             classifications: classifications.clone(),
+            exterior_inside: vec![false; 2],
         };
         assert!(matches!(
             arrangement.materialize_expression_classifications(
@@ -3406,6 +3524,7 @@ mod tests {
             expression_count: 1,
             facet_count: arrangement.cells.facets.len() + 1,
             classifications: classifications.clone(),
+            exterior_inside: vec![false],
         };
         assert!(matches!(
             arrangement.materialize_expression_classifications(
@@ -3425,11 +3544,12 @@ mod tests {
                     expression_count: 0,
                     facet_count: arrangement.cells.facets.len(),
                     classifications: Vec::new(),
+                    exterior_inside: Vec::new(),
                 },
             )
             .unwrap();
         assert!(no_outputs.vertices.is_empty());
-        assert!(no_outputs.outputs.is_empty());
+        assert!(no_outputs.results.is_empty());
         let mut invalid_classification = classifications.clone();
         invalid_classification[0] = 2;
         assert!(matches!(
@@ -3543,8 +3663,16 @@ mod tests {
         let output = arrangement
             .materialize_classifications(&decisions, &polygons, &classifications)
             .unwrap();
-        assert_eq!(signed_six_volume(&output), Real::from(64));
-        assert!(output.sources.iter().all(|source| source.orientation == 1));
+        assert_eq!(
+            signed_six_volume(&output.vertices, &output.results[0]),
+            Real::from(64)
+        );
+        assert!(
+            output.results[0]
+                .sources
+                .iter()
+                .all(|source| source.orientation == 1)
+        );
         assert_eq!(decisions.certainty(), MeshCertainty::Certified);
     }
 
@@ -3780,6 +3908,10 @@ mod tests {
             let classified = cells.classify_expressions(&nodes, &roots).unwrap();
             assert_eq!(classified.expression_count, roots.len());
             assert_eq!(classified.facet_count, cells.facets.len());
+            assert_eq!(
+                classified.exterior_inside,
+                [false, true, false, false, false, false, false]
+            );
             let selected = (0..classified.expression_count)
                 .map(|expression| {
                     (0..classified.facet_count)
@@ -3789,10 +3921,25 @@ mod tests {
                 .collect::<Vec<_>>();
             assert_eq!(selected, [0, 0, 4, 4, 8, 12, 12]);
             let batch = arrangement
-                .materialize_expression_classifications(&decisions, &polygons, &classified)
+                .materialize_program(
+                    &decisions,
+                    &polygons,
+                    BooleanProgram::Expressions {
+                        nodes: &nodes,
+                        roots: &roots,
+                    },
+                )
                 .unwrap();
-            assert_eq!(batch.outputs.len(), roots.len());
+            assert_eq!(batch.results.len(), roots.len());
             assert_eq!(batch.vertices.len(), 12);
+            assert_eq!(
+                batch
+                    .results
+                    .iter()
+                    .map(|result| result.exterior_inside)
+                    .collect::<Vec<_>>(),
+                classified.exterior_inside
+            );
             let mut used = vec![false; batch.vertices.len()];
             for (expression, &selected_count) in selected.iter().enumerate() {
                 let classifications = (0..classified.facet_count)
@@ -3801,9 +3948,9 @@ mod tests {
                 if selected_count != 0 {
                     assert!(facet_classifications_are_closed(cells, &classifications));
                 }
-                let output = &batch.outputs[expression];
+                let output = &batch.results[expression];
                 for &vertex in output.triangles.iter().flatten() {
-                    used[vertex] = true;
+                    used[vertex as usize] = true;
                 }
                 assert_materialized_batch_output(
                     &decisions,
@@ -3817,15 +3964,15 @@ mod tests {
 
             assert!(matches!(
                 cells.classify_expressions(&[CellTruthNode::Operand(3)], &[0]),
-                Err(HypermeshError::SurfaceArrangementFailed { .. })
+                Err(HypermeshError::InvalidBooleanProgram { .. })
             ));
             assert!(matches!(
                 cells.classify_expressions(&[CellTruthNode::Not(0)], &[0]),
-                Err(HypermeshError::SurfaceArrangementFailed { .. })
+                Err(HypermeshError::InvalidBooleanProgram { .. })
             ));
             assert!(matches!(
                 cells.classify_expressions(&nodes, &[u32::MAX]),
-                Err(HypermeshError::SurfaceArrangementFailed { .. })
+                Err(HypermeshError::InvalidBooleanProgram { .. })
             ));
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
@@ -4226,7 +4373,7 @@ mod tests {
             let batch = arrangement
                 .materialize_expression_classifications(&decisions, &polygons, &classified)
                 .unwrap();
-            assert_eq!(batch.outputs.len(), 3);
+            assert_eq!(batch.results.len(), 3);
             assert_eq!(batch.vertices.len(), OPERAND_COUNT * 4);
             for (expression, &selected_count) in selected.iter().enumerate() {
                 let classifications = (0..classified.facet_count)
@@ -4239,7 +4386,7 @@ mod tests {
                     &decisions,
                     &polygons,
                     &batch.vertices,
-                    &batch.outputs[expression],
+                    &batch.results[expression],
                     selected_count,
                 );
             }
@@ -4290,8 +4437,8 @@ mod tests {
                 .materialize_operation(&decisions, &polygons, crate::winding::BooleanOp::Union)
                 .unwrap();
             assert_eq!(output.vertices.len(), shell_count * 4);
-            assert_eq!(output.triangles.len(), shell_count * 4);
-            assert_eq!(output.sources.len(), shell_count * 4);
+            assert_eq!(output.results[0].triangles.len(), shell_count * 4);
+            assert_eq!(output.results[0].sources.len(), shell_count * 4);
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
     }
