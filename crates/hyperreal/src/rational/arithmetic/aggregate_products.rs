@@ -1906,14 +1906,46 @@ impl Rational {
             .collect()
     }
 
-    /// Normalize an exact-rational ratio to primitive integer components.
+    /// Normalize a fixed exact-rational ratio to primitive integer components.
     ///
-    /// The returned vector differs from the input by one positive common
+    /// The returned array differs from the input by one positive common
     /// scale: denominators are cleared and the greatest common magnitude of
     /// all nonzero integer components is removed. Empty and all-zero inputs
-    /// preserve their shape.
-    pub fn primitive_integer_ratio(values: &[&Self]) -> Vec<Self> {
-        let mut integers = Self::clear_common_denominator_slice(values);
+    /// preserve their shape; a single nonzero component becomes its signed
+    /// unit without allocating a common denominator.
+    pub fn primitive_integer_ratio<const N: usize>(values: [&Self; N]) -> [Self; N] {
+        let mut single = None;
+        let mut multiple = false;
+        for (index, value) in values.iter().enumerate() {
+            if value.sign == NoSign {
+                continue;
+            }
+            if single.is_some() {
+                multiple = true;
+                break;
+            }
+            single = Some((index, value.sign));
+        }
+        if !multiple {
+            let Some((single_index, single_sign)) = single else {
+                return values.map(|_| Self::zero());
+            };
+            return core::array::from_fn(|index| {
+                if index == single_index {
+                    Self::from_integer_magnitude(single_sign, BigUint::one())
+                } else {
+                    Self::zero()
+                }
+            });
+        }
+        let common_denominator = Self::common_denominator(&values);
+        let mut integers = values.map(|value| {
+            if value.sign == NoSign {
+                return Self::zero();
+            }
+            let scale = &common_denominator / &value.denominator;
+            Self::from_integer_magnitude(value.sign, &value.numerator * scale)
+        });
         let mut content = BigUint::ZERO;
         for value in &integers {
             if value.sign == NoSign {
@@ -1939,101 +1971,6 @@ impl Rational {
         }
         crate::trace_dispatch!("rational", "common-scale", "primitive-integer-ratio");
         integers
-    }
-
-    /// Extract a compact dyadic four-coefficient ratio after removing common
-    /// positive numerator content.
-    ///
-    /// Denominators remain as shift counts rather than cloned `BigUint`s.
-    /// `None` preserves the caller's general rational product-sum route when a
-    /// coefficient is non-dyadic or no nontrivial content exists.
-    pub(crate) fn compact_dyadic_linear_form4(
-        values: [&Self; 4],
-    ) -> Option<([Sign; 4], [BigUint; 4], [u64; 4])> {
-        let values = values.map(Self::canonicalized_ref);
-        let mut denominator_shifts = [0_u64; 4];
-        let mut content = BigUint::ZERO;
-        for (index, value) in values.into_iter().enumerate() {
-            denominator_shifts[index] = value.dyadic_denominator_shift_if_reduced()?;
-            if value.sign == NoSign {
-                continue;
-            }
-            content = if content.is_zero() {
-                value.numerator.clone()
-            } else {
-                Self::gcd_magnitudes_with_mixed_width_fast_path(&content, &value.numerator)
-            };
-            if content.is_one() {
-                return None;
-            }
-        }
-        if content.is_zero() || content.is_one() {
-            return None;
-        }
-        crate::trace_dispatch!("rational", "common-scale", "compact-dyadic-linear-form4");
-        let signs = values.map(|value| value.sign);
-        let numerators = core::array::from_fn(|index| {
-            let value = values[index];
-            if value.sign == NoSign {
-                return BigUint::ZERO;
-            }
-            &value.numerator / &content
-        });
-        Some((signs, numerators, denominator_shifts))
-    }
-
-    /// Evaluate a compact dyadic four-coefficient linear form at an exact
-    /// rational point.
-    ///
-    /// Non-dyadic query values return `None` for the ordinary complete exact
-    /// product-sum fallback. Successful evaluation compares the two scaled
-    /// integer totals directly and never reconstructs coefficient rationals.
-    pub(crate) fn compact_dyadic_linear_form4_ordering(
-        coefficient_signs: [Sign; 4],
-        coefficient_numerators: [&BigUint; 4],
-        coefficient_shifts: [u64; 4],
-        point: [&Self; 4],
-    ) -> Option<Ordering> {
-        let point = point.map(Self::canonicalized_ref);
-        let mut term_signs = [NoSign; 4];
-        let mut term_shifts = [0_u64; 4];
-        let mut max_shift = 0_u64;
-        for index in 0..4 {
-            term_signs[index] = coefficient_signs[index] * point[index].sign;
-            if term_signs[index] == NoSign {
-                continue;
-            }
-            let point_shift = point[index].dyadic_denominator_shift_if_reduced()?;
-            let shift = coefficient_shifts[index].checked_add(point_shift)?;
-            term_shifts[index] = shift;
-            max_shift = max_shift.max(shift);
-        }
-
-        let mut positive = BigUint::ZERO;
-        let mut negative = BigUint::ZERO;
-        for index in 0..4 {
-            let accumulator = match term_signs[index] {
-                Plus => &mut positive,
-                Minus => &mut negative,
-                NoSign => continue,
-            };
-            let coefficient = coefficient_numerators[index];
-            let query = &point[index].numerator;
-            let mut magnitude = if coefficient.is_one() {
-                query.clone()
-            } else if query.is_one() {
-                coefficient.clone()
-            } else {
-                coefficient * query
-            };
-            let scale_shift = usize::try_from(max_shift - term_shifts[index]).ok()?;
-            if scale_shift != 0 {
-                magnitude <<= scale_shift;
-            }
-            *accumulator += magnitude;
-        }
-        crate::trace_dispatch!("rational", "product_sum_ordering", "compact-dyadic-linear-form4");
-        Some(positive.cmp(&negative))
     }
 
     /// Normalize an exact-rational ratio directly to primitive big integers.

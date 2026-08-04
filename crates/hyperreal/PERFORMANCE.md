@@ -1463,9 +1463,10 @@ polynomial/rational Bézier, arc, spline/NURBS, offset, and region workloads.
 Elimination polynomials and projective coordinate tuples are invariant under
 one shared nonzero scale. `Rational::clear_common_denominator_slice` now exposes
 the existing exact common-denominator machinery for dynamic coefficient sets,
-while `primitive_integer_ratio` additionally removes their integer content.
-Both retain every component and apply one positive common scale; empty and
-all-zero inputs remain shape-preserving.
+while the fixed-array `primitive_integer_ratio` additionally removes their
+integer content without a result-vector allocation. Both retain every component
+and apply one positive common scale; empty and all-zero inputs remain
+shape-preserving.
 
 Fraction-free Bareiss elimination also guarantees that its integer numerator is
 exactly divisible by the previous integer pivot. The new

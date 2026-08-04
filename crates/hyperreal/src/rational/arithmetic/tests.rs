@@ -1560,14 +1560,22 @@ mod tests {
             Rational::zero(),
         ];
         assert_eq!(
-            Rational::primitive_integer_ratio(&[&values[0], &values[1], &values[2]]),
-            vec![Rational::one(), Rational::new(-2), Rational::zero()]
+            Rational::primitive_integer_ratio([&values[0], &values[1], &values[2]]),
+            [Rational::one(), Rational::new(-2), Rational::zero()]
         );
         assert_eq!(
-            Rational::primitive_integer_ratio(&[&Rational::zero(), &Rational::zero()]),
-            vec![Rational::zero(), Rational::zero()]
+            Rational::primitive_integer_ratio([&Rational::zero(), &Rational::zero()]),
+            [Rational::zero(), Rational::zero()]
         );
-        assert!(Rational::primitive_integer_ratio(&[]).is_empty());
+        assert_eq!(
+            Rational::primitive_integer_ratio([
+                &Rational::zero(),
+                &Rational::fraction(-42, 5).unwrap(),
+                &Rational::zero(),
+            ]),
+            [Rational::zero(), Rational::new(-1), Rational::zero()]
+        );
+        assert!(Rational::primitive_integer_ratio([]).is_empty());
     }
 
     #[test]
