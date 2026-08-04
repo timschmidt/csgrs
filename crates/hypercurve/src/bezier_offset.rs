@@ -8197,6 +8197,43 @@ fn trivariate_quadratic_axis_factorizations(
     (!factorizations.is_empty()).then_some(factorizations)
 }
 
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn bivariate_evaluate_exact(polynomial: &BivariatePolynomial, first: &Real, second: &Real) -> Real {
+    polynomial
+        .coefficients
+        .iter()
+        .rev()
+        .fold(Real::zero(), |value, row| {
+            value * first + polynomial_evaluate(row, second)
+        })
+}
+
+/// One exact specialization can reject, but never assert, a global repeated
+/// cubic factor. A genuine repeated factor makes the discriminant relation
+/// vanish identically, including at this point.
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn cubic_specialization_rejects_repeated_factor(coefficients: [&BivariatePolynomial; 4]) -> bool {
+    let first = Real::one();
+    let second = Real::from(2_i8);
+    let [constant, linear, quadratic, cubic] =
+        coefficients.map(|coefficient| bivariate_evaluate_exact(coefficient, &first, &second));
+    let cubic_square = &cubic * &cubic;
+    let delta_zero = &quadratic * &quadratic - Real::from(3_i8) * &cubic * &linear;
+    let delta_one = Real::from(2_i8) * &quadratic * &quadratic * &quadratic
+        - Real::from(9_i8) * &cubic * &quadratic * &linear
+        + Real::from(27_i8) * &cubic_square * &constant;
+    let discriminant_relation =
+        &delta_one * &delta_one - Real::from(4_i8) * &delta_zero * &delta_zero * &delta_zero;
+    matches!(
+        real_sign(&discriminant_relation, &CurveContext::STRICT),
+        Some(RealSign::Negative | RealSign::Positive)
+    )
+}
+
 /// Splits a cubic tensor axis when the cubic has a repeated linear factor over
 /// the exact bivariate fraction field.
 ///
@@ -8217,6 +8254,9 @@ fn trivariate_repeated_cubic_axis_factorizations(
     let [constant, linear, quadratic, cubic]: [BivariatePolynomial; 4] =
         coefficients.try_into().ok()?;
     let _ = bivariate_exact_nonzero_metadata(&cubic)??;
+    if cubic_specialization_rejects_repeated_factor([&constant, &linear, &quadratic, &cubic]) {
+        return None;
+    }
 
     let quadratic_square =
         bivariate_multiply_bounded(&quadratic, &quadratic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
@@ -8224,22 +8264,96 @@ fn trivariate_repeated_cubic_axis_factorizations(
         bivariate_multiply_bounded(&cubic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
     let delta_zero = bivariate_subtract(
         &quadratic_square,
-        &bivariate_scale(cubic_linear, &Real::from(3_i8)),
+        &bivariate_scale(cubic_linear.clone(), &Real::from(3_i8)),
     );
     let raw = if bivariate_exact_nonzero_metadata(&delta_zero)?.is_none() {
+        // Delta-one vanishes exactly for a triple root once delta-zero does.
+        // Reject x^3+d and related square-free cubics before component work.
+        let quadratic_cube = bivariate_multiply_bounded(
+            &quadratic_square,
+            &quadratic,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let cubic_quadratic_linear = bivariate_multiply_bounded(
+            &cubic_linear,
+            &quadratic,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let cubic_square =
+            bivariate_multiply_bounded(&cubic, &cubic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+        let cubic_square_constant = bivariate_multiply_bounded(
+            &cubic_square,
+            &constant,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let delta_one = bivariate_add(
+            &bivariate_subtract(
+                &bivariate_scale(quadratic_cube, &Real::from(2_i8)),
+                &bivariate_scale(cubic_quadratic_linear, &Real::from(9_i8)),
+            ),
+            &bivariate_scale(cubic_square_constant, &Real::from(27_i8)),
+        );
+        if bivariate_exact_nonzero_metadata(&delta_one)?.is_some() {
+            return None;
+        }
         [quadratic, bivariate_scale(cubic, &Real::from(3_i8))]
     } else {
         let quadratic_linear =
             bivariate_multiply_bounded(&quadratic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
         let cubic_constant =
             bivariate_multiply_bounded(&cubic, &constant, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
-        [
-            bivariate_subtract(
-                &quadratic_linear,
-                &bivariate_scale(cubic_constant, &Real::from(9_i8)),
+        let factor_constant = bivariate_subtract(
+            &quadratic_linear,
+            &bivariate_scale(cubic_constant, &Real::from(9_i8)),
+        );
+        let factor_linear = bivariate_scale(delta_zero, &Real::from(2_i8));
+        // At x=-factor_constant/factor_linear, the derivative numerator
+        // must vanish for a repeated root. This cheap structural rejection
+        // keeps square-free cubics out of general component extraction.
+        let constant_square = bivariate_multiply_bounded(
+            &factor_constant,
+            &factor_constant,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let constant_linear = bivariate_multiply_bounded(
+            &factor_constant,
+            &factor_linear,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let linear_square = bivariate_multiply_bounded(
+            &factor_linear,
+            &factor_linear,
+            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+        )?;
+        let derivative_remainder = bivariate_add(
+            &bivariate_subtract(
+                &bivariate_scale(
+                    bivariate_multiply_bounded(
+                        &cubic,
+                        &constant_square,
+                        MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+                    )?,
+                    &Real::from(3_i8),
+                ),
+                &bivariate_scale(
+                    bivariate_multiply_bounded(
+                        &quadratic,
+                        &constant_linear,
+                        MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+                    )?,
+                    &Real::from(2_i8),
+                ),
             ),
-            bivariate_scale(delta_zero, &Real::from(2_i8)),
-        ]
+            &bivariate_multiply_bounded(
+                &linear,
+                &linear_square,
+                MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+            )?,
+        );
+        if bivariate_exact_nonzero_metadata(&derivative_remainder)?.is_some() {
+            return None;
+        }
+        [factor_constant, factor_linear]
     };
     let factorization =
         trivariate_normalize_and_verify_linear_axis_factor(polynomial, axis, remaining, raw)?;
@@ -27297,6 +27411,18 @@ mod conversion_tests {
             polynomial = trivariate_multiply_axis_linear(polynomial, 0, &constant, &Real::one());
         }
         assert!(trivariate_repeated_cubic_axis_factorizations(&polynomial, 0).is_none());
+
+        // Delta-zero alone is insufficient: x^3+1 has no repeated root, and
+        // its nonzero delta-one must reject the triple-root candidate.
+        let delta_zero_only = TrivariatePolynomial2 {
+            coefficients: vec![
+                vec![vec![Real::one()]],
+                vec![vec![Real::zero()]],
+                vec![vec![Real::zero()]],
+                vec![vec![Real::one()]],
+            ],
+        };
+        assert!(trivariate_repeated_cubic_axis_factorizations(&delta_zero_only, 0).is_none());
     }
 
     #[cfg(feature = "predicates")]
