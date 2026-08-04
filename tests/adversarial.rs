@@ -40,15 +40,18 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = solid::center(&solid::cube(r(2.0)));
     let b = solid::cube(r(1.1)).translated(r(0.4), r(0.2), r(0.1));
 
-    let direct = hypermesh::boolean_triangle_meshes(
+    let batch = hypermesh::boolean(
         &CONTEXT,
-        &a,
-        &b,
-        hypermesh::BooleanOp::Difference,
-        hypermesh::EmberConfig::default(),
+        &[a.as_ref(), b.as_ref()],
+        hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
     )
     .expect("direct difference")
     .into_value();
+    let direct = batch
+        .into_triangle_meshes()
+        .expect("bounded direct difference")
+        .pop()
+        .expect("one direct result");
     assert!(
         direct
             .has_unique_nondegenerate_triangles(&CONTEXT)

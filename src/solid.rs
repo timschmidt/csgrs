@@ -7,7 +7,7 @@
 use crate::context::GeometryDecisions;
 use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
-use hypermesh::{BooleanOp, EmberConfig, HypermeshResult, Plane, Triangle, TriangleMesh};
+use hypermesh::{BooleanOp, BooleanProgram, HypermeshResult, Plane, Triangle, TriangleMesh};
 use hyperreal::RealSign;
 use std::cell::RefCell;
 use std::num::NonZeroU32;
@@ -214,7 +214,7 @@ fn indexed_convex(
     positions: Vec<Point3>,
     triangles: impl IntoIterator<Item = [usize; 3]>,
 ) -> TriangleMesh {
-    indexed(positions, triangles).with_certified_convexity()
+    indexed(positions, triangles)
 }
 
 /// Empty native triangle geometry.
@@ -1064,14 +1064,18 @@ pub fn boolean(
     right: &TriangleMesh,
     operation: BooleanOp,
 ) -> HypermeshResult<TriangleMesh> {
-    hypermesh::boolean_triangle_meshes(
+    let batch = hypermesh::boolean(
         &crate::MESH_CONTEXT,
-        left,
-        right,
-        operation,
-        EmberConfig::default(),
-    )
-    .map(hypermesh::MeshOutcome::into_value)
+        &[left.as_ref(), right.as_ref()],
+        BooleanProgram::Operation(operation),
+    )?
+    .into_value();
+    let mut meshes = batch.into_triangle_meshes()?;
+    meshes
+        .pop()
+        .ok_or(hypermesh::HypermeshError::InvalidBooleanProgram {
+            reason: "one CSG Boolean operation produced no result row",
+        })
 }
 
 /// Applies a homogeneous transform and returns native geometry.
