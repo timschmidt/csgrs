@@ -8198,28 +8198,33 @@ fn bivariate_evaluate_exact(polynomial: &BivariatePolynomial, first: &Real, seco
         })
 }
 
-/// One exact specialization can reject, but never assert, a global repeated
+/// Exact specializations can reject, but never assert, a global repeated
 /// cubic factor. A genuine repeated factor makes the discriminant relation
-/// vanish identically, including at this point.
+/// vanish identically at every probe. Multiple cheap probes avoid constructing
+/// the full bivariate invariants when one accidental specialization vanishes.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn cubic_specialization_rejects_repeated_factor(coefficients: [&BivariatePolynomial; 4]) -> bool {
-    let first = Real::one();
-    let second = Real::from(2_i8);
-    let [constant, linear, quadratic, cubic] =
-        coefficients.map(|coefficient| bivariate_evaluate_exact(coefficient, &first, &second));
-    let cubic_square = &cubic * &cubic;
-    let delta_zero = &quadratic * &quadratic - Real::from(3_i8) * &cubic * &linear;
-    let delta_one = Real::from(2_i8) * &quadratic * &quadratic * &quadratic
-        - Real::from(9_i8) * &cubic * &quadratic * &linear
-        + Real::from(27_i8) * &cubic_square * &constant;
-    let discriminant_relation =
-        &delta_one * &delta_one - Real::from(4_i8) * &delta_zero * &delta_zero * &delta_zero;
-    matches!(
-        real_sign(&discriminant_relation, &CurveContext::STRICT),
-        Some(RealSign::Negative | RealSign::Positive)
-    )
+    [(1_i8, 2_i8), (0, 0), (0, 1), (1, 0), (-1, 2)]
+        .into_iter()
+        .any(|(first, second)| {
+            let first = Real::from(first);
+            let second = Real::from(second);
+            let [constant, linear, quadratic, cubic] = coefficients
+                .map(|coefficient| bivariate_evaluate_exact(coefficient, &first, &second));
+            let cubic_square = &cubic * &cubic;
+            let delta_zero = &quadratic * &quadratic - Real::from(3_i8) * &cubic * &linear;
+            let delta_one = Real::from(2_i8) * &quadratic * &quadratic * &quadratic
+                - Real::from(9_i8) * &cubic * &quadratic * &linear
+                + Real::from(27_i8) * &cubic_square * &constant;
+            let discriminant_relation = &delta_one * &delta_one
+                - Real::from(4_i8) * &delta_zero * &delta_zero * &delta_zero;
+            matches!(
+                real_sign(&discriminant_relation, &CurveContext::STRICT),
+                Some(RealSign::Negative | RealSign::Positive)
+            )
+        })
 }
 
 /// Splits a cubic tensor axis when the cubic has a repeated linear factor over
