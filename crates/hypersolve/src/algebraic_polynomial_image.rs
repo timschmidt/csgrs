@@ -310,8 +310,9 @@ fn primitive_integer_image_relation(image_polynomial: &[Real]) -> Option<(Vec<Re
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
     rationals.push(&y_coefficient);
-    let mut coefficients = Rational::primitive_integer_ratio(&rationals)
+    let mut coefficients = Rational::primitive_bigint_ratio(&rationals)
         .into_iter()
+        .map(Rational::from_bigint)
         .map(Real::from)
         .collect::<Vec<_>>();
     let image_scale = coefficients.pop()?;

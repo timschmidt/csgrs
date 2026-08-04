@@ -284,11 +284,7 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
         .chain(fiber_coefficients.iter().flatten())
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
-    let mut integers = Rational::primitive_integer_ratio(&rational_coefficients)
-        .into_iter()
-        .map(|coefficient| coefficient.to_big_integer())
-        .collect::<Option<Vec<_>>>()?
-        .into_iter();
+    let mut integers = Rational::primitive_bigint_ratio(&rational_coefficients).into_iter();
     let source = integers.by_ref().take(source.len()).collect::<Vec<_>>();
     if source.len() != degree + 1 || source.last().is_none_or(BigInt::is_zero) {
         return None;

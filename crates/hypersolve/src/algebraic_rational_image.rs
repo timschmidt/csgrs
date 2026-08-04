@@ -864,8 +864,9 @@ fn clear_rational_map_denominators(
         .chain(denominator)
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
-    let mut integers = Rational::primitive_integer_ratio(&rationals)
+    let mut integers = Rational::primitive_bigint_ratio(&rationals)
         .into_iter()
+        .map(Rational::from_bigint)
         .map(Real::from);
     let numerator = integers.by_ref().take(numerator.len()).collect();
     let denominator = integers.collect();

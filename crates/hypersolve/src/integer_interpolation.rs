@@ -7,8 +7,9 @@ pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Re
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
     Some(
-        Rational::primitive_integer_ratio(&rationals)
+        Rational::primitive_bigint_ratio(&rationals)
             .into_iter()
+            .map(Rational::from_bigint)
             .map(Real::from)
             .collect(),
     )
@@ -39,12 +40,9 @@ fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
         .iter()
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
-    Some(primitive_integer_part(
-        Rational::primitive_integer_ratio(&rationals)
-            .into_iter()
-            .map(|coefficient| coefficient.to_big_integer())
-            .collect::<Option<Vec<_>>>()?,
-    ))
+    Some(primitive_integer_part(Rational::primitive_bigint_ratio(
+        &rationals,
+    )))
 }
 
 fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option<Vec<BigInt>> {
