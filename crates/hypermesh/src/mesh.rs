@@ -2,7 +2,10 @@
 
 use std::collections::{BTreeSet, HashMap};
 use std::num::NonZeroU32;
-use std::sync::{Arc, OnceLock};
+use std::sync::{
+    Arc, OnceLock,
+    atomic::{AtomicU8, Ordering},
+};
 
 use hyperlattice::{Aabb as ExactAabb, HomogeneousPoint3, Matrix4, Point3, Real, Vector3, Vector4};
 
@@ -12,7 +15,9 @@ use crate::geometry::{
     Aabb, Classification, Plane, affine_projective_point_decision, axis_ref, compare_real_decision,
 };
 use crate::point_interner::{PointCoordinates, PointInterner};
-use crate::polygon::{ConvexPolygon, convex_triangle_decision};
+use crate::polygon::{
+    ConvexPolygon, convex_triangle_decision, points_require_wide_dyadic_plane_normalization,
+};
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
 
@@ -44,6 +49,24 @@ pub(crate) struct TriangleMeshFacts {
     exact_bounds: OnceLock<Option<Arc<ExactAabb>>>,
     valid_pwn: CertaintyFact,
     axis_aligned_box: OnceLock<Option<Arc<ExactAabb>>>,
+    wide_dyadic_plane_schedule: AtomicU8,
+}
+
+impl TriangleMeshFacts {
+    fn normalizes_wide_dyadic_planes(&self, positions: &[Point3]) -> bool {
+        match self.wide_dyadic_plane_schedule.load(Ordering::Relaxed) {
+            1 => false,
+            2 => true,
+            _ => {
+                let normalize = points_require_wide_dyadic_plane_normalization(positions);
+                // The fact is a deterministic property of immutable positions.
+                // Concurrent first consumers may repeat the scan harmlessly.
+                self.wide_dyadic_plane_schedule
+                    .store(u8::from(normalize) + 1, Ordering::Relaxed);
+                normalize
+            }
+        }
+    }
 }
 
 /// Canonical owned triangle mesh.
@@ -1170,6 +1193,10 @@ pub(crate) fn build_polygon_soup_internal(
         let edge_balance_is_certified = mesh
             .native
             .is_some_and(|native| native.facts.valid_pwn.consume(decisions));
+        let normalize_wide_dyadic = mesh.native.map_or_else(
+            || points_require_wide_dyadic_plane_normalization(mesh.positions),
+            |native| native.facts.normalizes_wide_dyadic_planes(mesh.positions),
+        );
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -1200,6 +1227,7 @@ pub(crate) fn build_polygon_soup_internal(
                 p2,
                 mesh_index as isize,
                 polygon_index,
+                normalize_wide_dyadic,
             )?;
             polygon.set_source_triangle_edge_identities(mesh_index, [i0, i1, i2])?;
             if !polygon.support.decide_is_valid(decisions)? {

@@ -1,12 +1,12 @@
 //! Convex polygon representation backed by hyperreal planes.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
+use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
 use std::sync::Arc;
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
 use crate::geometry::{
-    Classification, Plane, affine_projective_point_decision, cross_arrays, dot_point, sub_points,
+    Classification, Plane, affine_projective_point_decision, cross_arrays, sub_points,
 };
 use crate::predicate::{classify_projective_point_decision, compare_real_decision};
 use crate::winding::WindingNumberTransitionVector;
@@ -537,7 +537,16 @@ pub fn convex_triangle(
     polygon_index: isize,
 ) -> HypermeshResult<MeshOutcome<ConvexPolygon>> {
     let decisions = DecisionContext::new(context);
-    let polygon = convex_triangle_decision(&decisions, p0, p1, p2, mesh_index, polygon_index)?;
+    let normalize_wide_dyadic = points_require_wide_dyadic_plane_normalization([p0, p1, p2]);
+    let polygon = convex_triangle_decision(
+        &decisions,
+        p0,
+        p1,
+        p2,
+        mesh_index,
+        polygon_index,
+        normalize_wide_dyadic,
+    )?;
     Ok(decisions.finish(polygon))
 }
 
@@ -548,12 +557,13 @@ pub(crate) fn convex_triangle_decision(
     p2: &Point3,
     mesh_index: isize,
     polygon_index: isize,
+    normalize_wide_dyadic: bool,
 ) -> HypermeshResult<ConvexPolygon> {
     let support = Plane::from_points(p0, p1, p2);
     let edges = Vec::from([
-        edge_plane(decisions, p0, p1, p2, &support)?,
-        edge_plane(decisions, p1, p2, p0, &support)?,
-        edge_plane(decisions, p2, p0, p1, &support)?,
+        edge_plane(decisions, p0, p1, p2, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p1, p2, p0, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p2, p0, p1, &support, normalize_wide_dyadic)?,
     ]);
 
     Ok(ConvexPolygon {
@@ -583,7 +593,14 @@ pub fn convex_quad(
     polygon_index: isize,
 ) -> HypermeshResult<MeshOutcome<ConvexPolygon>> {
     let decisions = DecisionContext::new(context);
-    let polygon = convex_quad_decision(&decisions, [p0, p1, p2, p3], mesh_index, polygon_index)?;
+    let normalize_wide_dyadic = points_require_wide_dyadic_plane_normalization([p0, p1, p2, p3]);
+    let polygon = convex_quad_decision(
+        &decisions,
+        [p0, p1, p2, p3],
+        mesh_index,
+        polygon_index,
+        normalize_wide_dyadic,
+    )?;
     Ok(decisions.finish(polygon))
 }
 
@@ -592,13 +609,14 @@ pub(crate) fn convex_quad_decision(
     [p0, p1, p2, p3]: [&Point3; 4],
     mesh_index: isize,
     polygon_index: isize,
+    normalize_wide_dyadic: bool,
 ) -> HypermeshResult<ConvexPolygon> {
     let support = Plane::from_points(p0, p1, p2);
     let edges = Vec::from([
-        edge_plane(decisions, p0, p1, p2, &support)?,
-        edge_plane(decisions, p1, p2, p3, &support)?,
-        edge_plane(decisions, p2, p3, p0, &support)?,
-        edge_plane(decisions, p3, p0, p1, &support)?,
+        edge_plane(decisions, p0, p1, p2, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p1, p2, p3, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p2, p3, p0, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p3, p0, p1, &support, normalize_wide_dyadic)?,
     ]);
 
     Ok(ConvexPolygon {
@@ -624,8 +642,9 @@ pub(crate) fn edge_plane(
     b: &Point3,
     opposite: &Point3,
     support: &Plane,
+    normalize_wide_dyadic: bool,
 ) -> HypermeshResult<Plane> {
-    let mut plane = oriented_edge_plane(a, b, support);
+    let mut plane = oriented_edge_plane(a, b, support, normalize_wide_dyadic);
     if crate::predicate::classify_point_decision(decisions, opposite, &plane)?
         == Classification::Positive
     {
@@ -634,7 +653,12 @@ pub(crate) fn edge_plane(
     Ok(plane)
 }
 
-fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
+fn oriented_edge_plane(
+    a: &Point3,
+    b: &Point3,
+    support: &Plane,
+    normalize_wide_dyadic: bool,
+) -> Plane {
     let edge = sub_points(b, a);
     let support_normal = [
         support.normal.x.clone(),
@@ -642,8 +666,54 @@ fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
         support.normal.z.clone(),
     ];
     let normal = cross_arrays(&edge, &support_normal);
-    let offset = -dot_point(&normal, a);
-    Plane::new(normal, offset)
+    Plane::from_normal_and_point(normal, a, normalize_wide_dyadic)
+}
+
+pub(crate) fn points_require_wide_dyadic_plane_normalization<'a>(
+    points: impl IntoIterator<Item = &'a Point3>,
+) -> bool {
+    crate::trace_dispatch!("wide-plane-normalization", "affine-content-scan");
+    let mut points = points.into_iter();
+    let Some(anchor) = points.next() else {
+        return false;
+    };
+    let [Some(anchor_x), Some(anchor_y), Some(anchor_z)] =
+        [&anchor.x, &anchor.y, &anchor.z].map(Real::exact_rational_ref)
+    else {
+        return false;
+    };
+    let anchors = [anchor_x, anchor_y, anchor_z];
+    // A common wide numerator factor in exact dyadic displacements is an
+    // affine, translation-invariant scale. Removing it from derived edge
+    // planes pays back across many predicates. A wide denominator by itself
+    // is merely coordinate resolution and does not justify normalization.
+    let mut content: Option<Rational> = None;
+    for point in points {
+        let [Some(x), Some(y), Some(z)] =
+            [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+        else {
+            return false;
+        };
+        for (coordinate, anchor) in [x, y, z].into_iter().zip(anchors) {
+            let Some(displacement_numerator) =
+                coordinate.dyadic_difference_numerator_magnitude(anchor)
+            else {
+                return false;
+            };
+            if displacement_numerator.is_zero() {
+                continue;
+            }
+            let common = match content {
+                Some(content) => content.numerator_magnitude_gcd(&displacement_numerator),
+                None => displacement_numerator,
+            };
+            if common.numerator().bits() <= u64::from(usize::BITS) {
+                return false;
+            }
+            content = Some(common);
+        }
+    }
+    content.is_some()
 }
 
 fn bounds_for_points(
@@ -724,7 +794,6 @@ fn update_min_max(
 mod tests {
     use super::*;
     use crate::test_support::approximate_convex_triangle;
-
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
@@ -785,6 +854,89 @@ mod tests {
                 .into_value()
         );
         assert_eq!(inverted.inverted(), polygon);
+    }
+
+    #[test]
+    fn wide_dyadic_triangle_uses_primitive_support_and_edge_planes() {
+        let denominator = Rational::new(2)
+            .powi(2048_i64.into())
+            .expect("fixture exponent is positive");
+        let scale = Real::from((&denominator + Rational::one()) / denominator);
+        let p0 = Point3::new(Real::zero(), Real::zero(), Real::zero());
+        let p1 = Point3::new(scale.clone(), Real::zero(), Real::zero());
+        let p2 = Point3::new(Real::zero(), scale.clone(), Real::zero());
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let outcome = convex_triangle(&MeshContext::new(policy), &p0, &p1, &p2, 0, 0)
+                .expect("the exact triangle is nondegenerate");
+            assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
+            let polygon = outcome.value;
+            assert_eq!(
+                polygon.support,
+                Plane::new(
+                    Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    Real::zero(),
+                )
+            );
+            assert_eq!(
+                polygon.edges.as_slice(),
+                [
+                    Plane::new(
+                        Point3::new(Real::zero(), Real::from(-1), Real::zero()),
+                        Real::zero(),
+                    ),
+                    Plane::new(
+                        Point3::new(Real::one(), Real::one(), Real::zero()),
+                        -scale.clone(),
+                    ),
+                    Plane::new(
+                        Point3::new(Real::from(-1), Real::zero(), Real::zero()),
+                        Real::zero(),
+                    ),
+                ]
+            );
+        }
+    }
+
+    #[test]
+    fn wide_plane_schedule_requires_affine_numerator_content() {
+        let denominator = Rational::new(2)
+            .powi(2048_i64.into())
+            .expect("fixture exponent is positive");
+        let scale = Real::from((&denominator + Rational::one()) / &denominator);
+        let translation = Real::from(
+            (&denominator + Rational::from(3_u8)) / (&denominator * Rational::from(2_u8)),
+        );
+        let p0 = Point3::new(translation.clone(), Real::zero(), Real::zero());
+        let p1 = Point3::new(
+            translation.clone() + scale.clone(),
+            Real::zero(),
+            Real::zero(),
+        );
+        let p2 = Point3::new(
+            translation + scale.clone() * Real::from(3_u8),
+            scale,
+            Real::zero(),
+        );
+        assert!(points_require_wide_dyadic_plane_normalization([
+            &p0, &p1, &p2
+        ]));
+
+        let resolution_only = Real::from(Rational::one() / &denominator);
+        let unrelated = Point3::new(resolution_only.clone(), Real::zero(), Real::zero());
+        let unrelated_2 = Point3::new(
+            resolution_only * Real::from(3_u8),
+            Real::one(),
+            Real::zero(),
+        );
+        assert!(!points_require_wide_dyadic_plane_normalization([
+            &Point3::origin(),
+            &unrelated,
+            &unrelated_2,
+        ]));
     }
 
     #[cfg(target_pointer_width = "64")]

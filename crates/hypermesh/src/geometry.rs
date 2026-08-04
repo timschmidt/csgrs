@@ -72,6 +72,39 @@ impl Plane {
         Self::new(normal, -value)
     }
 
+    /// Constructs the oriented plane with `normal` through `point`.
+    ///
+    /// Wide exact-dyadic normals are projective coordinates: one positive
+    /// common scale has no geometric meaning. Remove it before constructing
+    /// the offset so repeated predicates do not carry that scale into every
+    /// product. General exact-rational and symbolic normals retain the usual
+    /// `Real` expression path.
+    pub(crate) fn from_normal_and_point(
+        normal: Point3,
+        point: &Point3,
+        normalize_wide_dyadic: bool,
+    ) -> Self {
+        if normalize_wide_dyadic
+            && let [Some(x), Some(y), Some(z)] =
+                [&normal.x, &normal.y, &normal.z].map(Real::exact_rational_ref)
+            && let [Some(px), Some(py), Some(pz)] =
+                [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+            && [x, y, z, px, py, pz].into_iter().all(Rational::is_dyadic)
+        {
+            let [x, y, z] = Rational::primitive_integer_ratio([x, y, z]);
+            let offset = Rational::signed_product_sum_known_dyadic(
+                [false; 3],
+                [[&x, px], [&y, py], [&z, pz]],
+            );
+            return Self::new(
+                Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                Real::from(offset),
+            );
+        }
+        let offset = -dot_point(&normal, point);
+        Self::new(normal, offset)
+    }
+
     /// Returns the exact homogeneous reflection across this plane.
     ///
     /// For `n · x + d = 0`, reflection is
