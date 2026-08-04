@@ -1485,26 +1485,38 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
     if left.len() != 3 || right.len() != 3 {
         return Ok(false);
     }
-    let (Some(left_edges), Some(right_edges)) = (
+    let (Some(left_vertices), Some(left_edges), Some(right_vertices), Some(right_edges)) = (
+        left_polygon.known_vertex_identities(),
         left_polygon.known_edge_identities(),
+        right_polygon.known_vertex_identities(),
         right_polygon.known_edge_identities(),
     ) else {
         return Ok(false);
     };
     for left_index in 0..3 {
-        let left_start = &left[left_index];
-        let left_end = &left[(left_index + 1) % 3];
+        let Some(left_edge) = left_edges.get(left_index) else {
+            return Err(HypermeshError::UnknownClassification);
+        };
+        let Some(left_start) = left_vertices.get(left_index) else {
+            return Err(HypermeshError::UnknownClassification);
+        };
+        let Some(left_end) = left_vertices.get((left_index + 1) % 3) else {
+            return Err(HypermeshError::UnknownClassification);
+        };
         for right_index in 0..3 {
-            if left_start != &right[(right_index + 1) % 3] || left_end != &right[right_index] {
-                continue;
-            }
-            let Some(left_edge) = left_edges.get(left_index) else {
-                return Err(HypermeshError::UnknownClassification);
-            };
             let Some(right_edge) = right_edges.get(right_index) else {
                 return Err(HypermeshError::UnknownClassification);
             };
             if left_edge != right_edge {
+                continue;
+            }
+            let Some(right_start) = right_vertices.get(right_index) else {
+                return Err(HypermeshError::UnknownClassification);
+            };
+            let Some(right_end) = right_vertices.get((right_index + 1) % 3) else {
+                return Err(HypermeshError::UnknownClassification);
+            };
+            if left_start != right_end || left_end != right_start {
                 continue;
             }
             let left_opposite = &left[(left_index + 2) % 3];
