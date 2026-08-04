@@ -8118,39 +8118,23 @@ fn trivariate_divide_linear_axis_factor(
     trivariate_from_axis_bivariate_coefficients(&quotient, axis, remaining)
 }
 
-#[cfg(feature = "predicates")]
-#[cold]
-#[inline(never)]
-fn trivariate_verify_linear_axis_factor(
-    polynomial: &TrivariatePolynomial2,
-    axis: usize,
-    remaining: [usize; 2],
-    factor_coefficients: &[BivariatePolynomial; 2],
-) -> Option<(TrivariatePolynomial2, TrivariatePolynomial2)> {
-    let factor = trivariate_from_axis_bivariate_coefficients(factor_coefficients, axis, remaining)?;
-    let quotient = trivariate_divide_linear_axis_factor(polynomial, axis, factor_coefficients)?;
-    Some((factor, quotient))
-}
-
 /// Removes coefficient content only when the raw rational-function factor is
 /// not already an exact polynomial divisor. Whole-tensor division remains the
 /// authority in either case.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
-fn trivariate_normalize_and_verify_linear_axis_factor(
+fn trivariate_normalize_and_divide_linear_axis_factor(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
-    remaining: [usize; 2],
     raw: [BivariatePolynomial; 2],
-) -> Option<(TrivariatePolynomial2, TrivariatePolynomial2)> {
-    if let Some(factorization) =
-        trivariate_verify_linear_axis_factor(polynomial, axis, remaining, &raw)
-    {
-        return Some(factorization);
+) -> Option<([BivariatePolynomial; 2], TrivariatePolynomial2)> {
+    if let Some(quotient) = trivariate_divide_linear_axis_factor(polynomial, axis, &raw) {
+        return Some((raw, quotient));
     }
     let primitive = bivariate_remove_common_factors(raw);
-    trivariate_verify_linear_axis_factor(polynomial, axis, remaining, &primitive)
+    let quotient = trivariate_divide_linear_axis_factor(polynomial, axis, &primitive)?;
+    Some((primitive, quotient))
 }
 
 /// Splits a quadratic tensor axis when its bivariate discriminant is an exact
@@ -8181,11 +8165,13 @@ fn trivariate_quadratic_axis_factorizations(
         bivariate_subtract(&linear, &square_root),
     ] {
         let raw = [constant, doubled_quadratic.clone()];
-        let Some((factor, quotient)) =
-            trivariate_normalize_and_verify_linear_axis_factor(polynomial, axis, remaining, raw)
+        let Some((factor_coefficients, quotient)) =
+            trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw)
         else {
             continue;
         };
+        let factor =
+            trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
         if factorizations.iter().any(|(existing, _)| {
             existing.coefficients == factor.coefficients
                 || existing.coefficients == quotient.coefficients
@@ -8296,6 +8282,9 @@ fn trivariate_repeated_cubic_axis_factorizations(
         if bivariate_exact_nonzero_metadata(&delta_one)?.is_some() {
             return None;
         }
+        drop(delta_zero);
+        drop(constant);
+        drop(linear);
         [quadratic, bivariate_scale(cubic, &Real::from(3_i8))]
     } else {
         let quadratic_linear =
@@ -8353,18 +8342,16 @@ fn trivariate_repeated_cubic_axis_factorizations(
         if bivariate_exact_nonzero_metadata(&derivative_remainder)?.is_some() {
             return None;
         }
+        drop((constant, linear, quadratic, cubic));
         [factor_constant, factor_linear]
     };
-    let factorization =
-        trivariate_normalize_and_verify_linear_axis_factor(polynomial, axis, remaining, raw)?;
-    let (factor_constant, factor_linear, factor_remaining) =
-        trivariate_linear_axis_coefficients(&factorization.0, axis)?;
-    if factor_remaining != remaining {
-        return None;
-    }
-    let repeated = [factor_constant, factor_linear];
-    trivariate_divide_linear_axis_factor(&factorization.1, axis, &repeated)?;
-    Some(vec![factorization])
+    drop((quadratic_square, cubic_linear));
+    let (factor_coefficients, quotient) =
+        trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw)?;
+    trivariate_divide_linear_axis_factor(&quotient, axis, &factor_coefficients)?;
+    let factor =
+        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
+    Some(vec![(factor, quotient)])
 }
 
 #[cfg(feature = "predicates")]
