@@ -1,0 +1,231 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "checkpoint": "exact rational square-free cubic trivariate factorization for selected-root winding",
+  "captured_on": "2026-08-03",
+  "source_revision": "71b580d097f2e9490ac11aa9e9d517be9521a729",
+  "semantic_revisions": [
+    "cc729dd",
+    "ef40ca0"
+  ],
+  "dependency_adaptation_revision": "71b580d",
+  "comparison_revision": "c8574d3",
+  "comparison_semantic_revision": "0c169ac",
+  "dependency_revisions": {
+    "hyperreal": "c2217bae132b725e29faeb89495b8cd51012e1bc",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "6e4d68c835dbdcb487ef8e43cf57138ed13894b5",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "41631f652233e1337521822abc63bc29a6c0ce55",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "bounded exact recovery of a rational multi-affine linear factor from a trivariate tensor that is cubic in one axis",
+      "four exact rational specializations with all three-sample combinations so one specialization degree drop is tolerated",
+      "signed three-by-three maximal-minor reconstruction of each bilinear slice proposal",
+      "constant specialized-root recovery for rank-deficient constant-root slices",
+      "exact rational-root extraction with exact univariate quotient replay and an implicit irreducible remainder",
+      "exact recovery of retained-variable specialization content through univariate GCD, rational roots, multiplication, and division",
+      "both retained/lift coordinate orientations, four bounded lift anchors, exact first Taylor slice, and exact highest-degree slice",
+      "exact inter-slice relative-scale recovery followed by complete trivariate normalization and division",
+      "recursive replay of the existing linear, quadratic, and repeated-cubic selected-root sign authorities on the verified quotient",
+      "dense three-factor, one-rational-factor plus irreducible-quadratic, specialization-content, and full-lift coverage",
+      "identical Certified STRICT and APPROXIMATE_512 results for the formerly terminal square-free-cubic rational three-field zero",
+      "a quartic coupled control that retains the shared selected terminal policy",
+      "matched-dependency allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general factorization of quartic or higher tensors",
+      "non-rational square-free cubic factors not exposed by the bounded exact specializations",
+      "unbounded multivariate factorization or primitive-element compositum construction",
+      "dense intermediate tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images, broader noncircular fields, and distinct-carrier joins",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "slice_factor": "For one cubic tensor axis x and retained slice coordinate y, a proposed factor has the form u0+u1*y+x*(v0+v1*y). Three exact specialized roots make a homogeneous three-by-four system; signed maximal minors recover its one-dimensional nullspace when the rank is three.",
+    "constant_root_fallback": "When all three exact specialized roots agree and every maximal minor vanishes, x-root is proposed as a constant bilinear factor. Any other rank-deficient sample set makes no claim.",
+    "rational_roots": "The bounded rational-root theorem proposes exact roots only. Every extracted factor is divided out exactly; the first irreducible or unsupported remainder terminates discovery without invalidating already proved factors.",
+    "specialization_authority": "Four rational specializations at 0, 1, -1, and 2 only propose slice factors. All four choose three triples are tried, and Hypersolve exact bivariate division is the sole authority for accepting a slice divisor.",
+    "specialization_content": "Projective root reconstruction can omit content depending only on the retained variable. Exact coefficient GCD, exact rational roots, and exact multiply/divide replay reattach only content that is itself a proved divisor.",
+    "lift": "The other retained coordinate is treated as a lift. The highest-degree slice and the constant and first Taylor slices after translation at anchors 1, 0, -1, and 2 recover a candidate factor and its relative scale. Both coordinate orientations are attempted.",
+    "full_division_authority": "A lifted candidate is normalized and accepted only when it divides the complete original trivariate tensor exactly. Specializations, roots, minors, and scale samples never assert a global factor by themselves.",
+    "selected_sign": "The verified linear factor and quotient enter the single bounded recursive sign authority. A selected zero factor proves the complete product zero; decided nonzero signs multiply exactly.",
+    "resource_bound": "Dimensions are checked and all bivariate products and reconstructed tensors retain the existing 16384-control ceiling. The recursive split budget remains two: one verified linear factor followed by its quadratic quotient.",
+    "policy": "A supportable rational square-free cubic factorization is Certified under STRICT and APPROXIMATE_512 without terminal consumption. The quartic control remains Predicate uncertainty in STRICT and returns Zero only after APPROXIMATE_512 records Approximate512Consumed.",
+    "failure": "Missing exact rational roots, rank deficiency without a constant root, unresolved exact signs, failed GCD or division, degenerate lift slices, unavailable nonzero relative scale, resource overflow, unsupported coefficient towers, or failed full-tensor division make no exact claim and fall through to the shared policy terminal. No tolerance, sampled positive assertion, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The square-free product of one selected-zero coupled multi-affine factor and two distinct coupled cofactors was unsupported. STRICT returned Predicate uncertainty and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "A rational multi-affine factor is reconstructed from exact slice roots, lifted across the third coordinate, proved by exact full-tensor division, and recursively signed with its quadratic quotient.",
+    "certified_fixture": "The formerly terminal square-free-cubic rational three-field fixture returns Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes the approximate terminal.",
+    "differential_factor_coverage": "Three distinct dense multi-affine factors reconstruct on every axis; a single rational factor is recovered from an irreducible quadratic cofactor on every axis; retained-variable and highest-lift-slice content are preserved; an unfactored cubic is rejected.",
+    "remaining_policy_control": "Multiplying the exact cubic fixture by another positive coupled factor makes every axis quartic. The bounded package deliberately declines it; STRICT remains explicitly uncertain and APPROXIMATE_512 returns Zero only with Approximate512Consumed.",
+    "remaining_exactness_boundary": "Recover bounded quartic factors or construct another bounded exact relation only after axis content, linear resultant, binary selected-root, quadratic, repeated-cubic, and rational square-free-cubic paths fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for focused fixtures and three for fixed-work controls; median retired instructions and branches are primary",
+    "matched_dependency_control": "c8574d3 was built against the listed live dependencies in a disposable worktree. Its sole source adjustment was the same test-only primitive_bigint_ratio API adaptation as 71b580d; production benchmark sources were unchanged.",
+    "square_free_cubic_coupled_rational_zero": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 1,
+      "median_task_clock_ms": 11.71,
+      "median_cycles": 40733106,
+      "median_instructions": 94245200,
+      "median_branches": 19728866,
+      "median_branch_misses": 263268,
+      "comparison_terminal_task_clock_ms": 66.16,
+      "comparison_terminal_cycles": 270418079,
+      "comparison_terminal_instructions": 866555027,
+      "comparison_terminal_branches": 141952828,
+      "comparison_terminal_branch_misses": 1018340,
+      "instruction_change_percent": -89.124153,
+      "branch_change_percent": -86.101815,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "quartic_coupled_terminal": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 1,
+      "median_task_clock_ms": 89.64,
+      "median_cycles": 368487116,
+      "median_instructions": 1147002496,
+      "median_branches": 184606349,
+      "median_branch_misses": 1597954,
+      "strict_result": "Predicate uncertainty with no approximate consumption",
+      "approximate_result": "Zero with Approximate512Consumed",
+      "interpretation": "Quartic coupled tensors are now the next focused exactness and allocation boundary; this control proves the terminal remains policy-selected rather than unconditional."
+    },
+    "fixed_work_historical_controls": {
+      "method": "matched c8574d3 and 71b580d all-feature release comparative executables against identical dependency revisions, pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded from timed loops",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 2134960491,
+        "current_instructions": 2137791801,
+        "instruction_change": 2831310,
+        "instruction_change_percent": 0.132617,
+        "comparison_branches": 438172238,
+        "current_branches": 439272665,
+        "branch_change": 1100427,
+        "branch_change_percent": 0.251140
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3484903105,
+        "current_instructions": 3484929440,
+        "instruction_change": 26335,
+        "instruction_change_percent": 0.000756,
+        "comparison_branches": 658569028,
+        "current_branches": 658581521,
+        "branch_change": 12493,
+        "branch_change_percent": 0.001897
+      },
+      "interpretation": "The ordinary certified cubic lane is instruction-neutral. The line/arc process rises 0.13 percent in retired instructions despite not entering the cold factor package; this is retained as a regression budget rather than hidden by loaded-host wall time."
+    },
+    "competitive_context": {
+      "method": "final all-feature release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded; retired-instruction controls remain primary",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18933.3,
+        "cavalier_contours": 905.5,
+        "hypercurve_to_cavalier_ratio": 20.909221
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29960491.5,
+        "hypercurve_chord_fallback": 975826.2,
+        "curvo_heuristic": 8279.4,
+        "certified_to_curvo_ratio": 3618.679071,
+        "chord_to_curvo_ratio": 117.861947
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. The square-free package is cold and does not explain the large pre-existing exact-versus-heuristic offset gap."
+    }
+  },
+  "memory": {
+    "tool": "matched Heaptrack record-only direct all-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summary is authoritative",
+    "square_free_cubic_coupled_rational_zero": {
+      "allocation_calls": 120269,
+      "temporary_allocations": 3054,
+      "peak_heap_mib": 1.37,
+      "recorder_peak_rss_mib": 14.88,
+      "comparison_terminal_allocation_calls": 1427251,
+      "comparison_terminal_temporary_allocations": 301373,
+      "comparison_terminal_peak_heap_mib": 1.36,
+      "comparison_terminal_recorder_peak_rss_mib": 14.86,
+      "allocation_change_percent": -91.573381,
+      "temporary_change_percent": -98.986638,
+      "interpretation": "The certified path eliminates 1,306,982 allocation calls and 298,319 temporary allocations. Heaptrack's rounded peak-live-heap display rises by 0.01 MiB while recorder RSS is effectively unchanged."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release benchmark executables at c8574d3 and 71b580d against identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8380704,
+      "current_file_bytes": 8429296,
+      "file_change_bytes": 48592,
+      "file_change_percent": 0.579808,
+      "comparison_size_text_bytes": 6390825,
+      "current_size_text_bytes": 6432437,
+      "size_text_change_bytes": 41612,
+      "size_text_change_percent": 0.651121,
+      "comparison_actual_text_section_bytes": 4840855,
+      "current_actual_text_section_bytes": 4873767,
+      "actual_text_change_bytes": 32912,
+      "actual_text_change_percent": 0.679880
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7969688,
+      "current_file_bytes": 7969688,
+      "file_change_bytes": 0,
+      "file_change_percent": 0.0,
+      "comparison_size_text_bytes": 6055221,
+      "current_size_text_bytes": 6055221,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4552055,
+      "current_actual_text_section_bytes": 4552055,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The complete predicate-enabled square-free package adds 32.14 KiB of actual production .text. The minimal production artifact remains byte-for-byte and section-for-section identical."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-square-free-cubic-factor-final --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-square-free-cubic-factor-final/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23958,
+      "current_nodes": 24004,
+      "node_change_percent": 0.192003,
+      "comparison_edges": 45246,
+      "current_edges": 45443,
+      "edge_change_percent": 0.435398
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> original cubic trivariate_content_and_bounded_factor_sign before defining-polynomial quotient expansion",
+      "trivariate_bounded_factor_sign_with_budget -> repeated-cubic then square-free-cubic axis factorization",
+      "square-free cubic factorization -> bounded exact univariate rational roots -> maximal-minor bilinear proposal -> Hypersolve exact bivariate division",
+      "bilinear specialization factorization -> exact retained-variable content GCD and exact expanded-factor division",
+      "square-free cubic factorization -> lift degree and slices -> exact relative scale -> normalized full trivariate factor -> exact complete-tensor division",
+      "verified quotient -> bounded recursive quadratic factorization -> existing selected-root sign authorities"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "passed at dependency revision: 215 tests",
+    "hypercurve_all_features_library": "passed at source revision: 414 tests",
+    "hypercurve_default_features_library": "passed at source revision: 410 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed the square-free-cubic coupled identity as Certified under both policies, dense and irreducible-cofactor reconstruction on all axes, specialization and lift content retention, exact rejection of an unfactored cubic, and the quartic STRICT uncertainty plus APPROXIMATE_512 terminal",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}
