@@ -7079,6 +7079,125 @@ fn parameter_bounds(parameter: &BezierParameter2) -> (&Real, &Real) {
     }
 }
 
+/// Returns `(scale, offset)` only after exact evidence proves
+/// `second = scale * first + offset`.
+fn exact_parameter_affine_relation(
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+) -> Option<(Real, Real)> {
+    match (first, second) {
+        (BezierParameter2::Exact(first), BezierParameter2::Exact(second)) => {
+            Some((Real::one(), second - first))
+        }
+        (BezierParameter2::Algebraic(first), BezierParameter2::Algebraic(second)) => {
+            let first = parameter_representation(first, &CurveContext::STRICT);
+            let second = parameter_representation(second, &CurveContext::STRICT);
+            if let Some(difference) = hypersolve::translated_algebraic_root_difference(
+                &first,
+                &second,
+                hypersolve::PredicatePolicy::STRICT,
+            ) {
+                return Some((Real::one(), -difference));
+            }
+            let relation = hypersolve::algebraic_root_affine_relation(
+                &first,
+                &second,
+                hypersolve::PredicatePolicy::STRICT,
+            )?;
+            Some((relation.scale, relation.offset))
+        }
+        (BezierParameter2::Exact(_), BezierParameter2::Algebraic(_))
+        | (BezierParameter2::Algebraic(_), BezierParameter2::Exact(_)) => None,
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_substitute_affine_axis(
+    polynomial: &TrivariatePolynomial2,
+    retained_axis: usize,
+    substituted_axis: usize,
+    scale: &Real,
+    offset: &Real,
+) -> Option<BivariatePolynomial> {
+    if retained_axis >= 3 || substituted_axis >= 3 || retained_axis == substituted_axis {
+        return None;
+    }
+    let remaining_axis = 3_usize.checked_sub(retained_axis + substituted_axis)?;
+    if remaining_axis >= 3 || remaining_axis == retained_axis || remaining_axis == substituted_axis
+    {
+        return None;
+    }
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    let retained_count = counts[retained_axis];
+    let substituted_count = counts[substituted_axis];
+    let remaining_count = counts[remaining_axis];
+    if retained_count == 0 || substituted_count == 0 || remaining_count == 0 {
+        return None;
+    }
+    let combined_count = retained_count
+        .checked_add(substituted_count)?
+        .checked_sub(1)?;
+    if combined_count.checked_mul(remaining_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
+        return None;
+    }
+    let affine_powers = polynomial_powers(&[offset.clone(), scale.clone()], substituted_count - 1);
+    let mut reduced = vec![vec![Real::zero(); remaining_count]; combined_count];
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                let exponents = [first, second, third];
+                for (power, factor) in affine_powers[exponents[substituted_axis]]
+                    .iter()
+                    .enumerate()
+                {
+                    reduced[exponents[retained_axis] + power][exponents[remaining_axis]] +=
+                        coefficient * factor;
+                }
+            }
+        }
+    }
+    Some(BivariatePolynomial::new(reduced))
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_affinely_related_parameter_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let parameters = [first, second, third];
+    for (retained_axis, substituted_axis) in [(0, 1), (0, 2), (1, 2)] {
+        let Some((scale, offset)) = exact_parameter_affine_relation(
+            parameters[retained_axis],
+            parameters[substituted_axis],
+        ) else {
+            continue;
+        };
+        let remaining_axis = 3 - retained_axis - substituted_axis;
+        let Some(reduced) = trivariate_substitute_affine_axis(
+            polynomial,
+            retained_axis,
+            substituted_axis,
+            &scale,
+            &offset,
+        ) else {
+            continue;
+        };
+        if let Classification::Decided(sign) = signed_bivariate_at_parameter_pair(
+            &reduced,
+            parameters[retained_axis],
+            parameters[remaining_axis],
+            policy,
+        )? {
+            return Ok(Some(sign));
+        }
+    }
+    Ok(None)
+}
+
 #[cfg(feature = "predicates")]
 fn trivariate_restrict_to_parameter_box(
     polynomial: &TrivariatePolynomial2,
@@ -7217,6 +7336,17 @@ fn trivariate_parameter_triple_sign_by_refinement(
             third_refinement.refine_to(target_steps),
         );
         if let Some(sign) = trivariate_unit_cube_strict_bernstein_sign(restricted, policy)? {
+            return Ok(Classification::Decided(sign));
+        }
+        // Let common nonzero boxes separate before constructing a field
+        // relation, but do not grow a correlated zero to the 512-bit terminal
+        // before exact symbolic substitution. Eight bisections preserve the
+        // mapped-cusp nonzero fast path while bounding the zero-path work.
+        if target_steps == 8
+            && let Some(sign) = trivariate_affinely_related_parameter_sign(
+                polynomial, first, second, third, policy,
+            )?
+        {
             return Ok(Classification::Decided(sign));
         }
     }
@@ -20174,6 +20304,13 @@ fn signed_bivariate_at_parameter_pair(
                     Classification::Uncertain(reason) => blocker = reason,
                 }
             }
+            if let Some((scale, offset)) = exact_parameter_affine_relation(first, second) {
+                return signed_coefficients_at_parameter(
+                    bivariate_substitute_second_equal_affine_first(polynomial, &scale, &offset),
+                    first,
+                    policy,
+                );
+            }
             Ok(Classification::Uncertain(blocker))
         }
     }
@@ -20513,6 +20650,30 @@ fn bivariate_substitute_second_equal_one_minus_first(
     for (first, row) in polynomial.coefficients.iter().enumerate() {
         for (second, coefficient) in row.iter().enumerate() {
             for (power, factor) in complement_powers[second].iter().enumerate() {
+                coefficients[first + power] += coefficient * factor;
+            }
+        }
+    }
+    coefficients
+}
+
+fn bivariate_substitute_second_equal_affine_first(
+    polynomial: &BivariatePolynomial,
+    scale: &Real,
+    offset: &Real,
+) -> Vec<Real> {
+    let second_degree = polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let affine_powers = polynomial_powers(&[offset.clone(), scale.clone()], second_degree);
+    let degree = polynomial.coefficients.len().saturating_sub(1) + second_degree;
+    let mut coefficients = vec![Real::zero(); degree + 1];
+    for (first, row) in polynomial.coefficients.iter().enumerate() {
+        for (second, coefficient) in row.iter().enumerate() {
+            for (power, factor) in affine_powers[second].iter().enumerate() {
                 coefficients[first + power] += coefficient * factor;
             }
         }
@@ -25192,74 +25353,208 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn independent_field_collinear_chord_side(
+        root_coefficients: [Vec<Real>; 3],
+        policy: &CurveContext,
+    ) -> Classification<crate::classify::LineSide> {
+        let points = root_coefficients
+            .into_iter()
+            .enumerate()
+            .map(|(index, coefficients)| {
+                let BezierParameter2::Algebraic(parameter) = algebraic_parameter(coefficients)
+                else {
+                    unreachable!("the selected related root must remain algebraic");
+                };
+                let (x, y) = match index {
+                    0 => (vec![Real::zero(), Real::one()], vec![Real::zero()]),
+                    1 => (vec![Real::zero()], vec![Real::zero(), Real::one()]),
+                    2 => (
+                        vec![Real::zero(), Real::one()],
+                        vec![Real::zero(), Real::one()],
+                    ),
+                    _ => unreachable!(),
+                };
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, policy),
+                    x,
+                    y,
+                    vec![Real::one()],
+                    "test independent-field collinear point",
+                )
+            })
+            .collect::<Vec<_>>();
+        let predicates = points
+            .iter()
+            .map(|point| {
+                let Classification::Decided(predicate) = point.predicate_evaluator(policy).unwrap()
+                else {
+                    panic!("the retained collinear point must expose its predicate");
+                };
+                predicate
+            })
+            .collect::<Vec<_>>();
+        algebraic_point_oriented_line_side(&predicates[0], &predicates[1], &predicates[2], policy)
+            .unwrap()
+    }
+
+    #[cfg(feature = "predicates")]
     #[test]
-    fn distinct_field_chord_zero_obeys_the_selected_terminal_policy() {
+    fn trivariate_affine_axis_substitution_preserves_all_axis_orders() {
+        let polynomial = TrivariatePolynomial2 {
+            coefficients: (0..3)
+                .map(|first| {
+                    (0..4)
+                        .map(|second| {
+                            (0..2)
+                                .map(|third| Real::from(1_i32 + first * 7 + second * 3 + third * 5))
+                                .collect()
+                        })
+                        .collect()
+                })
+                .collect(),
+        };
+        let scale = (Real::from(-3_i8) / Real::from(2_i8)).unwrap();
+        let offset = (Real::from(7_i8) / Real::from(11_i8)).unwrap();
+        let retained_value = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
+        let remaining_value = (Real::from(4_i8) / Real::from(7_i8)).unwrap();
+        let evaluate_trivariate = |values: &[Real; 3]| {
+            polynomial
+                .coefficients
+                .iter()
+                .rev()
+                .fold(Real::zero(), |first_accumulator, rows| {
+                    first_accumulator * &values[0]
+                        + rows
+                            .iter()
+                            .rev()
+                            .fold(Real::zero(), |second_accumulator, row| {
+                                second_accumulator * &values[1]
+                                    + polynomial_evaluate(row, &values[2])
+                            })
+                })
+        };
+
+        for (retained_axis, substituted_axis) in [(0, 1), (0, 2), (1, 2), (1, 0), (2, 0), (2, 1)] {
+            let remaining_axis = 3 - retained_axis - substituted_axis;
+            let reduced = trivariate_substitute_affine_axis(
+                &polynomial,
+                retained_axis,
+                substituted_axis,
+                &scale,
+                &offset,
+            )
+            .expect("the bounded affine substitution must fit");
+            let mut values = std::array::from_fn(|_| Real::zero());
+            values[retained_axis] = retained_value.clone();
+            values[substituted_axis] = &scale * &retained_value + &offset;
+            values[remaining_axis] = remaining_value.clone();
+            let reduced_value = polynomial_evaluate(
+                &bivariate_specialize_second(&reduced, &remaining_value),
+                &retained_value,
+            );
+            assert_eq!(reduced_value, evaluate_trivariate(&values));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn translated_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         // alpha=sqrt(1/2), beta=1-alpha, gamma=alpha-1/2.
         // The independently represented points (alpha,0), (0,beta), and
         // (gamma,gamma) are collinear because alpha*beta=gamma and
-        // alpha+beta=1. No pair alone carries that three-field identity.
-        let roots = [
-            vec![-half.clone(), Real::zero(), Real::one()],
-            vec![half.clone(), Real::from(-2_i8), Real::one()],
-            vec![-quarter, Real::one(), Real::one()],
-        ]
-        .map(|coefficients| {
-            let BezierParameter2::Algebraic(parameter) = algebraic_parameter(coefficients) else {
-                unreachable!("the selected related root must remain algebraic");
-            };
-            parameter
-        });
+        // alpha+beta=1. The full chord identity appears only after replaying
+        // the certified pairwise affine root relations.
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let points = roots
-                .clone()
-                .into_iter()
-                .enumerate()
-                .map(|(index, parameter)| {
-                    let (x, y) = match index {
-                        0 => (vec![Real::zero(), Real::one()], vec![Real::zero()]),
-                        1 => (vec![Real::zero()], vec![Real::zero(), Real::one()]),
-                        2 => (
-                            vec![Real::zero(), Real::one()],
-                            vec![Real::zero(), Real::one()],
-                        ),
-                        _ => unreachable!(),
-                    };
-                    RationalBezierAlgebraicPointImage2::from_retained_expression(
-                        parameter.clone(),
-                        parameter_representation(&parameter, &policy),
-                        x,
-                        y,
-                        vec![Real::one()],
-                        "test independent-field collinear point",
-                    )
-                })
-                .collect::<Vec<_>>();
-            let predicates = points
-                .iter()
-                .map(|point| {
-                    let Classification::Decided(predicate) =
-                        point.predicate_evaluator(&policy).unwrap()
-                    else {
-                        panic!("the retained collinear point must expose its predicate");
-                    };
-                    predicate
-                })
-                .collect::<Vec<_>>();
-            let actual = algebraic_point_oriented_line_side(
-                &predicates[0],
-                &predicates[1],
-                &predicates[2],
-                &policy,
-            )
-            .unwrap();
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                independent_field_collinear_chord_side(
+                    [
+                        vec![-half.clone(), Real::zero(), Real::one()],
+                        vec![half.clone(), Real::from(-2_i8), Real::one()],
+                        vec![-quarter.clone(), Real::one(), Real::one()],
+                    ],
+                    attempt,
+                )
+            });
             assert_eq!(
-                actual,
+                outcome.value,
+                Classification::Decided(crate::classify::LineSide::On),
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn scaled_distinct_field_chord_zero_is_exact_in_strict() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+        let eighteenth = (Real::one() / Real::from(18_i8)).unwrap();
+        // alpha=sqrt(1/2), beta=alpha/2, gamma=alpha/3. The same three
+        // coordinate forms are collinear because alpha*beta =
+        // gamma*(alpha+beta). The independently represented fields expose
+        // only exact rational scaling relations.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                independent_field_collinear_chord_side(
+                    [
+                        vec![-half.clone(), Real::zero(), Real::one()],
+                        vec![-eighth.clone(), Real::zero(), Real::one()],
+                        vec![-eighteenth.clone(), Real::zero(), Real::one()],
+                    ],
+                    attempt,
+                )
+            });
+            assert_eq!(
+                outcome.value,
+                Classification::Decided(crate::classify::LineSide::On),
+            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn unsupported_distinct_field_chord_zero_obeys_the_selected_terminal_policy() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        // alpha=sqrt(1/2), beta=sqrt(1/3), and
+        // gamma=alpha*beta/(alpha+beta). Gamma is the unique unit root of
+        // x^4-10*x^2+1. The three coordinate forms remain exactly collinear,
+        // while no pair is related by a rational affine transform.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                independent_field_collinear_chord_side(
+                    [
+                        vec![-half.clone(), Real::zero(), Real::one()],
+                        vec![-third.clone(), Real::zero(), Real::one()],
+                        vec![
+                            Real::one(),
+                            Real::zero(),
+                            Real::from(-10_i8),
+                            Real::zero(),
+                            Real::one(),
+                        ],
+                    ],
+                    attempt,
+                )
+            });
+            assert_eq!(
+                outcome.value,
                 if policy == CurveContext::STRICT {
                     Classification::Uncertain(UncertaintyReason::Predicate)
                 } else {
                     Classification::Decided(crate::classify::LineSide::On)
+                },
+            );
+            assert_eq!(
+                outcome.certainty,
+                if policy == CurveContext::STRICT {
+                    crate::CurveCertainty::Certified
+                } else {
+                    crate::CurveCertainty::Approximate512Consumed
                 },
             );
         }
