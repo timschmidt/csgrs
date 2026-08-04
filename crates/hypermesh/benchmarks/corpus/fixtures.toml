@@ -157,6 +157,7 @@ cgal_eligible = true
 expected_certainty = "Certified"
 archive_sha256 = "b3a4f314bfb8c67e36eab5faa96a146ffac90524e120769b5adb8a71be8ba3dc"
 control_mesh_sha256 = "bf8768bf019ac505c39c92ae5d63808ee1773047aefd5d5d6700b88c1b5f1c3e"
+heap_probe_modes = ["yeahright"]
 
 [[fixture]]
 id = "yeahright_control_hull_subdivided_4_box"
@@ -173,6 +174,7 @@ tiers = ["scaling", "heap"]
 size = "large"
 cgal_eligible = true
 expected_certainty = "Certified"
+heap_probe_modes = ["yeahright-4"]
 
 [[fixture]]
 id = "yeahright_control_hull_subdivided_8_box"
@@ -189,6 +191,7 @@ tiers = ["scaling", "heap"]
 size = "xl"
 cgal_eligible = true
 expected_certainty = "Certified"
+heap_probe_modes = ["yeahright-8"]
 
 [[fixture]]
 id = "yeahright_full_resolution_rotated_box"
@@ -207,6 +210,7 @@ cgal_eligible = true
 expected_certainty = "Certified"
 input_triangles = 23788
 expected_output_triangles = 0
+heap_probe_modes = ["yeahright-full-rotated"]
 
 [[fixture]]
 id = "symbolic_terminal_box_contact"

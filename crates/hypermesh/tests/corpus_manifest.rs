@@ -89,6 +89,10 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
                 matches!(fixture["size"].as_str(), Some("large" | "xl")),
                 "heap fixture {id} must be large or xl"
             );
+            assert!(
+                !string_array(fixture, "heap_probe_modes").is_empty(),
+                "heap fixture {id} requires at least one process/kernel probe mode"
+            );
         }
     }
 }
@@ -211,6 +215,39 @@ fn large_box_heap_fixture_covers_certified_and_general_paths() {
         ["boxes-3072", "boxes-3072-general"]
     );
     assert_eq!(fixture["input_triangles"].as_integer(), Some(6144));
+}
+
+#[test]
+fn every_large_heap_fixture_has_a_distinct_probe_selector() {
+    let manifest = manifest();
+    let mut selectors = BTreeSet::new();
+    for fixture in manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| string_array(fixture, "tiers").contains(&"heap"))
+    {
+        let id = fixture["id"].as_str().expect("fixture id");
+        for selector in string_array(fixture, "heap_probe_modes") {
+            assert!(
+                selectors.insert(selector),
+                "heap probe selector {selector} is duplicated by fixture {id}"
+            );
+        }
+    }
+    assert_eq!(
+        selectors,
+        [
+            "boxes-3072",
+            "boxes-3072-general",
+            "yeahright",
+            "yeahright-4",
+            "yeahright-8",
+            "yeahright-full-rotated",
+        ]
+        .into_iter()
+        .collect()
+    );
 }
 
 #[test]

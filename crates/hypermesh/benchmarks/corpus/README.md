@@ -42,3 +42,16 @@ raw borrowed views so repeated-input cache effects are visible without
 selecting a different engine. Every heap gate runs both
 `STRICT` and `APPROXIMATE_512` and records output certainty and topology with
 the process-memory result.
+
+`large_mesh_kernel_heap_probe` accepts every manifested `heap_probe_modes`
+selector and wraps the system allocator only in that measurement executable.
+It records exact requested-payload bytes retained by prepared inputs, the peak
+while `boolean` runs, the incremental kernel peak above those live inputs,
+allocation/reallocation churn, post-Boolean retention, output-live payload,
+input-attached retained-fact growth after output drop, and the residual after
+input drop. Authoritative rows are one-thread runs so interval snapshots have a
+single allocation schedule.
+The ordinary `large_mesh_heap_probe` remains allocator-uninstrumented for
+Heaptrack, Massif, RSS, and hardware-counter runs. The probes select fixtures,
+input ownership, policy, and requested operation only; neither can select a
+Boolean implementation or bypass a production path.
