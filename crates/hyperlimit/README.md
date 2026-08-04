@@ -226,6 +226,7 @@ Associated `*Case` aliases document each batch tuple shape.
 | `std` | yes | Standard-library support used by the current crate build. |
 | `parallel` | no | Enables Rayon-backed parallel batch variants; implies `std`. |
 | `dispatch-trace` | no | Enables lower-stack predicate/scalar dispatch instrumentation. |
+| `serde` | no | Serializes the shared exact `Point2` carrier. |
 
 ## Guarantees and boundaries
 

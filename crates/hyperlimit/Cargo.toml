@@ -26,6 +26,7 @@ default = ["std"]
 std = []
 dispatch-trace = ["hyperreal/dispatch-trace"]
 parallel = ["std", "dep:rayon"]
+serde = ["hyperreal/serde", "hyperlattice/serde"]
 
 [[example]]
 name = "readme_quickstart"
