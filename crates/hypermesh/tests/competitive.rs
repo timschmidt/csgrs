@@ -174,12 +174,13 @@ fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
         BooleanExpression::Operation(BooleanOp::Union),
         BooleanExpression::Operation(BooleanOp::Intersection),
         BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
         BooleanExpression::Operand(0),
         BooleanExpression::Operand(1),
-        BooleanExpression::Not(3),
-        BooleanExpression::And([4, 5]),
+        BooleanExpression::Not(4),
+        BooleanExpression::And([5, 6]),
     ];
-    let roots = [0_u32, 1, 2, 6];
+    let roots = [0_u32, 1, 2, 7, 3];
     for case in lower_dimensional_contact_corpus() {
         let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
         let right_volume = summarize(&case.right).volume;
@@ -188,6 +189,7 @@ fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
             case.expected_volumes[1],
             case.expected_volumes[2],
             right_volume - case.expected_volumes[1],
+            case.expected_volumes[0] - case.expected_volumes[1],
         ];
         for (policy, context) in predicate_contexts() {
             let outcome = boolean(
