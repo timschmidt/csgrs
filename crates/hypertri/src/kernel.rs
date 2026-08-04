@@ -142,16 +142,8 @@ impl ExactKernel {
         // application topology from arithmetic policy. The predicate
         // implementation keeps robust-orientation logic and exact
         // rational/common-scale schedules near their use.
-        self.decide(
-            hyperlimit::orient2(
-                &predicate_point(a),
-                &predicate_point(b),
-                &predicate_point(c),
-                self.policy,
-            ),
-            "orient2",
-        )
-        .map(map_hyperlimit_sign)
+        self.decide(hyperlimit::orient2(a, b, c, self.policy), "orient2")
+            .map(map_hyperlimit_sign)
     }
 
     #[cfg(feature = "cdt")]
@@ -160,17 +152,8 @@ impl ExactKernel {
         // `hyperlimit` so exact lifted-determinant certificates remain
         // centralized. Hypertri consumes only the certified empty-circle
         // result.
-        self.decide(
-            hyperlimit::incircle2(
-                &predicate_point(a),
-                &predicate_point(b),
-                &predicate_point(c),
-                &predicate_point(d),
-                self.policy,
-            ),
-            "incircle2",
-        )
-        .map(map_hyperlimit_sign)
+        self.decide(hyperlimit::incircle2(a, b, c, d, self.policy), "incircle2")
+            .map(map_hyperlimit_sign)
     }
 
     #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -235,11 +218,6 @@ fn map_real_sign(sign: RealSign) -> Sign {
         RealSign::Zero => Sign::Zero,
         RealSign::Positive => Sign::Positive,
     }
-}
-
-#[cfg(any(feature = "earcut", feature = "cdt"))]
-fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]

@@ -335,6 +335,7 @@ name = "hyperlattice"
 version = "0.6.1"
 dependencies = [
  "hyperreal",
+ "serde",
 ]
 
 [[package]]

@@ -45,7 +45,7 @@ float to its exact represented value before topology is decided.
 
 | Type | Purpose |
 | --- | --- |
-| `Point2`, `ExactPoint` | Exact 2D point used by native triangulators. |
+| `Point2`, `ExactPoint` | Shared Hyperlimit/Hyperlattice exact 2D point used by native triangulators. |
 | `PolygonInput` | Owned flat polygon buffer with earcut-compatible hole starts and retained facts. |
 | `PolygonInputFacts`, `RingInputFacts` | Policy-independent structural and exact-scalar input facts. |
 | `Constraint` | One caller-indexed segment in a planar straight-line graph. |

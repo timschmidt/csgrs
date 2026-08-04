@@ -18,7 +18,7 @@ cdt = []
 nd = []
 runtime-select = []
 f64-interop = []
-serde = ["dep:serde", "hyperreal/serde"]
+serde = ["dep:serde", "hyperreal/serde", "hyperlimit/serde"]
 dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
 
 [dependencies]

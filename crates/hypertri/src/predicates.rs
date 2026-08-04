@@ -43,12 +43,7 @@ pub(crate) fn point_on_segment(
     // through hyperlimit's segment classifier so the exact interval and
     // degenerate-segment rules have a single owner.
     kernel.decide(
-        hyperlimit::point_on_segment(
-            &predicate_point(a),
-            &predicate_point(b),
-            &predicate_point(point),
-            kernel.policy(),
-        ),
+        hyperlimit::point_on_segment(a, b, point, kernel.policy()),
         "point_on_segment",
     )
 }
@@ -73,11 +68,7 @@ pub(crate) fn points_equal(kernel: &ExactKernel, left: &Point2, right: &Point2) 
     }
 
     kernel.decide(
-        hyperlimit::point2_equal(
-            &predicate_point(left),
-            &predicate_point(right),
-            kernel.policy(),
-        ),
+        hyperlimit::point2_equal(left, right, kernel.policy()),
         "point2_equal",
     )
 }
@@ -91,14 +82,8 @@ pub(crate) fn point_in_ring_even_odd(
 ) -> Result<bool> {
     // Hyperlimit owns the exact crossing-number and boundary predicates;
     // hypertri supplies only index topology.
-    let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
     kernel.decide(
-        hyperlimit::point_in_indexed_ring_even_odd(
-            &predicate_vertices,
-            ring,
-            &predicate_point(point),
-            kernel.policy(),
-        ),
+        hyperlimit::point_in_indexed_ring_even_odd(vertices, ring, point, kernel.policy()),
         "point_in_indexed_ring_even_odd",
     )
 }
@@ -115,18 +100,8 @@ pub(crate) fn segment_intersection(
     // recovery and ear visibility. Keep the four-orientation classifier in
     // hyperlimit, where determinant and interval decisions are implemented.
     // Hypertri consumes only the decided combinatorial relation.
-    let outcome = hyperlimit::classify_segment_intersection(
-        &predicate_point(a),
-        &predicate_point(b),
-        &predicate_point(c),
-        &predicate_point(d),
-        kernel.policy(),
-    );
+    let outcome = hyperlimit::classify_segment_intersection(a, b, c, d, kernel.policy());
     kernel.decide(outcome, "segment_intersection")
-}
-
-fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
 #[cfg(test)]

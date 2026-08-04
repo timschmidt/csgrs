@@ -260,15 +260,7 @@ fn compare_points(
     // predicate. Keep it in hyperlimit so hypertri only chooses how ordered
     // rings are consumed.
     kernel.decide(
-        hyperlimit::compare_point2_lexicographic(
-            &predicate_point(&points[left]),
-            &predicate_point(&points[right]),
-            kernel.policy(),
-        ),
+        hyperlimit::compare_point2_lexicographic(&points[left], &points[right], kernel.policy()),
         "compare_point2_lexicographic",
     )
-}
-
-fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }

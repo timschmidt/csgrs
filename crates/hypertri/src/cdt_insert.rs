@@ -202,12 +202,7 @@ fn segment_intersection_point(
     let c = &points[second.from];
     let d = &points[second.to];
 
-    match hyperlimit::construct_line_intersection_point(
-        &predicate_point(a),
-        &predicate_point(b),
-        &predicate_point(c),
-        &predicate_point(d),
-    ) {
+    match hyperlimit::construct_line_intersection_point(a, b, c, d) {
         Some(point) => Ok(Point2::new(point.x, point.y)),
         None => Err(Error::InvalidInput {
             reason: "properly crossing constraint lines have no constructible intersection",
@@ -236,10 +231,6 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
         || first.from == second.to
         || first.to == second.from
         || first.to == second.to
-}
-
-fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
 fn sort_indices_on_segment(

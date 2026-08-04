@@ -4,24 +4,9 @@ use hyperreal::{RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// Shared Hyperlimit/Hyperlattice 2D point with exact [`Real`] coordinates.
+pub use hyperlimit::Point2;
 pub use hyperreal::{Rational, Real};
-
-/// 2D point with exact Real coordinates.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Clone, Debug, PartialEq)]
-pub struct Point2 {
-    /// X coordinate.
-    pub x: Real,
-    /// Y coordinate.
-    pub y: Real,
-}
-
-impl Point2 {
-    /// Construct a 2D point from coordinates.
-    pub const fn new(x: Real, y: Real) -> Self {
-        Self { x, y }
-    }
-}
 
 /// Exact 2D point used by the default triangulation APIs.
 pub type ExactPoint = Point2;

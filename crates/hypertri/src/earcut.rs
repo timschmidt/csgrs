@@ -706,9 +706,9 @@ fn compare_distance_then_xy(
 ) -> Result<Ordering> {
     match kernel.decide(
         hyperlimit::compare_point2_distance_squared(
-            &predicate_point(&vertices[from]),
-            &predicate_point(&vertices[ring[left_pos]]),
-            &predicate_point(&vertices[ring[right_pos]]),
+            &vertices[from],
+            &vertices[ring[left_pos]],
+            &vertices[ring[right_pos]],
             kernel.policy(),
         ),
         "compare_point2_distance_squared",
@@ -736,8 +736,8 @@ fn compare_point_indices(
 ) -> Result<Ordering> {
     kernel.decide(
         hyperlimit::compare_point2_lexicographic(
-            &predicate_point(&vertices[left]),
-            &predicate_point(&vertices[right]),
+            &vertices[left],
+            &vertices[right],
             kernel.policy(),
         ),
         "compare_point2_lexicographic",
@@ -1309,22 +1309,15 @@ fn point_in_triangle_bbox(
     // orientation-based containment predicate. The box is evaluated with the
     // crate's exact kernel rather than primitive floats.
     kernel.decide(
-        hyperlimit::point_in_triangle2_aabb(
-            &predicate_point(a),
-            &predicate_point(b),
-            &predicate_point(c),
-            &predicate_point(point),
-            kernel.policy(),
-        ),
+        hyperlimit::point_in_triangle2_aabb(a, b, c, point, kernel.policy()),
         "point_in_triangle2_aabb",
     )
 }
 
 fn ring_area_sign(kernel: &ExactKernel, vertices: &[Point2], ring: &[usize]) -> Result<Sign> {
-    let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
     kernel
         .decide(
-            hyperlimit::indexed_ring_area_sign(&predicate_vertices, ring, kernel.policy()),
+            hyperlimit::indexed_ring_area_sign(vertices, ring, kernel.policy()),
             "indexed_ring_area_sign",
         )
         .map(map_hyperlimit_sign)
@@ -1348,10 +1341,6 @@ fn same_point(
     right: usize,
 ) -> Result<bool> {
     points_equal(kernel, &vertices[left], &vertices[right])
-}
-
-fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
 fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
