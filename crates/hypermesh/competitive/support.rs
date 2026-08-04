@@ -7,6 +7,7 @@ use hypermesh::{
     BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, Point3,
     PredicatePolicy, Real, Triangle, TriangleMesh, boolean, certify_convex_mesh,
 };
+use hyperreal::Rational;
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
     types::{Error as ManifoldError, MeshGL64},
@@ -21,6 +22,8 @@ pub const STRICT_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const DENSE_COPLANAR_DIVISIONS: [usize; 3] = [4, 16, 32];
+pub const WIDE_RATIONAL_DIVISIONS: usize = 16;
+pub const WIDE_RATIONAL_SHIFTS: [u32; 3] = [64, 512, 2048];
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
@@ -81,6 +84,30 @@ pub struct MeshPair {
     pub name: &'static str,
     pub left: RawMesh,
     pub right: RawMesh,
+}
+
+#[derive(Clone, Debug)]
+pub struct ExactMeshPair {
+    pub name: &'static str,
+    pub left: TriangleMesh,
+    pub right: TriangleMesh,
+}
+
+pub fn exact_mesh_pair(case: Case) -> ExactMeshPair {
+    ExactMeshPair {
+        name: case.name,
+        left: to_hypermesh(&case.left),
+        right: to_hypermesh(&case.right),
+    }
+}
+
+pub fn wide_rational_shift(name: &str) -> Option<u32> {
+    match name {
+        "wide_rational_boxes_64" => Some(64),
+        "wide_rational_boxes_512" => Some(512),
+        "wide_rational_boxes_2048" => Some(2048),
+        _ => None,
+    }
 }
 
 impl Case {
@@ -393,6 +420,49 @@ pub fn large_boolean_case() -> Case {
     assert_eq!(case.left.triangles.len(), LARGE_TRIANGLES_PER_MESH);
     assert_eq!(case.right.triangles.len(), LARGE_TRIANGLES_PER_MESH);
     case
+}
+
+pub fn wide_rational_scale(shift: u32) -> Real {
+    let denominator = Rational::new(2)
+        .powi(i64::from(shift).into())
+        .expect("wide-rational fixture shift fits Hyperreal's eager exact budget");
+    Real::new((&denominator + Rational::one()) / &denominator)
+}
+
+/// Applies one positive exact-rational similarity to an overlapping-box
+/// surface grid. The scale `(2^shift + 1) / 2^shift` keeps geometry and its
+/// binary64 approximation bounded while growing exact numerator and
+/// denominator width through fixed-word and arbitrary-width schedules.
+pub fn wide_rational_overlapping_box_case(divisions: usize, shift: u32) -> ExactMeshPair {
+    assert!(divisions > 0 && divisions.is_power_of_two());
+    let scale = wide_rational_scale(shift);
+    let scale_mesh = |mesh: &RawMesh| {
+        let exact = to_hypermesh(mesh);
+        TriangleMesh::new(
+            exact
+                .positions
+                .iter()
+                .map(|point| Point3::new(&point.x * &scale, &point.y * &scale, &point.z * &scale))
+                .collect(),
+            exact.triangles.to_vec(),
+        )
+    };
+    let mut case = corpus()
+        .into_iter()
+        .next()
+        .expect("competitive corpus contains the overlapping-box case");
+    case.left = subdivide(&case.left, divisions);
+    case.right = subdivide(&case.right, divisions);
+    ExactMeshPair {
+        name: match (divisions, shift) {
+            (WIDE_RATIONAL_DIVISIONS, 64) => "wide_rational_boxes_64",
+            (WIDE_RATIONAL_DIVISIONS, 512) => "wide_rational_boxes_512",
+            (WIDE_RATIONAL_DIVISIONS, 2048) => "wide_rational_boxes_2048",
+            _ => "wide_rational_boxes",
+        },
+        left: scale_mesh(&case.left),
+        right: scale_mesh(&case.right),
+    }
 }
 
 pub fn yeahright_boolean_case() -> MeshPair {

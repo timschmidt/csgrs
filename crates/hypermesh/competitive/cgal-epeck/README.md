@@ -42,6 +42,12 @@ The same exporter accepts `dense_coplanar_boxes_4`,
 `dense_coplanar_boxes_16`, and `dense_coplanar_boxes_32`, whose opposite face
 diagonals provide the fixed-coordinate-complexity coplanar scaling family.
 
+It also accepts `wide_rational_boxes_64`, `wide_rational_boxes_512`, and
+`wide_rational_boxes_2048`. Those inputs preserve one fixed topology while
+growing the exact similarity numerator and denominator through 65, 513, and
+2,049 bits; the exporter retains the exact rational rather than its binary64
+approximation of one.
+
 The exporter writes reduced `numerator/denominator` tokens from
 `Real::exact_rational`; it does not round through a display approximation.
 

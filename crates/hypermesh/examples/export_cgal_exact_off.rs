@@ -5,14 +5,16 @@ mod competitive_support;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use competitive_support::{RawMesh, clipped_voxel_torus_case, corpus, dense_coplanar_box_case};
-use hypermesh::Real;
+use competitive_support::{
+    WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus, dense_coplanar_box_case,
+    exact_mesh_pair, large_boolean_case, wide_rational_overlapping_box_case, wide_rational_shift,
+};
+use hypermesh::{Real, TriangleMesh};
 
-fn exact_scalar(value: f64, output: &mut String) {
-    let rational = Real::try_from(value)
-        .expect("fixture coordinate is finite")
+fn write_exact_scalar(value: &Real, output: &mut String) {
+    let rational = value
         .exact_rational()
-        .expect("a finite binary64 fixture coordinate is an exact rational");
+        .expect("the exact CGAL fixture coordinate must be rational");
     if rational.is_negative() {
         output.push('-');
     }
@@ -25,7 +27,7 @@ fn exact_scalar(value: f64, output: &mut String) {
     .unwrap();
 }
 
-fn write_exact_off(path: &Path, mesh: &RawMesh) {
+fn write_exact_triangle_mesh(path: &Path, mesh: &TriangleMesh) {
     let mut output = String::new();
     writeln!(
         output,
@@ -34,17 +36,17 @@ fn write_exact_off(path: &Path, mesh: &RawMesh) {
         mesh.triangles.len()
     )
     .unwrap();
-    for point in &mesh.positions {
-        for (axis, &coordinate) in point.iter().enumerate() {
+    for point in mesh.positions.iter() {
+        for (axis, coordinate) in [&point.x, &point.y, &point.z].into_iter().enumerate() {
             if axis != 0 {
                 output.push(' ');
             }
-            exact_scalar(coordinate, &mut output);
+            write_exact_scalar(coordinate, &mut output);
         }
         output.push('\n');
     }
-    for triangle in &mesh.triangles {
-        writeln!(output, "3 {} {} {}", triangle[0], triangle[1], triangle[2]).unwrap();
+    for triangle in mesh.triangles.iter() {
+        writeln!(output, "3 {} {} {}", triangle.v0, triangle.v1, triangle.v2).unwrap();
     }
     std::fs::write(path, output)
         .unwrap_or_else(|error| panic!("failed to write {}: {error}", path.display()));
@@ -63,22 +65,27 @@ fn main() {
         args.next().is_none(),
         "expected exactly one fixture and one output directory"
     );
-    let case = match fixture.as_str() {
-        "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
-        "clipped_voxel_torus_65" => clipped_voxel_torus_case(65),
-        "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
-        "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
-        "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
-        _ => corpus()
-            .into_iter()
-            .find(|case| case.name == fixture)
-            .unwrap_or_else(|| panic!("unknown competitive fixture {fixture}")),
-    };
     std::fs::create_dir_all(&output_directory)
         .unwrap_or_else(|error| panic!("failed to create {}: {error}", output_directory.display()));
+    let case = if let Some(shift) = wide_rational_shift(&fixture) {
+        wide_rational_overlapping_box_case(WIDE_RATIONAL_DIVISIONS, shift)
+    } else {
+        exact_mesh_pair(match fixture.as_str() {
+            "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
+            "clipped_voxel_torus_65" => clipped_voxel_torus_case(65),
+            "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
+            "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
+            "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
+            "subdivided_overlapping_boxes_3072_each" => large_boolean_case(),
+            _ => corpus()
+                .into_iter()
+                .find(|case| case.name == fixture)
+                .unwrap_or_else(|| panic!("unknown competitive fixture {fixture}")),
+        })
+    };
     let left = output_directory.join(format!("{}-left.off", case.name));
     let right = output_directory.join(format!("{}-right.off", case.name));
-    write_exact_off(&left, &case.left);
-    write_exact_off(&right, &case.right);
+    write_exact_triangle_mesh(&left, &case.left);
+    write_exact_triangle_mesh(&right, &case.right);
     println!("{}\n{}", left.display(), right.display());
 }

@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 32, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 35, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -175,6 +175,9 @@ fn corpus_spans_initial_replacement_path_classes() {
         "cross-operand-coplanar-overlay",
         "opposite-face-diagonals",
         "fixed-coordinate-complexity",
+        "exact-similarity",
+        "fixed-topology-scalar-scaling",
+        "wide-rational",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -260,6 +263,9 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
             "dense-coplanar-32",
             "voxel-torus-33",
             "voxel-torus-65",
+            "wide-rational-64",
+            "wide-rational-512",
+            "wide-rational-2048",
             "yeahright",
             "yeahright-4",
             "yeahright-8",
@@ -268,6 +274,71 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         .into_iter()
         .collect()
     );
+}
+
+#[test]
+fn wide_rational_family_scales_scalar_width_without_changing_topology() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str) == Some("wide_rational_boxes")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), support::WIDE_RATIONAL_SHIFTS.len() + 1);
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        [0, 64, 512, 2048]
+    );
+
+    let mut topology = None;
+    for shift in support::WIDE_RATIONAL_SHIFTS {
+        let scale = support::wide_rational_scale(shift)
+            .exact_rational()
+            .expect("fixture similarity is exact rational");
+        assert_eq!(scale.numerator().bits(), u64::from(shift) + 1);
+        assert_eq!(scale.denominator().bits(), u64::from(shift) + 1);
+        assert_eq!(
+            support::wide_rational_scale(shift).to_f64_lossy(),
+            Some(1.0),
+        );
+
+        let case =
+            support::wide_rational_overlapping_box_case(support::WIDE_RATIONAL_DIVISIONS, shift);
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            6_144
+        );
+        let current = [case.left.triangles.to_vec(), case.right.triangles.to_vec()];
+        if let Some(topology) = &topology {
+            assert_eq!(&current, topology);
+        } else {
+            topology = Some(current);
+        }
+        assert!(
+            case.left
+                .positions
+                .iter()
+                .chain(case.right.positions.iter())
+                .flat_map(|point| [&point.x, &point.y, &point.z])
+                .all(|coordinate| coordinate.exact_rational_ref().is_some())
+        );
+
+        let fixture = family
+            .iter()
+            .find(|fixture| fixture["scale_parameter"].as_integer() == Some(i64::from(shift)))
+            .expect("every generated shift is manifested");
+        assert_eq!(
+            fixture["similarity_component_bits"].as_integer(),
+            Some(i64::from(shift) + 1)
+        );
+        assert_eq!(fixture["input_triangles"].as_integer(), Some(6_144));
+    }
 }
 
 #[test]

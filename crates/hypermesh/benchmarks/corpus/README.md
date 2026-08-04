@@ -57,6 +57,15 @@ input coordinate stays on the same denominator-at-most-eight dyadic lattice,
 separating mesh growth from input scalar-storage growth. The large and XL
 siblings have distinct both-policy kernel/process heap selectors.
 
+`wide_rational_boxes_64`, `wide_rational_boxes_512`, and
+`wide_rational_boxes_2048` hold the 6,144-triangle overlapping-box topology
+fixed while applying the positive exact similarity
+`(2^shift + 1) / 2^shift`. Their scale numerators and denominators occupy 65,
+513, and 2,049 bits even though every binary64 approximation is one. This
+separates arbitrary-rational scalar width from mesh/event growth, crosses the
+512-bit policy precision without consuming an approximate terminal, and gives
+each point a distinct both-policy kernel/process heap selector.
+
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
 first primes the native policy-qualified closed-PWN fact, while the second uses

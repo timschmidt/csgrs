@@ -6,8 +6,10 @@ use std::collections::BTreeMap;
 
 use hypermesh::{
     BooleanExpression, BooleanMeshResult, BooleanOp, BooleanProgram, MeshContext, Plane,
-    PredicatePolicy, boolean, boolean_mesh_closure_evidence, certify_convex_mesh, polygon_soup,
+    PredicatePolicy, Real, boolean, boolean_mesh_closure_evidence, certify_convex_mesh,
+    polygon_soup,
 };
+use hyperreal::Rational;
 use support::{
     APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
     YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
@@ -51,6 +53,21 @@ fn boundary_is_balanced(result: &BooleanMeshResult) -> bool {
         }
     }
     edges.values().all(|uses| uses[0] == uses[1])
+}
+
+fn exact_six_volume(batch: &hypermesh::BooleanMeshBatch, output: usize) -> Rational {
+    let mut total = Real::zero();
+    for triangle in &batch.results[output].triangles {
+        let [a, b, c] = triangle.map(|vertex| &batch.vertices[vertex as usize]);
+        let cross_x = &b.y * &c.z - &b.z * &c.y;
+        let cross_y = &b.z * &c.x - &b.x * &c.z;
+        let cross_z = &b.x * &c.y - &b.y * &c.x;
+        total += &a.x * cross_x + &a.y * cross_y + &a.z * cross_z;
+    }
+    total
+        .abs()
+        .exact_rational()
+        .expect("exact-rational mesh has an exact-rational volume")
 }
 
 #[test]
@@ -229,6 +246,88 @@ fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
                 expected_volume,
                 &format!("{policy} output {output_index} volume"),
             );
+        }
+    }
+}
+
+#[test]
+fn wide_rational_similarity_preserves_every_boolean_under_both_policies() {
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(4),
+        BooleanExpression::And([5, 6]),
+    ];
+    let roots = [0_u32, 1, 2, 7, 3];
+    let normalized_six_volumes = [504, 72, 312, 120, 432];
+    let mut reference = None;
+
+    for shift in support::WIDE_RATIONAL_SHIFTS {
+        let case = support::wide_rational_overlapping_box_case(2, shift);
+        let inputs = [case.left, case.right];
+        let scale = support::wide_rational_scale(shift)
+            .exact_rational()
+            .expect("fixture scale is exact rational");
+        let scale_cubed = (&scale * &scale) * &scale;
+        let mut strict = None;
+
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            )
+            .unwrap_or_else(|error| panic!("wide-rational shift {shift} {policy}: {error}"));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            if let Some(strict) = &strict {
+                assert_eq!(outcome.value, *strict, "shift {shift} policy output");
+            } else {
+                strict = Some(outcome.value.clone());
+            }
+
+            for (output, normalized_six_volume) in normalized_six_volumes.into_iter().enumerate() {
+                assert!(boundary_is_balanced(&outcome.value.results[output]));
+                assert_eq!(
+                    exact_six_volume(&outcome.value, output),
+                    Rational::new(normalized_six_volume) * &scale_cubed,
+                    "shift {shift} {policy} output {output} volume",
+                );
+            }
+
+            if policy == "STRICT" {
+                let normalized_vertices = outcome
+                    .value
+                    .vertices
+                    .iter()
+                    .map(|point| {
+                        [&point.x, &point.y, &point.z].map(|coordinate| {
+                            coordinate
+                                .exact_rational()
+                                .expect("wide-rational output coordinate")
+                                / &scale
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let topology = outcome
+                    .value
+                    .results
+                    .iter()
+                    .map(|result| result.triangles.clone())
+                    .collect::<Vec<_>>();
+                if let Some((reference_vertices, reference_topology)) = &reference {
+                    assert_eq!(&normalized_vertices, reference_vertices);
+                    assert_eq!(&topology, reference_topology);
+                } else {
+                    reference = Some((normalized_vertices, topology));
+                }
+            }
         }
     }
 }

@@ -253,6 +253,82 @@ cgal_eligible = true
 expected_certainty = "Certified"
 input_triangles = 6144
 heap_probe_modes = ["boxes-3072", "boxes-3072-general"]
+scaling_family = "wide_rational_boxes"
+scale_parameter = 0
+similarity = "1"
+similarity_component_bits = 1
+
+[[fixture]]
+id = "wide_rational_boxes_64"
+status = "permanent"
+provenance = "Hypermesh deterministic fixed-topology rational-width corpus"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 64)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 64
+similarity = "(2^64 + 1) / 2^64"
+similarity_component_bits = 65
+heap_probe_modes = ["wide-rational-64"]
+
+[[fixture]]
+id = "wide_rational_boxes_512"
+status = "permanent"
+provenance = "Deterministic 513-bit sibling of wide_rational_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 512)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 512
+similarity = "(2^512 + 1) / 2^512"
+similarity_component_bits = 513
+heap_probe_modes = ["wide-rational-512"]
+
+[[fixture]]
+id = "wide_rational_boxes_2048"
+status = "permanent"
+provenance = "Deterministic 2049-bit sibling of wide_rational_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::wide_rational_overlapping_box_case(16, 2048)"
+coordinate_class = "wide-arbitrary-rational"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-similarity", "fixed-topology-scalar-scaling", "wide-rational"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "wide_rational_boxes"
+scale_parameter = 2048
+similarity = "(2^2048 + 1) / 2^2048"
+similarity_component_bits = 2049
+heap_probe_modes = ["wide-rational-2048"]
 
 [[fixture]]
 id = "dense_coplanar_boxes_4"

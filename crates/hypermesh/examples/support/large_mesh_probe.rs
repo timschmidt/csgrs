@@ -1,12 +1,13 @@
 use crate::competitive_support::{
-    MeshPair, RawMesh, box_mesh, clipped_voxel_torus_case, dense_coplanar_box_case,
-    large_boolean_case, parse_triangle_obj, to_hypermesh, yeahright_boolean_case,
+    MeshPair, RawMesh, WIDE_RATIONAL_DIVISIONS, box_mesh, clipped_voxel_torus_case,
+    dense_coplanar_box_case, large_boolean_case, parse_triangle_obj, to_hypermesh,
+    wide_rational_overlapping_box_case, yeahright_boolean_case,
     yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
 };
 use crate::mesh_common;
 use hypermesh::{BooleanOp, MeshContext, TriangleMesh, TriangleMeshRef, polygon_soup};
 
-pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|dense-coplanar-16|dense-coplanar-32|voxel-torus-33|voxel-torus-65|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
+pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|dense-coplanar-16|dense-coplanar-32|wide-rational-64|wide-rational-512|wide-rational-2048|voxel-torus-33|voxel-torus-65|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
 
 #[derive(Clone, Copy)]
 pub(crate) enum InputPath {
@@ -22,6 +23,21 @@ pub(crate) struct PreparedLargeFixture {
 }
 
 pub(crate) fn prepare_large_fixture(selector: &str) -> PreparedLargeFixture {
+    let wide_rational_shift = match selector {
+        "wide-rational-64" => Some(64),
+        "wide-rational-512" => Some(512),
+        "wide-rational-2048" => Some(2048),
+        _ => None,
+    };
+    if let Some(shift) = wide_rational_shift {
+        let case = wide_rational_overlapping_box_case(WIDE_RATIONAL_DIVISIONS, shift);
+        return PreparedLargeFixture {
+            name: case.name,
+            meshes: [case.left, case.right],
+            input_path: InputPath::Native { prime_pwn: true },
+            operation: BooleanOp::Union,
+        };
+    }
     let (name, left, right, exact_subdivision_levels, input_path, operation) = match selector {
         "boxes-3072" => {
             let case = large_boolean_case();

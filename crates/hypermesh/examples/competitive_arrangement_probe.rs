@@ -5,7 +5,9 @@ mod competitive_support;
 use std::{env, hint::black_box, time::Instant};
 
 use competitive_support::{
-    clipped_voxel_torus_case, corpus, dense_coplanar_box_case, run_hypermesh_all, to_hypermesh,
+    WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus, dense_coplanar_box_case,
+    exact_mesh_pair, large_boolean_case, run_hypermesh_all, wide_rational_overlapping_box_case,
+    wide_rational_shift,
 };
 use hypermesh::{
     BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, TriangleMesh,
@@ -67,18 +69,24 @@ fn main() {
         ),
     };
 
-    let case = match fixture.as_str() {
-        "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
-        "clipped_voxel_torus_65" => clipped_voxel_torus_case(65),
-        "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
-        "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
-        "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
-        _ => corpus()
-            .into_iter()
-            .find(|case| case.name == fixture)
-            .unwrap_or_else(|| panic!("unknown competitive fixture {fixture}")),
+    let case = if let Some(shift) = wide_rational_shift(&fixture) {
+        wide_rational_overlapping_box_case(WIDE_RATIONAL_DIVISIONS, shift)
+    } else {
+        exact_mesh_pair(match fixture.as_str() {
+            "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
+            "clipped_voxel_torus_65" => clipped_voxel_torus_case(65),
+            "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
+            "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
+            "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
+            "subdivided_overlapping_boxes_3072_each" => large_boolean_case(),
+            _ => corpus()
+                .into_iter()
+                .find(|case| case.name == fixture)
+                .unwrap_or_else(|| panic!("unknown competitive fixture {fixture}")),
+        })
     };
-    let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+    let name = case.name;
+    let inputs = [case.left, case.right];
     let context = MeshContext::new(policy);
     polygon_soup(&context, &[inputs[0].as_ref(), inputs[1].as_ref()])
         .expect("overlapping-box inputs satisfy the PWN contract");
@@ -97,7 +105,7 @@ fn main() {
         .collect::<Vec<_>>();
     println!(
         "fixture={} operation={operation_name} policy={policy_name} repetitions={repetitions} elapsed_ns={} ns_per_iteration={} vertices={} triangles={triangles:?}",
-        case.name,
+        name,
         elapsed.as_nanos(),
         elapsed.as_nanos() / repetitions as u128,
         output.vertices.len(),
