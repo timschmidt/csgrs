@@ -339,7 +339,7 @@ fn recover_constraint(
             return Ok(());
         }
 
-        let crossing_edge = match first_flippable_edge_crossing_constraint(
+        let (crossing_edge, adjacent) = match first_flippable_edge_crossing_constraint(
             kernel,
             points,
             triangles,
@@ -363,17 +363,7 @@ fn recover_constraint(
             Err(error) => return Err(error),
         };
 
-        if !flip_edge(kernel, points, triangles, crossing_edge)? {
-            recover_constraint_cavity(
-                kernel,
-                points,
-                triangles,
-                constraint,
-                constrained_edges,
-                approximate_points,
-            )?;
-            return Ok(());
-        }
+        replace_adjacent_edge(kernel, points, triangles, crossing_edge, adjacent)?;
         push_unique_edge(&mut flipped_edges, crossing_edge);
     }
 }
@@ -387,7 +377,8 @@ fn recover_constraint_cavity(
     approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     let mut cavity = vec![false; triangles.len()];
-    for edge in unique_edges(triangles) {
+    for topology in TopologyEdges::new(triangles)? {
+        let (edge, owners) = topology?;
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
             continue;
         }
@@ -400,11 +391,12 @@ fn recover_constraint_cavity(
                 reason: "constraint crosses an existing constrained edge",
             });
         }
-        let Some(adjacent) = two_adjacent_triangles(triangles, edge)? else {
+        let Some(owners) = owners else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint cavity crosses a boundary edge",
             });
         };
+        let adjacent = adjacent_triangles(triangles, edge, owners)?;
         cavity[adjacent[0].triangle] = true;
         cavity[adjacent[1].triangle] = true;
     }
@@ -650,8 +642,9 @@ fn first_flippable_edge_crossing_constraint(
     constrained_edges: &[EdgeKey],
     approximate_points: Option<&[[f64; 2]]>,
     flipped_edges: &[EdgeKey],
-) -> Result<Option<EdgeKey>> {
-    for edge in unique_edges(triangles) {
+) -> Result<Option<(EdgeKey, [AdjacentTriangle; 2])>> {
+    for topology in TopologyEdges::new(triangles)? {
+        let (edge, owners) = topology?;
         if edge.contains(constraint.from)
             || edge.contains(constraint.to)
             || flipped_edges.binary_search(&edge).is_ok()
@@ -680,9 +673,10 @@ fn first_flippable_edge_crossing_constraint(
                     reason: "constraint crosses an existing constrained edge",
                 });
             }
-            let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
+            let Some(owners) = owners else {
                 continue;
             };
+            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
             let new_edge = EdgeKey::new(first.opposite, second.opposite);
             if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
                 || edge_properly_crosses_constraint(
@@ -695,7 +689,7 @@ fn first_flippable_edge_crossing_constraint(
             {
                 continue;
             }
-            return Ok(Some(edge));
+            return Ok(Some((edge, [first, second])));
         }
     }
 
@@ -739,22 +733,23 @@ fn legalize_unconstrained_edges(
 ) -> Result<()> {
     loop {
         let mut flipped = false;
-        for edge in unique_edges(triangles) {
+        for topology in TopologyEdges::new(triangles)? {
+            let (edge, owners) = topology?;
             if constrained_edges.binary_search(&edge).is_ok() {
                 continue;
             }
 
-            let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
+            let Some(owners) = owners else {
                 continue;
             };
+            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
 
             if !edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)? {
                 continue;
             }
-            if flip_edge(kernel, points, triangles, edge)? {
-                flipped = true;
-                break;
-            }
+            replace_adjacent_edge(kernel, points, triangles, edge, [first, second])?;
+            flipped = true;
+            break;
         }
 
         if !flipped {
@@ -780,23 +775,24 @@ fn canonicalize_unconstrained_edges(
 ) -> Result<()> {
     loop {
         let mut flipped = false;
-        for edge in unique_edges(triangles) {
+        for topology in TopologyEdges::new(triangles)? {
+            let (edge, owners) = topology?;
             if constrained_edges.binary_search(&edge).is_ok() {
                 continue;
             }
-            let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
+            let Some(owners) = owners else {
                 continue;
             };
+            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
             let replacement = EdgeKey::new(first.opposite, second.opposite);
             if replacement >= edge
                 || !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
             {
                 continue;
             }
-            if flip_edge(kernel, points, triangles, edge)? {
-                flipped = true;
-                break;
-            }
+            replace_adjacent_edge(kernel, points, triangles, edge, [first, second])?;
+            flipped = true;
+            break;
         }
         if !flipped {
             return Ok(());
@@ -838,25 +834,23 @@ fn edge_is_illegal(
     ))
 }
 
-fn flip_edge(
+/// Replaces an edge after the caller has certified this exact adjacency and
+/// the strict convex-quadrilateral predicate against the current triangles.
+/// Keeping the proof beside the selected edge avoids rediscovering topology or
+/// repeating the four exact side predicates immediately before the write.
+fn replace_adjacent_edge(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
     edge: EdgeKey,
-) -> Result<bool> {
-    let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
-        return Ok(false);
-    };
-
-    if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)? {
-        return Ok(false);
-    }
-
+    adjacent: [AdjacentTriangle; 2],
+) -> Result<()> {
+    let [first, second] = adjacent;
     let first_new = make_oriented(kernel, points, [first.opposite, second.opposite, edge.from])?;
     let second_new = make_oriented(kernel, points, [second.opposite, first.opposite, edge.to])?;
     triangles[first.triangle] = first_new;
     triangles[second.triangle] = second_new;
-    Ok(true)
+    Ok(())
 }
 
 fn edge_is_flippable(
@@ -912,36 +906,105 @@ struct AdjacentTriangle {
     opposite: usize,
 }
 
-fn two_adjacent_triangles(
-    triangles: &[Triangle],
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct EdgeUse {
     edge: EdgeKey,
-) -> Result<Option<[AdjacentTriangle; 2]>> {
-    let mut adjacent = Vec::new();
-    for (triangle_index, triangle) in triangles.iter().enumerate() {
-        if triangle_contains_edge(*triangle, edge) {
-            let Some(opposite) = triangle
-                .iter()
-                .copied()
-                .find(|&index| !edge.contains(index))
-            else {
+    triangle: usize,
+}
+
+struct TopologyEdges {
+    uses: Vec<EdgeUse>,
+    next: usize,
+}
+
+impl TopologyEdges {
+    /// Builds one deterministic edge-use stream for the current triangulation.
+    /// Sorted owners make every adjacency lookup local and detect malformed or
+    /// nonmanifold incidence without a per-edge scan of all triangles.
+    fn new(triangles: &[Triangle]) -> Result<Self> {
+        let capacity = triangles.len().checked_mul(3).ok_or(Error::InvalidInput {
+            reason: "triangle topology capacity overflow",
+        })?;
+        let mut uses = Vec::with_capacity(capacity);
+        for (triangle, indices) in triangles.iter().copied().enumerate() {
+            if indices[0] == indices[1] || indices[1] == indices[2] || indices[2] == indices[0] {
                 return Err(Error::InvalidInput {
                     reason: "triangle edge has no opposite vertex",
                 });
-            };
-            adjacent.push(AdjacentTriangle {
-                triangle: triangle_index,
-                opposite,
-            });
+            }
+            uses.extend([
+                EdgeUse {
+                    edge: EdgeKey::new(indices[0], indices[1]),
+                    triangle,
+                },
+                EdgeUse {
+                    edge: EdgeKey::new(indices[1], indices[2]),
+                    triangle,
+                },
+                EdgeUse {
+                    edge: EdgeKey::new(indices[2], indices[0]),
+                    triangle,
+                },
+            ]);
         }
+        uses.sort_unstable();
+        Ok(Self { uses, next: 0 })
     }
+}
 
-    match adjacent.len() {
-        0 | 1 => Ok(None),
-        2 => Ok(Some([adjacent[0], adjacent[1]])),
-        _ => Err(Error::InvalidInput {
-            reason: "triangulation edge has more than two adjacent triangles",
-        }),
+impl Iterator for TopologyEdges {
+    type Item = Result<(EdgeKey, Option<[usize; 2]>)>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let first = *self.uses.get(self.next)?;
+        let mut end = self.next + 1;
+        while self
+            .uses
+            .get(end)
+            .is_some_and(|use_| use_.edge == first.edge)
+        {
+            end += 1;
+        }
+        let count = end - self.next;
+        self.next = end;
+        Some(match count {
+            1 => Ok((first.edge, None)),
+            2 => {
+                let second = self.uses[end - 1];
+                if first.triangle == second.triangle {
+                    Err(Error::InvalidInput {
+                        reason: "triangle contains the same edge more than once",
+                    })
+                } else {
+                    Ok((first.edge, Some([first.triangle, second.triangle])))
+                }
+            }
+            _ => Err(Error::InvalidInput {
+                reason: "triangulation edge has more than two adjacent triangles",
+            }),
+        })
     }
+}
+
+fn adjacent_triangles(
+    triangles: &[Triangle],
+    edge: EdgeKey,
+    owners: [usize; 2],
+) -> Result<[AdjacentTriangle; 2]> {
+    let adjacent = |triangle: usize| -> Result<AdjacentTriangle> {
+        let triangle_vertices = triangles.get(triangle).ok_or(Error::InvalidInput {
+            reason: "triangle topology references an absent triangle",
+        })?;
+        let opposite = triangle_vertices
+            .iter()
+            .copied()
+            .find(|&vertex| !edge.contains(vertex))
+            .ok_or(Error::InvalidInput {
+                reason: "triangle edge has no opposite vertex",
+            })?;
+        Ok(AdjacentTriangle { triangle, opposite })
+    };
+    Ok([adjacent(owners[0])?, adjacent(owners[1])?])
 }
 
 fn make_oriented(
@@ -975,18 +1038,6 @@ fn triangulation_has_edge(triangles: &[Triangle], edge: EdgeKey) -> bool {
 
 fn triangle_contains_edge(triangle: Triangle, edge: EdgeKey) -> bool {
     triangle.contains(&edge.from) && triangle.contains(&edge.to)
-}
-
-fn unique_edges(triangles: &[Triangle]) -> Vec<EdgeKey> {
-    let mut edges = Vec::with_capacity(triangles.len().saturating_mul(3));
-    for triangle in triangles {
-        edges.push(EdgeKey::new(triangle[0], triangle[1]));
-        edges.push(EdgeKey::new(triangle[1], triangle[2]));
-        edges.push(EdgeKey::new(triangle[2], triangle[0]));
-    }
-    edges.sort_unstable();
-    edges.dedup();
-    edges
 }
 
 fn push_unique_edge(edges: &mut Vec<EdgeKey>, edge: EdgeKey) {
@@ -1036,6 +1087,50 @@ mod tests {
 
     fn p(x: i64, y: i64) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn sorted_topology_edges_retain_owners_and_reject_malformed_incidence() {
+        let triangles = [[0, 1, 2], [1, 0, 3]];
+        let edges = TopologyEdges::new(&triangles)
+            .unwrap()
+            .collect::<Result<Vec<_>>>()
+            .unwrap();
+        let (_, owners) = edges
+            .iter()
+            .find(|(edge, _)| *edge == EdgeKey::new(0, 1))
+            .copied()
+            .unwrap();
+        assert_eq!(owners, Some([0, 1]));
+        assert_eq!(
+            adjacent_triangles(&triangles, EdgeKey::new(0, 1), owners.unwrap()).unwrap(),
+            [
+                AdjacentTriangle {
+                    triangle: 0,
+                    opposite: 2,
+                },
+                AdjacentTriangle {
+                    triangle: 1,
+                    opposite: 3,
+                },
+            ]
+        );
+
+        assert!(matches!(
+            TopologyEdges::new(&[[0, 0, 1]]),
+            Err(Error::InvalidInput {
+                reason: "triangle edge has no opposite vertex"
+            })
+        ));
+        let nonmanifold = TopologyEdges::new(&[[0, 1, 2], [1, 0, 3], [0, 1, 4]])
+            .unwrap()
+            .collect::<Result<Vec<_>>>();
+        assert_eq!(
+            nonmanifold,
+            Err(Error::InvalidInput {
+                reason: "triangulation edge has more than two adjacent triangles",
+            })
+        );
     }
 
     #[test]
