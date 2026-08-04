@@ -1,0 +1,224 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "checkpoint": "resource-bounded rational multi-affine trivariate factorization for selected-root winding",
+  "captured_on": "2026-08-03",
+  "source_revision": "4ef20de34569015a2147eeef3b728929a0ab900f",
+  "semantic_revisions": [
+    "97d2187",
+    "4ef20de"
+  ],
+  "comparison_revision": "97d21871dffae00eb82977fea6c455b94031a2e6",
+  "comparison_semantic_revision": "97d2187",
+  "dependency_revisions": {
+    "hyperreal": "c2217bae132b725e29faeb89495b8cd51012e1bc",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "6e4d68c835dbdcb487ef8e43cf57138ed13894b5",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "41631f652233e1337521822abc63bc29a6c0ce55",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "one authoritative rational multi-affine factor package from cubic through the degree-24 balanced resource boundary",
+      "exhaustive exact slice-divisor enumeration through octic and bounded exact proposal passes above octic",
+      "a 64-proposal first-factor fast pass followed by at most 256 root-triple proposals and 24 retained exact slice divisors",
+      "first-Taylor lift proofs and exact two-anchor projective alignment for repeated factors",
+      "exact Hypersolve slice division, normalization, and complete-tensor division as the only acceptance authorities",
+      "a tensor-degree-derived recursive split budget capped at 24",
+      "distinct nonic factors, repeated nonic factors, a balanced degree-24 repeated factor, unfactored nonic rejection, and selected-root policy coverage",
+      "matched allocation, linked-size, fixed-work historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general multivariate factorization outside the rational multi-affine specialization",
+      "a completeness claim after the bounded proposal budget is exhausted",
+      "single-axis degrees above 24 even when an unbalanced tensor happens to fit the raw control-count ceiling",
+      "coefficient towers without exact rational specialized roots",
+      "primitive-element compositum construction or unbounded divisor enumeration",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "soundness": "Exact rational specializations and maximal-minor reconstruction only propose bilinear slice factors. Exact slice division and exact division of the complete trivariate tensor are required before any factor is accepted; truncating a search can only return no claim.",
+    "resource_ceiling": "The existing tensor ceiling is 16384 controls. A balanced degree-24 product occupies 25^3 = 15625 controls, while degree 25 would require 26^3 = 17576. The exact-factor recursion ceiling is therefore 24 even for unbalanced tensors whose raw storage alone would allow a larger single-axis degree.",
+    "exhaustive_envelope": "Axis coefficient counts four through nine, corresponding to cubic through octic degree, retain the authoritative first-factor fast pass followed by exhaustive first-Taylor and repeated-factor alignment passes.",
+    "bounded_envelope": "Axis coefficient counts ten through twenty-five use a 64-proposal single-factor fast pass, then first-Taylor and repeated-factor alignment passes retaining at most 24 proved slice factors from at most 256 inspected root triples per slice call.",
+    "proposal_budget": "The 256-proposal ceiling is the smallest measured power-of-two ceiling that retains the authored dense distinct and repeated nonic fixtures. A 128-proposal ceiling correctly made no claim but lost both fixtures.",
+    "recursive_budget": "The useful budget is min(sum of the three tensor axis degrees, 24). Exact factor division reduces the tensor before recursion; existing symbolic sign authorities run before a zero remaining budget returns no claim.",
+    "policy": "The formerly terminal nonic selected-root identity is now Certified Zero under both STRICT and APPROXIMATE_512, without consuming the approximate terminal. Unsupported factors and exhausted budgets continue to the same shared policy terminal; no tolerance or approximate geometry is introduced.",
+    "failure": "Missing exact roots, exhausted root-triple proposals, failed slice or complete-tensor division, degenerate lift relations, resource overflow, unsupported coefficient towers, or exhaustion of the recursive split budget returns no exact claim. APPROXIMATE_512 remains the sole permitted 512-bit terminal path."
+  },
+  "capability": {
+    "comparison_revision": "The sparse genuinely nonic all-axis selected-root fixture was outside the octic authority. STRICT returned Predicate uncertainty and APPROXIMATE_512 returned Zero only after recording Approximate512Consumed.",
+    "source_revision": "The same nonic tensor is split into exactly proved rational multi-affine factors under a degree-derived recursive budget and returns Certified Zero under both policies.",
+    "distinct_factor_coverage": "Nine distinct dense rational multi-affine factors recover on every axis through the bounded first-Taylor pass.",
+    "multiplicity_coverage": "A dense F^3*G^2*H^2*J^2 nonic product recovers on every axis through bounded first-Taylor or exact two-anchor alignment.",
+    "balanced_boundary_coverage": "The repeated factor (1+x+y+z+xyz)^24 occupies a 25 by 25 by 25 tensor and retains an exact factor at the largest balanced degree admitted by the storage ceiling.",
+    "negative_coverage": "An unfactored nonic tensor is rejected on every axis; proposal truncation produces no false factor.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "matched-dependency all-feature release unit-test executables pinned to CPU 11; exact fully qualified filters; seven perf-stat repetitions for the certified source and three for the former terminal; median retired instructions and branches are primary",
+    "matched_dependency_control": "97d2187 and 4ef20de use the listed live dependency revisions. The fixture polynomial, explicit structural preflight, and two policy evaluations are identical; only the expected policy result and authority implementation differ.",
+    "nonic_coupled_rational_zero": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 1,
+      "median_task_clock_ms": 119.52,
+      "median_cycles": 482469934,
+      "median_instructions": 1145563543,
+      "median_branches": 222941572,
+      "median_branch_misses": 2167996,
+      "comparison_terminal_task_clock_ms": 6184.54,
+      "comparison_terminal_cycles": 26186223690,
+      "comparison_terminal_instructions": 87363576931,
+      "comparison_terminal_branches": 12286804535,
+      "comparison_terminal_branch_misses": 104765312,
+      "task_clock_change_percent": -98.067439,
+      "cycle_change_percent": -98.157543,
+      "instruction_change_percent": -98.688740,
+      "branch_change_percent": -98.185520,
+      "branch_miss_change_percent": -97.930617,
+      "task_clock_speedup": 51.744813,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "fixed_work_historical_controls": {
+      "method": "matched 97d2187 and 4ef20de comparative-benchmark executables with default predicates and comparative dependencies, pinned to CPU 11; one timed sample per process, fixed work, and three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1980048667,
+        "current_instructions": 1980048519,
+        "instruction_change": -148,
+        "instruction_change_percent": -0.000007,
+        "comparison_branches": 402621987,
+        "current_branches": 402621927,
+        "branch_change": -60,
+        "branch_change_percent": -0.000015
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447392364,
+        "current_instructions": 3447392229,
+        "instruction_change": -135,
+        "instruction_change_percent": -0.000004,
+        "comparison_branches": 649790339,
+        "current_branches": 649790318,
+        "branch_change": -21,
+        "branch_change_percent": -0.000003
+      },
+      "interpretation": "Both ordinary production lanes are instruction- and branch-neutral. The resource-bounded factor package remains cold outside the selected-root predicate boundary."
+    },
+    "competitive_context": {
+      "method": "final comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 17740.6,
+        "cavalier_contours": 922.6,
+        "hypercurve_to_cavalier_ratio": 19.228918
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29982016.2,
+        "hypercurve_chord_fallback": 985605.6,
+        "curvo_heuristic": 8583.7,
+        "certified_to_curvo_ratio": 3492.901220,
+        "chord_to_curvo_ratio": 114.822932
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. This checkpoint changes neither measured production lane."
+    }
+  },
+  "memory": {
+    "tool": "matched Heaptrack record-only direct all-feature release-unit-test traces with exact fully qualified filters; heaptrack_print summary is authoritative",
+    "nonic_coupled_rational_zero": {
+      "allocation_calls": 1683459,
+      "temporary_allocations": 140830,
+      "peak_heap_mib": 3.80,
+      "recorder_peak_rss_mib": 17.89,
+      "comparison_terminal_allocation_calls": 112743816,
+      "comparison_terminal_temporary_allocations": 29280558,
+      "comparison_terminal_peak_heap_mib": 6.08,
+      "comparison_terminal_recorder_peak_rss_mib": 20.41,
+      "allocation_change_percent": -98.506828,
+      "temporary_change_percent": -99.519032,
+      "peak_heap_change_percent": -37.500000,
+      "recorder_peak_rss_change_percent": -12.346889,
+      "allocation_calls_eliminated": 111060357,
+      "temporary_allocations_eliminated": 29139728,
+      "interpretation": "Exact certification removes the 512-bit terminal's dominant allocation traffic while lowering both live heap and recorder RSS."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release benchmark executables at 97d2187 and 4ef20de against identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8442512,
+      "current_file_bytes": 8441792,
+      "file_change_bytes": -720,
+      "file_change_percent": -0.008528,
+      "comparison_size_text_bytes": 6444089,
+      "current_size_text_bytes": 6443345,
+      "size_text_change_bytes": -744,
+      "size_text_change_percent": -0.011545,
+      "comparison_actual_text_section_bytes": 4884087,
+      "current_actual_text_section_bytes": 4883719,
+      "actual_text_change_bytes": -368,
+      "actual_text_change_percent": -0.007535
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7969720,
+      "current_file_bytes": 7969696,
+      "file_change_bytes": -24,
+      "comparison_size_text_bytes": 6055221,
+      "current_size_text_bytes": 6055221,
+      "size_text_change_bytes": 0,
+      "comparison_actual_text_section_bytes": 4552055,
+      "current_actual_text_section_bytes": 4552055,
+      "actual_text_change_bytes": 0,
+      "interpretation": "Every measured production section is identical without predicates; the 24-byte whole-file difference is non-code ELF layout metadata from the matched worktree builds."
+    },
+    "interpretation": "The generalized predicate authority reduces default production code size and adds no minimal-feature production code."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-bounded-multiaffine-final --crate-name hypercurve --include-tests --format json --per-library",
+    "comparison_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .hypercurve-control-97d2187 --out-dir target/callgraph-hypercurve-octic-control --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-bounded-multiaffine-final/callgraph.json",
+    "comparison_output": "target/callgraph-hypercurve-octic-control/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 24050,
+      "current_nodes": 24058,
+      "node_change_percent": 0.033264,
+      "comparison_edges": 45582,
+      "current_edges": 45596,
+      "edge_change_percent": 0.030714
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_content_and_bounded_factor_sign and trivariate_bounded_factor_sign before quotient-ring reduction",
+      "trivariate_bounded_factor_sign -> tensor-degree split budget -> trivariate_bounded_factor_sign_with_budget",
+      "trivariate_bounded_factor_sign_with_budget -> rational multi-affine axis factorization -> bounded bilinear slice proposals",
+      "bounded bilinear slice proposals -> exact rational roots -> maximal-minor factor proposal -> exact bivariate division",
+      "lifted factor proposal -> exact normalization and complete trivariate tensor division",
+      "unsupported result -> shared permits_approximate_512 and observe_approximate_512 terminal in trivariate_parameter_triple_sign_by_refinement"
+    ],
+    "interpretation": "The small node and edge increase is test-inclusive and extends one existing authority. No parallel selected-root sign, Boolean, offset, or policy engine is introduced."
+  },
+  "validation": {
+    "all_features_library": "445 passed",
+    "default_features_library": "441 passed",
+    "no_default_features_library": "320 passed",
+    "all_targets_all_features_clippy": "passed with -D warnings",
+    "all_targets_no_default_features_clippy": "passed with -D warnings",
+    "focused_factor_matrix": "27 passed, including distinct, multiplicity, balanced-boundary, and unfactored cases",
+    "strict_and_approximate": "the formerly terminal nonic selected-root identity returns Certified Zero under both STRICT and APPROXIMATE_512",
+    "format_and_diff_checks": "passed"
+  },
+  "remaining": [
+    "retain explicit shared STRICT and APPROXIMATE_512 terminal coverage for factors outside the bounded rational multi-affine package",
+    "measure whether proposal ordering can lower the 256-proposal ceiling without losing dense distinct or repeated factors",
+    "continue selected-root exactness work only for measured real topology blockers rather than extending degree switches",
+    "return to the authoritative CurveRegion2 Boolean, offset, fillet/chamfer, caller cutover, and historical-engine deletion phases",
+    "keep Hypermesh outside this workstream"
+  ]
+}
