@@ -7,13 +7,14 @@ use hyperlattice::{
 };
 
 use crate::bvh::ExactBvh;
-use crate::context::{DecisionContext, MeshContext, MeshOutcome};
+use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real_decision};
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
-    classify_point_decision, classify_projective_point_decision, classify_real,
+    Point3PredicateQuery, classify_point_decision, classify_projective_point_decision,
+    classify_real, exact_rational_points_contradict,
 };
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
@@ -84,6 +85,13 @@ enum ConstructedPairwiseIntersection {
     CoplanarPoint(ConstructedIntersectionPoint),
     CoplanarSegment(ConstructedIntersectionSegment),
     CoplanarOverlap,
+}
+
+#[derive(Default)]
+struct PairwiseIntersectionScratch {
+    points: Vec<ConstructedIntersectionPoint>,
+    coplanar_classifications: Vec<Option<Classification>>,
+    coplanar_queries: Vec<Option<Point3PredicateQuery>>,
 }
 
 impl ConstructedPairwiseIntersection {
@@ -1044,6 +1052,7 @@ pub(crate) fn intersect_polygons_with_vertices(
     other_vertices: &[Point3],
     other_polygon_idx: usize,
 ) -> HypermeshResult<PairwiseIntersection> {
+    let mut scratch = PairwiseIntersectionScratch::default();
     intersect_polygons_with_vertices_constructed(
         decisions,
         polygon,
@@ -1052,6 +1061,7 @@ pub(crate) fn intersect_polygons_with_vertices(
         other,
         other_vertices,
         None,
+        &mut scratch,
     )
     .map(|intersection| intersection.into_public(other_polygon_idx))
 }
@@ -1064,7 +1074,11 @@ fn intersect_polygons_with_vertices_constructed(
     other: &ConvexPolygon,
     other_vertices: &[Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
+    scratch: &mut PairwiseIntersectionScratch,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
+    scratch.points.clear();
+    scratch.coplanar_classifications.clear();
+    scratch.coplanar_queries.clear();
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
         return Ok(ConstructedPairwiseIntersection::Disjoint);
     }
@@ -1087,13 +1101,25 @@ fn intersect_polygons_with_vertices_constructed(
                 other,
                 other_vertices,
                 retain_construction,
+                scratch,
             )
         } else {
             Ok(ConstructedPairwiseIntersection::Disjoint)
         };
     }
 
-    let mut points = Vec::new();
+    let point_capacity = polygon_vertices
+        .len()
+        .checked_add(other_vertices.len())
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "polygon intersection point scratch",
+        })?;
+    scratch
+        .points
+        .try_reserve_exact(point_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "polygon intersection point scratch",
+        })?;
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-forward");
     collect_edge_plane_crossings(
         decisions,
@@ -1101,7 +1127,7 @@ fn intersect_polygons_with_vertices_constructed(
         polygon_vertices,
         other,
         other_support_identity,
-        &mut points,
+        &mut scratch.points,
     )?;
     crate::trace_dispatch!("intersect-polygons", "edge-crossings-reverse");
     collect_edge_plane_crossings(
@@ -1110,11 +1136,11 @@ fn intersect_polygons_with_vertices_constructed(
         other_vertices,
         polygon,
         polygon_support_identity,
-        &mut points,
+        &mut scratch.points,
     )?;
-    dedup_constructed_points(decisions, &mut points)?;
+    dedup_constructed_points(decisions, &mut scratch.points)?;
 
-    match exact_constructed_intersection_span(decisions, &polygon.support, &points)? {
+    match exact_constructed_intersection_span(decisions, &polygon.support, &scratch.points)? {
         ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
         ConstructedIntersectionSpan::Point(point) => {
             Ok(ConstructedPairwiseIntersection::NonCoplanarPoint(point))
@@ -1228,6 +1254,7 @@ pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
     }
     let mut graph = PairwiseIntersectionGraphBuilder::new(polygons.len())?;
     let vertices = PolygonVertexArena::build(decisions, polygons)?;
+    let mut scratch = PairwiseIntersectionScratch::default();
     let mut failure = None;
 
     bvh.intersect_self_pairs_decision(decisions, |global_i, global_j| {
@@ -1240,6 +1267,7 @@ pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
             &vertices,
             certified_embedded_inputs,
             &mut graph,
+            &mut scratch,
             global_i,
             global_j,
         ) {
@@ -1267,6 +1295,7 @@ fn append_pairwise_intersection(
     vertices: &PolygonVertexArena,
     certified_embedded_inputs: &[bool],
     graph: &mut PairwiseIntersectionGraphBuilder,
+    scratch: &mut PairwiseIntersectionScratch,
     global_i: usize,
     global_j: usize,
 ) -> HypermeshResult<()> {
@@ -1318,6 +1347,7 @@ fn append_pairwise_intersection(
         &polygons[global_j],
         right_vertices,
         right_support_identity,
+        scratch,
     )
     .inspect_err(|_error| {
         crate::trace_dispatch!("pairwise-intersection", "polygon-test-failed");
@@ -1615,8 +1645,23 @@ fn intersect_coplanar_constructed(
     other: &ConvexPolygon,
     other_vertices: &[Point3],
     retain_construction: bool,
+    scratch: &mut PairwiseIntersectionScratch,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
-    if polygons_share_area(decisions, polygon, polygon_vertices, other, other_vertices)? {
+    let PairwiseIntersectionScratch {
+        points,
+        coplanar_classifications,
+        coplanar_queries,
+    } = scratch;
+    let mut relation = CoplanarClassificationCache::new(
+        decisions,
+        polygon,
+        polygon_vertices,
+        other,
+        other_vertices,
+        coplanar_classifications,
+        coplanar_queries,
+    )?;
+    if relation.polygons_share_area()? {
         return Ok(ConstructedPairwiseIntersection::CoplanarOverlap);
     }
 
@@ -1632,14 +1677,13 @@ fn intersect_coplanar_constructed(
         .ok_or(HypermeshError::CapacityOverflow {
             operation: "coplanar polygon contact candidates",
         })?;
-    let mut points = Vec::new();
     points
         .try_reserve_exact(capacity)
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "coplanar polygon contact candidates",
         })?;
     for (index, point) in polygon_vertices.iter().enumerate() {
-        if affine_point_in_polygon_on_support(decisions, point, other)? {
+        if relation.left_vertex_is_contained(index)? {
             points.push(ConstructedIntersectionPoint {
                 point: point.clone(),
                 identity: retain_construction
@@ -1649,7 +1693,7 @@ fn intersect_coplanar_constructed(
         }
     }
     for (index, point) in other_vertices.iter().enumerate() {
-        if affine_point_in_polygon_on_support(decisions, point, polygon)? {
+        if relation.right_vertex_is_contained(index)? {
             points.push(ConstructedIntersectionPoint {
                 point: point.clone(),
                 identity: retain_construction
@@ -1658,9 +1702,9 @@ fn intersect_coplanar_constructed(
             });
         }
     }
-    dedup_constructed_points(decisions, &mut points)?;
+    dedup_constructed_points(decisions, points)?;
 
-    match exact_constructed_intersection_span(decisions, &polygon.support, &points)? {
+    match exact_constructed_intersection_span(decisions, &polygon.support, points)? {
         ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
         ConstructedIntersectionSpan::Point(point) => {
             Ok(ConstructedPairwiseIntersection::CoplanarPoint(point))
@@ -1670,6 +1714,234 @@ fn intersect_coplanar_constructed(
                 ConstructedIntersectionSegment { v0, v1 },
             ))
         }
+    }
+}
+
+/// Lazily retains the exact point/edge classifications shared by the
+/// separating-axis and lower-dimensional-contact passes for one coplanar
+/// polygon pair. The original predicate order and short-circuit behavior stay
+/// intact, so this cache cannot consume a terminal policy decision that the
+/// geometric result did not already require.
+struct CoplanarClassificationCache<'geometry, 'scratch> {
+    right_vertices_against_left: CoplanarClassificationMatrix<'geometry, 'scratch>,
+    left_vertices_against_right: CoplanarClassificationMatrix<'geometry, 'scratch>,
+}
+
+struct CoplanarClassificationMatrix<'geometry, 'scratch> {
+    decisions: &'geometry DecisionContext,
+    container: &'geometry ConvexPolygon,
+    vertices: &'geometry [Point3],
+    values: &'scratch mut [Option<Classification>],
+    queries: &'scratch mut [Option<Point3PredicateQuery>],
+}
+
+impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
+    fn new(
+        decisions: &'geometry DecisionContext,
+        left: &'geometry ConvexPolygon,
+        left_vertices: &'geometry [Point3],
+        right: &'geometry ConvexPolygon,
+        right_vertices: &'geometry [Point3],
+        values: &'scratch mut Vec<Option<Classification>>,
+        queries: &'scratch mut Vec<Option<Point3PredicateQuery>>,
+    ) -> HypermeshResult<Self> {
+        let left_matrix_len = left.edges.len().checked_mul(right_vertices.len()).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "coplanar classification matrix",
+            },
+        )?;
+        let right_matrix_len = right.edges.len().checked_mul(left_vertices.len()).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "coplanar classification matrix",
+            },
+        )?;
+        let len = left_matrix_len.checked_add(right_matrix_len).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "coplanar classification matrix",
+            },
+        )?;
+        values.clear();
+        values
+            .try_reserve_exact(len)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "coplanar classification matrix",
+            })?;
+        values.resize(len, None);
+        let (left_values, right_values) = values.split_at_mut(left_matrix_len);
+        let query_len = right_vertices
+            .len()
+            .checked_add(left_vertices.len())
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "coplanar point query scratch",
+            })?;
+        queries.clear();
+        queries
+            .try_reserve_exact(query_len)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "coplanar point query scratch",
+            })?;
+        queries.resize(query_len, None);
+        let (right_queries, left_queries) = queries.split_at_mut(right_vertices.len());
+        Ok(Self {
+            right_vertices_against_left: CoplanarClassificationMatrix {
+                decisions,
+                container: left,
+                vertices: right_vertices,
+                values: left_values,
+                queries: right_queries,
+            },
+            left_vertices_against_right: CoplanarClassificationMatrix {
+                decisions,
+                container: right,
+                vertices: left_vertices,
+                values: right_values,
+                queries: left_queries,
+            },
+        })
+    }
+
+    fn polygons_share_area(&mut self) -> HypermeshResult<bool> {
+        Ok(!self
+            .right_vertices_against_left
+            .has_open_interior_separator()?
+            && !self
+                .left_vertices_against_right
+                .has_open_interior_separator()?)
+    }
+
+    fn left_vertex_is_contained(&mut self, vertex: usize) -> HypermeshResult<bool> {
+        self.left_vertices_against_right.vertex_is_contained(vertex)
+    }
+
+    fn right_vertex_is_contained(&mut self, vertex: usize) -> HypermeshResult<bool> {
+        self.right_vertices_against_left.vertex_is_contained(vertex)
+    }
+}
+
+impl CoplanarClassificationMatrix<'_, '_> {
+    /// Exact convex separating-axis test for positive-area coplanar overlap.
+    ///
+    /// Every edge plane bounds the polygon's negative halfspace. If every
+    /// vertex of the other polygon is on or outside one edge, their open
+    /// interiors are separated; if neither polygon supplies such an edge,
+    /// their planar intersection has positive area.
+    fn has_open_interior_separator(&mut self) -> HypermeshResult<bool> {
+        if self.vertices.is_empty() {
+            return Ok(true);
+        }
+        for edge in 0..self.container.edges.len() {
+            let mut reaches_negative_halfspace = false;
+            for vertex in 0..self.vertices.len() {
+                if self.classification(edge, vertex)? == Classification::Negative {
+                    reaches_negative_halfspace = true;
+                    break;
+                }
+            }
+            if !reaches_negative_halfspace {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    fn vertex_is_contained(&mut self, vertex: usize) -> HypermeshResult<bool> {
+        let cached = self.cached_vertex_containment(vertex)?;
+        if cached == Some(true) {
+            return Ok(true);
+        }
+        if cached == Some(false) && self.decisions.certainty() == MeshCertainty::Certified {
+            return Ok(false);
+        }
+        let point = self
+            .vertices
+            .get(vertex)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        if self.container.has_retained_vertex(point) {
+            return Ok(true);
+        }
+        if cached == Some(false) {
+            return Ok(false);
+        }
+
+        let mut saw_unknown = false;
+        for edge in 0..self.container.edges.len() {
+            match self.classification(edge, vertex) {
+                Ok(Classification::Positive) => return Ok(false),
+                Ok(Classification::Negative | Classification::On) => {}
+                Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
+                Err(error) => return Err(error),
+            }
+        }
+        if saw_unknown {
+            Err(HypermeshError::PredicateUndecided {
+                predicate: "affine point/polygon containment",
+            })
+        } else {
+            Ok(true)
+        }
+    }
+
+    /// Reuses only predicates already demanded by the separating-axis walk.
+    /// A fully populated non-positive column proves containment without
+    /// another predicate. A certified cached positive proves exclusion;
+    /// after any approximate terminal, retained vertex identity keeps its
+    /// stronger original priority.
+    fn cached_vertex_containment(&self, vertex: usize) -> HypermeshResult<Option<bool>> {
+        if vertex >= self.vertices.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        let mut missing = false;
+        for edge in 0..self.container.edges.len() {
+            match self
+                .values
+                .get(self.index(edge, vertex)?)
+                .copied()
+                .flatten()
+            {
+                Some(Classification::Positive) => return Ok(Some(false)),
+                Some(Classification::Negative | Classification::On) => {}
+                None => missing = true,
+            }
+        }
+        Ok((!missing).then_some(true))
+    }
+
+    fn classification(&mut self, edge: usize, vertex: usize) -> HypermeshResult<Classification> {
+        let index = self.index(edge, vertex)?;
+        if let Some(classification) = self.values.get(index).copied().flatten() {
+            return Ok(classification);
+        }
+        let point = self
+            .vertices
+            .get(vertex)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        let plane = self
+            .container
+            .edges
+            .get(edge)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        let query = self
+            .queries
+            .get_mut(vertex)
+            .ok_or(HypermeshError::UnknownClassification)?
+            .get_or_insert_with(|| Point3PredicateQuery::new(point));
+        let classification = query.classify(self.decisions, point, plane)?;
+        *self
+            .values
+            .get_mut(index)
+            .ok_or(HypermeshError::UnknownClassification)? = Some(classification);
+        Ok(classification)
+    }
+
+    fn index(&self, edge: usize, vertex: usize) -> HypermeshResult<usize> {
+        if edge >= self.container.edges.len() || vertex >= self.vertices.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        edge.checked_mul(self.vertices.len())
+            .and_then(|index| index.checked_add(vertex))
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "coplanar classification matrix index",
+            })
     }
 }
 
@@ -1749,50 +2021,6 @@ fn compare_points_lexicographically(
         }
     }
     Ok(std::cmp::Ordering::Equal)
-}
-
-fn polygons_share_area(
-    decisions: &DecisionContext,
-    polygon: &ConvexPolygon,
-    polygon_vertices: &[Point3],
-    other: &ConvexPolygon,
-    other_vertices: &[Point3],
-) -> HypermeshResult<bool> {
-    Ok(
-        !polygon_has_open_interior_separator(decisions, polygon, other_vertices)?
-            && !polygon_has_open_interior_separator(decisions, other, polygon_vertices)?,
-    )
-}
-
-/// Exact convex separating-axis test for positive-area coplanar overlap.
-///
-/// Every edge plane is an axis whose negative halfspace contains its polygon.
-/// If every vertex of the other polygon is on or outside one edge, the closed
-/// sets are disjoint or touch only in dimension zero or one. Conversely, if no
-/// edge of either convex polygon separates their open interiors, their planar
-/// intersection has positive area. This avoids constructing and repeatedly
-/// cloning an intermediate clipped polygon.
-fn polygon_has_open_interior_separator(
-    decisions: &DecisionContext,
-    polygon: &ConvexPolygon,
-    other_vertices: &[Point3],
-) -> HypermeshResult<bool> {
-    if other_vertices.is_empty() {
-        return Ok(true);
-    }
-    for edge in polygon.edges.iter() {
-        let mut reaches_negative_halfspace = false;
-        for point in other_vertices {
-            if classify_point_decision(decisions, point, edge)? == Classification::Negative {
-                reaches_negative_halfspace = true;
-                break;
-            }
-        }
-        if !reaches_negative_halfspace {
-            return Ok(true);
-        }
-    }
-    Ok(false)
 }
 
 fn collect_edge_plane_crossings(
@@ -2316,14 +2544,6 @@ fn supports_are_parallel(
     }
 }
 
-fn exact_rational_points_contradict(left: &Point3, right: &Point3) -> bool {
-    let left = [&left.x, &left.y, &left.z].map(Real::exact_rational_ref);
-    let right = [&right.x, &right.y, &right.z].map(Real::exact_rational_ref);
-    left.into_iter()
-        .zip(right)
-        .any(|(left, right)| matches!((left, right), (Some(left), Some(right)) if left != right))
-}
-
 fn construction_identity_fingerprint(identity: &ConstructionVertexIdentity) -> u64 {
     let mut hasher = StorageIdentityHasher::default();
     identity.hash(&mut hasher);
@@ -2334,31 +2554,35 @@ fn dedup_constructed_points(
     decisions: &DecisionContext,
     points: &mut Vec<ConstructedIntersectionPoint>,
 ) -> HypermeshResult<()> {
-    let mut unique: Vec<ConstructedIntersectionPoint> = Vec::with_capacity(points.len());
-    for point in points.drain(..) {
+    let mut candidate = 0;
+    while candidate < points.len() {
         let mut duplicate = None;
-        for (index, existing) in unique.iter().enumerate() {
-            if existing.point == point.point
-                || crate::predicate::points_equal(decisions, &existing.point, &point.point)?
+        for existing in 0..candidate {
+            if points[existing].point == points[candidate].point
+                || crate::predicate::points_equal(
+                    decisions,
+                    &points[existing].point,
+                    &points[candidate].point,
+                )?
             {
-                duplicate = Some(index);
+                duplicate = Some(existing);
                 break;
             }
         }
-        if let Some(index) = duplicate {
+        if let Some(existing) = duplicate {
+            let point = points.remove(candidate);
             if point.identity.as_ref().is_some_and(|identity| {
-                unique[index]
+                points[existing]
                     .identity
                     .as_ref()
                     .is_none_or(|existing| identity < existing)
             }) {
-                unique[index].identity = point.identity;
+                points[existing].identity = point.identity;
             }
         } else {
-            unique.push(point);
+            candidate += 1;
         }
     }
-    *points = unique;
     Ok(())
 }
 
@@ -2367,10 +2591,12 @@ mod tests {
     use hyperlattice::{Point3, Real};
 
     use super::{
-        ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
+        ConstructedIntersectionPoint, ConstructedIntersectionSegment,
+        ConstructedPairwiseIntersection, CoplanarClassificationMatrix, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
-        PolygonVertexArena, StoredIntersectionKind, classify_segment_plane_edge_numerator,
-        pairwise_intersections_by_polygon_from_bvh,
+        PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
+        classify_segment_plane_edge_numerator, dedup_constructed_points,
+        intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
     };
     use crate::bvh::ExactBvh;
@@ -2517,6 +2743,119 @@ mod tests {
                 reason: "intersection hierarchy and source-face counts differ",
             }
         );
+    }
+
+    #[test]
+    fn pairwise_scratch_drops_prior_points_and_resets_coplanar_classifications() {
+        let decisions = crate::test_support::approximate_decisions();
+        let triangle = crate::test_support::approximate_convex_triangle(
+            &Point3::origin(),
+            &Point3::new(Real::from(4), Real::zero(), Real::zero()),
+            &Point3::new(Real::zero(), Real::from(4), Real::zero()),
+            0,
+            0,
+        );
+        let disjoint = crate::test_support::approximate_convex_triangle(
+            &Point3::new(Real::from(8), Real::zero(), Real::zero()),
+            &Point3::new(Real::from(9), Real::zero(), Real::zero()),
+            &Point3::new(Real::from(8), Real::one(), Real::zero()),
+            1,
+            0,
+        );
+        let triangle_vertices = triangle.vertices_decision(&decisions).unwrap();
+        let disjoint_vertices = disjoint.vertices_decision(&decisions).unwrap();
+        let mut scratch = PairwiseIntersectionScratch::default();
+        scratch.points.push(ConstructedIntersectionPoint {
+            point: Point3::new(Real::pi(), Real::e(), Real::one()),
+            identity: None,
+        });
+
+        assert!(matches!(
+            intersect_polygons_with_vertices_constructed(
+                &decisions,
+                &triangle,
+                &triangle_vertices,
+                None,
+                &triangle,
+                &triangle_vertices,
+                None,
+                &mut scratch,
+            )
+            .unwrap(),
+            ConstructedPairwiseIntersection::CoplanarOverlap
+        ));
+        assert!(scratch.points.is_empty());
+        assert!(scratch.coplanar_classifications.iter().any(Option::is_some));
+        assert!(scratch.coplanar_queries.iter().any(Option::is_some));
+
+        assert!(matches!(
+            intersect_polygons_with_vertices_constructed(
+                &decisions,
+                &triangle,
+                &triangle_vertices,
+                None,
+                &disjoint,
+                &disjoint_vertices,
+                None,
+                &mut scratch,
+            )
+            .unwrap(),
+            ConstructedPairwiseIntersection::Disjoint
+        ));
+        assert!(scratch.points.is_empty());
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn approximate_cached_exclusion_does_not_override_retained_vertex_identity() {
+        let decisions = crate::test_support::approximate_decisions();
+        decisions.absorb(crate::MeshCertainty::Approximate512Consumed);
+        let triangle = crate::test_support::approximate_convex_triangle(
+            &Point3::origin(),
+            &Point3::new(Real::from(4), Real::zero(), Real::zero()),
+            &Point3::new(Real::zero(), Real::from(4), Real::zero()),
+            0,
+            0,
+        );
+        let point = triangle.vertices_decision(&decisions).unwrap()[0].clone();
+        let vertices = [point];
+        let mut values = vec![None; triangle.edges.len()];
+        values[0] = Some(Classification::Positive);
+        let mut queries = vec![None];
+        let mut matrix = CoplanarClassificationMatrix {
+            decisions: &decisions,
+            container: &triangle,
+            vertices: &vertices,
+            values: &mut values,
+            queries: &mut queries,
+        };
+
+        assert!(matrix.vertex_is_contained(0).unwrap());
+        assert_eq!(
+            decisions.certainty(),
+            crate::MeshCertainty::Approximate512Consumed
+        );
+    }
+
+    #[test]
+    fn constructed_point_deduplication_retains_capacity_and_canonical_recipe() {
+        let decisions = crate::test_support::approximate_decisions();
+        let identity = |vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex };
+        let point = |x, vertex| ConstructedIntersectionPoint {
+            point: Point3::new(Real::from(x), Real::zero(), Real::zero()),
+            identity: Some(identity(vertex)),
+        };
+        let mut points = Vec::with_capacity(8);
+        points.extend([point(0, 9), point(1, 4), point(0, 2)]);
+        let capacity = points.capacity();
+
+        dedup_constructed_points(&decisions, &mut points).unwrap();
+
+        assert_eq!(points.len(), 2);
+        assert_eq!(points.capacity(), capacity);
+        assert_eq!(points[0].identity, Some(identity(2)));
+        assert_eq!(points[1].identity, Some(identity(4)));
+        assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
     }
 
     #[test]

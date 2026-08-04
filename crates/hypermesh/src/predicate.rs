@@ -199,20 +199,18 @@ pub(crate) fn classify_point_decision(
     point: &Point3,
     plane: &Plane,
 ) -> HypermeshResult<Classification> {
-    Point3PredicateEvidence::new(point).classify(decisions, plane)
+    Point3PredicateQuery::new(point).classify(decisions, point, plane)
 }
 
-/// Borrowed point coordinates cached for repeated plane predicates.
+/// Compact scalar-owned query facts cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct Point3PredicateEvidence<'a> {
-    point: &'a Point3,
-    exact_coordinates: Option<[&'a Rational; 3]>,
+pub(crate) struct Point3PredicateQuery {
     rational_filter_query: Option<RationalLinearForm4Query>,
 }
 
-impl<'a> Point3PredicateEvidence<'a> {
-    /// Retains exact-rational coordinate facts without cloning scalar storage.
-    pub(crate) fn new(point: &'a Point3) -> Self {
+impl Point3PredicateQuery {
+    /// Retains the certified floating query without cloning exact coordinates.
+    pub(crate) fn new(point: &Point3) -> Self {
         let exact_coordinates = match (
             point.x.exact_rational_ref(),
             point.y.exact_rational_ref(),
@@ -235,23 +233,23 @@ impl<'a> Point3PredicateEvidence<'a> {
             crate::trace_dispatch!("point3-evidence", "rational-filter-query");
         }
         Self {
-            point,
-            exact_coordinates,
             rational_filter_query,
         }
     }
 
-    /// Classifies the retained point against one plane.
+    /// Classifies the immutable point that supplied these retained query facts.
     pub(crate) fn classify(
         &self,
         decisions: &DecisionContext,
+        point: &Point3,
         plane: &Plane,
     ) -> HypermeshResult<Classification> {
-        if let Some(coordinates) = self.exact_coordinates
+        if let [Some(x), Some(y), Some(z)] =
+            [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
             && let Some(classification) = classify_exact_rational_coordinates(
                 decisions,
                 plane,
-                coordinates,
+                [x, y, z],
                 Rational::one_ref(),
                 self.rational_filter_query.as_ref(),
             )
@@ -261,7 +259,7 @@ impl<'a> Point3PredicateEvidence<'a> {
         }
 
         crate::trace_dispatch!("classify-point", "affine-real-fallback");
-        classify_real(decisions, &plane.expression_at_point(self.point))
+        classify_real(decisions, &plane.expression_at_point(point))
     }
 }
 
@@ -432,6 +430,17 @@ pub(crate) fn coordinates3_equal(
     }
 }
 
+/// Returns true when retained exact-rational coordinates already disprove
+/// affine-point equality. Unknown coordinate representations never contradict.
+#[inline]
+pub(crate) fn exact_rational_points_contradict(left: &Point3, right: &Point3) -> bool {
+    let left = [&left.x, &left.y, &left.z].map(Real::exact_rational_ref);
+    let right = [&right.x, &right.y, &right.z].map(Real::exact_rational_ref);
+    left.into_iter()
+        .zip(right)
+        .any(|(left, right)| matches!((left, right), (Some(left), Some(right)) if left != right))
+}
+
 /// Decides exact affine-point equality through the shared coordinate cascade.
 #[inline]
 pub(crate) fn points_equal(
@@ -569,29 +578,37 @@ mod tests {
     }
 
     #[test]
-    fn point_evidence_matches_direct_exact_classification() {
+    fn point_query_matches_direct_exact_classification() {
         let point = point(Real::from(2), Real::from(3), Real::from(5));
-        let evidence = Point3PredicateEvidence::new(&point);
+        let query = Point3PredicateQuery::new(&point);
         let planes = [
             Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::from(-2)),
             Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::from(-4)),
         ];
 
         assert_eq!(
-            evidence
-                .classify(&crate::test_support::approximate_decisions(), &planes[0])
+            query
+                .classify(
+                    &crate::test_support::approximate_decisions(),
+                    &point,
+                    &planes[0],
+                )
                 .unwrap(),
             Classification::On
         );
         assert_eq!(
-            evidence
-                .classify(&crate::test_support::approximate_decisions(), &planes[1])
+            query
+                .classify(
+                    &crate::test_support::approximate_decisions(),
+                    &point,
+                    &planes[1],
+                )
                 .unwrap(),
             Classification::Negative
         );
         for plane in &planes {
             assert_eq!(
-                evidence.classify(&crate::test_support::approximate_decisions(), plane),
+                query.classify(&crate::test_support::approximate_decisions(), &point, plane,),
                 classify_point_decision(
                     &crate::test_support::approximate_decisions(),
                     &point,
@@ -617,8 +634,12 @@ mod tests {
             Classification::Positive
         );
         assert_eq!(
-            Point3PredicateEvidence::new(&point)
-                .classify(&crate::test_support::approximate_decisions(), &plane)
+            Point3PredicateQuery::new(&point)
+                .classify(
+                    &crate::test_support::approximate_decisions(),
+                    &point,
+                    &plane,
+                )
                 .unwrap(),
             Classification::Positive
         );

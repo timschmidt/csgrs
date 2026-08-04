@@ -29,6 +29,7 @@ use crate::polygon::{
 };
 use crate::predicate::{
     classify_point_decision, classify_projective_point_decision, classify_real,
+    exact_rational_points_contradict,
 };
 use crate::storage_hash::StorageHashMap;
 use crate::winding::{BooleanExpression, BooleanProgram};
@@ -2883,17 +2884,6 @@ fn map_triangulation_error(error: hypertri::Error) -> HypermeshError {
         hypertri::Error::UnsupportedFeature { feature } => {
             HypermeshError::SurfaceArrangementFailed { reason: feature }
         }
-    }
-}
-
-fn exact_rational_points_contradict(left: &Point3, right: &Point3) -> bool {
-    let left = [&left.x, &left.y, &left.z].map(Real::exact_rational_ref);
-    let right = [&right.x, &right.y, &right.z].map(Real::exact_rational_ref);
-    match (left, right) {
-        ([Some(lx), Some(ly), Some(lz)], [Some(rx), Some(ry), Some(rz)]) => {
-            lx != rx || ly != ry || lz != rz
-        }
-        _ => false,
     }
 }
 
