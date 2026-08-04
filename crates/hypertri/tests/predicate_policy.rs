@@ -57,6 +57,30 @@ fn delaunay_reports_terminal_policy_consumption() {
     );
 }
 
+#[cfg(feature = "cdt")]
+#[test]
+fn constrained_topology_reports_terminal_policy_consumption() {
+    let (left, right) = terminal_equality();
+    let points = vec![
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(Real::one(), Real::one()),
+        Point2::new(left, right),
+        Point2::new(Real::zero(), Real::one()),
+    ];
+
+    assert!(matches!(
+        hypertri::cdt::constrained_triangulation_convex_hull(&STRICT, &points, &[]),
+        Err(Error::PredicateUndecided { .. })
+    ));
+    let outcome =
+        hypertri::cdt::constrained_triangulation_convex_hull(&APPROX, &points, &[]).unwrap();
+    assert_eq!(outcome.value.triangles().len(), 2);
+    assert_eq!(
+        outcome.certainty,
+        TriangulationCertainty::Approximate512Consumed
+    );
+}
+
 #[cfg(feature = "nd")]
 #[test]
 fn nd_oracle_reports_terminal_policy_consumption() {
@@ -107,6 +131,12 @@ fn exact_rational_work_stays_certified_under_both_policies() {
             ];
             assert_eq!(
                 hypertri::cdt::delaunay(&context, &triangle)
+                    .unwrap()
+                    .certainty,
+                TriangulationCertainty::Certified
+            );
+            assert_eq!(
+                hypertri::cdt::constrained_triangulation_convex_hull(&context, &triangle, &[])
                     .unwrap()
                     .certainty,
                 TriangulationCertainty::Certified
