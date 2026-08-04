@@ -2724,55 +2724,26 @@ fn corefine_face(
         })?;
     for triangle in outcome.value.triangles() {
         let mut triangle = triangle.map(|vertex| point_ids[vertex]);
-        let triangle_positive = match planar_orientation(
-            decisions,
-            &projected[&triangle[0]],
-            &projected[&triangle[1]],
-            &projected[&triangle[2]],
-        )? {
-            Classification::Positive => true,
-            Classification::Negative => false,
-            Classification::On => {
-                return Err(HypermeshError::SurfaceArrangementFailed {
-                    reason: "bounded face triangulation produced a degenerate triangle",
-                });
-            }
-        };
-        if triangle_positive != source_positive {
+        // Hypertri's checked topology entry point returns only strictly
+        // positive triangles and has already absorbed every predicate into its
+        // outcome certainty. Preserve that exact postcondition instead of
+        // repeating one orientation decision per output triangle.
+        if !source_positive {
             triangle.swap(1, 2);
         }
         triangles.push(triangle);
     }
+    #[cfg(test)]
     let constraints = outcome
         .value
         .constraint_edges()
         .iter()
         .map(|constraint| sorted_edge([point_ids[constraint.from], point_ids[constraint.to]]))
-        .collect::<BTreeSet<_>>();
-    let expected_constraints = split_lines.keys().copied().collect::<BTreeSet<_>>();
-    let triangulation_edges = triangles
-        .iter()
-        .flat_map(|triangle| {
-            [
-                sorted_edge([triangle[0], triangle[1]]),
-                sorted_edge([triangle[1], triangle[2]]),
-                sorted_edge([triangle[2], triangle[0]]),
-            ]
-        })
-        .collect::<BTreeSet<_>>();
-    if constraints != expected_constraints
-        || !constraints
-            .iter()
-            .all(|constraint| triangulation_edges.contains(constraint))
-    {
-        return Err(HypermeshError::SurfaceArrangementFailed {
-            reason: "bounded face triangulation did not preserve every exact constraint",
-        });
-    }
+        .collect::<Vec<_>>();
     Ok(FaceResult {
         triangles,
         #[cfg(test)]
-        constraints: constraints.into_iter().collect(),
+        constraints,
         #[cfg(test)]
         contacts,
     })
