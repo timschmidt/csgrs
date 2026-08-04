@@ -13,8 +13,8 @@ use std::cmp::Ordering;
 
 use hyperlimit::{
     Point2, PointSegmentLocation, PredicatePolicy, SegmentIntersection, classify_point_segment,
-    classify_segment_intersection_with_facts, compare_reals, point2_equal,
-    proper_segment_intersection_point,
+    classify_segment_intersection_with_facts, compare_reals, construct_line_intersection_point,
+    point2_equal,
 };
 use hyperreal::{Real, RealExactSetFacts};
 
@@ -812,9 +812,7 @@ fn classify_line_arrangement_event(
         }),
         SegmentIntersection::Proper => {
             let Some(point) =
-                proper_segment_intersection_point(a.start(), a.end(), b.start(), b.end(), policy)
-                    .value()
-                    .flatten()
+                construct_line_intersection_point(a.start(), a.end(), b.start(), b.end())
             else {
                 return Ok(LineArrangementEvent {
                     first,
