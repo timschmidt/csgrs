@@ -1,11 +1,12 @@
 use crate::competitive_support::{
-    MeshPair, RawMesh, box_mesh, large_boolean_case, parse_triangle_obj, to_hypermesh,
-    yeahright_boolean_case, yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
+    MeshPair, RawMesh, box_mesh, clipped_voxel_torus_case, large_boolean_case, parse_triangle_obj,
+    to_hypermesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
+    yeahright_control_mesh,
 };
 use crate::mesh_common;
 use hypermesh::{BooleanOp, MeshContext, TriangleMesh, TriangleMeshRef, polygon_soup};
 
-pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
+pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|voxel-torus-33|voxel-torus-65|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
 
 #[derive(Clone, Copy)]
 pub(crate) enum InputPath {
@@ -42,6 +43,28 @@ pub(crate) fn prepare_large_fixture(selector: &str) -> PreparedLargeFixture {
                 0,
                 InputPath::Raw,
                 BooleanOp::Union,
+            )
+        }
+        "voxel-torus-33" => {
+            let case = clipped_voxel_torus_case(33);
+            (
+                case.name,
+                case.left,
+                case.right,
+                0,
+                InputPath::Native { prime_pwn: true },
+                BooleanOp::Intersection,
+            )
+        }
+        "voxel-torus-65" => {
+            let case = clipped_voxel_torus_case(65);
+            (
+                case.name,
+                case.left,
+                case.right,
+                0,
+                InputPath::Native { prime_pwn: true },
+                BooleanOp::Intersection,
             )
         }
         "yeahright" => {

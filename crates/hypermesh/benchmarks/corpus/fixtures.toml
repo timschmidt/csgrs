@@ -106,6 +106,60 @@ expected_certainty = "Certified"
 expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
 
 [[fixture]]
+id = "edge_touching_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "edge-contact", "zero-volume-intersection", "nonmanifold-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/edge_touching_boxes"
+
+[[fixture]]
+id = "vertex_touching_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "vertex-contact", "zero-volume-intersection", "nonmanifold-output"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/vertex_touching_boxes"
+
+[[fixture]]
+id = "face_tangent_containment_boxes"
+status = "permanent"
+provenance = "tests/competitive.rs::lower_dimensional_closed_pwn_contacts_are_total_under_both_policies"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::lower_dimensional_contact_corpus"
+coordinate_class = "integer"
+topology = ["closed-pwn", "strict-containment", "tangent-containment", "partial-face-contact", "coplanar-overlay"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_volumes = [64.0, 8.0, 56.0, 0.0, 56.0]
+fuzz_seed = "fuzz/seeds/boolean_box_oracle/face_tangent_containment_boxes"
+
+[[fixture]]
 id = "overlapping_tetrahedra"
 status = "permanent"
 provenance = "Hypermesh exact competitive corpus"
@@ -121,6 +175,66 @@ size = "small"
 cgal_eligible = true
 expected_certainty = "Certified"
 expected_volumes = [21.166666666666668, 0.16666666666666666, 10.5]
+
+[[fixture]]
+id = "clipped_voxel_torus_9"
+status = "permanent"
+provenance = "Hypermesh deterministic high-genus scaling and competitive corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(9)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling"]
+size = "medium"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 460
+expected_volumes = [298.0, 56.0, 56.0, 186.0, 242.0]
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 9
+
+[[fixture]]
+id = "clipped_voxel_torus_33"
+status = "permanent"
+provenance = "Deterministic large sibling of clipped_voxel_torus_9"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(33)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6412
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 33
+heap_probe_modes = ["voxel-torus-33"]
+
+[[fixture]]
+id = "clipped_voxel_torus_65"
+status = "permanent"
+provenance = "Deterministic XL sibling of clipped_voxel_torus_9"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::clipped_voxel_torus_case(65)"
+coordinate_class = "integer-and-dyadic"
+topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "xl"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 25100
+scaling_family = "clipped_voxel_torus"
+scale_parameter = 65
+heap_probe_modes = ["voxel-torus-65"]
 
 [[fixture]]
 id = "subdivided_overlapping_boxes_3072_each"

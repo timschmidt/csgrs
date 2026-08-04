@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 16, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 29, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -113,6 +113,13 @@ fn every_in_process_competitive_case_has_a_manifest_record() {
             case.name
         );
     }
+    for case in support::lower_dimensional_contact_corpus() {
+        assert!(
+            registered.contains(case.name),
+            "closed-PWN contact case {} is absent from fixtures.toml",
+            case.name
+        );
+    }
     assert!(registered.contains("subdivided_overlapping_boxes_3072_each"));
 }
 
@@ -159,6 +166,12 @@ fn corpus_spans_initial_replacement_path_classes() {
         "batched-expression",
         "source-edge-split-propagation",
         "intersection-curve-continuation",
+        "edge-contact",
+        "vertex-contact",
+        "tangent-containment",
+        "nonmanifold-output",
+        "exact-symmetry-plane",
+        "large-mesh",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -240,6 +253,8 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         [
             "boxes-3072",
             "boxes-3072-general",
+            "voxel-torus-33",
+            "voxel-torus-65",
             "yeahright",
             "yeahright-4",
             "yeahright-8",
@@ -248,6 +263,86 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         .into_iter()
         .collect()
     );
+}
+
+#[test]
+fn clipped_voxel_torus_family_spans_medium_large_and_xl_exactly() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str) == Some("clipped_voxel_torus")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), 3);
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        [9, 33, 65]
+    );
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["size"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["medium", "large", "xl"]
+    );
+    for (extent, expected_triangles) in [(9, 460), (33, 6_412), (65, 25_100)] {
+        let case = support::clipped_voxel_torus_case(extent);
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            expected_triangles
+        );
+        assert_eq!(
+            family
+                .iter()
+                .find(|fixture| fixture["scale_parameter"].as_integer() == Some(extent as i64))
+                .unwrap()["input_triangles"]
+                .as_integer(),
+            Some(expected_triangles as i64)
+        );
+    }
+}
+
+#[test]
+fn lower_dimensional_contact_fuzz_seeds_are_pinned_and_executable() {
+    let manifest = manifest();
+    let fixtures = manifest["fixture"].as_array().expect("fixture records");
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    for (id, relative, expected) in [
+        (
+            "edge_touching_boxes",
+            "fuzz/seeds/boolean_box_oracle/edge_touching_boxes",
+            b"ADDGGGBBBIIGBBBXXXXXXXXXXXXXXXX\n".as_slice(),
+        ),
+        (
+            "vertex_touching_boxes",
+            "fuzz/seeds/boolean_box_oracle/vertex_touching_boxes",
+            b"ADDGGGBBBIIIBBBXXXXXXXXXXXXXXXX\n".as_slice(),
+        ),
+        (
+            "face_tangent_containment_boxes",
+            "fuzz/seeds/boolean_box_oracle/face_tangent_containment_boxes",
+            b"ADDGGGDDDGHHBBBXXXXXXXXXXXXXXXX\n".as_slice(),
+        ),
+    ] {
+        let fixture = fixtures
+            .iter()
+            .find(|fixture| fixture["id"].as_str() == Some(id))
+            .unwrap_or_else(|| panic!("missing fixture {id}"));
+        assert_eq!(fixture["fuzz_seed"].as_str(), Some(relative));
+        assert_eq!(
+            std::fs::read(root.join(relative)).unwrap_or_else(|error| {
+                panic!("failed to read permanent fuzz seed {relative}: {error}")
+            }),
+            expected
+        );
+        assert_eq!(expected.len(), 32);
+    }
 }
 
 #[test]

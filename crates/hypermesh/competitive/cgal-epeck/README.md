@@ -23,6 +23,24 @@ target/competitive/cgal-epeck/hypermesh_cgal_epeck \
   all 11 outside
 ```
 
+Generated competitive fixtures use the Rust exact-OFF exporter so CGAL sees
+the same rational value that Hyperreal imports from each binary64 coordinate,
+including values whose shortest decimal spelling would not be the identical
+rational:
+
+```sh
+cargo build --release --example export_cgal_exact_off
+target/release/examples/export_cgal_exact_off \
+  clipped_voxel_torus_65 /tmp/hypermesh-cgal
+target/competitive/cgal-epeck/hypermesh_cgal_epeck \
+  /tmp/hypermesh-cgal/clipped_voxel_torus_65-left.off \
+  /tmp/hypermesh-cgal/clipped_voxel_torus_65-right.off \
+  intersection 21 outside
+```
+
+The exporter writes reduced `numerator/denominator` tokens from
+`Real::exact_rational`; it does not round through a display approximation.
+
 The operation is `union`, `intersection`, `difference`,
 `reverse-difference`, `xor`, or `all`. The final argument selects whether the
 input copies required by CGAL's mutating API are made `inside` or `outside` the

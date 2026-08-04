@@ -11,10 +11,10 @@ use hypermesh::{
 use support::{
     APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
     YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
-    corpus, large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh_batch, run_boolmesh,
-    run_hypermesh, run_hypermesh_all, run_hypermesh_batch, run_manifold, summarize, to_hypermesh,
-    validate_with_tri_mesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
-    yeahright_control_mesh,
+    corpus, large_boolean_case, lower_dimensional_contact_corpus, prepare, prepare_yeahright,
+    raw_from_hypermesh_batch, run_boolmesh, run_hypermesh, run_hypermesh_all, run_hypermesh_batch,
+    run_manifold, summarize, to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
+    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
 };
 
 const HYPERMESH_OPERATIONS: [(&str, BooleanOp); 4] = [
@@ -162,6 +162,76 @@ fn shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies(
                     summary.volume,
                     expected_volume,
                     &format!("HyperMesh {} {policy} output {output}", case.name),
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(3),
+        BooleanExpression::And([4, 5]),
+    ];
+    let roots = [0_u32, 1, 2, 6];
+    for case in lower_dimensional_contact_corpus() {
+        let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+        let right_volume = summarize(&case.right).volume;
+        let expected_volumes = [
+            case.expected_volumes[0],
+            case.expected_volumes[1],
+            case.expected_volumes[2],
+            right_volume - case.expected_volumes[1],
+        ];
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            )
+            .unwrap_or_else(|error| panic!("{} {policy} failed: {error}", case.name));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            assert_eq!(outcome.value.results.len(), roots.len());
+            for (output_index, (output, expected_volume)) in outcome
+                .value
+                .results
+                .iter()
+                .zip(expected_volumes)
+                .enumerate()
+            {
+                assert!(
+                    boundary_is_balanced(output),
+                    "{} {policy} output {output_index} is directionally unbalanced",
+                    case.name
+                );
+                let raw = raw_from_hypermesh_batch(&outcome.value, output_index);
+                let summary = summarize(&raw);
+                assert!(
+                    summary.finite,
+                    "{} {policy} output {output_index}",
+                    case.name
+                );
+                assert!(
+                    summary.nondegenerate,
+                    "{} {policy} output {output_index}",
+                    case.name
+                );
+                assert_close(
+                    summary.volume,
+                    expected_volume,
+                    &format!(
+                        "Hypermesh {} {policy} output {output_index} volume",
+                        case.name
+                    ),
                 );
             }
         }

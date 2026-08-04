@@ -35,6 +35,19 @@ point, segment, and positive-area coplanar intersections, and the
 checking geometry, order/orientation invariance, policy certainty, and payload
 indices.
 
+The public Boolean matrix separately retains edge-touching, vertex-touching,
+and face-tangent containment cases. Their inputs are ordinary closed
+manifolds, while some exact closed-PWN results are intentionally non-manifold
+at the lower-dimensional contact. They remain mandatory Hypermesh cases but
+are not mislabeled as shared boolmesh/Manifold/CGAL output-contract rows.
+
+`clipped_voxel_torus_9`, `clipped_voxel_torus_33`, and
+`clipped_voxel_torus_65` form one deterministic indexed high-genus family.
+They use the same exact symmetry-plane clipping operation at 460, 6,412, and
+25,100 input triangles, respectively. The medium point runs in the shared
+correctness and competitive suite; the large and XL points have unique direct
+kernel/process heap selectors under both policies.
+
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
 first primes the native policy-qualified closed-PWN fact, while the second uses

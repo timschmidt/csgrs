@@ -117,116 +117,89 @@ pub struct PreparedInputs {
     pub manifold: [ManifoldRs; 2],
 }
 
+fn box_volume(min: [f64; 3], max: [f64; 3]) -> f64 {
+    (0..3).map(|axis| max[axis] - min[axis]).product()
+}
+
+fn box_case(name: &'static str, inputs: [([f64; 3], [f64; 3]); 2]) -> Case {
+    let [(left_min, left_max), (right_min, right_max)] = inputs;
+    let intersection_min = std::array::from_fn(|axis| left_min[axis].max(right_min[axis]));
+    let intersection_max = std::array::from_fn(|axis| left_max[axis].min(right_max[axis]));
+    let intersection_volume = (0..3)
+        .map(|axis| (intersection_max[axis] - intersection_min[axis]).max(0.0))
+        .product::<f64>();
+    let left_volume = box_volume(left_min, left_max);
+    let right_volume = box_volume(right_min, right_max);
+    Case {
+        name,
+        left: box_mesh(left_min, left_max),
+        right: box_mesh(right_min, right_max),
+        expected_volumes: [
+            left_volume + right_volume - intersection_volume,
+            intersection_volume,
+            left_volume - intersection_volume,
+        ],
+        expected_bounds: [
+            Some(Bounds {
+                min: std::array::from_fn(|axis| left_min[axis].min(right_min[axis])),
+                max: std::array::from_fn(|axis| left_max[axis].max(right_max[axis])),
+            }),
+            (intersection_volume > 0.0).then_some(Bounds {
+                min: intersection_min,
+                max: intersection_max,
+            }),
+            (left_volume > intersection_volume).then_some(Bounds {
+                min: left_min,
+                max: left_max,
+            }),
+        ],
+    }
+}
+
 pub fn corpus() -> Vec<Case> {
     vec![
-        Case {
-            name: "overlapping_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
-            right: box_mesh([2.0, 1.0, 1.0], [6.0, 3.0, 5.0]),
-            expected_volumes: [84.0, 12.0, 52.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [6.0, 4.0, 5.0],
-                }),
-                Some(Bounds {
-                    min: [2.0, 1.0, 1.0],
-                    max: [4.0, 3.0, 4.0],
-                }),
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [4.0, 4.0, 4.0],
-                }),
+        box_case(
+            "overlapping_boxes",
+            [
+                ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+                ([2.0, 1.0, 1.0], [6.0, 3.0, 5.0]),
             ],
-        },
-        Case {
-            name: "disjoint_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
-            right: box_mesh([3.0, 1.0, 0.0], [5.0, 3.0, 2.0]),
-            expected_volumes: [16.0, 0.0, 8.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [5.0, 3.0, 2.0],
-                }),
-                None,
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [2.0, 2.0, 2.0],
-                }),
+        ),
+        box_case(
+            "disjoint_boxes",
+            [
+                ([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+                ([3.0, 1.0, 0.0], [5.0, 3.0, 2.0]),
             ],
-        },
-        Case {
-            name: "nested_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [6.0, 6.0, 6.0]),
-            right: box_mesh([2.0, 1.0, 2.0], [4.0, 5.0, 4.0]),
-            expected_volumes: [216.0, 16.0, 200.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [6.0, 6.0, 6.0],
-                }),
-                Some(Bounds {
-                    min: [2.0, 1.0, 2.0],
-                    max: [4.0, 5.0, 4.0],
-                }),
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [6.0, 6.0, 6.0],
-                }),
+        ),
+        box_case(
+            "nested_boxes",
+            [
+                ([0.0, 0.0, 0.0], [6.0, 6.0, 6.0]),
+                ([2.0, 1.0, 2.0], [4.0, 5.0, 4.0]),
             ],
-        },
-        Case {
-            name: "identical_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
-            right: box_mesh([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
-            expected_volumes: [64.0, 64.0, 0.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [4.0, 4.0, 4.0],
-                }),
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [4.0, 4.0, 4.0],
-                }),
-                None,
+        ),
+        box_case(
+            "identical_boxes",
+            [
+                ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+                ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
             ],
-        },
-        Case {
-            name: "face_touching_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
-            right: box_mesh([2.0, 0.0, 0.0], [4.0, 2.0, 2.0]),
-            expected_volumes: [16.0, 0.0, 8.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [4.0, 2.0, 2.0],
-                }),
-                None,
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [2.0, 2.0, 2.0],
-                }),
+        ),
+        box_case(
+            "face_touching_boxes",
+            [
+                ([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+                ([2.0, 0.0, 0.0], [4.0, 2.0, 2.0]),
             ],
-        },
-        Case {
-            name: "partial_face_touching_boxes",
-            left: box_mesh([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
-            right: box_mesh([2.0, 1.0, 0.0], [4.0, 3.0, 2.0]),
-            expected_volumes: [16.0, 0.0, 8.0],
-            expected_bounds: [
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [4.0, 3.0, 2.0],
-                }),
-                None,
-                Some(Bounds {
-                    min: [0.0, 0.0, 0.0],
-                    max: [2.0, 2.0, 2.0],
-                }),
+        ),
+        box_case(
+            "partial_face_touching_boxes",
+            [
+                ([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+                ([2.0, 1.0, 0.0], [4.0, 3.0, 2.0]),
             ],
-        },
+        ),
         Case {
             name: "overlapping_tetrahedra",
             left: tetrahedron([0.0, 0.0, 0.0], 4.0),
@@ -247,7 +220,137 @@ pub fn corpus() -> Vec<Case> {
                 }),
             ],
         },
+        clipped_voxel_torus_case(9),
     ]
+}
+
+/// Closed-PWN Boolean cases whose exact results may be non-manifold at a
+/// lower-dimensional contact and therefore are not shared competitor rows.
+pub fn lower_dimensional_contact_corpus() -> Vec<Case> {
+    vec![
+        box_case(
+            "edge_touching_boxes",
+            [
+                ([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+                ([2.0, 2.0, 0.0], [4.0, 4.0, 2.0]),
+            ],
+        ),
+        box_case(
+            "vertex_touching_boxes",
+            [
+                ([0.0, 0.0, 0.0], [2.0, 2.0, 2.0]),
+                ([2.0, 2.0, 2.0], [4.0, 4.0, 4.0]),
+            ],
+        ),
+        box_case(
+            "face_tangent_containment_boxes",
+            [
+                ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+                ([0.0, 1.0, 1.0], [2.0, 3.0, 3.0]),
+            ],
+        ),
+    ]
+}
+
+/// Builds an indexed rectangular voxel torus and clips it through its exact
+/// symmetry plane. Known corpus scale points use `outer` values 9, 33, and 65.
+pub fn clipped_voxel_torus_case(outer: usize) -> Case {
+    assert!(outer >= 9 && (outer - 1).is_multiple_of(4));
+    let wall = (outer - 1) / 4;
+    let depth = wall;
+    let inner = outer - 2 * wall;
+    let left = voxel_torus_mesh(outer, wall, depth);
+    let cut = outer as f64 / 2.0;
+    let right = box_mesh(
+        [-1.0, -1.0, -1.0],
+        [cut, outer as f64 + 1.0, depth as f64 + 1.0],
+    );
+    let left_volume = ((outer * outer - inner * inner) * depth) as f64;
+    let intersection_volume = left_volume / 2.0;
+    let right_volume = (cut + 1.0) * (outer as f64 + 2.0) * (depth as f64 + 2.0);
+    Case {
+        name: match outer {
+            9 => "clipped_voxel_torus_9",
+            33 => "clipped_voxel_torus_33",
+            65 => "clipped_voxel_torus_65",
+            _ => "clipped_voxel_torus",
+        },
+        left,
+        right,
+        expected_volumes: [
+            left_volume + right_volume - intersection_volume,
+            intersection_volume,
+            left_volume - intersection_volume,
+        ],
+        expected_bounds: [
+            Some(Bounds {
+                min: [-1.0, -1.0, -1.0],
+                max: [outer as f64, outer as f64 + 1.0, depth as f64 + 1.0],
+            }),
+            Some(Bounds {
+                min: [0.0, 0.0, 0.0],
+                max: [cut, outer as f64, depth as f64],
+            }),
+            Some(Bounds {
+                min: [cut, 0.0, 0.0],
+                max: [outer as f64, outer as f64, depth as f64],
+            }),
+        ],
+    }
+}
+
+fn voxel_torus_mesh(outer: usize, wall: usize, depth: usize) -> RawMesh {
+    assert!(wall > 0 && depth > 0 && wall * 2 < outer);
+    let outer = i32::try_from(outer).expect("voxel torus extent fits i32");
+    let wall = i32::try_from(wall).expect("voxel torus wall fits i32");
+    let depth = i32::try_from(depth).expect("voxel torus depth fits i32");
+    let occupied = (0..outer)
+        .flat_map(|x| (0..outer).flat_map(move |y| (0..depth).map(move |z| [x, y, z])))
+        .filter(|&[x, y, _]| x < wall || x >= outer - wall || y < wall || y >= outer - wall)
+        .collect::<BTreeSet<_>>();
+    let faces = [
+        ([-1, 0, 0], [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]]),
+        ([1, 0, 0], [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]]),
+        ([0, -1, 0], [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]]),
+        ([0, 1, 0], [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]]),
+        ([0, 0, -1], [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]),
+        ([0, 0, 1], [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]),
+    ];
+    let mut vertex_ids = BTreeMap::<[i32; 3], usize>::new();
+    let mut positions = Vec::new();
+    let mut triangles = Vec::new();
+    for &[x, y, z] in &occupied {
+        for &(direction, offsets) in &faces {
+            let neighbor = [x + direction[0], y + direction[1], z + direction[2]];
+            if occupied.contains(&neighbor) {
+                continue;
+            }
+            let grid = offsets.map(|[ox, oy, oz]| [x + ox, y + oy, z + oz]);
+            let mut vertices = [0; 4];
+            for (slot, coordinates) in vertices.iter_mut().zip(grid) {
+                *slot = if let Some(&vertex) = vertex_ids.get(&coordinates) {
+                    vertex
+                } else {
+                    let vertex = positions.len();
+                    positions.push(coordinates.map(f64::from));
+                    vertex_ids.insert(coordinates, vertex);
+                    vertex
+                };
+            }
+            triangles.push([vertices[0], vertices[1], vertices[2]]);
+            triangles.push([vertices[0], vertices[2], vertices[3]]);
+        }
+    }
+    let inner = outer - 2 * wall;
+    let expected_triangles = 4 * (outer * outer - inner * inner) + 8 * (outer + inner) * depth;
+    assert_eq!(
+        triangles.len(),
+        usize::try_from(expected_triangles).expect("voxel torus triangle count fits usize")
+    );
+    RawMesh {
+        positions,
+        triangles,
+    }
 }
 
 pub fn large_boolean_case() -> Case {

@@ -81,3 +81,14 @@ The Boolean targets are intentionally separate because certified arrangement
 construction is much more expensive than predicate, BVH, oracle, and
 input-validation work. Run long campaigns for each target independently.
 Minimize every crash and promote it to a deterministic regression test.
+
+Named permanent inputs live under `fuzz/seeds`; the mutable libFuzzer working
+corpus under `fuzz/corpus` remains ignored. The box-oracle seeds include the
+edge-contact, vertex-contact, and face-tangent containment Boolean fixtures and
+exercise the shared four-operation program. Run one directly with, for
+example:
+
+```sh
+cargo +nightly fuzz run boolean_box_oracle --fuzz-dir fuzz -- \
+  fuzz/seeds/boolean_box_oracle/edge_touching_boxes -runs=1
+```
