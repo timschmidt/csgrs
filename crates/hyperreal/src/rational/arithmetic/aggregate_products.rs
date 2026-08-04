@@ -1906,6 +1906,60 @@ impl Rational {
             .collect()
     }
 
+    /// Returns the positive integer greatest common divisor of the reduced
+    /// numerator magnitudes of two rationals.
+    ///
+    /// Denominators and signs deliberately do not participate. This exposes
+    /// the reusable integer content needed to schedule projective and affine
+    /// exact-coordinate normalization without cloning numerator internals in
+    /// downstream geometry crates. Zero is the identity, as for integer GCD.
+    pub fn numerator_magnitude_gcd(&self, other: &Self) -> Self {
+        let left = self.canonicalized_ref();
+        let right = other.canonicalized_ref();
+        Self::from_unsigned_integer(Self::gcd_magnitudes_with_mixed_width_fast_path(
+            &left.numerator,
+            &right.numerator,
+        ))
+    }
+
+    /// Returns the reduced unsigned numerator magnitude of `self - other`
+    /// when both operands are exact dyadics.
+    ///
+    /// This structural query deliberately bypasses retained linear-result
+    /// scheduling. It is intended for one-shot representation analysis where
+    /// populating an operand's bounded arithmetic cache would displace work
+    /// that a subsequent numeric kernel actually reuses.
+    pub fn dyadic_difference_numerator_magnitude(&self, other: &Self) -> Option<Self> {
+        let left = self.canonicalized_ref();
+        let right = other.canonicalized_ref();
+        let left_shift = Self::biguint_power_of_two_shift(&left.denominator)?;
+        let right_shift = Self::biguint_power_of_two_shift(&right.denominator)?;
+        let denominator_shift = left_shift.max(right_shift);
+        let left_scale = usize::try_from(denominator_shift - left_shift).ok()?;
+        let right_scale = usize::try_from(denominator_shift - right_shift).ok()?;
+        let left_magnitude = &left.numerator << left_scale;
+        let right_magnitude = &right.numerator << right_scale;
+        let mut magnitude = match (left.sign, right.sign) {
+            (NoSign, NoSign) => return Some(Self::zero()),
+            (NoSign, _) => right_magnitude,
+            (_, NoSign) => left_magnitude,
+            (left_sign, right_sign) if left_sign != right_sign => {
+                left_magnitude + right_magnitude
+            }
+            _ => match left_magnitude.cmp(&right_magnitude) {
+                Ordering::Less => right_magnitude - left_magnitude,
+                Ordering::Equal => return Some(Self::zero()),
+                Ordering::Greater => left_magnitude - right_magnitude,
+            },
+        };
+        let reduction_shift = magnitude
+            .trailing_zeros()
+            .expect("nonzero magnitude has trailing zeros")
+            .min(denominator_shift);
+        magnitude >>= usize::try_from(reduction_shift).ok()?;
+        Some(Self::from_unsigned_integer(magnitude))
+    }
+
     /// Normalize a fixed exact-rational ratio to primitive integer components.
     ///
     /// The returned array differs from the input by one positive common

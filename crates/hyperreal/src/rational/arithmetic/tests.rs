@@ -1191,6 +1191,45 @@ mod tests {
         );
     }
 
+    #[test]
+    fn numerator_magnitude_gcd_ignores_signs_and_denominators() {
+        let common = (BigUint::one() << 192_usize) + BigUint::one();
+        let left = -Rational::from_unsigned_integer(&common * 15_u8) / Rational::from(8_u8);
+        let right = Rational::from_unsigned_integer(&common * 21_u8) / Rational::from(32_u8);
+
+        assert_eq!(
+            left.numerator_magnitude_gcd(&right),
+            Rational::from_unsigned_integer(&common * 3_u8)
+        );
+        assert_eq!(
+            Rational::zero().numerator_magnitude_gcd(&right),
+            Rational::from_unsigned_integer(&common * 21_u8)
+        );
+    }
+
+    #[test]
+    fn dyadic_difference_numerator_query_is_reduced_and_unsigned() {
+        let wide = (BigUint::one() << 192_usize) + BigUint::one();
+        let left = Rational::from_unsigned_integer(&wide * 9_u8) / Rational::from(32_u8);
+        let right = Rational::from_unsigned_integer(&wide * 3_u8) / Rational::from(8_u8);
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&right),
+            Some(Rational::from_unsigned_integer(&wide * 3_u8))
+        );
+        assert_eq!(
+            (-&left).dyadic_difference_numerator_magnitude(&right),
+            Some(Rational::from_unsigned_integer(&wide * 21_u8))
+        );
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&left),
+            Some(Rational::zero())
+        );
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&Rational::fraction(1, 3).unwrap()),
+            None
+        );
+    }
+
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn rational_operation_gcd_trace_reports_selected_algorithm() {
