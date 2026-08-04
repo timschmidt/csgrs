@@ -8750,6 +8750,23 @@ fn trivariate_parameter_triple_sign_by_refinement(
             return Ok(Classification::Decided(sign));
         }
         if target_steps == 8 {
+            let original_dimensions = polynomial.dimensions();
+            let original_cubic_factor_attempted = [
+                original_dimensions.0,
+                original_dimensions.1,
+                original_dimensions.2,
+            ]
+            .contains(&4);
+            // Degree-three defining-polynomial reduction can preserve the
+            // selected value while expanding an authored repeated factor.
+            // Give an original cubic axis one exact replay first, and record
+            // the attempt so a failed square-free tensor is not repeated.
+            if original_cubic_factor_attempted
+                && let Some(sign) =
+                    trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
+            {
+                return Ok(Classification::Decided(sign));
+            }
             let reduced =
                 trivariate_reduce_selected_root_relations(polynomial, first, second, third);
             if let Some(reduced) = reduced.as_ref() {
@@ -8859,6 +8876,7 @@ fn trivariate_parameter_triple_sign_by_refinement(
             // value at the root tuple. Replay the exact original product only
             // after the smaller reduced tensor has exhausted its authorities.
             if reduced.is_some()
+                && !original_cubic_factor_attempted
                 && let Some(sign) =
                     trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
             {
