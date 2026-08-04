@@ -209,16 +209,27 @@ pub fn delaunay(
 
 fn delaunay_inner(kernel: &ExactKernel, points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
     validate_unique_points(kernel, points)?;
-    let triangles = delaunay_triangles(kernel, points)?;
+    delaunay_from_validated(kernel, points)
+}
+
+fn delaunay_from_validated(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+) -> Result<DelaunayTriangulation> {
+    delaunay_from_validated_owned(kernel, points.to_vec())
+}
+
+fn delaunay_from_validated_owned(
+    kernel: &ExactKernel,
+    points: Vec<ExactPoint>,
+) -> Result<DelaunayTriangulation> {
+    let triangles = delaunay_triangles(kernel, &points)?;
     // Every construction branch admits only nondegenerate, positively
     // oriented triangles and makes each Delaunay choice with the exact
     // in-circle predicate. Re-running the public validator here would repeat
     // those predicates over the completed mesh; callers can still invoke
     // `validate` explicitly on records assembled or deserialized elsewhere.
-    Ok(DelaunayTriangulation::from_parts(
-        points.to_vec(),
-        triangles,
-    ))
+    Ok(DelaunayTriangulation::from_parts(points, triangles))
 }
 
 /// Triangulate an exact point set using a deterministic BRIO-style batch order.
@@ -247,11 +258,22 @@ fn delaunay_spatial_inner(
     points: &[ExactPoint],
 ) -> Result<DelaunayTriangulation> {
     validate_unique_points(kernel, points)?;
-    let triangles = delaunay_triangles_spatial(kernel, points)?;
-    Ok(DelaunayTriangulation::from_parts(
-        points.to_vec(),
-        triangles,
-    ))
+    delaunay_spatial_from_validated(kernel, points)
+}
+
+fn delaunay_spatial_from_validated(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+) -> Result<DelaunayTriangulation> {
+    delaunay_spatial_from_validated_owned(kernel, points.to_vec())
+}
+
+fn delaunay_spatial_from_validated_owned(
+    kernel: &ExactKernel,
+    points: Vec<ExactPoint>,
+) -> Result<DelaunayTriangulation> {
+    let triangles = delaunay_triangles_spatial(kernel, &points)?;
+    Ok(DelaunayTriangulation::from_parts(points, triangles))
 }
 
 /// Triangulate exact points with constraints.
@@ -283,14 +305,26 @@ pub fn constrained_delaunay(
 /// either side of every protected cycle remains triangulated. This is the
 /// appropriate domain for surface corefinement and other planar-complex work
 /// where an interior ring separates cells instead of removing material.
+/// Constraints must already form a PSLG: they may not cross, overlap, or contain
+/// an input point that is not one of their endpoints. Invalid structure is
+/// rejected rather than silently planarized; use [`constrained_delaunay`] when
+/// authored constraints still require exact intersection insertion.
 pub fn constrained_delaunay_convex_hull(
     context: &TriangulationContext,
     points: &[ExactPoint],
     constraints: &[Constraint],
 ) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
     let kernel = ExactKernel::new(context);
-    let triangulation =
-        constrained_delaunay_inner_with_polygon_dispatch(&kernel, points, constraints, false)?;
+    validate_constraints(points.len(), constraints)?;
+    validate_unique_points(&kernel, points)?;
+    validate_constraint_geometry(&kernel, points, constraints, true)?;
+    let triangulation = constrained_delaunay_planar_inner(
+        &kernel,
+        points.to_vec(),
+        constraints,
+        constraints.to_vec(),
+        false,
+    )?;
     Ok(kernel.finish(triangulation))
 }
 
@@ -312,26 +346,47 @@ fn constrained_delaunay_inner_with_polygon_dispatch(
     validate_unique_points(kernel, points)?;
 
     if constraints.is_empty() {
-        let triangulation = delaunay_inner(kernel, points)?;
-        let constrained = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
-            triangulation.points,
-            Vec::new(),
-            Vec::new(),
-            triangulation.triangles,
-        );
-        crate::cdt_validate::validate_constrained_convex_hull_delaunay(
+        return constrained_delaunay_planar_inner(
             kernel,
-            &constrained.points,
-            &constrained.constraint_edges,
-            &constrained.triangles,
-        )?;
-        return Ok(constrained);
+            points.to_vec(),
+            constraints,
+            Vec::new(),
+            dispatch_closed_polygon,
+        );
     }
 
     let planar = crate::cdt_insert::planarize_constraints(kernel, points, constraints)?;
     let points = planar.points;
     let internal_constraints = planar.constraints;
-    validate_constraint_geometry(kernel, &points, &internal_constraints)?;
+    validate_constraint_geometry(kernel, &points, &internal_constraints, false)?;
+
+    constrained_delaunay_planar_inner(
+        kernel,
+        points,
+        constraints,
+        internal_constraints,
+        dispatch_closed_polygon,
+    )
+}
+
+fn constrained_delaunay_planar_inner(
+    kernel: &ExactKernel,
+    points: Vec<ExactPoint>,
+    public_constraints: &[Constraint],
+    internal_constraints: Vec<Constraint>,
+    dispatch_closed_polygon: bool,
+) -> Result<ConstrainedDelaunayTriangulation> {
+    if internal_constraints.is_empty() {
+        let triangulation = delaunay_from_validated_owned(kernel, points)?;
+        return Ok(
+            ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+                triangulation.points,
+                Vec::new(),
+                Vec::new(),
+                triangulation.triangles,
+            ),
+        );
+    }
 
     if dispatch_closed_polygon
         && let Some(polygon) = cdt_constraints::polygon_from_closed_constraints(
@@ -371,7 +426,7 @@ fn constrained_delaunay_inner_with_polygon_dispatch(
 
             let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
                 points,
-                constraints.to_vec(),
+                public_constraints.to_vec(),
                 internal_constraints,
                 triangles,
             );
@@ -399,23 +454,24 @@ fn constrained_delaunay_inner_with_polygon_dispatch(
 
     let base = match constrained_edges_already_delaunay(
         kernel,
-        &points,
+        points,
         &internal_constraints,
-        constraints,
+        public_constraints,
     )? {
         Ok(triangulation) => return Ok(triangulation),
         Err(base) => base,
     };
 
+    let (points, base_triangles) = base.into_parts();
     let triangles = crate::cdt_insert::insert_constraints(
         kernel,
         &points,
-        base.triangles().to_vec(),
+        base_triangles,
         &internal_constraints,
     )?;
     let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
         points,
-        constraints.to_vec(),
+        public_constraints.to_vec(),
         internal_constraints,
         triangles,
     );
@@ -1133,12 +1189,18 @@ fn validate_constraint_geometry(
     kernel: &ExactKernel,
     points: &[Point2],
     constraints: &[Constraint],
+    reject_unsplit_points: bool,
 ) -> Result<()> {
     let approximate_points = exact_points_f64(points);
     for first in 0..constraints.len() {
         for second in first + 1..constraints.len() {
             let a = constraints[first];
             let b = constraints[second];
+            if (a.from == b.from && a.to == b.to) || (a.from == b.to && a.to == b.from) {
+                return Err(Error::InvalidInput {
+                    reason: "overlapping constraints are not supported",
+                });
+            }
             if constraints_share_endpoint(a, b) {
                 continue;
             }
@@ -1173,6 +1235,32 @@ fn validate_constraint_geometry(
         }
     }
 
+    if !reject_unsplit_points {
+        return Ok(());
+    }
+    for &constraint in constraints {
+        for point in 0..points.len() {
+            if point == constraint.from || point == constraint.to {
+                continue;
+            }
+            if approximate_points.as_ref().is_some_and(|points| {
+                !approximate_point_within_constraint_bounds(points, constraint, point)
+            }) {
+                continue;
+            }
+            if predicates::point_on_segment(
+                kernel,
+                &points[constraint.from],
+                &points[constraint.to],
+                &points[point],
+            )? {
+                return Err(Error::InvalidInput {
+                    reason: "constraint contains an unsplit point",
+                });
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -1185,14 +1273,14 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
 
 fn constrained_edges_already_delaunay(
     kernel: &ExactKernel,
-    points: &[ExactPoint],
+    points: Vec<ExactPoint>,
     constraints: &[Constraint],
     public_constraints: &[Constraint],
 ) -> Result<std::result::Result<ConstrainedDelaunayTriangulation, DelaunayTriangulation>> {
     let triangulation = if points.len() >= 32 {
-        delaunay_spatial_inner(kernel, points)?
+        delaunay_spatial_from_validated_owned(kernel, points)?
     } else {
-        delaunay_inner(kernel, points)?
+        delaunay_from_validated_owned(kernel, points)?
     };
 
     // Exact fast path: if every requested constrained segment already exists
@@ -1210,12 +1298,6 @@ fn constrained_edges_already_delaunay(
             constraints.to_vec(),
             triangles,
         );
-        crate::cdt_validate::validate_constrained_convex_hull_delaunay(
-            kernel,
-            &constrained.points,
-            &constrained.constraint_edges,
-            &constrained.triangles,
-        )?;
         return Ok(Ok(constrained));
     }
 
@@ -1736,6 +1818,35 @@ mod tests {
                 .validate_unconstrained_edges_are_delaunay(&context)
                 .unwrap();
         }
+    }
+
+    #[test]
+    fn convex_hull_pslg_rejects_constraints_that_still_require_planarization() {
+        let crossing_points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
+        let crossing = [Constraint::new(0, 2), Constraint::new(1, 3)];
+        assert_eq!(
+            constrained_delaunay_convex_hull(&APPROX, &crossing_points, &crossing).unwrap_err(),
+            Error::InvalidInput {
+                reason: "properly crossing constraints are not supported"
+            }
+        );
+
+        let unsplit_points = vec![p(0, 0), p(2, 0), p(1, 0), p(0, 2)];
+        assert_eq!(
+            constrained_delaunay_convex_hull(&APPROX, &unsplit_points, &[Constraint::new(0, 1)],)
+                .unwrap_err(),
+            Error::InvalidInput {
+                reason: "constraint contains an unsplit point"
+            }
+        );
+
+        let duplicate = [Constraint::new(0, 1), Constraint::new(1, 0)];
+        assert_eq!(
+            constrained_delaunay_convex_hull(&APPROX, &crossing_points, &duplicate).unwrap_err(),
+            Error::InvalidInput {
+                reason: "overlapping constraints are not supported"
+            }
+        );
     }
 
     #[test]
