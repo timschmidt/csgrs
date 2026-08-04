@@ -1108,6 +1108,37 @@ fn intersect_polygons_with_vertices_constructed(
         };
     }
 
+    // A closed triangle reaches a plane only through an on-plane vertex or a
+    // pair of vertices on opposite sides. Certifying this symmetric support
+    // separator before constructing crossings avoids exact points that the
+    // other direction would later reject. A successful triangle pair always
+    // needs all six classifications, so retaining them changes no successful
+    // policy-decision set.
+    let triangle_classes = if let ([p0, p1, p2], [q0, q1, q2]) = (polygon_vertices, other_vertices)
+    {
+        let polygon_classes = [
+            classify_point_decision(decisions, p0, &other.support)?,
+            classify_point_decision(decisions, p1, &other.support)?,
+            classify_point_decision(decisions, p2, &other.support)?,
+        ];
+        if !triangle_reaches_plane(polygon_classes) {
+            crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
+            return Ok(ConstructedPairwiseIntersection::Disjoint);
+        }
+        let other_classes = [
+            classify_point_decision(decisions, q0, &polygon.support)?,
+            classify_point_decision(decisions, q1, &polygon.support)?,
+            classify_point_decision(decisions, q2, &polygon.support)?,
+        ];
+        if !triangle_reaches_plane(other_classes) {
+            crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
+            return Ok(ConstructedPairwiseIntersection::Disjoint);
+        }
+        Some([polygon_classes, other_classes])
+    } else {
+        None
+    };
+
     let point_capacity = polygon_vertices
         .len()
         .checked_add(other_vertices.len())
@@ -1125,6 +1156,7 @@ fn intersect_polygons_with_vertices_constructed(
         decisions,
         polygon,
         polygon_vertices,
+        triangle_classes.as_ref().map(|classes| &classes[0]),
         other,
         other_support_identity,
         &mut scratch.points,
@@ -1134,6 +1166,7 @@ fn intersect_polygons_with_vertices_constructed(
         decisions,
         other,
         other_vertices,
+        triangle_classes.as_ref().map(|classes| &classes[1]),
         polygon,
         polygon_support_identity,
         &mut scratch.points,
@@ -2023,18 +2056,28 @@ fn compare_points_lexicographically(
     Ok(std::cmp::Ordering::Equal)
 }
 
+fn triangle_reaches_plane([c0, c1, c2]: [Classification; 3]) -> bool {
+    c0 == Classification::On || c0 != c1 || c1 != c2
+}
+
 fn collect_edge_plane_crossings(
     decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
     vertices: &[Point3],
+    retained_classifications: Option<&[Classification; 3]>,
     plane_polygon: &ConvexPolygon,
     plane_identity: Option<ConstructionPlaneIdentity>,
     points: &mut Vec<ConstructedIntersectionPoint>,
 ) -> HypermeshResult<()> {
     if let [v0, v1, v2] = vertices {
-        let c0 = classify_point_decision(decisions, v0, &plane_polygon.support)?;
-        let c1 = classify_point_decision(decisions, v1, &plane_polygon.support)?;
-        let c2 = classify_point_decision(decisions, v2, &plane_polygon.support)?;
+        let [c0, c1, c2] = match retained_classifications {
+            Some(classifications) => *classifications,
+            None => [
+                classify_point_decision(decisions, v0, &plane_polygon.support)?,
+                classify_point_decision(decisions, v1, &plane_polygon.support)?,
+                classify_point_decision(decisions, v2, &plane_polygon.support)?,
+            ],
+        };
         collect_edge_plane_crossing(
             decisions,
             edge_polygon,
@@ -2598,12 +2641,33 @@ mod tests {
         classify_segment_plane_edge_numerator, dedup_constructed_points,
         intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
+        triangle_reaches_plane,
     };
     use crate::bvh::ExactBvh;
     use crate::context::{DecisionContext, MeshContext};
     use crate::error::HypermeshError;
     use crate::geometry::{Classification, Plane};
     use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
+
+    #[test]
+    fn triangle_plane_prepass_rejects_only_one_open_halfspace() {
+        let values = [
+            Classification::Negative,
+            Classification::On,
+            Classification::Positive,
+        ];
+        for c0 in values {
+            for c1 in values {
+                for c2 in values {
+                    let classifications = [c0, c1, c2];
+                    let expected = classifications.contains(&Classification::On)
+                        || (classifications.contains(&Classification::Negative)
+                            && classifications.contains(&Classification::Positive));
+                    assert_eq!(triangle_reaches_plane(classifications), expected);
+                }
+            }
+        }
+    }
 
     #[test]
     fn sign_only_segment_plane_edge_numerator_matches_materialized_polynomial() {
