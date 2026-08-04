@@ -1411,6 +1411,7 @@ fn fixed_point_structure_masks_3<const N: usize>(points: [&Point3; N]) -> FixedP
 mod tests {
     use super::*;
     use crate::predicate::{Certainty, Escalation};
+    use crate::predicates::exact;
     use hyperreal::Rational;
     use proptest::prelude::*;
 
@@ -1444,6 +1445,11 @@ mod tests {
 
     fn rp3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(rational(x), rational(y), rational(z))
+    }
+
+    fn wide_rp3(scale: &Rational, x: i32, y: i32, z: i32) -> Point3 {
+        let coordinate = |value| Real::from(scale * &Rational::new(i64::from(value)));
+        Point3::new(coordinate(x), coordinate(y), coordinate(z))
     }
 
     #[test]
@@ -2141,6 +2147,39 @@ mod tests {
                 orient3d_with_policy(&a, &b, &c, &d, policy),
                 orient3d_with_policy(&moved_a, &moved_b, &moved_c, &moved_d, policy)
             );
+        }
+
+        #[test]
+        fn sign_only_exact_orient3d_matches_wide_integer_determinants(
+            ax in -16_i32..16, ay in -16_i32..16, az in -16_i32..16,
+            bx in -16_i32..16, by in -16_i32..16, bz in -16_i32..16,
+            cx in -16_i32..16, cy in -16_i32..16, cz in -16_i32..16,
+            dx in -16_i32..16, dy in -16_i32..16, dz in -16_i32..16,
+        ) {
+            let adx = i128::from(ax - dx);
+            let ady = i128::from(ay - dy);
+            let adz = i128::from(az - dz);
+            let bdx = i128::from(bx - dx);
+            let bdy = i128::from(by - dy);
+            let bdz = i128::from(bz - dz);
+            let cdx = i128::from(cx - dx);
+            let cdy = i128::from(cy - dy);
+            let cdz = i128::from(cz - dz);
+            let determinant = adx * (bdy * cdz - bdz * cdy)
+                - ady * (bdx * cdz - bdz * cdx)
+                + adz * (bdx * cdy - bdy * cdx);
+            let expected = match determinant.cmp(&0) {
+                Ordering::Less => Sign::Negative,
+                Ordering::Equal => Sign::Zero,
+                Ordering::Greater => Sign::Positive,
+            };
+            let scale = rational_beyond_i128();
+            let a = wide_rp3(&scale, ax, ay, az);
+            let b = wide_rp3(&scale, bx, by, bz);
+            let c = wide_rp3(&scale, cx, cy, cz);
+            let d = wide_rp3(&scale, dx, dy, dz);
+
+            prop_assert_eq!(exact::orient3d(&a, &b, &c, &d), Some(expected));
         }
 
         #[test]

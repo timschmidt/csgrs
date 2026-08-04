@@ -7,6 +7,7 @@
 
 use crate::geometry::{Point2, Point3};
 use crate::predicate::Sign;
+use core::cmp::Ordering;
 use hyperreal::{Rational, Real};
 
 /// Try the exact rational 2D orientation kernel.
@@ -53,10 +54,10 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
 
     crate::trace_dispatch!("hyperlimit", "exact_orient3d", "rational-det3");
 
-    // Keep the translated 3D determinant as one six-term signed product-sum
-    // until the final sign decision. The scalar reducer can select dyadic,
-    // equal-denominator, or LCM schedules without first building generic
-    // symbolic `Real` nodes.
+    // The predicate consumes only the determinant sign. Preserve the complete
+    // six-term polynomial for the scalar scheduler, but compare its signed
+    // magnitudes directly instead of materializing and reducing a dead
+    // rational result.
     let adx = ax - dx;
     let ady = ay - dy;
     let adz = az - dz;
@@ -67,7 +68,7 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
     let cdy = cy - dy;
     let cdz = cz - dz;
 
-    let det = Rational::signed_product_sum(
+    let ordering = Rational::signed_product_sum_ordering(
         [true, false, true, false, true, false],
         [
             [&adx, &bdy, &cdz],
@@ -78,7 +79,7 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
             [&adz, &bdy, &cdx],
         ],
     );
-    Some(sign_from_rational(&det))
+    Some(sign_from_ordering(ordering))
 }
 
 /// Try the exact rational in-circle kernel.
@@ -222,5 +223,13 @@ fn sign_from_rational(value: &Rational) -> Sign {
         Sign::Positive
     } else {
         Sign::Zero
+    }
+}
+
+fn sign_from_ordering(ordering: Ordering) -> Sign {
+    match ordering {
+        Ordering::Less => Sign::Negative,
+        Ordering::Equal => Sign::Zero,
+        Ordering::Greater => Sign::Positive,
     }
 }
