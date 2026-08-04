@@ -2585,20 +2585,15 @@ fn corefine_face(
             if !segments_properly_cross(decisions, left_points, right_points)? {
                 continue;
             }
-            let intersection = decisions
-                .decide(
-                    hyperlimit::proper_segment_intersection_point(
-                        &limit_point(left_points[0]),
-                        &limit_point(left_points[1]),
-                        &limit_point(right_points[0]),
-                        &limit_point(right_points[1]),
-                        decisions.policy(),
-                    ),
-                    "surface arrangement proper segment intersection",
-                )?
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "proper face constraints have no intersection point",
-                })?;
+            let intersection = hyperlimit::construct_line_intersection_point(
+                &limit_point(left_points[0]),
+                &limit_point(left_points[1]),
+                &limit_point(right_points[0]),
+                &limit_point(right_points[1]),
+            )
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "proper face constraints have no intersection point",
+            })?;
             let planar = hypertri::ExactPoint::new(intersection.x, intersection.y);
             let point = lift_planar_point(&planar, &polygon.support, projection_axis, axes)?;
             if classify_point_decision(decisions, &point, &polygon.support)? != Classification::On {
