@@ -28,6 +28,24 @@ fn expect_decided<T>(classification: Classification<T>, message: &str) -> T {
     }
 }
 
+fn corner_lane_enabled(name: &str) -> bool {
+    match std::env::var("HYPERCURVE_EDIT_CORNER_LANE") {
+        Ok(selected) => selected == name,
+        Err(_) => true,
+    }
+}
+
+fn benchmark_iterations() -> u32 {
+    let iterations = match std::env::var("HYPERCURVE_EDIT_ITERATIONS") {
+        Ok(iterations) => iterations
+            .parse()
+            .expect("HYPERCURVE_EDIT_ITERATIONS must be a positive u32"),
+        Err(_) => 10_000,
+    };
+    assert!(iterations > 0, "benchmark iterations must be nonzero");
+    iterations
+}
+
 fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
@@ -288,89 +306,102 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
     let next_parameter = q(1, 4);
     let design_value = s(1);
 
-    let started = Instant::now();
-    let mut curves = 0_usize;
-    for _ in 0..iterations {
-        let chamfered = path
-            .chamfer_vertex_by_parameters(
-                1,
-                previous_parameter.clone(),
-                next_parameter.clone(),
-                &policy,
-            )
-            .expect("parameter chamfer benchmark must remain exact")
-            .into_value();
-        curves += black_box(chamfered.curves().len());
+    if corner_lane_enabled("curve_path_parameter_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let chamfered = path
+                .chamfer_vertex_by_parameters(
+                    1,
+                    previous_parameter.clone(),
+                    next_parameter.clone(),
+                    &policy,
+                )
+                .expect("parameter chamfer benchmark must remain exact")
+                .into_value();
+            curves += black_box(chamfered.curves().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_path_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut curves = 0_usize;
-    for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(chamfered) = path
-            .chamfer_vertex_by_setbacks(
-                1,
-                design_value.clone(),
-                design_value.clone(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
-            .expect("design-parameter chamfer benchmark must remain exact")
-            .into_value()
-        else {
-            panic!("line design-parameter chamfer benchmark must be unique");
-        };
-        curves += black_box(chamfered.curves().len());
+    if corner_lane_enabled("curve_path_design_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(chamfered) = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    design_value.clone(),
+                    design_value.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("design-parameter chamfer benchmark must remain exact")
+                .into_value()
+            else {
+                panic!("line design-parameter chamfer benchmark must be unique");
+            };
+            curves += black_box(chamfered.curves().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_path_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut curves = 0_usize;
-    for _ in 0..iterations {
-        let filleted = path
-            .fillet_vertex_by_parameters(
-                1,
-                previous_parameter.clone(),
-                next_parameter.clone(),
-                &p(3, 1),
-                false,
-                &policy,
-            )
-            .expect("parameter fillet benchmark must remain exact")
-            .into_value();
-        curves += black_box(filleted.curves().len());
+    if corner_lane_enabled("curve_path_parameter_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let filleted = path
+                .fillet_vertex_by_parameters(
+                    1,
+                    previous_parameter.clone(),
+                    next_parameter.clone(),
+                    &p(3, 1),
+                    false,
+                    &policy,
+                )
+                .expect("parameter fillet benchmark must remain exact")
+                .into_value();
+            curves += black_box(filleted.curves().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_path_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut curves = 0_usize;
-    for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(filleted) = path
-            .fillet_vertex_by_radius(1, design_value.clone(), CurveCornerMode2::TrimOnly, &policy)
-            .expect("design-parameter fillet benchmark must remain exact")
-            .into_value()
-        else {
-            panic!("line design-parameter fillet benchmark must be unique");
-        };
-        curves += black_box(filleted.curves().len());
+    if corner_lane_enabled("curve_path_design_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = path
+                .fillet_vertex_by_radius(
+                    1,
+                    design_value.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("design-parameter fillet benchmark must remain exact")
+                .into_value()
+            else {
+                panic!("line design-parameter fillet benchmark must be unique");
+            };
+            curves += black_box(filleted.curves().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_path_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
-        elapsed / iterations
-    );
 }
 
 fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
@@ -814,100 +845,117 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
             .expect("benchmark rectangle must promote")
             .into_value();
 
-    let started = Instant::now();
-    let mut transformed_loops = 0_usize;
-    for _ in 0..iterations {
-        let transformed = region
-            .transform_affine(
-                &Real::zero(),
-                &-Real::one(),
-                &Real::one(),
-                &Real::zero(),
-                &Real::zero(),
-                &Real::zero(),
-                &policy,
-            )
-            .expect("benchmark transform must remain exact")
-            .into_value();
-        transformed_loops += black_box(transformed.boundary_loops().len());
+    if corner_lane_enabled("curve_region_affine_transform") {
+        let started = Instant::now();
+        let mut transformed_loops = 0_usize;
+        for _ in 0..iterations {
+            let transformed = region
+                .transform_affine(
+                    &Real::zero(),
+                    &-Real::one(),
+                    &Real::one(),
+                    &Real::zero(),
+                    &Real::zero(),
+                    &Real::zero(),
+                    &policy,
+                )
+                .expect("benchmark transform must remain exact")
+                .into_value();
+            transformed_loops += black_box(transformed.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_affine_transform: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={transformed_loops}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_region_affine_transform: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={transformed_loops}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut chamfered_loops = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(chamfered) = region
-            .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &policy)
-            .expect("benchmark chamfer must remain exact")
-            .into_value()
-        else {
-            panic!("CurveRegion2 line chamfer benchmark became uncertain");
-        };
-        chamfered_loops += black_box(chamfered.boundary_loops().len());
+    if corner_lane_enabled("curve_region_parameter_chamfer") {
+        let started = Instant::now();
+        let mut chamfered_loops = 0_usize;
+        for _ in 0..iterations {
+            let Classification::Decided(chamfered) = region
+                .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &policy)
+                .expect("benchmark chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("CurveRegion2 line chamfer benchmark became uncertain");
+            };
+            chamfered_loops += black_box(chamfered.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_region_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut filleted_loops = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(filleted) = region
-            .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)
-            .expect("benchmark fillet must remain exact")
-            .into_value()
-        else {
-            panic!("CurveRegion2 line fillet benchmark became uncertain");
-        };
-        filleted_loops += black_box(filleted.boundary_loops().len());
+    if corner_lane_enabled("curve_region_parameter_fillet") {
+        let started = Instant::now();
+        let mut filleted_loops = 0_usize;
+        for _ in 0..iterations {
+            let Classification::Decided(filleted) = region
+                .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)
+                .expect("benchmark fillet must remain exact")
+                .into_value()
+            else {
+                panic!("CurveRegion2 line fillet benchmark became uncertain");
+            };
+            filleted_loops += black_box(filleted.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_region_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut chamfered_loops = 0_usize;
-    for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(chamfered) = region
-            .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
-            .expect("benchmark design-parameter chamfer must remain exact")
-            .into_value()
-        else {
-            panic!("CurveRegion2 design-parameter chamfer benchmark must be unique");
-        };
-        chamfered_loops += black_box(chamfered.boundary_loops().len());
+    if corner_lane_enabled("curve_region_design_chamfer") {
+        let started = Instant::now();
+        let mut chamfered_loops = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(chamfered) = region
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    s(1),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("benchmark design-parameter chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("CurveRegion2 design-parameter chamfer benchmark must be unique");
+            };
+            chamfered_loops += black_box(chamfered.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_region_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
-        elapsed / iterations
-    );
 
-    let started = Instant::now();
-    let mut filleted_loops = 0_usize;
-    for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(filleted) = region
-            .fillet_loop_vertex_by_radius(0, 1, s(1), CurveCornerMode2::TrimOnly, &policy)
-            .expect("benchmark design-parameter fillet must remain exact")
-            .into_value()
-        else {
-            panic!("CurveRegion2 design-parameter fillet benchmark must be unique");
-        };
-        filleted_loops += black_box(filleted.boundary_loops().len());
+    if corner_lane_enabled("curve_region_design_fillet") {
+        let started = Instant::now();
+        let mut filleted_loops = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = region
+                .fillet_loop_vertex_by_radius(0, 1, s(1), CurveCornerMode2::TrimOnly, &policy)
+                .expect("benchmark design-parameter fillet must remain exact")
+                .into_value()
+            else {
+                panic!("CurveRegion2 design-parameter fillet benchmark must be unique");
+            };
+            filleted_loops += black_box(filleted.boundary_loops().len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
+            elapsed / iterations
+        );
     }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_region_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
-        elapsed / iterations
-    );
     Ok(())
 }
 
@@ -991,7 +1039,7 @@ fn bench_higher_order_curve_edits(iterations: u32) {
 }
 
 fn main() -> CurveResult<()> {
-    let iterations = 10_000;
+    let iterations = benchmark_iterations();
     if let Some(selection) = std::env::var_os("HYPERCURVE_EDIT_BENCH") {
         if selection == "higher-order" {
             bench_higher_order_curve_edits(iterations);
