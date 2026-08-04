@@ -2546,32 +2546,28 @@ fn supports_are_parallel(
     left: &Plane,
     right: &Plane,
 ) -> HypermeshResult<bool> {
-    let cross = Point3::new(
-        hyperlattice::Real::signed_product_sum(
-            [true, false],
-            [
-                [&left.normal.y, &right.normal.z],
-                [&left.normal.z, &right.normal.y],
-            ],
-        ),
-        hyperlattice::Real::signed_product_sum(
-            [true, false],
-            [
-                [&left.normal.z, &right.normal.x],
-                [&left.normal.x, &right.normal.z],
-            ],
-        ),
-        hyperlattice::Real::signed_product_sum(
-            [true, false],
-            [
-                [&left.normal.x, &right.normal.y],
-                [&left.normal.y, &right.normal.x],
-            ],
-        ),
-    );
     let mut saw_unknown = false;
-    for component in [&cross.x, &cross.y, &cross.z] {
-        match classify_real(decisions, component) {
+    for [a, b, c, d] in [
+        [
+            &left.normal.y,
+            &right.normal.z,
+            &left.normal.z,
+            &right.normal.y,
+        ],
+        [
+            &left.normal.z,
+            &right.normal.x,
+            &left.normal.x,
+            &right.normal.z,
+        ],
+        [
+            &left.normal.x,
+            &right.normal.y,
+            &left.normal.y,
+            &right.normal.x,
+        ],
+    ] {
+        match classify_two_product_difference(decisions, a, b, c, d) {
             Ok(Classification::On) => {}
             Ok(Classification::Negative | Classification::Positive) => return Ok(false),
             Err(HypermeshError::PredicateUndecided { .. }) => saw_unknown = true,
@@ -2585,6 +2581,31 @@ fn supports_are_parallel(
     } else {
         Ok(true)
     }
+}
+
+fn classify_two_product_difference(
+    decisions: &DecisionContext,
+    a: &Real,
+    b: &Real,
+    c: &Real,
+    d: &Real,
+) -> HypermeshResult<Classification> {
+    if let [Some(a), Some(b), Some(c), Some(d)] = [a, b, c, d].map(Real::exact_rational_ref) {
+        return Ok(
+            match hyperlattice::Rational::signed_product_sum_ordering(
+                [true, false],
+                [[a, b], [c, d]],
+            ) {
+                std::cmp::Ordering::Less => Classification::Negative,
+                std::cmp::Ordering::Equal => Classification::On,
+                std::cmp::Ordering::Greater => Classification::Positive,
+            },
+        );
+    }
+    classify_real(
+        decisions,
+        &Real::signed_product_sum([true, false], [[a, b], [c, d]]),
+    )
 }
 
 fn construction_identity_fingerprint(identity: &ConstructionVertexIdentity) -> u64 {
@@ -2638,10 +2659,11 @@ mod tests {
         ConstructedPairwiseIntersection, CoplanarClassificationMatrix, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
         PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
-        classify_segment_plane_edge_numerator, dedup_constructed_points,
-        intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
+        classify_segment_plane_edge_numerator, classify_two_product_difference,
+        dedup_constructed_points, intersect_polygons_with_vertices_constructed,
+        pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
-        triangle_reaches_plane,
+        supports_are_parallel, triangle_reaches_plane,
     };
     use crate::bvh::ExactBvh;
     use crate::context::{DecisionContext, MeshContext};
@@ -2667,6 +2689,48 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn sign_only_two_product_difference_matches_materialized_value() {
+        let decisions = crate::test_support::approximate_decisions();
+        for seed in 0_i64..512 {
+            let value = |multiplier: i64, addend: i64| {
+                Real::from((seed * multiplier + addend).rem_euclid(43) - 21)
+            };
+            let [a, b, c, d] = [value(3, 1), value(5, 2), value(7, 3), value(11, 4)];
+            let materialized = Real::signed_product_sum([true, false], [[&a, &b], [&c, &d]]);
+            let expected = crate::predicate::classify_real(&decisions, &materialized).unwrap();
+            assert_eq!(
+                classify_two_product_difference(&decisions, &a, &b, &c, &d).unwrap(),
+                expected,
+                "seed={seed}",
+            );
+        }
+    }
+
+    #[test]
+    fn symbolic_support_parallelism_obeys_terminal_policy() {
+        let left_value = Real::pi() + Real::e();
+        let right_value = Real::e() + Real::pi();
+        let left = Plane::from_coefficients(Real::zero(), left_value, right_value, Real::zero());
+        let right = Plane::from_coefficients(Real::zero(), Real::one(), Real::one(), Real::zero());
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert!(matches!(
+            supports_are_parallel(&strict, &left, &right),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        assert!(supports_are_parallel(&approximate, &left, &right).unwrap());
+        assert_eq!(
+            approximate.certainty(),
+            crate::MeshCertainty::Approximate512Consumed
+        );
     }
 
     #[test]
