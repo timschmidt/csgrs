@@ -937,13 +937,12 @@ impl Rational {
     }
 }
 
-impl<T: AsRef<Rational>> Add<T> for &Rational {
-    type Output = Rational;
-
-    fn add(self, other: T) -> Self::Output {
+impl Rational {
+    // Keep generic operator adapters from cloning this exact core into every consumer.
+    #[inline(never)]
+    fn add_ref(&self, other: &Self) -> Self {
         use std::cmp::Ordering::*;
 
-        let other = other.as_ref();
         if self.sign == NoSign {
             return other.clone();
         }
@@ -952,7 +951,7 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         }
         if self.is_one() {
             if other.is_one() {
-                return Self::Output::new(2);
+                return Self::new(2);
             }
             return other.add_one();
         }
@@ -983,7 +982,7 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    let result = Self::Output::zero();
+                    let result = Self::zero();
                     self.retain_sum_pair(other, &result);
                     return result;
                 }
@@ -991,10 +990,18 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             },
         };
         trace_rational_temporary!();
-        let result = Self::Output::from_parts_raw(sign, numerator, denominator)
+        let result = Self::from_parts_raw(sign, numerator, denominator)
             .reduce_with_possible_divisor(&common_denominator);
         self.retain_sum_pair(other, &result);
         result
+    }
+}
+
+impl<T: AsRef<Rational>> Add<T> for &Rational {
+    type Output = Rational;
+
+    fn add(self, other: T) -> Self::Output {
+        self.add_ref(other.as_ref())
     }
 }
 
@@ -1176,6 +1183,7 @@ impl Neg for Rational {
 }
 
 impl Rational {
+    // Keep generic operator adapters from cloning this exact core into every consumer.
     #[inline(never)]
     fn subtract_ref(&self, other: &Self) -> Self {
         use std::cmp::Ordering::*;
