@@ -9,6 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use hyperlattice::{Point3, Real, Vector3};
+use hyperreal::Rational;
 
 use crate::bvh::{ExactBvh, ExactBvhQueryHierarchy};
 use crate::context::{DecisionContext, MeshCertainty};
@@ -16,6 +17,7 @@ use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, axis_mut, axis_ref, compare_real_decision};
 use crate::intersection::{
     PairwiseIntersectionEventIds, PairwiseIntersectionGraph, pairwise_support_identity,
+    source_face_pair_key,
 };
 use crate::output::{
     BooleanMeshBatch, BooleanMeshClosureEvidence, BooleanMeshResult, TriangleSource,
@@ -279,34 +281,7 @@ impl SurfaceCellComplex {
     }
 
     fn checked_facet_contributions(&self, facet: usize) -> HypermeshResult<&[FacetContribution]> {
-        let start = self.contribution_offsets.get(facet).copied().ok_or(
-            HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet contribution storage is malformed",
-            },
-        )? as usize;
-        let end = self
-            .contribution_offsets
-            .get(
-                facet
-                    .checked_add(1)
-                    .ok_or(HypermeshError::SurfaceArrangementFailed {
-                        reason: "surface output facet contribution storage is malformed",
-                    })?,
-            )
-            .copied()
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet contribution storage is malformed",
-            })? as usize;
-        if start > end {
-            return Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet contribution storage is malformed",
-            });
-        }
-        self.contributions
-            .get(start..end)
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet contribution storage is malformed",
-            })
+        checked_contribution_row(&self.contribution_offsets, &self.contributions, facet)
     }
 
     #[cfg(test)]
@@ -563,6 +538,7 @@ fn assemble_surface_cells(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
+    radially_separated_face_pair_keys: &[u64],
     source_bvh: &ExactBvhQueryHierarchy,
 ) -> HypermeshResult<SurfaceCellComplex> {
     if surface.face_offsets.len() != polygons.len().saturating_add(1)
@@ -583,6 +559,18 @@ fn assemble_surface_cells(
                 .iter()
                 .find(|polygon| polygon.delta_w.len() != operand_count)
                 .map_or(operand_count, |polygon| polygon.delta_w.len()),
+        });
+    }
+    if radially_separated_face_pair_keys.iter().any(|&pair| {
+        let first = pair >> u32::BITS;
+        let second = pair as u32;
+        first >= u64::from(second) || second as usize >= polygons.len()
+    }) || radially_separated_face_pair_keys
+        .windows(2)
+        .any(|pairs| pairs[0] >= pairs[1])
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "radially separated source-face pairs are not canonical",
         });
     }
 
@@ -654,13 +642,22 @@ fn assemble_surface_cells(
         }
         let uses = &edge_uses[edge_start..edge_end];
         if let [first, second] = uses {
-            if same_radial_ray(
-                decisions,
-                &surface.points,
-                edge,
-                first.opposite,
-                second.opposite,
-            )? {
+            let retained_separation = facets_have_retained_radial_separation(
+                first.facet,
+                second.facet,
+                &contribution_offsets,
+                &contributions,
+                radially_separated_face_pair_keys,
+            )?;
+            if !retained_separation
+                && same_radial_ray(
+                    decisions,
+                    &surface.points,
+                    edge,
+                    first.opposite,
+                    second.opposite,
+                )?
+            {
                 return Err(HypermeshError::SurfaceArrangementFailed {
                     reason: "two-facet radial edge has one geometric ray",
                 });
@@ -968,6 +965,55 @@ fn assemble_radial_ring(
     Ok(())
 }
 
+fn checked_contribution_row<'a>(
+    contribution_offsets: &[u32],
+    contributions: &'a [FacetContribution],
+    facet: usize,
+) -> HypermeshResult<&'a [FacetContribution]> {
+    const MALFORMED: HypermeshError = HypermeshError::SurfaceArrangementFailed {
+        reason: "surface output facet contribution storage is malformed",
+    };
+    let start = contribution_offsets.get(facet).copied().ok_or(MALFORMED)? as usize;
+    let end = facet
+        .checked_add(1)
+        .and_then(|terminal| contribution_offsets.get(terminal))
+        .copied()
+        .ok_or(MALFORMED)? as usize;
+    if start > end {
+        return Err(MALFORMED);
+    }
+    contributions.get(start..end).ok_or(MALFORMED)
+}
+
+fn facets_have_retained_radial_separation(
+    left: u32,
+    right: u32,
+    contribution_offsets: &[u32],
+    contributions: &[FacetContribution],
+    radially_separated_face_pair_keys: &[u64],
+) -> HypermeshResult<bool> {
+    // A bundled arrangement facet may carry several coincident source-face
+    // contributions. Any retained source pair proves separation only for the
+    // degree-two edge currently being assembled; higher-degree radial rings
+    // continue through the complete exact ordering path.
+    let left = checked_contribution_row(contribution_offsets, contributions, left as usize)?;
+    let right = checked_contribution_row(contribution_offsets, contributions, right as usize)?;
+    for left in left {
+        for right in right {
+            let Some(pair) = source_face_pair_key(left.face, right.face) else {
+                continue;
+            };
+            if radially_separated_face_pair_keys
+                .binary_search(&pair)
+                .is_ok()
+            {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
 fn facet_side_node(
     facets: &[PendingFacet],
     facet: u32,
@@ -1103,9 +1149,64 @@ fn radial_dot_classification(
     let direction = point_by_id(points, edge[1])? - origin;
     let left = point_by_id(points, left)? - origin;
     let right = point_by_id(points, right)? - origin;
+    if let Some(ordering) = exact_radial_perpendicular_dot_ordering(&direction, &left, &right) {
+        return Ok(match ordering {
+            Ordering::Less => Classification::Negative,
+            Ordering::Equal => Classification::On,
+            Ordering::Greater => Classification::Positive,
+        });
+    }
     let perpendicular_dot =
         direction.dot(&direction) * left.dot(&right) - direction.dot(&left) * direction.dot(&right);
     classify_real(decisions, &perpendicular_dot)
+}
+
+fn exact_radial_perpendicular_dot_ordering(
+    direction: &Vector3,
+    left: &Vector3,
+    right: &Vector3,
+) -> Option<Ordering> {
+    let [dx, dy, dz] = [&direction.0[0], &direction.0[1], &direction.0[2]];
+    let [lx, ly, lz] = [&left.0[0], &left.0[1], &left.0[2]];
+    let [rx, ry, rz] = [&right.0[0], &right.0[1], &right.0[2]];
+    let [dx, dy, dz] = [
+        dx.exact_rational_ref()?,
+        dy.exact_rational_ref()?,
+        dz.exact_rational_ref()?,
+    ];
+    let [lx, ly, lz] = [
+        lx.exact_rational_ref()?,
+        ly.exact_rational_ref()?,
+        lz.exact_rational_ref()?,
+    ];
+    let [rx, ry, rz] = [
+        rx.exact_rational_ref()?,
+        ry.exact_rational_ref()?,
+        rz.exact_rational_ref()?,
+    ];
+    // This predicate needs only the sign of `(direction cross left) dot
+    // (direction cross right)`. Retain exact-rational scalar facts long enough
+    // for Hyperreal to schedule the whole polynomial and compare its signed
+    // magnitudes without materializing or reducing an otherwise dead `Real`.
+    Some(Rational::signed_product_sum_ordering(
+        [
+            true, true, false, false, true, true, false, false, true, true, false, false,
+        ],
+        [
+            [dx, dx, ly, ry],
+            [dy, dy, lx, rx],
+            [dx, dy, lx, ry],
+            [dx, dy, ly, rx],
+            [dx, dx, lz, rz],
+            [dz, dz, lx, rx],
+            [dx, dz, lx, rz],
+            [dx, dz, lz, rx],
+            [dy, dy, lz, rz],
+            [dz, dz, ly, ry],
+            [dy, dz, ly, rz],
+            [dy, dz, lz, ry],
+        ],
+    ))
 }
 
 fn point_by_id(points: &[Point3], point: u32) -> HypermeshResult<&Point3> {
@@ -2819,7 +2920,14 @@ pub(crate) fn build_surface_arrangement(
     )?;
     let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
     let corefinement = corefine_surface(decisions, polygons, &graph)?;
-    let cells = assemble_surface_cells(decisions, polygons, &corefinement, &source_bvh)?;
+    let radially_separated_face_pair_keys = graph.into_radially_separated_face_pair_keys();
+    let cells = assemble_surface_cells(
+        decisions,
+        polygons,
+        &corefinement,
+        &radially_separated_face_pair_keys,
+        &source_bvh,
+    )?;
     Ok(ExactSurfaceArrangement {
         corefinement,
         cells,
@@ -4619,7 +4727,8 @@ mod tests {
                 .into_query_hierarchy(&polygons)
                 .unwrap();
             assert_eq!(
-                assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
+                assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh)
+                    .unwrap_err(),
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "surface radial edge has fewer than two geometric rays",
                 }
@@ -4640,9 +4749,27 @@ mod tests {
             .into_query_hierarchy(&polygons)
             .unwrap();
 
+        let malformed_pair_sets = [
+            vec![(u64::from(1_u32) << u32::BITS) | 1],
+            vec![source_face_pair_key(0, polygons.len() as u32).unwrap()],
+            vec![
+                source_face_pair_key(0, 2).unwrap(),
+                source_face_pair_key(0, 1).unwrap(),
+            ],
+        ];
+        for malformed in malformed_pair_sets {
+            assert_eq!(
+                assemble_surface_cells(&decisions, &polygons, &surface, &malformed, &source_bvh,)
+                    .unwrap_err(),
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "radially separated source-face pairs are not canonical",
+                }
+            );
+        }
+
         polygons[1].delta_w.pop();
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
             HypermeshError::WindingDimensionMismatch {
                 expected: 2,
                 actual: 1,
@@ -4652,7 +4779,7 @@ mod tests {
 
         surface.triangles[0][0] = u32::MAX;
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
             HypermeshError::SurfaceArrangementFailed {
                 reason: "surface facet references an absent arrangement point",
             }
@@ -4678,7 +4805,7 @@ mod tests {
             polygon.delta_w[0] = 1;
         }
         assert_eq!(
-            assemble_surface_cells(&decisions, &polygons, &surface, &source_bvh).unwrap_err(),
+            assemble_surface_cells(&decisions, &polygons, &surface, &[], &source_bvh).unwrap_err(),
             HypermeshError::WindingOverflow
         );
     }
@@ -5029,5 +5156,94 @@ mod tests {
             approximate.certainty(),
             MeshCertainty::Approximate512Consumed
         );
+    }
+
+    #[test]
+    fn sign_only_radial_dot_matches_the_factored_exact_polynomial() {
+        let mut vectors = Vec::with_capacity(27);
+        let zero = Rational::from(0);
+        for x in -1_i64..=1 {
+            for y in -1_i64..=1 {
+                for z in -1_i64..=1 {
+                    vectors.push(Vector3::from_xyz(
+                        Real::from(x),
+                        Real::from(y),
+                        Real::from(z),
+                    ));
+                }
+            }
+        }
+        for direction in &vectors {
+            for left in &vectors {
+                for right in &vectors {
+                    let factored = direction.dot(direction) * left.dot(right)
+                        - direction.dot(left) * direction.dot(right);
+                    let ordering =
+                        exact_radial_perpendicular_dot_ordering(direction, left, right).unwrap();
+                    assert_eq!(
+                        ordering,
+                        factored
+                            .exact_rational_ref()
+                            .unwrap()
+                            .partial_cmp(&zero)
+                            .unwrap()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_radial_separation_requires_a_proved_source_face_pair() {
+        let contribution_offsets = [0, 1, 3, 4];
+        let contributions = [
+            FacetContribution {
+                face: 7,
+                orientation: 1,
+            },
+            FacetContribution {
+                face: 11,
+                orientation: -1,
+            },
+            FacetContribution {
+                face: 2,
+                orientation: 1,
+            },
+            FacetContribution {
+                face: 3,
+                orientation: 1,
+            },
+        ];
+        let separated = [
+            source_face_pair_key(2, 7).unwrap(),
+            source_face_pair_key(3, 9).unwrap(),
+        ];
+
+        assert!(
+            facets_have_retained_radial_separation(
+                0,
+                1,
+                &contribution_offsets,
+                &contributions,
+                &separated,
+            )
+            .unwrap()
+        );
+        assert!(
+            !facets_have_retained_radial_separation(
+                0,
+                2,
+                &contribution_offsets,
+                &contributions,
+                &separated,
+            )
+            .unwrap()
+        );
+        assert!(matches!(
+            facets_have_retained_radial_separation(0, 1, &[1, 0], &contributions, &separated,),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface output facet contribution storage is malformed"
+            })
+        ));
     }
 }

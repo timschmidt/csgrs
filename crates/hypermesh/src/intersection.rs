@@ -263,6 +263,22 @@ pub(crate) struct PairwiseIntersectionGraph {
     point_identities: Vec<Option<ConstructionVertexIdentity>>,
     segments: Vec<PairwiseIntersectionSegment>,
     events: Vec<PairwiseIntersectionEvent>,
+    // Compact retained facts from authored adjacencies. Each pair proves that
+    // its two source triangles can meet only on distinct radial rays along
+    // their shared edge.
+    radially_separated_face_pair_keys: Box<[u64]>,
+}
+
+pub(crate) fn source_face_pair_key(left: u32, right: u32) -> Option<u64> {
+    if left == right {
+        return None;
+    }
+    let [first, second] = if left < right {
+        [left, right]
+    } else {
+        [right, left]
+    };
+    Some((u64::from(first) << u32::BITS) | u64::from(second))
 }
 
 impl PairwiseIntersectionGraph {
@@ -384,6 +400,12 @@ impl PairwiseIntersectionGraph {
             })?;
         Ok((point, identity))
     }
+
+    /// Consumes the graph and retains only source-face pairs whose authored
+    /// reversed edge was proved to separate two distinct radial rays.
+    pub(crate) fn into_radially_separated_face_pair_keys(self) -> Box<[u64]> {
+        self.radially_separated_face_pair_keys
+    }
 }
 
 struct ConstructionPointAlias {
@@ -401,6 +423,7 @@ pub(crate) struct PairwiseIntersectionGraphBuilder {
     point_interner: PointInterner<()>,
     segments: Vec<PairwiseIntersectionSegment>,
     events: Vec<PendingIntersectionEvent>,
+    radially_separated_face_pair_keys: Vec<u64>,
 }
 
 impl PairwiseIntersectionGraphBuilder {
@@ -415,6 +438,22 @@ impl PairwiseIntersectionGraphBuilder {
                 operation: "pairwise intersection face arena",
             })?;
         counts.resize(face_count, 0);
+        // A consistently oriented triangle surface ordinarily contributes
+        // three face-edge incidences for every two authored adjacencies. This
+        // is only a storage seed: nonmanifold inputs may exceed it and retain
+        // the same checked growth path.
+        let radial_pair_capacity =
+            face_count
+                .checked_add(face_count / 2)
+                .ok_or(HypermeshError::CapacityOverflow {
+                    operation: "radially separated source-face pairs",
+                })?;
+        let mut radially_separated_face_pair_keys = Vec::new();
+        radially_separated_face_pair_keys
+            .try_reserve_exact(radial_pair_capacity)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "radially separated source-face pairs",
+            })?;
         Ok(Self {
             counts: counts.into_boxed_slice(),
             points: Vec::new(),
@@ -424,7 +463,24 @@ impl PairwiseIntersectionGraphBuilder {
             point_interner: PointInterner::new_exact_unreserved(),
             segments: Vec::new(),
             events: Vec::new(),
+            radially_separated_face_pair_keys,
         })
+    }
+
+    fn append_radially_separated_face_pair(
+        &mut self,
+        left: usize,
+        right: usize,
+    ) -> HypermeshResult<()> {
+        let pair = source_face_pair_key(self.face_id(left)?, self.face_id(right)?)
+            .ok_or(HypermeshError::UnknownClassification)?;
+        self.radially_separated_face_pair_keys
+            .try_reserve(1)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "radially separated source-face pairs",
+            })?;
+        self.radially_separated_face_pair_keys.push(pair);
+        Ok(())
     }
 
     fn face_id(&self, face: usize) -> HypermeshResult<u32> {
@@ -865,6 +921,7 @@ impl PairwiseIntersectionGraphBuilder {
             point_interner,
             segments,
             events,
+            mut radially_separated_face_pair_keys,
         } = self;
         drop(point_interner);
         drop(construction_heads);
@@ -872,6 +929,8 @@ impl PairwiseIntersectionGraphBuilder {
         if point_identities.len() != points.len() {
             return Err(HypermeshError::UnknownClassification);
         }
+        radially_separated_face_pair_keys.sort_unstable();
+        radially_separated_face_pair_keys.dedup();
 
         let offset_capacity =
             counts
@@ -947,6 +1006,7 @@ impl PairwiseIntersectionGraphBuilder {
             point_identities,
             segments,
             events: ordered,
+            radially_separated_face_pair_keys: radially_separated_face_pair_keys.into_boxed_slice(),
         })
     }
 }
@@ -1237,6 +1297,7 @@ fn append_pairwise_intersection(
     };
     if same_mesh && shares_manifold_edge {
         crate::trace_dispatch!("pairwise-intersection", "known-manifold-edge");
+        graph.append_radially_separated_face_pair(global_i, global_j)?;
         return Ok(());
     }
     crate::trace_dispatch!(
@@ -2211,7 +2272,7 @@ mod tests {
         ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
         PolygonVertexArena, StoredIntersectionKind, pairwise_intersections_by_polygon_from_bvh,
-        polygon_cycles_share_reversed_manifold_triangle_edge,
+        polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
     };
     use crate::bvh::ExactBvh;
     use crate::error::HypermeshError;
@@ -2459,6 +2520,10 @@ mod tests {
         assert_eq!(graph.events.len(), 0);
         assert!(graph.points.is_empty());
         assert!(graph.segments.is_empty());
+        assert_eq!(
+            graph.radially_separated_face_pair_keys.as_ref(),
+            [source_face_pair_key(0, 1).unwrap()]
+        );
 
         let mut distinct_vertex =
             crate::test_support::approximate_convex_triangle(&p(2, 0), &p(3, -1), &p(3, 0), 0, 3);
@@ -2475,6 +2540,7 @@ mod tests {
                 ..
             }))
         ));
+        assert!(graph.radially_separated_face_pair_keys.is_empty());
     }
 
     #[test]
