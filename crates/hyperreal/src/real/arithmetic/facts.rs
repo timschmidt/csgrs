@@ -298,6 +298,114 @@ impl Real {
         Ok((Real::new(parameter), coordinates.map(Real::new)))
     }
 
+    /// Interpolate exact 3D dyadic endpoints from a dyadic parameter ratio.
+    ///
+    /// This forms each complete numerator
+    /// `start * denominator + numerator * end - numerator * start` before its
+    /// one quotient reduction. The caller must have proved all inputs exact
+    /// dyadics and the denominator nonzero.
+    #[doc(hidden)]
+    pub fn exact_rational_interpolate_point3_known_dyadic(
+        start: [&Real; 3],
+        end: [&Real; 3],
+        numerator: &Real,
+        denominator: &Real,
+    ) -> Result<[Real; 3], crate::Problem> {
+        if denominator.has_zero_scale() {
+            return Err(crate::Problem::DivideByZero);
+        }
+        let numerator = &numerator.rational;
+        let denominator = &denominator.rational;
+        let coordinates = std::array::from_fn(|index| {
+            let affine_numerator = Rational::signed_product_sum_known_dyadic(
+                [true, true, false],
+                [
+                    [&start[index].rational, denominator],
+                    [numerator, &end[index].rational],
+                    [numerator, &start[index].rational],
+                ],
+            );
+            Real::new(
+                Rational::quotient_known_dyadic(&affine_numerator, denominator)
+                    .expect("the interpolation denominator was checked nonzero"),
+            )
+        });
+        crate::trace_dispatch!(
+            "real",
+            "interpolate-point3",
+            "exact-dyadic-parameter-ratio"
+        );
+        Ok(coordinates)
+    }
+
+    /// Construct the exact point where two exact-rational 2D lines meet.
+    ///
+    /// Endpoint differences, both line determinants, and the two affine point
+    /// numerators are each reduced only after their complete polynomial has
+    /// been formed. Non-rational inputs and parallel lines return `None`; a
+    /// caller that already certified a proper segment crossing can use this as
+    /// a construction schedule and retain its unchanged general fallback.
+    #[doc(hidden)]
+    pub fn exact_rational_line_intersection2_point_known_exact(
+        first_start: [&Real; 2],
+        first_end: [&Real; 2],
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<[Real; 2]> {
+        let [Some(ax), Some(ay), Some(bx), Some(by), Some(cx), Some(cy), Some(dx), Some(dy)] = [
+            first_start[0],
+            first_start[1],
+            first_end[0],
+            first_end[1],
+            second_start[0],
+            second_start[1],
+            second_end[0],
+            second_end[1],
+        ]
+        .map(Real::exact_rational_ref)
+        else {
+            return None;
+        };
+
+        let denominator = Rational::signed_product_sum(
+            [true, false, false, true, false, true, true, false],
+            [
+                [bx, dy],
+                [bx, cy],
+                [ax, dy],
+                [ax, cy],
+                [by, dx],
+                [by, cx],
+                [ay, dx],
+                [ay, cx],
+            ],
+        );
+        if denominator.is_zero() {
+            return None;
+        }
+        let numerator = Rational::signed_product_sum(
+            [true, false, true, false, true, false],
+            [[cx, dy], [ax, dy], [ax, cy], [cy, dx], [ay, dx], [ay, cx]],
+        );
+        let coordinate = |start: &Rational, end: &Rational| {
+            let affine_numerator = Rational::signed_product_sum(
+                [true, true, false],
+                [
+                    [start, &denominator],
+                    [&numerator, end],
+                    [&numerator, start],
+                ],
+            );
+            Real::new(&affine_numerator / &denominator)
+        };
+        crate::trace_dispatch!(
+            "real",
+            "line-intersection2",
+            "exact-rational-fused-point"
+        );
+        Some([coordinate(ax, bx), coordinate(ay, by)])
+    }
+
     /// Solve a certified proper crossing between exact dyadic endpoints while
     /// retaining intermediate differences and determinants in native scalar
     /// accumulators. Wider inputs return `None` for the general exact path.

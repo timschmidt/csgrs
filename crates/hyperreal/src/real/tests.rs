@@ -3141,6 +3141,68 @@ mod tests {
     }
 
     #[test]
+    fn exact_dyadic_interpolated_point3_matches_expanded_arithmetic() {
+        let q =
+            |numerator, denominator| Real::new(Rational::fraction(numerator, denominator).unwrap());
+        let origin = [q(3, 8), q(-5, 4), q(13, 32)];
+        let delta = [q(7, 16), q(9, 8), q(-15, 64)];
+        let numerator = q(5, 32);
+        let denominator = q(11, 64);
+        let expected_parameter = (&numerator / &denominator).unwrap();
+        let expected_point = std::array::from_fn(|index| {
+            Real::affine(&origin[index], &expected_parameter, &delta[index])
+        });
+
+        let end: [Real; 3] = std::array::from_fn(|index| &origin[index] + &delta[index]);
+        assert_eq!(
+            Real::exact_rational_interpolate_point3_known_dyadic(
+                [&origin[0], &origin[1], &origin[2]],
+                [&end[0], &end[1], &end[2]],
+                &numerator,
+                &denominator,
+            )
+            .unwrap(),
+            expected_point
+        );
+        for seed in 1_i64..=256 {
+            let dyadic = |multiplier: i64, addend: i64, shift: u32| {
+                q(
+                    (seed * multiplier + addend).rem_euclid(97) - 48,
+                    1_u64 << shift,
+                )
+            };
+            let start = [dyadic(5, 1, 3), dyadic(7, 2, 5), dyadic(11, 3, 7)];
+            let end = [dyadic(13, 4, 4), dyadic(17, 5, 6), dyadic(19, 6, 8)];
+            let numerator = dyadic(23, 7, 5);
+            let denominator = q((seed * 29).rem_euclid(31) + 1, 1_u64 << (seed as u32 % 9));
+            let parameter = (&numerator / &denominator).unwrap();
+            let expected: [Real; 3] = std::array::from_fn(|index| {
+                Real::affine(&start[index], &parameter, &(&end[index] - &start[index]))
+            });
+            assert_eq!(
+                Real::exact_rational_interpolate_point3_known_dyadic(
+                    [&start[0], &start[1], &start[2]],
+                    [&end[0], &end[1], &end[2]],
+                    &numerator,
+                    &denominator,
+                )
+                .unwrap(),
+                expected,
+                "seed={seed}",
+            );
+        }
+        assert_eq!(
+            Real::exact_rational_interpolate_point3_known_dyadic(
+                [&origin[0], &origin[1], &origin[2]],
+                [&end[0], &end[1], &end[2]],
+                &numerator,
+                &Real::zero(),
+            ),
+            Err(Problem::DivideByZero)
+        );
+    }
+
+    #[test]
     fn exact_dyadic_parameterized_point_reduces_wide_affine_numerators_exactly() {
         let dyadic = |sign: i8, odd: u64, shift: usize| {
             let magnitude = num::BigInt::from(odd) << 220_usize;
@@ -3194,6 +3256,108 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn fused_exact_rational_line_intersection_matches_expanded_exact_arithmetic() {
+        let mut state = 0x510e_527f_ade6_82d1_u64;
+        let mut nonparallel_cases = 0;
+        let mut nondyadic_cases = 0;
+        for _ in 0..512 {
+            let points: [[Real; 2]; 4] = core::array::from_fn(|_| {
+                core::array::from_fn(|_| {
+                    state = state
+                        .wrapping_mul(2_862_933_555_777_941_757)
+                        .wrapping_add(3_037_000_493);
+                    let numerator = i64::try_from(state % 2049).unwrap() - 1024;
+                    let denominator = 3 + 2 * ((state >> 32) % 15);
+                    Real::new(Rational::fraction(numerator, denominator).unwrap())
+                })
+            });
+            let [first_start, first_end, second_start, second_end] = &points;
+            let first_delta = [
+                &first_end[0] - &first_start[0],
+                &first_end[1] - &first_start[1],
+            ];
+            let second_delta = [
+                &second_end[0] - &second_start[0],
+                &second_end[1] - &second_start[1],
+            ];
+            let denominator = Real::diff_of_products(
+                &first_delta[0],
+                &second_delta[1],
+                &first_delta[1],
+                &second_delta[0],
+            );
+            if denominator == Real::zero() {
+                assert_eq!(
+                    Real::exact_rational_line_intersection2_point_known_exact(
+                        [&first_start[0], &first_start[1]],
+                        [&first_end[0], &first_end[1]],
+                        [&second_start[0], &second_start[1]],
+                        [&second_end[0], &second_end[1]],
+                    ),
+                    None
+                );
+                continue;
+            }
+
+            nonparallel_cases += 1;
+            nondyadic_cases += usize::from(
+                points
+                    .iter()
+                    .flatten()
+                    .any(|coordinate| !coordinate.is_exact_dyadic_rational()),
+            );
+            let start_delta = [
+                &second_start[0] - &first_start[0],
+                &second_start[1] - &first_start[1],
+            ];
+            let numerator = Real::diff_of_products(
+                &start_delta[0],
+                &second_delta[1],
+                &start_delta[1],
+                &second_delta[0],
+            );
+            let parameter = (&numerator / &denominator).unwrap();
+            let expected = [
+                Real::affine(&first_start[0], &parameter, &first_delta[0]),
+                Real::affine(&first_start[1], &parameter, &first_delta[1]),
+            ];
+            assert_eq!(
+                Real::exact_rational_line_intersection2_point_known_exact(
+                    [&first_start[0], &first_start[1]],
+                    [&first_end[0], &first_end[1]],
+                    [&second_start[0], &second_start[1]],
+                    [&second_end[0], &second_end[1]],
+                ),
+                Some(expected)
+            );
+        }
+        assert!(nonparallel_cases > 500);
+        assert!(nondyadic_cases > 500);
+
+        let zero = Real::zero();
+        let one = Real::one();
+        let two = Real::from(2_i8);
+        assert_eq!(
+            Real::exact_rational_line_intersection2_point_known_exact(
+                [&zero, &zero],
+                [&one, &one],
+                [&one, &one],
+                [&two, &two],
+            ),
+            None
+        );
+        assert_eq!(
+            Real::exact_rational_line_intersection2_point_known_exact(
+                [&Real::pi(), &zero],
+                [&one, &one],
+                [&zero, &one],
+                [&one, &zero],
+            ),
+            None
+        );
     }
 
     #[test]

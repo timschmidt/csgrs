@@ -91,6 +91,48 @@ fuzz_target!(|input: Input| {
         );
     }
 
+    let first_start = [&values[0], &values[1]];
+    let first_end = [&values[2], &values[3]];
+    let second_start = [&values[4], &values[5]];
+    let second_end = [&values[6], &values[7]];
+    let first_delta = [first_end[0] - first_start[0], first_end[1] - first_start[1]];
+    let second_delta = [
+        second_end[0] - second_start[0],
+        second_end[1] - second_start[1],
+    ];
+    let denominator = Real::diff_of_products(
+        &first_delta[0],
+        &second_delta[1],
+        &first_delta[1],
+        &second_delta[0],
+    );
+    let exact_intersection = Real::exact_rational_line_intersection2_point_known_exact(
+        first_start,
+        first_end,
+        second_start,
+        second_end,
+    );
+    if denominator.definitely_zero() {
+        assert_eq!(exact_intersection, None);
+    } else {
+        let start_delta = [
+            second_start[0] - first_start[0],
+            second_start[1] - first_start[1],
+        ];
+        let numerator = Real::diff_of_products(
+            &start_delta[0],
+            &second_delta[1],
+            &start_delta[1],
+            &second_delta[0],
+        );
+        let parameter = (&numerator / &denominator).expect("nonparallel exact lines");
+        let expected = [
+            Real::affine(first_start[0], &parameter, &first_delta[0]),
+            Real::affine(first_start[1], &parameter, &first_delta[1]),
+        ];
+        assert_eq!(exact_intersection, Some(expected));
+    }
+
     let dyadic = input.values.map(RawRational::dyadic_real);
     if !dyadic[3].definitely_zero() {
         let parameter = (&dyadic[2] / &dyadic[3]).expect("nonzero dyadic quotient");
@@ -112,6 +154,22 @@ fuzz_target!(|input: Input| {
         .expect("nonzero known-dyadic parameterized point");
         assert_eq!(aggregate_parameter, parameter);
         assert_eq!(point, expected_point);
+
+        let start = [&dyadic[0], &dyadic[1], &dyadic[4]];
+        let end = [&dyadic[5], &dyadic[6], &dyadic[7]];
+        let expected_point3 = std::array::from_fn(|index| {
+            Real::affine(start[index], &parameter, &(end[index] - start[index]))
+        });
+        assert_eq!(
+            Real::exact_rational_interpolate_point3_known_dyadic(
+                start,
+                end,
+                &dyadic[2],
+                &dyadic[3],
+            )
+            .expect("nonzero known-dyadic 3D interpolation"),
+            expected_point3
+        );
     }
 
     let first_delta = [&dyadic[2] - &dyadic[0], &dyadic[3] - &dyadic[1]];

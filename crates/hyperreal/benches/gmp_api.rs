@@ -1517,6 +1517,47 @@ fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
         },
     );
 
+    let point3_start = [real(1.25), real(-2.5), real(0.375)];
+    let point3_end = [real(-2.25), real(1.75), real(5.125)];
+    let g_point3_start = [gmp(1.25), gmp(-2.5), gmp(0.375)];
+    let g_point3_end = [gmp(-2.25), gmp(1.75), gmp(5.125)];
+    group.bench_function(
+        BenchmarkId::new(
+            "hyperreal",
+            "exact_rational_interpolate_point3_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_interpolate_point3_known_dyadic(
+                        [&point3_start[0], &point3_start[1], &point3_start[2]],
+                        [&point3_end[0], &point3_end[1], &point3_end[2]],
+                        &parameter_numerator,
+                        &parameter_denominator,
+                    )
+                    .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new(
+            "gmp_mpfr128",
+            "exact_rational_interpolate_point3_known_dyadic",
+        ),
+        |b| {
+            b.iter(|| {
+                let parameter = g_parameter_numerator.clone() / &g_parameter_denominator;
+                black_box(std::array::from_fn::<_, 3, _>(|index| {
+                    let mut coordinate = g_point3_end[index].clone() - &g_point3_start[index];
+                    coordinate *= &parameter;
+                    coordinate += &g_point3_start[index];
+                    coordinate
+                }))
+            })
+        },
+    );
+
     let first_start = [real(-7.25), real(-2.5)];
     let first_end = [real(9.5), real(6.75)];
     let second_start = [real(-3.0), real(8.125)];
@@ -1568,6 +1609,59 @@ fn bench_real_collection_and_conversion_api(c: &mut Criterion) {
                         g_first_start[1].clone() + first_parameter * ry,
                     ],
                 ))
+            })
+        },
+    );
+
+    let exact = |numerator, denominator| Real::new(rational(numerator, denominator));
+    let g_exact =
+        |numerator: i32, denominator: i32| Float::with_val(GMP_PRECISION, numerator) / denominator;
+    let exact_first_start = [exact(-22, 3), exact(-13, 5)];
+    let exact_first_end = [exact(47, 5), exact(27, 4)];
+    let exact_second_start = [exact(-19, 6), exact(65, 8)];
+    let exact_second_end = [exact(35, 4), exact(-11, 2)];
+    let g_exact_first_start = [g_exact(-22, 3), g_exact(-13, 5)];
+    let g_exact_first_end = [g_exact(47, 5), g_exact(27, 4)];
+    let g_exact_second_start = [g_exact(-19, 6), g_exact(65, 8)];
+    let g_exact_second_end = [g_exact(35, 4), g_exact(-11, 2)];
+    group.bench_function(
+        BenchmarkId::new(
+            "hyperreal",
+            "exact_rational_line_intersection2_point_known_exact",
+        ),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    Real::exact_rational_line_intersection2_point_known_exact(
+                        [&exact_first_start[0], &exact_first_start[1]],
+                        [&exact_first_end[0], &exact_first_end[1]],
+                        [&exact_second_start[0], &exact_second_start[1]],
+                        [&exact_second_end[0], &exact_second_end[1]],
+                    )
+                    .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        BenchmarkId::new(
+            "gmp_mpfr128",
+            "exact_rational_line_intersection2_point_known_exact",
+        ),
+        |b| {
+            b.iter(|| {
+                let rx = g_exact_first_end[0].clone() - &g_exact_first_start[0];
+                let ry = g_exact_first_end[1].clone() - &g_exact_first_start[1];
+                let sx = g_exact_second_end[0].clone() - &g_exact_second_start[0];
+                let sy = g_exact_second_end[1].clone() - &g_exact_second_start[1];
+                let qx = g_exact_second_start[0].clone() - &g_exact_first_start[0];
+                let qy = g_exact_second_start[1].clone() - &g_exact_first_start[1];
+                let denominator = rx.clone() * &sy - ry.clone() * &sx;
+                let parameter = (qx * &sy - qy * &sx) / denominator;
+                black_box([
+                    g_exact_first_start[0].clone() + &parameter * rx,
+                    g_exact_first_start[1].clone() + parameter * ry,
+                ])
             })
         },
     );
