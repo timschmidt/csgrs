@@ -19,7 +19,6 @@ use hypersolve::{
     AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
     arithmetic_algebraic_root_representations,
 };
-#[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
     compare_algebraic_root_representations_by_difference,
@@ -233,7 +232,6 @@ fn compare_algebraic_representation_to_real(
 /// A strict comparison is always attempted first. If only
 /// `APPROXIMATE_512` decides, the caller's operation frame is marked before
 /// the ordering is returned.
-#[cfg(feature = "predicates")]
 pub(crate) fn compare_algebraic_representations_with_policy(
     first: &AlgebraicRootRepresentation,
     second: &AlgebraicRootRepresentation,
@@ -306,15 +304,6 @@ pub(crate) fn arithmetic_algebraic_representations_with_policy(
         policy.observe_approximate_512();
     }
     approximate
-}
-
-#[cfg(not(feature = "predicates"))]
-pub(crate) fn compare_algebraic_representations_with_policy(
-    _first: &AlgebraicRootRepresentation,
-    _second: &AlgebraicRootRepresentation,
-    _policy: &CurveContext,
-) -> Option<Ordering> {
-    None
 }
 
 impl BezierAlgebraicCoordinateImage {
