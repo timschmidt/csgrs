@@ -1905,33 +1905,58 @@ fn collect_edge_plane_crossing(
         }
         (Classification::Negative, Classification::Positive)
         | (Classification::Positive, Classification::Negative) => {
-            let point = intersect_segment_plane(start, end, &plane_polygon.support)?;
-            let contained =
-                match affine_point_in_polygon_on_support(decisions, &point, plane_polygon) {
-                    Ok(contained) => contained,
-                    Err(HypermeshError::PredicateUndecided { .. }) => {
-                        match projective_edge_plane_intersection_in_polygon(
-                            decisions,
-                            edge_polygon,
-                            edge_index,
-                            plane_polygon,
-                        ) {
-                            Ok(contained) => contained,
-                            Err(HypermeshError::PredicateUndecided { .. }) => {
-                                segment_plane_intersection_in_polygon(
-                                    decisions,
-                                    start,
-                                    end,
-                                    start_class,
-                                    plane_polygon,
-                                )?
+            let start_support = plane_polygon.support.expression_at_point(start);
+            let end_support = plane_polygon.support.expression_at_point(end);
+            let point = match segment_plane_intersection_in_polygon(
+                decisions,
+                start,
+                end,
+                start_class,
+                &start_support,
+                &end_support,
+                plane_polygon,
+            ) {
+                Ok(false) => None,
+                Ok(true) => Some(intersect_segment_plane_from_values(
+                    start,
+                    end,
+                    &start_support,
+                    &end_support,
+                )?),
+                Err(undecided @ HypermeshError::PredicateUndecided { .. }) => {
+                    let point = intersect_segment_plane_from_values(
+                        start,
+                        end,
+                        &start_support,
+                        &end_support,
+                    )?;
+                    let contained = match affine_point_in_polygon_on_support(
+                        decisions,
+                        &point,
+                        plane_polygon,
+                    ) {
+                        Ok(contained) => contained,
+                        Err(HypermeshError::PredicateUndecided { .. }) => {
+                            match projective_edge_plane_intersection_in_polygon(
+                                decisions,
+                                edge_polygon,
+                                edge_index,
+                                plane_polygon,
+                            ) {
+                                Ok(contained) => contained,
+                                Err(HypermeshError::PredicateUndecided { .. }) => {
+                                    return Err(undecided);
+                                }
+                                Err(error) => return Err(error),
                             }
-                            Err(error) => return Err(error),
                         }
-                    }
-                    Err(error) => return Err(error),
-                };
-            contained.then(|| ConstructedIntersectionPoint {
+                        Err(error) => return Err(error),
+                    };
+                    contained.then_some(point)
+                }
+                Err(error) => return Err(error),
+            };
+            point.map(|point| ConstructedIntersectionPoint {
                 point,
                 identity: edge_plane_intersection_identity(
                     edge_polygon,
@@ -2089,6 +2114,8 @@ fn segment_plane_intersection_in_polygon(
     start: &Point3,
     end: &Point3,
     start_class: Classification,
+    start_support: &Real,
+    end_support: &Real,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
     debug_assert!(matches!(
@@ -2096,19 +2123,18 @@ fn segment_plane_intersection_in_polygon(
         Classification::Negative | Classification::Positive
     ));
 
-    let start_support = polygon.support.expression_at_point(start);
-    let end_support = polygon.support.expression_at_point(end);
     let denominator_is_positive = start_class == Classification::Positive;
     let mut saw_unknown = false;
 
     for edge in polygon.edges.iter() {
-        let start_edge = edge.expression_at_point(start);
-        let end_edge = edge.expression_at_point(end);
-        let numerator = hyperlattice::Real::signed_product_sum(
-            [true, false],
-            [[&start_support, &end_edge], [&end_support, &start_edge]],
-        );
-        let candidate_class = match classify_real(decisions, &numerator) {
+        let candidate_class = match classify_segment_plane_edge_numerator(
+            decisions,
+            start,
+            end,
+            start_support,
+            end_support,
+            edge,
+        ) {
             Ok(classification) if denominator_is_positive => classification,
             Ok(Classification::Negative) => Classification::Positive,
             Ok(Classification::Positive) => Classification::Negative,
@@ -2133,10 +2159,82 @@ fn segment_plane_intersection_in_polygon(
     }
 }
 
-fn intersect_segment_plane(start: &Point3, end: &Point3, plane: &Plane) -> HypermeshResult<Point3> {
-    let start_value = plane.expression_at_point(start);
-    let end_value = plane.expression_at_point(end);
-    let denom = &start_value - &end_value;
+fn classify_segment_plane_edge_numerator(
+    decisions: &DecisionContext,
+    start: &Point3,
+    end: &Point3,
+    start_support: &Real,
+    end_support: &Real,
+    edge: &Plane,
+) -> HypermeshResult<Classification> {
+    if let (Some(start_support), Some(end_support)) = (
+        start_support.exact_rational_ref(),
+        end_support.exact_rational_ref(),
+    ) && let [Some(a), Some(b), Some(c), Some(d)] =
+        [&edge.normal.x, &edge.normal.y, &edge.normal.z, &edge.offset].map(Real::exact_rational_ref)
+        && let [Some(sx), Some(sy), Some(sz), Some(ex), Some(ey), Some(ez)] =
+            [&start.x, &start.y, &start.z, &end.x, &end.y, &end.z].map(Real::exact_rational_ref)
+    {
+        let one = hyperlattice::Rational::one_ref();
+        return Ok(
+            match hyperlattice::Rational::signed_product_sum_ordering(
+                [true, true, true, true, false, false, false, false],
+                [
+                    [start_support, a, ex],
+                    [start_support, b, ey],
+                    [start_support, c, ez],
+                    [start_support, d, one],
+                    [end_support, a, sx],
+                    [end_support, b, sy],
+                    [end_support, c, sz],
+                    [end_support, d, one],
+                ],
+            ) {
+                std::cmp::Ordering::Less => Classification::Negative,
+                std::cmp::Ordering::Equal => Classification::On,
+                std::cmp::Ordering::Greater => Classification::Positive,
+            },
+        );
+    }
+
+    let start_edge = edge.expression_at_point(start);
+    let end_edge = edge.expression_at_point(end);
+    let numerator = Real::signed_product_sum(
+        [true, false],
+        [[start_support, &end_edge], [end_support, &start_edge]],
+    );
+    classify_real(decisions, &numerator)
+}
+
+fn intersect_segment_plane_from_values(
+    start: &Point3,
+    end: &Point3,
+    start_value: &Real,
+    end_value: &Real,
+) -> HypermeshResult<Point3> {
+    let denom = start_value - end_value;
+    if [
+        &start.x,
+        &start.y,
+        &start.z,
+        &end.x,
+        &end.y,
+        &end.z,
+        start_value,
+        end_value,
+    ]
+    .into_iter()
+    .all(Real::is_exact_dyadic_rational)
+    {
+        let [x, y, z] = Real::exact_rational_interpolate_point3_known_dyadic(
+            [&start.x, &start.y, &start.z],
+            [&end.x, &end.y, &end.z],
+            start_value,
+            &denom,
+        )
+        .map_err(|_| HypermeshError::UnknownClassification)?;
+        return Ok(Point3::new(x, y, z));
+    }
     let t = (start_value / denom).map_err(|_| HypermeshError::UnknownClassification)?;
 
     Ok(Point3::new(
@@ -2271,12 +2369,94 @@ mod tests {
     use super::{
         ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
-        PolygonVertexArena, StoredIntersectionKind, pairwise_intersections_by_polygon_from_bvh,
+        PolygonVertexArena, StoredIntersectionKind, classify_segment_plane_edge_numerator,
+        pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
     };
     use crate::bvh::ExactBvh;
+    use crate::context::{DecisionContext, MeshContext};
     use crate::error::HypermeshError;
+    use crate::geometry::{Classification, Plane};
     use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity};
+
+    #[test]
+    fn sign_only_segment_plane_edge_numerator_matches_materialized_polynomial() {
+        let decisions = crate::test_support::approximate_decisions();
+        for seed in 0_i64..512 {
+            let value = |multiplier: i64, addend: i64| {
+                Real::from((seed * multiplier + addend).rem_euclid(23) - 11)
+            };
+            let start = Point3::new(value(3, 1), value(5, 2), value(7, 3));
+            let end = Point3::new(value(11, 4), value(13, 5), value(17, 6));
+            let edge =
+                Plane::from_coefficients(value(19, 7), value(23, 8), value(29, 9), value(31, 10));
+            let start_support = value(37, 11);
+            let end_support = value(41, 12);
+            let start_edge = edge.expression_at_point(&start);
+            let end_edge = edge.expression_at_point(&end);
+            let materialized = Real::signed_product_sum(
+                [true, false],
+                [[&start_support, &end_edge], [&end_support, &start_edge]],
+            );
+            let expected = crate::predicate::classify_real(&decisions, &materialized).unwrap();
+            assert_eq!(
+                classify_segment_plane_edge_numerator(
+                    &decisions,
+                    &start,
+                    &end,
+                    &start_support,
+                    &end_support,
+                    &edge,
+                )
+                .unwrap(),
+                expected,
+                "seed={seed}",
+            );
+        }
+    }
+
+    #[test]
+    fn symbolic_segment_plane_edge_numerator_obeys_terminal_policy() {
+        let left = Real::pi() + Real::e();
+        let right = Real::e() + Real::pi();
+        let start = Point3::new(left, Real::zero(), Real::zero());
+        let end = Point3::new(right, Real::zero(), Real::zero());
+        let edge = Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::zero());
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert!(matches!(
+            classify_segment_plane_edge_numerator(
+                &strict,
+                &start,
+                &end,
+                &Real::one(),
+                &Real::one(),
+                &edge,
+            ),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        assert_eq!(
+            classify_segment_plane_edge_numerator(
+                &approximate,
+                &start,
+                &end,
+                &Real::one(),
+                &Real::one(),
+                &edge,
+            )
+            .unwrap(),
+            Classification::On,
+        );
+        assert_eq!(
+            approximate.certainty(),
+            crate::MeshCertainty::Approximate512Consumed
+        );
+    }
 
     #[test]
     fn polygon_vertex_arena_flattens_known_empty_and_constructed_rows() {
