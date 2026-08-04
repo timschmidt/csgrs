@@ -6,10 +6,10 @@ use std::{hint::black_box, time::Duration};
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use support::{
-    Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
-    run_hypermesh_batch, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
-    to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh,
-    yeahright_enabled,
+    APPROXIMATE_CONTEXT, Operation, STRICT_CONTEXT, corpus, large_boolean_case, prepare,
+    prepare_yeahright, run_boolmesh, run_hypermesh, run_hypermesh_all, run_hypermesh_batch,
+    run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold, to_three_d_asset,
+    validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh, yeahright_enabled,
 };
 
 fn competitive(c: &mut Criterion) {
@@ -38,6 +38,24 @@ fn competitive(c: &mut Criterion) {
         }
     }
     boolean_group.finish();
+
+    let mut shared_group = c.benchmark_group("competitive_shared_arrangement");
+    shared_group.sample_size(20);
+    shared_group.warm_up_time(Duration::from_secs(1));
+    shared_group.measurement_time(Duration::from_secs(4));
+    for case in &cases {
+        let inputs = prepare(case);
+        for (policy, context) in [
+            ("strict", &STRICT_CONTEXT),
+            ("approximate_512", &APPROXIMATE_CONTEXT),
+        ] {
+            let workload = format!("{}/{policy}/all", case.name);
+            shared_group.bench_function(BenchmarkId::new("hypermesh", workload), |benchmark| {
+                benchmark.iter(|| run_hypermesh_all(context, black_box(&inputs.hypermesh)));
+            });
+        }
+    }
+    shared_group.finish();
 
     let large_case = large_boolean_case();
     let large_inputs = prepare(&large_case);

@@ -37,8 +37,8 @@ indices.
 
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
-first performs explicit convexity validation and primes the native closed-PWN
-fact, while the second uses raw borrowed views so repeated-input cache effects
-are visible without selecting a different engine. Every heap gate runs both
+first primes the native policy-qualified closed-PWN fact, while the second uses
+raw borrowed views so repeated-input cache effects are visible without
+selecting a different engine. Every heap gate runs both
 `STRICT` and `APPROXIMATE_512` and records output certainty and topology with
 the process-memory result.

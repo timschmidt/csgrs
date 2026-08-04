@@ -55,6 +55,7 @@ struct ArrangementPointArena {
     points: Vec<Point3>,
     identities: Vec<ArrangementPointIdentity>,
     structural: StorageHashMap<ArrangementPointIdentity, u32>,
+    source_edge_points: Vec<(u32, [u32; 2], u32)>,
     numeric: PointInterner<()>,
 }
 
@@ -82,6 +83,7 @@ impl ArrangementPointArena {
             points,
             identities,
             structural,
+            source_edge_points: Vec::new(),
             numeric: PointInterner::try_with_capacity(capacity, false, false)?,
         })
     }
@@ -133,6 +135,50 @@ impl ArrangementPointArena {
         }
         self.structural.insert(identity, compact);
         Ok(compact)
+    }
+
+    fn retain_overlay_source_edge_memberships(
+        &mut self,
+        identity: &ArrangementPointIdentity,
+        point: u32,
+    ) -> HypermeshResult<()> {
+        let source_edge_count = match identity {
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::SourceEdgePlane { .. },
+            ) => 1,
+            ArrangementPointIdentity::CoplanarEdges(edges) => edges
+                .iter()
+                .filter(|edge| matches!(edge, ConstructionEdgeIdentity::Source { .. }))
+                .count(),
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::Source { .. }
+                | ConstructionVertexIdentity::PlaneTriple { .. },
+            ) => 0,
+        };
+        self.source_edge_points
+            .try_reserve(source_edge_count)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "retained source-edge point schedule",
+            })?;
+        match identity {
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::SourceEdgePlane {
+                    mesh, endpoints, ..
+                },
+            ) => self.source_edge_points.push((*mesh, *endpoints, point)),
+            ArrangementPointIdentity::CoplanarEdges(edges) => {
+                for edge in edges {
+                    if let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge {
+                        self.source_edge_points.push((*mesh, *endpoints, point));
+                    }
+                }
+            }
+            ArrangementPointIdentity::Construction(
+                ConstructionVertexIdentity::Source { .. }
+                | ConstructionVertexIdentity::PlaneTriple { .. },
+            ) => {}
+        }
+        Ok(())
     }
 }
 
@@ -606,16 +652,37 @@ fn assemble_surface_cells(
             max_radial_degree =
                 max_radial_degree.max(compact_len(edge_end - edge_start, "surface radial degree")?);
         }
-        assemble_radial_ring(
-            decisions,
-            &surface.points,
-            &pending,
-            edge,
-            &edge_uses[edge_start..edge_end],
-            &mut radial,
-            &mut ray_starts,
-            &mut sets,
-        )?;
+        let uses = &edge_uses[edge_start..edge_end];
+        if let [first, second] = uses {
+            if same_radial_ray(
+                decisions,
+                &surface.points,
+                edge,
+                first.opposite,
+                second.opposite,
+            )? {
+                return Err(HypermeshError::SurfaceArrangementFailed {
+                    reason: "two-facet radial edge has one geometric ray",
+                });
+            }
+            let first_after = facet_side_node(&pending, first.facet, edge, true)?;
+            let first_before = facet_side_node(&pending, first.facet, edge, false)?;
+            let second_after = facet_side_node(&pending, second.facet, edge, true)?;
+            let second_before = facet_side_node(&pending, second.facet, edge, false)?;
+            sets.union(first_after, second_before);
+            sets.union(second_after, first_before);
+        } else {
+            assemble_radial_ring(
+                decisions,
+                &surface.points,
+                &pending,
+                edge,
+                uses,
+                &mut radial,
+                &mut ray_starts,
+                &mut sets,
+            )?;
+        }
         edge_start = edge_end;
     }
 
@@ -1008,10 +1075,21 @@ fn radial_triple_classification(
     right: u32,
 ) -> HypermeshResult<Classification> {
     let origin = point_by_id(points, edge[0])?;
-    let direction = point_by_id(points, edge[1])? - origin;
-    let left = point_by_id(points, left)? - origin;
-    let right = point_by_id(points, right)? - origin;
-    classify_real(decisions, &direction.dot(&left.cross(&right)))
+    let endpoint = point_by_id(points, edge[1])?;
+    let left = point_by_id(points, left)?;
+    let right = point_by_id(points, right)?;
+    decisions
+        .decide(
+            hyperlimit::orient3(origin, endpoint, left, right, decisions.policy()),
+            "surface radial orientation",
+        )
+        .map(|sign| match sign {
+            // Hyperlimit's affine orientation is det(a-d, b-d, c-d),
+            // the negative of edge dot (left cross right) for this ordering.
+            hyperlimit::Sign::Negative => Classification::Positive,
+            hyperlimit::Sign::Zero => Classification::On,
+            hyperlimit::Sign::Positive => Classification::Negative,
+        })
 }
 
 fn radial_dot_classification(
@@ -1526,6 +1604,7 @@ fn corefine_surface(
         add_source_boundary(decisions, face, polygon, &mut arena, &mut work[face])?;
     }
     append_intersection_constraints(decisions, polygons, intersections, &mut arena, &mut work)?;
+    propagate_retained_source_edge_points(&mut arena, &mut work)?;
 
     let offset_capacity =
         polygons
@@ -1763,11 +1842,17 @@ fn append_intersection_constraints(
                         }
                     })?;
                     for vertex in &overlay {
-                        point_ids.push(arena.insert(
+                        let point = arena.insert(
                             decisions,
                             vertex.identity.clone(),
                             vertex.point.clone(),
-                        )?);
+                        )?;
+                        // Pairwise-graph points are already attached to every
+                        // incident face. Overlay vertices are synthesized at
+                        // this later stage, so fan out their retained authored
+                        // source-edge membership after all overlays are known.
+                        arena.retain_overlay_source_edge_memberships(&vertex.identity, point)?;
+                        point_ids.push(point);
                     }
                     for index in 0..overlay.len() {
                         let constraint = RawConstraint {
@@ -1781,6 +1866,59 @@ fn append_intersection_constraints(
                     work[other].changed = true;
                 }
             }
+        }
+    }
+    Ok(())
+}
+
+fn propagate_retained_source_edge_points(
+    arena: &mut ArrangementPointArena,
+    work: &mut [FaceWork],
+) -> HypermeshResult<()> {
+    let mut source_edge_points = std::mem::take(&mut arena.source_edge_points);
+    source_edge_points.sort_unstable();
+    source_edge_points.dedup();
+    if source_edge_points.is_empty() {
+        return Ok(());
+    }
+
+    for face_work in work {
+        let FaceWork {
+            boundary,
+            constraints,
+            contacts,
+            changed,
+        } = face_work;
+        let mut inserted = false;
+        for constraint in constraints.iter().take(boundary.len()) {
+            let ConstructionEdgeIdentity::Source { mesh, endpoints } = &constraint.line else {
+                continue;
+            };
+            let key = (*mesh, *endpoints);
+            let start =
+                source_edge_points.partition_point(|&(candidate_mesh, candidate_endpoints, _)| {
+                    (candidate_mesh, candidate_endpoints) < key
+                });
+            let end =
+                source_edge_points.partition_point(|&(candidate_mesh, candidate_endpoints, _)| {
+                    (candidate_mesh, candidate_endpoints) <= key
+                });
+            contacts
+                .try_reserve(end - start)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "retained source-edge face schedule",
+                })?;
+            for &(_, _, point) in &source_edge_points[start..end] {
+                if !constraint.endpoints.contains(&point) {
+                    contacts.push(point);
+                    inserted = true;
+                }
+            }
+        }
+        if inserted {
+            contacts.sort_unstable();
+            contacts.dedup();
+            *changed = true;
         }
     }
     Ok(())
@@ -2149,6 +2287,22 @@ fn corefine_face(
     work: &FaceWork,
     arena: &mut ArrangementPointArena,
 ) -> HypermeshResult<FaceResult> {
+    if !work.changed {
+        return Ok(FaceResult {
+            triangles: triangulate_convex_boundary(&work.boundary),
+            #[cfg(test)]
+            constraints: work
+                .boundary
+                .iter()
+                .copied()
+                .zip(work.boundary.iter().copied().cycle().skip(1))
+                .take(work.boundary.len())
+                .map(|(from, to)| sorted_edge([from, to]))
+                .collect(),
+            #[cfg(test)]
+            contacts: Vec::new(),
+        });
+    }
     let mut constraint_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
     for constraint in &work.constraints {
         let endpoints = sorted_edge(constraint.endpoints);
@@ -2316,7 +2470,7 @@ fn corefine_face(
         contacts.dedup();
         contacts
     };
-    if !work.changed || only_source_boundary {
+    if only_source_boundary {
         return Ok(FaceResult {
             triangles: triangulate_convex_boundary(&work.boundary),
             #[cfg(test)]

@@ -4,8 +4,8 @@ mod yeahright;
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
-    BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, Point3, PredicatePolicy, Real,
-    Triangle, TriangleMesh, boolean, certify_convex_mesh,
+    BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, Point3,
+    PredicatePolicy, Real, Triangle, TriangleMesh, boolean, certify_convex_mesh,
 };
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -17,6 +17,7 @@ use tri_mesh::Mesh as TriMeshHalfEdge;
 const METRIC_TOLERANCE: f64 = 1.0e-8;
 const KEY_SCALE: f64 = 1.0e9;
 pub const APPROXIMATE_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
+pub const STRICT_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
@@ -354,6 +355,32 @@ pub fn run_hypermesh_batch(inputs: &[TriangleMesh; 2], operation: Operation) -> 
         BooleanProgram::Operation(operation.hypermesh()),
     )
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
+    .into_value()
+}
+
+/// Materializes the four bounded two-operand results emitted by CGAL's
+/// `corefine_and_compute_boolean_operations` from one shared arrangement.
+pub fn run_hypermesh_all(context: &MeshContext, inputs: &[TriangleMesh; 2]) -> BooleanMeshBatch {
+    let nodes = [
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(1),
+        BooleanExpression::And([0, 2]),
+        BooleanExpression::Not(0),
+        BooleanExpression::And([1, 4]),
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+    ];
+    let roots = [6, 7, 3, 5];
+    boolean(
+        context,
+        &[inputs[0].as_ref(), inputs[1].as_ref()],
+        BooleanProgram::Expressions {
+            nodes: &nodes,
+            roots: &roots,
+        },
+    )
+    .expect("hypermesh shared four-result arrangement failed")
     .into_value()
 }
 

@@ -9,14 +9,14 @@ The Boolean suite is split by purpose:
 
 - `boolean_pipeline` requires supported boxes, tetrahedra, octahedra,
   subdivided surfaces, disconnected components, and variadic inputs to
-  succeed. It checks every operation, polygon and immediate output paths,
-  certified-convex dispatch, convenience wrappers, bounded-depth behavior,
-  closure, winding evidence, operand-order invariance, duplicate-input
-  identities, and the absence of degenerate or exact duplicate materialized
-  triangles (including independently indexed duplicates).
+  succeed through the canonical `boolean` entry point. It checks every
+  operation, shared multi-expression programs, retained-native versus raw
+  views, closure, winding evidence, operand-order invariance, duplicate-input
+  identities, round-trip materialization, and the absence of degenerate or
+  exact duplicate triangles (including independently indexed duplicates).
 - `boolean_box_oracle` checks one through four boxes against an independent
-  exact cell-decomposition volume oracle. It exercises general polygon,
-  immediate triangle-soup, and certified-convex APIs.
+  exact cell-decomposition volume oracle. It exercises raw and retained-native
+  views plus single-operation and shared multi-expression programs.
 - `boolean_input_validation` mutates valid closed meshes into empty,
   out-of-range, degenerate, open, and non-PWN inputs and requires the public
   APIs to return the documented error.
@@ -39,23 +39,22 @@ The Boolean suite is split by purpose:
   products when both operands are transformed. Identity and signed
   permutations, whose coefficients are structurally fixed, are followed by a
   value-bearing translation. The target checks matrix classification,
-  batch-versus-scalar point transformation, repaired winding, convex
-  certification, every Boolean output API, closure, and exact-output API
-  agreement. All combinations may overlap. The fuzz-only
+  batch-versus-scalar point transformation, repaired winding, retained convex
+  facts, canonical Boolean programs, closure, and exact volume agreement. All
+  combinations may overlap. The fuzz-only
   `fuzz-bounded-campaign` feature uses certified dyadic intervals for
   comparisons after structural identity and exact-rational tests. Disjoint
   intervals retain their certified ordering or sign, while overlap between two
   values or with zero at 512-bit refinement is treated as approximate equality.
-  Symbolic Cartesian-product cases validate polygon output and its winding
-  metadata without repeating the 512-bit refinements during T-junction cleanup.
-  They accept explicit certification errors, including `OpenOutput` when the
-  approximate campaign policy cannot certify a closed surface. Exact
-  transformed cases exercise every triangulated API and require full closure.
+  Symbolic Cartesian-product cases validate the shared arrangement output and
+  winding metadata without repeating avoidable 512-bit refinements. They
+  accept only explicit certification-boundary errors. Exact transformed cases
+  require full closure.
   The optional feature changes campaign bounds only; it does not select the
   predicate policy.
 
-Every successful Boolean result is replayed through the public polygon-closure,
-certified-triangulation, and exact triangle-quality checks. Errors from
+Every successful Boolean result is replayed through batch validation, public
+closure evidence, and exact triangle-quality checks. Errors from
 supported inputs whose selected policy can decide every required predicate are
 treated as fuzz failures rather than discarded.
 

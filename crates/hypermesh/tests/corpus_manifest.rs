@@ -153,6 +153,8 @@ fn corpus_spans_initial_replacement_path_classes() {
         "operand-permutation",
         "high-operand-count",
         "batched-expression",
+        "source-edge-split-propagation",
+        "intersection-curve-continuation",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }

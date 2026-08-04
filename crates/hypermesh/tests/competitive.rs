@@ -12,7 +12,7 @@ use support::{
     APPROXIMATE_CONTEXT, LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
     YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, assert_close, assert_summary,
     corpus, large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh_batch, run_boolmesh,
-    run_hypermesh, run_hypermesh_batch, run_manifold, summarize, to_hypermesh,
+    run_hypermesh, run_hypermesh_all, run_hypermesh_batch, run_manifold, summarize, to_hypermesh,
     validate_with_tri_mesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
     yeahright_control_mesh,
 };
@@ -131,6 +131,39 @@ fn hypermesh_boolean_outputs_are_valid_tri_mesh_half_edge_inputs() {
                 case.name,
                 operation.name()
             );
+        }
+    }
+}
+
+#[test]
+fn shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies() {
+    for case in corpus() {
+        let inputs = prepare(&case);
+        for (policy, context) in predicate_contexts() {
+            let batch = run_hypermesh_all(&context, &inputs.hypermesh);
+            assert_eq!(batch.results.len(), 4, "{} {policy}", case.name);
+            for (output, expected_volume) in [
+                case.expected_volumes[0],
+                case.expected_volumes[1],
+                case.expected_volumes[2],
+                summarize(&case.right).volume - case.expected_volumes[1],
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                assert!(
+                    boundary_is_balanced(&batch.results[output]),
+                    "{} {policy} output {output} is not closed",
+                    case.name
+                );
+                let summary = summarize(&raw_from_hypermesh_batch(&batch, output));
+                assert!(summary.finite, "{} {policy} output {output}", case.name);
+                assert_close(
+                    summary.volume,
+                    expected_volume,
+                    &format!("HyperMesh {} {policy} output {output}", case.name),
+                );
+            }
         }
     }
 }

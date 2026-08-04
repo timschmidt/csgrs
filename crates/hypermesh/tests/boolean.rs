@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::num::NonZeroU32;
 
 use hypermesh::{
     BooleanExpression, BooleanMeshBatch, BooleanMeshResult, BooleanOp, BooleanProgram,
@@ -45,6 +46,52 @@ fn exact_box(min: [Real; 3], max: [Real; 3]) -> TriangleMesh {
 
 fn integer_box(min: [i32; 3], max: [i32; 3]) -> TriangleMesh {
     exact_box(min.map(r), max.map(r))
+}
+
+fn integer_octahedron(center: [i32; 3], radius: [i32; 3]) -> TriangleMesh {
+    let [x, y, z] = center;
+    TriangleMesh::new(
+        vec![
+            Point3::new(r(x + radius[0]), r(y), r(z)),
+            Point3::new(r(x - radius[0]), r(y), r(z)),
+            Point3::new(r(x), r(y + radius[1]), r(z)),
+            Point3::new(r(x), r(y - radius[1]), r(z)),
+            Point3::new(r(x), r(y), r(z + radius[2])),
+            Point3::new(r(x), r(y), r(z - radius[2])),
+        ],
+        vec![
+            Triangle::new(0, 2, 4),
+            Triangle::new(2, 1, 4),
+            Triangle::new(1, 3, 4),
+            Triangle::new(3, 0, 4),
+            Triangle::new(2, 0, 5),
+            Triangle::new(1, 2, 5),
+            Triangle::new(3, 1, 5),
+            Triangle::new(0, 3, 5),
+        ],
+    )
+}
+
+fn with_rotated_triangle_order(mesh: TriangleMesh, amount: usize) -> TriangleMesh {
+    let mut triangles = mesh.triangles.to_vec();
+    let count = triangles.len();
+    triangles.rotate_left(amount % count);
+    TriangleMesh::new(mesh.positions.to_vec(), triangles)
+}
+
+fn combine_meshes(meshes: &[TriangleMesh]) -> TriangleMesh {
+    let position_count = meshes.iter().map(|mesh| mesh.positions.len()).sum();
+    let triangle_count = meshes.iter().map(|mesh| mesh.triangles.len()).sum();
+    let mut positions = Vec::with_capacity(position_count);
+    let mut triangles = Vec::with_capacity(triangle_count);
+    for mesh in meshes {
+        let base = positions.len();
+        positions.extend(mesh.positions.iter().cloned());
+        triangles.extend(mesh.triangles.iter().map(|triangle| {
+            Triangle::new(base + triangle.v0, base + triangle.v1, base + triangle.v2)
+        }));
+    }
+    TriangleMesh::new(positions, triangles)
 }
 
 fn run(
@@ -388,4 +435,77 @@ fn boolean_terminal_equality_obeys_strict_and_approximate_512() {
     .unwrap();
     assert_eq!(outcome.certainty, MeshCertainty::Approximate512Consumed);
     assert_certified_boundary(&outcome.value, &outcome.value.results[0]);
+}
+
+#[test]
+fn same_operand_coplanar_shell_overlap_is_order_invariant() {
+    let first = with_rotated_triangle_order(integer_box([-5, -4, -3], [-3, -1, -1]), 4);
+    let second = with_rotated_triangle_order(integer_box([-5, -5, -5], [-3, -2, -1]), 8);
+    let overlapping_shells = combine_meshes(&[first, second]);
+    let octahedron = integer_octahedron([-2, -1, 0], [3, 3, 4]);
+    // Inclusion-exclusion gives 76 - 125/288: the second box/octahedron
+    // intersection and the three-way intersection are the same 1/288
+    // tetrahedron. `signed_six_volume` is six times geometric volume.
+    let expected_signed_six_volume =
+        (r(21_763) / r(48)).expect("the exact volume denominator is nonzero");
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = MeshContext::new(policy);
+        let forward = run(
+            &context,
+            &[&overlapping_shells, &octahedron],
+            BooleanProgram::Operation(BooleanOp::Union),
+        )
+        .unwrap();
+        let reverse = run(
+            &context,
+            &[&octahedron, &overlapping_shells],
+            BooleanProgram::Operation(BooleanOp::Union),
+        )
+        .unwrap();
+
+        assert_eq!(forward.certainty, MeshCertainty::Certified);
+        assert_eq!(reverse.certainty, MeshCertainty::Certified);
+        assert_certified_boundary(&forward.value, &forward.value.results[0]);
+        assert_certified_boundary(&reverse.value, &reverse.value.results[0]);
+        assert_eq!(
+            signed_six_volume(&forward.value.vertices, &forward.value.results[0]),
+            expected_signed_six_volume,
+        );
+        assert_eq!(
+            signed_six_volume(&reverse.value.vertices, &reverse.value.results[0]),
+            expected_signed_six_volume,
+        );
+    }
+}
+
+#[test]
+fn subdivided_same_operand_overlap_has_empty_disjoint_intersection() {
+    let first = with_rotated_triangle_order(integer_box([-5, -4, -3], [-3, -1, -1]), 4)
+        .subdivide_triangles(NonZeroU32::MIN)
+        .unwrap();
+    let second = with_rotated_triangle_order(integer_box([-5, -4, -3], [-2, 0, -2]), 9);
+    let overlapping_shells = combine_meshes(&[first, second]);
+    let disjoint_octahedron = integer_octahedron([-2, -1, 0], [1, 1, 1]);
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = MeshContext::new(policy);
+        for operands in [
+            [&overlapping_shells, &disjoint_octahedron],
+            [&disjoint_octahedron, &overlapping_shells],
+        ] {
+            let outcome = run(
+                &context,
+                &operands,
+                BooleanProgram::Operation(BooleanOp::Intersection),
+            )
+            .unwrap();
+            assert_eq!(outcome.certainty, MeshCertainty::Certified);
+            assert!(outcome.value.results[0].triangles.is_empty());
+            assert_eq!(
+                signed_six_volume(&outcome.value.vertices, &outcome.value.results[0]),
+                Real::zero(),
+            );
+        }
+    }
 }

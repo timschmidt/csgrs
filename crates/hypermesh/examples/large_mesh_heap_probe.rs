@@ -12,7 +12,7 @@ use competitive_support::{
     yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
 };
 use hypermesh::{
-    BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, boolean, certify_convex_mesh,
+    BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, TriangleMeshRef, boolean, polygon_soup,
 };
 
 fn main() {
@@ -29,7 +29,7 @@ fn main() {
         args.next().is_none(),
         "expected exactly one fixture and one policy"
     );
-    let (name, left, right, exact_subdivision_levels, certify_convex) = match fixture.as_str() {
+    let (name, left, right, exact_subdivision_levels, prime_native_pwn) = match fixture.as_str() {
         "boxes-3072" => {
             let case = large_boolean_case();
             (case.name, case.left, case.right, 0, true)
@@ -83,19 +83,29 @@ fn main() {
     let exact_left =
         mesh_common::subdivide_triangles(to_hypermesh(&left), exact_subdivision_levels);
     let exact_right = to_hypermesh(&right);
-    if certify_convex {
-        certify_convex_mesh(&MeshContext::new(policy), exact_left.as_ref())
-            .expect("left large-mesh fixture must remain convex");
-        certify_convex_mesh(&MeshContext::new(policy), exact_right.as_ref())
-            .expect("right large-mesh fixture must remain convex");
-    }
     drop((left, right));
     let meshes = [exact_left, exact_right];
     let input_triangles = meshes[0].triangles.len() + meshes[1].triangles.len();
+    let context = MeshContext::new(policy);
+    let native_views = [meshes[0].as_ref(), meshes[1].as_ref()];
+    let raw_views = [
+        TriangleMeshRef::new(&meshes[0].positions, &meshes[0].triangles),
+        TriangleMeshRef::new(&meshes[1].positions, &meshes[1].triangles),
+    ];
+    let views = if prime_native_pwn {
+        drop(
+            polygon_soup(&context, &native_views)
+                .expect("large-mesh native PWN facts must validate")
+                .into_value(),
+        );
+        &native_views
+    } else {
+        &raw_views
+    };
 
     let result = boolean(
-        &MeshContext::new(policy),
-        black_box(&[meshes[0].as_ref(), meshes[1].as_ref()]),
+        &context,
+        black_box(views),
         BooleanProgram::Operation(BooleanOp::Union),
     )
     .expect("large fixture union must complete under the selected policy");

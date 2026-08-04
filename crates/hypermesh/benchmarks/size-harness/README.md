@@ -5,10 +5,13 @@ Hypermesh's dev dependencies, so native and `wasm32-unknown-unknown` artifacts
 measure the linked Hyper stack rather than Criterion, fuzzing, UI, or
 competitor code.
 
-`hypermesh-size-harness` retains polygon selection plus certified
-triangulation. `immediate` retains direct certified triangle materialization,
-including analytic fast paths. Each selects the operation from a runtime
-argument; `immediate` also accepts `strict` as its second argument:
+Both binaries call the canonical shared-arrangement `boolean` API and
+materialize its compact triangle batch. `hypermesh-size-harness` uses an exact
+tetrahedron workload and consumes the value; `immediate` uses an exact box
+workload and also observes aggregate certainty. The distinct consumers expose
+link-retention differences without retaining a second Boolean engine or a
+compatibility API. Each selects the operation from a runtime argument;
+`immediate` also accepts `strict` as its second argument:
 
 ```sh
 cargo run --release -- union
@@ -18,7 +21,7 @@ cargo run --release -- symmetric-difference
 cargo run --release --bin immediate -- union strict
 ```
 
-`retention` repeatedly exercises the general polygon path with raw mesh views.
+`retention` repeatedly exercises the canonical arrangement with raw mesh views.
 It is excluded from `measure.sh` because it is a long-lived-process memory
 consumer rather than an artifact-size consumer:
 

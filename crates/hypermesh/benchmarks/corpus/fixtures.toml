@@ -338,6 +338,43 @@ expected_certainty = "Certified"
 metamorphic_variants = 4
 
 [[fixture]]
+id = "same_operand_coplanar_source_edge_propagation"
+status = "permanent"
+provenance = "tests/boolean.rs::same_operand_coplanar_shell_overlap_is_order_invariant"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "two overlapping integer boxes in one operand unioned with an integer octahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "coplanar-overlay", "source-edge-split-propagation", "nonmanifold-radial", "operand-permutation"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volume = "21763/48"
+metamorphic_variants = 4
+
+[[fixture]]
+id = "same_operand_subdivision_edge_intersection_continuation"
+status = "permanent"
+provenance = "tests/boolean.rs::subdivided_same_operand_overlap_has_empty_disjoint_intersection"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "one subdivided and one unsubdivided overlapping integer box in one operand, intersected with a disjoint integer octahedron"
+coordinate_class = "dyadic"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "coplanar-overlay", "subdivided-surface", "boundary-aligned-intersection", "intersection-curve-continuation", "winding-multiplicity-two", "operand-permutation", "empty-result"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_output_triangles = 0
+expected_signed_six_volume = "0"
+metamorphic_variants = 4
+
+[[fixture]]
 id = "surface_arrangement_forty_operand_truth"
 status = "permanent"
 provenance = "surface_arrangement::tests::forty_operands_share_one_arrangement_and_batched_truth_table"

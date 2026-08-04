@@ -1225,12 +1225,12 @@ fn append_pairwise_intersection(
     let left_vertices = vertices.row(global_i)?;
     let right_vertices = vertices.row(global_j)?;
     let shares_manifold_edge = if same_mesh {
-        polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+        polygon_cycles_share_reversed_manifold_triangle_edge(
             decisions,
             left_vertices,
-            &polygons[global_i].support,
+            &polygons[global_i],
             right_vertices,
-            &polygons[global_j].support,
+            &polygons[global_j],
         )?
     } else {
         false
@@ -1291,18 +1291,6 @@ fn append_pairwise_intersection(
             )
         }
         ConstructedPairwiseIntersection::NonCoplanarSegment(segment) => {
-            if same_mesh
-                && !segment_has_strict_interior_point_in_both(
-                    decisions,
-                    &segment.v0.point,
-                    &segment.v1.point,
-                    &polygons[global_i],
-                    &polygons[global_j],
-                )?
-            {
-                crate::trace_dispatch!("pairwise-intersection", "same-mesh-boundary-only");
-                return Ok(());
-            }
             crate::trace_dispatch!("pairwise-intersection", "nonempty-cut");
             graph.append_constructed_segment_pair(
                 global_i,
@@ -1487,16 +1475,22 @@ fn points_match(
     Ok(left == right || crate::predicate::points_equal(decisions, left, right)?)
 }
 
-fn polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+fn polygon_cycles_share_reversed_manifold_triangle_edge(
     decisions: &DecisionContext,
     left: &[Point3],
-    left_support: &Plane,
+    left_polygon: &ConvexPolygon,
     right: &[Point3],
-    right_support: &Plane,
+    right_polygon: &ConvexPolygon,
 ) -> HypermeshResult<bool> {
     if left.len() != 3 || right.len() != 3 {
         return Ok(false);
     }
+    let (Some(left_edges), Some(right_edges)) = (
+        left_polygon.known_edge_identities(),
+        right_polygon.known_edge_identities(),
+    ) else {
+        return Ok(false);
+    };
     for left_index in 0..3 {
         let left_start = &left[left_index];
         let left_end = &left[(left_index + 1) % 3];
@@ -1504,108 +1498,41 @@ fn polygon_cycles_share_reversed_noncoplanar_triangle_edge(
             if left_start != &right[(right_index + 1) % 3] || left_end != &right[right_index] {
                 continue;
             }
+            let Some(left_edge) = left_edges.get(left_index) else {
+                return Err(HypermeshError::UnknownClassification);
+            };
+            let Some(right_edge) = right_edges.get(right_index) else {
+                return Err(HypermeshError::UnknownClassification);
+            };
+            if left_edge != right_edge {
+                continue;
+            }
             let left_opposite = &left[(left_index + 2) % 3];
             let right_opposite = &right[(right_index + 2) % 3];
-            return Ok(
-                classify_point_decision(decisions, right_opposite, left_support)?
+            if classify_point_decision(decisions, right_opposite, &left_polygon.support)?
+                != Classification::On
+                || classify_point_decision(decisions, left_opposite, &right_polygon.support)?
                     != Classification::On
-                    || classify_point_decision(decisions, left_opposite, right_support)?
-                        != Classification::On,
-            );
+            {
+                return Ok(true);
+            }
+            // Coplanar PWN neighbors meet only at their authored edge when
+            // each opposite vertex lies strictly outside the other's edge
+            // half-space. Same-side or collinear folds still reach the full
+            // coplanar-overlap path.
+            return Ok(classify_point_decision(
+                decisions,
+                right_opposite,
+                &left_polygon.edges[left_index],
+            )? == Classification::Positive
+                && classify_point_decision(
+                    decisions,
+                    left_opposite,
+                    &right_polygon.edges[right_index],
+                )? == Classification::Positive);
         }
     }
     Ok(false)
-}
-
-pub(crate) fn segment_has_strict_interior_point_in_both(
-    decisions: &DecisionContext,
-    a: &Point3,
-    b: &Point3,
-    left: &ConvexPolygon,
-    right: &ConvexPolygon,
-) -> HypermeshResult<bool> {
-    let mut lower = Real::zero();
-    let mut upper = Real::one();
-    Ok(
-        constrain_open_segment_interval_to_polygon(decisions, a, b, left, &mut lower, &mut upper)?
-            && constrain_open_segment_interval_to_polygon(
-                decisions, a, b, right, &mut lower, &mut upper,
-            )?
-            && compare_real_decision(decisions, &lower, &upper)?.is_lt(),
-    )
-}
-
-fn constrain_open_segment_interval_to_polygon(
-    decisions: &DecisionContext,
-    a: &Point3,
-    b: &Point3,
-    polygon: &ConvexPolygon,
-    lower: &mut Real,
-    upper: &mut Real,
-) -> HypermeshResult<bool> {
-    for edge in polygon.edges.iter() {
-        if !constrain_open_segment_interval_to_plane_negative(decisions, a, b, edge, lower, upper)?
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-fn constrain_open_segment_interval_to_plane_negative(
-    decisions: &DecisionContext,
-    a: &Point3,
-    b: &Point3,
-    plane: &Plane,
-    lower: &mut Real,
-    upper: &mut Real,
-) -> HypermeshResult<bool> {
-    let start = plane.expression_at_point(a);
-    let end = plane.expression_at_point(b);
-    let start_class = classify_real(decisions, &start)?;
-    let end_class = classify_real(decisions, &end)?;
-
-    match (start_class, end_class) {
-        (Classification::Negative, Classification::Negative)
-        | (Classification::Negative, Classification::On)
-        | (Classification::On, Classification::Negative) => Ok(true),
-        (Classification::Positive, Classification::Negative) => {
-            let cut = (start.clone() / (&start - &end))
-                .map_err(|_| HypermeshError::UnknownClassification)?;
-            update_open_segment_lower(decisions, lower, &cut)
-        }
-        (Classification::Negative, Classification::Positive) => {
-            let cut = (start.clone() / (&start - &end))
-                .map_err(|_| HypermeshError::UnknownClassification)?;
-            update_open_segment_upper(decisions, upper, &cut)
-        }
-        (Classification::On, Classification::On)
-        | (Classification::Positive, Classification::Positive)
-        | (Classification::Positive, Classification::On)
-        | (Classification::On, Classification::Positive) => Ok(false),
-    }
-}
-
-fn update_open_segment_lower(
-    decisions: &DecisionContext,
-    lower: &mut Real,
-    candidate: &Real,
-) -> HypermeshResult<bool> {
-    if compare_real_decision(decisions, candidate, lower)?.is_gt() {
-        *lower = candidate.clone();
-    }
-    Ok(compare_real_decision(decisions, lower, &Real::one())?.is_lt())
-}
-
-fn update_open_segment_upper(
-    decisions: &DecisionContext,
-    upper: &mut Real,
-    candidate: &Real,
-) -> HypermeshResult<bool> {
-    if compare_real_decision(decisions, candidate, upper)?.is_lt() {
-        *upper = candidate.clone();
-    }
-    Ok(compare_real_decision(decisions, &Real::zero(), upper)?.is_lt())
 }
 
 fn intersect_coplanar_constructed(
@@ -2272,6 +2199,7 @@ mod tests {
         ConstructedIntersectionPoint, ConstructedIntersectionSegment, PairwiseIntersection,
         PairwiseIntersectionEvent, PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
         PolygonVertexArena, StoredIntersectionKind, pairwise_intersections_by_polygon_from_bvh,
+        polygon_cycles_share_reversed_manifold_triangle_edge,
     };
     use crate::bvh::ExactBvh;
     use crate::error::HypermeshError;
@@ -2535,6 +2463,51 @@ mod tests {
                 ..
             }))
         ));
+    }
+
+    #[test]
+    fn manifold_edge_skip_requires_shared_construction_identity() {
+        let decisions = crate::test_support::approximate_decisions();
+        let p = |x, y| Point3::new(Real::from(x), Real::from(y), Real::zero());
+        let mut host =
+            crate::test_support::approximate_convex_triangle(&p(0, 0), &p(2, 0), &p(0, 2), 0, 0);
+        host.set_source_triangle_edge_identities(0, [0, 1, 2])
+            .unwrap();
+        let mut authored_neighbor =
+            crate::test_support::approximate_convex_triangle(&p(2, 0), &p(0, 0), &p(1, -2), 0, 1);
+        authored_neighbor
+            .set_source_triangle_edge_identities(0, [1, 0, 3])
+            .unwrap();
+        let mut coincident_component_edge = authored_neighbor.clone();
+        coincident_component_edge
+            .set_source_triangle_edge_identities(0, [10, 11, 12])
+            .unwrap();
+        let host_vertices = host.vertices_decision(&decisions).unwrap();
+        let neighbor_vertices = authored_neighbor.vertices_decision(&decisions).unwrap();
+        let component_vertices = coincident_component_edge
+            .vertices_decision(&decisions)
+            .unwrap();
+
+        assert!(
+            polygon_cycles_share_reversed_manifold_triangle_edge(
+                &decisions,
+                &host_vertices,
+                &host,
+                &neighbor_vertices,
+                &authored_neighbor,
+            )
+            .unwrap()
+        );
+        assert!(
+            !polygon_cycles_share_reversed_manifold_triangle_edge(
+                &decisions,
+                &host_vertices,
+                &host,
+                &component_vertices,
+                &coincident_component_edge,
+            )
+            .unwrap()
+        );
     }
 
     #[test]
