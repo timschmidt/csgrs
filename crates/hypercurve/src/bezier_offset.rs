@@ -71,6 +71,10 @@ use hypersolve::{
     parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     subresultant_chain_univariate_polynomials,
 };
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    divide_univariate_polynomial_exact, greatest_common_divisor_univariate_polynomials_exact,
+};
 
 /// Exact source representation retained by an analytic Bezier parallel.
 ///
@@ -7201,6 +7205,164 @@ fn trivariate_reduce_selected_root_relations(
 }
 
 #[cfg(feature = "predicates")]
+fn trivariate_axis_fiber(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+    first_other: usize,
+    second_other: usize,
+) -> Option<Vec<Real>> {
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    if axis >= 3 || counts[axis] == 0 {
+        return None;
+    }
+    let remaining = match axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!(),
+    };
+    if first_other >= counts[remaining[0]] || second_other >= counts[remaining[1]] {
+        return None;
+    }
+    let mut fiber = Vec::with_capacity(counts[axis]);
+    for power in 0..counts[axis] {
+        let mut exponents = [0, 0, 0];
+        exponents[axis] = power;
+        exponents[remaining[0]] = first_other;
+        exponents[remaining[1]] = second_other;
+        fiber.push(
+            polynomial
+                .coefficients
+                .get(exponents[0])
+                .and_then(|rows| rows.get(exponents[1]))
+                .and_then(|row| row.get(exponents[2]))
+                .cloned()
+                .unwrap_or_else(Real::zero),
+        );
+    }
+    while fiber.last().is_some_and(|coefficient| {
+        real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero)
+    }) {
+        fiber.pop();
+    }
+    Some(fiber)
+}
+
+/// Returns the nonconstant univariate content shared by every tensor fiber
+/// along one axis.
+#[cfg(feature = "predicates")]
+fn trivariate_axis_content(polynomial: &TrivariatePolynomial2, axis: usize) -> Option<Vec<Real>> {
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    let remaining = match axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => return None,
+    };
+    let mut content: Option<Vec<Real>> = None;
+    for first_other in 0..counts[remaining[0]] {
+        for second_other in 0..counts[remaining[1]] {
+            let fiber = trivariate_axis_fiber(polynomial, axis, first_other, second_other)?;
+            if fiber.is_empty() {
+                continue;
+            }
+            content = Some(match content {
+                None => fiber,
+                Some(previous) => {
+                    greatest_common_divisor_univariate_polynomials_exact(&previous, &fiber)?
+                }
+            });
+            if content.as_ref().is_none_or(|content| content.len() <= 1) {
+                return None;
+            }
+        }
+    }
+    content.filter(|content| content.len() > 1)
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_divide_axis_content(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+    content: &[Real],
+) -> Option<TrivariatePolynomial2> {
+    let dimensions = polynomial.dimensions();
+    let mut counts = [dimensions.0, dimensions.1, dimensions.2];
+    if axis >= 3 || content.len() <= 1 || content.len() > counts[axis] {
+        return None;
+    }
+    let remaining = match axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!(),
+    };
+    counts[axis] = counts[axis].checked_sub(content.len())?.checked_add(1)?;
+    if counts[0].checked_mul(counts[1])?.checked_mul(counts[2])? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS
+    {
+        return None;
+    }
+    let mut coefficients = vec![vec![vec![Real::zero(); counts[2]]; counts[1]]; counts[0]];
+    for first_other in 0..counts[remaining[0]] {
+        for second_other in 0..counts[remaining[1]] {
+            let fiber = trivariate_axis_fiber(polynomial, axis, first_other, second_other)?;
+            if fiber.is_empty() {
+                continue;
+            }
+            let quotient = divide_univariate_polynomial_exact(&fiber, content)?;
+            if quotient.len() > counts[axis] {
+                return None;
+            }
+            for (power, coefficient) in quotient.into_iter().enumerate() {
+                let mut exponents = [0, 0, 0];
+                exponents[axis] = power;
+                exponents[remaining[0]] = first_other;
+                exponents[remaining[1]] = second_other;
+                coefficients[exponents[0]][exponents[1]][exponents[2]] = coefficient;
+            }
+        }
+    }
+    Some(TrivariatePolynomial2 { coefficients })
+}
+
+/// Removes separable univariate tensor content and returns its selected sign.
+/// A zero content factor proves the original tensor zero immediately.
+#[cfg(feature = "predicates")]
+fn trivariate_strip_axis_contents(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> CurveResult<Option<(TrivariatePolynomial2, Option<RealSign>)>> {
+    let parameters = [first, second, third];
+    let mut reduced = polynomial.clone();
+    let mut factor_sign = Some(RealSign::Positive);
+    let mut changed = false;
+    for (axis, parameter) in parameters.into_iter().enumerate() {
+        let Some(content) = trivariate_axis_content(&reduced, axis) else {
+            continue;
+        };
+        changed = true;
+        match signed_coefficients_at_parameter(content.clone(), parameter, &CurveContext::STRICT)? {
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Some((reduced, Some(RealSign::Zero))));
+            }
+            Classification::Decided(sign) => {
+                factor_sign = factor_sign.map(|accumulator| product_sign(accumulator, sign));
+            }
+            Classification::Uncertain(_) => factor_sign = None,
+        }
+        let Some(quotient) = trivariate_divide_axis_content(&reduced, axis, &content) else {
+            return Ok(None);
+        };
+        reduced = quotient;
+    }
+    Ok(changed.then_some((reduced, factor_sign)))
+}
+
+#[cfg(feature = "predicates")]
 fn polynomial_restrict_to_interval(coefficients: &[Real], start: &Real, end: &Real) -> Vec<Real> {
     let degree = coefficients.len().saturating_sub(1);
     let powers = polynomial_powers(&[start.clone(), end - start], degree);
@@ -8058,13 +8220,54 @@ fn trivariate_parameter_triple_sign_by_refinement(
                     return Ok(Classification::Decided(sign));
                 }
             }
-            if let Some(sign) = trivariate_binary_related_parameter_sign(
-                reduced.as_ref().unwrap_or(polynomial),
-                first,
-                second,
-                third,
-            )? {
+            let symbolic = reduced.as_ref().unwrap_or(polynomial);
+            if let Some(sign) =
+                trivariate_binary_related_parameter_sign(symbolic, first, second, third)?
+            {
                 return Ok(Classification::Decided(sign));
+            }
+            if let Some((primitive, factor_sign)) =
+                trivariate_strip_axis_contents(symbolic, first, second, third)?
+            {
+                if factor_sign == Some(RealSign::Zero)
+                    || trivariate_structurally_zero(&primitive, &CurveContext::STRICT)
+                {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                let restricted = trivariate_restrict_to_parameter_box(
+                    &primitive,
+                    first_refinement.refine_to(target_steps),
+                    second_refinement.refine_to(target_steps),
+                    third_refinement.refine_to(target_steps),
+                );
+                let primitive_sign = if let Some(sign) =
+                    trivariate_unit_cube_strict_bernstein_sign(restricted, &CurveContext::STRICT)?
+                {
+                    Some(sign)
+                } else if let Some(sign) = trivariate_affinely_related_parameter_sign(
+                    &primitive,
+                    first,
+                    second,
+                    third,
+                    &CurveContext::STRICT,
+                )? {
+                    Some(sign)
+                } else if let Some(sign) =
+                    trivariate_linear_axis_resultant_sign(&primitive, first, second, third)?
+                {
+                    Some(sign)
+                } else {
+                    trivariate_binary_related_parameter_sign(&primitive, first, second, third)?
+                };
+                if primitive_sign == Some(RealSign::Zero) {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                if let (Some(primitive_sign), Some(factor_sign)) = (primitive_sign, factor_sign) {
+                    return Ok(Classification::Decided(product_sign(
+                        primitive_sign,
+                        factor_sign,
+                    )));
+                }
             }
         }
     }
@@ -26359,6 +26562,37 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn trivariate_multiply(
+        left: &TrivariatePolynomial2,
+        right: &TrivariatePolynomial2,
+    ) -> TrivariatePolynomial2 {
+        let left_dimensions = left.dimensions();
+        let right_dimensions = right.dimensions();
+        let counts = [
+            left_dimensions.0 + right_dimensions.0 - 1,
+            left_dimensions.1 + right_dimensions.1 - 1,
+            left_dimensions.2 + right_dimensions.2 - 1,
+        ];
+        let mut coefficients = vec![vec![vec![Real::zero(); counts[2]]; counts[1]]; counts[0]];
+        for (left_first, left_rows) in left.coefficients.iter().enumerate() {
+            for (left_second, left_row) in left_rows.iter().enumerate() {
+                for (left_third, left_coefficient) in left_row.iter().enumerate() {
+                    for (right_first, right_rows) in right.coefficients.iter().enumerate() {
+                        for (right_second, right_row) in right_rows.iter().enumerate() {
+                            for (right_third, right_coefficient) in right_row.iter().enumerate() {
+                                coefficients[left_first + right_first]
+                                    [left_second + right_second][left_third + right_third] +=
+                                    left_coefficient * right_coefficient;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        TrivariatePolynomial2 { coefficients }
+    }
+
+    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_linear_resultant_certifies_every_axis_order() {
         let (parameters, base) = nonaffine_three_field_chord_fixture();
@@ -26702,11 +26936,10 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
-    #[test]
-    fn nonlinear_rational_three_field_zero_obeys_the_selected_terminal_policy() {
+    fn nonlinear_rational_three_field_parameters() -> [BezierParameter2; 3] {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
-        let parameters = [
+        [
             algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]),
             algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]),
             // c=a*b/(a+b). From (1/c)^3=(1/a+1/b)^3, the
@@ -26723,12 +26956,19 @@ mod conversion_tests {
                 Real::zero(),
                 Real::from(-125_i8),
             ]),
-        ];
+        ]
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn separable_axis_content_exposes_rational_three_field_zero_exactly() {
+        let parameters = nonlinear_rational_three_field_parameters();
         let mut coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
         coefficients[1][1][0] = Real::one();
         coefficients[1][0][1] = -Real::one();
         coefficients[0][1][1] = -Real::one();
-        let mut polynomial = TrivariatePolynomial2 { coefficients };
+        let primitive = TrivariatePolynomial2 { coefficients };
+        let mut polynomial = primitive.clone();
         for axis in 0..3 {
             polynomial =
                 trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
@@ -26744,6 +26984,76 @@ mod conversion_tests {
         );
         assert!(
             trivariate_binary_related_parameter_sign(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .unwrap()
+            .is_none()
+        );
+        let (reduced, factor_sign) = trivariate_strip_axis_contents(
+            &polynomial,
+            &parameters[0],
+            &parameters[1],
+            &parameters[2],
+        )
+        .unwrap()
+        .expect("all three nonzero separable factors must be removed");
+        assert_eq!(reduced.coefficients, primitive.coefficients);
+        assert_eq!(factor_sign, Some(RealSign::Positive));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn coupled_factor_rational_three_field_zero_obeys_the_selected_terminal_policy() {
+        let parameters = nonlinear_rational_three_field_parameters();
+        let mut primitive_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        primitive_coefficients[1][1][0] = Real::one();
+        primitive_coefficients[1][0][1] = -Real::one();
+        primitive_coefficients[0][1][1] = -Real::one();
+        let primitive = TrivariatePolynomial2 {
+            coefficients: primitive_coefficients,
+        };
+        // 1+a*b+a*c+b*c is strictly positive on the parameter cube but is
+        // coupled across every axis, so univariate content cannot expose the
+        // zero factor a*b-c*(a+b).
+        let mut cofactor_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        cofactor_coefficients[0][0][0] = Real::one();
+        cofactor_coefficients[1][1][0] = Real::one();
+        cofactor_coefficients[1][0][1] = Real::one();
+        cofactor_coefficients[0][1][1] = Real::one();
+        let polynomial = trivariate_multiply(
+            &primitive,
+            &TrivariatePolynomial2 {
+                coefficients: cofactor_coefficients,
+            },
+        );
+        assert!(
+            trivariate_reduce_selected_root_relations(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .is_none()
+        );
+        assert!(
+            trivariate_strip_axis_contents(
                 &polynomial,
                 &parameters[0],
                 &parameters[1],
