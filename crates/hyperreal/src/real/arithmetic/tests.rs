@@ -766,7 +766,7 @@ mod tests {
     fn rational_linear_form4_relative_conversion_normalizes_minimum_normal() {
         let minimum = Real::try_from(f64::MIN_POSITIVE).unwrap();
         let minimum_rational = minimum.exact_rational_ref().unwrap();
-        assert!(Real::rational_f64_with_error(minimum_rational).is_none());
+        assert!(Real::exact_rational_real_f64_with_error(&minimum).is_none());
 
         let zero = Real::zero();
         let zero_rational = zero.exact_rational_ref().unwrap();
@@ -907,31 +907,106 @@ mod tests {
 
     #[test]
     fn rational_line2_filter_preserves_exact_signs() {
+        let retained_numerator = (BigUint::from(1_u8) << 96_usize) + BigUint::from(1_u8);
+        let retained_denominator = (BigUint::from(1_u8) << 80_usize) + BigUint::from(3_u8);
+        let retained = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, retained_numerator),
+            retained_denominator,
+        )
+        .unwrap();
+        assert!(!retained.has_relative_f64_filter_view());
+        let prewarmed_real = Real::from(retained.clone());
+        let prewarmed_view = prewarmed_real
+            .to_f64_lossy()
+            .expect("stable rational should have a generic lossy view");
+        let retained_real = Real::from(retained.clone());
+        let first_view = Real::exact_rational_real_f64_with_error(&retained_real)
+            .expect("ordinary rational should support a relative filter view");
+        assert!(!retained.has_relative_f64_filter_view());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&retained_real),
+            Some(first_view)
+        );
+        assert!(retained.has_relative_f64_filter_view());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&retained_real),
+            Some(first_view)
+        );
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&prewarmed_real),
+            Some(first_view),
+            "shared eligibility must certify an independently prewarmed Real cache"
+        );
+        assert_eq!(prewarmed_view, first_view.0);
+
+        let concurrent_numerator = (BigUint::from(1_u8) << 112_usize) + BigUint::from(5_u8);
+        let concurrent_denominator = (BigUint::from(1_u8) << 93_usize) + BigUint::from(7_u8);
+        let concurrent = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, concurrent_numerator),
+            concurrent_denominator,
+        )
+        .unwrap();
+        let concurrent_reals = (0..8)
+            .map(|_| Real::from(concurrent.clone()))
+            .collect::<Vec<_>>();
+        std::thread::scope(|scope| {
+            for value in &concurrent_reals {
+                scope.spawn(move || {
+                    for _ in 0..64 {
+                        assert!(Real::exact_rational_real_f64_with_error(value).is_some());
+                    }
+                });
+            }
+        });
+        assert!(concurrent.has_relative_f64_filter_view());
+
+        let huge_numerator = (BigUint::from(1_u8) << 2048_usize) + BigUint::from(1_u8);
+        let huge_denominator = &huge_numerator + BigUint::from(2_u8);
+        let huge = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Sign::Plus, huge_numerator),
+            huge_denominator,
+        )
+        .unwrap();
+        let huge_real = Real::from(huge.clone());
+        assert!(huge_real.to_f64_lossy().is_some());
+        assert_eq!(
+            Real::exact_rational_real_f64_with_error(&huge_real),
+            None,
+            "a generic lossy cache entry is not certified predicate evidence"
+        );
+        assert!(!huge.has_relative_f64_filter_view());
+
         let zero = Rational::zero();
         let third = Rational::fraction(1, 3).unwrap();
         let two_thirds = Rational::fraction(2, 3).unwrap();
-        let line = RationalLine2Filter::from_rationals(
-            [&zero, &zero],
-            [&third, &two_thirds],
-        )
-        .expect("finite rational line should construct");
         let one = Rational::one();
         let two = Rational::new(2);
         let three = Rational::new(3);
+        let zero_real = Real::from(zero.clone());
+        let third_real = Real::from(third.clone());
+        let two_thirds_real = Real::from(two_thirds.clone());
+        let one_real = Real::from(one.clone());
+        let two_real = Real::from(two.clone());
+        let three_real = Real::from(three.clone());
+        let line = RationalLine2Filter::from_reals(
+            [&zero_real, &zero_real],
+            [&third_real, &two_thirds_real],
+        )
+        .expect("finite rational line should construct");
         assert_eq!(
-            line.sign_rationals([&one, &three]),
+            line.sign_reals([&one_real, &three_real]),
             Some(RealSign::Positive),
         );
         assert_eq!(
-            line.sign_rationals([&two, &three]),
+            line.sign_reals([&two_real, &three_real]),
             Some(RealSign::Negative),
         );
-        assert_eq!(line.sign_rationals([&one, &two]), None);
+        assert_eq!(line.sign_reals([&one_real, &two_real]), None);
         assert_eq!(
             Real::certified_rational_line2_sign(
-                [&zero, &zero],
-                [&third, &two_thirds],
-                [&one, &three],
+                [&zero_real, &zero_real],
+                [&third_real, &two_thirds_real],
+                [&one_real, &three_real],
             ),
             Some(RealSign::Positive),
         );

@@ -420,21 +420,18 @@ pub struct RationalLine2Filter {
 }
 
 impl RationalLine2Filter {
-    /// Construct a reusable filter from exact-rational endpoints.
+    /// Construct a reusable filter from exact-rational `Real` endpoints.
     #[inline]
-    pub fn from_rationals(
-        from: [&Rational; 2],
-        to: [&Rational; 2],
-    ) -> Option<Self> {
+    pub fn from_reals(from: [&Real; 2], to: [&Real; 2]) -> Option<Self> {
         let mut from_values = [0.0; 2];
         let mut from_errors = [0.0; 2];
         let mut to_values = [0.0; 2];
         let mut to_errors = [0.0; 2];
         for index in 0..2 {
             (from_values[index], from_errors[index]) =
-                Real::rational_f64_with_error(from[index])?;
+                Real::exact_rational_real_f64_with_error(from[index])?;
             (to_values[index], to_errors[index]) =
-                Real::rational_f64_with_error(to[index])?;
+                Real::exact_rational_real_f64_with_error(to[index])?;
         }
         Some(Self {
             from: from_values,
@@ -461,17 +458,13 @@ impl RationalLine2Filter {
         })
     }
 
-    /// Try to certify the orientation sign of a rational query point.
+    /// Try to certify the orientation sign of an exact-rational `Real` query.
     #[inline]
-    pub fn sign_rationals(
-        &self,
-        point: [&Rational; 2],
-    ) -> Option<RealSign> {
+    pub fn sign_reals(&self, point: [&Real; 2]) -> Option<RealSign> {
         let mut values = [0.0; 2];
         let mut errors = [0.0; 2];
         for (index, coordinate) in point.into_iter().enumerate() {
-            let (value, error) =
-                Real::rational_f64_with_error(coordinate)?;
+            let (value, error) = Real::exact_rational_real_f64_with_error(coordinate)?;
             values[index] = value;
             errors[index] = error;
         }
@@ -804,11 +797,11 @@ impl Real {
     #[inline]
     #[doc(hidden)]
     pub fn certified_rational_line2_sign(
-        from: [&Rational; 2],
-        to: [&Rational; 2],
-        point: [&Rational; 2],
+        from: [&Real; 2],
+        to: [&Real; 2],
+        point: [&Real; 2],
     ) -> Option<RealSign> {
-        RationalLine2Filter::from_rationals(from, to)?.sign_rationals(point)
+        RationalLine2Filter::from_reals(from, to)?.sign_reals(point)
     }
 
     #[inline]
@@ -896,12 +889,71 @@ impl Real {
     }
 
     #[inline]
-    fn rational_f64_with_error(
-        value: &Rational,
+    fn exact_rational_real_f64_with_error(value: &Real) -> Option<(f64, f64)> {
+        let rational = value.exact_rational_ref()?;
+        debug_assert!(value.computable.is_none());
+        if rational.has_relative_f64_filter_view() {
+            // Direct Rational conversion canonicalizes lazy ratios and learns
+            // dyadic shape on every attempt. Its success therefore cannot
+            // appear after an earlier generic-cache fallback for this
+            // immutable rational: any existing exact-rational `Real` cache
+            // was seeded by the same bounded direct route.
+            crate::trace_dispatch!(
+                "real",
+                "rational-relative-filter-view",
+                "retained"
+            );
+            return Self::rational_approximation_with_error(
+                value.to_f64_lossy()?,
+                rational.is_zero(),
+            );
+        }
+        Self::observe_exact_rational_real_f64_with_error(value, rational)
+    }
+
+    #[inline(never)]
+    fn observe_exact_rational_real_f64_with_error(
+        value: &Real,
+        rational: &Rational,
     ) -> Option<(f64, f64)> {
-        let approximation = Self::rational_f64_for_relative_filter(value)?;
+        // Establish the same direct Rational conversion bound used before
+        // consulting `Real`'s scalar-local approximation cache. A first
+        // observation records reuse potential without writing the cache. A
+        // second successful observation installs the directly bounded value;
+        // only then may later calls consume a cached view as predicate input.
+        let approximation = rational.to_f64_lossy()?;
+        let certified =
+            Self::rational_approximation_with_error(approximation, rational.is_zero())?;
+        if rational.observe_relative_f64_filter_view() {
+            rational.mark_relative_f64_filter_view();
+            crate::trace_dispatch!(
+                "real",
+                "rational-relative-filter-view",
+                "retained-after-reuse"
+            );
+            value
+                .primitive_approx_cache
+                .set(PrimitiveApproxCache::F64(Some(approximation)));
+        } else {
+            crate::trace_dispatch!(
+                "real",
+                "rational-relative-filter-view",
+                "reuse-observed"
+            );
+        }
+        Some(certified)
+    }
+
+    #[inline]
+    fn rational_approximation_with_error(
+        approximation: f64,
+        exact_zero: bool,
+    ) -> Option<(f64, f64)> {
+        if !approximation.is_finite() {
+            return None;
+        }
         if approximation == 0.0 {
-            return Some((0.0, 0.0));
+            return exact_zero.then_some((0.0, 0.0));
         }
 
         // `BigUint::to_f64` retains the high significand bits and introduces

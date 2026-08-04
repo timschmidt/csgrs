@@ -540,6 +540,21 @@ impl Rational {
     }
 
     #[inline]
+    pub(crate) fn has_relative_f64_filter_view(&self) -> bool {
+        self.retained_fact(RETAINED_RELATIVE_F64_FILTER_VIEW)
+    }
+
+    #[inline]
+    pub(crate) fn observe_relative_f64_filter_view(&self) -> bool {
+        self.observe_retained_fact(RETAINED_RELATIVE_F64_FILTER_SEEN)
+    }
+
+    #[inline]
+    pub(crate) fn mark_relative_f64_filter_view(&self) {
+        self.retain_fact(RETAINED_RELATIVE_F64_FILTER_VIEW);
+    }
+
+    #[inline]
     pub(crate) fn denominator_could_be_dyadic(&self) -> bool {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().denominator_could_be_dyadic();
