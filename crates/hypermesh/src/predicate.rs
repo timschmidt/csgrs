@@ -4,9 +4,7 @@ use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperlimit::{Sign, classify_real_sign};
-use hyperreal::{
-    ExactRationalLinearForm4, RationalLinearForm4Filter, RationalLinearForm4Query, RealSign,
-};
+use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query, RealSign};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
@@ -17,20 +15,11 @@ const RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY: usize =
     RATIONAL_LINEAR_FORM4_FILTER_CACHE_CAPACITY * 2;
 const INITIAL_RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY: usize = 16;
 const EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT: u16 = u16::MAX;
-const NO_RATIONAL_LINEAR_FORM4_EXACT: u16 = u16::MAX;
-const DECLINED_RATIONAL_LINEAR_FORM4_EXACT: u16 = u16::MAX - 1;
 
 struct CachedRationalLinearForm4Filter {
     fingerprint: u64,
     owners: [Rational; 4],
     filter: Option<RationalLinearForm4Filter>,
-}
-
-#[derive(Clone, Copy)]
-struct RationalLinearForm4Evidence {
-    filter: Option<RationalLinearForm4Filter>,
-    entry_index: usize,
-    exact_index: u16,
 }
 
 pub(crate) struct RationalLinearForm4FilterCache {
@@ -39,8 +28,6 @@ pub(crate) struct RationalLinearForm4FilterCache {
     /// pointers in every hash-table entry.
     slots: Vec<u16>,
     entries: Vec<CachedRationalLinearForm4Filter>,
-    exact_indices: Vec<u16>,
-    exact_forms: Vec<ExactRationalLinearForm4>,
 }
 
 impl Default for RationalLinearForm4FilterCache {
@@ -54,8 +41,6 @@ impl RationalLinearForm4FilterCache {
         Self {
             slots: Vec::new(),
             entries: Vec::new(),
-            exact_indices: Vec::new(),
-            exact_forms: Vec::new(),
         }
     }
 
@@ -131,8 +116,6 @@ impl RationalLinearForm4FilterCache {
             crate::trace_dispatch!("rational-linear-form4-filter-cache", "clear-at-capacity");
             self.entries.clear();
             self.slots.fill(EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT);
-            self.exact_indices.clear();
-            self.exact_forms.clear();
         }
         if self.entries.len() >= self.slots.len() / 2 {
             self.grow_slots();
@@ -147,31 +130,18 @@ impl RationalLinearForm4FilterCache {
         self.slots[slot] = entry_index as u16;
         entry_index
     }
-
-    #[inline]
-    fn exact_index(&self, entry_index: usize) -> u16 {
-        self.exact_indices
-            .get(entry_index)
-            .copied()
-            .unwrap_or(NO_RATIONAL_LINEAR_FORM4_EXACT)
-    }
 }
 
 fn rational_linear_form4_filter(
     decisions: &DecisionContext,
     plane: &Plane,
     coefficients: [&Rational; 4],
-) -> RationalLinearForm4Evidence {
+) -> Option<RationalLinearForm4Filter> {
     let key = coefficients.map(Rational::storage_identity);
     let mut cache = decisions.rational_linear_form4_filters.borrow_mut();
     if let Some(index) = cache.find_index(key) {
         crate::trace_dispatch!("rational-linear-form4-filter-cache", "hit");
-        let entry = &cache.entries[index];
-        return RationalLinearForm4Evidence {
-            filter: entry.filter,
-            entry_index: index,
-            exact_index: cache.exact_index(index),
-        };
+        return cache.entries[index].filter;
     }
     crate::trace_dispatch!("rational-linear-form4-filter-cache", "miss");
     let filter = RationalLinearForm4Filter::from_reals([
@@ -180,48 +150,12 @@ fn rational_linear_form4_filter(
         &plane.normal.z,
         &plane.offset,
     ]);
-    let entry_index = cache.insert(CachedRationalLinearForm4Filter {
+    cache.insert(CachedRationalLinearForm4Filter {
         fingerprint: RationalLinearForm4FilterCache::fingerprint(key),
         owners: coefficients.map(Clone::clone),
         filter,
     });
-    RationalLinearForm4Evidence {
-        filter,
-        entry_index,
-        exact_index: NO_RATIONAL_LINEAR_FORM4_EXACT,
-    }
-}
-
-fn rational_linear_form4_exact_sign(
-    decisions: &DecisionContext,
-    entry_index: usize,
-    exact_index: u16,
-    coefficients: [&Rational; 4],
-    point: [&Rational; 4],
-) -> Option<RealSign> {
-    let mut cache = decisions.rational_linear_form4_filters.borrow_mut();
-    if exact_index < DECLINED_RATIONAL_LINEAR_FORM4_EXACT {
-        crate::trace_dispatch!("rational-linear-form4-exact-cache", "hit");
-        return cache.exact_forms[usize::from(exact_index)].sign_rationals(point);
-    }
-    if exact_index == DECLINED_RATIONAL_LINEAR_FORM4_EXACT {
-        return None;
-    }
-    if cache.exact_indices.len() <= entry_index {
-        cache
-            .exact_indices
-            .resize(entry_index + 1, NO_RATIONAL_LINEAR_FORM4_EXACT);
-    }
-    let Some(exact) = ExactRationalLinearForm4::from_rationals(coefficients) else {
-        cache.exact_indices[entry_index] = DECLINED_RATIONAL_LINEAR_FORM4_EXACT;
-        return None;
-    };
-    let exact_index = u16::try_from(cache.exact_forms.len())
-        .expect("the bounded filter cache has fewer than u16::MAX exact forms");
-    cache.exact_forms.push(exact);
-    cache.exact_indices[entry_index] = exact_index;
-    crate::trace_dispatch!("rational-linear-form4-exact-cache", "common-numerator");
-    cache.exact_forms[usize::from(exact_index)].sign_rationals(point)
+    filter
 }
 
 /// Certified point-vs-plane classification.
@@ -393,7 +327,6 @@ fn classify_exact_rational_coordinates(
         return None;
     };
     Some(classify_exact_rational_coordinates_with_filter(
-        decisions,
         [a, b, c, d],
         [x, y, z],
         homogeneous_weight,
@@ -403,14 +336,13 @@ fn classify_exact_rational_coordinates(
 }
 
 fn classify_exact_rational_coordinates_with_filter(
-    decisions: &DecisionContext,
     [a, b, c, d]: [&Rational; 4],
     [x, y, z]: [&Rational; 3],
     homogeneous_weight: &Rational,
     rational_query: Option<&RationalLinearForm4Query>,
-    evidence: RationalLinearForm4Evidence,
+    filter: Option<RationalLinearForm4Filter>,
 ) -> Classification {
-    let filtered_sign = evidence.filter.and_then(|filter| match rational_query {
+    let filtered_sign = filter.and_then(|filter| match rational_query {
         Some(query) => filter.sign(query),
         None => filter.sign_rationals([x, y, z, homogeneous_weight]),
     });
@@ -423,25 +355,6 @@ fn classify_exact_rational_coordinates_with_filter(
                 "projective-rational-floating-filter"
             }
         );
-        return match sign {
-            RealSign::Negative => Classification::Negative,
-            RealSign::Zero => Classification::On,
-            RealSign::Positive => Classification::Positive,
-        };
-    }
-
-    let point = [x, y, z, homogeneous_weight];
-    if (evidence.exact_index < DECLINED_RATIONAL_LINEAR_FORM4_EXACT
-        || (evidence.exact_index == NO_RATIONAL_LINEAR_FORM4_EXACT
-            && ExactRationalLinearForm4::should_retain([a, b, c, d], point)))
-        && let Some(sign) = rational_linear_form4_exact_sign(
-            decisions,
-            evidence.entry_index,
-            evidence.exact_index,
-            [a, b, c, d],
-            point,
-        )
-    {
         return match sign {
             RealSign::Negative => Classification::Negative,
             RealSign::Zero => Classification::On,
@@ -633,19 +546,6 @@ mod tests {
                 owners,
                 filter: None,
             });
-            if value == 0 {
-                let coefficients = [
-                    Rational::new(2),
-                    Rational::new(4),
-                    Rational::new(6),
-                    Rational::new(8),
-                ];
-                cache.exact_indices.push(0);
-                cache.exact_forms.push(
-                    ExactRationalLinearForm4::from_rationals(coefficients.each_ref())
-                        .expect("fixture coefficients share a common exact scale"),
-                );
-            }
             grown_keys.push(key);
         }
         assert!(cache.slots.len() > INITIAL_RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY);
@@ -679,8 +579,6 @@ mod tests {
             .map(|owner| owner.storage_identity());
         assert!(cache.find(first_key.unwrap()).is_none());
         assert!(matches!(cache.find(retained_key), Some(None)));
-        assert!(cache.exact_indices.is_empty());
-        assert!(cache.exact_forms.is_empty());
         assert_eq!(
             cache.slots.len(),
             RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY
@@ -729,7 +627,7 @@ mod tests {
     }
 
     #[test]
-    fn wide_dyadic_point_plane_sign_retains_exact_common_scale_under_both_policies() {
+    fn wide_dyadic_point_plane_sign_uses_complete_exact_path_under_both_policies() {
         let denominator = Rational::new(2)
             .powi(2048_i64.into())
             .expect("fixture exponent is positive");
@@ -771,8 +669,6 @@ mod tests {
                     .unwrap(),
                 Classification::Positive
             );
-            let cache = decisions.rational_linear_form4_filters.borrow();
-            assert!(!cache.exact_forms.is_empty());
             assert_eq!(
                 decisions.certainty(),
                 crate::context::MeshCertainty::Certified

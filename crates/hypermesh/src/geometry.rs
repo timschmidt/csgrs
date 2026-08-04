@@ -170,6 +170,15 @@ impl Plane {
             } else {
                 Rational::signed_product_sum(signs, z_terms)
             };
+            let [x, y, z] = if exact_dyadic {
+                // The fixed-stack constructor above already handles narrow
+                // dyadics. Once it declines, remove the cross product's
+                // positive projective scale before forming the offset so that
+                // later predicates never multiply that dead factor again.
+                Rational::primitive_integer_ratio([&x, &y, &z])
+            } else {
+                [x, y, z]
+            };
             let offset_terms = [[&x, x0], [&y, y0], [&z, z0]];
             let offset = if exact_dyadic {
                 Rational::signed_product_sum_known_dyadic([false; 3], offset_terms)
@@ -566,6 +575,51 @@ mod tests {
                     .decide_is_valid(&crate::test_support::approximate_decisions())
                     .unwrap()
             );
+        }
+    }
+
+    #[test]
+    fn wide_dyadic_plane_uses_primitive_normal_before_offset_construction() {
+        let denominator = Rational::new(2)
+            .powi(2048_i64.into())
+            .expect("fixture exponent is positive");
+        let scale = (&denominator + Rational::one()) / &denominator;
+        let scaled = |value| Real::from(Rational::new(value) * &scale);
+        let zero = Real::zero();
+        let points = [
+            Point3::new(scaled(2), zero.clone(), zero.clone()),
+            Point3::new(scaled(2), scaled(1), zero.clone()),
+            Point3::new(scaled(2), zero.clone(), scaled(1)),
+        ];
+
+        let plane = Plane::from_points(&points[0], &points[1], &points[2]);
+        assert_eq!(plane.normal, Point3::new(Real::one(), zero.clone(), zero));
+        assert_eq!(plane.offset, -scaled(2));
+
+        let oblique_points = [
+            Point3::new(scaled(1), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), scaled(1), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), scaled(1)),
+        ];
+        let oblique =
+            Plane::from_points(&oblique_points[0], &oblique_points[1], &oblique_points[2]);
+        assert_eq!(
+            oblique.normal,
+            Point3::new(Real::one(), Real::one(), Real::one())
+        );
+        assert_eq!(oblique.offset, -scaled(1));
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let outcome = classify_point(&MeshContext::new(policy), &points[0], &plane).unwrap();
+            assert_eq!(outcome.value, Classification::On);
+            assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
+            let outcome =
+                classify_point(&MeshContext::new(policy), &oblique_points[0], &oblique).unwrap();
+            assert_eq!(outcome.value, Classification::On);
+            assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
         }
     }
 
