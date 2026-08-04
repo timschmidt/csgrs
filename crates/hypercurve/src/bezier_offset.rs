@@ -17,7 +17,9 @@
 use std::sync::{Arc, Mutex, OnceLock};
 
 #[cfg(feature = "predicates")]
-use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
+use crate::bezier_algebraic_image::{
+    RationalBezierAlgebraicPointPredicate2, exact_real_algebraic_representation,
+};
 use crate::bezier_algebraic_image::{
     parameter_representation, rational_point_image_from_power_basis,
     rational_tangent_image_from_power_basis,
@@ -7253,6 +7255,153 @@ fn exact_parameter_affine_relation(
     }
 }
 
+/// Proves `result = left op right` for the three selected parameter values.
+///
+/// Hypersolve constructs the arithmetic image as an exact represented root;
+/// the separate difference comparison then proves that the image is the
+/// selected result root rather than a foreign conjugate.
+#[cfg(feature = "predicates")]
+fn exact_parameter_binary_relation(
+    left: &BezierParameter2,
+    right: &BezierParameter2,
+    result: &BezierParameter2,
+    operation: hypersolve::AlgebraicRootArithmeticOp,
+) -> bool {
+    let represent = |parameter: &BezierParameter2| match parameter {
+        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Algebraic(parameter) => {
+            parameter_representation(parameter, &CurveContext::STRICT)
+        }
+    };
+    let left = represent(left);
+    let right = represent(right);
+    let result = represent(result);
+    let arithmetic = hypersolve::arithmetic_algebraic_root_representations(
+        &left,
+        Some(&right),
+        operation,
+        hypersolve::PredicatePolicy::STRICT,
+    );
+    if !matches!(
+        arithmetic.status,
+        hypersolve::AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | hypersolve::AlgebraicRootArithmeticStatus::ComputedRepresentation
+    ) {
+        return false;
+    }
+    let Some(candidate) = arithmetic.result_representation.or_else(|| {
+        arithmetic
+            .exact_result
+            .as_ref()
+            .map(exact_real_algebraic_representation)
+    }) else {
+        return false;
+    };
+    let comparison = hypersolve::compare_algebraic_root_representations_by_difference(
+        &candidate,
+        &result,
+        hypersolve::AlgebraicRootRefinementComparisonConfig {
+            policy: hypersolve::PredicatePolicy::STRICT,
+            ..hypersolve::AlgebraicRootRefinementComparisonConfig::default()
+        },
+    )
+    .comparison;
+    matches!(
+        comparison.status,
+        hypersolve::AlgebraicRootComparisonStatus::Compared
+            | hypersolve::AlgebraicRootComparisonStatus::SameRepresentation
+    ) && comparison.ordering == Some(std::cmp::Ordering::Equal)
+}
+
+/// Substitutes `product = left * right`, leaving a bivariate polynomial in
+/// `(left, right)`.
+#[cfg(feature = "predicates")]
+fn trivariate_substitute_product_axis(
+    polynomial: &TrivariatePolynomial2,
+    left_axis: usize,
+    right_axis: usize,
+    product_axis: usize,
+) -> Option<BivariatePolynomial> {
+    let mut axes = [left_axis, right_axis, product_axis];
+    axes.sort_unstable();
+    if axes != [0, 1, 2] {
+        return None;
+    }
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    let left_count = counts[left_axis];
+    let right_count = counts[right_axis];
+    let product_count = counts[product_axis];
+    if left_count == 0 || right_count == 0 || product_count == 0 {
+        return None;
+    }
+    let first_count = left_count.checked_add(product_count)?.checked_sub(1)?;
+    let second_count = right_count.checked_add(product_count)?.checked_sub(1)?;
+    if first_count.checked_mul(second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
+        return None;
+    }
+    let mut reduced = vec![vec![Real::zero(); second_count]; first_count];
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                let exponents = [first, second, third];
+                let product_power = exponents[product_axis];
+                reduced[exponents[left_axis] + product_power]
+                    [exponents[right_axis] + product_power] += coefficient;
+            }
+        }
+    }
+    Some(BivariatePolynomial::new(reduced))
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_multiplicatively_related_parameter_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> CurveResult<Option<RealSign>> {
+    let parameters = [first, second, third];
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    let root_degree = |axis: usize| match parameters[axis] {
+        BezierParameter2::Exact(_) => 1,
+        BezierParameter2::Algebraic(parameter) => parameter.polynomial().degree(),
+    };
+    let mut candidates = [(0, 1, 2), (0, 2, 1), (1, 2, 0)];
+    candidates.sort_by_key(|(left, right, product)| {
+        (
+            root_degree(*left).saturating_mul(root_degree(*right)),
+            counts[*left]
+                .saturating_add(counts[*product])
+                .saturating_mul(counts[*right].saturating_add(counts[*product])),
+        )
+    });
+    for (left_axis, right_axis, product_axis) in candidates {
+        if !exact_parameter_binary_relation(
+            parameters[left_axis],
+            parameters[right_axis],
+            parameters[product_axis],
+            hypersolve::AlgebraicRootArithmeticOp::Multiply,
+        ) {
+            continue;
+        }
+        let Some(reduced) =
+            trivariate_substitute_product_axis(polynomial, left_axis, right_axis, product_axis)
+        else {
+            continue;
+        };
+        if let Classification::Decided(sign) = signed_bivariate_at_parameter_pair_exact_first(
+            &reduced,
+            parameters[left_axis],
+            parameters[right_axis],
+        )? {
+            return Ok(Some(sign));
+        }
+    }
+    Ok(None)
+}
+
 #[cfg(feature = "predicates")]
 fn trivariate_substitute_affine_axis(
     polynomial: &TrivariatePolynomial2,
@@ -7744,39 +7893,49 @@ fn trivariate_parameter_triple_sign_by_refinement(
         {
             return Ok(Classification::Decided(sign));
         }
-        if target_steps == 8
-            && let Some(reduced) =
-                trivariate_reduce_selected_root_relations(polynomial, first, second, third)
-        {
-            // Quotient-ring reduction changes the tensor away from the roots,
-            // but preserves its value at this selected root tuple exactly. A
-            // strict sign over the selected box is therefore still valid.
-            if trivariate_structurally_zero(&reduced, &CurveContext::STRICT) {
-                return Ok(Classification::Decided(RealSign::Zero));
+        if target_steps == 8 {
+            let reduced =
+                trivariate_reduce_selected_root_relations(polynomial, first, second, third);
+            if let Some(reduced) = reduced.as_ref() {
+                // Quotient-ring reduction changes the tensor away from the
+                // roots, but preserves its value at this selected root tuple
+                // exactly. A strict sign over the selected box is therefore
+                // still valid.
+                if trivariate_structurally_zero(reduced, &CurveContext::STRICT) {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                let restricted = trivariate_restrict_to_parameter_box(
+                    reduced,
+                    first_refinement.refine_to(target_steps),
+                    second_refinement.refine_to(target_steps),
+                    third_refinement.refine_to(target_steps),
+                );
+                if let Some(sign) =
+                    trivariate_unit_cube_strict_bernstein_sign(restricted, &CurveContext::STRICT)?
+                {
+                    return Ok(Classification::Decided(sign));
+                }
+                if let Some(sign) = trivariate_affinely_related_parameter_sign(
+                    reduced,
+                    first,
+                    second,
+                    third,
+                    &CurveContext::STRICT,
+                )? {
+                    return Ok(Classification::Decided(sign));
+                }
+                if let Some(sign) =
+                    trivariate_linear_axis_resultant_sign(reduced, first, second, third)?
+                {
+                    return Ok(Classification::Decided(sign));
+                }
             }
-            let restricted = trivariate_restrict_to_parameter_box(
-                &reduced,
-                first_refinement.refine_to(target_steps),
-                second_refinement.refine_to(target_steps),
-                third_refinement.refine_to(target_steps),
-            );
-            if let Some(sign) =
-                trivariate_unit_cube_strict_bernstein_sign(restricted, &CurveContext::STRICT)?
-            {
-                return Ok(Classification::Decided(sign));
-            }
-            if let Some(sign) = trivariate_affinely_related_parameter_sign(
-                &reduced,
+            if let Some(sign) = trivariate_multiplicatively_related_parameter_sign(
+                reduced.as_ref().unwrap_or(polynomial),
                 first,
                 second,
                 third,
-                &CurveContext::STRICT,
             )? {
-                return Ok(Classification::Decided(sign));
-            }
-            if let Some(sign) =
-                trivariate_linear_axis_resultant_sign(&reduced, first, second, third)?
-            {
                 return Ok(Classification::Decided(sign));
             }
         }
@@ -25945,6 +26104,68 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
+    #[test]
+    fn trivariate_product_axis_substitution_preserves_all_axis_orders() {
+        let polynomial = TrivariatePolynomial2 {
+            coefficients: (0..3)
+                .map(|first| {
+                    (0..4)
+                        .map(|second| {
+                            (0..2)
+                                .map(|third| Real::from(1_i32 + first * 7 + second * 3 + third * 5))
+                                .collect()
+                        })
+                        .collect()
+                })
+                .collect(),
+        };
+        let left_value = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
+        let right_value = (Real::from(4_i8) / Real::from(7_i8)).unwrap();
+        let evaluate_trivariate = |values: &[Real; 3]| {
+            polynomial
+                .coefficients
+                .iter()
+                .rev()
+                .fold(Real::zero(), |first_accumulator, rows| {
+                    first_accumulator * &values[0]
+                        + rows
+                            .iter()
+                            .rev()
+                            .fold(Real::zero(), |second_accumulator, row| {
+                                second_accumulator * &values[1]
+                                    + polynomial_evaluate(row, &values[2])
+                            })
+                })
+        };
+
+        for (left_axis, right_axis, product_axis) in [
+            (0, 1, 2),
+            (1, 0, 2),
+            (0, 2, 1),
+            (2, 0, 1),
+            (1, 2, 0),
+            (2, 1, 0),
+        ] {
+            let reduced = trivariate_substitute_product_axis(
+                &polynomial,
+                left_axis,
+                right_axis,
+                product_axis,
+            )
+            .expect("the bounded product substitution must fit");
+            let mut values = std::array::from_fn(|_| Real::zero());
+            values[left_axis] = left_value.clone();
+            values[right_axis] = right_value.clone();
+            values[product_axis] = &left_value * &right_value;
+            let reduced_value = polynomial_evaluate(
+                &bivariate_specialize_second(&reduced, &right_value),
+                &left_value,
+            );
+            assert_eq!(reduced_value, evaluate_trivariate(&values));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
     fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
@@ -26167,64 +26388,88 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn nonlinear_cubic_three_field_zero_obeys_the_selected_terminal_policy() {
+    fn multiplicative_cubic_three_field_zero_is_exact_in_every_axis_order() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let sixth = (Real::one() / Real::from(6_i8)).unwrap();
-        let parameters = [
+        let factors = [
             algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]),
             algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]),
-            algebraic_parameter(vec![-sixth, Real::zero(), Real::zero(), Real::one()]),
         ];
-        // a*b-c, where the positive selected roots satisfy c=a*b because
-        // a^3=1/2, b^3=1/3, and c^3=1/6. Multiplication by one nonzero linear
-        // factor per axis makes the predicate quadratic in every cubic field,
-        // so defining-polynomial reduction cannot yet expose a linear axis.
-        let mut coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
-        coefficients[1][1][0] = Real::one();
-        coefficients[0][0][1] = -Real::one();
-        let mut polynomial = TrivariatePolynomial2 { coefficients };
-        for axis in 0..3 {
-            polynomial =
-                trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
-        }
-        assert!(
-            trivariate_reduce_selected_root_relations(
-                &polynomial,
-                &parameters[0],
-                &parameters[1],
-                &parameters[2],
-            )
-            .is_none()
-        );
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
-                trivariate_parameter_triple_sign_by_refinement(
+        let product = algebraic_parameter(vec![-sixth, Real::zero(), Real::zero(), Real::one()]);
+        for product_axis in 0..3 {
+            let factor_axes = (0..3)
+                .filter(|axis| *axis != product_axis)
+                .collect::<Vec<_>>();
+            let parameters: [BezierParameter2; 3] = std::array::from_fn(|axis| {
+                if axis == product_axis {
+                    product.clone()
+                } else if axis == factor_axes[0] {
+                    factors[0].clone()
+                } else {
+                    factors[1].clone()
+                }
+            });
+            // left*right-product. One nonzero linear factor per axis makes
+            // the predicate quadratic in every cubic field, so independent
+            // defining-polynomial reduction cannot expose a linear axis.
+            let mut coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+            let mut factor_exponents = [0; 3];
+            factor_exponents[factor_axes[0]] = 1;
+            factor_exponents[factor_axes[1]] = 1;
+            coefficients[factor_exponents[0]][factor_exponents[1]][factor_exponents[2]] =
+                Real::one();
+            let mut product_exponents = [0; 3];
+            product_exponents[product_axis] = 1;
+            coefficients[product_exponents[0]][product_exponents[1]][product_exponents[2]] =
+                -Real::one();
+            let mut polynomial = TrivariatePolynomial2 { coefficients };
+            for axis in 0..3 {
+                polynomial =
+                    trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
+            }
+            assert!(
+                trivariate_reduce_selected_root_relations(
                     &polynomial,
                     &parameters[0],
                     &parameters[1],
                     &parameters[2],
-                    attempt,
                 )
-                .unwrap()
-            });
-            assert_eq!(
-                outcome.value,
-                if policy == CurveContext::STRICT {
-                    Classification::Uncertain(UncertaintyReason::Predicate)
-                } else {
-                    Classification::Decided(RealSign::Zero)
-                },
+                .is_none()
             );
-            assert_eq!(
-                outcome.certainty,
-                if policy == CurveContext::STRICT {
-                    crate::CurveCertainty::Certified
-                } else {
-                    crate::CurveCertainty::Approximate512Consumed
-                },
-            );
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    trivariate_parameter_triple_sign_by_refinement(
+                        &polynomial,
+                        &parameters[0],
+                        &parameters[1],
+                        &parameters[2],
+                        attempt,
+                    )
+                    .unwrap()
+                });
+                assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn multiplicative_root_relation_rejects_a_different_selected_root() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let first = algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]);
+        let second = algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]);
+        let foreign = algebraic_parameter(vec![-fifth, Real::zero(), Real::zero(), Real::one()]);
+
+        assert!(!exact_parameter_binary_relation(
+            &first,
+            &second,
+            &foreign,
+            hypersolve::AlgebraicRootArithmeticOp::Multiply,
+        ));
     }
 
     #[cfg(feature = "predicates")]
