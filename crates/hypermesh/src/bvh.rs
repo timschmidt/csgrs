@@ -494,6 +494,118 @@ impl ExactBvh {
         }
         Ok(())
     }
+
+    /// Calls `callback` once for each distinct overlapping primitive pair in
+    /// this hierarchy.
+    ///
+    /// A canonical node-pair traversal avoids querying the same hierarchy
+    /// once per primitive and never visits both `(left, right)` and
+    /// `(right, left)`. Leaf pairs still pass the ordinary exact AABB
+    /// predicate, so tree layout only schedules work and cannot decide an
+    /// intersection.
+    pub(crate) fn intersect_self_pairs_decision<F>(
+        &self,
+        decisions: &DecisionContext,
+        mut callback: F,
+    ) -> HypermeshResult<()>
+    where
+        F: FnMut(usize, usize),
+    {
+        if self.tree.nodes.is_empty() {
+            return Ok(());
+        }
+
+        let mut pending = vec![(0_usize, 0_usize)];
+        while let Some((left_index, right_index)) = pending.pop() {
+            let left = self.tree.nodes.get(left_index).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "exact self-intersection hierarchy reached an absent node",
+                },
+            )?;
+            let right = self.tree.nodes.get(right_index).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "exact self-intersection hierarchy reached an absent node",
+                },
+            )?;
+            if left_index != right_index
+                && !bounds_overlap_decision(decisions, &left.bounds, &right.bounds)?
+            {
+                continue;
+            }
+
+            match (left.children, right.children) {
+                (Some([left_first, left_second]), Some([right_first, right_second]))
+                    if left_index == right_index =>
+                {
+                    pending.push((left_second, right_second));
+                    pending.push((left_first, right_second));
+                    pending.push((left_first, right_first));
+                }
+                (Some([left_first, left_second]), Some([right_first, right_second])) => {
+                    pending.push((left_second, right_second));
+                    pending.push((left_second, right_first));
+                    pending.push((left_first, right_second));
+                    pending.push((left_first, right_first));
+                }
+                (Some([left_first, left_second]), None) => {
+                    pending.push((left_second, right_index));
+                    pending.push((left_first, right_index));
+                }
+                (None, Some([right_first, right_second])) => {
+                    pending.push((left_index, right_second));
+                    pending.push((left_index, right_first));
+                }
+                (None, None) => {
+                    let left_items = self.tree.order.get(left.range.clone()).ok_or(
+                        HypermeshError::SurfaceArrangementFailed {
+                            reason: "exact self-intersection hierarchy has an invalid leaf range",
+                        },
+                    )?;
+                    let right_items = self.tree.order.get(right.range.clone()).ok_or(
+                        HypermeshError::SurfaceArrangementFailed {
+                            reason: "exact self-intersection hierarchy has an invalid leaf range",
+                        },
+                    )?;
+                    for (left_position, &left_item) in left_items.iter().enumerate() {
+                        let right_items = if left_index == right_index {
+                            &right_items[left_position + 1..]
+                        } else {
+                            right_items
+                        };
+                        for &right_item in right_items {
+                            let left_primitive = self.primitives.get(left_item).ok_or(
+                                HypermeshError::SurfaceArrangementFailed {
+                                    reason: "exact self-intersection hierarchy references an absent primitive",
+                                },
+                            )?;
+                            let right_primitive = self.primitives.get(right_item).ok_or(
+                                HypermeshError::SurfaceArrangementFailed {
+                                    reason: "exact self-intersection hierarchy references an absent primitive",
+                                },
+                            )?;
+                            if !bounds_overlap_decision(
+                                decisions,
+                                &left_primitive.bounds,
+                                &right_primitive.bounds,
+                            )? {
+                                continue;
+                            }
+                            let first = left_primitive
+                                .polygon_index
+                                .min(right_primitive.polygon_index);
+                            let second = left_primitive
+                                .polygon_index
+                                .max(right_primitive.polygon_index);
+                            if first != second {
+                                callback(first, second);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl ExactBvhQueryHierarchy {
@@ -1192,6 +1304,105 @@ mod tests {
             assert!(matches.is_empty());
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
+    }
+
+    #[test]
+    fn canonical_self_pairs_match_exact_brute_force_under_both_policies() {
+        let mut polygons = separated_triangles();
+        polygons.extend((0_i64..12).map(|index| {
+            approximate_convex_triangle(
+                &point(index, 0, 0),
+                &point(index + 4, 0, 0),
+                &point(index, 4, 0),
+                0,
+                (20 + index) as isize,
+            )
+        }));
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+            let mut actual = Vec::new();
+            bvh.intersect_self_pairs_decision(&decisions, |first, second| {
+                actual.push((first, second));
+            })
+            .unwrap();
+            actual.sort_unstable();
+
+            let mut expected = Vec::new();
+            for first in 0..bvh.primitives.len() {
+                for second in first + 1..bvh.primitives.len() {
+                    if bounds_overlap_decision(
+                        &decisions,
+                        &bvh.primitives[first].bounds,
+                        &bvh.primitives[second].bounds,
+                    )
+                    .unwrap()
+                    {
+                        expected.push((
+                            bvh.primitives[first].polygon_index,
+                            bvh.primitives[second].polygon_index,
+                        ));
+                    }
+                }
+            }
+            expected.sort_unstable();
+            assert_eq!(actual, expected);
+            assert!(actual.iter().all(|(first, second)| first < second));
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn canonical_self_pairs_handle_empty_and_singleton_hierarchies() {
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        for polygons in [Vec::new(), separated_triangles()[..1].to_vec()] {
+            let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+            let mut pair_count = 0;
+            bvh.intersect_self_pairs_decision(&decisions, |_, _| pair_count += 1)
+                .unwrap();
+            assert_eq!(pair_count, 0);
+        }
+        assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn canonical_self_pairs_reject_malformed_hierarchy_storage() {
+        let polygons = separated_triangles();
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+
+        let mut absent_node = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+        absent_node.tree.nodes[0].children.as_mut().unwrap()[0] = usize::MAX;
+        assert!(matches!(
+            absent_node.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact self-intersection hierarchy reached an absent node"
+            })
+        ));
+
+        let mut invalid_leaf = ExactBvh::build_decision(&decisions, &polygons[..2]).unwrap();
+        invalid_leaf.tree.nodes[0].range.end = usize::MAX;
+        assert!(matches!(
+            invalid_leaf.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact self-intersection hierarchy has an invalid leaf range"
+            })
+        ));
+
+        let mut absent_primitive = ExactBvh::build_decision(&decisions, &polygons[..2]).unwrap();
+        absent_primitive.tree.order[0] = usize::MAX;
+        assert!(matches!(
+            absent_primitive.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact self-intersection hierarchy references an absent primitive"
+            })
+        ));
     }
 
     #[test]

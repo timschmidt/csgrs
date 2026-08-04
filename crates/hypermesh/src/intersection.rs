@@ -1230,8 +1230,8 @@ pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
     let vertices = PolygonVertexArena::build(decisions, polygons)?;
     let mut failure = None;
 
-    bvh.intersect_pairs_decision(decisions, bvh, |global_i, global_j| {
-        if global_i >= global_j || failure.is_some() {
+    bvh.intersect_self_pairs_decision(decisions, |global_i, global_j| {
+        if failure.is_some() {
             return;
         }
         if let Err(error) = append_pairwise_intersection(
