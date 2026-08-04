@@ -3304,6 +3304,49 @@ impl LineFilletCorner2 {
     }
 }
 
+enum CornerSolutionAccumulator<T> {
+    Empty,
+    One(T),
+    Multiple(Vec<T>),
+}
+
+impl<T> CornerSolutionAccumulator<T> {
+    fn push(&mut self, candidate: T) {
+        *self = match std::mem::replace(self, Self::Empty) {
+            Self::Empty => Self::One(candidate),
+            Self::One(first) => Self::Multiple(vec![first, candidate]),
+            Self::Multiple(mut candidates) => {
+                candidates.push(candidate);
+                Self::Multiple(candidates)
+            }
+        };
+    }
+
+    fn finish(self, empty_reason: CurveCornerNoSolution2) -> CurveCornerSolutions2<T> {
+        match self {
+            Self::Empty => CurveCornerSolutions2::NoSolution(empty_reason),
+            Self::One(candidate) => CurveCornerSolutions2::Unique(candidate),
+            Self::Multiple(candidates) => CurveCornerSolutions2::Multiple(candidates),
+        }
+    }
+}
+
+#[derive(Default)]
+struct LineCornerCuts2 {
+    interior: Option<LineCornerCut2>,
+    extension: Option<LineCornerCut2>,
+}
+
+impl LineCornerCuts2 {
+    fn iter(&self) -> impl Iterator<Item = &LineCornerCut2> {
+        self.interior.iter().chain(self.extension.iter())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.interior.is_none() && self.extension.is_none()
+    }
+}
+
 fn exact_linear_corner_line(curve: &Curve2) -> Option<&LineSeg2> {
     match curve.geometry() {
         CurveGeometry2::Line(line) => Some(line),
@@ -3314,21 +3357,6 @@ fn exact_linear_corner_line(curve: &Curve2) -> Option<&LineSeg2> {
         | CurveGeometry2::RationalBezier(_)
         | CurveGeometry2::PolynomialBSpline(_)
         | CurveGeometry2::Nurbs(_) => None,
-    }
-}
-
-fn corner_solutions<T>(
-    mut candidates: Vec<T>,
-    empty_reason: CurveCornerNoSolution2,
-) -> CurveCornerSolutions2<T> {
-    match candidates.len() {
-        0 => CurveCornerSolutions2::NoSolution(empty_reason),
-        1 => CurveCornerSolutions2::Unique(
-            candidates
-                .pop()
-                .expect("one corner candidate remains in the solution inventory"),
-        ),
-        _ => CurveCornerSolutions2::Multiple(candidates),
     }
 }
 
@@ -3413,9 +3441,9 @@ pub(crate) fn solve_line_chamfer_corner(
     } else {
         CurveCornerNoSolution2::DegenerateCandidate
     };
-    let mut candidates = Vec::with_capacity(previous_cuts.len() * next_cuts.len());
-    for previous in &previous_cuts {
-        for next in &next_cuts {
+    let mut candidates = CornerSolutionAccumulator::Empty;
+    for previous in previous_cuts.iter() {
+        for next in next_cuts.iter() {
             match crate::classify::is_zero(&previous.point.distance_squared(&next.point), policy) {
                 Some(true) => continue,
                 Some(false) => candidates.push(LineChamferCorner2 {
@@ -3432,7 +3460,7 @@ pub(crate) fn solve_line_chamfer_corner(
             }
         }
     }
-    Ok(corner_solutions(candidates, empty_reason))
+    Ok(candidates.finish(empty_reason))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -3455,19 +3483,30 @@ pub(crate) fn solve_line_fillet_corner(
         RealSign::Positive => {}
         RealSign::Negative => unreachable!("negative corner values are rejected"),
     }
-    let previous_unit =
-        line_unit_direction(previous, CurveOperation2::Fillet, previous_family, policy)?;
-    let next_unit = line_unit_direction(next, CurveOperation2::Fillet, next_family, policy)?;
     let previous_delta = previous.delta();
     let next_delta = next.delta();
+    let previous_unit = line_unit_direction(
+        &previous_delta.0,
+        &previous_delta.1,
+        CurveOperation2::Fillet,
+        previous_family,
+        policy,
+    )?;
+    let next_unit = line_unit_direction(
+        &next_delta.0,
+        &next_delta.1,
+        CurveOperation2::Fillet,
+        next_family,
+        policy,
+    )?;
     let denominator = &previous_delta.0 * &next_delta.1 - &previous_delta.1 * &next_delta.0;
-    match crate::classify::real_sign(&denominator, policy) {
+    let denominator_sign = match crate::classify::real_sign(&denominator, policy) {
         Some(RealSign::Zero) => {
             return Ok(CurveCornerSolutions2::NoSolution(
                 CurveCornerNoSolution2::ParallelTangents,
             ));
         }
-        Some(RealSign::Positive | RealSign::Negative) => {}
+        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
         None => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
@@ -3475,10 +3514,24 @@ pub(crate) fn solve_line_fillet_corner(
                 crate::UncertaintyReason::RealSign,
             ));
         }
-    }
+    };
 
-    let mut candidates = Vec::with_capacity(2);
-    for (signed_radius, clockwise) in [(radius.clone(), false), (-radius.clone(), true)] {
+    let mut candidates = CornerSolutionAccumulator::Empty;
+    // For connected incoming/outgoing lines, only the offset side matching the
+    // turn can have both contacts in the open trim domains. Extension mode must
+    // retain both exact carrier solutions.
+    let sides: &[(bool, bool)] = match (mode, denominator_sign) {
+        (CurveCornerMode2::TrimOnly, RealSign::Positive) => &[(true, false)],
+        (CurveCornerMode2::TrimOnly, RealSign::Negative) => &[(false, true)],
+        (CurveCornerMode2::TrimOrExtend, _) => &[(true, false), (false, true)],
+        (_, RealSign::Zero) => unreachable!("parallel line directions return before solving"),
+    };
+    for &(positive_radius, clockwise) in sides {
+        let signed_radius = if positive_radius {
+            radius.clone()
+        } else {
+            -radius.clone()
+        };
         let previous_offset_start = previous.start().translated(
             -&previous_unit.1 * &signed_radius,
             &previous_unit.0 * &signed_radius,
@@ -3551,20 +3604,34 @@ pub(crate) fn solve_line_fillet_corner(
             }
         }
     }
-    Ok(corner_solutions(
-        candidates,
-        CurveCornerNoSolution2::OutsideTrimDomain,
-    ))
+    Ok(candidates.finish(CurveCornerNoSolution2::OutsideTrimDomain))
 }
 
 fn line_unit_direction(
-    line: &LineSeg2,
+    dx: &Real,
+    dy: &Real,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<(Real, Real, Real)> {
-    let (dx, dy) = line.delta();
-    let length_squared = &dx * &dx + &dy * &dy;
+    // Axis-aligned edges are common and their exact norm is already one
+    // coordinate; avoid constructing and reducing a redundant square root.
+    match (dx.structural_facts().sign, dy.structural_facts().sign) {
+        (Some(RealSign::Zero), Some(RealSign::Positive)) => {
+            return Ok((Real::zero(), Real::one(), dy.clone()));
+        }
+        (Some(RealSign::Zero), Some(RealSign::Negative)) => {
+            return Ok((Real::zero(), -Real::one(), -dy.clone()));
+        }
+        (Some(RealSign::Positive), Some(RealSign::Zero)) => {
+            return Ok((Real::one(), Real::zero(), dx.clone()));
+        }
+        (Some(RealSign::Negative), Some(RealSign::Zero)) => {
+            return Ok((-Real::one(), Real::zero(), -dx.clone()));
+        }
+        _ => {}
+    }
+    let length_squared = dx * dx + dy * dy;
     match crate::classify::real_sign(&length_squared, policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero | RealSign::Negative) => {
@@ -3585,9 +3652,9 @@ fn line_unit_direction(
     let length = length_squared
         .sqrt()
         .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
-    let unit_x = (&dx / &length)
+    let unit_x = (dx / &length)
         .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
-    let unit_y = (&dy / &length)
+    let unit_y = (dy / &length)
         .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
     Ok((unit_x, unit_y, length))
 }
@@ -3636,19 +3703,23 @@ fn line_chamfer_cuts(
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<Vec<LineCornerCut2>> {
+) -> ExactCurveResult<LineCornerCuts2> {
     if setback_sign == RealSign::Zero {
-        return Ok(vec![LineCornerCut2 {
-            parameter: if previous { Real::one() } else { Real::zero() },
-            point: if previous {
-                line.end().clone()
-            } else {
-                line.start().clone()
-            },
-            placement: LineCornerPlacement2::Corner,
-        }]);
+        return Ok(LineCornerCuts2 {
+            interior: Some(LineCornerCut2 {
+                parameter: if previous { Real::one() } else { Real::zero() },
+                point: if previous {
+                    line.end().clone()
+                } else {
+                    line.start().clone()
+                },
+                placement: LineCornerPlacement2::Corner,
+            }),
+            extension: None,
+        });
     }
-    let (_, _, length) = line_unit_direction(line, operation, family, policy)?;
+    let (dx, dy) = line.delta();
+    let (_, _, length) = line_unit_direction(&dx, &dy, operation, family, policy)?;
     let ratio = (setback / &length)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
     let interior_parameter = if previous {
@@ -3656,11 +3727,7 @@ fn line_chamfer_cuts(
     } else {
         ratio.clone()
     };
-    let mut cuts = Vec::with_capacity(if mode == CurveCornerMode2::TrimOnly {
-        1
-    } else {
-        2
-    });
+    let mut cuts = LineCornerCuts2::default();
     let interior_after_zero = compare_corner_parameter(
         &interior_parameter,
         &Real::zero(),
@@ -3673,7 +3740,7 @@ fn line_chamfer_cuts(
     if interior_after_zero == std::cmp::Ordering::Greater
         && interior_before_one == std::cmp::Ordering::Less
     {
-        cuts.push(LineCornerCut2 {
+        cuts.interior = Some(LineCornerCut2 {
             point: line.point_at(interior_parameter.clone()),
             parameter: interior_parameter,
             placement: LineCornerPlacement2::Trim,
@@ -3685,7 +3752,7 @@ fn line_chamfer_cuts(
         } else {
             -ratio
         };
-        cuts.push(LineCornerCut2 {
+        cuts.extension = Some(LineCornerCut2 {
             point: line.point_at(extension_parameter.clone()),
             parameter: extension_parameter,
             placement: LineCornerPlacement2::Extension,
