@@ -3999,8 +3999,9 @@ mod conversion_tests {
             .map(Real::exact_rational_ref)
             .collect::<Option<Vec<_>>>()
             .expect("test coefficients are rational");
-        HyperRational::primitive_integer_ratio(&rationals)
+        HyperRational::primitive_bigint_ratio(&rationals)
             .into_iter()
+            .map(HyperRational::from_bigint)
             .map(Real::from)
             .collect()
     }
