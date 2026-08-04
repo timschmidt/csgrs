@@ -8407,6 +8407,23 @@ fn three_by_three_minor(rows: &[[Real; 4]; 3], omitted: usize) -> Real {
             * (&rows[1][first] * &rows[2][second] - &rows[1][second] * &rows[2][first])
 }
 
+#[cfg(feature = "predicates")]
+fn bivariate_trim_exact(mut polynomial: BivariatePolynomial) -> Option<BivariatePolynomial> {
+    for row in &mut polynomial.coefficients {
+        while row.len() > 1 && real_sign(row.last()?, &CurveContext::STRICT)? == RealSign::Zero {
+            row.pop();
+        }
+    }
+    while polynomial.coefficients.len() > 1
+        && polynomial.coefficients.last()?.iter().all(|coefficient| {
+            real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero)
+        })
+    {
+        polynomial.coefficients.pop();
+    }
+    Some(polynomial)
+}
+
 /// Reconstructs the bilinear factor `u0+u1*y+x*(v0+v1*y)` from three exact
 /// specialized roots. Signed maximal minors give the one-dimensional nullspace;
 /// exact bivariate division remains the authority for the proposed factor.
@@ -8436,7 +8453,21 @@ fn bivariate_bilinear_factor_from_roots(
             real_sign(coefficient, &CurveContext::STRICT),
             Some(RealSign::Negative | RealSign::Positive)
         )
-    })?;
+    });
+    if pivot.is_none() {
+        let repeated = roots[1..].iter().all(|root| {
+            real_sign(&(*root - roots[0]), &CurveContext::STRICT) == Some(RealSign::Zero)
+        });
+        return repeated
+            .then(|| {
+                BivariatePolynomial::new(vec![
+                    vec![-roots[0].clone(), Real::zero()],
+                    vec![Real::one(), Real::zero()],
+                ])
+            })
+            .and_then(bivariate_trim_exact);
+    }
+    let pivot = pivot?;
     let normalized = coefficients
         .iter()
         .map(|coefficient| (coefficient / pivot).ok())
@@ -8448,7 +8479,65 @@ fn bivariate_bilinear_factor_from_roots(
     bivariate_exact_nonzero_metadata(&BivariatePolynomial::new(vec![
         factor.coefficients[1].clone(),
     ]))??;
-    Some(factor)
+    bivariate_trim_exact(factor)
+}
+
+#[cfg(feature = "predicates")]
+fn bivariate_second_parameter_content(polynomial: &BivariatePolynomial) -> Option<Vec<Real>> {
+    let mut content: Option<Vec<Real>> = None;
+    for row in &polynomial.coefficients {
+        let mut fiber = row.clone();
+        while fiber.last().is_some_and(|coefficient| {
+            real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero)
+        }) {
+            fiber.pop();
+        }
+        if fiber.is_empty() {
+            continue;
+        }
+        content = Some(match content {
+            None => fiber,
+            Some(previous) => {
+                greatest_common_divisor_univariate_polynomials_exact(&previous, &fiber)?
+            }
+        });
+        if content.as_ref().is_none_or(|content| content.len() <= 1) {
+            return None;
+        }
+    }
+    content.filter(|content| content.len() > 1)
+}
+
+#[cfg(feature = "predicates")]
+fn bivariate_attach_second_parameter_content(
+    polynomial: &BivariatePolynomial,
+    factor: &BivariatePolynomial,
+    quotient: &BivariatePolynomial,
+) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
+    if factor.coefficients.iter().any(|row| {
+        row.get(1).is_some_and(|coefficient| {
+            real_sign(coefficient, &CurveContext::STRICT) != Some(RealSign::Zero)
+        })
+    }) {
+        return Vec::new();
+    }
+    let Some(content) = bivariate_second_parameter_content(quotient) else {
+        return Vec::new();
+    };
+    exact_rational_univariate_roots(content)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|root| {
+            let content_factor = BivariatePolynomial::new(vec![vec![-root, Real::one()]]);
+            let expanded = bivariate_trim_exact(bivariate_multiply_bounded(
+                factor,
+                &content_factor,
+                MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
+            )?)?;
+            let quotient = divide_bivariate_polynomial_exact(polynomial, &expanded)?;
+            Some((expanded, quotient))
+        })
+        .collect()
 }
 
 /// Recovers all distinct bilinear divisors visible through four bounded exact
@@ -8495,10 +8584,17 @@ fn bivariate_bilinear_factorizations(
                     else {
                         continue;
                     };
-                    factorizations.push((factor, quotient));
-                    if factorizations.len() == 3 {
-                        return factorizations;
+                    for expanded in
+                        bivariate_attach_second_parameter_content(polynomial, &factor, &quotient)
+                    {
+                        if !factorizations
+                            .iter()
+                            .any(|(existing, _)| existing == &expanded.0)
+                        {
+                            factorizations.push(expanded);
+                        }
                     }
+                    factorizations.push((factor, quotient));
                 }
             }
         }
@@ -27876,6 +27972,25 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn bilinear_factorization_retains_linear_specialization_content() {
+        let factor = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::one()],
+            vec![Real::zero(), Real::one()],
+        ]);
+        let cofactor = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::zero(), Real::one()],
+            vec![Real::one(), Real::one(), Real::zero()],
+            vec![Real::one(), Real::zero(), Real::one()],
+        ]);
+        let polynomial = bivariate_multiply(&factor, &cofactor);
+        let factorizations = bivariate_bilinear_factorizations(&polynomial);
+        assert!(factorizations.iter().any(|(recovered, quotient)| {
+            recovered == &factor && bivariate_multiply(recovered, quotient) == polynomial
+        }));
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn square_free_cubic_axis_factorization_recovers_one_rational_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
         let mut quadratic_coefficients = vec![vec![vec![Real::zero(); 3]; 3]; 3];
@@ -28219,6 +28334,28 @@ mod conversion_tests {
             &foreign,
             hypersolve::AlgebraicRootArithmeticOp::Multiply,
         ));
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn square_free_cubic_lift_retains_top_slice_content() {
+        let factor = trivariate_multi_affine([1, 0, 0, 1, 2, 0, 0, 1]);
+        let mut quadratic_coefficients = vec![vec![vec![Real::zero(); 3]; 3]; 3];
+        quadratic_coefficients[0][0][0] = Real::one();
+        quadratic_coefficients[2][0][0] = Real::one();
+        quadratic_coefficients[0][2][0] = Real::one();
+        quadratic_coefficients[0][0][2] = Real::one();
+        let product = trivariate_multiply(
+            &factor,
+            &TrivariatePolynomial2 {
+                coefficients: quadratic_coefficients,
+            },
+        );
+        let factorizations = trivariate_square_free_cubic_axis_factorizations(&product, 0)
+            .expect("linear top-slice content must remain attached to its factor");
+        assert!(factorizations.iter().all(|(recovered, quotient)| {
+            trivariate_multiply(recovered, quotient).coefficients == product.coefficients
+        }));
     }
 
     #[cfg(feature = "predicates")]
