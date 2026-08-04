@@ -18,7 +18,7 @@ pub(crate) fn validate_delaunay(
     points: &[ExactPoint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    validate_triangles(kernel, points, triangles)?;
+    let _ = validate_triangles(kernel, points, triangles)?;
     let edge_uses = sorted_edge_uses(triangles);
     validate_edge_adjacency(&edge_uses)?;
     if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
@@ -206,9 +206,9 @@ fn validated_constrained_edge_uses(
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
-) -> Result<Vec<EdgeUse>> {
+) -> Result<(Vec<EdgeUse>, Option<Sign>)> {
     validate_constraints(points.len(), constraints)?;
-    validate_triangles(kernel, points, triangles)?;
+    let winding = validate_triangles(kernel, points, triangles)?;
     let edge_uses = sorted_edge_uses(triangles);
     validate_edge_adjacency(&edge_uses)?;
     for &constraint in constraints {
@@ -218,7 +218,7 @@ fn validated_constrained_edge_uses(
             });
         }
     }
-    Ok(edge_uses)
+    Ok((edge_uses, winding))
 }
 
 /// Validate constrained topology and local Delaunay legality of unprotected
@@ -229,7 +229,7 @@ pub(crate) fn validate_constrained_delaunay(
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let edge_uses = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    let (edge_uses, _) = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
     let constrained_edges = sorted_constraint_edges(constraints);
     validate_local_delaunay(kernel, points, &edge_uses, &constrained_edges)
 }
@@ -242,7 +242,7 @@ pub(crate) fn validate_constrained_convex_hull_delaunay(
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let edge_uses = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    let (edge_uses, _) = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
     let constrained_edges = sorted_constraint_edges(constraints);
     validate_local_delaunay(kernel, points, &edge_uses, &constrained_edges)?;
     if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
@@ -253,15 +253,22 @@ pub(crate) fn validate_constrained_convex_hull_delaunay(
     Ok(())
 }
 
-/// Validate constrained topology covering the complete convex hull without
-/// imposing Delaunay legality on unprotected interior edges.
+/// Validate positively oriented constrained topology covering the complete
+/// convex hull without imposing Delaunay legality on unprotected interior
+/// edges.
 pub(crate) fn validate_constrained_convex_hull_topology(
     kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    let edge_uses = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    let (edge_uses, winding) =
+        validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    if winding == Some(Sign::Negative) {
+        return Err(Error::InvalidInput {
+            reason: "triangle winding is not positive",
+        });
+    }
     if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
         return Err(Error::InvalidInput {
             reason: "constrained triangulation does not cover the convex hull",
@@ -301,7 +308,7 @@ fn validate_triangles(
     kernel: &ExactKernel,
     points: &[ExactPoint],
     triangles: &[Triangle],
-) -> Result<()> {
+) -> Result<Option<Sign>> {
     let mut seen = Vec::with_capacity(triangles.len());
     let mut winding = None;
     for &triangle in triangles {
@@ -341,7 +348,7 @@ fn validate_triangles(
             reason: "duplicate triangle",
         });
     }
-    Ok(())
+    Ok(winding)
 }
 
 fn validate_edge_adjacency(edge_uses: &[EdgeUse]) -> Result<()> {
@@ -522,4 +529,38 @@ fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
         (first, second),
         (Sign::Negative, Sign::Positive) | (Sign::Positive, Sign::Negative)
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::TriangulationContext;
+    use hyperreal::Real;
+
+    #[test]
+    fn convex_hull_topology_contract_rejects_consistent_negative_winding() {
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let kernel = ExactKernel::new(&context);
+        let points = [
+            ExactPoint::new(Real::from(0), Real::from(0)),
+            ExactPoint::new(Real::from(1), Real::from(0)),
+            ExactPoint::new(Real::from(1), Real::from(1)),
+            ExactPoint::new(Real::from(0), Real::from(1)),
+        ];
+
+        let error = validate_constrained_convex_hull_topology(
+            &kernel,
+            &points,
+            &[],
+            &[[0, 2, 1], [0, 3, 2]],
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error,
+            Error::InvalidInput {
+                reason: "triangle winding is not positive"
+            }
+        );
+    }
 }

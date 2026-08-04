@@ -342,7 +342,11 @@ pub fn constrained_delaunay_convex_hull(
 /// for topology-only consumers such as surface arrangements.
 ///
 /// Constraints must already be planarized: they may not cross, overlap, or
-/// contain an input point other than an endpoint.
+/// contain an input point other than an endpoint. Every returned triangle is
+/// strictly positively oriented in the caller's coordinate axes, and every
+/// input constraint is present in [`ConstrainedTriangulation::constraint_edges`]
+/// as a triangulation edge. The active policy and aggregate certainty govern
+/// every predicate used to establish those postconditions.
 pub fn constrained_triangulation_convex_hull(
     context: &TriangulationContext,
     points: &[ExactPoint],
