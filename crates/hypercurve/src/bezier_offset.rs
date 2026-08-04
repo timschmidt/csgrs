@@ -6994,6 +6994,31 @@ struct TrivariatePolynomial2 {
 #[cfg(feature = "predicates")]
 const MAX_TRIVARIATE_BERNSTEIN_CONTROLS: usize = 16_384;
 
+/// A balanced product of 24 multi-affine factors occupies 25^3 controls,
+/// while degree 25 would exceed `MAX_TRIVARIATE_BERNSTEIN_CONTROLS`. The same
+/// ceiling also bounds recursion for unbalanced tensors whose raw control
+/// count alone would permit a much higher single-axis degree.
+#[cfg(feature = "predicates")]
+const MAX_TRIVARIATE_EXACT_FACTOR_SPLITS: usize = 24;
+
+#[cfg(feature = "predicates")]
+const MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS + 1;
+
+#[cfg(feature = "predicates")]
+const MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS: usize = 9;
+
+#[cfg(feature = "predicates")]
+const MAX_BOUNDED_BILINEAR_FACTORIZATIONS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS;
+
+#[cfg(feature = "predicates")]
+const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
+
+/// Higher-degree slices receive a bounded proposal pass. A proposal can only
+/// be accepted by exact division, so exhaustion loses capability rather than
+/// exactness.
+#[cfg(feature = "predicates")]
+const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
+
 #[cfg(feature = "predicates")]
 impl TrivariatePolynomial2 {
     fn ab_ac_determinant(
@@ -8580,18 +8605,19 @@ fn bivariate_attach_second_parameter_content(
 }
 
 /// Recovers up to `maximum_factorizations` distinct bilinear divisors visible
-/// through four bounded exact rational specializations. Four choose three
-/// sample triples tolerate one degree drop without making a sampled value part
-/// of the proof. An unused fourth specialization rejects mismatched proposals
-/// before exact division.
+/// through four bounded exact rational specializations, inspecting at most
+/// `maximum_proposals` root triples. Four choose three sample triples tolerate
+/// one degree drop without making a sampled value part of the proof. An unused
+/// fourth specialization rejects mismatched proposals before exact division.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_bilinear_factorizations_bounded(
     polynomial: &BivariatePolynomial,
     maximum_factorizations: usize,
+    maximum_proposals: usize,
 ) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
-    if maximum_factorizations == 0 {
+    if maximum_factorizations == 0 || maximum_proposals == 0 {
         return Vec::new();
     }
     const SAMPLE_TRIPLES: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
@@ -8609,10 +8635,15 @@ fn bivariate_bilinear_factorizations_bounded(
         })
         .collect::<Vec<_>>();
     let mut factorizations = Vec::with_capacity(3);
+    let mut proposals = 0_usize;
     for [first, second, third] in SAMPLE_TRIPLES {
         for first_root in &roots[first] {
             for second_root in &roots[second] {
                 for third_root in &roots[third] {
+                    if proposals >= maximum_proposals {
+                        return factorizations;
+                    }
+                    proposals += 1;
                     let Some(factor) = bivariate_bilinear_factor_from_roots(
                         [&samples[first], &samples[second], &samples[third]],
                         [first_root, second_root, third_root],
@@ -8667,7 +8698,7 @@ fn bivariate_bilinear_factorizations_bounded(
 fn bivariate_bilinear_factorizations(
     polynomial: &BivariatePolynomial,
 ) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
-    bivariate_bilinear_factorizations_bounded(polynomial, usize::MAX)
+    bivariate_bilinear_factorizations_bounded(polynomial, usize::MAX, usize::MAX)
 }
 
 /// Returns one `(axis, retained)` bivariate coefficient slice at a fixed power
@@ -8994,13 +9025,15 @@ fn trivariate_rational_multi_affine_factor_from_scale(
     Some((factor, quotient))
 }
 
-/// Recovers one exact rational multi-affine factor from a bounded tensor that
-/// is cubic through octic in `axis`. Specializations only propose
-/// bilinear slice factors. Hypersolve exact division proves each slice, derives the
-/// inter-slice scale from the translated first-order coefficient or an exact
-/// two-anchor projective alignment for repeated factors, and finally proves
-/// the complete trivariate factor. Unsupported coefficient towers or
-/// degenerate slices make no claim.
+/// Recovers one exact rational multi-affine factor from a resource-bounded
+/// tensor in `axis`. Specializations only propose bilinear slice factors.
+/// Hypersolve exact division proves each slice, derives the inter-slice scale
+/// from the translated first-order coefficient or an exact two-anchor
+/// projective alignment for repeated factors, and finally proves the complete
+/// trivariate factor. Cubic through octic tensors retain exhaustive proposal
+/// enumeration; higher degrees receive bounded first-factor passes. Unsupported
+/// coefficient towers, exhausted proposal budgets, or degenerate slices make
+/// no claim.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
@@ -9009,16 +9042,34 @@ fn trivariate_rational_multi_affine_axis_factorizations(
     axis: usize,
 ) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
-    if !(4..=9).contains(&coefficients.len()) {
+    if !(4..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS).contains(&coefficients.len()) {
         return None;
     }
+    let exhaustive = coefficients.len() <= MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS;
     // Try the first proved slice factors before enumerating every divisor. The
-    // exhaustive pass remains authoritative when that stable fast path does
-    // not lift. Exhaust the cheaper first-Taylor proof before entering the
+    // exhaustive pass remains authoritative in its measured-safe envelope.
+    // Higher degrees get a capped first-Taylor pass and, when needed, a capped
     // repeated-factor alignment pass.
-    for (maximum_factorizations, align_anchors) in
-        [(1, false), (usize::MAX, false), (usize::MAX, true)]
-    {
+    for (maximum_factorizations, maximum_proposals, align_anchors, enabled) in [
+        (1, MAX_FIRST_BILINEAR_FACTOR_PROPOSALS, false, true),
+        (
+            MAX_BOUNDED_BILINEAR_FACTORIZATIONS,
+            MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS,
+            false,
+            !exhaustive,
+        ),
+        (usize::MAX, usize::MAX, false, exhaustive),
+        (
+            MAX_BOUNDED_BILINEAR_FACTORIZATIONS,
+            MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS,
+            true,
+            !exhaustive,
+        ),
+        (usize::MAX, usize::MAX, true, exhaustive),
+    ] {
+        if !enabled {
+            continue;
+        }
         for lift_coordinate in 0..2 {
             let lift_degree = trivariate_axis_lift_degree(&coefficients, lift_coordinate)?;
             if lift_degree == 0 {
@@ -9026,8 +9077,11 @@ fn trivariate_rational_multi_affine_axis_factorizations(
             }
             let top_slice =
                 trivariate_axis_lift_power_slice(&coefficients, lift_coordinate, lift_degree)?;
-            let top_factorizations =
-                bivariate_bilinear_factorizations_bounded(&top_slice, maximum_factorizations);
+            let top_factorizations = bivariate_bilinear_factorizations_bounded(
+                &top_slice,
+                maximum_factorizations,
+                maximum_proposals,
+            );
             if top_factorizations.is_empty() {
                 continue;
             }
@@ -9044,9 +9098,11 @@ fn trivariate_rational_multi_affine_axis_factorizations(
                     &anchor,
                     true,
                 )?;
-                for (anchor_factor, anchor_quotient) in
-                    bivariate_bilinear_factorizations_bounded(&anchor_slice, maximum_factorizations)
-                {
+                for (anchor_factor, anchor_quotient) in bivariate_bilinear_factorizations_bounded(
+                    &anchor_slice,
+                    maximum_factorizations,
+                    maximum_proposals,
+                ) {
                     for (top_factor, _) in &top_factorizations {
                         if !align_anchors {
                             if let Some(scale) = rational_multi_affine_lift_scale(
@@ -9084,6 +9140,7 @@ fn trivariate_rational_multi_affine_axis_factorizations(
                             for (other_factor, _) in bivariate_bilinear_factorizations_bounded(
                                 &other_slice,
                                 maximum_factorizations,
+                                maximum_proposals,
                             ) {
                                 let Some(scale) = rational_multi_affine_lift_scale_from_anchor_pair(
                                     &anchor_factor,
@@ -9529,7 +9586,9 @@ fn trivariate_bounded_factor_sign_with_budget(
             3 => trivariate_quadratic_axis_factorizations(polynomial, axis),
             4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis)
                 .or_else(|| trivariate_rational_multi_affine_axis_factorizations(polynomial, axis)),
-            5..=9 => trivariate_rational_multi_affine_axis_factorizations(polynomial, axis),
+            5..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS => {
+                trivariate_rational_multi_affine_axis_factorizations(polynomial, axis)
+            }
             _ => None,
         };
         let Some(factorizations) = factorizations else {
@@ -9556,8 +9615,9 @@ fn trivariate_bounded_factor_sign_with_budget(
 }
 
 /// Replays the bounded exact quadratic, repeated-cubic, and rational
-/// multi-affine factor authorities. Seven splits suffice for every supported
-/// octic path.
+/// multi-affine factor authorities. The tensor degree supplies the useful
+/// split budget, capped at the largest balanced multi-affine product admitted
+/// by the existing control-count ceiling.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
@@ -9567,7 +9627,19 @@ fn trivariate_bounded_factor_sign(
     second: &BezierParameter2,
     third: &BezierParameter2,
 ) -> CurveResult<Option<RealSign>> {
-    trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, 7)
+    let dimensions = polynomial.dimensions();
+    let total_degree = dimensions
+        .0
+        .saturating_sub(1)
+        .saturating_add(dimensions.1.saturating_sub(1))
+        .saturating_add(dimensions.2.saturating_sub(1));
+    trivariate_bounded_factor_sign_with_budget(
+        polynomial,
+        first,
+        second,
+        third,
+        total_degree.min(MAX_TRIVARIATE_EXACT_FACTOR_SPLITS),
+    )
 }
 
 /// Preserves authored products that quotient-ring reduction may expand across
@@ -28336,6 +28408,26 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn rational_multi_affine_axis_factorization_replays_nine_distinct_factors() {
+        let product = trivariate_multi_affine_product([
+            [1, 2, -1, 3, 2, -2, 4, 1],
+            [2, -1, 3, 1, -3, 2, 1, 2],
+            [3, 1, 2, -2, 1, 4, -1, 3],
+            [2, 3, 1, -1, -2, 1, 3, 2],
+            [4, -2, 1, 2, 3, -1, 2, 1],
+            [5, 1, -2, 1, 2, 3, 1, -1],
+            [6, -1, 2, 3, 1, -2, 1, 2],
+            [7, 2, -1, 1, -2, 3, 2, 1],
+            [8, 1, 3, -2, 1, 2, -1, 2],
+        ]);
+        assert_rational_multi_affine_factor_on_every_axis(
+            &product,
+            "the bounded proposal pass must split an authored nonic product exactly",
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn rational_multi_affine_axis_factorization_replays_quartic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
         let second = [2, -1, 3, 1, -3, 2, 1, 2];
@@ -28400,6 +28492,36 @@ mod conversion_tests {
             &product,
             "octic multiplicities must retain an exact linear-axis factor",
         );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_multi_affine_axis_factorization_replays_bounded_nonic_multiplicity() {
+        let first = [1, 2, -1, 3, 2, -2, 4, 1];
+        let second = [2, -1, 3, 1, -3, 2, 1, 2];
+        let third = [3, 1, 2, -2, 1, 4, -1, 3];
+        let fourth = [2, 3, 1, -1, -2, 1, 3, 2];
+        let product = trivariate_multi_affine_product([
+            first, first, first, second, second, third, third, fourth, fourth,
+        ]);
+        assert_rational_multi_affine_factor_on_every_axis(
+            &product,
+            "the bounded alignment pass must retain a repeated nonic factor",
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_multi_affine_axis_factorization_reaches_the_balanced_resource_boundary() {
+        let repeated = [1, 1, 1, 0, 1, 0, 0, 1];
+        let product =
+            trivariate_multi_affine_product([repeated; MAX_TRIVARIATE_EXACT_FACTOR_SPLITS]);
+        assert_eq!(product.dimensions(), (25, 25, 25));
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, 0)
+            .expect("the degree-24 balanced resource boundary must retain its repeated factor");
+        assert!(factorizations.iter().any(|(factor, quotient)| {
+            trivariate_multiply(factor, quotient).coefficients == product.coefficients
+        }));
     }
 
     #[cfg(feature = "predicates")]
@@ -28696,6 +28818,23 @@ mod conversion_tests {
         coefficients[8][0][0] = Real::one();
         coefficients[0][8][0] = Real::one();
         coefficients[0][0][8] = Real::one();
+        coefficients[1][1][1] = Real::one();
+        let polynomial = TrivariatePolynomial2 { coefficients };
+        for axis in 0..3 {
+            assert!(
+                trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none()
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic() {
+        let mut coefficients = vec![vec![vec![Real::zero(); 10]; 10]; 10];
+        coefficients[0][0][0] = Real::one();
+        coefficients[9][0][0] = Real::one();
+        coefficients[0][9][0] = Real::one();
+        coefficients[0][0][9] = Real::one();
         coefficients[1][1][1] = Real::one();
         let polynomial = TrivariatePolynomial2 { coefficients };
         for axis in 0..3 {
@@ -29571,7 +29710,7 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn nonic_coupled_factor_obeys_the_selected_terminal_policy() {
+    fn bounded_nonic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, cubic) = square_free_cubic_coupled_fixture();
         let positive = trivariate_multi_affine_product([
             [4, 1, 1, 0, 1, 0, 0, 0],
@@ -29590,7 +29729,7 @@ mod conversion_tests {
                 &parameters[2],
             )
             .unwrap(),
-            None
+            Some(RealSign::Zero)
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
@@ -29603,22 +29742,8 @@ mod conversion_tests {
                 )
                 .unwrap()
             });
-            assert_eq!(
-                outcome.value,
-                if policy == CurveContext::STRICT {
-                    Classification::Uncertain(UncertaintyReason::Predicate)
-                } else {
-                    Classification::Decided(RealSign::Zero)
-                }
-            );
-            assert_eq!(
-                outcome.certainty,
-                if policy == CurveContext::STRICT {
-                    crate::CurveCertainty::Certified
-                } else {
-                    crate::CurveCertainty::Approximate512Consumed
-                }
-            );
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
         }
     }
 
