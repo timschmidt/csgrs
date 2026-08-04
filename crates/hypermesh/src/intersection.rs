@@ -2060,6 +2060,13 @@ fn triangle_reaches_plane([c0, c1, c2]: [Classification; 3]) -> bool {
     c0 == Classification::On || c0 != c1 || c1 != c2
 }
 
+fn triangle_has_two_proper_plane_crossings([c0, c1, c2]: [Classification; 3]) -> bool {
+    c0 != Classification::On
+        && c1 != Classification::On
+        && c2 != Classification::On
+        && (c0 != c1 || c1 != c2)
+}
+
 fn collect_edge_plane_crossings(
     decisions: &DecisionContext,
     edge_polygon: &ConvexPolygon,
@@ -2078,6 +2085,13 @@ fn collect_edge_plane_crossings(
                 classify_point_decision(decisions, v2, &plane_polygon.support)?,
             ],
         };
+        let support_values = triangle_has_two_proper_plane_crossings([c0, c1, c2]).then(|| {
+            [
+                plane_polygon.support.expression_at_point(v0),
+                plane_polygon.support.expression_at_point(v1),
+                plane_polygon.support.expression_at_point(v2),
+            ]
+        });
         collect_edge_plane_crossing(
             decisions,
             edge_polygon,
@@ -2086,6 +2100,9 @@ fn collect_edge_plane_crossings(
             v1,
             c0,
             c1,
+            support_values
+                .as_ref()
+                .map(|values| (&values[0], &values[1])),
             plane_polygon,
             plane_identity,
             points,
@@ -2098,6 +2115,9 @@ fn collect_edge_plane_crossings(
             v2,
             c1,
             c2,
+            support_values
+                .as_ref()
+                .map(|values| (&values[1], &values[2])),
             plane_polygon,
             plane_identity,
             points,
@@ -2110,6 +2130,9 @@ fn collect_edge_plane_crossings(
             v0,
             c2,
             c0,
+            support_values
+                .as_ref()
+                .map(|values| (&values[2], &values[0])),
             plane_polygon,
             plane_identity,
             points,
@@ -2130,6 +2153,7 @@ fn collect_edge_plane_crossings(
             end,
             start_class,
             end_class,
+            None,
             plane_polygon,
             plane_identity,
             points,
@@ -2147,6 +2171,7 @@ fn collect_edge_plane_crossing(
     end: &Point3,
     start_class: Classification,
     end_class: Classification,
+    support_values: Option<(&Real, &Real)>,
     plane_polygon: &ConvexPolygon,
     plane_identity: Option<ConstructionPlaneIdentity>,
     points: &mut Vec<ConstructedIntersectionPoint>,
@@ -2176,30 +2201,39 @@ fn collect_edge_plane_crossing(
         }
         (Classification::Negative, Classification::Positive)
         | (Classification::Positive, Classification::Negative) => {
-            let start_support = plane_polygon.support.expression_at_point(start);
-            let end_support = plane_polygon.support.expression_at_point(end);
+            let owned_support_values;
+            let (start_support, end_support) = match support_values {
+                Some(values) => values,
+                None => {
+                    owned_support_values = (
+                        plane_polygon.support.expression_at_point(start),
+                        plane_polygon.support.expression_at_point(end),
+                    );
+                    (&owned_support_values.0, &owned_support_values.1)
+                }
+            };
             let point = match segment_plane_intersection_in_polygon(
                 decisions,
                 start,
                 end,
                 start_class,
-                &start_support,
-                &end_support,
+                start_support,
+                end_support,
                 plane_polygon,
             ) {
                 Ok(false) => None,
                 Ok(true) => Some(intersect_segment_plane_from_values(
                     start,
                     end,
-                    &start_support,
-                    &end_support,
+                    start_support,
+                    end_support,
                 )?),
                 Err(undecided @ HypermeshError::PredicateUndecided { .. }) => {
                     let point = intersect_segment_plane_from_values(
                         start,
                         end,
-                        &start_support,
-                        &end_support,
+                        start_support,
+                        end_support,
                     )?;
                     let contained = match affine_point_in_polygon_on_support(
                         decisions,
@@ -2663,7 +2697,7 @@ mod tests {
         dedup_constructed_points, intersect_polygons_with_vertices_constructed,
         pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
-        supports_are_parallel, triangle_reaches_plane,
+        supports_are_parallel, triangle_has_two_proper_plane_crossings, triangle_reaches_plane,
     };
     use crate::bvh::ExactBvh;
     use crate::context::{DecisionContext, MeshContext};
@@ -2686,6 +2720,36 @@ mod tests {
                         || (classifications.contains(&Classification::Negative)
                             && classifications.contains(&Classification::Positive));
                     assert_eq!(triangle_reaches_plane(classifications), expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn triangle_support_values_are_shared_only_across_two_proper_crossings() {
+        let values = [
+            Classification::Negative,
+            Classification::On,
+            Classification::Positive,
+        ];
+        for c0 in values {
+            for c1 in values {
+                for c2 in values {
+                    let classifications = [c0, c1, c2];
+                    let proper_crossings = [(c0, c1), (c1, c2), (c2, c0)]
+                        .into_iter()
+                        .filter(|(start, end)| {
+                            matches!(
+                                (start, end),
+                                (Classification::Negative, Classification::Positive)
+                                    | (Classification::Positive, Classification::Negative)
+                            )
+                        })
+                        .count();
+                    assert_eq!(
+                        triangle_has_two_proper_plane_crossings(classifications),
+                        proper_crossings == 2,
+                    );
                 }
             }
         }
