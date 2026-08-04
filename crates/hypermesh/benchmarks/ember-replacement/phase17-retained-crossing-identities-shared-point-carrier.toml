@@ -1,0 +1,288 @@
+[metadata]
+captured = "2026-08-03"
+phase = 17
+checkpoint = "retained-crossing-identities-shared-point-carrier"
+status = "retained-open"
+supersedes_checkpoint = "retained-planar-radial-topology"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+parent_hypermesh = "349dddd24109e70f616ad6496a0dd16e3a2773c9"
+hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "6e4d68c835dbdcb487ef8e43cf57138ed13894b5"
+hypertri = "3b436192b9eaf4b7f5c7907fb17892c6557492c1"
+hypermesh = "e2bdff30d4ccbf0c0ba2a95473d75050db786463"
+hyperpath = "e65506279d3cba99a23cf98bbd17be44126ec14d"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+crate = "hypermesh"
+engine = "exact-surface-arrangement"
+segment_classification_separate_from_line_construction = true
+proper_crossing_always_policy_classified = true
+operation_wide_crossing_identity_reuse = true
+source_edge_plane_identity = true
+plane_triple_identity = true
+generic_edge_pair_identity = true
+shared_planar_point_carrier = "hyperlattice::Point2"
+temporary_real_coordinate_clones_removed = true
+temporary_indexed_ring_vectors_removed = true
+fallback_paths_preserved = true
+adds_heap_storage = false
+hidden_work_limit = false
+fixture_branch = false
+coordinate_branch = false
+triangle_count_branch = false
+operation_branch = false
+policy_branch = false
+expected_output_branch = false
+
+[api]
+removed = "hyperlimit::proper_segment_intersection_point_with_policy"
+added = "hyperlimit::construct_line_intersection_point"
+compatibility_alias = false
+controlled_callers_migrated_directly = true
+hyperpath_build_blocked_by_concurrent_hypersolve_source_mismatch = true
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+all_measured_certainty = "Certified"
+approximate_512_terminal_consumed = false
+policy_values_exactly_equal = true
+policy_heap_exactly_equal = true
+proper_crossing_uses_decision_context = true
+line_construction_is_exact_and_policy_free = true
+
+[full_perf_protocol]
+fixture = "yeahright-full-rotated"
+operation = "intersection"
+policy = "STRICT"
+input_triangles = 23_788
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+fresh_process = true
+cpu_pinned = 11
+repetitions = 5
+fixture_preparation_included = true
+exact_import_included = true
+one_boolean_included = true
+validation_and_destruction_included = true
+
+[full_perf]
+parent_median_seconds = 2.36
+current_median_seconds = 2.18
+wall_movement_percent = -7.6271
+parent_cycles = 9_311_200_332
+current_cycles = 8_528_856_984
+cycle_movement_percent = -8.4022
+parent_instructions = 24_604_987_622
+current_instructions = 22_237_885_130
+instruction_movement_percent = -9.6204
+parent_branches = 4_371_171_205
+current_branches = 3_988_513_749
+branch_movement_percent = -8.7541
+current_cache_misses = 20_080_741
+
+[historical]
+ember_seconds = 3_312.66
+current_vs_ember_speedup = 1_519.57
+cgal_epeck_seconds = 0.09
+current_vs_cgal_runtime_ratio = 24.22
+cgal_epeck_max_rss_kib = 15_516
+current_max_rss_kib = 192_196
+current_vs_cgal_rss_ratio = 12.39
+cgal_runtime_target_closed = false
+cgal_rss_target_closed = false
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+strict_and_approximate_512_equal = true
+
+[heap.full_yeahright]
+parent_incremental_peak_bytes = 158_258_204
+current_incremental_peak_bytes = 158_258_204
+parent_allocation_calls = 28_631_893
+current_allocation_calls = 26_006_589
+allocation_call_movement_percent = -9.1692
+parent_reallocation_calls = 3_113_322
+current_reallocation_calls = 2_525_282
+reallocation_call_movement_percent = -18.8879
+parent_added_bytes = 1_447_448_648
+current_added_bytes = 1_279_258_296
+added_byte_movement_percent = -11.6198
+current_deallocation_calls = 25_653_948
+current_removed_bytes = 1_254_868_392
+input_fact_growth_bytes = 24_389_848
+output_live_payload_bytes = 56
+post_input_drop_incremental_bytes = 10_792
+
+[heap.wide_2049]
+incremental_peak_bytes = 31_038_074
+allocation_calls = 2_107_571
+reallocation_calls = 227_677
+added_bytes = 462_626_870
+input_fact_growth_bytes = 26_568
+output_live_payload_bytes = 520_472
+post_input_drop_incremental_bytes = 96_192
+strict_and_approximate_512_equal = true
+
+[controls.wide_2049]
+fixture = "wide-rational-2048"
+input_triangles = 6_144
+parent_instructions = 4_195_599_349
+current_instructions = 4_190_199_389
+instruction_movement_percent = -0.1287
+certainty = "Certified"
+
+[controls.voxel_torus_33]
+input_triangles = 6_412
+parent_instructions = 1_303_920_505
+current_instructions = 1_246_596_747
+instruction_movement_percent = -4.3963
+
+[controls.voxel_torus_65]
+input_triangles = 25_100
+parent_instructions = 5_592_161_042
+current_instructions = 5_334_327_874
+instruction_movement_percent = -4.6106
+
+[controls.dense_coplanar_16]
+input_triangles = 6_144
+parent_instructions = 3_616_449_330
+current_instructions = 3_268_905_691
+instruction_movement_percent = -9.6101
+
+[controls.small_exact_boxes]
+operation = "all"
+repetitions = 101
+strict_median_microseconds = 674.542
+approximate_512_median_microseconds = 734.314
+pinned_cgal_copy_outside_microseconds = 119.5965
+pinned_cgal_copy_inside_microseconds = 128.976
+strict_vs_cgal_copy_outside_ratio = 5.64
+strict_vs_cgal_copy_inside_ratio = 5.23
+target_closed = false
+
+[controls.medium_dense_coplanar]
+operation = "intersection"
+input_triangles = 384
+repetitions = 31
+strict_median_milliseconds = 14.974266
+approximate_512_median_milliseconds = 14.979057
+pinned_cgal_milliseconds = 16.036
+strict_vs_cgal_ratio = 0.9338
+approximate_512_vs_cgal_ratio = 0.9341
+runtime_target_closed = true
+
+[size_protocol]
+native_metric = "text bytes"
+wasm_metric = "wasm-opt -Oz bytes"
+feature_set = "default"
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_bytes = 2_022_254
+current_native_bytes = 2_019_526
+native_movement_bytes = -2_728
+native_movement_percent = -0.1349
+parent_wasm_bytes = 1_439_446
+current_wasm_bytes = 1_437_843
+wasm_movement_bytes = -1_603
+wasm_movement_percent = -0.1114
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_bytes = 2_025_398
+current_native_bytes = 2_022_670
+native_movement_bytes = -2_728
+native_movement_percent = -0.1347
+parent_wasm_bytes = 1_441_304
+current_wasm_bytes = 1_439_697
+wasm_movement_bytes = -1_607
+wasm_movement_percent = -0.1115
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_bytes = 1_085_687
+current_native_bytes = 1_082_351
+native_movement_bytes = -3_336
+native_movement_percent = -0.3073
+parent_wasm_bytes = 680_458
+current_wasm_bytes = 679_625
+wasm_movement_bytes = -833
+wasm_movement_percent = -0.1224
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_bytes = 1_086_635
+current_native_bytes = 1_083_315
+native_movement_bytes = -3_320
+native_movement_percent = -0.3055
+parent_wasm_bytes = 680_869
+current_wasm_bytes = 680_032
+wasm_movement_bytes = -837
+wasm_movement_percent = -0.1229
+
+[profile]
+path = "/tmp/hypermesh-retained-crossing-shared-point-fp.data"
+samples = 2_251
+lost_samples = 0
+build_surface_inclusive_percent = 85.67
+pairwise_intersection_inclusive_percent = 44.50
+bvh_self_pairs_inclusive_percent = 44.11
+append_pair_inclusive_percent = 40.15
+polygon_intersection_inclusive_percent = 37.93
+corefine_inclusive_percent = 35.24
+edge_plane_crossings_inclusive_percent = 28.54
+signed_product_sum_ordering_fallback_inclusive_percent = 11.37
+constrained_triangulation_inclusive_percent = 17.15
+line_intersection_construction_inclusive_percent = 3.92
+point_on_segment_inclusive_percent = 4.65
+
+[callgraph]
+path = "/tmp/hypermesh-retained-crossing-shared-point-callgraph-2026-08-03"
+function_nodes = 14_672
+edges = 24_403
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+hypercurve_excluded = true
+hypersolve_excluded = true
+
+[validation]
+hypermesh_executed_tests = 163
+hypermesh_ignored_tests = 6
+hyperlimit_unit_tests = 152
+no_default_checks_pass = true
+all_feature_tests_pass = true
+clippy_warning_denied_pass = true
+rustdoc_warning_denied_pass = true
+fuzz_target_checks_pass = true
+size_harness_pass = true
+dispatch_trace_unknown_fact_events = 0
+dispatch_trace_fallback_or_abort_events = 0
+hyperpath_direct_source_migration_committed = true
+hyperpath_full_build_pass = false
+hyperpath_blocker_is_out_of_scope_concurrent_hypersolve = true
+
