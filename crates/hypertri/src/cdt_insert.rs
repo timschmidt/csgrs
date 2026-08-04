@@ -26,10 +26,10 @@ pub(crate) struct PlanarConstraints {
     pub(crate) constraints: Vec<Constraint>,
 }
 
-#[derive(Clone, Copy)]
-enum UnconstrainedEdgePolicy {
-    Delaunay,
-    Lexicographic,
+struct RecoveredConstraints {
+    triangles: Vec<Triangle>,
+    constrained_edges: Vec<EdgeKey>,
+    approximate_points: Option<Vec<[f64; 2]>>,
 }
 
 /// Insert all constraints into an existing triangulation.
@@ -44,13 +44,19 @@ pub(crate) fn insert_constraints(
     triangles: Vec<Triangle>,
     constraints: &[Constraint],
 ) -> Result<Vec<Triangle>> {
-    insert_constraints_inner(
+    let RecoveredConstraints {
+        mut triangles,
+        constrained_edges,
+        approximate_points,
+    } = recover_constraints(kernel, points, triangles, constraints)?;
+    legalize_unconstrained_edges(
         kernel,
         points,
-        triangles,
-        constraints,
-        UnconstrainedEdgePolicy::Delaunay,
-    )
+        &mut triangles,
+        &constrained_edges,
+        approximate_points.as_deref(),
+    )?;
+    Ok(triangles)
 }
 
 /// Insert every constraint without imposing a triangle-quality policy on the
@@ -65,22 +71,27 @@ pub(crate) fn insert_constraints_topology(
     triangles: Vec<Triangle>,
     constraints: &[Constraint],
 ) -> Result<Vec<Triangle>> {
-    insert_constraints_inner(
+    let RecoveredConstraints {
+        mut triangles,
+        constrained_edges,
+        approximate_points,
+    } = recover_constraints(kernel, points, triangles, constraints)?;
+    canonicalize_unconstrained_edges(
         kernel,
         points,
-        triangles,
-        constraints,
-        UnconstrainedEdgePolicy::Lexicographic,
-    )
+        &mut triangles,
+        &constrained_edges,
+        approximate_points.as_deref(),
+    )?;
+    Ok(triangles)
 }
 
-fn insert_constraints_inner(
+fn recover_constraints(
     kernel: &ExactKernel,
     points: &[Point2],
     mut triangles: Vec<Triangle>,
     constraints: &[Constraint],
-    edge_policy: UnconstrainedEdgePolicy,
-) -> Result<Vec<Triangle>> {
+) -> Result<RecoveredConstraints> {
     // Structural-dispatch note: constraint recovery processes the planarized
     // subsegments in caller-derived order. The retained PSLG facts already
     // keep intersection vertices and split subsegments explicit; richer
@@ -108,23 +119,11 @@ fn insert_constraints_inner(
         push_unique_edge(&mut constrained_edges, edge);
     }
 
-    match edge_policy {
-        UnconstrainedEdgePolicy::Delaunay => legalize_unconstrained_edges(
-            kernel,
-            points,
-            &mut triangles,
-            &constrained_edges,
-            approximate_points.as_deref(),
-        )?,
-        UnconstrainedEdgePolicy::Lexicographic => canonicalize_unconstrained_edges(
-            kernel,
-            points,
-            &mut triangles,
-            &constrained_edges,
-            approximate_points.as_deref(),
-        )?,
-    }
-    Ok(triangles)
+    Ok(RecoveredConstraints {
+        triangles,
+        constrained_edges,
+        approximate_points,
+    })
 }
 
 /// Planarize caller constraints into exact PSLG subsegments.
