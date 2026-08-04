@@ -1175,13 +1175,11 @@ impl Neg for Rational {
     }
 }
 
-impl<T: AsRef<Rational>> Sub<T> for &Rational {
-    type Output = Rational;
-
-    fn sub(self, other: T) -> Self::Output {
+impl Rational {
+    #[inline(never)]
+    fn subtract_ref(&self, other: &Self) -> Self {
         use std::cmp::Ordering::*;
 
-        let other = other.as_ref();
         if other.sign == NoSign {
             return self.clone();
         }
@@ -1218,7 +1216,7 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             (x, y) => match a.cmp(&b) {
                 Greater => (x, a - b),
                 Equal => {
-                    let result = Self::Output::zero();
+                    let result = Self::zero();
                     self.retain_difference_pair(other, &result);
                     return result;
                 }
@@ -1226,10 +1224,18 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             },
         };
         trace_rational_temporary!();
-        let result = Self::Output::from_parts_raw(sign, numerator, denominator)
+        let result = Self::from_parts_raw(sign, numerator, denominator)
             .reduce_with_possible_divisor(&common_denominator);
         self.retain_difference_pair(other, &result);
         result
+    }
+}
+
+impl<T: AsRef<Rational>> Sub<T> for &Rational {
+    type Output = Rational;
+
+    fn sub(self, other: T) -> Self::Output {
+        self.subtract_ref(other.as_ref())
     }
 }
 
