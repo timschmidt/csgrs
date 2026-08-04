@@ -50,8 +50,9 @@ use crate::{
     BezierParameterRange2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveError, CurveFamily2,
-    CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
+    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveCornerMode2,
+    CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
     CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
     ExactCurveResult, FillRule, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
     QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
@@ -4727,6 +4728,126 @@ impl CurveRegion2 {
         })
     }
 
+    /// Solves a boundary-loop chamfer from two exact chord setbacks.
+    ///
+    /// The retained loop is lowered losslessly to the shared [`CurvePath2`]
+    /// corner solver, and every exact candidate is rebuilt with this region's
+    /// material/hole and fill semantics. Certified line-image vertices are the
+    /// current exact fast path; nonmaterializable and higher-order pairs remain
+    /// explicit blockers rather than falling through to historical contour
+    /// machinery.
+    pub fn chamfer_loop_vertex_by_setbacks(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.chamfer_loop_vertex_by_setbacks_raw(
+                loop_index,
+                vertex_index,
+                previous_setback,
+                next_setback,
+                mode,
+                attempt,
+            )
+        })
+    }
+
+    fn chamfer_loop_vertex_by_setbacks_raw(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let paths =
+            match self.materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)? {
+                Classification::Decided(paths) => paths,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Chamfer,
+                        CurveFamily2::Line,
+                        reason,
+                    ));
+                }
+            };
+        let path = paths.get(loop_index).ok_or_else(|| {
+            curve_region_edit_error(CurveOperation2::Chamfer, CurveError::InvalidCurveRange)
+        })?;
+        let solutions = path.chamfer_vertex_by_setbacks_raw(
+            vertex_index,
+            previous_setback,
+            next_setback,
+            mode,
+            policy,
+        )?;
+        self.rebuild_corner_path_solutions(
+            &paths,
+            loop_index,
+            solutions,
+            CurveOperation2::Chamfer,
+            policy,
+        )
+    }
+
+    /// Solves a boundary-loop circular fillet from an exact radius.
+    ///
+    /// Exact candidates come from the same [`CurvePath2`] solver used by open
+    /// path editing and are rebuilt without changing loop role or fill rule.
+    /// Trim-only line/line vertices have a unique oriented candidate;
+    /// trim-or-extend requests preserve all exact candidates for caller
+    /// selection.
+    pub fn fillet_loop_vertex_by_radius(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        radius: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.fillet_loop_vertex_by_radius_raw(loop_index, vertex_index, radius, mode, attempt)
+        })
+    }
+
+    fn fillet_loop_vertex_by_radius_raw(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        radius: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let paths =
+            match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)? {
+                Classification::Decided(paths) => paths,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::Line,
+                        reason,
+                    ));
+                }
+            };
+        let path = paths.get(loop_index).ok_or_else(|| {
+            curve_region_edit_error(CurveOperation2::Fillet, CurveError::InvalidCurveRange)
+        })?;
+        let solutions = path.fillet_vertex_by_radius_raw(vertex_index, radius, mode, policy)?;
+        self.rebuild_corner_path_solutions(
+            &paths,
+            loop_index,
+            solutions,
+            CurveOperation2::Fillet,
+            policy,
+        )
+    }
+
     /// Chamfers one boundary-loop vertex without leaving the unified carrier.
     ///
     /// `loop_index` addresses this region's retained boundary order. The edited
@@ -4944,6 +5065,38 @@ impl CurveRegion2 {
             paths.push(path);
         }
         Ok(Classification::Decided(paths))
+    }
+
+    fn rebuild_corner_path_solutions(
+        &self,
+        paths: &[CurvePath2],
+        loop_index: usize,
+        solutions: CurveCornerSolutions2<CurvePath2>,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let rebuild = |path: CurvePath2| -> ExactCurveResult<Self> {
+            let family = path.curves()[0].family();
+            let mut edited_paths = paths.to_vec();
+            edited_paths[loop_index] = path;
+            match self.rebuild_after_materialized_path_edit(edited_paths, operation, policy)? {
+                Classification::Decided(region) => Ok(region),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            }
+        };
+        match solutions {
+            CurveCornerSolutions2::NoSolution(reason) => {
+                Ok(CurveCornerSolutions2::NoSolution(reason))
+            }
+            CurveCornerSolutions2::Unique(path) => rebuild(path).map(CurveCornerSolutions2::Unique),
+            CurveCornerSolutions2::Multiple(paths) => paths
+                .into_iter()
+                .map(rebuild)
+                .collect::<ExactCurveResult<Vec<_>>>()
+                .map(CurveCornerSolutions2::Multiple),
+        }
     }
 
     /// Materializes every retained boundary loop as an exact top-level path.

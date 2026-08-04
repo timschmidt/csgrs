@@ -189,9 +189,9 @@ pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
-    Curve2, CurveDerivative2, CurveFamily2, CurveGeometry2, CurveParameterDomain2,
-    CurveParameterSide2, CurvePath2, CurvePathView2, CurveSpanRange2, CurveView2,
-    NativeBezierBoundaryLoop2, NativeBezierFragment2,
+    Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
+    CurveFamily2, CurveGeometry2, CurveParameterDomain2, CurveParameterSide2, CurvePath2,
+    CurvePathView2, CurveSpanRange2, CurveView2, NativeBezierBoundaryLoop2, NativeBezierFragment2,
 };
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,

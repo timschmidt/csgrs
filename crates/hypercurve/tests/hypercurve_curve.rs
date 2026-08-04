@@ -1,10 +1,11 @@
 use hypercurve::{
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurveFamily2,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
+    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 #[cfg(feature = "predicates")]
-use hypercurve::{ContourPointLocation, CurveCertainty, UncertaintyReason};
+use hypercurve::{ContourPointLocation, CurveCertainty};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -100,6 +101,14 @@ fn every_family_closed_path() -> CurvePath2 {
         Curve2::from(LineSeg2::try_new(p(0, -3), p(0, 0)).unwrap()),
     ]);
     CurvePath2::try_new(curves).unwrap()
+}
+
+fn right_angle_line_path(length: i32) -> CurvePath2 {
+    CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-length, 0), p(0, 0)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(0, length)).unwrap()),
+    ])
+    .unwrap()
 }
 
 #[test]
@@ -798,6 +807,208 @@ fn mixed_curve_path_corner_edits_reject_invalid_parameters_and_tangency() {
     ));
 }
 
+#[test]
+fn line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer() {
+    let path = right_angle_line_path(4);
+    let chamfer = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            r(1),
+            r(1),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+    let CurveCornerSolutions2::Unique(chamfer) = chamfer.into_value() else {
+        panic!("equal line setbacks must have one trimmed solution");
+    };
+    assert_eq!(chamfer.curves().len(), 3);
+    assert_eq!(chamfer.curves()[0].end(), &p(-1, 0));
+    assert_eq!(chamfer.curves()[1].start(), &p(-1, 0));
+    assert_eq!(chamfer.curves()[1].end(), &p(0, 1));
+    assert_eq!(chamfer.curves()[2].start(), &p(0, 1));
+
+    let fillet = path
+        .fillet_vertex_by_radius(1, r(1), CurveCornerMode2::TrimOnly, &CurveContext::STRICT)
+        .unwrap();
+    let CurveCornerSolutions2::Unique(fillet) = fillet.into_value() else {
+        panic!("a convex right-angle line corner must have one trimmed fillet");
+    };
+    assert_eq!(fillet.curves().len(), 3);
+    assert_eq!(fillet.curves()[0].end(), &p(-1, 0));
+    let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+        panic!("the solved fillet must be an exact circular carrier");
+    };
+    assert_eq!(arc.start(), &p(-1, 0));
+    assert_eq!(arc.end(), &p(0, 1));
+    assert_eq!(arc.center(), &p(-1, 1));
+    assert_eq!(arc.radius_squared(), r(1));
+    assert!(!arc.is_clockwise());
+}
+
+#[test]
+fn line_corner_solvers_enumerate_extensions_deterministically() {
+    let path = right_angle_line_path(4);
+    let CurveCornerSolutions2::Multiple(chamfers) = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            r(1),
+            r(1),
+            CurveCornerMode2::TrimOrExtend,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("trim-or-extend setbacks must expose all four line-support choices");
+    };
+    assert_eq!(chamfers.len(), 4);
+    assert_eq!(chamfers[0].curves()[0].end(), &p(-1, 0));
+    assert_eq!(chamfers[0].curves()[2].start(), &p(0, 1));
+    assert_eq!(chamfers[1].curves()[0].end(), &p(-1, 0));
+    assert_eq!(chamfers[1].curves()[2].start(), &p(0, -1));
+    assert_eq!(chamfers[2].curves()[0].end(), &p(1, 0));
+    assert_eq!(chamfers[2].curves()[2].start(), &p(0, 1));
+    assert_eq!(chamfers[3].curves()[0].end(), &p(1, 0));
+    assert_eq!(chamfers[3].curves()[2].start(), &p(0, -1));
+
+    let CurveCornerSolutions2::Multiple(fillets) = path
+        .fillet_vertex_by_radius(
+            1,
+            r(1),
+            CurveCornerMode2::TrimOrExtend,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("trim-or-extend must expose both oriented line fillets");
+    };
+    assert_eq!(fillets.len(), 2);
+    let centers_and_orientations = fillets
+        .iter()
+        .map(|fillet| {
+            let CurveGeometry2::CircularArc(arc) = fillet.curves()[1].geometry() else {
+                panic!("every line fillet candidate must contain one circular arc");
+            };
+            (arc.center().clone(), arc.is_clockwise())
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        centers_and_orientations,
+        vec![(p(-1, 1), false), (p(1, -1), true)]
+    );
+}
+
+#[test]
+fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
+    let path = right_angle_line_path(4);
+    assert_eq!(
+        path.fillet_vertex_by_radius(1, r(5), CurveCornerMode2::TrimOnly, &CurveContext::STRICT,)
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+    );
+    assert_eq!(
+        path.chamfer_vertex_by_setbacks(
+            1,
+            Real::zero(),
+            Real::zero(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            -Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Invalid {
+            operation: CurveOperation2::Fillet,
+            cause: CurveError::InvalidCornerOptions,
+            ..
+        })
+    ));
+
+    let tangent_path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+    ])
+    .unwrap();
+    assert_eq!(
+        tangent_path
+            .fillet_vertex_by_radius(
+                1,
+                Real::one(),
+                CurveCornerMode2::TrimOrExtend,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ParallelTangents)
+    );
+}
+
+#[test]
+fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-4, 0), p(-2, 0), p(0, 0))),
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
+    ])
+    .unwrap();
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Fillet
+                && blocker.family() == CurveFamily2::QuadraticBezier
+                && blocker.reason() == UncertaintyReason::Unsupported
+    ));
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
+    let path = right_angle_line_path(4);
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            undecidable_zero.clone(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Fillet
+                && blocker.reason() == UncertaintyReason::RealSign
+    ));
+    let approximate = path
+        .fillet_vertex_by_radius(
+            1,
+            undecidable_zero,
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        approximate.value,
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+}
+
 proptest! {
     #[test]
     fn exact_line_corner_edits_hold_for_rational_trim_parameters(
@@ -830,6 +1041,20 @@ proptest! {
             .into_value();
         prop_assert_eq!(chamfered.curves()[0].end(), &p(-radius, 0));
         prop_assert_eq!(chamfered.curves()[1].end(), &p(0, radius));
+        let CurveCornerSolutions2::Unique(solved_chamfer) = path
+            .chamfer_vertex_by_setbacks(
+                1,
+                r(radius),
+                r(radius),
+                CurveCornerMode2::TrimOnly,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            return Err(TestCaseError::fail("line setbacks must solve uniquely"));
+        };
+        prop_assert_eq!(&solved_chamfer, &chamfered);
 
         let filleted = path
             .fillet_vertex_by_parameters(
@@ -846,5 +1071,18 @@ proptest! {
         prop_assert_eq!(filleted.curves()[1].family(), CurveFamily2::CircularArc);
         prop_assert_eq!(filleted.curves()[1].end(), &p(0, radius));
         prop_assert_eq!(filleted.curves()[2].start(), &p(0, radius));
+        let CurveCornerSolutions2::Unique(solved_fillet) = path
+            .fillet_vertex_by_radius(
+                1,
+                r(radius),
+                CurveCornerMode2::TrimOnly,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            return Err(TestCaseError::fail("line radius must solve uniquely"));
+        };
+        prop_assert_eq!(solved_fillet, filleted);
     }
 }

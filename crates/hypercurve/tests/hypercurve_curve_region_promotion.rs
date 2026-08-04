@@ -1,9 +1,9 @@
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions,
-    LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
-    RegionPointLocation, Segment2, Similarity2,
+    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
+    CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError,
+    FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -548,6 +548,68 @@ fn unified_region_offset_corner_styles_have_exact_area_and_miter_fallback() {
         certified(round.classify_point(&p(-1, -1), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
+}
+
+#[test]
+fn unified_region_reuses_design_parameter_corner_solvers() {
+    let policy = CurveContext::STRICT;
+    let source = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy)
+        .unwrap()
+        .into_value();
+
+    let CurveCornerSolutions2::Unique(chamfer) = source
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            Real::one(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("a square vertex must have one trim-only chamfer");
+    };
+    assert_eq!(
+        decided(chamfer.loop_roles(&policy).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let chamfer_paths = decided(chamfer.materialized_boundary_paths(&policy).unwrap());
+    assert_eq!(chamfer_paths[0].curves().len(), 5);
+    assert_eq!(chamfer_paths[0].curves()[0].end(), &p(3, 0));
+    assert_eq!(chamfer_paths[0].curves()[1].end(), &p(4, 1));
+
+    let CurveCornerSolutions2::Unique(fillet) = source
+        .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+        .unwrap()
+        .into_value()
+    else {
+        panic!("a square vertex must have one trim-only fillet");
+    };
+    assert_eq!(
+        decided(fillet.loop_roles(&policy).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let fillet_native = decided(fillet.native_contours_fast_path(&policy).unwrap());
+    assert_eq!(fillet_native.material_contours()[0].segments().len(), 5);
+    let Segment2::Arc(arc) = &fillet_native.material_contours()[0].segments()[1] else {
+        panic!("the region fillet must recover its exact circular carrier");
+    };
+    assert_eq!(arc.start(), &p(3, 0));
+    assert_eq!(arc.end(), &p(4, 1));
+    assert_eq!(arc.center(), &p(3, 1));
+    assert_eq!(arc.radius_squared(), Real::one());
+    assert!(!arc.is_clockwise());
+
+    let CurveCornerSolutions2::Multiple(extended) = source
+        .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOrExtend, &policy)
+        .unwrap()
+        .into_value()
+    else {
+        panic!("the region must preserve both exact trim-or-extend candidates");
+    };
+    assert_eq!(extended.len(), 2);
 }
 
 #[test]

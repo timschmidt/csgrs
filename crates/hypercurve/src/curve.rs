@@ -65,6 +65,63 @@ pub enum CurveParameterSide2 {
     Right,
 }
 
+/// Whether a solved corner edit may extend incident carriers past the corner.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum CurveCornerMode2 {
+    /// Keep both solved contacts strictly inside their incident curve domains.
+    #[default]
+    TrimOnly,
+    /// Also retain exact solutions reached by extending either carrier past the corner.
+    TrimOrExtend,
+}
+
+/// Exact reason that a supported corner solver produced no candidate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveCornerNoSolution2 {
+    /// The radius or both chamfer setbacks are exactly zero.
+    ZeroDesignValue,
+    /// The incident tangents are parallel or coincident, so no finite fillet center exists.
+    ParallelTangents,
+    /// Every exact candidate lies outside the permitted trim domains.
+    OutsideTrimDomain,
+    /// Every candidate collapses the inserted corner carrier.
+    DegenerateCandidate,
+}
+
+/// Complete exact solutions for one corner-edit request.
+///
+/// Candidate order is deterministic. Fillets order the left-side center before
+/// the right-side center. Chamfers order trim/trim, trim/extension,
+/// extension/trim, then extension/extension whenever those candidates exist.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CurveCornerSolutions2<T> {
+    /// The supported exact system has no admissible solution.
+    NoSolution(CurveCornerNoSolution2),
+    /// Exactly one admissible solution exists.
+    Unique(T),
+    /// More than one exact solution exists and the caller must select one.
+    Multiple(Vec<T>),
+}
+
+impl<T> CurveCornerSolutions2<T> {
+    /// Returns the number of exact candidates.
+    pub fn candidate_count(&self) -> usize {
+        match self {
+            Self::NoSolution(_) => 0,
+            Self::Unique(_) => 1,
+            Self::Multiple(candidates) => candidates.len(),
+        }
+    }
+
+    /// Returns the no-solution reason, when no candidate exists.
+    pub const fn no_solution_reason(&self) -> Option<CurveCornerNoSolution2> {
+        match self {
+            Self::NoSolution(reason) => Some(*reason),
+            Self::Unique(_) | Self::Multiple(_) => None,
+        }
+    }
+}
+
 impl CurveDerivative2 {
     /// Constructs an exact derivative vector.
     pub fn new(dx: Real, dy: Real) -> Self {
@@ -1722,6 +1779,375 @@ impl CurvePath2 {
         ))
     }
 
+    /// Solves and applies an exact chord-setback chamfer at one path vertex.
+    ///
+    /// Each nonnegative setback is the Euclidean chord distance from the
+    /// original corner along its incident curve image. The current exact fast
+    /// path handles certified line-image pairs, including retained
+    /// degree-elevated lines; all other pairs remain an explicit `Unsupported`
+    /// blocker until the shared algebraic point-distance solver supplies their
+    /// parameters. [`CurveCornerMode2::TrimOrExtend`] returns every exact
+    /// line-support candidate in deterministic order.
+    pub fn chamfer_vertex_by_setbacks(
+        &self,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.chamfer_vertex_by_setbacks_raw(
+                vertex_index,
+                previous_setback,
+                next_setback,
+                mode,
+                attempt,
+            )
+        })
+    }
+
+    pub(crate) fn chamfer_vertex_by_setbacks_raw(
+        &self,
+        vertex_index: usize,
+        previous_setback: Real,
+        next_setback: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let (previous_index, next_index) =
+            self.corner_curve_indices(vertex_index, CurveOperation2::Chamfer, policy)?;
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        let previous_sign = validate_corner_design_value(
+            &previous_setback,
+            CurveOperation2::Chamfer,
+            previous.family(),
+            policy,
+        )?;
+        let next_sign = validate_corner_design_value(
+            &next_setback,
+            CurveOperation2::Chamfer,
+            next.family(),
+            policy,
+        )?;
+        if previous_sign == RealSign::Zero && next_sign == RealSign::Zero {
+            return Ok(CurveCornerSolutions2::NoSolution(
+                CurveCornerNoSolution2::ZeroDesignValue,
+            ));
+        }
+        let previous_line = exact_linear_corner_line(previous);
+        let next_line = exact_linear_corner_line(next);
+        let (Some(previous_line), Some(next_line)) = (previous_line, next_line) else {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                if previous_line.is_none() {
+                    previous.family()
+                } else {
+                    next.family()
+                },
+                crate::UncertaintyReason::Unsupported,
+            ));
+        };
+
+        let previous_cuts = line_chamfer_cuts(
+            previous_line,
+            &previous_setback,
+            previous_sign,
+            true,
+            mode,
+            CurveOperation2::Chamfer,
+            previous.family(),
+            policy,
+        )?;
+        let next_cuts = line_chamfer_cuts(
+            next_line,
+            &next_setback,
+            next_sign,
+            false,
+            mode,
+            CurveOperation2::Chamfer,
+            next.family(),
+            policy,
+        )?;
+        let mut candidates = Vec::with_capacity(previous_cuts.len() * next_cuts.len());
+        for previous_cut in &previous_cuts {
+            for next_cut in &next_cuts {
+                match crate::classify::is_zero(
+                    &previous_cut.point.distance_squared(&next_cut.point),
+                    policy,
+                ) {
+                    Some(true) => continue,
+                    Some(false) => {}
+                    None => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Chamfer,
+                            previous.family(),
+                            crate::UncertaintyReason::RealSign,
+                        ));
+                    }
+                }
+                let previous_trim = materialize_line_corner_cut(
+                    previous,
+                    previous_line,
+                    previous_cut,
+                    true,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?;
+                let next_trim = materialize_line_corner_cut(
+                    next,
+                    next_line,
+                    next_cut,
+                    false,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?;
+                let chamfer = Curve2::from(
+                    LineSeg2::try_new(previous_cut.point.clone(), next_cut.point.clone()).map_err(
+                        |cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Chamfer,
+                                previous.family(),
+                                cause,
+                            )
+                        },
+                    )?,
+                );
+                let candidate = self.with_corner_replaced(
+                    vertex_index,
+                    previous_index,
+                    next_index,
+                    previous_trim,
+                    chamfer,
+                    next_trim,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?;
+                candidates.push(candidate);
+            }
+        }
+        Ok(corner_solutions(
+            candidates,
+            if previous_cuts.is_empty() || next_cuts.is_empty() {
+                CurveCornerNoSolution2::OutsideTrimDomain
+            } else {
+                CurveCornerNoSolution2::DegenerateCandidate
+            },
+        ))
+    }
+
+    /// Solves and applies an exact circular fillet of the requested radius.
+    ///
+    /// Fillet centers are intersections of equal signed-radius offsets of the
+    /// two incident carriers. The current exact fast path handles certified
+    /// line-image pairs, including retained degree-elevated lines, and orders
+    /// the left-side center before the right-side center. Higher-order pairs
+    /// remain explicit until they enter the same analytic-parallel intersection
+    /// authority used by region offsets.
+    pub fn fillet_vertex_by_radius(
+        &self,
+        vertex_index: usize,
+        radius: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.fillet_vertex_by_radius_raw(vertex_index, radius, mode, attempt)
+        })
+    }
+
+    pub(crate) fn fillet_vertex_by_radius_raw(
+        &self,
+        vertex_index: usize,
+        radius: Real,
+        mode: CurveCornerMode2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let (previous_index, next_index) =
+            self.corner_curve_indices(vertex_index, CurveOperation2::Fillet, policy)?;
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        match validate_corner_design_value(
+            &radius,
+            CurveOperation2::Fillet,
+            previous.family(),
+            policy,
+        )? {
+            RealSign::Zero => {
+                return Ok(CurveCornerSolutions2::NoSolution(
+                    CurveCornerNoSolution2::ZeroDesignValue,
+                ));
+            }
+            RealSign::Positive => {}
+            RealSign::Negative => unreachable!("negative corner values are rejected"),
+        }
+        let previous_line = exact_linear_corner_line(previous);
+        let next_line = exact_linear_corner_line(next);
+        let (Some(previous_line), Some(next_line)) = (previous_line, next_line) else {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                if previous_line.is_none() {
+                    previous.family()
+                } else {
+                    next.family()
+                },
+                crate::UncertaintyReason::Unsupported,
+            ));
+        };
+        let previous_unit = line_unit_direction(
+            previous_line,
+            CurveOperation2::Fillet,
+            previous.family(),
+            policy,
+        )?;
+        let next_unit =
+            line_unit_direction(next_line, CurveOperation2::Fillet, next.family(), policy)?;
+        let previous_delta = previous_line.delta();
+        let next_delta = next_line.delta();
+        let denominator = &previous_delta.0 * &next_delta.1 - &previous_delta.1 * &next_delta.0;
+        match crate::classify::real_sign(&denominator, policy) {
+            Some(RealSign::Zero) => {
+                return Ok(CurveCornerSolutions2::NoSolution(
+                    CurveCornerNoSolution2::ParallelTangents,
+                ));
+            }
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous.family(),
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        }
+
+        let mut candidates = Vec::with_capacity(2);
+        for (signed_radius, clockwise) in [(radius.clone(), false), (-radius.clone(), true)] {
+            let previous_offset_start = previous_line.start().translated(
+                -&previous_unit.1 * &signed_radius,
+                &previous_unit.0 * &signed_radius,
+            );
+            let next_offset_start = next_line.start().translated(
+                -&next_unit.1 * &signed_radius,
+                &next_unit.0 * &signed_radius,
+            );
+            let between_offsets = next_offset_start.delta_from(&previous_offset_start);
+            let previous_numerator =
+                &between_offsets.0 * &next_delta.1 - &between_offsets.1 * &next_delta.0;
+            let next_numerator =
+                &between_offsets.0 * &previous_delta.1 - &between_offsets.1 * &previous_delta.0;
+            let previous_parameter = (previous_numerator / &denominator).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, previous.family(), cause.into())
+            })?;
+            let next_parameter = (next_numerator / &denominator).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, next.family(), cause.into())
+            })?;
+            let Some(previous_placement) = line_fillet_placement(
+                &previous_parameter,
+                true,
+                mode,
+                CurveOperation2::Fillet,
+                previous.family(),
+                policy,
+            )?
+            else {
+                continue;
+            };
+            let Some(next_placement) = line_fillet_placement(
+                &next_parameter,
+                false,
+                mode,
+                CurveOperation2::Fillet,
+                next.family(),
+                policy,
+            )?
+            else {
+                continue;
+            };
+            let previous_point = previous_line.point_at(previous_parameter.clone());
+            let next_point = next_line.point_at(next_parameter.clone());
+            let center = previous_offset_start.translated(
+                &previous_delta.0 * &previous_parameter,
+                &previous_delta.1 * &previous_parameter,
+            );
+            match crate::classify::is_zero(&previous_point.distance_squared(&next_point), policy) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous.family(),
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+
+            let candidate = if previous_placement == LineCornerPlacement2::Trim
+                && next_placement == LineCornerPlacement2::Trim
+            {
+                self.fillet_vertex_by_parameters_raw(
+                    vertex_index,
+                    previous_parameter,
+                    next_parameter,
+                    &center,
+                    clockwise,
+                    policy,
+                )?
+            } else {
+                let previous_cut = LineCornerCut2 {
+                    parameter: previous_parameter,
+                    point: previous_point.clone(),
+                    placement: previous_placement,
+                };
+                let next_cut = LineCornerCut2 {
+                    parameter: next_parameter,
+                    point: next_point.clone(),
+                    placement: next_placement,
+                };
+                let previous_trim = materialize_line_corner_cut(
+                    previous,
+                    previous_line,
+                    &previous_cut,
+                    true,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?;
+                let next_trim = materialize_line_corner_cut(
+                    next,
+                    next_line,
+                    &next_cut,
+                    false,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?;
+                let fillet = Curve2::from(CircularArc2::new_with_certified_radius(
+                    previous_point,
+                    next_point,
+                    center,
+                    &radius * &radius,
+                    clockwise,
+                    None,
+                ));
+                self.with_corner_replaced(
+                    vertex_index,
+                    previous_index,
+                    next_index,
+                    previous_trim,
+                    fillet,
+                    next_trim,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?
+            };
+            candidates.push(candidate);
+        }
+        Ok(corner_solutions(
+            candidates,
+            CurveCornerNoSolution2::OutsideTrimDomain,
+        ))
+    }
+
     /// Replaces one path vertex with an exact line chamfer.
     ///
     /// `vertex_index` identifies the next curve at the vertex. Interior
@@ -2970,6 +3396,246 @@ fn retained_native_endpoint(
         Some(endpoint.clone())
     } else {
         None
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LineCornerPlacement2 {
+    Trim,
+    Corner,
+    Extension,
+}
+
+#[derive(Clone, Debug)]
+struct LineCornerCut2 {
+    parameter: Real,
+    point: Point2,
+    placement: LineCornerPlacement2,
+}
+
+fn exact_linear_corner_line(curve: &Curve2) -> Option<&LineSeg2> {
+    match curve.geometry() {
+        CurveGeometry2::Line(line) => Some(line),
+        CurveGeometry2::QuadraticBezier(curve) => curve.retained_exact_line_image(),
+        CurveGeometry2::CircularArc(_)
+        | CurveGeometry2::CubicBezier(_)
+        | CurveGeometry2::RationalQuadraticBezier(_)
+        | CurveGeometry2::RationalBezier(_)
+        | CurveGeometry2::PolynomialBSpline(_)
+        | CurveGeometry2::Nurbs(_) => None,
+    }
+}
+
+fn corner_solutions<T>(
+    mut candidates: Vec<T>,
+    empty_reason: CurveCornerNoSolution2,
+) -> CurveCornerSolutions2<T> {
+    match candidates.len() {
+        0 => CurveCornerSolutions2::NoSolution(empty_reason),
+        1 => CurveCornerSolutions2::Unique(
+            candidates
+                .pop()
+                .expect("one corner candidate remains in the solution inventory"),
+        ),
+        _ => CurveCornerSolutions2::Multiple(candidates),
+    }
+}
+
+fn validate_corner_design_value(
+    value: &Real,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<RealSign> {
+    match crate::classify::real_sign(value, policy) {
+        Some(sign @ (RealSign::Zero | RealSign::Positive)) => Ok(sign),
+        Some(RealSign::Negative) => Err(ExactCurveError::invalid(
+            operation,
+            family,
+            CurveError::InvalidCornerOptions,
+        )),
+        None => Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::RealSign,
+        )),
+    }
+}
+
+fn line_unit_direction(
+    line: &LineSeg2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<(Real, Real, Real)> {
+    let (dx, dy) = line.delta();
+    let length_squared = &dx * &dx + &dy * &dy;
+    match crate::classify::real_sign(&length_squared, policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Zero | RealSign::Negative) => {
+            return Err(ExactCurveError::invalid(
+                operation,
+                family,
+                CurveError::ZeroLengthLine,
+            ));
+        }
+        None => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                family,
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+    let length = length_squared
+        .sqrt()
+        .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
+    let unit_x = (&dx / &length)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
+    let unit_y = (&dy / &length)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, CurveError::from(cause)))?;
+    Ok((unit_x, unit_y, length))
+}
+
+fn compare_corner_parameter(
+    left: &Real,
+    right: &Real,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<std::cmp::Ordering> {
+    crate::classify::compare_reals(left, right, policy).ok_or_else(|| {
+        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Ordering)
+    })
+}
+
+fn line_fillet_placement(
+    parameter: &Real,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<LineCornerPlacement2>> {
+    let zero_order = compare_corner_parameter(parameter, &Real::zero(), operation, family, policy)?;
+    let one_order = compare_corner_parameter(parameter, &Real::one(), operation, family, policy)?;
+    if zero_order == std::cmp::Ordering::Greater && one_order == std::cmp::Ordering::Less {
+        return Ok(Some(LineCornerPlacement2::Trim));
+    }
+    if mode == CurveCornerMode2::TrimOrExtend
+        && ((previous && one_order == std::cmp::Ordering::Greater)
+            || (!previous && zero_order == std::cmp::Ordering::Less))
+    {
+        return Ok(Some(LineCornerPlacement2::Extension));
+    }
+    Ok(None)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn line_chamfer_cuts(
+    line: &LineSeg2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<LineCornerCut2>> {
+    if setback_sign == RealSign::Zero {
+        return Ok(vec![LineCornerCut2 {
+            parameter: if previous { Real::one() } else { Real::zero() },
+            point: if previous {
+                line.end().clone()
+            } else {
+                line.start().clone()
+            },
+            placement: LineCornerPlacement2::Corner,
+        }]);
+    }
+    let (_, _, length) = line_unit_direction(line, operation, family, policy)?;
+    let ratio = (setback / &length)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
+    let interior_parameter = if previous {
+        Real::one() - &ratio
+    } else {
+        ratio.clone()
+    };
+    let mut cuts = Vec::with_capacity(if mode == CurveCornerMode2::TrimOnly {
+        1
+    } else {
+        2
+    });
+    let interior_after_zero = compare_corner_parameter(
+        &interior_parameter,
+        &Real::zero(),
+        operation,
+        family,
+        policy,
+    )?;
+    let interior_before_one =
+        compare_corner_parameter(&interior_parameter, &Real::one(), operation, family, policy)?;
+    if interior_after_zero == std::cmp::Ordering::Greater
+        && interior_before_one == std::cmp::Ordering::Less
+    {
+        cuts.push(LineCornerCut2 {
+            point: line.point_at(interior_parameter.clone()),
+            parameter: interior_parameter,
+            placement: LineCornerPlacement2::Trim,
+        });
+    }
+    if mode == CurveCornerMode2::TrimOrExtend {
+        let extension_parameter = if previous {
+            Real::one() + ratio
+        } else {
+            -ratio
+        };
+        cuts.push(LineCornerCut2 {
+            point: line.point_at(extension_parameter.clone()),
+            parameter: extension_parameter,
+            placement: LineCornerPlacement2::Extension,
+        });
+    }
+    Ok(cuts)
+}
+
+fn materialize_line_corner_cut(
+    curve: &Curve2,
+    line: &LineSeg2,
+    cut: &LineCornerCut2,
+    previous: bool,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Curve2> {
+    match cut.placement {
+        LineCornerPlacement2::Trim => {
+            let domain = curve.parameter_domain();
+            let (start, end) = if previous {
+                (domain.start().clone(), cut.parameter.clone())
+            } else {
+                (cut.parameter.clone(), domain.end().clone())
+            };
+            curve
+                .subcurve_with_policy(start, end, policy)
+                .map_err(|error| remap_operation(error, operation))
+        }
+        LineCornerPlacement2::Corner => Ok(curve.clone()),
+        LineCornerPlacement2::Extension => {
+            let extended = if previous {
+                LineSeg2::try_new(line.start().clone(), cut.point.clone())
+            } else {
+                LineSeg2::try_new(cut.point.clone(), line.end().clone())
+            }
+            .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?;
+            Ok(match curve.geometry() {
+                CurveGeometry2::QuadraticBezier(source)
+                    if source.retained_exact_line_image().is_some() =>
+                {
+                    Curve2::from(QuadraticBezier2::from_line_segment(extended))
+                }
+                _ => Curve2::from(extended),
+            })
+        }
     }
 }
 
