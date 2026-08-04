@@ -22250,29 +22250,12 @@ fn bivariate_multiply(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
 ) -> BivariatePolynomial {
-    bivariate_multiply_bounded(first, second, usize::MAX)
-        .expect("nonempty bivariate multiplication dimensions must fit")
-}
-
-fn bivariate_multiply_bounded(
-    first: &BivariatePolynomial,
-    second: &BivariatePolynomial,
-    max_controls: usize,
-) -> Option<BivariatePolynomial> {
     let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
     let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
-    let first_count = first
-        .coefficients
-        .len()
-        .checked_add(second.coefficients.len())?
-        .checked_sub(1)?;
-    let second_count = first_second_count
-        .checked_add(second_second_count)?
-        .checked_sub(1)?;
-    if first_count.checked_mul(second_count)? > max_controls {
-        return None;
-    }
-    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    let mut coefficients = vec![
+        vec![Real::zero(); first_second_count + second_second_count - 1];
+        first.coefficients.len() + second.coefficients.len() - 1
+    ];
     for (first_power, first_row) in first.coefficients.iter().enumerate() {
         for (second_power, second_row) in second.coefficients.iter().enumerate() {
             for (first_column, first_coefficient) in first_row.iter().enumerate() {
@@ -22283,7 +22266,27 @@ fn bivariate_multiply_bounded(
             }
         }
     }
-    Some(BivariatePolynomial::new(coefficients))
+    BivariatePolynomial::new(coefficients)
+}
+
+#[cfg(feature = "predicates")]
+fn bivariate_multiply_bounded(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    max_controls: usize,
+) -> Option<BivariatePolynomial> {
+    let first_count = first
+        .coefficients
+        .len()
+        .checked_add(second.coefficients.len())?
+        .checked_sub(1)?;
+    let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let second_count = first_second_count
+        .checked_add(second_second_count)?
+        .checked_sub(1)?;
+    (first_count.checked_mul(second_count)? <= max_controls)
+        .then(|| bivariate_multiply(first, second))
 }
 
 fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> BivariatePolynomial {
