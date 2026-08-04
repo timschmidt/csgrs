@@ -102,12 +102,10 @@ pub fn exact_mesh_pair(case: Case) -> ExactMeshPair {
 }
 
 pub fn wide_rational_shift(name: &str) -> Option<u32> {
-    match name {
-        "wide_rational_boxes_64" => Some(64),
-        "wide_rational_boxes_512" => Some(512),
-        "wide_rational_boxes_2048" => Some(2048),
-        _ => None,
-    }
+    name.strip_prefix("wide_rational_boxes_")?
+        .parse::<u32>()
+        .ok()
+        .filter(|shift| *shift != 0)
 }
 
 impl Case {
