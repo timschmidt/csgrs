@@ -224,6 +224,65 @@ pub fn proper_segment_intersection_point_with_policy(
         }
     };
 
+    if [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y, &d.x, &d.y]
+        .into_iter()
+        .all(Real::is_exact_dyadic_rational)
+    {
+        let first_start = [&a.x, &a.y];
+        let first_end = [&b.x, &b.y];
+        let second_start = [&c.x, &c.y];
+        let second_end = [&d.x, &d.y];
+        if let Some((_, [x, y])) = Real::exact_rational_line_intersection2_point_known_dyadic(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+        ) {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "proper-segment-intersection-point",
+                "exact-dyadic-stack"
+            );
+            return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+        }
+        if let Some((_, [x, y])) = Real::exact_rational_line_intersection2_point_known_dyadic_wide(
+            first_start,
+            first_end,
+            second_start,
+            second_end,
+        ) {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "proper-segment-intersection-point",
+                "exact-dyadic-wide"
+            );
+            return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+        }
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "proper-segment-intersection-point",
+            "exact-dyadic-declined"
+        );
+    }
+    if let Some([x, y]) = Real::exact_rational_line_intersection2_point_known_exact(
+        [&a.x, &a.y],
+        [&b.x, &b.y],
+        [&c.x, &c.y],
+        [&d.x, &d.y],
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "proper-segment-intersection-point",
+            "exact-rational-fused"
+        );
+        return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+    }
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "proper-segment-intersection-point",
+        "general-real"
+    );
+
     let ab_x = sub_ref(&b.x, &a.x);
     let ab_y = sub_ref(&b.y, &a.y);
     let cd_x = sub_ref(&d.x, &c.x);
@@ -1176,6 +1235,35 @@ mod tests {
             .value(),
             Some(None)
         );
+    }
+
+    #[test]
+    fn proper_segment_intersection_point_fuses_nondyadic_exact_rationals() {
+        let rational = |numerator, denominator| {
+            Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+        };
+        let zero = Real::zero();
+        let two_thirds = rational(2, 3);
+        let one_third = rational(1, 3);
+        let a = Point2::new(zero.clone(), zero.clone());
+        let b = Point2::new(two_thirds.clone(), two_thirds.clone());
+        let c = Point2::new(zero.clone(), two_thirds.clone());
+        let d = Point2::new(two_thirds, zero);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            match proper_segment_intersection_point_with_policy(&a, &b, &c, &d, policy) {
+                PredicateOutcome::Decided {
+                    value: Some(point),
+                    certainty,
+                    ..
+                } => {
+                    assert_eq!(point.x, one_third);
+                    assert_eq!(point.y, one_third);
+                    assert_eq!(certainty, Certainty::Exact);
+                }
+                outcome => panic!("expected a certified non-dyadic crossing, got {outcome:?}"),
+            }
+        }
     }
 
     #[test]
