@@ -2002,7 +2002,7 @@ fn irreducible_quadratic_pair_from_resolvent_root(
     ]))
 }
 
-fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
+pub(crate) fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
     const MAX_RATIONAL_ROOT_FACTOR: u64 = 1_000_000_000;
 
     if polynomial.len() < 2 {
