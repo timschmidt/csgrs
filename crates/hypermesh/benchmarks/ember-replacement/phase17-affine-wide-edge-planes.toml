@@ -1,0 +1,361 @@
+[metadata]
+captured = "2026-08-03"
+phase = 17
+checkpoint = "affine-wide-edge-planes"
+status = "retained-open"
+supersedes_checkpoint = "primitive-wide-plane-construction"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+hyperreal = "f59a6ce7206354f33f73f8956e3c1e5261a20893"
+hyperlattice = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit = "e9d58cf4ae46a29d35884a9fb50e91a1be3a526b"
+hypertri = "186a29eb74ade9126f605184d1275a504450b9ec"
+hypermesh = "5f9e45d21ded8a6aad46764f82fb396c6930cc0a"
+parent_hypermesh = "da32f8eb10aaad8f82166e709004f5302c17688c"
+
+[host]
+cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+threads = 1
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[algorithm]
+entry = "hypermesh::polygon::oriented_edge_plane"
+constructor = "hypermesh::geometry::Plane::from_normal_and_point"
+schedule = "wide common exact-dyadic affine numerator content"
+affine_translation_invariant = true
+mesh_fact_cached = true
+mesh_fact_storage = "AtomicU8 in existing TriangleMeshFacts padding"
+concurrent_duplicate_scan_safe = true
+decline_preserves_complete_real_path = true
+wide_denominator_alone_activates = false
+native_word_or_narrow_content_activates = false
+multi_limb_common_numerator_content_activates = true
+positive_projective_scale_only = true
+normal_primitive_before_offset = true
+ordinary_rational_subtraction_used_for_scan = false
+retained_linear_cache_populated_by_scan = false
+general_exact_rational_fallback_unchanged = true
+symbolic_fallback_unchanged = true
+
+[policy]
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+all_measured_certainty = "Certified"
+approximate_512_terminal_consumed = false
+policy_values_exactly_equal = true
+
+[runtime_protocol]
+fixture_triangles_pair = 6144
+operation = "union"
+warm_repetitions_per_aggregate = 5
+independent_aggregates = 3
+reported_statistic = "median of independent aggregate means"
+exact_import_outside_timing = true
+pwn_primed_outside_timing = true
+parent = "primitive-wide-plane-construction"
+cgal_version = "6.0.3"
+cgal_kernel = "Exact_predicates_exact_constructions_kernel"
+cgal_repetitions = 21
+cgal_copy_timing = "outside"
+cgal_exact_off_regenerated = true
+
+[[runtime]]
+scale_component_bits = 65
+parent_strict_ns = 139_687_982
+current_strict_ns = 124_727_294
+strict_movement_percent = -10.7101
+parent_approximate_512_ns = 144_947_905
+current_approximate_512_ns = 125_213_987
+approximate_512_movement_percent = -13.6145
+cgal_median_ns = 22_303_708
+current_strict_to_cgal = 5.5922
+current_approximate_512_to_cgal = 5.6140
+
+[[runtime]]
+scale_component_bits = 513
+parent_strict_ns = 166_881_107
+current_strict_ns = 166_251_319
+strict_movement_percent = -0.3774
+parent_approximate_512_ns = 167_066_240
+current_approximate_512_ns = 163_551_253
+approximate_512_movement_percent = -2.1039
+cgal_median_ns = 29_070_134
+current_strict_to_cgal = 5.7190
+current_approximate_512_to_cgal = 5.6261
+
+[[runtime]]
+scale_component_bits = 2049
+historical_strict_ns = 542_174_352
+parent_strict_ns = 328_751_768
+current_strict_ns = 245_495_131
+strict_movement_percent = -25.3251
+strict_vs_historical_percent = -54.7203
+historical_approximate_512_ns = 540_821_857
+parent_approximate_512_ns = 323_994_333
+current_approximate_512_ns = 245_597_220
+approximate_512_movement_percent = -24.1971
+approximate_512_vs_historical_percent = -54.5881
+cgal_median_ns = 55_261_466
+historical_strict_to_cgal = 9.8111
+parent_strict_to_cgal = 5.9490
+current_strict_to_cgal = 4.4424
+current_approximate_512_to_cgal = 4.4443
+
+[perf_protocol]
+fixture = "wide-rational-2048"
+policy = "STRICT"
+fresh_process_repetitions = 11
+includes_fixture_preparation = true
+includes_exact_import = true
+includes_affine_content_scan = true
+includes_pwn_priming = true
+includes_one_boolean = true
+
+[perf.task_clock_ms]
+parent = 455.39
+current = 370.23
+movement_percent = -18.7005
+
+[perf.cycles]
+parent = 1_829_281_954
+current = 1_506_682_648
+movement_percent = -17.6353
+
+[perf.instructions]
+parent = 5_235_520_029
+current = 4_195_402_389
+movement_percent = -19.8666
+
+[perf.branches]
+parent = 928_942_604
+current = 780_805_097
+movement_percent = -15.9469
+
+[perf.branch_misses]
+parent = 4_322_528
+current = 3_949_145
+movement_percent = -8.6381
+
+[perf.cache_misses]
+parent = 4_263_749
+current = 2_878_577
+movement_percent = -32.4872
+
+[heap_protocol]
+metric = "global_allocator_requested_payload"
+fixture_preparation_excluded = true
+input_drop_measured_separately = true
+output_drop_measured_separately = true
+strict_and_approximate_512_values_equal = true
+strict_and_approximate_512_heap_equal = true
+output_vertices = 2410
+output_triangles = 4816
+output_live_payload_bytes = 520_472
+certainty = "Certified"
+
+[[heap]]
+scale_component_bits = 65
+parent_incremental_peak_bytes = 26_906_378
+current_incremental_peak_bytes = 21_519_562
+peak_movement_percent = -20.0206
+parent_allocation_calls = 1_076_635
+current_allocation_calls = 693_333
+allocation_movement_percent = -35.6019
+parent_reallocation_calls = 2_035
+current_reallocation_calls = 4_903
+reallocation_movement_percent = 140.9337
+parent_added_bytes = 68_227_422
+current_added_bytes = 50_749_998
+added_bytes_movement_percent = -25.6164
+input_fact_growth_bytes = 9_976
+pre_kernel_input_payload_growth_bytes = 120
+
+[[heap]]
+scale_component_bits = 513
+parent_incremental_peak_bytes = 30_816_842
+current_incremental_peak_bytes = 22_399_610
+peak_movement_percent = -27.3137
+parent_allocation_calls = 1_729_010
+current_allocation_calls = 1_833_830
+allocation_movement_percent = 6.0624
+parent_reallocation_calls = 38_201
+current_reallocation_calls = 44_345
+reallocation_movement_percent = 16.0833
+parent_added_bytes = 166_069_902
+current_added_bytes = 136_500_670
+added_bytes_movement_percent = -17.8053
+input_fact_growth_bytes = 12_744
+pre_kernel_input_payload_growth_bytes = 0
+
+[[heap]]
+scale_component_bits = 2049
+parent_incremental_peak_bytes = 55_761_482
+current_incremental_peak_bytes = 31_038_074
+peak_movement_percent = -44.3378
+parent_allocation_calls = 2_387_525
+current_allocation_calls = 2_109_647
+allocation_movement_percent = -11.6387
+parent_reallocation_calls = 477_205
+current_reallocation_calls = 228_217
+reallocation_movement_percent = -52.1763
+parent_added_bytes = 687_328_086
+current_added_bytes = 463_318_390
+added_bytes_movement_percent = -32.5914
+input_fact_growth_bytes = 26_568
+pre_kernel_input_payload_growth_bytes = 0
+
+[ordinary_control]
+fixture = "subdivided_overlapping_boxes_3072_each"
+schedule_activates = false
+paired_aggregate_count = 9
+parent_median_ns = 102_019_161
+current_median_ns = 102_552_759
+wall_movement_percent = 0.5230
+perf_repetitions = 11
+perf_operations_per_process = 5
+parent_instructions = 6_018_600_210
+current_instructions = 6_022_350_821
+instruction_movement_percent = 0.0623
+parent_branches = 1_070_278_900
+current_branches = 1_070_736_284
+branch_movement_percent = 0.0427
+incremental_peak_bytes = 15_807_426
+allocation_calls = 166_410
+reallocation_calls = 788
+added_bytes = 27_359_910
+input_fact_growth_bytes = 13_536
+
+[yeahright_control]
+fixture = "yeahright-full-rotated"
+input_triangles = 23_788
+schedule_activates = false
+output_vertices = 0
+output_triangles = 0
+certainty = "Certified"
+parent_incremental_peak_bytes = 158_258_204
+current_incremental_peak_bytes = 158_258_204
+parent_allocation_calls = 39_175_091
+current_allocation_calls = 39_175_099
+parent_reallocation_calls = 4_027_656
+current_reallocation_calls = 4_027_656
+parent_added_bytes = 2_445_957_688
+current_added_bytes = 2_445_957_944
+perf_repetitions = 3
+parent_task_clock_ms = 3_038.25
+current_task_clock_ms = 3_020.41
+parent_instructions = 34_869_325_304
+current_instructions = 34_870_205_160
+instruction_movement_percent = 0.0025
+parent_branches = 5_865_119_892
+current_branches = 5_865_014_059
+branch_movement_percent = -0.0018
+
+[[rejected_prototype]]
+name = "normalize every mesh containing any wide dyadic coordinate"
+reason = "wide denominators alone did not repay normalization on heterogeneous geometry"
+yeahright_instruction_movement_percent = 1.21
+yeahright_branch_movement_percent = 1.32
+yeahright_allocation_movement_percent = 1.90
+yeahright_added_bytes_movement_percent = 1.03
+removed = true
+
+[[rejected_prototype]]
+name = "affine-content scan through ordinary Rational subtraction"
+reason = "one-shot scheduling probes populated retained linear-result slots and displaced kernel reuse"
+wide_kernel_allocation_movement_percent = 6.0
+wide_kernel_added_bytes_movement_percent = 6.0
+removed = true
+
+[size_protocol]
+harness = "benchmarks/size-harness/measure.sh"
+parent_checkpoint = "primitive-wide-plane-construction"
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_text_bytes = 2_039_878
+current_native_text_bytes = 2_044_326
+native_text_movement_percent = 0.2181
+parent_wasm_opt_oz_bytes = 1_446_618
+current_wasm_opt_oz_bytes = 1_450_878
+wasm_movement_percent = 0.2945
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_text_bytes = 2_043_022
+current_native_text_bytes = 2_047_470
+native_text_movement_percent = 0.2177
+parent_wasm_opt_oz_bytes = 1_448_473
+current_wasm_opt_oz_bytes = 1_452_733
+wasm_movement_percent = 0.2941
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_text_bytes = 1_082_343
+current_native_text_bytes = 1_084_559
+native_text_movement_percent = 0.2047
+parent_wasm_opt_oz_bytes = 677_174
+current_wasm_opt_oz_bytes = 679_339
+wasm_movement_percent = 0.3197
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_text_bytes = 1_083_291
+current_native_text_bytes = 1_085_499
+native_text_movement_percent = 0.2038
+parent_wasm_opt_oz_bytes = 677_790
+current_wasm_opt_oz_bytes = 679_746
+wasm_movement_percent = 0.2886
+
+[source]
+hyperreal_insertions = 95
+hyperreal_deletions = 0
+hypermesh_insertions = 231
+hypermesh_deletions = 18
+net_lines = 308
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 14_672
+edges = 24_391
+path = "/tmp/hypermesh-affine-edge-plane-final-callgraph-2026-08-03"
+hypercurve_included = false
+hypersolve_included = false
+
+[validation]
+hyperreal_unit_tests = 649
+hypermesh_unit_tests = 122
+hypermesh_executed_tests = 162
+hypermesh_competitive_ignored = 6
+all_feature_tests = true
+no_default_check = true
+clippy_deny_warnings = true
+rustdoc_deny_warnings = true
+fuzz_targets_check = true
+benchmarks_compile = true
+gmp_api_audit = true
+size_harness = true
+current_cgal_run = true
+format = true
+diff_check = true
+
+[open]
+phase_17_complete = false
+phase_18_complete = false
+all_cgal_cases_parity = false
+all_heap_cases_parity = false
+linked_size_recovered = false
+corpus_complete = false
