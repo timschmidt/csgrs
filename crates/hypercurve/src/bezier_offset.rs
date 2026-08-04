@@ -9467,8 +9467,38 @@ fn trivariate_bounded_factor_sign_with_budget(
 ) -> CurveResult<Option<RealSign>> {
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1, dimensions.2];
+    // A denser exact quintic leading slice is less likely to lose candidate
+    // factors at the bounded specializations. This is scheduling only: an
+    // undecidable coefficient gives no preference and cannot create a claim.
+    let leading_nonzero_count = |axis: usize| {
+        if counts[axis] != 6 {
+            return 0;
+        }
+        let mut count = 0_usize;
+        for (first, rows) in polynomial.coefficients.iter().enumerate() {
+            for (second, row) in rows.iter().enumerate() {
+                for (third, coefficient) in row.iter().enumerate() {
+                    if [first, second, third][axis] + 1 != counts[axis] {
+                        continue;
+                    }
+                    match real_sign(coefficient, &CurveContext::STRICT) {
+                        Some(RealSign::Zero) => {}
+                        Some(RealSign::Negative | RealSign::Positive) => count += 1,
+                        None => return 0,
+                    }
+                }
+            }
+        }
+        count
+    };
+    let leading_nonzero_counts: [usize; 3] = std::array::from_fn(leading_nonzero_count);
     let mut axes = [0, 1, 2];
-    axes.sort_by_key(|axis| counts[*axis]);
+    axes.sort_by_key(|axis| {
+        (
+            counts[*axis],
+            std::cmp::Reverse(leading_nonzero_counts[*axis]),
+        )
+    });
     for axis in axes {
         let factorizations = match counts[axis] {
             3 => trivariate_quadratic_axis_factorizations(polynomial, axis),
