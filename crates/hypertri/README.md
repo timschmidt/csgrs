@@ -4,9 +4,9 @@
 </h1>
 
 `hypertri` owns exact-aware triangulation for the Hyper geometry stack. It
-provides polygon triangulation, incremental Delaunay and constrained Delaunay
-topology, and a small D-dimensional triangulation data structure and exact
-Delaunay oracle.
+provides polygon triangulation, topology-only constrained triangulation,
+incremental Delaunay and constrained Delaunay topology, and a small
+D-dimensional triangulation data structure and exact Delaunay oracle.
 
 The crate owns straight-edge connectivity decisions. Curved boundaries belong
 to Hypercurve, general mesh topology and 3D Booleans belong to Hypermesh, and
@@ -31,7 +31,7 @@ Real points + polygon/constraint facts
                     │
          ┌──────────┼───────────┐
          ▼          ▼           ▼
-      earcut    Delaunay/CDT   D-dimensional TDS
+      earcut    topology/CDT   D-dimensional TDS
          │          │           │
          └──────────┴───────────┘
                     ▼
@@ -53,7 +53,7 @@ float to its exact represented value before topology is decided.
 | `EarcutReport` | Polygon result plus non-certifying workload diagnostics. |
 | `TriangulationContext`, `TriangulationOutcome` | Explicit predicate policy and aggregate certainty for one operation. |
 | `cdt::DelaunayTriangulation` | Exact 2D points and Delaunay triangles. |
-| `cdt::ConstrainedDelaunayTriangulation` | Caller constraints, planarized protected edges, exact Steiner points, and triangles. |
+| `cdt::ConstrainedTriangulation` | Caller constraints, planarized protected edges, exact Steiner points, and triangles. |
 | `PointD`, `TriangulationDataStructureD`, `DelaunayComplex` | D-dimensional points, dynamic combinatorial storage, and small exact oracle complex. |
 | `Error`, `Result<T>` | Invalid input, unsupported capability, predicate, topology, and validation failures. |
 
@@ -139,6 +139,7 @@ Successful operations return a [`TriangulationOutcome`]. Its `certainty` is
 | Preserve caller-order insertion | `cdt::delaunay` |
 | Use deterministic spatial insertion | `cdt::delaunay_spatial` |
 | Recover constraints | `cdt::constrained_delaunay` |
+| Preserve a complete constrained convex-hull topology without Delaunay quality work | `cdt::constrained_triangulation_convex_hull` |
 | Inspect a Delaunay result | `points`, `triangles`, `into_parts` |
 | Inspect constrained output | `points`, `constraints`, `constraint_edges`, `triangles`, `into_parts_with_constraint_edges` |
 | Audit topology | `validate`, `validate_unconstrained_edges_are_delaunay` |

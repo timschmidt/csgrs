@@ -1,7 +1,7 @@
 //! Runtime `f64` triangulation entry points.
 
 #[cfg(feature = "cdt")]
-use crate::cdt::{ConstrainedDelaunayTriangulation, DelaunayTriangulation};
+use crate::cdt::{ConstrainedTriangulation, DelaunayTriangulation};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 use crate::context::{TriangulationContext, TriangulationOutcome};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -56,7 +56,7 @@ pub fn constrained_delaunay(
     context: &TriangulationContext,
     points: &[[f64; 2]],
     constraints: &[Constraint],
-) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
+) -> Result<TriangulationOutcome<ConstrainedTriangulation>> {
     validate_f64_vertices(points)?;
     validate_constraints(points.len(), constraints)?;
     let exact = lift_vertices(points)?;

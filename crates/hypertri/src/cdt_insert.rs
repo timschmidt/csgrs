@@ -1,4 +1,4 @@
-//! Constraint recovery and local legalization for exact CDT.
+//! Exact constraint recovery with structural or Delaunay legalization.
 //!
 //! The public [`crate::cdt`] module owns API shape and result records; this
 //! module keeps the incremental segment-insertion machinery local. The
@@ -26,6 +26,12 @@ pub(crate) struct PlanarConstraints {
     pub(crate) constraints: Vec<Constraint>,
 }
 
+#[derive(Clone, Copy)]
+enum UnconstrainedEdgePolicy {
+    Delaunay,
+    Lexicographic,
+}
+
 /// Insert all constraints into an existing triangulation.
 ///
 /// `triangles` must triangulate the convex hull of `points`. The function keeps
@@ -35,8 +41,45 @@ pub(crate) struct PlanarConstraints {
 pub(crate) fn insert_constraints(
     kernel: &ExactKernel,
     points: &[Point2],
+    triangles: Vec<Triangle>,
+    constraints: &[Constraint],
+) -> Result<Vec<Triangle>> {
+    insert_constraints_inner(
+        kernel,
+        points,
+        triangles,
+        constraints,
+        UnconstrainedEdgePolicy::Delaunay,
+    )
+}
+
+/// Insert every constraint without imposing a triangle-quality policy on the
+/// remaining edges.
+///
+/// This is the topology-only counterpart of [`insert_constraints`]. The same
+/// exact crossing, flip, and cavity predicates recover every protected edge;
+/// only the final empty-circle legalization sweep is omitted.
+pub(crate) fn insert_constraints_topology(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: Vec<Triangle>,
+    constraints: &[Constraint],
+) -> Result<Vec<Triangle>> {
+    insert_constraints_inner(
+        kernel,
+        points,
+        triangles,
+        constraints,
+        UnconstrainedEdgePolicy::Lexicographic,
+    )
+}
+
+fn insert_constraints_inner(
+    kernel: &ExactKernel,
+    points: &[Point2],
     mut triangles: Vec<Triangle>,
     constraints: &[Constraint],
+    edge_policy: UnconstrainedEdgePolicy,
 ) -> Result<Vec<Triangle>> {
     // Structural-dispatch note: constraint recovery processes the planarized
     // subsegments in caller-derived order. The retained PSLG facts already
@@ -65,13 +108,22 @@ pub(crate) fn insert_constraints(
         push_unique_edge(&mut constrained_edges, edge);
     }
 
-    legalize_unconstrained_edges(
-        kernel,
-        points,
-        &mut triangles,
-        &constrained_edges,
-        approximate_points.as_deref(),
-    )?;
+    match edge_policy {
+        UnconstrainedEdgePolicy::Delaunay => legalize_unconstrained_edges(
+            kernel,
+            points,
+            &mut triangles,
+            &constrained_edges,
+            approximate_points.as_deref(),
+        )?,
+        UnconstrainedEdgePolicy::Lexicographic => canonicalize_unconstrained_edges(
+            kernel,
+            points,
+            &mut triangles,
+            &constrained_edges,
+            approximate_points.as_deref(),
+        )?,
+    }
     Ok(triangles)
 }
 
@@ -746,6 +798,54 @@ fn legalize_unconstrained_edges(
     }
 }
 
+/// Choose one structural triangulation without evaluating empty circles.
+///
+/// Every retained flip replaces an unconstrained diagonal by a strictly
+/// smaller endpoint pair. The finite edge set therefore gives a direct
+/// termination measure, while exact convexity and constraint-preservation
+/// predicates keep each intermediate triangulation valid. The descending rule
+/// also stabilizes common equivalent-cell cases that constraint recovery can
+/// reach through different initial diagonals.
+fn canonicalize_unconstrained_edges(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &mut [Triangle],
+    constrained_edges: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
+) -> Result<()> {
+    loop {
+        let mut flipped = false;
+        for edge in unique_edges(triangles) {
+            if constrained_edges.binary_search(&edge).is_ok() {
+                continue;
+            }
+            let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
+                continue;
+            };
+            let replacement = EdgeKey::new(first.opposite, second.opposite);
+            if replacement >= edge
+                || !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+                || !flip_preserves_constraints(
+                    kernel,
+                    points,
+                    replacement,
+                    constrained_edges,
+                    approximate_points,
+                )?
+            {
+                continue;
+            }
+            if flip_edge(kernel, points, triangles, edge)? {
+                flipped = true;
+                break;
+            }
+        }
+        if !flipped {
+            return Ok(());
+        }
+    }
+}
+
 fn edge_is_illegal(
     kernel: &ExactKernel,
     points: &[Point2],
@@ -1100,6 +1200,42 @@ mod tests {
                 kernel.finish(()).certainty,
                 crate::TriangulationCertainty::Certified
             );
+        }
+    }
+
+    #[test]
+    fn lexicographic_topology_is_independent_of_the_initial_convex_fan() {
+        let points = vec![p(0, 0), p(2, 0), p(3, 1), p(2, 2), p(0, 2), p(-1, 1)];
+        let first = [[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5]];
+        let second = [[3, 4, 5], [3, 5, 0], [3, 0, 1], [3, 1, 2]];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let kernel = ExactKernel::new(&context);
+            let orient = |triangles: &[[usize; 3]]| {
+                triangles
+                    .iter()
+                    .copied()
+                    .map(|triangle| make_oriented(&kernel, &points, triangle))
+                    .collect::<Result<Vec<_>>>()
+            };
+            let mut first = orient(&first).unwrap();
+            let mut second = orient(&second).unwrap();
+
+            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[], None).unwrap();
+            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[], None).unwrap();
+
+            let canonical = |mut triangles: Vec<Triangle>| {
+                for triangle in &mut triangles {
+                    triangle.sort_unstable();
+                }
+                triangles.sort_unstable();
+                triangles
+            };
+            assert_eq!(canonical(first), canonical(second));
         }
     }
 }

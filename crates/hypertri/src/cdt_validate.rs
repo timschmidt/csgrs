@@ -253,6 +253,23 @@ pub(crate) fn validate_constrained_convex_hull_delaunay(
     Ok(())
 }
 
+/// Validate constrained topology covering the complete convex hull without
+/// imposing Delaunay legality on unprotected interior edges.
+pub(crate) fn validate_constrained_convex_hull_topology(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+    triangles: &[Triangle],
+) -> Result<()> {
+    let edge_uses = validated_constrained_edge_uses(kernel, points, constraints, triangles)?;
+    if !triangulates_convex_hull_with_edge_uses(kernel, points, triangles, &edge_uses)? {
+        return Err(Error::InvalidInput {
+            reason: "constrained triangulation does not cover the convex hull",
+        });
+    }
+    Ok(())
+}
+
 fn sorted_constraint_edges(constraints: &[Constraint]) -> Vec<EdgeKey> {
     let mut edges = constraints
         .iter()

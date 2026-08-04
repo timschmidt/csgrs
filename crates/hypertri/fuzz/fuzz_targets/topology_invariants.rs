@@ -145,6 +145,27 @@ fn exercise_separated_cycle_cdt(input: RawInput) {
             "every generated protected edge must appear in CDT triangles"
         );
     }
+
+    let topology = hypertri::cdt::constrained_triangulation_convex_hull(
+        &APPROX,
+        &points,
+        &constraints,
+    )
+    .expect("generated separated cycles must have exact constrained topology")
+    .value;
+    topology
+        .validate(&APPROX)
+        .expect("topology-only constrained triangulation must validate");
+    for constraint in constraints {
+        assert!(
+            topology
+                .triangles()
+                .iter()
+                .any(|triangle| triangle.contains(&constraint.from)
+                    && triangle.contains(&constraint.to)),
+            "every generated protected edge must appear in topology-only triangles"
+        );
+    }
 }
 
 fn exercise_exact_nd_complex(input: RawInput) {

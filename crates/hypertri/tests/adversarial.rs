@@ -588,8 +588,7 @@ fn serde_roundtrips_public_topology_and_rebuilds_polygon_facts() {
             .unwrap()
             .value;
     let encoded = serde_json::to_string(&triangulation).unwrap();
-    let decoded: hypertri::cdt::ConstrainedDelaunayTriangulation =
-        serde_json::from_str(&encoded).unwrap();
+    let decoded: hypertri::cdt::ConstrainedTriangulation = serde_json::from_str(&encoded).unwrap();
 
     decoded.validate(&APPROX).unwrap();
     assert_eq!(decoded.constraints(), triangulation.constraints());

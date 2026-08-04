@@ -1,10 +1,11 @@
-//! Constrained Delaunay triangulation API foundation.
+//! Constrained topology and Delaunay triangulation.
 //!
 //! The implementation handles exact incremental Delaunay point sets, planarizes
 //! crossing constraints with exact Steiner points, recovers protected edges by
 //! flipping or exact cavity retriangulation, and re-legalizes unprotected
-//! edges. The production path owns its topology implementation and has no
-//! external triangulation dependency.
+//! edges. Topology-only consumers can omit empty-circle quality work and use a
+//! deterministic lexicographic triangulation. The production paths own their
+//! topology implementation and have no external triangulation dependency.
 
 use crate::cdt_constraints;
 use crate::context::{TriangulationContext, TriangulationOutcome};
@@ -13,6 +14,8 @@ use crate::kernel::ExactKernel;
 use crate::predicates;
 use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
+
+mod topology;
 
 // Sorting a handful of integer edge handles costs more than the exhaustive
 // exact test, so retain the simple path until a nontrivial mesh exists.
@@ -67,14 +70,14 @@ impl DelaunayTriangulation {
 /// which may be longer than the caller's input point buffer.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
-pub struct ConstrainedDelaunayTriangulation {
+pub struct ConstrainedTriangulation {
     points: Vec<ExactPoint>,
     constraints: Vec<Constraint>,
     constraint_edges: Vec<Constraint>,
     triangles: Vec<Triangle>,
 }
 
-impl ConstrainedDelaunayTriangulation {
+impl ConstrainedTriangulation {
     /// Construct a constrained triangulation record from raw parts.
     pub fn from_parts(
         points: Vec<ExactPoint>,
@@ -292,7 +295,7 @@ pub fn constrained_delaunay(
     context: &TriangulationContext,
     points: &[ExactPoint],
     constraints: &[Constraint],
-) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
+) -> Result<TriangulationOutcome<ConstrainedTriangulation>> {
     let kernel = ExactKernel::new(context);
     let triangulation = constrained_delaunay_inner(&kernel, points, constraints)?;
     Ok(kernel.finish(triangulation))
@@ -313,7 +316,7 @@ pub fn constrained_delaunay_convex_hull(
     context: &TriangulationContext,
     points: &[ExactPoint],
     constraints: &[Constraint],
-) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
+) -> Result<TriangulationOutcome<ConstrainedTriangulation>> {
     let kernel = ExactKernel::new(context);
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(&kernel, points)?;
@@ -328,11 +331,51 @@ pub fn constrained_delaunay_convex_hull(
     Ok(kernel.finish(triangulation))
 }
 
+/// Triangulate a planar straight-line graph over its complete convex hull
+/// without imposing a Delaunay quality policy.
+///
+/// Every input point is inserted with exact orientation predicates, then every
+/// protected PSLG edge is recovered through the same exact flip/cavity path as
+/// [`constrained_delaunay_convex_hull`]. The result covers both sides of closed
+/// interior cycles. Unlike the Delaunay entry point, unprotected diagonals are
+/// not legalized with empty-circle predicates. This is the appropriate path
+/// for topology-only consumers such as surface arrangements.
+///
+/// Constraints must already be planarized: they may not cross, overlap, or
+/// contain an input point other than an endpoint.
+pub fn constrained_triangulation_convex_hull(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+) -> Result<TriangulationOutcome<ConstrainedTriangulation>> {
+    let kernel = ExactKernel::new(context);
+    validate_constraints(points.len(), constraints)?;
+    validate_unique_points(&kernel, points)?;
+    validate_constraint_geometry(&kernel, points, constraints, true)?;
+
+    let triangles = topology::triangulate_point_set(&kernel, points)?;
+    let triangles =
+        crate::cdt_insert::insert_constraints_topology(&kernel, points, triangles, constraints)?;
+    let triangulation = ConstrainedTriangulation::from_parts_with_constraint_edges(
+        points.to_vec(),
+        constraints.to_vec(),
+        constraints.to_vec(),
+        triangles,
+    );
+    crate::cdt_validate::validate_constrained_convex_hull_topology(
+        &kernel,
+        &triangulation.points,
+        &triangulation.constraint_edges,
+        &triangulation.triangles,
+    )?;
+    Ok(kernel.finish(triangulation))
+}
+
 pub(crate) fn constrained_delaunay_inner(
     kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
-) -> Result<ConstrainedDelaunayTriangulation> {
+) -> Result<ConstrainedTriangulation> {
     constrained_delaunay_inner_with_polygon_dispatch(kernel, points, constraints, true)
 }
 
@@ -341,7 +384,7 @@ fn constrained_delaunay_inner_with_polygon_dispatch(
     points: &[ExactPoint],
     constraints: &[Constraint],
     dispatch_closed_polygon: bool,
-) -> Result<ConstrainedDelaunayTriangulation> {
+) -> Result<ConstrainedTriangulation> {
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(kernel, points)?;
 
@@ -375,17 +418,15 @@ fn constrained_delaunay_planar_inner(
     public_constraints: &[Constraint],
     internal_constraints: Vec<Constraint>,
     dispatch_closed_polygon: bool,
-) -> Result<ConstrainedDelaunayTriangulation> {
+) -> Result<ConstrainedTriangulation> {
     if internal_constraints.is_empty() {
         let triangulation = delaunay_from_validated_owned(kernel, points)?;
-        return Ok(
-            ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
-                triangulation.points,
-                Vec::new(),
-                Vec::new(),
-                triangulation.triangles,
-            ),
-        );
+        return Ok(ConstrainedTriangulation::from_parts_with_constraint_edges(
+            triangulation.points,
+            Vec::new(),
+            Vec::new(),
+            triangulation.triangles,
+        ));
     }
 
     if dispatch_closed_polygon
@@ -424,7 +465,7 @@ fn constrained_delaunay_planar_inner(
                 })
                 .collect::<Vec<_>>();
 
-            let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+            let triangulation = ConstrainedTriangulation::from_parts_with_constraint_edges(
                 points,
                 public_constraints.to_vec(),
                 internal_constraints,
@@ -469,7 +510,7 @@ fn constrained_delaunay_planar_inner(
         base_triangles,
         &internal_constraints,
     )?;
-    let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+    let triangulation = ConstrainedTriangulation::from_parts_with_constraint_edges(
         points,
         public_constraints.to_vec(),
         internal_constraints,
@@ -911,17 +952,17 @@ fn triangle_neighbors(triangles: &[Triangle]) -> Result<Vec<[Option<usize>; 3]>>
     let table_capacity = triangles
         .len()
         .checked_mul(2)
+        .and_then(|edges| edges.checked_add(1))
         .and_then(usize::checked_next_power_of_two)
         .ok_or(Error::InvalidInput {
             reason: "triangle adjacency capacity overflow",
         })?
         .max(8);
-    // Bowyer-Watson keeps one connected triangulated disk with the three
-    // super-triangle boundary edges, so fewer than two edge records exist per
-    // triangle. Keep the table sparse without paying to sort all three edge
-    // occurrences after every insertion. The bounded probe below turns any
-    // violated internal occupancy invariant into a typed error rather than an
-    // unbounded search.
+    // A connected triangulated disk has at most `2T + 1` unique edges: the
+    // upper bound is reached when every finite vertex lies on its boundary.
+    // Keep the table sparse without paying to sort all three edge occurrences
+    // after every insertion. The bounded probe below turns any violated
+    // occupancy invariant into a typed error rather than an unbounded search.
     let mut table = vec![NeighborEdgeSlot::EMPTY; table_capacity];
     let mask = table_capacity - 1;
 
@@ -1276,7 +1317,7 @@ fn constrained_edges_already_delaunay(
     points: Vec<ExactPoint>,
     constraints: &[Constraint],
     public_constraints: &[Constraint],
-) -> Result<std::result::Result<ConstrainedDelaunayTriangulation, DelaunayTriangulation>> {
+) -> Result<std::result::Result<ConstrainedTriangulation, DelaunayTriangulation>> {
     let triangulation = if points.len() >= 32 {
         delaunay_spatial_from_validated_owned(kernel, points)?
     } else {
@@ -1292,7 +1333,7 @@ fn constrained_edges_already_delaunay(
         .all(|constraint| triangulation_has_edge(triangulation.triangles(), *constraint))
     {
         let (points, triangles) = triangulation.into_parts();
-        let constrained = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+        let constrained = ConstrainedTriangulation::from_parts_with_constraint_edges(
             points,
             public_constraints.to_vec(),
             constraints.to_vec(),
@@ -1396,7 +1437,7 @@ mod tests {
     fn approx_constrained_delaunay(
         points: &[ExactPoint],
         constraints: &[Constraint],
-    ) -> Result<ConstrainedDelaunayTriangulation> {
+    ) -> Result<ConstrainedTriangulation> {
         constrained_delaunay(&APPROX, points, constraints).map(TriangulationOutcome::into_value)
     }
 
@@ -1821,6 +1862,60 @@ mod tests {
     }
 
     #[test]
+    fn topology_only_convex_hull_pslg_preserves_every_point_and_constraint() {
+        let points = vec![
+            p(0, 0),
+            p(3, 0),
+            p(6, 0),
+            p(6, 6),
+            p(0, 6),
+            p(2, 2),
+            p(4, 2),
+            p(4, 4),
+            p(2, 4),
+            p(3, 3),
+        ];
+        let constraints = vec![
+            Constraint::new(0, 1),
+            Constraint::new(1, 2),
+            Constraint::new(2, 3),
+            Constraint::new(3, 4),
+            Constraint::new(4, 0),
+            Constraint::new(5, 6),
+            Constraint::new(6, 7),
+            Constraint::new(7, 8),
+            Constraint::new(8, 5),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let outcome = constrained_triangulation_convex_hull(&context, &points, &constraints)
+                .expect("the topology-only PSLG must be exactly triangulable");
+
+            assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
+            assert_eq!(outcome.value.points(), points);
+            assert_eq!(outcome.value.triangles().len(), 13);
+            assert!(points.iter().enumerate().all(|(point, _)| {
+                outcome
+                    .value
+                    .triangles()
+                    .iter()
+                    .any(|triangle| triangle.contains(&point))
+            }));
+            assert!(
+                constraints.iter().all(|constraint| triangulation_has_edge(
+                    outcome.value.triangles(),
+                    *constraint
+                ))
+            );
+            outcome.value.validate(&context).unwrap();
+        }
+    }
+
+    #[test]
     fn convex_hull_pslg_rejects_constraints_that_still_require_planarization() {
         let crossing_points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
         let crossing = [Constraint::new(0, 2), Constraint::new(1, 3)];
@@ -2000,7 +2095,7 @@ mod tests {
     #[test]
     fn validation_rejects_missing_constraint_edge() {
         let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
-        let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+        let triangulation = ConstrainedTriangulation::from_parts_with_constraint_edges(
             points,
             vec![Constraint::new(0, 2)],
             vec![Constraint::new(0, 2)],

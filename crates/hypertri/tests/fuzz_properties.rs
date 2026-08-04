@@ -325,6 +325,22 @@ proptest! {
                 .iter()
                 .any(|triangle| triangle.contains(&1) && triangle.contains(&3))
         );
+
+        let topology = hypertri::cdt::constrained_triangulation_convex_hull(
+            &APPROX,
+            &points,
+            &constraints,
+        )
+        .unwrap()
+        .value;
+        topology.validate(&APPROX).unwrap();
+        prop_assert_eq!(topology.constraints(), constraints.as_slice());
+        prop_assert!(
+            topology
+                .triangles()
+                .iter()
+                .any(|triangle| triangle.contains(&1) && triangle.contains(&3))
+        );
     }
 
     #[test]
@@ -467,6 +483,21 @@ proptest! {
                     .any(|triangle| triangle.contains(&constraint.from)
                         && triangle.contains(&constraint.to))
             );
+        }
+
+        let topology = hypertri::cdt::constrained_triangulation_convex_hull(
+            &APPROX,
+            &points,
+            &constraints,
+        )
+        .unwrap()
+        .value;
+        topology.validate(&APPROX).unwrap();
+        for constraint in &constraints {
+            prop_assert!(has_undirected_edge(
+                topology.constraint_edges(),
+                *constraint
+            ));
         }
     }
 
