@@ -29,7 +29,6 @@ pub(crate) struct PlanarConstraints {
 struct RecoveredConstraints {
     triangles: Vec<Triangle>,
     constrained_edges: Vec<EdgeKey>,
-    approximate_points: Option<Vec<[f64; 2]>>,
 }
 
 /// Insert all constraints into an existing triangulation.
@@ -47,15 +46,8 @@ pub(crate) fn insert_constraints(
     let RecoveredConstraints {
         mut triangles,
         constrained_edges,
-        approximate_points,
     } = recover_constraints(kernel, points, triangles, constraints)?;
-    legalize_unconstrained_edges(
-        kernel,
-        points,
-        &mut triangles,
-        &constrained_edges,
-        approximate_points.as_deref(),
-    )?;
+    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
     Ok(triangles)
 }
 
@@ -74,15 +66,8 @@ pub(crate) fn insert_constraints_topology(
     let RecoveredConstraints {
         mut triangles,
         constrained_edges,
-        approximate_points,
     } = recover_constraints(kernel, points, triangles, constraints)?;
-    canonicalize_unconstrained_edges(
-        kernel,
-        points,
-        &mut triangles,
-        &constrained_edges,
-        approximate_points.as_deref(),
-    )?;
+    canonicalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
     Ok(triangles)
 }
 
@@ -122,7 +107,6 @@ fn recover_constraints(
     Ok(RecoveredConstraints {
         triangles,
         constrained_edges,
-        approximate_points,
     })
 }
 
@@ -701,13 +685,6 @@ fn first_flippable_edge_crossing_constraint(
             };
             let new_edge = EdgeKey::new(first.opposite, second.opposite);
             if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
-                || !flip_preserves_constraints(
-                    kernel,
-                    points,
-                    new_edge,
-                    constrained_edges,
-                    approximate_points,
-                )?
                 || edge_properly_crosses_constraint(
                     kernel,
                     points,
@@ -759,7 +736,6 @@ fn legalize_unconstrained_edges(
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     loop {
         let mut flipped = false;
@@ -772,17 +748,7 @@ fn legalize_unconstrained_edges(
                 continue;
             };
 
-            let new_edge = EdgeKey::new(first.opposite, second.opposite);
             if !edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)? {
-                continue;
-            }
-            if !flip_preserves_constraints(
-                kernel,
-                points,
-                new_edge,
-                constrained_edges,
-                approximate_points,
-            )? {
                 continue;
             }
             if flip_edge(kernel, points, triangles, edge)? {
@@ -801,16 +767,16 @@ fn legalize_unconstrained_edges(
 ///
 /// Every retained flip replaces an unconstrained diagonal by a strictly
 /// smaller endpoint pair. The finite edge set therefore gives a direct
-/// termination measure, while exact convexity and constraint-preservation
-/// predicates keep each intermediate triangulation valid. The descending rule
-/// also stabilizes common equivalent-cell cases that constraint recovery can
-/// reach through different initial diagonals.
+/// termination measure. Exact convexity keeps the replacement diagonal inside
+/// the two adjacent triangles, so it cannot cross a protected triangulation
+/// edge or pass through another represented vertex. The descending rule also
+/// stabilizes common equivalent-cell cases that constraint recovery can reach
+/// through different initial diagonals.
 fn canonicalize_unconstrained_edges(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     loop {
         let mut flipped = false;
@@ -824,13 +790,6 @@ fn canonicalize_unconstrained_edges(
             let replacement = EdgeKey::new(first.opposite, second.opposite);
             if replacement >= edge
                 || !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
-                || !flip_preserves_constraints(
-                    kernel,
-                    points,
-                    replacement,
-                    constrained_edges,
-                    approximate_points,
-                )?
             {
                 continue;
             }
@@ -939,70 +898,12 @@ fn edge_is_flippable(
         &points[edge.to],
     )?;
 
+    // These four strict sides certify a convex quadrilateral. Its replacement
+    // diagonal stays inside the two adjacent triangles; the triangulation
+    // invariant therefore proves it cannot cross an existing edge or contain
+    // any other represented vertex.
     Ok(signs_strictly_differ(first_side, second_side)
         && signs_strictly_differ(opposite_edge_side, opposite_other_side))
-}
-
-fn flip_preserves_constraints(
-    kernel: &ExactKernel,
-    points: &[Point2],
-    new_edge: EdgeKey,
-    constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
-) -> Result<bool> {
-    for point_index in 0..points.len() {
-        if new_edge.contains(point_index) {
-            continue;
-        }
-        if approximate_points.is_some_and(|points| {
-            !crate::cdt::approximate_point_within_constraint_bounds(
-                points,
-                Constraint::new(new_edge.from, new_edge.to),
-                point_index,
-            )
-        }) {
-            continue;
-        }
-        if predicates::point_on_segment(
-            kernel,
-            &points[new_edge.from],
-            &points[new_edge.to],
-            &points[point_index],
-        )? {
-            return Ok(false);
-        }
-    }
-
-    for &constraint in constrained_edges {
-        if new_edge == constraint {
-            continue;
-        }
-        if approximate_points.is_some_and(|points| {
-            !crate::cdt::approximate_constraint_bounds_overlap(
-                points,
-                Constraint::new(new_edge.from, new_edge.to),
-                Constraint::new(constraint.from, constraint.to),
-            )
-        }) {
-            continue;
-        }
-
-        let intersection = predicates::segment_intersection(
-            kernel,
-            &points[new_edge.from],
-            &points[new_edge.to],
-            &points[constraint.from],
-            &points[constraint.to],
-        )?;
-        if intersection.is_disjoint()
-            || (intersection.is_endpoint_touch() && new_edge.shares_endpoint(constraint))
-        {
-            continue;
-        }
-        return Ok(false);
-    }
-
-    Ok(true)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1118,10 +1019,6 @@ impl EdgeKey {
     fn contains(self, index: usize) -> bool {
         self.from == index || self.to == index
     }
-
-    fn shares_endpoint(self, other: Self) -> bool {
-        self.contains(other.from) || self.contains(other.to)
-    }
 }
 
 fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
@@ -1224,8 +1121,8 @@ mod tests {
             let mut first = orient(&first).unwrap();
             let mut second = orient(&second).unwrap();
 
-            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[], None).unwrap();
-            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[], None).unwrap();
+            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[]).unwrap();
+            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[]).unwrap();
 
             let canonical = |mut triangles: Vec<Triangle>| {
                 for triangle in &mut triangles {
