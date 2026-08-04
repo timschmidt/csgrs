@@ -143,7 +143,7 @@ that need an explicit `PredicatePolicy`.
 | Task | API |
 | --- | --- |
 | Point on segment | `classify_point_segment`, `classify_point_segment3`, `point_on_segment`, `point_on_segment3` |
-| Segment intersection | `classify_segment_intersection`, `classify_segment3_intersection`, `proper_segment_intersection_point` |
+| Segment intersection | `classify_segment_intersection`, `classify_segment3_intersection`, `construct_line_intersection_point` |
 | Reuse 2D facts | `point2_displacement_facts`, `segment2_facts`, `triangle2_facts`, `classify_point_segment_with_facts`, `classify_segment_intersection_with_facts` |
 | Ring structure | `ring2_facts`, `indexed_ring2_facts`, `ring_area_sign`, `indexed_ring_area_sign`, `ring_convexity`, `indexed_ring_convexity` |
 | Point in ring | `classify_point_ring_even_odd`, `classify_point_indexed_ring_even_odd`, `point_in_ring_even_odd`, `point_in_indexed_ring_even_odd` |

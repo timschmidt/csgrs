@@ -195,35 +195,21 @@ pub fn point_on_segment_with_policy_and_facts(
     }
 }
 
-/// Construct the exact point where two closed 2D segments cross properly with
-/// an explicit predicate escalation policy.
+/// Construct the exact intersection point of two supporting 2D lines.
 ///
 /// The construction uses the standard line parameter
 /// `t = cross(c - a, d - c) / cross(b - a, d - c)` and returns
-/// `a + t (b - a)` only after the segment classifier certifies a proper
-/// crossing. The formula is the ordinary segment-intersection construction;
-/// exact predicates certify its precondition.
-pub fn proper_segment_intersection_point_with_policy(
+/// `a + t (b - a)`. It does not classify the closed segments: callers that
+/// require segment topology must first use [`classify_segment_intersection_with_policy`]
+/// and invoke this constructor only for a certified proper crossing. `None`
+/// means the lines are parallel or the exact scalar backend could not form the
+/// required quotient.
+pub fn construct_line_intersection_point(
     a: &Point2,
     b: &Point2,
     c: &Point2,
     d: &Point2,
-    policy: PredicatePolicy,
-) -> PredicateOutcome<Option<Point2>> {
-    let (certainty, stage) = match classify_segment_intersection_with_policy(a, b, c, d, policy) {
-        PredicateOutcome::Decided {
-            value,
-            certainty,
-            stage,
-        } if value.is_proper_crossing() => (certainty, stage),
-        PredicateOutcome::Decided {
-            certainty, stage, ..
-        } => return PredicateOutcome::decided(None, certainty, stage),
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
-    };
-
+) -> Option<Point2> {
     if [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y, &d.x, &d.y]
         .into_iter()
         .all(Real::is_exact_dyadic_rational)
@@ -240,10 +226,10 @@ pub fn proper_segment_intersection_point_with_policy(
         ) {
             crate::trace_dispatch!(
                 "hyperlimit",
-                "proper-segment-intersection-point",
+                "line-intersection-point",
                 "exact-dyadic-stack"
             );
-            return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+            return Some(Point2::new(x, y));
         }
         if let Some((_, [x, y])) = Real::exact_rational_line_intersection2_point_known_dyadic_wide(
             first_start,
@@ -251,16 +237,12 @@ pub fn proper_segment_intersection_point_with_policy(
             second_start,
             second_end,
         ) {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "proper-segment-intersection-point",
-                "exact-dyadic-wide"
-            );
-            return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+            crate::trace_dispatch!("hyperlimit", "line-intersection-point", "exact-dyadic-wide");
+            return Some(Point2::new(x, y));
         }
         crate::trace_dispatch!(
             "hyperlimit",
-            "proper-segment-intersection-point",
+            "line-intersection-point",
             "exact-dyadic-declined"
         );
     }
@@ -272,16 +254,12 @@ pub fn proper_segment_intersection_point_with_policy(
     ) {
         crate::trace_dispatch!(
             "hyperlimit",
-            "proper-segment-intersection-point",
+            "line-intersection-point",
             "exact-rational-fused"
         );
-        return PredicateOutcome::decided(Some(Point2::new(x, y)), certainty, stage);
+        return Some(Point2::new(x, y));
     }
-    crate::trace_dispatch!(
-        "hyperlimit",
-        "proper-segment-intersection-point",
-        "general-real"
-    );
+    crate::trace_dispatch!("hyperlimit", "line-intersection-point", "general-real");
 
     let ab_x = sub_ref(&b.x, &a.x);
     let ab_y = sub_ref(&b.y, &a.y);
@@ -292,21 +270,12 @@ pub fn proper_segment_intersection_point_with_policy(
 
     let denominator = cross2(&ab_x, &ab_y, &cd_x, &cd_y);
     let numerator = cross2(&ca_x, &ca_y, &cd_x, &cd_y);
-    let t = match &numerator / &denominator {
-        Ok(value) => value,
-        Err(_) => {
-            return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
-        }
-    };
+    let t = (&numerator / &denominator).ok()?;
 
-    PredicateOutcome::decided(
-        Some(Point2::new(
-            add_ref(&a.x, &mul_ref(&t, &ab_x)),
-            add_ref(&a.y, &mul_ref(&t, &ab_y)),
-        )),
-        certainty,
-        stage,
-    )
+    Some(Point2::new(
+        add_ref(&a.x, &mul_ref(&t, &ab_x)),
+        add_ref(&a.y, &mul_ref(&t, &ab_y)),
+    ))
 }
 
 /// Classify the intersection of closed 3D segments `ab` and `cd` with an
@@ -1212,33 +1181,25 @@ mod tests {
     }
 
     #[test]
-    fn proper_segment_intersection_point_constructs_exact_crossing() {
+    fn line_intersection_point_constructs_exact_crossing() {
         assert_eq!(
-            crate::proper_segment_intersection_point(
-                &p2(0, 0),
-                &p2(4, 4),
-                &p2(0, 4),
-                &p2(4, 0),
-                APPROX
-            )
-            .value(),
-            Some(Some(p2(2, 2)))
+            crate::construct_line_intersection_point(&p2(0, 0), &p2(4, 4), &p2(0, 4), &p2(4, 0)),
+            Some(p2(2, 2))
         );
         assert_eq!(
-            crate::proper_segment_intersection_point(
-                &p2(0, 0),
-                &p2(4, 0),
-                &p2(4, 0),
-                &p2(6, 0),
-                APPROX
-            )
-            .value(),
-            Some(None)
+            crate::construct_line_intersection_point(&p2(0, 0), &p2(4, 0), &p2(4, 1), &p2(6, 1)),
+            None
+        );
+        // Construction is deliberately independent of closed-segment
+        // topology: these disjoint segments have intersecting supporting lines.
+        assert_eq!(
+            crate::construct_line_intersection_point(&p2(0, 0), &p2(1, 0), &p2(2, -1), &p2(2, 1)),
+            Some(p2(2, 0))
         );
     }
 
     #[test]
-    fn proper_segment_intersection_point_fuses_nondyadic_exact_rationals() {
+    fn line_intersection_point_fuses_nondyadic_exact_rationals() {
         let rational = |numerator, denominator| {
             Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
         };
@@ -1250,20 +1211,10 @@ mod tests {
         let c = Point2::new(zero.clone(), two_thirds.clone());
         let d = Point2::new(two_thirds, zero);
 
-        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-            match proper_segment_intersection_point_with_policy(&a, &b, &c, &d, policy) {
-                PredicateOutcome::Decided {
-                    value: Some(point),
-                    certainty,
-                    ..
-                } => {
-                    assert_eq!(point.x, one_third);
-                    assert_eq!(point.y, one_third);
-                    assert_eq!(certainty, Certainty::Exact);
-                }
-                outcome => panic!("expected a certified non-dyadic crossing, got {outcome:?}"),
-            }
-        }
+        let point = construct_line_intersection_point(&a, &b, &c, &d)
+            .expect("nonparallel exact lines have an exact intersection");
+        assert_eq!(point.x, one_third);
+        assert_eq!(point.y, one_third);
     }
 
     #[test]
