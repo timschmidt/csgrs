@@ -124,11 +124,27 @@ pub(crate) fn orient2d_certified_rational_filter(
     b: [&Real; 2],
     c: [&Real; 2],
 ) -> Option<Sign> {
-    let sign = Real::certified_rational_line2_sign(
-        [a[0].exact_rational_ref()?, a[1].exact_rational_ref()?],
-        [b[0].exact_rational_ref()?, b[1].exact_rational_ref()?],
-        [c[0].exact_rational_ref()?, c[1].exact_rational_ref()?],
-    )?;
+    // Keep the eligibility guard in coordinate order so symbolic and mixed
+    // calls decline before constructing a reusable rational filter. Fully
+    // exact inputs then reuse each `Real`'s retained conversion schedule.
+    let _ = (
+        a[0].exact_rational_ref()?,
+        a[1].exact_rational_ref()?,
+        b[0].exact_rational_ref()?,
+        b[1].exact_rational_ref()?,
+        c[0].exact_rational_ref()?,
+        c[1].exact_rational_ref()?,
+    );
+    orient2d_certified_rational_filter_exact(a, b, c)
+}
+
+#[inline(never)]
+fn orient2d_certified_rational_filter_exact(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+) -> Option<Sign> {
+    let sign = Real::certified_rational_line2_sign(a, b, c)?;
     crate::trace_dispatch!("hyperlimit", "orient2d", "certified-rational-det2-filter");
     Some(crate::real::map_real_sign(sign))
 }
@@ -461,8 +477,9 @@ pub struct Sphere3Polynomial<'a> {
 /// Derived exact-predicate evidence for one fixed oriented 2D line.
 ///
 /// This value owns certified dyadic and exact-word filters plus fixed-input
-/// scheduling facts, but not the line endpoints. Retain it alongside the
-/// endpoints when classifying many points against the same oriented line.
+/// scheduling facts, but not the line endpoints. Retaining it alongside the
+/// endpoints also lets wide rational queries use their scalar-local conversion
+/// schedules before the arbitrary-precision determinant fallback.
 #[derive(Clone, Copy, Debug)]
 pub struct Line2Orientation {
     facts: PredicateFacts,
@@ -489,11 +506,8 @@ pub fn line2_orientation_with_facts(
     facts: PredicateFacts,
 ) -> Line2Orientation {
     let filter = AffineDet2Filter::from_reals([&from.x, &from.y], [&to.x, &to.y]);
-    let exact_word_filter = if filter.is_none() {
-        AffineDet2ExactWordFilter::from_reals([&from.x, &from.y], [&to.x, &to.y])
-    } else {
-        None
-    };
+    let exact_word_filter =
+        AffineDet2ExactWordFilter::from_reals([&from.x, &from.y], [&to.x, &to.y]);
     Line2Orientation {
         facts,
         filter,
@@ -534,6 +548,22 @@ pub fn classify_point_line_with_orientation_and_policy(
             "hyperlimit",
             "line2_orientation",
             "exact-word-homogeneous-det2"
+        );
+        return PredicateOutcome::decided(
+            LineSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    if let Some(sign) = Real::certified_rational_line2_sign(
+        [&from.x, &from.y],
+        [&to.x, &to.y],
+        [&point.x, &point.y],
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "line2_orientation",
+            "certified-rational-det2-filter"
         );
         return PredicateOutcome::decided(
             LineSide::from(crate::real::map_real_sign(sign)),
@@ -1873,6 +1903,96 @@ mod tests {
                     .value(),
                 crate::classify_point_line(&a, &b, &point, APPROX).value()
             );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn retained_line_orientation_certifies_wide_rational_queries() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let scale: Rational =
+            "100000000000000000000000000000000000000000000000000000000000000000000000000000001"
+                .parse()
+                .expect("wide exact integer");
+        let scaled = |factor| Real::from(&scale * Rational::new(factor));
+        let a = Point2::new(scaled(1), scaled(2));
+        let b = Point2::new(scaled(4), scaled(3));
+        let point = Point2::new(scaled(2), scaled(5));
+        let orientation = line2_orientation(&a, &b);
+
+        hyperreal::dispatch_trace::reset();
+        let strict = hyperreal::dispatch_trace::with_recording(|| {
+            crate::classify_point_line_with_orientation(
+                &a,
+                &b,
+                &point,
+                &orientation,
+                PredicatePolicy::STRICT,
+            )
+        });
+        assert_eq!(strict.value(), Some(LineSide::Left));
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "line2_orientation",
+                "certified-rational-det2-filter"
+            ),
+            1
+        );
+        assert_eq!(
+            crate::classify_point_line_with_orientation(&a, &b, &point, &orientation, APPROX)
+                .value(),
+            Some(LineSide::Left)
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn retained_line_orientation_cascades_by_query_representation() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let a = rp2(0, 0);
+        let b = rp2(4, 1);
+        let dyadic = rp2(1, 2);
+        let word = Point2::new(
+            Real::from(Rational::fraction(1, 3).unwrap()),
+            Real::from(Rational::fraction(2, 7).unwrap()),
+        );
+        let scale: Rational =
+            "100000000000000000000000000000000000000000000000000000000000000000000000000000001"
+                .parse()
+                .expect("wide exact integer");
+        let wide = Point2::new(
+            Real::from(scale.clone()),
+            Real::from(&scale * Rational::new(5)),
+        );
+        let orientation = line2_orientation(&a, &b);
+
+        hyperreal::dispatch_trace::reset();
+        let sides = hyperreal::dispatch_trace::with_recording(|| {
+            [&dyadic, &word, &wide].map(|point| {
+                crate::classify_point_line_with_orientation(
+                    &a,
+                    &b,
+                    point,
+                    &orientation,
+                    PredicatePolicy::STRICT,
+                )
+                .value()
+            })
+        });
+        assert_eq!(sides, [Some(LineSide::Left); 3]);
+        let trace = hyperreal::dispatch_trace::take_trace();
+        for path in [
+            "certified-real-det2-filter",
+            "exact-word-homogeneous-det2",
+            "certified-rational-det2-filter",
+        ] {
+            assert_eq!(trace.path_count("hyperlimit", "line2_orientation", path), 1);
         }
     }
 
