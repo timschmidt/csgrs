@@ -669,7 +669,16 @@ fn assemble_surface_cells(
             let second_before = facet_side_node(&pending, second.facet, edge, false)?;
             sets.union(first_after, second_before);
             sets.union(second_after, first_before);
-        } else {
+        } else if !try_assemble_two_face_transverse_ring(
+            decisions,
+            &surface.points,
+            &pending,
+            edge,
+            uses,
+            &contribution_offsets,
+            &contributions,
+            &mut sets,
+        )? {
             assemble_radial_ring(
                 decisions,
                 &surface.points,
@@ -966,6 +975,88 @@ fn assemble_radial_ring(
     Ok(())
 }
 
+fn try_assemble_two_face_transverse_ring(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    facets: &[PendingFacet],
+    edge: [u32; 2],
+    uses: &[EdgeUse],
+    contribution_offsets: &[u32],
+    contributions: &[FacetContribution],
+    sets: &mut CellDisjointSets,
+) -> HypermeshResult<bool> {
+    // A validated planar triangulation has at most two facets from one source
+    // face on an edge, and two such facets occupy antipodal radial rays. When
+    // four unbundled facets split evenly between two source faces, one
+    // nonzero orientation therefore proves the complete alternating cycle:
+    // `a, b, -a, -b`. Retain that topology instead of rediscovering the other
+    // three relations and sorting four rays. Coplanar, coincident, bundled,
+    // or higher-degree incidence declines to the complete exact ring path.
+    let [_, _, _, _] = uses else {
+        return Ok(false);
+    };
+    let mut face_ids = [u32::MAX; 2];
+    let mut face_uses = [[None; 2]; 2];
+    let mut face_counts = [0_usize; 2];
+    for &edge_use in uses {
+        let [contribution] =
+            checked_contribution_row(contribution_offsets, contributions, edge_use.facet as usize)?
+        else {
+            return Ok(false);
+        };
+        let face_slot = if face_ids[0] == contribution.face {
+            0
+        } else if face_ids[0] == u32::MAX {
+            face_ids[0] = contribution.face;
+            0
+        } else if face_ids[1] == contribution.face {
+            1
+        } else if face_ids[1] == u32::MAX {
+            face_ids[1] = contribution.face;
+            1
+        } else {
+            return Ok(false);
+        };
+        let use_slot = face_counts[face_slot];
+        if use_slot >= 2 {
+            return Ok(false);
+        }
+        face_uses[face_slot][use_slot] = Some(edge_use);
+        face_counts[face_slot] += 1;
+    }
+    if face_counts != [2, 2] {
+        return Ok(false);
+    }
+    let [
+        [Some(first), Some(first_opposite)],
+        [Some(second), Some(second_opposite)],
+    ] = face_uses
+    else {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "transverse radial ring grouping is incomplete",
+        });
+    };
+    let second_half = match radial_triple_classification(
+        decisions,
+        points,
+        edge,
+        first.opposite,
+        second.opposite,
+    )? {
+        Classification::Positive => [second, second_opposite],
+        Classification::Negative => [second_opposite, second],
+        Classification::On => return Ok(false),
+    };
+    let ring = [first, second_half[0], first_opposite, second_half[1]];
+    for index in 0..ring.len() {
+        let next = (index + 1) % ring.len();
+        let after = facet_side_node(facets, ring[index].facet, edge, true)?;
+        let before = facet_side_node(facets, ring[next].facet, edge, false)?;
+        sets.union(after, before);
+    }
+    Ok(true)
+}
+
 fn checked_contribution_row<'a>(
     contribution_offsets: &[u32],
     contributions: &'a [FacetContribution],
@@ -994,13 +1085,21 @@ fn facets_have_retained_radial_separation(
     radially_separated_face_pair_keys: &[u64],
 ) -> HypermeshResult<bool> {
     // A bundled arrangement facet may carry several coincident source-face
-    // contributions. Any retained source pair proves separation only for the
-    // degree-two edge currently being assembled; higher-degree radial rings
-    // continue through the complete exact ordering path.
+    // contributions. A shared validated face or retained adjacent source pair
+    // proves separation only for the degree-two edge currently being
+    // assembled; higher-degree radial rings use their dedicated transverse
+    // proof above or continue through the complete exact ordering path.
     let left = checked_contribution_row(contribution_offsets, contributions, left as usize)?;
     let right = checked_contribution_row(contribution_offsets, contributions, right as usize)?;
     for left in left {
         for right in right {
+            // Two distinct facets emitted by one validated planar
+            // triangulation lie on opposite sides of their shared edge. That
+            // source-face incidence is already a stronger radial-separation
+            // proof than recomputing equality from materialized coordinates.
+            if left.face == right.face {
+                return Ok(true);
+            }
             let Some(pair) = source_face_pair_key(left.face, right.face) else {
                 continue;
             };
@@ -5149,6 +5248,163 @@ mod tests {
     }
 
     #[test]
+    fn retained_two_face_transverse_ring_matches_complete_radial_order() {
+        let point_sets = [
+            [
+                p(0, 0, 0),
+                p(1, 0, 0),
+                p(0, 1, 0),
+                p(0, 0, 1),
+                p(0, -1, 0),
+                p(0, 0, -1),
+            ],
+            [
+                p(0, 0, 0),
+                p(2, 1, 3),
+                p(0, 1, 0),
+                p(0, 0, 1),
+                p(10, 3, 15),
+                p(-4, -2, -9),
+            ],
+        ];
+        let facets = (2_u32..=5)
+            .map(|opposite| PendingFacet {
+                vertices: [0, 1, opposite],
+            })
+            .collect::<Vec<_>>();
+        let base_uses = [
+            EdgeUse {
+                edge: [0, 1],
+                facet: 0,
+                opposite: 2,
+            },
+            EdgeUse {
+                edge: [0, 1],
+                facet: 1,
+                opposite: 3,
+            },
+            EdgeUse {
+                edge: [0, 1],
+                facet: 2,
+                opposite: 4,
+            },
+            EdgeUse {
+                edge: [0, 1],
+                facet: 3,
+                opposite: 5,
+            },
+        ];
+        let contribution_offsets = [0, 1, 2, 3, 4];
+        let contributions = [
+            FacetContribution {
+                face: 7,
+                orientation: 1,
+            },
+            FacetContribution {
+                face: 11,
+                orientation: -1,
+            },
+            FacetContribution {
+                face: 7,
+                orientation: -1,
+            },
+            FacetContribution {
+                face: 11,
+                orientation: 1,
+            },
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            for points in &point_sets {
+                for first in 0..4 {
+                    for second in 0..4 {
+                        for third in 0..4 {
+                            for fourth in 0..4 {
+                                if [first, second, third, fourth]
+                                    .iter()
+                                    .copied()
+                                    .collect::<BTreeSet<_>>()
+                                    .len()
+                                    != 4
+                                {
+                                    continue;
+                                }
+                                let uses = [
+                                    base_uses[first],
+                                    base_uses[second],
+                                    base_uses[third],
+                                    base_uses[fourth],
+                                ];
+                                let mut retained = CellDisjointSets::new(8).unwrap();
+                                assert!(
+                                    try_assemble_two_face_transverse_ring(
+                                        &decisions,
+                                        points,
+                                        &facets,
+                                        [0, 1],
+                                        &uses,
+                                        &contribution_offsets,
+                                        &contributions,
+                                        &mut retained,
+                                    )
+                                    .unwrap()
+                                );
+                                let mut complete = CellDisjointSets::new(8).unwrap();
+                                assemble_radial_ring(
+                                    &decisions,
+                                    points,
+                                    &facets,
+                                    [0, 1],
+                                    &uses,
+                                    &mut Vec::new(),
+                                    &mut Vec::new(),
+                                    &mut complete,
+                                )
+                                .unwrap();
+                                assert_eq!(
+                                    retained.into_cells().unwrap(),
+                                    complete.into_cells().unwrap()
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+
+        let coplanar_points = [
+            p(0, 0, 0),
+            p(1, 0, 0),
+            p(0, 1, 0),
+            p(0, 2, 0),
+            p(0, -1, 0),
+            p(0, -2, 0),
+        ];
+        let decisions = crate::test_support::approximate_decisions();
+        let mut declined = CellDisjointSets::new(8).unwrap();
+        assert!(
+            !try_assemble_two_face_transverse_ring(
+                &decisions,
+                &coplanar_points,
+                &facets,
+                [0, 1],
+                &base_uses,
+                &contribution_offsets,
+                &contributions,
+                &mut declined,
+            )
+            .unwrap()
+        );
+        assert_eq!(declined.into_cells().unwrap().1, 8);
+    }
+
+    #[test]
     fn sign_only_radial_dot_matches_the_factored_exact_polynomial() {
         let mut vectors = Vec::with_capacity(27);
         let zero = Rational::from(0);
@@ -5184,8 +5440,8 @@ mod tests {
     }
 
     #[test]
-    fn retained_radial_separation_requires_a_proved_source_face_pair() {
-        let contribution_offsets = [0, 1, 3, 4];
+    fn retained_radial_separation_requires_shared_face_or_proved_pair() {
+        let contribution_offsets = [0, 1, 3, 4, 5];
         let contributions = [
             FacetContribution {
                 face: 7,
@@ -5202,6 +5458,10 @@ mod tests {
             FacetContribution {
                 face: 3,
                 orientation: 1,
+            },
+            FacetContribution {
+                face: 7,
+                orientation: -1,
             },
         ];
         let separated = [
@@ -5226,6 +5486,16 @@ mod tests {
                 &contribution_offsets,
                 &contributions,
                 &separated,
+            )
+            .unwrap()
+        );
+        assert!(
+            facets_have_retained_radial_separation(
+                0,
+                3,
+                &contribution_offsets,
+                &contributions,
+                &[],
             )
             .unwrap()
         );
