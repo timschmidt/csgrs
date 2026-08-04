@@ -2495,8 +2495,9 @@ fn corefine_face(
         .map(|edge| hypertri::Constraint::new(local[&edge[0]], local[&edge[1]]))
         .collect::<Vec<_>>();
     let context = hypertri::TriangulationContext::new(decisions.policy());
-    let outcome = hypertri::cdt::constrained_delaunay_convex_hull(&context, &points, &constraints)
-        .map_err(map_triangulation_error)?;
+    let outcome =
+        hypertri::cdt::constrained_triangulation_convex_hull(&context, &points, &constraints)
+            .map_err(map_triangulation_error)?;
     decisions.absorb(match outcome.certainty {
         hypertri::TriangulationCertainty::Certified => MeshCertainty::Certified,
         hypertri::TriangulationCertainty::Approximate512Consumed => {
