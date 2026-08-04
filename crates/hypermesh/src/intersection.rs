@@ -98,10 +98,10 @@ enum DeferredIntersectionGeometry<'a> {
         axis: SupportLineAxis,
         enclosure: Option<[f64; 2]>,
     },
+    /// An exact line coordinate with a strictly positive denominator.
     SegmentPlane {
         coordinate_numerator: Real,
         denominator: Real,
-        denominator_is_positive: bool,
         enclosure: Option<[f64; 2]>,
         start: &'a Point3,
         end: &'a Point3,
@@ -2250,14 +2250,12 @@ fn compare_deferred_points(
             DeferredIntersectionGeometry::SegmentPlane {
                 coordinate_numerator: left_numerator,
                 denominator: left_denominator,
-                denominator_is_positive: left_positive,
                 enclosure: left_enclosure,
                 ..
             },
             DeferredIntersectionGeometry::SegmentPlane {
                 coordinate_numerator: right_numerator,
                 denominator: right_denominator,
-                denominator_is_positive: right_positive,
                 enclosure: right_enclosure,
                 ..
             },
@@ -2267,24 +2265,18 @@ fn compare_deferred_points(
             {
                 return Ok(ordering);
             }
-            let ordering = classification_ordering(classify_two_product_difference(
+            Ok(classification_ordering(classify_two_product_difference(
                 decisions,
                 left_numerator,
                 right_denominator,
                 right_numerator,
                 left_denominator,
-            )?);
-            Ok(if left_positive == right_positive {
-                ordering
-            } else {
-                ordering.reverse()
-            })
+            )?))
         }
         (
             DeferredIntersectionGeometry::SegmentPlane {
                 coordinate_numerator,
                 denominator,
-                denominator_is_positive,
                 enclosure,
                 ..
             },
@@ -2303,7 +2295,6 @@ fn compare_deferred_points(
                 decisions,
                 coordinate_numerator,
                 denominator,
-                *denominator_is_positive,
                 axis.coordinate(affine),
             )
         }
@@ -2316,7 +2307,6 @@ fn compare_deferred_points(
             DeferredIntersectionGeometry::SegmentPlane {
                 coordinate_numerator,
                 denominator,
-                denominator_is_positive,
                 enclosure,
                 ..
             },
@@ -2330,7 +2320,6 @@ fn compare_deferred_points(
                 decisions,
                 coordinate_numerator,
                 denominator,
-                *denominator_is_positive,
                 axis.coordinate(affine),
             )
             .map(std::cmp::Ordering::reverse)
@@ -2369,16 +2358,10 @@ fn affine_deferred_geometry(
     }
 }
 
-fn certified_ratio_enclosure(
-    numerator: &Real,
-    denominator: &Real,
-    denominator_is_positive: bool,
-) -> Option<[f64; 2]> {
+fn certified_ratio_enclosure(numerator: &Real, denominator: &Real) -> Option<[f64; 2]> {
     let numerator = certified_real_enclosure(numerator)?;
     let denominator = certified_real_enclosure(denominator)?;
-    if (denominator_is_positive && denominator[0] <= 0.0)
-        || (!denominator_is_positive && denominator[1] >= 0.0)
-    {
+    if denominator[0] <= 0.0 {
         return None;
     }
     let quotients = [
@@ -2399,7 +2382,6 @@ fn compare_ratio_to_affine(
     decisions: &DecisionContext,
     numerator: &Real,
     denominator: &Real,
-    denominator_is_positive: bool,
     affine: &Real,
 ) -> HypermeshResult<std::cmp::Ordering> {
     let classification = if let [Some(numerator), Some(denominator), Some(affine)] =
@@ -2417,12 +2399,7 @@ fn compare_ratio_to_affine(
     } else {
         classify_real(decisions, &(numerator - &(denominator * affine)))?
     };
-    let ordering = classification_ordering(classification);
-    Ok(if denominator_is_positive {
-        ordering
-    } else {
-        ordering.reverse()
-    })
+    Ok(classification_ordering(classification))
 }
 
 fn classification_ordering(classification: Classification) -> std::cmp::Ordering {
@@ -2736,20 +2713,21 @@ fn extend_polygon_plane_slice_edge<'point>(
             (&owned_support_values.0, &owned_support_values.1)
         }
     };
-    let parameter_denominator = start_support - end_support;
+    let (positive_endpoint, negative_endpoint, positive_support, negative_support) =
+        if start_class == Classification::Positive {
+            (start, end, start_support, end_support)
+        } else {
+            (end, start, end_support, start_support)
+        };
+    let parameter_denominator = positive_support - negative_support;
     let coordinate_numerator = Real::signed_product_sum(
         [true, false],
         [
-            [start_support, axis.coordinate(end)],
-            [end_support, axis.coordinate(start)],
+            [positive_support, axis.coordinate(negative_endpoint)],
+            [negative_support, axis.coordinate(positive_endpoint)],
         ],
     );
-    let denominator_is_positive = start_class == Classification::Positive;
-    let enclosure = certified_ratio_enclosure(
-        &coordinate_numerator,
-        &parameter_denominator,
-        denominator_is_positive,
-    );
+    let enclosure = certified_ratio_enclosure(&coordinate_numerator, &parameter_denominator);
     extend_deferred_span(
         decisions,
         span,
@@ -2757,11 +2735,10 @@ fn extend_polygon_plane_slice_edge<'point>(
             geometry: DeferredIntersectionGeometry::SegmentPlane {
                 coordinate_numerator,
                 denominator: parameter_denominator,
-                denominator_is_positive,
                 enclosure,
-                start,
-                end,
-                parameter_numerator: start_support.clone(),
+                start: positive_endpoint,
+                end: negative_endpoint,
+                parameter_numerator: positive_support.clone(),
             },
             identity: edge_plane_intersection_identity(edge_polygon, edge_index, plane_identity),
             discovery_order: (reverse_slice, edge_index),
@@ -3113,16 +3090,18 @@ mod tests {
         let decisions = crate::test_support::approximate_decisions();
         let origin = Point3::origin();
         let endpoint = |numerator: i64, denominator: i64| {
-            let denominator_is_positive = denominator > 0;
+            let (numerator, denominator) = if denominator > 0 {
+                (numerator, denominator)
+            } else {
+                (-numerator, -denominator)
+            };
             let numerator = Real::from(numerator);
             let denominator = Real::from(denominator);
-            let enclosure =
-                certified_ratio_enclosure(&numerator, &denominator, denominator_is_positive);
+            let enclosure = certified_ratio_enclosure(&numerator, &denominator);
             DeferredIntersectionPoint {
                 geometry: DeferredIntersectionGeometry::SegmentPlane {
                     coordinate_numerator: numerator,
                     denominator,
-                    denominator_is_positive,
                     enclosure,
                     start: &origin,
                     end: &origin,
@@ -3230,15 +3209,14 @@ mod tests {
         fn point<'point>(
             positions: &'point [Point3; 6],
             x: i64,
-            negative_denominator: bool,
+            ratio: bool,
         ) -> DeferredIntersectionPoint<'point> {
             let point = &positions[x as usize];
             DeferredIntersectionPoint {
-                geometry: if negative_denominator {
+                geometry: if ratio {
                     DeferredIntersectionGeometry::SegmentPlane {
-                        coordinate_numerator: Real::from(-x),
-                        denominator: Real::from(-1),
-                        denominator_is_positive: false,
+                        coordinate_numerator: Real::from(x),
+                        denominator: Real::one(),
                         enclosure: None,
                         start: point,
                         end: point,
@@ -3255,16 +3233,16 @@ mod tests {
         fn span<'point>(
             positions: &'point [Point3; 6],
             interval: Option<(i64, i64)>,
-            negative_denominator: bool,
+            ratio: bool,
         ) -> DeferredIntersectionSpan<'point> {
             match interval {
                 None => DeferredIntersectionSpan::default(),
                 Some((minimum, maximum)) if minimum == maximum => {
-                    deferred_point_span(point(positions, minimum, negative_denominator))
+                    deferred_point_span(point(positions, minimum, ratio))
                 }
                 Some((minimum, maximum)) => deferred_segment_span(
-                    point(positions, minimum, negative_denominator),
-                    point(positions, maximum, negative_denominator),
+                    point(positions, minimum, ratio),
+                    point(positions, maximum, ratio),
                 ),
             }
         }
@@ -3288,15 +3266,15 @@ mod tests {
         ] {
             for &(left, right, expected) in &cases {
                 for (left, right) in [(left, right), (right, left)] {
-                    for (left_negative, right_negative) in
+                    for (left_ratio, right_ratio) in
                         [(false, false), (false, true), (true, false), (true, true)]
                     {
                         let context = MeshContext::new(policy);
                         let decisions = DecisionContext::new(&context);
                         let actual = intersect_deferred_spans(
                             &decisions,
-                            span(&positions, left, left_negative),
-                            span(&positions, right, right_negative),
+                            span(&positions, left, left_ratio),
+                            span(&positions, right, right_ratio),
                         )
                         .unwrap();
                         let actual = match actual {
@@ -3333,13 +3311,12 @@ mod tests {
         let end = Point3::new(Real::from(10), Real::zero(), Real::zero());
         let crossing = DeferredIntersectionPoint {
             geometry: DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator: Real::from(-50),
-                denominator: Real::from(-10),
-                denominator_is_positive: false,
+                coordinate_numerator: Real::from(50),
+                denominator: Real::from(10),
                 enclosure: None,
                 start: &start,
                 end: &end,
-                parameter_numerator: Real::from(-5),
+                parameter_numerator: Real::from(5),
             },
             identity: None,
             discovery_order: (false, 0),
@@ -3404,7 +3381,6 @@ mod tests {
                     DeferredIntersectionGeometry::SegmentPlane {
                         coordinate_numerator: x.clone(),
                         denominator: Real::one(),
-                        denominator_is_positive: true,
                         enclosure: None,
                         start: &origin,
                         end: &origin,
