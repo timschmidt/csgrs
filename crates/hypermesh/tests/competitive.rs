@@ -169,6 +169,71 @@ fn shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies(
 }
 
 #[test]
+fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
+    let case = support::dense_coplanar_box_case(4);
+    let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(4),
+        BooleanExpression::And([5, 6]),
+    ];
+    let roots = [0_u32, 1, 2, 7, 3];
+    let expected_triangles = [384, 384, 0, 0, 0];
+    let expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0];
+    let mut strict = None;
+
+    for (policy, context) in predicate_contexts() {
+        let outcome = boolean(
+            &context,
+            &[inputs[0].as_ref(), inputs[1].as_ref()],
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
+        )
+        .unwrap_or_else(|error| panic!("{} {policy} failed: {error}", case.name));
+        assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+        if let Some(strict) = &strict {
+            assert_eq!(outcome.value, *strict, "policy outputs differ");
+        } else {
+            strict = Some(outcome.value.clone());
+        }
+
+        for (output_index, ((output, expected_triangles), expected_volume)) in outcome
+            .value
+            .results
+            .iter()
+            .zip(expected_triangles)
+            .zip(expected_volumes)
+            .enumerate()
+        {
+            assert_eq!(
+                output.triangles.len(),
+                expected_triangles,
+                "{policy} output {output_index} triangle count",
+            );
+            assert!(
+                boundary_is_balanced(output),
+                "{policy} output {output_index} is directionally unbalanced",
+            );
+            let summary = summarize(&raw_from_hypermesh_batch(&outcome.value, output_index));
+            assert!(summary.finite, "{policy} output {output_index}");
+            assert!(summary.nondegenerate, "{policy} output {output_index}");
+            assert_close(
+                summary.volume,
+                expected_volume,
+                &format!("{policy} output {output_index} volume"),
+            );
+        }
+    }
+}
+
+#[test]
 fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
     let nodes = [
         BooleanExpression::Operation(BooleanOp::Union),

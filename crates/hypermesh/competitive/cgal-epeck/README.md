@@ -38,6 +38,10 @@ target/competitive/cgal-epeck/hypermesh_cgal_epeck \
   intersection 21 outside
 ```
 
+The same exporter accepts `dense_coplanar_boxes_4`,
+`dense_coplanar_boxes_16`, and `dense_coplanar_boxes_32`, whose opposite face
+diagonals provide the fixed-coordinate-complexity coplanar scaling family.
+
 The exporter writes reduced `numerator/denominator` tokens from
 `Real::exact_rational`; it does not round through a display approximation.
 

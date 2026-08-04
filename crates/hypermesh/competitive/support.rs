@@ -20,6 +20,7 @@ pub const APPROXIMATE_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::A
 pub const STRICT_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
+pub const DENSE_COPLANAR_DIVISIONS: [usize; 3] = [4, 16, 32];
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
@@ -297,6 +298,34 @@ pub fn clipped_voxel_torus_case(outer: usize) -> Case {
             }),
         ],
     }
+}
+
+/// Builds two exactly coincident boxes with opposite face diagonals and the
+/// same power-of-two surface grid. Every face therefore exercises coplanar
+/// overlay while coordinate storage remains bounded exact dyadic.
+pub fn dense_coplanar_box_case(divisions: usize) -> Case {
+    assert!(divisions >= 2 && divisions.is_power_of_two());
+    let mut case = box_case(
+        match divisions {
+            4 => "dense_coplanar_boxes_4",
+            16 => "dense_coplanar_boxes_16",
+            32 => "dense_coplanar_boxes_32",
+            _ => "dense_coplanar_boxes",
+        },
+        [
+            ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+        ],
+    );
+    case.left = subdivide(&case.left, divisions);
+    case.right = subdivide(
+        &box_mesh_with_alternate_diagonals([0.0; 3], [4.0; 3]),
+        divisions,
+    );
+    let triangles_per_mesh = 12 * divisions * divisions;
+    assert_eq!(case.left.triangles.len(), triangles_per_mesh);
+    assert_eq!(case.right.triangles.len(), triangles_per_mesh);
+    case
 }
 
 fn voxel_torus_mesh(outer: usize, wall: usize, depth: usize) -> RawMesh {
@@ -828,6 +857,18 @@ pub fn box_mesh(min: [f64; 3], max: [f64; 3]) -> RawMesh {
             [0, 5, 4],
         ],
     }
+}
+
+fn box_mesh_with_alternate_diagonals(min: [f64; 3], max: [f64; 3]) -> RawMesh {
+    let mut mesh = box_mesh(min, max);
+    for pair in mesh.triangles.chunks_exact_mut(2) {
+        let [a, b, c] = pair[0];
+        let [same_a, same_c, d] = pair[1];
+        assert_eq!([same_a, same_c], [a, c]);
+        pair[0] = [a, b, d];
+        pair[1] = [b, c, d];
+    }
+    mesh
 }
 
 fn tetrahedron(origin: [f64; 3], size: f64) -> RawMesh {

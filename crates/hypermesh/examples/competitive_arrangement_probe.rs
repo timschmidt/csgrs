@@ -4,7 +4,9 @@ mod competitive_support;
 
 use std::{env, hint::black_box, time::Instant};
 
-use competitive_support::{clipped_voxel_torus_case, corpus, run_hypermesh_all, to_hypermesh};
+use competitive_support::{
+    clipped_voxel_torus_case, corpus, dense_coplanar_box_case, run_hypermesh_all, to_hypermesh,
+};
 use hypermesh::{
     BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, TriangleMesh,
     boolean, polygon_soup,
@@ -68,6 +70,9 @@ fn main() {
     let case = match fixture.as_str() {
         "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
         "clipped_voxel_torus_65" => clipped_voxel_torus_case(65),
+        "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
+        "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
+        "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
         _ => corpus()
             .into_iter()
             .find(|case| case.name == fixture)

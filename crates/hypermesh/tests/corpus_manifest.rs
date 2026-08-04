@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 29, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 32, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -172,6 +172,9 @@ fn corpus_spans_initial_replacement_path_classes() {
         "nonmanifold-output",
         "exact-symmetry-plane",
         "large-mesh",
+        "cross-operand-coplanar-overlay",
+        "opposite-face-diagonals",
+        "fixed-coordinate-complexity",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -253,6 +256,8 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         [
             "boxes-3072",
             "boxes-3072-general",
+            "dense-coplanar-16",
+            "dense-coplanar-32",
             "voxel-torus-33",
             "voxel-torus-65",
             "yeahright",
@@ -263,6 +268,63 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         .into_iter()
         .collect()
     );
+}
+
+#[test]
+fn dense_coplanar_family_scales_mesh_work_at_fixed_coordinate_complexity() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str) == Some("dense_coplanar_boxes")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), 3);
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        support::DENSE_COPLANAR_DIVISIONS.map(|divisions| divisions as i64)
+    );
+    assert!(
+        family.iter().all(|fixture| {
+            fixture["input_coordinate_denominator_bound"].as_integer() == Some(8)
+        })
+    );
+
+    for divisions in support::DENSE_COPLANAR_DIVISIONS {
+        let expected_triangles = 24 * divisions * divisions;
+        let case = support::dense_coplanar_box_case(divisions);
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            expected_triangles
+        );
+        for mesh in [&case.left, &case.right] {
+            let summary = support::summarize(mesh);
+            assert!(summary.closed);
+            assert!(summary.nondegenerate);
+            assert_eq!(summary.volume, 64.0);
+            assert!(
+                mesh.positions
+                    .iter()
+                    .flatten()
+                    .all(|coordinate| (coordinate * 8.0).fract() == 0.0)
+            );
+        }
+        assert_eq!(
+            family
+                .iter()
+                .find(|fixture| {
+                    fixture["scale_parameter"].as_integer() == Some(divisions as i64)
+                })
+                .unwrap()["input_triangles"]
+                .as_integer(),
+            Some(expected_triangles as i64)
+        );
+    }
 }
 
 #[test]

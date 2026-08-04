@@ -1,12 +1,12 @@
 use crate::competitive_support::{
-    MeshPair, RawMesh, box_mesh, clipped_voxel_torus_case, large_boolean_case, parse_triangle_obj,
-    to_hypermesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
-    yeahright_control_mesh,
+    MeshPair, RawMesh, box_mesh, clipped_voxel_torus_case, dense_coplanar_box_case,
+    large_boolean_case, parse_triangle_obj, to_hypermesh, yeahright_boolean_case,
+    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
 };
 use crate::mesh_common;
 use hypermesh::{BooleanOp, MeshContext, TriangleMesh, TriangleMeshRef, polygon_soup};
 
-pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|voxel-torus-33|voxel-torus-65|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
+pub(crate) const FIXTURE_HELP: &str = "expected <boxes-3072|boxes-3072-general|dense-coplanar-16|dense-coplanar-32|voxel-torus-33|voxel-torus-65|yeahright|yeahright-4|yeahright-8|yeahright-full-rotated> <policy>";
 
 #[derive(Clone, Copy)]
 pub(crate) enum InputPath {
@@ -43,6 +43,28 @@ pub(crate) fn prepare_large_fixture(selector: &str) -> PreparedLargeFixture {
                 0,
                 InputPath::Raw,
                 BooleanOp::Union,
+            )
+        }
+        "dense-coplanar-16" => {
+            let case = dense_coplanar_box_case(16);
+            (
+                case.name,
+                case.left,
+                case.right,
+                0,
+                InputPath::Native { prime_pwn: true },
+                BooleanOp::Intersection,
+            )
+        }
+        "dense-coplanar-32" => {
+            let case = dense_coplanar_box_case(32);
+            (
+                case.name,
+                case.left,
+                case.right,
+                0,
+                InputPath::Native { prime_pwn: true },
+                BooleanOp::Intersection,
             )
         }
         "voxel-torus-33" => {

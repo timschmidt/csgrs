@@ -48,6 +48,15 @@ They use the same exact symmetry-plane clipping operation at 460, 6,412, and
 correctness and competitive suite; the large and XL points have unique direct
 kernel/process heap selectors under both policies.
 
+`dense_coplanar_boxes_4`, `dense_coplanar_boxes_16`, and
+`dense_coplanar_boxes_32` are geometrically identical box pairs whose two
+surface grids use opposite face diagonals. Every face therefore enters the
+cross-operand coplanar overlay instead of relying on coincident triangulation.
+The family has 384, 6,144, and 24,576 input triangles while every authored
+input coordinate stays on the same denominator-at-most-eight dyadic lattice,
+separating mesh growth from input scalar-storage growth. The large and XL
+siblings have distinct both-policy kernel/process heap selectors.
+
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
 first primes the native policy-qualified closed-PWN fact, while the second uses
