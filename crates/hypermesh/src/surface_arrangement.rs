@@ -2599,10 +2599,10 @@ fn corefine_face(
                 point
             } else {
                 let intersection = hyperlimit::construct_line_intersection_point(
-                    &limit_point(left_points[0]),
-                    &limit_point(left_points[1]),
-                    &limit_point(right_points[0]),
-                    &limit_point(right_points[1]),
+                    left_points[0],
+                    left_points[1],
+                    right_points[0],
+                    right_points[1],
                 )
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
                     reason: "proper face constraints have no intersection point",
@@ -2838,12 +2838,7 @@ fn planar_point_on_segment(
     point: &hypertri::ExactPoint,
 ) -> HypermeshResult<bool> {
     decisions.decide(
-        hyperlimit::point_on_segment(
-            &limit_point(edge[0]),
-            &limit_point(edge[1]),
-            &limit_point(point),
-            decisions.policy(),
-        ),
+        hyperlimit::point_on_segment(edge[0], edge[1], point, decisions.policy()),
         "surface arrangement point on segment",
     )
 }
@@ -2883,12 +2878,7 @@ fn planar_orientation(
     c: &hypertri::ExactPoint,
 ) -> HypermeshResult<Classification> {
     let sign = decisions.decide(
-        hyperlimit::orient2(
-            &limit_point(a),
-            &limit_point(b),
-            &limit_point(c),
-            decisions.policy(),
-        ),
+        hyperlimit::orient2(a, b, c, decisions.policy()),
         "surface arrangement orientation",
     )?;
     Ok(match sign {
@@ -2896,10 +2886,6 @@ fn planar_orientation(
         hyperlimit::Sign::Zero => Classification::On,
         hyperlimit::Sign::Positive => Classification::Positive,
     })
-}
-
-fn limit_point(point: &hypertri::ExactPoint) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
 fn projection_axis(decisions: &DecisionContext, plane: &Plane) -> HypermeshResult<usize> {
