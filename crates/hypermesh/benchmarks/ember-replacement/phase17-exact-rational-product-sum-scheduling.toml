@@ -1,0 +1,288 @@
+[metadata]
+captured = "2026-08-04"
+phase = 17
+checkpoint = "retained-fact-product-sum-scheduling"
+status = "retained-open"
+ember_removed = true
+compatibility_shim = false
+second_boolean_engine = false
+benchmark_specific_dispatch = false
+expected_output_shortcut = false
+hidden_work_limit = false
+hypercurve_touched = false
+hypersolve_touched = false
+
+[revisions]
+hypermesh_implementation = "f3683ba9202214409d67a4b7d427d5c0d39aebad"
+hypermesh_evidence_parent = "43c8c17069aaeec0a5232c187371f50aa48bfe52"
+parent_hyperreal = "c2217bae132b725e29faeb89495b8cd51012e1bc"
+hyperreal = "0a95218213ca32708f06a63706a1aa4f759d51d5"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "6e4d68c835dbdcb487ef8e43cf57138ed13894b5"
+hypertri = "41631f652233e1337521822abc63bc29a6c0ce55"
+hyperpath = "e65506279d3cba99a23cf98bbd17be44126ec14d"
+
+[algorithm]
+component = "Real fixed-shape signed product-sum dispatch"
+first_route = "fixed Pythagorean SinPi identity"
+second_route = "all-exact-rational shared-denominator reducer"
+third_route = "general orthonormal SinPi polynomial"
+final_route = "bounded active expression tree"
+all_routes_retained = true
+new_function = false
+public_api_changed = false
+adds_dependency = false
+adds_allocation = false
+mesh_local_scalar_schedule = false
+fixture_branch = false
+triangle_count_branch = false
+coordinate_width_branch = false
+operation_branch = false
+policy_name_branch = false
+expected_output_branch = false
+competitor_branch = false
+
+[policy]
+new_numeric_decisions = 0
+strict_terminal_approximation_allowed = false
+approximate_512_terminal_bits = 512
+approximate_terminal_owner = "hyperlimit"
+certainty_aggregation_changed = false
+exact_rational_certified_under_both = true
+large_policy_outputs_exactly_equal = true
+large_policy_heap_exactly_equal = true
+
+[source]
+files_changed = 1
+insertions = 13
+deletions = 13
+net_lines = 0
+
+[perf_protocol]
+cpu = 11
+independent_release_targets = true
+primary_metrics = ["instructions", "branches"]
+wall_accepted = false
+wall_rejection_reason = "host frequency and concurrent load changed cycles without changing retired work"
+
+[perf.full]
+fixture = "yeahright-full-rotated"
+input_triangles = 23_788
+parent_instructions = 16_526_759_045
+current_instructions = 16_506_581_246
+instruction_movement_percent = -0.122092
+parent_branches = 2_947_529_412
+current_branches = 2_943_852_219
+branch_movement_percent = -0.124755
+
+[perf.wide_2049_repeated]
+fixture = "wide_rational_boxes_2048"
+input_triangles = 6_144
+complete_arrangements = 5
+parent_instructions = 14_668_312_208
+current_instructions = 14_668_171_266
+instruction_movement_percent = -0.000961
+parent_branches = 2_690_275_188
+current_branches = 2_690_193_315
+branch_movement_percent = -0.003043
+
+[perf.voxel_torus_33]
+input_triangles = 6_412
+parent_instructions = 1_134_319_463
+current_instructions = 1_133_187_357
+instruction_movement_percent = -0.099805
+parent_branches = 195_284_322
+current_branches = 195_070_221
+branch_movement_percent = -0.109636
+
+[perf.voxel_torus_65]
+input_triangles = 25_100
+parent_instructions = 4_914_802_919
+current_instructions = 4_908_029_439
+instruction_movement_percent = -0.137818
+parent_branches = 843_382_823
+current_branches = 841_294_510
+branch_movement_percent = -0.247612
+
+[perf.dense_coplanar_16]
+input_triangles = 6_144
+parent_instructions = 3_019_032_101
+current_instructions = 3_002_649_818
+instruction_movement_percent = -0.542634
+parent_branches = 516_028_057
+current_branches = 511_765_566
+branch_movement_percent = -0.826019
+
+[perf.small_boxes_strict]
+complete_arrangements = 1_000
+parent_instructions = 5_677_972_759
+current_instructions = 5_666_961_740
+instruction_movement_percent = -0.193925
+parent_branches = 1_001_866_089
+current_branches = 999_436_903
+branch_movement_percent = -0.242466
+
+[perf.small_boxes_approximate_512]
+complete_arrangements = 1_000
+parent_instructions = 5_682_917_084
+current_instructions = 5_662_035_127
+instruction_movement_percent = -0.367451
+parent_branches = 1_003_113_603
+current_branches = 998_222_045
+branch_movement_percent = -0.487637
+
+[scalar_probe.rational_det3]
+calls = 5_000_000
+parent_instructions = 23_625_382_390
+current_instructions = 23_210_382_417
+instruction_movement_percent = -1.756585
+parent_branches = 3_410_078_742
+current_branches = 3_300_078_732
+branch_movement_percent = -3.225732
+
+[scalar_probe.mixed_symbolic_det3]
+calls = 1_000_000
+parent_instructions = 24_259_403_400
+current_instructions = 24_259_403_532
+instruction_movement_percent = 0.000001
+parent_branches = 5_478_083_650
+current_branches = 5_478_083_637
+branch_movement_percent = 0.0
+
+[scalar_probe.pythagorean_sin_pi]
+calls = 5_000_000
+parent_instructions = 6_620_388_466
+current_instructions = 6_620_388_464
+instruction_movement_percent = 0.0
+parent_branches = 1_460_079_208
+current_branches = 1_460_079_207
+branch_movement_percent = 0.0
+
+[scalar_probe.general_orthonormal_sin_pi]
+calls = 500_000
+parent_instructions = 3_747_390_067
+current_instructions = 3_758_390_006
+instruction_movement_percent = 0.293536
+parent_branches = 844_579_330
+current_branches = 846_079_287
+branch_movement_percent = 0.177598
+
+[heap.full]
+fixture = "yeahright-full-rotated"
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_equal = true
+parent_equal = true
+peak_bytes = 158_258_204
+allocations = 16_928_390
+deallocations = 16_575_749
+reallocations = 2_385_300
+added_bytes = 913_360_240
+removed_bytes = 888_970_336
+
+[heap.wide_2049]
+fixture = "wide-rational-2048"
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_equal = true
+parent_equal = true
+peak_bytes = 31_234_658
+allocations = 2_092_630
+deallocations = 2_092_488
+reallocations = 227_677
+added_bytes = 459_671_086
+removed_bytes = 459_124_046
+
+[size.release_general]
+parent_native_text_bytes = 1_968_582
+current_native_text_bytes = 1_968_630
+native_movement_bytes = 48
+parent_wasm_oz_bytes = 1_391_425
+current_wasm_oz_bytes = 1_391_425
+wasm_movement_bytes = 0
+
+[size.release_immediate]
+parent_native_text_bytes = 1_971_726
+current_native_text_bytes = 1_971_774
+native_movement_bytes = 48
+parent_wasm_oz_bytes = 1_393_283
+current_wasm_oz_bytes = 1_393_283
+wasm_movement_bytes = 0
+
+[size.size_general]
+parent_native_text_bytes = 1_071_807
+current_native_text_bytes = 1_071_807
+native_movement_bytes = 0
+parent_wasm_oz_bytes = 668_454
+current_wasm_oz_bytes = 668_459
+wasm_movement_bytes = 5
+
+[size.size_immediate]
+parent_native_text_bytes = 1_072_771
+current_native_text_bytes = 1_072_771
+native_movement_bytes = 0
+parent_wasm_oz_bytes = 668_865
+current_wasm_oz_bytes = 668_870
+wasm_movement_bytes = 5
+
+[callgraph]
+path = "/tmp/hypermesh-exact-rational-product-sum-schedule-callgraph-2026-08-04"
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+nodes = 14_792
+edges = 24_633
+hyperreal_nodes = 7_210
+hyperreal_edges = 12_416
+hypermesh_nodes = 2_913
+hypermesh_edges = 4_668
+node_movement = 0
+edge_movement = 0
+old_candidate_routes = 0
+ember_routes = 0
+compatibility_routes = 0
+
+[validation]
+hyperreal_all_feature_unit_tests = 649
+hyperreal_no_default_unit_tests = 572
+hyperlimit_all_features = true
+hyperlattice_all_features = true
+hypertri_all_features = true
+hypermesh_all_feature_tests_executed = 179
+hypermesh_default_tests_executed = 178
+ignored_external_manual_tests = 6
+no_default_features_check = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_deny_warnings = true
+fuzz_bins_check = true
+bench_no_run = true
+fmt_check = true
+diff_check = true
+locked_release_trunk = true
+
+[[rejected]]
+name = "universal exact-first order ahead of fixed Pythagorean identity"
+reason = "charged the fastest retained sine identity for a roughly 0.02 percent full-mesh gain"
+retained = false
+
+[[rejected]]
+name = "mesh-local all-rational support-value helper"
+full_instruction_improvement_percent = -0.051
+native_text_growth_bytes = 1_700
+wasm_oz_growth_bytes = 2_600
+retained = false
+
+[[rejected]]
+name = "two-product construction variant"
+reason = "regressed end-to-end deterministic work"
+retained = false
+
+[competitive_open]
+cgal_version = "6.0.3"
+historical_full_runtime_loss_ratio = 19.00
+historical_full_fresh_rss_loss_ratio = 12.25
+historical_ordinary_box_strict_loss_ratio = 4.81
+historical_ordinary_box_approximate_512_loss_ratio = 4.53
+ratios_relabelled_current = false
+runtime_gate_closed = false
+rss_gate_closed = false
+stage_attribution_complete = false
+external_real_world_corpus_complete = false
+phase17_complete = false
+phase18_complete = false
