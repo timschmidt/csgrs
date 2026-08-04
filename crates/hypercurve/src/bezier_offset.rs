@@ -6978,7 +6978,7 @@ fn algebraic_point_linear_order(
 }
 
 #[cfg(feature = "predicates")]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct TrivariatePolynomial2 {
     coefficients: Vec<Vec<Vec<Real>>>,
 }
@@ -7054,6 +7054,143 @@ impl TrivariatePolynomial2 {
                 .unwrap_or(0),
         )
     }
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_structurally_zero(polynomial: &TrivariatePolynomial2, policy: &CurveContext) -> bool {
+    polynomial.coefficients.iter().all(|rows| {
+        rows.iter().all(|row| {
+            row.iter()
+                .all(|coefficient| real_sign(coefficient, policy) == Some(RealSign::Zero))
+        })
+    })
+}
+
+/// Reduces one tensor axis modulo a selected root's defining polynomial.
+///
+/// The source tensor is rectangularized once, then high powers are consumed
+/// in descending order. Each source slice is moved rather than cloned, keeping
+/// the cold quotient-ring simplification bounded by the tensor itself.
+#[cfg(feature = "predicates")]
+fn trivariate_reduce_axis_mod_defining(
+    mut polynomial: TrivariatePolynomial2,
+    axis: usize,
+    defining: &[Real],
+) -> Option<TrivariatePolynomial2> {
+    let degree = defining.len().checked_sub(1)?;
+    if axis >= 3 || degree == 0 {
+        return None;
+    }
+    let (first_count, second_count, third_count) = polynomial.dimensions();
+    let counts = [first_count, second_count, third_count];
+    if counts.into_iter().any(|count| count == 0)
+        || counts[axis] <= degree
+        || first_count
+            .checked_mul(second_count)?
+            .checked_mul(third_count)?
+            > MAX_TRIVARIATE_BERNSTEIN_CONTROLS
+    {
+        return None;
+    }
+
+    let leading = defining.last()?;
+    let relation = defining[..degree]
+        .iter()
+        .map(|coefficient| ((-coefficient.clone()) / leading.clone()).ok())
+        .collect::<Option<Vec<_>>>()?;
+    for rows in &mut polynomial.coefficients {
+        rows.resize_with(second_count, || vec![Real::zero(); third_count]);
+        for row in rows {
+            row.resize(third_count, Real::zero());
+        }
+    }
+
+    match axis {
+        0 => {
+            for power in (degree..first_count).rev() {
+                let source = std::mem::take(&mut polynomial.coefficients[power]);
+                for (second, row) in source.into_iter().enumerate() {
+                    for (third, coefficient) in row.into_iter().enumerate() {
+                        for (offset, factor) in relation.iter().enumerate() {
+                            polynomial.coefficients[power - degree + offset][second][third] +=
+                                &coefficient * factor;
+                        }
+                    }
+                }
+            }
+            polynomial.coefficients.truncate(degree);
+        }
+        1 => {
+            for rows in &mut polynomial.coefficients {
+                for power in (degree..second_count).rev() {
+                    let source = std::mem::take(&mut rows[power]);
+                    for (third, coefficient) in source.into_iter().enumerate() {
+                        for (offset, factor) in relation.iter().enumerate() {
+                            rows[power - degree + offset][third] += &coefficient * factor;
+                        }
+                    }
+                }
+                rows.truncate(degree);
+            }
+        }
+        2 => {
+            for rows in &mut polynomial.coefficients {
+                for row in rows {
+                    for power in (degree..third_count).rev() {
+                        let coefficient = std::mem::replace(&mut row[power], Real::zero());
+                        for (offset, factor) in relation.iter().enumerate() {
+                            row[power - degree + offset] += &coefficient * factor;
+                        }
+                    }
+                    row.truncate(degree);
+                }
+            }
+        }
+        _ => unreachable!(),
+    }
+    Some(polynomial)
+}
+
+/// Returns a smaller tensor only when at least one selected-root relation
+/// removes powers. Sequential reductions commute at the selected root tuple.
+#[cfg(feature = "predicates")]
+fn trivariate_reduce_selected_root_relations(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> Option<TrivariatePolynomial2> {
+    let parameters = [first, second, third];
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    let degrees = parameters.map(|parameter| match parameter {
+        BezierParameter2::Exact(_) => 1,
+        BezierParameter2::Algebraic(parameter) => parameter.polynomial().degree(),
+    });
+    let reduce_axes: [bool; 3] = std::array::from_fn(|axis| counts[axis] > degrees[axis]);
+    if !reduce_axes.into_iter().any(std::convert::identity) {
+        return None;
+    }
+    let mut reduced = polynomial.clone();
+    for (axis, parameter) in parameters.into_iter().enumerate() {
+        if !reduce_axes[axis] {
+            continue;
+        }
+        match parameter {
+            BezierParameter2::Exact(parameter) => {
+                let defining = [-parameter.clone(), Real::one()];
+                reduced = trivariate_reduce_axis_mod_defining(reduced, axis, &defining)?;
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                reduced = trivariate_reduce_axis_mod_defining(
+                    reduced,
+                    axis,
+                    parameter.polynomial().coefficients(),
+                )?;
+            }
+        }
+    }
+    Some(reduced)
 }
 
 #[cfg(feature = "predicates")]
@@ -7569,21 +7706,7 @@ fn trivariate_parameter_triple_sign_by_refinement(
     third: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let mut structurally_zero = true;
-    'coefficients: for rows in &polynomial.coefficients {
-        for row in rows {
-            for coefficient in row {
-                match real_sign(coefficient, policy) {
-                    Some(RealSign::Zero) => {}
-                    Some(RealSign::Negative | RealSign::Positive) | None => {
-                        structurally_zero = false;
-                        break 'coefficients;
-                    }
-                }
-            }
-        }
-    }
-    if structurally_zero {
+    if trivariate_structurally_zero(polynomial, policy) {
         return Ok(Classification::Decided(RealSign::Zero));
     }
     let mut first_refinement = BezierParameterRefinement2::new(first, policy);
@@ -7615,6 +7738,42 @@ fn trivariate_parameter_triple_sign_by_refinement(
                 trivariate_linear_axis_resultant_sign(polynomial, first, second, third)?
         {
             return Ok(Classification::Decided(sign));
+        }
+        if target_steps == 8
+            && let Some(reduced) =
+                trivariate_reduce_selected_root_relations(polynomial, first, second, third)
+        {
+            // Quotient-ring reduction changes the tensor away from the roots,
+            // but preserves its value at this selected root tuple exactly. A
+            // strict sign over the selected box is therefore still valid.
+            if trivariate_structurally_zero(&reduced, &CurveContext::STRICT) {
+                return Ok(Classification::Decided(RealSign::Zero));
+            }
+            let restricted = trivariate_restrict_to_parameter_box(
+                &reduced,
+                first_refinement.refine_to(target_steps),
+                second_refinement.refine_to(target_steps),
+                third_refinement.refine_to(target_steps),
+            );
+            if let Some(sign) =
+                trivariate_unit_cube_strict_bernstein_sign(restricted, &CurveContext::STRICT)?
+            {
+                return Ok(Classification::Decided(sign));
+            }
+            if let Some(sign) = trivariate_affinely_related_parameter_sign(
+                &reduced,
+                first,
+                second,
+                third,
+                &CurveContext::STRICT,
+            )? {
+                return Ok(Classification::Decided(sign));
+            }
+            if let Some(sign) =
+                trivariate_linear_axis_resultant_sign(&reduced, first, second, third)?
+            {
+                return Ok(Classification::Decided(sign));
+            }
         }
     }
     if policy.permits_approximate_512() {
@@ -25929,12 +26088,118 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn nonlinear_three_field_zero_obeys_the_selected_terminal_policy() {
+    fn trivariate_quotient_reduction_preserves_every_axis() {
+        let polynomial = TrivariatePolynomial2 {
+            coefficients: (0..4)
+                .map(|first| {
+                    (0..3)
+                        .map(|second| {
+                            (0..5)
+                                .map(|third| {
+                                    Real::from(1_i32 + first * 11 + second * 5 + third * 3)
+                                })
+                                .collect()
+                        })
+                        .collect()
+                })
+                .collect(),
+        };
+        let defining = [Real::zero(), -Real::one(), Real::one()];
+        let evaluate = |polynomial: &TrivariatePolynomial2, values: &[Real; 3]| {
+            polynomial
+                .coefficients
+                .iter()
+                .rev()
+                .fold(Real::zero(), |first_accumulator, rows| {
+                    first_accumulator * &values[0]
+                        + rows
+                            .iter()
+                            .rev()
+                            .fold(Real::zero(), |second_accumulator, row| {
+                                second_accumulator * &values[1]
+                                    + polynomial_evaluate(row, &values[2])
+                            })
+                })
+        };
+        for axis in 0..3 {
+            let mut values = [
+                (Real::from(2_i8) / Real::from(5_i8)).unwrap(),
+                (Real::from(3_i8) / Real::from(7_i8)).unwrap(),
+                (Real::from(4_i8) / Real::from(9_i8)).unwrap(),
+            ];
+            values[axis] = Real::one();
+            let reduced = trivariate_reduce_axis_mod_defining(polynomial.clone(), axis, &defining)
+                .expect("the bounded quotient reduction must fit");
+            let dimensions = reduced.dimensions();
+            assert_eq!([dimensions.0, dimensions.1, dimensions.2][axis], 2);
+            assert_eq!(evaluate(&reduced, &values), evaluate(&polynomial, &values));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn defining_polynomial_reduction_certifies_nonlinear_three_field_zero() {
         let (parameters, mut polynomial) = nonaffine_three_field_chord_fixture();
         for axis in 0..3 {
             polynomial =
                 trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
         }
+        let reduced = trivariate_reduce_selected_root_relations(
+            &polynomial,
+            &parameters[0],
+            &parameters[1],
+            &parameters[2],
+        )
+        .expect("quadratic selected-root relations must reduce the tensor");
+        assert_eq!(reduced.dimensions(), (2, 2, 3));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero),);
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn nonlinear_cubic_three_field_zero_obeys_the_selected_terminal_policy() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let sixth = (Real::one() / Real::from(6_i8)).unwrap();
+        let parameters = [
+            algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]),
+            algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]),
+            algebraic_parameter(vec![-sixth, Real::zero(), Real::zero(), Real::one()]),
+        ];
+        // a*b-c, where the positive selected roots satisfy c=a*b because
+        // a^3=1/2, b^3=1/3, and c^3=1/6. Multiplication by one nonzero linear
+        // factor per axis makes the predicate quadratic in every cubic field,
+        // so defining-polynomial reduction cannot yet expose a linear axis.
+        let mut coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        coefficients[1][1][0] = Real::one();
+        coefficients[0][0][1] = -Real::one();
+        let mut polynomial = TrivariatePolynomial2 { coefficients };
+        for axis in 0..3 {
+            polynomial =
+                trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
+        }
+        assert!(
+            trivariate_reduce_selected_root_relations(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .is_none()
+        );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
                 trivariate_parameter_triple_sign_by_refinement(
