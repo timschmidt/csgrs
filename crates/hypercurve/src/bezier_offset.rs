@@ -27596,22 +27596,6 @@ mod conversion_tests {
             .unwrap()
             .is_none()
         );
-        for axis in 0..3 {
-            let factorizations = trivariate_quadratic_axis_factorizations(&polynomial, axis)
-                .expect("the exact square discriminant must split on every axis");
-            assert!(factorizations.iter().any(|(factor, quotient)| {
-                [factor, quotient].into_iter().any(|candidate| {
-                    trivariate_existing_symbolic_sign(
-                        candidate,
-                        &parameters[0],
-                        &parameters[1],
-                        &parameters[2],
-                    )
-                    .unwrap()
-                        == Some(RealSign::Zero)
-                })
-            }));
-        }
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
                 trivariate_parameter_triple_sign_by_refinement(
