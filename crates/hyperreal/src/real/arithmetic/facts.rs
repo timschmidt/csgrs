@@ -662,11 +662,11 @@ impl Real {
     /// Return a fixed-size signed sum of products while preserving its shape.
     ///
     /// This is the general expression-layer counterpart to the matrix dot
-    /// helpers. It first attempts the exact rational reducer, which keeps one
-    /// shared denominator and performs one final canonicalization for the whole
-    /// determinant/cofactor polynomial. If any factor is symbolic or computable,
-    /// it falls back to a bounded expression tree that still prunes exact-zero
-    /// factors and applies exact-rational scales directly.
+    /// helpers. It retains the fixed Pythagorean sine identity, then attempts the
+    /// exact rational reducer. That reducer keeps one shared denominator and makes
+    /// one final canonicalization for the determinant/cofactor polynomial. Other
+    /// symbolic or computable factors fall back to a bounded expression tree that
+    /// still prunes exact-zero factors and applies exact-rational scales directly.
     ///
     /// The API is intentionally fixed-arity and caller-directed rather than a
     /// general symbolic optimizer. Predicate, matrix, and solver crates should
@@ -680,12 +680,12 @@ impl Real {
             crate::trace_dispatch!("real", "product_sum", "sin-pi-pythagorean");
             return sum;
         }
-        if let Some(sum) = Self::sin_pi_orthonormal_zero_product_sum(positive_terms, terms) {
-            crate::trace_dispatch!("real", "product_sum", "sin-pi-orthonormal-zero");
-            return sum;
-        }
         if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
             crate::trace_dispatch!("real", "product_sum", "fixed-exact-rational");
+            return sum;
+        }
+        if let Some(sum) = Self::sin_pi_orthonormal_zero_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "sin-pi-orthonormal-zero");
             return sum;
         }
 
@@ -711,16 +711,16 @@ impl Real {
             );
             return sum;
         }
+        if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "active-fixed-exact-rational");
+            return sum;
+        }
         if let Some(sum) = Self::sin_pi_orthonormal_zero_product_sum(positive_terms, terms) {
             crate::trace_dispatch!(
                 "real",
                 "product_sum",
                 "active-sin-pi-orthonormal-zero"
             );
-            return sum;
-        }
-        if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
-            crate::trace_dispatch!("real", "product_sum", "active-fixed-exact-rational");
             return sum;
         }
 
