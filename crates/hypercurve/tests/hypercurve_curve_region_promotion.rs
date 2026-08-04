@@ -1,9 +1,10 @@
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
-    CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError,
-    FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
+    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerNoSolution2,
+    CurveCornerSolutions2, CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    ExactCurveError, FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
+    Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -610,6 +611,88 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         panic!("the region must preserve both exact trim-or-extend candidates");
     };
     assert_eq!(extended.len(), 2);
+
+    let CurveCornerSolutions2::Unique(one_sided) = source
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            Real::zero(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("a one-sided zero setback must retain its nondegenerate chamfer");
+    };
+    assert_eq!(
+        decided(one_sided.native_contours_fast_path(&policy).unwrap()).material_contours()[0]
+            .segments()
+            .len(),
+        5
+    );
+    assert_eq!(
+        source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::zero(),
+                Real::zero(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+    assert_eq!(
+        source
+            .fillet_loop_vertex_by_radius(0, 1, Real::zero(), CurveCornerMode2::TrimOnly, &policy,)
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn unified_region_corner_solver_obeys_terminal_policy_once() {
+    let source = CurveRegion2::try_from_native_material_contours(
+        vec![square(0, 0, 4, 4)],
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    assert!(matches!(
+        source.fillet_loop_vertex_by_radius(
+            0,
+            1,
+            undecidable_zero.clone(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::RealSign
+    ));
+    let approximate = source
+        .fillet_loop_vertex_by_radius(
+            0,
+            1,
+            undecidable_zero,
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        approximate.value,
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
 }
 
 #[test]
