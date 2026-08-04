@@ -63,6 +63,8 @@ impl BackendDivisionAlgorithm {
 }
 
 impl Rational {
+    pub(crate) const BACKEND_BASECASE_FACTOR_BITS: u64 = 32 * usize::BITS as u64;
+
     #[cfg(any(feature = "dispatch-trace", test))]
     #[inline]
     fn backend_limb_count(value: &BigUint) -> usize {

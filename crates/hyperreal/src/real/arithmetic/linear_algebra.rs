@@ -309,6 +309,20 @@ pub struct RationalLinearForm4Filter {
     coefficients: [f64; 4],
 }
 
+/// Exact homogeneous four-variable linear form with common numerator content
+/// removed once for repeated arbitrary-width signs.
+///
+/// The represented form is unchanged up to one positive scale. Query values
+/// remain borrowed, and unsupported representations decline to the caller's
+/// ordinary complete rational product-sum ordering.
+#[derive(Clone, Debug)]
+#[doc(hidden)]
+pub struct ExactRationalLinearForm4 {
+    signs: [Sign; 4],
+    numerators: [BigUint; 4],
+    denominator_shifts: [u64; 4],
+}
+
 /// Certified floating approximation of a reusable exact-rational homogeneous
 /// point query.
 ///
@@ -622,6 +636,77 @@ impl RationalLinearForm4Filter {
             self.coefficients,
             query.values,
         )
+    }
+}
+
+impl ExactRationalLinearForm4 {
+    /// Return whether this form/query pair crosses the measured boundary at
+    /// which a smaller equivalent form can repay its one-time construction.
+    #[inline]
+    pub fn should_retain(coefficients: [&Rational; 4], point: [&Rational; 4]) -> bool {
+        // Building a retained ratio has a higher one-time cost than one
+        // schoolbook product, so require a coefficient wider than three
+        // backend envelopes. This is only a schedule gate; a declined form
+        // keeps the caller's complete exact product-sum fallback.
+        let backend_factor_bits = Rational::BACKEND_BASECASE_FACTOR_BITS;
+        let min_retained_coefficient_bits = 3 * backend_factor_bits;
+        if !point
+            .iter()
+            .any(|query| query.numerator().bits() > backend_factor_bits)
+        {
+            return false;
+        }
+        let mut nonzero_coefficients = 0_u8;
+        let mut live_terms = 0_u8;
+        let mut has_retained_width = false;
+        let mut crosses_wide_product = false;
+        for (coefficient, query) in coefficients.into_iter().zip(point) {
+            if !coefficient.is_dyadic() || !query.is_dyadic() {
+                return false;
+            }
+            let coefficient_nonzero = !coefficient.is_zero();
+            if coefficient_nonzero {
+                nonzero_coefficients += 1;
+                has_retained_width |=
+                    coefficient.numerator().bits() > min_retained_coefficient_bits;
+            }
+            if coefficient_nonzero && !query.is_zero() {
+                live_terms += 1;
+                crosses_wide_product |= coefficient.numerator().bits() > backend_factor_bits
+                    && query.numerator().bits() > backend_factor_bits;
+            }
+        }
+        nonzero_coefficients > 1
+            && live_terms > 1
+            && has_retained_width
+            && crosses_wide_product
+    }
+
+    /// Construct a smaller equivalent form when all coefficients share a
+    /// nontrivial positive numerator factor.
+    pub fn from_rationals(coefficients: [&Rational; 4]) -> Option<Self> {
+        let (signs, numerators, denominator_shifts) =
+            Rational::compact_dyadic_linear_form4(coefficients)?;
+        Some(Self {
+            signs,
+            numerators,
+            denominator_shifts,
+        })
+    }
+
+    /// Return the exact sign at one borrowed homogeneous rational point.
+    #[inline]
+    pub fn sign_rationals(&self, point: [&Rational; 4]) -> Option<RealSign> {
+        Some(match Rational::compact_dyadic_linear_form4_ordering(
+            self.signs,
+            self.numerators.each_ref(),
+            self.denominator_shifts,
+            point,
+        )? {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        })
     }
 }
 
