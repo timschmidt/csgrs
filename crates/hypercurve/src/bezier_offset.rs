@@ -7199,6 +7199,267 @@ fn trivariate_affinely_related_parameter_sign(
 }
 
 #[cfg(feature = "predicates")]
+fn trivariate_linear_axis_coefficients(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+) -> Option<(BivariatePolynomial, BivariatePolynomial, [usize; 2])> {
+    if axis >= 3 {
+        return None;
+    }
+    let dimensions = polynomial.dimensions();
+    let counts = [dimensions.0, dimensions.1, dimensions.2];
+    if counts[axis] == 0 || counts[axis] > 2 {
+        return None;
+    }
+    let remaining = match axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!(),
+    };
+    let first_count = counts[remaining[0]];
+    let second_count = counts[remaining[1]];
+    if first_count == 0 || second_count == 0 {
+        return None;
+    }
+    let mut constant = vec![vec![Real::zero(); second_count]; first_count];
+    let mut linear = vec![vec![Real::zero(); second_count]; first_count];
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                let exponents = [first, second, third];
+                let target = match exponents[axis] {
+                    0 => &mut constant,
+                    1 => &mut linear,
+                    _ => return None,
+                };
+                target[exponents[remaining[0]]][exponents[remaining[1]]] += coefficient;
+            }
+        }
+    }
+    Some((
+        BivariatePolynomial::new(constant),
+        BivariatePolynomial::new(linear),
+        remaining,
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn bivariate_add_scaled_assign(
+    target: &mut BivariatePolynomial,
+    source: &BivariatePolynomial,
+    scale: &Real,
+) {
+    let first_count = target.coefficients.len().max(source.coefficients.len());
+    let second_count = target
+        .coefficients
+        .iter()
+        .chain(&source.coefficients)
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0);
+    target
+        .coefficients
+        .resize_with(first_count, || vec![Real::zero(); second_count]);
+    for row in &mut target.coefficients {
+        row.resize(second_count, Real::zero());
+    }
+    for (target, source) in target.coefficients.iter_mut().zip(&source.coefficients) {
+        for (target, source) in target.iter_mut().zip(source) {
+            *target += source * scale;
+        }
+    }
+}
+
+/// Returns `linear^degree * defining(-constant / linear)`, whose zero set is
+/// the resultant of the defining polynomial and `constant + axis * linear`.
+#[cfg(feature = "predicates")]
+fn bivariate_linear_root_resultant(
+    constant: &BivariatePolynomial,
+    linear: &BivariatePolynomial,
+    defining: &[Real],
+) -> Option<BivariatePolynomial> {
+    let degree = defining.len().checked_sub(1)?;
+    if degree == 0 {
+        return None;
+    }
+    let dimensions = |polynomial: &BivariatePolynomial| {
+        (
+            polynomial.coefficients.len(),
+            polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0),
+        )
+    };
+    let (constant_first, constant_second) = dimensions(constant);
+    let (linear_first, linear_second) = dimensions(linear);
+    let first_degree = constant_first.max(linear_first).checked_sub(1)?;
+    let second_degree = constant_second.max(linear_second).checked_sub(1)?;
+    let first_count = degree.checked_mul(first_degree)?.checked_add(1)?;
+    let second_count = degree.checked_mul(second_degree)?.checked_add(1)?;
+    if first_count.checked_mul(second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
+        return None;
+    }
+
+    // Homogeneous Horner evaluation retains only the current result and power
+    // of `linear`; no table of every bivariate power is materialized.
+    let mut result = BivariatePolynomial::new(vec![vec![defining[degree].clone()]]);
+    let mut linear_power = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let negative_constant = bivariate_scale(constant.clone(), &(-Real::one()));
+    for coefficient in defining[..degree].iter().rev() {
+        linear_power = bivariate_multiply(&linear_power, linear);
+        result = bivariate_multiply(&negative_constant, &result);
+        bivariate_add_scaled_assign(&mut result, &linear_power, coefficient);
+    }
+    Some(result)
+}
+
+#[cfg(feature = "predicates")]
+fn signed_bivariate_at_parameter_pair_exact_first(
+    polynomial: &BivariatePolynomial,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+) -> CurveResult<Classification<RealSign>> {
+    let policy = &CurveContext::STRICT;
+    let direct = signed_bivariate_at_parameter_pair(polynomial, first, second, policy)?;
+    if matches!(direct, Classification::Decided(_)) {
+        return Ok(direct);
+    }
+    if let (BezierParameter2::Algebraic(first), BezierParameter2::Algebraic(second)) =
+        (first, second)
+        && bivariate_parameter_pair_is_exact_common_root(polynomial, first, second)
+    {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    if let Some(sign) =
+        bivariate_parameter_pair_strict_sign_by_refinement(polynomial, first, second, policy)?
+    {
+        return Ok(Classification::Decided(sign));
+    }
+    Ok(direct)
+}
+
+#[cfg(feature = "predicates")]
+fn signed_bivariate_at_parameter_pair_refinement_first(
+    polynomial: &BivariatePolynomial,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+) -> CurveResult<Classification<RealSign>> {
+    let policy = &CurveContext::STRICT;
+    if let Some(sign) =
+        bivariate_parameter_pair_strict_sign_by_refinement(polynomial, first, second, policy)?
+    {
+        return Ok(Classification::Decided(sign));
+    }
+    signed_bivariate_at_parameter_pair(polynomial, first, second, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_linear_axis_resultant_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> CurveResult<Option<RealSign>> {
+    let parameters = [first, second, third];
+    let root_degree = |axis: usize| match parameters[axis] {
+        BezierParameter2::Exact(_) => 0,
+        BezierParameter2::Algebraic(parameter) => parameter.polynomial().degree(),
+    };
+    let mut axes = [0, 1, 2];
+    axes.sort_by_key(|axis| std::cmp::Reverse(root_degree(*axis)));
+    for axis in axes {
+        let BezierParameter2::Algebraic(axis_parameter) = parameters[axis] else {
+            continue;
+        };
+        let Some((constant, linear, remaining)) =
+            trivariate_linear_axis_coefficients(polynomial, axis)
+        else {
+            continue;
+        };
+        let first_remaining = parameters[remaining[0]];
+        let second_remaining = parameters[remaining[1]];
+
+        // If the linear coefficient itself vanishes at the retained pair, the
+        // full trivariate value is exactly its constant coefficient.
+        if signed_bivariate_at_parameter_pair_refinement_first(
+            &linear,
+            first_remaining,
+            second_remaining,
+        )? == Classification::Decided(RealSign::Zero)
+        {
+            if let Classification::Decided(sign) =
+                signed_bivariate_at_parameter_pair_refinement_first(
+                    &constant,
+                    first_remaining,
+                    second_remaining,
+                )?
+            {
+                return Ok(Some(sign));
+            }
+            continue;
+        }
+
+        let Some(resultant) = bivariate_linear_root_resultant(
+            &constant,
+            &linear,
+            axis_parameter.polynomial().coefficients(),
+        ) else {
+            continue;
+        };
+        if signed_bivariate_at_parameter_pair_exact_first(
+            &resultant,
+            first_remaining,
+            second_remaining,
+        )? != Classification::Decided(RealSign::Zero)
+        {
+            continue;
+        }
+
+        // A zero resultant proves the unique root of the retained linear
+        // polynomial is some root of the axis defining polynomial. Strictly
+        // opposite endpoint signs place that root inside this selected
+        // one-root isolator, proving it is the authored root rather than a
+        // foreign conjugate.
+        let (lower, upper) = parameter_bounds(parameters[axis]);
+        let lower_sign = {
+            let mut value = constant.clone();
+            bivariate_add_scaled_assign(&mut value, &linear, lower);
+            signed_bivariate_at_parameter_pair_refinement_first(
+                &value,
+                first_remaining,
+                second_remaining,
+            )?
+        };
+        let upper_sign = {
+            let mut value = constant.clone();
+            bivariate_add_scaled_assign(&mut value, &linear, upper);
+            signed_bivariate_at_parameter_pair_refinement_first(
+                &value,
+                first_remaining,
+                second_remaining,
+            )?
+        };
+        if matches!(
+            (lower_sign, upper_sign),
+            (
+                Classification::Decided(RealSign::Negative),
+                Classification::Decided(RealSign::Positive)
+            ) | (
+                Classification::Decided(RealSign::Positive),
+                Classification::Decided(RealSign::Negative)
+            )
+        ) {
+            return Ok(Some(RealSign::Zero));
+        }
+    }
+    Ok(None)
+}
+
+#[cfg(feature = "predicates")]
 fn trivariate_restrict_to_parameter_box(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -7346,6 +7607,12 @@ fn trivariate_parameter_triple_sign_by_refinement(
             && let Some(sign) = trivariate_affinely_related_parameter_sign(
                 polynomial, first, second, third, policy,
             )?
+        {
+            return Ok(Classification::Decided(sign));
+        }
+        if target_steps == 8
+            && let Some(sign) =
+                trivariate_linear_axis_resultant_sign(polynomial, first, second, third)?
         {
             return Ok(Classification::Decided(sign));
         }
@@ -20187,6 +20454,62 @@ fn polynomial_powers(polynomial: &[Real], maximum: usize) -> Vec<Vec<Real>> {
     powers
 }
 
+#[cfg(feature = "predicates")]
+fn bivariate_parameter_pair_is_exact_common_root(
+    polynomial: &BivariatePolynomial,
+    first: &BezierAlgebraicParameter2,
+    second: &BezierAlgebraicParameter2,
+) -> bool {
+    let policy = &CurveContext::STRICT;
+    let attempt = |retained_axis| {
+        let (retained, fiber_lower, fiber_upper, defining) = match retained_axis {
+            CurveResultantParameter::First => (
+                parameter_representation(first, policy),
+                second.interval().start(),
+                second.interval().end(),
+                BivariatePolynomial::new(vec![second.polynomial().coefficients().to_vec()]),
+            ),
+            CurveResultantParameter::Second => (
+                parameter_representation(second, policy),
+                first.interval().start(),
+                first.interval().end(),
+                BivariatePolynomial::new(
+                    first
+                        .polynomial()
+                        .coefficients()
+                        .iter()
+                        .map(|coefficient| vec![coefficient.clone()])
+                        .collect(),
+                ),
+            ),
+        };
+        let report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+            polynomial,
+            &defining,
+            retained_axis,
+            &retained,
+            fiber_lower,
+            fiber_upper,
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        (report.status == AlgebraicFiberRootCountStatus::Counted
+            && report.certainty == PredicateCertainty::Exact)
+            .then_some(report.distinct_root_count.is_some_and(|count| count > 0))
+    };
+    let orientations = if first.polynomial().degree() <= second.polynomial().degree() {
+        [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ]
+    } else {
+        [
+            CurveResultantParameter::Second,
+            CurveResultantParameter::First,
+        ]
+    };
+    orientations.into_iter().find_map(attempt).unwrap_or(false)
+}
+
 fn signed_bivariate_at_parameter_pair(
     polynomial: &BivariatePolynomial,
     first_parameter: &BezierParameter2,
@@ -25458,6 +25781,191 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let parameters = [
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()]),
+            algebraic_parameter(vec![-third, Real::zero(), Real::one()]),
+            algebraic_parameter(vec![
+                Real::one(),
+                Real::zero(),
+                Real::from(-10_i8),
+                Real::zero(),
+                Real::one(),
+            ]),
+        ];
+        // a*b-c*(a+b), where c=a*b/(a+b).
+        let mut coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        coefficients[1][1][0] = Real::one();
+        coefficients[1][0][1] = -Real::one();
+        coefficients[0][1][1] = -Real::one();
+        (parameters, TrivariatePolynomial2 { coefficients })
+    }
+
+    #[cfg(feature = "predicates")]
+    fn trivariate_multiply_axis_linear(
+        polynomial: TrivariatePolynomial2,
+        axis: usize,
+        constant: &Real,
+        linear: &Real,
+    ) -> TrivariatePolynomial2 {
+        let dimensions = polynomial.dimensions();
+        let mut counts = [dimensions.0, dimensions.1, dimensions.2];
+        counts[axis] += 1;
+        let mut coefficients = vec![vec![vec![Real::zero(); counts[2]]; counts[1]]; counts[0]];
+        for (first, rows) in polynomial.coefficients.iter().enumerate() {
+            for (second, row) in rows.iter().enumerate() {
+                for (third, coefficient) in row.iter().enumerate() {
+                    let exponents = [first, second, third];
+                    coefficients[first][second][third] += coefficient * constant;
+                    let mut incremented = exponents;
+                    incremented[axis] += 1;
+                    coefficients[incremented[0]][incremented[1]][incremented[2]] +=
+                        coefficient * linear;
+                }
+            }
+        }
+        TrivariatePolynomial2 { coefficients }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn trivariate_linear_resultant_certifies_every_axis_order() {
+        let (parameters, base) = nonaffine_three_field_chord_fixture();
+        for linear_axis in 0..3 {
+            let mut polynomial = TrivariatePolynomial2 {
+                coefficients: base.coefficients.clone(),
+            };
+            for nonlinear_axis in (0..3).filter(|axis| *axis != linear_axis) {
+                polynomial = trivariate_multiply_axis_linear(
+                    polynomial,
+                    nonlinear_axis,
+                    &Real::one(),
+                    &Real::one(),
+                );
+            }
+            assert_eq!(
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    &CurveContext::STRICT,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero),
+                "linear axis {linear_axis} must certify the selected common root",
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn trivariate_linear_resultant_rejects_a_foreign_conjugate() {
+        let (mut parameters, polynomial) = nonaffine_three_field_chord_fixture();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let twenty_one_halves = (Real::from(21_i8) / Real::from(2_i8)).unwrap();
+        // Multiplying gamma's defining polynomial by x^2-1/2 makes the
+        // resultant vanish for the actual chord root and the foreign root
+        // sqrt(1/2). The selected isolator below retains only the latter.
+        let defining = match BezierParameterPolynomial::try_new_power_basis(
+            vec![
+                -half,
+                Real::zero(),
+                Real::from(6_i8),
+                Real::zero(),
+                -twenty_one_halves,
+                Real::zero(),
+                Real::one(),
+            ],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => panic!("foreign polynomial: {reason:?}"),
+        };
+        let interval = match BezierParameterInterval::try_new(
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => panic!("foreign isolator: {reason:?}"),
+        };
+        parameters[2] =
+            match BezierAlgebraicParameter2::try_isolate(defining, interval, &CurveContext::STRICT)
+                .unwrap()
+            {
+                Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
+                Classification::Uncertain(reason) => panic!("foreign root: {reason:?}"),
+            };
+
+        assert_ne!(
+            trivariate_linear_axis_resultant_sign(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .unwrap(),
+            Some(RealSign::Zero),
+        );
+        assert_eq!(
+            trivariate_parameter_triple_sign_by_refinement(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            Classification::Decided(RealSign::Negative),
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn nonlinear_three_field_zero_obeys_the_selected_terminal_policy() {
+        let (parameters, mut polynomial) = nonaffine_three_field_chord_fixture();
+        for axis in 0..3 {
+            polynomial =
+                trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
+        }
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(
+                outcome.value,
+                if policy == CurveContext::STRICT {
+                    Classification::Uncertain(UncertaintyReason::Predicate)
+                } else {
+                    Classification::Decided(RealSign::Zero)
+                },
+            );
+            assert_eq!(
+                outcome.certainty,
+                if policy == CurveContext::STRICT {
+                    crate::CurveCertainty::Certified
+                } else {
+                    crate::CurveCertainty::Approximate512Consumed
+                },
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
     #[test]
     fn translated_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -25517,7 +26025,7 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn unsupported_distinct_field_chord_zero_obeys_the_selected_terminal_policy() {
+    fn nonaffine_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         // alpha=sqrt(1/2), beta=sqrt(1/3), and
@@ -25543,20 +26051,9 @@ mod conversion_tests {
             });
             assert_eq!(
                 outcome.value,
-                if policy == CurveContext::STRICT {
-                    Classification::Uncertain(UncertaintyReason::Predicate)
-                } else {
-                    Classification::Decided(crate::classify::LineSide::On)
-                },
+                Classification::Decided(crate::classify::LineSide::On),
             );
-            assert_eq!(
-                outcome.certainty,
-                if policy == CurveContext::STRICT {
-                    crate::CurveCertainty::Certified
-                } else {
-                    crate::CurveCertainty::Approximate512Consumed
-                },
-            );
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
         }
     }
 
