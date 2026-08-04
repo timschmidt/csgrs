@@ -150,7 +150,7 @@ pub(crate) fn planarize_constraints(
             )?
             .is_proper_crossing()
             {
-                let point = segment_intersection_point(kernel, &planar_points, a, b)?;
+                let point = segment_intersection_point(&planar_points, a, b)?;
                 push_unique_point(kernel, &mut planar_points, point)?;
             }
         }
@@ -193,7 +193,6 @@ pub(crate) fn planarize_constraints(
 }
 
 fn segment_intersection_point(
-    kernel: &ExactKernel,
     points: &[Point2],
     first: Constraint,
     second: Constraint,
@@ -203,19 +202,15 @@ fn segment_intersection_point(
     let c = &points[second.from];
     let d = &points[second.to];
 
-    match kernel.decide(
-        hyperlimit::proper_segment_intersection_point(
-            &predicate_point(a),
-            &predicate_point(b),
-            &predicate_point(c),
-            &predicate_point(d),
-            kernel.policy(),
-        ),
-        "proper_segment_intersection_point",
-    )? {
+    match hyperlimit::construct_line_intersection_point(
+        &predicate_point(a),
+        &predicate_point(b),
+        &predicate_point(c),
+        &predicate_point(d),
+    ) {
         Some(point) => Ok(Point2::new(point.x, point.y)),
         None => Err(Error::InvalidInput {
-            reason: "constraints do not properly cross",
+            reason: "properly crossing constraint lines have no constructible intersection",
         }),
     }
 }
