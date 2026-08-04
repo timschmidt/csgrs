@@ -310,7 +310,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let chamfered = path
+            let chamfered = black_box(&path)
                 .chamfer_vertex_by_parameters(
                     1,
                     previous_parameter.clone(),
@@ -319,7 +319,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
                 )
                 .expect("parameter chamfer benchmark must remain exact")
                 .into_value();
-            curves += black_box(chamfered.curves().len());
+            curves += black_box(chamfered).curves().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -332,7 +332,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = path
+            let CurveCornerSolutions2::Unique(chamfered) = black_box(&path)
                 .chamfer_vertex_by_setbacks(
                     1,
                     design_value.clone(),
@@ -345,7 +345,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
             else {
                 panic!("line design-parameter chamfer benchmark must be unique");
             };
-            curves += black_box(chamfered.curves().len());
+            curves += black_box(chamfered).curves().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -358,7 +358,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let filleted = path
+            let filleted = black_box(&path)
                 .fillet_vertex_by_parameters(
                     1,
                     previous_parameter.clone(),
@@ -369,7 +369,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
                 )
                 .expect("parameter fillet benchmark must remain exact")
                 .into_value();
-            curves += black_box(filleted.curves().len());
+            curves += black_box(filleted).curves().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -382,7 +382,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = path
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&path)
                 .fillet_vertex_by_radius(
                     1,
                     design_value.clone(),
@@ -394,7 +394,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
             else {
                 panic!("line design-parameter fillet benchmark must be unique");
             };
-            curves += black_box(filleted.curves().len());
+            curves += black_box(filleted).curves().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -849,7 +849,7 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut transformed_loops = 0_usize;
         for _ in 0..iterations {
-            let transformed = region
+            let transformed = black_box(&region)
                 .transform_affine(
                     &Real::zero(),
                     &-Real::one(),
@@ -861,7 +861,7 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
                 )
                 .expect("benchmark transform must remain exact")
                 .into_value();
-            transformed_loops += black_box(transformed.boundary_loops().len());
+            transformed_loops += black_box(transformed).boundary_loops().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -874,14 +874,14 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut chamfered_loops = 0_usize;
         for _ in 0..iterations {
-            let Classification::Decided(chamfered) = region
+            let Classification::Decided(chamfered) = black_box(&region)
                 .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &policy)
                 .expect("benchmark chamfer must remain exact")
                 .into_value()
             else {
                 panic!("CurveRegion2 line chamfer benchmark became uncertain");
             };
-            chamfered_loops += black_box(chamfered.boundary_loops().len());
+            chamfered_loops += black_box(chamfered).boundary_loops().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -894,14 +894,14 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut filleted_loops = 0_usize;
         for _ in 0..iterations {
-            let Classification::Decided(filleted) = region
+            let Classification::Decided(filleted) = black_box(&region)
                 .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)
                 .expect("benchmark fillet must remain exact")
                 .into_value()
             else {
                 panic!("CurveRegion2 line fillet benchmark became uncertain");
             };
-            filleted_loops += black_box(filleted.boundary_loops().len());
+            filleted_loops += black_box(filleted).boundary_loops().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -914,7 +914,7 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut chamfered_loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(chamfered) = region
+            let CurveCornerSolutions2::Unique(chamfered) = black_box(&region)
                 .chamfer_loop_vertex_by_setbacks(
                     0,
                     1,
@@ -928,7 +928,7 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
             else {
                 panic!("CurveRegion2 design-parameter chamfer benchmark must be unique");
             };
-            chamfered_loops += black_box(chamfered.boundary_loops().len());
+            chamfered_loops += black_box(chamfered).boundary_loops().len();
         }
         let elapsed = started.elapsed();
         println!(
@@ -941,14 +941,14 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut filleted_loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = region
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&region)
                 .fillet_loop_vertex_by_radius(0, 1, s(1), CurveCornerMode2::TrimOnly, &policy)
                 .expect("benchmark design-parameter fillet must remain exact")
                 .into_value()
             else {
                 panic!("CurveRegion2 design-parameter fillet benchmark must be unique");
             };
-            filleted_loops += black_box(filleted.boundary_loops().len());
+            filleted_loops += black_box(filleted).boundary_loops().len();
         }
         let elapsed = started.elapsed();
         println!(
