@@ -245,6 +245,7 @@ impl Point3Facts {
 }
 
 /// 2D point with exact [`Real`] coordinates.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Point2 {
     /// X coordinate.

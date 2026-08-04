@@ -205,6 +205,7 @@ methods when long exact refinement must be cancellable.
 | --- | --- | --- |
 | `arbitrary` | no | Implements `arbitrary::Arbitrary` for lattice-owned types. |
 | `hyperreal-dispatch-trace` | no | Enables Hyperreal dispatch instrumentation for development and benchmarks. |
+| `serde` | no | Serializes the shared exact `Point2` carrier. |
 
 Hyperlattice has no default features.
 
