@@ -8118,6 +8118,41 @@ fn trivariate_divide_linear_axis_factor(
     trivariate_from_axis_bivariate_coefficients(&quotient, axis, remaining)
 }
 
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn trivariate_verify_linear_axis_factor(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+    remaining: [usize; 2],
+    factor_coefficients: &[BivariatePolynomial; 2],
+) -> Option<(TrivariatePolynomial2, TrivariatePolynomial2)> {
+    let factor = trivariate_from_axis_bivariate_coefficients(factor_coefficients, axis, remaining)?;
+    let quotient = trivariate_divide_linear_axis_factor(polynomial, axis, factor_coefficients)?;
+    Some((factor, quotient))
+}
+
+/// Removes coefficient content only when the raw rational-function factor is
+/// not already an exact polynomial divisor. Whole-tensor division remains the
+/// authority in either case.
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn trivariate_normalize_and_verify_linear_axis_factor(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+    remaining: [usize; 2],
+    raw: [BivariatePolynomial; 2],
+) -> Option<(TrivariatePolynomial2, TrivariatePolynomial2)> {
+    if let Some(factorization) =
+        trivariate_verify_linear_axis_factor(polynomial, axis, remaining, &raw)
+    {
+        return Some(factorization);
+    }
+    let primitive = bivariate_remove_common_factors(raw);
+    trivariate_verify_linear_axis_factor(polynomial, axis, remaining, &primitive)
+}
+
 /// Splits a quadratic tensor axis when its bivariate discriminant is an exact
 /// square, then verifies each recovered factor by exact tensor division.
 #[cfg(feature = "predicates")]
@@ -8146,29 +8181,76 @@ fn trivariate_quadratic_axis_factorizations(
         bivariate_subtract(&linear, &square_root),
     ] {
         let raw = [constant, doubled_quadratic.clone()];
-        let primitive = bivariate_remove_common_factors(raw.clone());
-        for factor_coefficients in [raw, primitive] {
-            let Some(factor) =
-                trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)
-            else {
-                continue;
-            };
-            let Some(quotient) =
-                trivariate_divide_linear_axis_factor(polynomial, axis, &factor_coefficients)
-            else {
-                continue;
-            };
-            if factorizations.iter().any(|(existing, _)| {
-                existing.coefficients == factor.coefficients
-                    || existing.coefficients == quotient.coefficients
-            }) {
-                continue;
-            }
-            factorizations.push((factor, quotient));
-            break;
+        let Some((factor, quotient)) =
+            trivariate_normalize_and_verify_linear_axis_factor(polynomial, axis, remaining, raw)
+        else {
+            continue;
+        };
+        if factorizations.iter().any(|(existing, _)| {
+            existing.coefficients == factor.coefficients
+                || existing.coefficients == quotient.coefficients
+        }) {
+            continue;
         }
+        factorizations.push((factor, quotient));
     }
     (!factorizations.is_empty()).then_some(factorizations)
+}
+
+/// Splits a cubic tensor axis when the cubic has a repeated linear factor over
+/// the exact bivariate fraction field.
+///
+/// For `a*x^3+b*x^2+c*x+d`, a non-triple repeated root is
+/// `(9*a*d-b*c)/(2*(b^2-3*a*c))`; a triple root is `-b/(3*a)`.
+/// These expressions only propose polynomial coefficient pairs. Common
+/// bivariate content is removed when necessary, and exact division of the full
+/// tensor is the final authority, so neither a vanishing invariant nor a
+/// rational-function candidate can create a false factor.
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn trivariate_repeated_cubic_axis_factorizations(
+    polynomial: &TrivariatePolynomial2,
+    axis: usize,
+) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
+    let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
+    let [constant, linear, quadratic, cubic]: [BivariatePolynomial; 4] =
+        coefficients.try_into().ok()?;
+    let _ = bivariate_exact_nonzero_metadata(&cubic)??;
+
+    let quadratic_square =
+        bivariate_multiply_bounded(&quadratic, &quadratic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+    let cubic_linear =
+        bivariate_multiply_bounded(&cubic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+    let delta_zero = bivariate_subtract(
+        &quadratic_square,
+        &bivariate_scale(cubic_linear, &Real::from(3_i8)),
+    );
+    let raw = if bivariate_exact_nonzero_metadata(&delta_zero)?.is_none() {
+        [quadratic, bivariate_scale(cubic, &Real::from(3_i8))]
+    } else {
+        let quadratic_linear =
+            bivariate_multiply_bounded(&quadratic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+        let cubic_constant =
+            bivariate_multiply_bounded(&cubic, &constant, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+        [
+            bivariate_subtract(
+                &quadratic_linear,
+                &bivariate_scale(cubic_constant, &Real::from(9_i8)),
+            ),
+            bivariate_scale(delta_zero, &Real::from(2_i8)),
+        ]
+    };
+    let factorization =
+        trivariate_normalize_and_verify_linear_axis_factor(polynomial, axis, remaining, raw)?;
+    let (factor_constant, factor_linear, factor_remaining) =
+        trivariate_linear_axis_coefficients(&factorization.0, axis)?;
+    if factor_remaining != remaining {
+        return None;
+    }
+    let repeated = [factor_constant, factor_linear];
+    trivariate_divide_linear_axis_factor(&factorization.1, axis, &repeated)?;
+    Some(vec![factorization])
 }
 
 #[cfg(feature = "predicates")]
@@ -8518,32 +8600,52 @@ fn trivariate_existing_symbolic_sign(
 }
 
 #[cfg(feature = "predicates")]
-#[cold]
-#[inline(never)]
-fn trivariate_quadratic_factor_sign(
+fn trivariate_factored_component_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
+    remaining_splits: usize,
+) -> CurveResult<Option<RealSign>> {
+    if let Some(sign) = trivariate_existing_symbolic_sign(polynomial, first, second, third)? {
+        return Ok(Some(sign));
+    }
+    if remaining_splits == 0 {
+        return Ok(None);
+    }
+    trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, remaining_splits)
+}
+
+#[cfg(feature = "predicates")]
+fn trivariate_bounded_factor_sign_with_budget(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    remaining_splits: usize,
 ) -> CurveResult<Option<RealSign>> {
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1, dimensions.2];
     let mut axes = [0, 1, 2];
     axes.sort_by_key(|axis| counts[*axis]);
     for axis in axes {
-        if counts[axis] != 3 {
-            continue;
-        }
-        let Some(factorizations) = trivariate_quadratic_axis_factorizations(polynomial, axis)
-        else {
+        let factorizations = match counts[axis] {
+            3 => trivariate_quadratic_axis_factorizations(polynomial, axis),
+            4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis),
+            _ => None,
+        };
+        let Some(factorizations) = factorizations else {
             continue;
         };
         for (factor, quotient) in factorizations {
-            let factor_sign = trivariate_existing_symbolic_sign(&factor, first, second, third)?;
+            let next_budget = remaining_splits.saturating_sub(1);
+            let factor_sign =
+                trivariate_factored_component_sign(&factor, first, second, third, next_budget)?;
             if factor_sign == Some(RealSign::Zero) {
                 return Ok(factor_sign);
             }
-            let quotient_sign = trivariate_existing_symbolic_sign(&quotient, first, second, third)?;
+            let quotient_sign =
+                trivariate_factored_component_sign(&quotient, first, second, third, next_budget)?;
             if quotient_sign == Some(RealSign::Zero) {
                 return Ok(quotient_sign);
             }
@@ -8553,6 +8655,56 @@ fn trivariate_quadratic_factor_sign(
         }
     }
     Ok(None)
+}
+
+/// Replays the bounded exact quadratic and repeated-cubic factor authorities.
+/// Two splits suffice for the complete supported cubic path: one repeated
+/// linear factor and the two linear factors of its quadratic quotient.
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn trivariate_bounded_factor_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> CurveResult<Option<RealSign>> {
+    trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, 2)
+}
+
+/// Preserves authored products that quotient-ring reduction may expand across
+/// a defining-polynomial boundary. Separable contents and bounded coupled
+/// factors are both replayed on the original tensor before this path makes an
+/// exact claim.
+#[cfg(feature = "predicates")]
+#[cold]
+#[inline(never)]
+fn trivariate_content_and_bounded_factor_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+) -> CurveResult<Option<RealSign>> {
+    if let Some(sign) = trivariate_bounded_factor_sign(polynomial, first, second, third)? {
+        return Ok(Some(sign));
+    }
+    let Some((primitive, factor_sign)) =
+        trivariate_strip_axis_contents(polynomial, first, second, third)?
+    else {
+        return Ok(None);
+    };
+    if factor_sign == Some(RealSign::Zero)
+        || trivariate_structurally_zero(&primitive, &CurveContext::STRICT)
+    {
+        return Ok(Some(RealSign::Zero));
+    }
+    let Some(sign) = trivariate_bounded_factor_sign(&primitive, first, second, third)? else {
+        return Ok(None);
+    };
+    if sign == RealSign::Zero {
+        return Ok(Some(sign));
+    }
+    Ok(factor_sign.map(|factor_sign| product_sign(factor_sign, sign)))
 }
 
 #[cfg(feature = "predicates")]
@@ -8686,12 +8838,11 @@ fn trivariate_parameter_triple_sign_by_refinement(
                 .as_ref()
                 .map(|(primitive, _)| primitive)
                 .unwrap_or(symbolic);
-            // A product of two factors that are linear on one tensor axis is
-            // quadratic there and has an exact-square bivariate
-            // discriminant. Split only after exact factor-content removal and
-            // exact tensor division have replayed the proposed factors.
-            if let Some(sign) =
-                trivariate_quadratic_factor_sign(factor_source, first, second, third)?
+            // A quadratic exact-square discriminant or a cubic repeated-root
+            // invariant can propose a linear-axis factor. Split only after
+            // exact factor-content removal and whole-tensor division have
+            // replayed it; recursively replay the bounded quadratic quotient.
+            if let Some(sign) = trivariate_bounded_factor_sign(factor_source, first, second, third)?
             {
                 if sign == RealSign::Zero {
                     return Ok(Classification::Decided(sign));
@@ -8702,6 +8853,16 @@ fn trivariate_parameter_triple_sign_by_refinement(
                 if let Some(removed_sign) = removed_sign {
                     return Ok(Classification::Decided(product_sign(removed_sign, sign)));
                 }
+            }
+            // Reducing powers modulo a selected defining polynomial can
+            // obscure an authored factorization even though it preserves the
+            // value at the root tuple. Replay the exact original product only
+            // after the smaller reduced tensor has exhausted its authorities.
+            if reduced.is_some()
+                && let Some(sign) =
+                    trivariate_content_and_bounded_factor_sign(polynomial, first, second, third)?
+            {
+                return Ok(Classification::Decided(sign));
             }
         }
     }
@@ -27047,9 +27208,8 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
-    #[test]
-    fn quadratic_axis_factorization_replays_dense_multi_affine_products() {
-        let multi_affine = |coefficients: [i8; 8]| TrivariatePolynomial2 {
+    fn trivariate_multi_affine(coefficients: [i8; 8]) -> TrivariatePolynomial2 {
+        TrivariatePolynomial2 {
             coefficients: (0..2)
                 .map(|first| {
                     (0..2)
@@ -27063,12 +27223,20 @@ mod conversion_tests {
                         .collect()
                 })
                 .collect(),
-        };
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn quadratic_axis_factorization_replays_dense_multi_affine_products() {
         for (left, right) in [
             ([1, 2, -1, 3, 2, -2, 4, 1], [2, -1, 3, 1, -3, 2, 1, 2]),
             ([-2, 1, 2, -1, 3, 1, -2, 4], [1, 3, -2, 2, 1, -1, 3, -2]),
         ] {
-            let product = trivariate_multiply(&multi_affine(left), &multi_affine(right));
+            let product = trivariate_multiply(
+                &trivariate_multi_affine(left),
+                &trivariate_multi_affine(right),
+            );
             for axis in 0..3 {
                 let factorizations = trivariate_quadratic_axis_factorizations(&product, axis)
                     .expect("every authored linear-axis product must split exactly");
@@ -27077,6 +27245,40 @@ mod conversion_tests {
                 }));
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn repeated_cubic_axis_factorization_replays_double_and_triple_factors() {
+        let repeated = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
+        let other = trivariate_multi_affine([2, -1, 3, 1, -3, 2, 1, 2]);
+        let repeated_square = trivariate_multiply(&repeated, &repeated);
+        for product in [
+            trivariate_multiply(&other, &repeated_square),
+            trivariate_multiply(&repeated, &repeated_square),
+        ] {
+            for axis in 0..3 {
+                let factorizations = trivariate_repeated_cubic_axis_factorizations(&product, axis)
+                    .expect("every authored repeated linear-axis factor must split exactly");
+                assert!(factorizations.iter().all(|(factor, quotient)| {
+                    trivariate_multiply(factor, quotient).coefficients == product.coefficients
+                }));
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
+        let mut polynomial = TrivariatePolynomial2 {
+            coefficients: vec![vec![vec![Real::one()]]],
+        };
+        // This arithmetic-progression cubic makes the repeated-root formula
+        // propose its middle root, but that factor occurs only once.
+        for constant in [Real::one(), Real::from(2_i8), Real::from(3_i8)] {
+            polynomial = trivariate_multiply_axis_linear(polynomial, 0, &constant, &Real::one());
+        }
+        assert!(trivariate_repeated_cubic_axis_factorizations(&polynomial, 0).is_none());
     }
 
     #[cfg(feature = "predicates")]
@@ -27123,7 +27325,7 @@ mod conversion_tests {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let parameter = BezierParameter2::Exact(half);
         assert_eq!(
-            trivariate_quadratic_factor_sign(&polynomial, &parameter, &parameter, &parameter,)
+            trivariate_bounded_factor_sign(&polynomial, &parameter, &parameter, &parameter,)
                 .unwrap(),
             Some(RealSign::Negative)
         );
@@ -27617,7 +27819,7 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn higher_degree_coupled_factor_obeys_the_selected_terminal_policy() {
+    fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
         let parameters = nonlinear_rational_three_field_parameters();
         let mut primitive_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
         primitive_coefficients[1][1][0] = Real::one();
@@ -27647,7 +27849,66 @@ mod conversion_tests {
             .is_none()
         );
         assert_eq!(
-            trivariate_quadratic_factor_sign(
+            trivariate_bounded_factor_sign(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .unwrap(),
+            Some(RealSign::Zero)
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn square_free_cubic_coupled_factor_obeys_the_selected_terminal_policy() {
+        let parameters = nonlinear_rational_three_field_parameters();
+        let mut primitive_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        primitive_coefficients[1][1][0] = Real::one();
+        primitive_coefficients[1][0][1] = -Real::one();
+        primitive_coefficients[0][1][1] = -Real::one();
+        let primitive = TrivariatePolynomial2 {
+            coefficients: primitive_coefficients,
+        };
+        let mut first_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        first_coefficients[0][0][0] = Real::one();
+        first_coefficients[1][1][0] = Real::one();
+        first_coefficients[1][0][1] = Real::one();
+        first_coefficients[0][1][1] = Real::one();
+        let mut second_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
+        second_coefficients[0][0][0] = Real::from(2_i8);
+        second_coefficients[1][1][0] = Real::from(2_i8);
+        second_coefficients[1][0][1] = Real::from(3_i8);
+        second_coefficients[0][1][1] = Real::from(4_i8);
+        second_coefficients[1][1][1] = Real::one();
+        let polynomial = trivariate_multiply(
+            &primitive,
+            &trivariate_multiply(
+                &TrivariatePolynomial2 {
+                    coefficients: first_coefficients,
+                },
+                &TrivariatePolynomial2 {
+                    coefficients: second_coefficients,
+                },
+            ),
+        );
+        assert_eq!(
+            trivariate_bounded_factor_sign(
                 &polynomial,
                 &parameters[0],
                 &parameters[1],
