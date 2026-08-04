@@ -140,6 +140,10 @@ impl ArrangementPointArena {
         Ok(compact)
     }
 
+    fn retained_point(&self, identity: &ArrangementPointIdentity) -> Option<u32> {
+        self.structural.get(identity).copied()
+    }
+
     fn retain_overlay_source_edge_memberships(
         &mut self,
         identity: &ArrangementPointIdentity,
@@ -2585,29 +2589,35 @@ fn corefine_face(
             if !segments_properly_cross(decisions, left_points, right_points)? {
                 continue;
             }
-            let intersection = hyperlimit::construct_line_intersection_point(
-                &limit_point(left_points[0]),
-                &limit_point(left_points[1]),
-                &limit_point(right_points[0]),
-                &limit_point(right_points[1]),
-            )
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "proper face constraints have no intersection point",
-            })?;
-            let planar = hypertri::ExactPoint::new(intersection.x, intersection.y);
-            let point = lift_planar_point(&planar, &polygon.support, projection_axis, axes)?;
-            if classify_point_decision(decisions, &point, &polygon.support)? != Classification::On {
-                return Err(HypermeshError::SurfaceArrangementFailed {
-                    reason: "lifted face crossing does not lie on its source support",
-                });
-            }
             let support = pairwise_support_identity(face)?.ok_or(
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "source face has no operation-local support identity",
                 },
             )?;
             let identity = intersect_arrangement_lines(&left.line, &right.line, support)?;
-            let point_id = arena.insert(decisions, identity, point)?;
+            let point_id = if let Some(point) = arena.retained_point(&identity) {
+                point
+            } else {
+                let intersection = hyperlimit::construct_line_intersection_point(
+                    &limit_point(left_points[0]),
+                    &limit_point(left_points[1]),
+                    &limit_point(right_points[0]),
+                    &limit_point(right_points[1]),
+                )
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "proper face constraints have no intersection point",
+                })?;
+                let planar = hypertri::ExactPoint::new(intersection.x, intersection.y);
+                let point = lift_planar_point(&planar, &polygon.support, projection_axis, axes)?;
+                if classify_point_decision(decisions, &point, &polygon.support)?
+                    != Classification::On
+                {
+                    return Err(HypermeshError::SurfaceArrangementFailed {
+                        reason: "lifted face crossing does not lie on its source support",
+                    });
+                }
+                arena.insert(decisions, identity, point)?
+            };
             projected
                 .entry(point_id)
                 .or_insert_with(|| project_point(&arena.points[point_id as usize], axes));
@@ -4966,7 +4976,15 @@ mod tests {
             ArrangementPointIdentity::Construction(ConstructionVertexIdentity::PlaneTriple { .. })
         ));
         assert!(surface.face_triangles(0).len() >= 8);
-        assert_constraints_are_edges(&surface, 0);
+        for face in 0..polygons.len() {
+            assert!(
+                surface
+                    .face_triangles(face)
+                    .iter()
+                    .any(|triangle| triangle.contains(&(center as u32)))
+            );
+            assert_constraints_are_edges(&surface, face);
+        }
     }
 
     #[test]
