@@ -1,0 +1,243 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "exact affine distinct-field winding identities",
+  "source_revision": "8dd786e6dd729ba5f6b7ab33056830a4bdbbd948",
+  "semantic_revisions": [
+    "8dd786e"
+  ],
+  "comparison_revision": "7378d718713716bd35c997c10b34c144ac9f4097",
+  "comparison_evidence_revision": "d29a3d7",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "3ba5eeb617b55b7c8cbaa3cbf25d870b3299041c",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "hypersolve_semantic_revisions": [
+    "36d9114",
+    "3ba5eeb"
+  ],
+  "scope": {
+    "included": [
+      "exact rational translations between independently represented selected algebraic roots",
+      "exact rational scale-plus-offset relations between selected algebraic roots",
+      "Hypersolve inference followed by exact transformed-polynomial and common-root replay",
+      "general affine substitution of any retained trivariate parameter axis into another axis",
+      "general affine substitution in bivariate parameter predicates",
+      "STRICT-certified zero winding determinants after relation substitution",
+      "identical STRICT and APPROXIMATE_512 proof graphs for supportable exact affine identities",
+      "an explicit non-affine three-field policy control that remains uncertain in STRICT and consumes the 512-bit terminal in APPROXIMATE_512",
+      "matched hot-path, allocation, linked-size, competitive, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general primitive-element or compositum proof of non-affine correlated identities across three selected algebraic fields",
+      "mixed exact/algebraic parameter affine inference without existing shared evidence",
+      "dense trivariate determinants above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images whose point still contains the analytic radical",
+      "general noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "relation_inference": "Hypersolve proposes a rational affine root relation from centered monic polynomial coefficients. Hypercurve consumes it only after Hypersolve transforms one selected-root polynomial by that affine map and proves an exact common selected root under STRICT. A proposal is never evidence by itself.",
+    "translation_fast_path": "Exact selected-root translations use the smaller dedicated transformed-root-difference authority before the general affine relation authority.",
+    "trivariate_substitution": "For a certified relation y=s*x+o, Hypercurve substitutes the complete affine power expansion into the determinant tensor and reduces the sign problem to the existing exact bivariate authority. Every retained/substituted axis ordering is algebraically equivalent and covered by exact differential tests.",
+    "bivariate_substitution": "A certified pair relation reduces a bivariate polynomial to one exact univariate polynomial only after existing structural and single-axis fast paths fail.",
+    "schedule": "Ordinary nonzero determinant boxes receive the measured short tensor-Bernstein refinement schedule first. Affine relation construction occurs after eight bisections, before expensive correlated-zero growth to the 512-bit boundary.",
+    "policy": "STRICT and APPROXIMATE_512 use the same exact relation and substitution authorities. Supportable affine zeros are Certified under both policies and do not consume the approximate terminal. A still-unsupported non-affine zero remains Predicate uncertainty in STRICT; only APPROXIMATE_512 may resolve it as On after recording terminal consumption.",
+    "failure": "No floating tolerance, guessed root correspondence, approximate coordinate projection, compatibility shim, or second Boolean engine is introduced. Unsupported field relations and resource bounds remain explicit."
+  },
+  "capability": {
+    "comparison_revision": "The distinct-field winding engine certified nonzero determinants, pairwise/structural zeros, and otherwise reached explicit STRICT uncertainty or the APPROXIMATE_512 equality terminal for correlated three-field zeros.",
+    "source_revision": "Translated and rationally scaled selected-root chord identities now reduce exactly through Hypersolve-certified affine relations and return Certified On under STRICT and APPROXIMATE_512.",
+    "translated_fixture": "For alpha=sqrt(1/2), beta=1-alpha, and gamma=alpha-1/2, the chord through (alpha,0), (0,beta), and (gamma,gamma) is now proved exactly instead of reaching the 512-bit terminal.",
+    "scaled_fixture": "For alpha=sqrt(1/2), beta=alpha/2, and gamma=alpha/3, the same chord form is proved exactly from rational scale relations under both policies.",
+    "non_affine_control": "For alpha=sqrt(1/2), beta=sqrt(1/3), and gamma=alpha*beta/(alpha+beta), whose selected gamma satisfies x^4-10*x^2+1, no pair has a rational affine relation. STRICT remains explicitly uncertain and APPROXIMATE_512 alone consumes its terminal and returns On.",
+    "remaining_exactness_boundary": "A general exact compositum, primitive-element, or resultant identity proof is still required for supportable non-affine correlated multi-field zeros.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "default-feature release unit-test or comparative executables pinned to CPU 11; seven perf-stat repetitions where reported; retired instructions and branches are primary because elapsed time varies with host load",
+    "translated_affine_zero": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 1.58,
+      "instructions": 3261698,
+      "branches": 660510,
+      "comparison_terminal_instructions": 35678608,
+      "instruction_change_percent": -90.858113,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "scaled_affine_zero": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 1.59,
+      "instructions": 3111077,
+      "branches": 627842,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "non_affine_policy_terminal": {
+      "policy_evaluations": 2,
+      "task_clock_ms": 12.84,
+      "instructions": 161607390,
+      "branches": 28299055,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "On with Approximate512Consumed",
+      "interpretation": "This deliberately unsupported compositum identity exposes both the remaining exactness gap and the largest allocation debt in this checkpoint."
+    },
+    "matched_distinct_endpoint_classification_guard": {
+      "comparison_instructions": 30953890,
+      "current_instructions": 30966508,
+      "instruction_change_percent": 0.040764,
+      "current_branches": 6242879,
+      "interpretation": "The established mapped-cusp nonzero path remains neutral; the eight-step relation schedule preserves its Bernstein separation fast path."
+    },
+    "matched_same_field_classification_guard": {
+      "comparison_instructions": 11286474,
+      "current_instructions": 11293581,
+      "instruction_change_percent": 0.062969,
+      "current_branches": 2206471,
+      "interpretation": "The existing selected-field route remains neutral to measurement resolution."
+    },
+    "matched_analytic_contact_guard": {
+      "comparison_instructions": 27856740,
+      "current_instructions": 27857844,
+      "instruction_change_percent": 0.003963,
+      "current_branches": 5236988,
+      "interpretation": "Existing analytic contact replay is instruction-neutral."
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1984183182,
+        "current_instructions": 1984183824,
+        "instruction_change_percent": 0.000032,
+        "current_branches": 402483688
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447267663,
+        "current_instructions": 3447267610,
+        "instruction_change_percent": -0.000002,
+        "current_branches": 649578643
+      },
+      "interpretation": "Both authoritative historical offset lanes are deterministic-instruction neutral."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18307.5,
+        "cavalier_contours": 933.7,
+        "hypercurve_to_cavalier_ratio": 19.607476
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29761916.0,
+        "hypercurve_chord_fallback": 995727.8,
+        "curvo_heuristic": 8494.1,
+        "certified_to_curvo_ratio": 3503.833955,
+        "chord_fallback_to_curvo_ratio": 117.225816
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets, not correctness peers: their measured lanes do not retain algebraic fields or expose equivalent STRICT/APPROXIMATE_512 topology guarantees. The certified cubic lane remains the dominant performance debt."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct default-feature release-unit-test traces; heaptrack_print summaries are authoritative",
+    "translated_affine_zero": {
+      "allocation_calls": 4482,
+      "temporary_allocations": 274,
+      "peak_heap_kib": 144.92,
+      "recorder_peak_rss_mib": 12.19,
+      "comparison_terminal_allocation_calls": 83521,
+      "allocation_change_percent": -94.633685
+    },
+    "scaled_affine_zero": {
+      "allocation_calls": 4021,
+      "temporary_allocations": 286,
+      "peak_heap_kib": 144.46,
+      "recorder_peak_rss_mib": 12.01
+    },
+    "non_affine_policy_terminal": {
+      "allocation_calls": 338437,
+      "temporary_allocations": 65708,
+      "peak_heap_kib": 147.70,
+      "recorder_peak_rss_mib": 11.51,
+      "interpretation": "Repeated exact quartic refinement to 512 bits is bounded in peak live memory but allocation-heavy; this is an explicit next optimization target."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at d29a3d7 and 8dd786e with identical non-Hypersolve dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8278440,
+      "current_file_bytes": 8297096,
+      "file_change_bytes": 18656,
+      "file_change_percent": 0.225356,
+      "comparison_size_text_bytes": 6310433,
+      "current_size_text_bytes": 6326785,
+      "size_text_change_bytes": 16352,
+      "size_text_change_percent": 0.259126,
+      "comparison_actual_text_section_bytes": 4770247,
+      "current_actual_text_section_bytes": 4783671,
+      "actual_text_change_bytes": 13424,
+      "actual_text_change_percent": 0.281411
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7973216,
+      "current_file_bytes": 7989560,
+      "file_change_bytes": 16344,
+      "file_change_percent": 0.204986,
+      "comparison_size_text_bytes": 6066389,
+      "current_size_text_bytes": 6080389,
+      "size_text_change_bytes": 14000,
+      "size_text_change_percent": 0.230780,
+      "comparison_actual_text_section_bytes": 4564919,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 11232,
+      "actual_text_change_percent": 0.246050
+    },
+    "interpretation": "The linked growth is the single exact affine-relation authority and its bivariate/trivariate consumers, not a compatibility layer. It buys a 90.86% instruction reduction on the translated zero while upgrading that path from approximate-terminal equality to exact STRICT proof."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "current_output": "target/callgraph-hypercurve-affine-root-relations/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23742,
+      "current_nodes": 23766,
+      "node_change_percent": 0.101087,
+      "comparison_edges": 44605,
+      "current_edges": 44673,
+      "edge_change_percent": 0.152449
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_affinely_related_parameter_sign -> trivariate_substitute_affine_axis",
+      "trivariate_affinely_related_parameter_sign -> exact_parameter_affine_relation -> hypersolve::algebraic_root_affine_relation",
+      "signed_bivariate_at_parameter_pair -> exact_parameter_affine_relation -> bivariate_substitute_second_equal_affine_first",
+      "hypersolve::algebraic_root_affine_relation -> transform_algebraic_root_affine -> exact selected common-root proof"
+    ]
+  },
+  "verification": {
+    "hypersolve_all_features_library": "passed: 213 tests",
+    "hypersolve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_all_features_library": "passed: 391 tests",
+    "hypercurve_default_features_library": "passed: 387 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_no_default_features_curve_region_boolean_integration": "passed: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed translated and scaled Certified zeros under both policies, all six affine substitution axis orders, mapped-cusp nonzero classification, unsupported non-affine STRICT uncertainty, and APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed default-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}
