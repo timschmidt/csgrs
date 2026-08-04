@@ -7057,13 +7057,18 @@ impl TrivariatePolynomial2 {
 }
 
 #[cfg(feature = "predicates")]
+#[inline]
 fn trivariate_structurally_zero(polynomial: &TrivariatePolynomial2, policy: &CurveContext) -> bool {
-    polynomial.coefficients.iter().all(|rows| {
-        rows.iter().all(|row| {
-            row.iter()
-                .all(|coefficient| real_sign(coefficient, policy) == Some(RealSign::Zero))
-        })
-    })
+    for rows in &polynomial.coefficients {
+        for row in rows {
+            for coefficient in row {
+                if real_sign(coefficient, policy) != Some(RealSign::Zero) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
 }
 
 /// Reduces one tensor axis modulo a selected root's defining polynomial.
