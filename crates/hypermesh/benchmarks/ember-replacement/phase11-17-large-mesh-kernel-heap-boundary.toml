@@ -1,0 +1,297 @@
+schema = 1
+status = "retained-checkpoint-phase-11-17-and-18-open"
+captured_at = "2026-08-03"
+checkpoint = "large-mesh-kernel-heap-boundary"
+implementation_commit = "6d0ad0311bb47f0a5faf7b770a896c136edab057"
+previous_evidence_commit = "3c87eaa85b9bfd8d66a444853bf9393ee62f14e4"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+serialized = true
+
+[scope]
+production_boolean_engine_count = 1
+production_module_changed = false
+dependency_changed = false
+cargo_feature_changed = false
+compatibility_shim = false
+benchmark_engine_dispatch = false
+fixture_coordinate_or_triangle_count_dispatch_in_engine = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[probe]
+executable = "large_mesh_kernel_heap_probe"
+ordinary_executable = "large_mesh_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+process_baseline = "after argument parsing and before fixture preparation"
+input_boundary = "after exact input construction, raw fixture drop, optional native PWN priming, and view construction"
+kernel_boundary = "one production hypermesh::boolean call"
+output_boundary = "explicit result drop"
+input_drop_boundary = "explicit exact input drop"
+allocation_calls_recorded = true
+deallocation_calls_recorded = true
+reallocation_calls_recorded = true
+reallocation_live_bytes = "new layout size minus old layout size"
+byte_conservation_asserted = true
+block_conservation_asserted = true
+ordinary_probe_instrumented = false
+timing_claim_from_instrumented_probe = false
+
+[manifest]
+heap_fixture_requires_large_or_xl = true
+heap_fixture_requires_probe_mode = true
+probe_selectors_unique = true
+selectors = [
+    "boxes-3072",
+    "boxes-3072-general",
+    "yeahright",
+    "yeahright-4",
+    "yeahright-8",
+    "yeahright-full-rotated",
+]
+
+[policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+executions = 12
+all_certainty = "Certified"
+all_policy_rows_byte_identical = true
+approximate_512_terminal_consumed = false
+
+[[fixture]]
+selector = "boxes-3072"
+fixture = "subdivided_overlapping_boxes_3072_each"
+input_path = "native retained views with policy-qualified PWN facts primed"
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+process_baseline_live_bytes = 630
+process_baseline_live_blocks = 4
+input_live_bytes = 656246
+input_live_blocks = 823
+input_payload_bytes = 655616
+input_payload_blocks = 819
+boolean_peak_live_bytes = 16462358
+kernel_peak_incremental_bytes = 15806112
+post_boolean_incremental_bytes = 534008
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 13536
+post_input_drop_incremental_bytes = 78576
+allocation_calls = 251626
+deallocation_calls = 251427
+reallocation_calls = 32892
+added_bytes = 85396932
+removed_bytes = 84862924
+
+[[fixture]]
+selector = "boxes-3072-general"
+fixture = "subdivided_overlapping_boxes_3072_each"
+input_path = "raw borrowed views"
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 6144
+output_vertices = 2410
+output_triangles = 4816
+process_baseline_live_bytes = 638
+process_baseline_live_blocks = 4
+input_live_bytes = 596534
+input_live_blocks = 108
+input_payload_bytes = 595896
+input_payload_blocks = 104
+boolean_peak_live_bytes = 16462366
+kernel_peak_incremental_bytes = 15865832
+post_boolean_incremental_bytes = 593728
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 73256
+post_input_drop_incremental_bytes = 78576
+allocation_calls = 252377
+deallocation_calls = 251463
+reallocation_calls = 32892
+added_bytes = 86866020
+removed_bytes = 86272292
+
+[[fixture]]
+selector = "yeahright"
+fixture = "yeahright_control_hull_subdivided_box"
+input_path = "native retained views with policy-qualified PWN facts primed"
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 852
+output_vertices = 317
+output_triangles = 630
+process_baseline_live_bytes = 629
+process_baseline_live_blocks = 4
+input_live_bytes = 916421
+input_live_blocks = 12714
+input_payload_bytes = 915792
+input_payload_blocks = 12710
+boolean_peak_live_bytes = 5970009
+kernel_peak_incremental_bytes = 5053588
+post_boolean_incremental_bytes = 517064
+output_live_payload_bytes = 232536
+input_fact_growth_bytes = 284528
+post_input_drop_incremental_bytes = 7320
+allocation_calls = 453382
+deallocation_calls = 446368
+reallocation_calls = 22241
+added_bytes = 28204955
+removed_bytes = 27687891
+
+[[fixture]]
+selector = "yeahright-4"
+fixture = "yeahright_control_hull_subdivided_4_box"
+input_path = "native retained views with policy-qualified PWN facts primed"
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 3372
+output_vertices = 1054
+output_triangles = 2104
+process_baseline_live_bytes = 631
+process_baseline_live_blocks = 4
+input_live_bytes = 3638023
+input_live_blocks = 50514
+input_payload_bytes = 3637392
+input_payload_blocks = 50510
+boolean_peak_live_bytes = 22489145
+kernel_peak_incremental_bytes = 18851122
+post_boolean_incremental_bytes = 1650192
+output_live_payload_bytes = 571168
+input_fact_growth_bytes = 1079024
+post_input_drop_incremental_bytes = 7320
+allocation_calls = 1623390
+deallocation_calls = 1600761
+reallocation_calls = 70301
+added_bytes = 103117256
+removed_bytes = 101467064
+
+[[fixture]]
+selector = "yeahright-8"
+fixture = "yeahright_control_hull_subdivided_8_box"
+input_path = "native retained views with policy-qualified PWN facts primed"
+operation = "union"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 13452
+output_vertices = 3820
+output_triangles = 7636
+process_baseline_live_bytes = 631
+process_baseline_live_blocks = 4
+input_live_bytes = 14524423
+input_live_blocks = 201714
+input_payload_bytes = 14523792
+input_payload_blocks = 201710
+boolean_peak_live_bytes = 85635443
+kernel_peak_incremental_bytes = 71111020
+post_boolean_incremental_bytes = 5708592
+output_live_payload_bytes = 1512560
+input_fact_growth_bytes = 4196032
+post_input_drop_incremental_bytes = 7320
+allocation_calls = 6296027
+deallocation_calls = 6217242
+reallocation_calls = 250529
+added_bytes = 406485522
+removed_bytes = 400776930
+
+[[fixture]]
+selector = "yeahright-full-rotated"
+fixture = "yeahright_full_resolution_rotated_intersection"
+input_path = "native retained views without separate priming"
+operation = "intersection"
+policies = ["STRICT", "APPROXIMATE_512"]
+input_triangles = 23788
+output_vertices = 0
+output_triangles = 0
+process_baseline_live_bytes = 642
+process_baseline_live_blocks = 4
+input_live_bytes = 7123330
+input_live_blocks = 102376
+input_payload_bytes = 7122688
+input_payload_blocks = 102372
+boolean_peak_live_bytes = 165385450
+kernel_peak_incremental_bytes = 158262120
+post_boolean_incremental_bytes = 24389904
+output_live_payload_bytes = 56
+input_fact_growth_bytes = 24389848
+post_input_drop_incremental_bytes = 10792
+allocation_calls = 39528604
+deallocation_calls = 39175963
+reallocation_calls = 4148399
+added_bytes = 2623230460
+removed_bytes = 2598840556
+
+[external_profiler_agreement.native]
+heaptrack_peak_bytes = 16497378
+direct_requested_payload_peak_bytes = 16462358
+difference_bytes = 35020
+difference_percent = 0.212276
+
+[external_profiler_agreement.general]
+heaptrack_peak_bytes = 16497738
+direct_requested_payload_peak_bytes = 16462366
+difference_bytes = 35372
+difference_percent = 0.214405
+
+[full_resolution_process]
+direct_requested_payload_peak_bytes = 165385450
+direct_requested_payload_peak_mib = 157.723856
+kernel_peak_incremental_bytes = 158262120
+kernel_peak_incremental_mib = 150.930519
+input_fact_growth_bytes = 24389848
+input_fact_growth_mib = 23.259972
+ordinary_max_rss_kib = 192376
+output_live_payload_bytes = 56
+
+[scaling]
+triangle_counts = [852, 3372, 13452]
+input_payload_growth = [3.971854, 3.992914]
+kernel_peak_growth = [3.730245, 3.772243]
+input_fact_growth = [3.792330, 3.888729]
+kernel_peak_bytes_per_triangle = [5931.441315, 5590.486951, 5286.278620]
+approximately_linear = true
+
+[validation]
+unit = 112
+boolean = 8
+competitive_executed = 5
+competitive_ignored = 6
+manifest = 7
+intersection = 2
+policy = 9
+readme = 2
+executed_total = 145
+failed = 0
+release_probe_builds = true
+large_xl_probe_executions = 12
+allocator_conservation_assertions = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+fuzz_bins_check = true
+fmt = true
+diff_check = true
+
+[footprint]
+production_rust_modules_changed = 0
+cargo_metadata_changed = false
+canonical_native_wasm_consumer_effect = "none; measurement/example/test/doc sources are not linked"
+implementation_insertions = 470
+implementation_deletions = 84
+implementation_net_lines = 386
+ordinary_probe_deleted_lines = 84
+fixture_preparation_shared = true
+
+[open]
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+per_case_cgal_parity = false
+whole_boolean_kernel_lifetime_isolated = true
+stage_specific_arena_lifetime_attribution = false
+larger_pathological_and_real_world_siblings_complete = false
+retained_fact_policy_change_authorized_by_this_evidence = false
+next_memory_target = "reduce the full-case 150.93 MiB incremental peak and 23.26 MiB input-attached fact growth through clean fused/sign-only schedules, with warm repeated-input runtime gates"
