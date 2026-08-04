@@ -482,15 +482,17 @@ fn cube_minus_translated_sphere() -> TriangleMesh {
     let cube = solid::cube(r(2.0));
     let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
-    hypermesh::boolean_triangle_meshes(
+    hypermesh::boolean(
         &context,
-        &cube,
-        &sphere,
-        hypermesh::BooleanOp::Difference,
-        hypermesh::EmberConfig::default(),
+        &[cube.as_ref(), sphere.as_ref()],
+        hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
     )
     .expect("translated-sphere difference")
     .into_value()
+    .into_triangle_meshes()
+    .expect("translated-sphere difference is bounded")
+    .pop()
+    .expect("one translated-sphere result")
 }
 
 fn render_curve(name: &str, region: &CurveRegion2) {
