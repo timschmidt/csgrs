@@ -33,7 +33,7 @@ use crate::root_isolation::{
     refine_isolated_univariate_polynomial_interval,
 };
 
-const MAX_BINARY_RESULTANT_DEGREE: usize = 8;
+const MAX_BINARY_RESULTANT_DEGREE: usize = 9;
 
 /// Status for constructing a binary arithmetic image of two algebraic roots.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -531,6 +531,38 @@ mod tests {
         }
     }
 
+    fn positive_cubic_root(
+        constant_numerator: i64,
+        constant_denominator: u64,
+        lower_numerator: i64,
+        lower_denominator: u64,
+        upper_numerator: i64,
+        upper_denominator: u64,
+    ) -> AlgebraicRootRepresentation {
+        AlgebraicRootRepresentation {
+            constraint_index: constant_denominator as usize,
+            symbol: SymbolId(constant_denominator as u32),
+            interval_index: 0,
+            polynomial_coefficients: vec![
+                -fraction(constant_numerator, constant_denominator),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ],
+            interval: IsolatedRootInterval {
+                lower: fraction(lower_numerator, lower_denominator),
+                upper: fraction(upper_numerator, upper_denominator),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }
+    }
+
     #[test]
     fn binary_constructs_sum_of_independent_square_roots() {
         let report = transform_algebraic_roots_binary(
@@ -610,6 +642,37 @@ mod tests {
             vec![real(36), Real::zero(), real(-12), Real::zero(), Real::one()]
         );
         assert!(root.is_valid());
+    }
+
+    #[test]
+    fn binary_constructs_product_of_independent_cubic_roots() {
+        let report = transform_algebraic_roots_binary(
+            &positive_cubic_root(1, 2, 3, 4, 4, 5),
+            &positive_cubic_root(1, 3, 2, 3, 3, 4),
+            AlgebraicRootArithmeticOp::Multiply,
+            PredicatePolicy::STRICT,
+        );
+
+        assert_eq!(
+            report.status,
+            AlgebraicRootBinaryTransformStatus::Transformed
+        );
+        let root = report.representation.as_ref().unwrap();
+        assert!(root.is_valid());
+        let expected = positive_cubic_root(1, 6, 11, 20, 14, 25);
+        let comparison = crate::algebraic::compare_algebraic_root_representations_by_difference(
+            root,
+            &expected,
+            crate::algebraic::AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                ..crate::algebraic::AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+        assert_eq!(
+            comparison.comparison.status,
+            crate::algebraic::AlgebraicRootComparisonStatus::Compared
+        );
+        assert_eq!(comparison.comparison.ordering, Some(Ordering::Equal));
     }
 
     #[test]
