@@ -1290,7 +1290,7 @@ pub(crate) fn pairwise_intersections_by_polygon_from_bvh(
     let mut scratch = PairwiseIntersectionScratch::default();
     let mut failure = None;
 
-    bvh.intersect_self_pairs_decision(decisions, |global_i, global_j| {
+    bvh.intersect_self_candidates_decision(decisions, |global_i, global_j| {
         if failure.is_some() {
             return;
         }
@@ -3252,6 +3252,45 @@ mod tests {
             }))
         ));
         assert!(graph.radially_separated_face_pair_keys.is_empty());
+    }
+
+    #[test]
+    fn conservative_binary32_bvh_candidate_is_rejected_by_exact_narrow_phase() {
+        let base = 1_i64 << 30;
+        let p = |x, y| Point3::new(Real::from(x), Real::from(y), Real::zero());
+        let polygons = [
+            crate::test_support::approximate_convex_triangle(
+                &p(base, 0),
+                &p(base + 1, 0),
+                &p(base, 1),
+                0,
+                0,
+            ),
+            crate::test_support::approximate_convex_triangle(
+                &p(base + 2, 0),
+                &p(base + 3, 0),
+                &p(base + 2, 1),
+                1,
+                0,
+            ),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let graph = super::pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+            assert!(graph.events.is_empty());
+            assert!(graph.points.is_empty());
+            assert!(graph.segments.is_empty());
+            assert!(graph.radially_separated_face_pair_keys.is_empty());
+            assert_eq!(
+                decisions.certainty(),
+                crate::context::MeshCertainty::Certified
+            );
+        }
     }
 
     #[test]

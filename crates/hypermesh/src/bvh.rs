@@ -1,7 +1,8 @@
 //! Hierarchical exact broad-phase bounds queries.
 //!
-//! Tree partitions are performance hints only. Every rejection and reported
-//! candidate is certified against exact hyperreal AABBs.
+//! Tree partitions and outward primitive filters are performance hints only.
+//! Every rejection is certified; conservative candidates are classified by
+//! the consuming exact geometry predicate and may include false positives.
 
 use std::cmp::Ordering;
 
@@ -13,6 +14,98 @@ use crate::polygon::{ApproxBounds, ConvexPolygon};
 use crate::predicate::{classify_point_decision, compare_real_decision};
 
 const LEAF_SIZE: usize = 8;
+
+/// Outward binary32 bounds used only to certify broad-phase rejection.
+///
+/// An unavailable filter is encoded by an empty interval so the carrier stays
+/// compact and has stable equality. Overlapping filters never establish an
+/// exact intersection; they only decline to the ordinary exact predicate.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct CertifiedAabbFilter {
+    min: [f32; 3],
+    max: [f32; 3],
+}
+
+impl Default for CertifiedAabbFilter {
+    fn default() -> Self {
+        Self {
+            min: [f32::INFINITY; 3],
+            max: [f32::NEG_INFINITY; 3],
+        }
+    }
+}
+
+impl CertifiedAabbFilter {
+    fn from_bounds(bounds: &ApproxBounds) -> Self {
+        let mut filter = Self::default();
+        for axis in 0..3 {
+            let Some(minimum) = certified_coordinate_enclosure(axis_ref(&bounds.min, axis)) else {
+                return Self::default();
+            };
+            let Some(maximum) = certified_coordinate_enclosure(axis_ref(&bounds.max, axis)) else {
+                return Self::default();
+            };
+            filter.min[axis] = outward_f32_lower(minimum[0]);
+            filter.max[axis] = outward_f32_upper(maximum[1]);
+        }
+        filter
+    }
+
+    fn from_axis_bounds(minimum: &crate::Real, maximum: &crate::Real, axis: usize) -> Self {
+        let Some(minimum) = certified_coordinate_enclosure(minimum) else {
+            return Self::default();
+        };
+        let Some(maximum) = certified_coordinate_enclosure(maximum) else {
+            return Self::default();
+        };
+        let mut filter = Self {
+            min: [f32::NEG_INFINITY; 3],
+            max: [f32::INFINITY; 3],
+        };
+        filter.min[axis] = outward_f32_lower(minimum[0]);
+        filter.max[axis] = outward_f32_upper(maximum[1]);
+        filter
+    }
+
+    fn is_available(self) -> bool {
+        self.min[0] <= self.max[0]
+    }
+
+    fn definitely_disjoint(self, other: Self) -> bool {
+        matches!(self.may_overlap(other), Some(false))
+    }
+
+    fn may_overlap(self, other: Self) -> Option<bool> {
+        (self.is_available() && other.is_available()).then(|| {
+            !(0..3).any(|axis| self.max[axis] < other.min[axis] || other.max[axis] < self.min[axis])
+        })
+    }
+}
+
+fn outward_f32_lower(value: f64) -> f32 {
+    let narrowed = value as f32;
+    if f64::from(narrowed) > value {
+        narrowed.next_down()
+    } else {
+        narrowed
+    }
+}
+
+fn outward_f32_upper(value: f64) -> f32 {
+    let narrowed = value as f32;
+    if f64::from(narrowed) < value {
+        narrowed.next_up()
+    } else {
+        narrowed
+    }
+}
+
+fn certified_coordinate_enclosure(value: &crate::Real) -> Option<[f64; 2]> {
+    if let Some(exact) = value.to_f64_exact_dyadic() {
+        return Some([exact, exact]);
+    }
+    value.exact_rational_ref()?.to_f64_enclosure()
+}
 
 fn compact_bvh_index(value: usize, operation: &'static str) -> HypermeshResult<u32> {
     u32::try_from(value).map_err(|_| HypermeshError::CapacityOverflow { operation })
@@ -30,6 +123,7 @@ pub struct PolygonBounds {
 #[derive(Clone, Debug, PartialEq)]
 struct BvhNode {
     bounds: ApproxBounds,
+    certified_filter: CertifiedAabbFilter,
     range: std::ops::Range<usize>,
     children: Option<[usize; 2]>,
 }
@@ -38,6 +132,7 @@ struct BvhNode {
 struct BoundsBvh {
     order: Vec<usize>,
     nodes: Vec<BvhNode>,
+    primitive_filters: Vec<CertifiedAabbFilter>,
     primitive_extrema: Option<Vec<[u32; 6]>>,
 }
 
@@ -53,6 +148,10 @@ impl BoundsBvh {
                 ..Self::default()
             });
         }
+        let primitive_filters = primitives
+            .iter()
+            .map(|primitive| CertifiedAabbFilter::from_bounds(&primitive.bounds))
+            .collect::<Vec<_>>();
         let approximate_centers = primitives
             .iter()
             .map(|primitive| {
@@ -62,6 +161,7 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..primitives.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(primitives.len())),
+            primitive_filters: Vec::new(),
             primitive_extrema: retain_primitive_extrema
                 .then(|| Vec::with_capacity(bvh_node_capacity(primitives.len()))),
         };
@@ -72,6 +172,7 @@ impl BoundsBvh {
             0,
             primitives.len(),
         )?;
+        tree.primitive_filters = primitive_filters;
         Ok(tree)
     }
 
@@ -100,6 +201,7 @@ impl BoundsBvh {
         let mut tree = Self {
             order: (0..points.len()).collect(),
             nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
+            primitive_filters: Vec::new(),
             primitive_extrema: None,
         };
         tree.build_point_node(decisions, points, approximate_points, 0, points.len())?;
@@ -118,7 +220,7 @@ impl BoundsBvh {
             decisions,
             self.order[start..end]
                 .iter()
-                .map(|&index| (index, &primitives[index].bounds)),
+                .map(|&index| (index, &primitives[index])),
             self.primitive_extrema.is_some(),
         )?;
         let children_axis = (end - start > LEAF_SIZE)
@@ -126,6 +228,7 @@ impl BoundsBvh {
             .transpose()?;
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
+            certified_filter: CertifiedAabbFilter::from_bounds(&bounds),
             bounds,
             range: start..end,
             children: None,
@@ -163,6 +266,7 @@ impl BoundsBvh {
             .transpose()?;
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
+            certified_filter: CertifiedAabbFilter::from_bounds(&bounds),
             bounds,
             range: start..end,
             children: None,
@@ -187,14 +291,23 @@ impl BoundsBvh {
         &self,
         decisions: &DecisionContext,
         query_bounds: &ApproxBounds,
+        query_filter: CertifiedAabbFilter,
         primitives: &[PolygonBounds],
         mut callback: F,
     ) -> HypermeshResult<()>
     where
         F: FnMut(usize),
     {
-        self.query_leaf_candidates(decisions, query_bounds, |item_index| {
-            if bounds_overlap_decision(decisions, &primitives[item_index].bounds, query_bounds)? {
+        self.query_leaf_candidates(decisions, query_bounds, query_filter, |item_index| {
+            let primitive = &primitives[item_index];
+            let primitive_filter = self.primitive_filters.get(item_index).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "exact hierarchy primitive has no certified filter",
+                },
+            )?;
+            if !primitive_filter.definitely_disjoint(query_filter)
+                && bounds_overlap_decision(decisions, &primitive.bounds, query_bounds)?
+            {
                 callback(item_index);
             }
             Ok(())
@@ -205,6 +318,7 @@ impl BoundsBvh {
         &self,
         decisions: &DecisionContext,
         query_bounds: &ApproxBounds,
+        query_filter: CertifiedAabbFilter,
         mut callback: F,
     ) -> HypermeshResult<()>
     where
@@ -216,8 +330,13 @@ impl BoundsBvh {
         let mut stack = vec![0];
         while let Some(node_index) = stack.pop() {
             let node = &self.nodes[node_index];
-            if !bounds_overlap_decision(decisions, &node.bounds, query_bounds)? {
-                continue;
+            match node.certified_filter.may_overlap(query_filter) {
+                Some(false) => continue,
+                Some(true) => {}
+                None if !bounds_overlap_decision(decisions, &node.bounds, query_bounds)? => {
+                    continue;
+                }
+                None => {}
             }
             if let Some([left, right]) = node.children {
                 stack.push(right);
@@ -451,10 +570,15 @@ impl ExactBvh {
         F: FnMut(usize),
     {
         let mut matches = Vec::new();
-        self.tree
-            .query(decisions, bounds, &self.primitives, |item_index| {
+        self.tree.query(
+            decisions,
+            bounds,
+            CertifiedAabbFilter::from_bounds(bounds),
+            &self.primitives,
+            |item_index| {
                 matches.push(item_index);
-            })?;
+            },
+        )?;
         matches.sort_unstable_by_key(|&item_index| self.primitives[item_index].polygon_index);
         for item_index in matches {
             callback(self.primitives[item_index].polygon_index);
@@ -487,23 +611,40 @@ impl ExactBvh {
     where
         F: FnMut(usize, usize),
     {
-        for primitive in &self.primitives {
-            other.query_bounds_decision(decisions, &primitive.bounds, |right| {
-                callback(primitive.polygon_index, right);
-            })?;
+        for (primitive_index, primitive) in self.primitives.iter().enumerate() {
+            let primitive_filter = self.tree.primitive_filters.get(primitive_index).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "exact hierarchy primitive has no certified filter",
+                },
+            )?;
+            let mut matches = Vec::new();
+            other.tree.query(
+                decisions,
+                &primitive.bounds,
+                *primitive_filter,
+                &other.primitives,
+                |item_index| matches.push(item_index),
+            )?;
+            matches.sort_unstable_by_key(|&item_index| other.primitives[item_index].polygon_index);
+            for item_index in matches {
+                callback(
+                    primitive.polygon_index,
+                    other.primitives[item_index].polygon_index,
+                );
+            }
         }
         Ok(())
     }
 
-    /// Calls `callback` once for each distinct overlapping primitive pair in
+    /// Calls `callback` once for each distinct conservative primitive pair in
     /// this hierarchy.
     ///
     /// A canonical node-pair traversal avoids querying the same hierarchy
     /// once per primitive and never visits both `(left, right)` and
-    /// `(right, left)`. Leaf pairs still pass the ordinary exact AABB
-    /// predicate, so tree layout only schedules work and cannot decide an
-    /// intersection.
-    pub(crate) fn intersect_self_pairs_decision<F>(
+    /// `(right, left)`. Certified outward filters may retain false-positive
+    /// leaf pairs, which the consuming exact polygon predicate must classify;
+    /// they can never omit an intersecting pair.
+    pub(crate) fn intersect_self_candidates_decision<F>(
         &self,
         decisions: &DecisionContext,
         mut callback: F,
@@ -527,10 +668,15 @@ impl ExactBvh {
                     reason: "exact self-intersection hierarchy reached an absent node",
                 },
             )?;
-            if left_index != right_index
-                && !bounds_overlap_decision(decisions, &left.bounds, &right.bounds)?
-            {
-                continue;
+            if left_index != right_index {
+                match left.certified_filter.may_overlap(right.certified_filter) {
+                    Some(false) => continue,
+                    Some(true) => {}
+                    None if !bounds_overlap_decision(decisions, &left.bounds, &right.bounds)? => {
+                        continue;
+                    }
+                    None => {}
+                }
             }
 
             match (left.children, right.children) {
@@ -583,12 +729,28 @@ impl ExactBvh {
                                     reason: "exact self-intersection hierarchy references an absent primitive",
                                 },
                             )?;
-                            if !bounds_overlap_decision(
-                                decisions,
-                                &left_primitive.bounds,
-                                &right_primitive.bounds,
-                            )? {
-                                continue;
+                            let left_filter = self.tree.primitive_filters.get(left_item).ok_or(
+                                HypermeshError::SurfaceArrangementFailed {
+                                    reason: "exact hierarchy primitive has no certified filter",
+                                },
+                            )?;
+                            let right_filter = self.tree.primitive_filters.get(right_item).ok_or(
+                                HypermeshError::SurfaceArrangementFailed {
+                                    reason: "exact hierarchy primitive has no certified filter",
+                                },
+                            )?;
+                            match left_filter.may_overlap(*right_filter) {
+                                Some(false) => continue,
+                                Some(true) => {}
+                                None if !bounds_overlap_decision(
+                                    decisions,
+                                    &left_primitive.bounds,
+                                    &right_primitive.bounds,
+                                )? =>
+                                {
+                                    continue;
+                                }
+                                None => {}
                             }
                             let first = left_primitive
                                 .polygon_index
@@ -622,6 +784,7 @@ impl ExactBvhQueryHierarchy {
         if self.nodes.is_empty() {
             return Ok(());
         }
+        let query_filter = CertifiedAabbFilter::from_bounds(bounds);
         let mut matches = Vec::new();
         let mut stack = vec![0_usize];
         while let Some(node_index) = stack.pop() {
@@ -637,7 +800,13 @@ impl ExactBvhQueryHierarchy {
                     .ok_or(HypermeshError::SurfaceArrangementFailed {
                         reason: "compact source hierarchy node has no exact extrema",
                     })?;
-            if !self.compact_bounds_overlap(decisions, polygons, node_extrema, bounds)? {
+            if !self.compact_bounds_overlap(
+                decisions,
+                polygons,
+                node_extrema,
+                bounds,
+                query_filter,
+            )? {
                 continue;
             }
             if node.right_child != 0 {
@@ -658,7 +827,10 @@ impl ExactBvhQueryHierarchy {
                     })?;
                 for &face in faces {
                     let face_bounds = self.primitive_bounds(polygons, face)?;
-                    if bounds_overlap_decision(decisions, face_bounds, bounds)? {
+                    if !CertifiedAabbFilter::from_bounds(face_bounds)
+                        .definitely_disjoint(query_filter)
+                        && bounds_overlap_decision(decisions, face_bounds, bounds)?
+                    {
                         matches.push(face);
                     }
                 }
@@ -677,10 +849,21 @@ impl ExactBvhQueryHierarchy {
         polygons: &[ConvexPolygon],
         extrema: &[u32; 6],
         query: &ApproxBounds,
+        query_filter: CertifiedAabbFilter,
     ) -> HypermeshResult<bool> {
         for axis in 0..3 {
             let minimum = self.primitive_bounds(polygons, extrema[axis])?;
             let maximum = self.primitive_bounds(polygons, extrema[axis + 3])?;
+            let node_axis_filter = CertifiedAabbFilter::from_axis_bounds(
+                axis_ref(&minimum.min, axis),
+                axis_ref(&maximum.max, axis),
+                axis,
+            );
+            match node_axis_filter.may_overlap(query_filter) {
+                Some(false) => return Ok(false),
+                Some(true) => continue,
+                None => {}
+            }
             if compare_real_decision(
                 decisions,
                 axis_ref(&minimum.min, axis),
@@ -1073,11 +1256,11 @@ pub(crate) fn bounds_overlap_decision(
 
 fn union_bounds<'a>(
     decisions: &DecisionContext,
-    mut bounds: impl Iterator<Item = (usize, &'a ApproxBounds)>,
+    mut bounds: impl Iterator<Item = (usize, &'a PolygonBounds)>,
     retain_extrema: bool,
 ) -> HypermeshResult<(ApproxBounds, Option<[u32; 6]>)> {
     let (first_index, first) = bounds.next().ok_or(HypermeshError::EmptyInput)?;
-    let mut result = first.clone();
+    let mut result = first.bounds.clone();
     let mut extrema = retain_extrema
         .then(|| {
             compact_bvh_index(first_index, "exact source hierarchy primitive IDs")
@@ -1088,12 +1271,12 @@ fn union_bounds<'a>(
         for axis in 0..3 {
             if compare_real_decision(
                 decisions,
-                axis_ref(&current.min, axis),
+                axis_ref(&current.bounds.min, axis),
                 axis_ref(&result.min, axis),
             )?
             .is_lt()
             {
-                *axis_mut(&mut result.min, axis) = axis_ref(&current.min, axis).clone();
+                *axis_mut(&mut result.min, axis) = axis_ref(&current.bounds.min, axis).clone();
                 if let Some(extrema) = &mut extrema {
                     extrema[axis] =
                         compact_bvh_index(current_index, "exact source hierarchy primitive IDs")?;
@@ -1101,12 +1284,12 @@ fn union_bounds<'a>(
             }
             if compare_real_decision(
                 decisions,
-                axis_ref(&current.max, axis),
+                axis_ref(&current.bounds.max, axis),
                 axis_ref(&result.max, axis),
             )?
             .is_gt()
             {
-                *axis_mut(&mut result.max, axis) = axis_ref(&current.max, axis).clone();
+                *axis_mut(&mut result.max, axis) = axis_ref(&current.bounds.max, axis).clone();
                 if let Some(extrema) = &mut extrema {
                     extrema[axis + 3] =
                         compact_bvh_index(current_index, "exact source hierarchy primitive IDs")?;
@@ -1208,6 +1391,125 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    #[test]
+    fn outward_binary32_conversion_contains_every_finite_binary64_input() {
+        for value in [
+            -f64::MAX,
+            -f64::from(f32::MAX) * 2.0,
+            -1.0 / 3.0,
+            -f64::from_bits(1),
+            -0.0,
+            0.0,
+            f64::from_bits(1),
+            1.0 / 3.0,
+            f64::from(f32::MAX) * 2.0,
+            f64::MAX,
+        ] {
+            assert!(f64::from(outward_f32_lower(value)) <= value);
+            assert!(f64::from(outward_f32_upper(value)) >= value);
+        }
+    }
+
+    #[test]
+    fn certified_filter_only_rejects_exactly_disjoint_rational_bounds() {
+        let third = Real::new(hyperlattice::Rational::fraction(1, 3).unwrap());
+        let tiny = Real::new(hyperlattice::Rational::fraction(1, 1_000_000_000).unwrap());
+        let left = ApproxBounds::new(
+            point(0, 0, 0),
+            Point3::new(third.clone(), third.clone(), third),
+        );
+        let near_right = ApproxBounds::new(
+            Point3::new(
+                &left.max.x + &tiny,
+                &left.max.y + &tiny,
+                &left.max.z + &tiny,
+            ),
+            point(2, 2, 2),
+        );
+        let far_right = ApproxBounds::new(point(3, 3, 3), point(4, 4, 4));
+
+        // The tiny exact gap rounds into the same outward binary32 interval,
+        // so it remains a safe false-positive scheduling candidate.
+        assert_eq!(
+            CertifiedAabbFilter::from_bounds(&left)
+                .may_overlap(CertifiedAabbFilter::from_bounds(&near_right)),
+            Some(true)
+        );
+        assert!(
+            CertifiedAabbFilter::from_bounds(&left)
+                .definitely_disjoint(CertifiedAabbFilter::from_bounds(&far_right))
+        );
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(!bounds_overlap_decision(&decisions, &left, &near_right).unwrap());
+            assert!(!bounds_overlap_decision(&decisions, &left, &far_right).unwrap());
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn unavailable_symbolic_filter_declines_to_exact_policy_aware_overlap() {
+        let pi = Real::pi();
+        let left = ApproxBounds::new(
+            Point3::new(pi.clone(), Real::zero(), Real::zero()),
+            Point3::new(pi.clone(), Real::one(), Real::one()),
+        );
+        let shifted = &pi + Real::from(2);
+        let right = ApproxBounds::new(
+            Point3::new(shifted.clone(), Real::zero(), Real::zero()),
+            Point3::new(&shifted + Real::one(), Real::one(), Real::one()),
+        );
+        assert_eq!(
+            CertifiedAabbFilter::from_bounds(&left)
+                .may_overlap(CertifiedAabbFilter::from_bounds(&right)),
+            None
+        );
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(!bounds_overlap_decision(&decisions, &left, &right).unwrap());
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn out_of_binary64_rational_filter_declines_to_exact_policy_aware_overlap() {
+        let huge = (0..1_100).fold(Real::one(), |value, _| &value + &value);
+        let left = ApproxBounds::new(
+            Point3::new(huge.clone(), Real::zero(), Real::zero()),
+            Point3::new(&huge + Real::one(), Real::one(), Real::one()),
+        );
+        let shifted = &huge + Real::from(2);
+        let right = ApproxBounds::new(
+            Point3::new(shifted.clone(), Real::zero(), Real::zero()),
+            Point3::new(&shifted + Real::one(), Real::one(), Real::one()),
+        );
+        assert_eq!(
+            CertifiedAabbFilter::from_bounds(&left)
+                .may_overlap(CertifiedAabbFilter::from_bounds(&right)),
+            None
+        );
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(!bounds_overlap_decision(&decisions, &left, &right).unwrap());
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
     fn separated_triangles() -> Vec<ConvexPolygon> {
         (0_i64..20)
             .map(|index| {
@@ -1307,7 +1609,7 @@ mod tests {
     }
 
     #[test]
-    fn canonical_self_pairs_match_exact_brute_force_under_both_policies() {
+    fn canonical_self_candidates_cover_exact_brute_force_under_both_policies() {
         let mut polygons = separated_triangles();
         polygons.extend((0_i64..12).map(|index| {
             approximate_convex_triangle(
@@ -1327,7 +1629,7 @@ mod tests {
             let decisions = DecisionContext::new(&context);
             let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
             let mut actual = Vec::new();
-            bvh.intersect_self_pairs_decision(&decisions, |first, second| {
+            bvh.intersect_self_candidates_decision(&decisions, |first, second| {
                 actual.push((first, second));
             })
             .unwrap();
@@ -1351,20 +1653,65 @@ mod tests {
                 }
             }
             expected.sort_unstable();
-            assert_eq!(actual, expected);
+            assert!(
+                expected
+                    .iter()
+                    .all(|pair| actual.binary_search(pair).is_ok())
+            );
             assert!(actual.iter().all(|(first, second)| first < second));
+            assert!(actual.windows(2).all(|pair| pair[0] < pair[1]));
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
     }
 
     #[test]
-    fn canonical_self_pairs_handle_empty_and_singleton_hierarchies() {
+    fn canonical_self_candidates_retain_binary32_false_positives_for_exact_consumers() {
+        let base = 1_i64 << 30;
+        let polygons = vec![
+            approximate_convex_triangle(
+                &point(base, 0, 0),
+                &point(base + 1, 0, 0),
+                &point(base, 1, 0),
+                0,
+                0,
+            ),
+            approximate_convex_triangle(
+                &point(base + 2, 0, 0),
+                &point(base + 3, 0, 0),
+                &point(base + 2, 1, 0),
+                1,
+                0,
+            ),
+        ];
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
+        assert!(
+            !bounds_overlap_decision(
+                &decisions,
+                &bvh.primitives[0].bounds,
+                &bvh.primitives[1].bounds,
+            )
+            .unwrap()
+        );
+
+        let mut candidates = Vec::new();
+        bvh.intersect_self_candidates_decision(&decisions, |first, second| {
+            candidates.push((first, second));
+        })
+        .unwrap();
+        assert_eq!(candidates, vec![(0, 1)]);
+        assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn canonical_self_candidates_handle_empty_and_singleton_hierarchies() {
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
         for polygons in [Vec::new(), separated_triangles()[..1].to_vec()] {
             let bvh = ExactBvh::build_decision(&decisions, &polygons).unwrap();
             let mut pair_count = 0;
-            bvh.intersect_self_pairs_decision(&decisions, |_, _| pair_count += 1)
+            bvh.intersect_self_candidates_decision(&decisions, |_, _| pair_count += 1)
                 .unwrap();
             assert_eq!(pair_count, 0);
         }
@@ -1372,7 +1719,7 @@ mod tests {
     }
 
     #[test]
-    fn canonical_self_pairs_reject_malformed_hierarchy_storage() {
+    fn canonical_self_candidates_reject_malformed_hierarchy_storage() {
         let polygons = separated_triangles();
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
@@ -1380,7 +1727,7 @@ mod tests {
         let mut absent_node = ExactBvh::build_decision(&decisions, &polygons).unwrap();
         absent_node.tree.nodes[0].children.as_mut().unwrap()[0] = usize::MAX;
         assert!(matches!(
-            absent_node.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            absent_node.intersect_self_candidates_decision(&decisions, |_, _| {}),
             Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "exact self-intersection hierarchy reached an absent node"
             })
@@ -1389,7 +1736,7 @@ mod tests {
         let mut invalid_leaf = ExactBvh::build_decision(&decisions, &polygons[..2]).unwrap();
         invalid_leaf.tree.nodes[0].range.end = usize::MAX;
         assert!(matches!(
-            invalid_leaf.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            invalid_leaf.intersect_self_candidates_decision(&decisions, |_, _| {}),
             Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "exact self-intersection hierarchy has an invalid leaf range"
             })
@@ -1398,9 +1745,18 @@ mod tests {
         let mut absent_primitive = ExactBvh::build_decision(&decisions, &polygons[..2]).unwrap();
         absent_primitive.tree.order[0] = usize::MAX;
         assert!(matches!(
-            absent_primitive.intersect_self_pairs_decision(&decisions, |_, _| {}),
+            absent_primitive.intersect_self_candidates_decision(&decisions, |_, _| {}),
             Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "exact self-intersection hierarchy references an absent primitive"
+            })
+        ));
+
+        let mut absent_filter = ExactBvh::build_decision(&decisions, &polygons[..2]).unwrap();
+        absent_filter.tree.primitive_filters.pop();
+        assert!(matches!(
+            absent_filter.intersect_self_candidates_decision(&decisions, |_, _| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "exact hierarchy primitive has no certified filter"
             })
         ));
     }
