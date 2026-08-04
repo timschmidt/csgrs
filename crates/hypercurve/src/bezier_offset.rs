@@ -8995,7 +8995,7 @@ fn trivariate_rational_multi_affine_factor_from_scale(
 }
 
 /// Recovers one exact rational multi-affine factor from a bounded tensor that
-/// is cubic through septic in `axis`. Specializations only propose
+/// is cubic through octic in `axis`. Specializations only propose
 /// bilinear slice factors. Hypersolve exact division proves each slice, derives the
 /// inter-slice scale from the translated first-order coefficient or an exact
 /// two-anchor projective alignment for repeated factors, and finally proves
@@ -9009,7 +9009,7 @@ fn trivariate_rational_multi_affine_axis_factorizations(
     axis: usize,
 ) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
-    if !(4..=8).contains(&coefficients.len()) {
+    if !(4..=9).contains(&coefficients.len()) {
         return None;
     }
     // Try the first proved slice factors before enumerating every divisor. The
@@ -9529,7 +9529,7 @@ fn trivariate_bounded_factor_sign_with_budget(
             3 => trivariate_quadratic_axis_factorizations(polynomial, axis),
             4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis)
                 .or_else(|| trivariate_rational_multi_affine_axis_factorizations(polynomial, axis)),
-            5..=8 => trivariate_rational_multi_affine_axis_factorizations(polynomial, axis),
+            5..=9 => trivariate_rational_multi_affine_axis_factorizations(polynomial, axis),
             _ => None,
         };
         let Some(factorizations) = factorizations else {
@@ -9556,8 +9556,8 @@ fn trivariate_bounded_factor_sign_with_budget(
 }
 
 /// Replays the bounded exact quadratic, repeated-cubic, and rational
-/// multi-affine factor authorities. Six splits suffice for every supported
-/// septic path.
+/// multi-affine factor authorities. Seven splits suffice for every supported
+/// octic path.
 #[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
@@ -9567,7 +9567,7 @@ fn trivariate_bounded_factor_sign(
     second: &BezierParameter2,
     third: &BezierParameter2,
 ) -> CurveResult<Option<RealSign>> {
-    trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, 6)
+    trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, 7)
 }
 
 /// Preserves authored products that quotient-ring reduction may expand across
@@ -28317,6 +28317,25 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn rational_multi_affine_axis_factorization_replays_eight_distinct_factors() {
+        let product = trivariate_multi_affine_product([
+            [1, 2, -1, 3, 2, -2, 4, 1],
+            [2, -1, 3, 1, -3, 2, 1, 2],
+            [3, 1, 2, -2, 1, 4, -1, 3],
+            [2, 3, 1, -1, -2, 1, 3, 2],
+            [4, -2, 1, 2, 3, -1, 2, 1],
+            [5, 1, -2, 1, 2, 3, 1, -1],
+            [6, -1, 2, 3, 1, -2, 1, 2],
+            [7, 2, -1, 1, -2, 3, 2, 1],
+        ]);
+        assert_rational_multi_affine_factor_on_every_axis(
+            &product,
+            "every authored octic multi-affine product must split exactly",
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn rational_multi_affine_axis_factorization_replays_quartic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
         let second = [2, -1, 3, 1, -3, 2, 1, 2];
@@ -28364,6 +28383,22 @@ mod conversion_tests {
         assert_rational_multi_affine_factor_on_every_axis(
             &product,
             "septic multiplicities must retain an exact linear-axis factor",
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_multi_affine_axis_factorization_replays_octic_multiplicity() {
+        let first = [1, 2, -1, 3, 2, -2, 4, 1];
+        let second = [2, -1, 3, 1, -3, 2, 1, 2];
+        let third = [3, 1, 2, -2, 1, 4, -1, 3];
+        let fourth = [2, 3, 1, -1, -2, 1, 3, 2];
+        let product = trivariate_multi_affine_product([
+            first, first, second, second, third, third, fourth, fourth,
+        ]);
+        assert_rational_multi_affine_factor_on_every_axis(
+            &product,
+            "octic multiplicities must retain an exact linear-axis factor",
         );
     }
 
@@ -28549,6 +28584,27 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn rational_multi_affine_axis_factorization_recovers_one_octic_factor() {
+        let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
+        let mut septic_coefficients = vec![vec![vec![Real::zero(); 8]; 8]; 8];
+        septic_coefficients[0][0][0] = Real::one();
+        septic_coefficients[7][0][0] = Real::one();
+        septic_coefficients[0][7][0] = Real::one();
+        septic_coefficients[0][0][7] = Real::one();
+        let product = trivariate_multiply(
+            &factor,
+            &TrivariatePolynomial2 {
+                coefficients: septic_coefficients,
+            },
+        );
+        assert_rational_multi_affine_factor_on_every_axis(
+            &product,
+            "one rational multi-affine octic factor must be retained",
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 4]; 4]; 4];
         coefficients[0][0][0] = Real::one();
@@ -28623,6 +28679,23 @@ mod conversion_tests {
         coefficients[7][0][0] = Real::one();
         coefficients[0][7][0] = Real::one();
         coefficients[0][0][7] = Real::one();
+        coefficients[1][1][1] = Real::one();
+        let polynomial = TrivariatePolynomial2 { coefficients };
+        for axis in 0..3 {
+            assert!(
+                trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none()
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn rational_multi_affine_axis_factorization_rejects_an_unfactored_octic() {
+        let mut coefficients = vec![vec![vec![Real::zero(); 9]; 9]; 9];
+        coefficients[0][0][0] = Real::one();
+        coefficients[8][0][0] = Real::one();
+        coefficients[0][8][0] = Real::one();
+        coefficients[0][0][8] = Real::one();
         coefficients[1][1][1] = Real::one();
         let polynomial = TrivariatePolynomial2 { coefficients };
         for axis in 0..3 {
@@ -29460,8 +29533,45 @@ mod conversion_tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn octic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+        let (parameters, septic) = septic_coupled_fixture();
+        let positive = trivariate_multi_affine([7, 1, 2, 1, 2, 1, 1, 2]);
+        (parameters, trivariate_multiply(&septic, &positive))
+    }
+
+    #[cfg(feature = "predicates")]
     #[test]
-    fn octic_coupled_factor_obeys_the_selected_terminal_policy() {
+    fn octic_coupled_factor_rational_three_field_zero_is_exact() {
+        let (parameters, polynomial) = octic_coupled_fixture();
+        assert_eq!(
+            trivariate_bounded_factor_sign(
+                &polynomial,
+                &parameters[0],
+                &parameters[1],
+                &parameters[2],
+            )
+            .unwrap(),
+            Some(RealSign::Zero)
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn nonic_coupled_factor_obeys_the_selected_terminal_policy() {
         let (parameters, cubic) = square_free_cubic_coupled_fixture();
         let positive = trivariate_multi_affine_product([
             [4, 1, 1, 0, 1, 0, 0, 0],
@@ -29469,6 +29579,7 @@ mod conversion_tests {
             [6, 1, 1, 0, 1, 0, 0, 0],
             [7, 1, 1, 0, 1, 0, 0, 0],
             [8, 1, 1, 0, 1, 0, 0, 0],
+            [9, 1, 1, 0, 1, 0, 0, 0],
         ]);
         let polynomial = trivariate_multiply(&cubic, &positive);
         assert_eq!(
