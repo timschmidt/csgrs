@@ -690,6 +690,7 @@ fn project_curve_region_loop_to_curve_path(
                 source_curve: None, ..
             }
             | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
         };
@@ -983,6 +984,11 @@ fn project_curve_region_loop(
                 return Err(CurveError::Topology(
                     "finite projection of exact analytic parallel fragments is not implemented"
                         .into(),
+                ));
+            }
+            BezierSplitFragment2::AlgebraicChord(_) => {
+                return Err(CurveError::Topology(
+                    "finite projection of algebraic chords is not implemented".into(),
                 ));
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {

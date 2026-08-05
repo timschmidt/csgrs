@@ -165,6 +165,22 @@ pub enum RationalBezierIntersectionPointEvidence2 {
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
+    /// Returns the represented point when this evidence has native coordinates.
+    pub const fn as_exact(&self) -> Option<&Point2> {
+        match self {
+            Self::Exact(point) => Some(point),
+            Self::Algebraic(_) => None,
+        }
+    }
+
+    /// Returns the retained algebraic image, when present.
+    pub const fn as_algebraic(&self) -> Option<&RationalBezierAlgebraicPointImage2> {
+        match self {
+            Self::Exact(_) => None,
+            Self::Algebraic(point) => Some(point),
+        }
+    }
+
     /// Compares two retained affine points without materializing an algebraic
     /// coordinate or sampling either isolating interval.
     ///
@@ -253,6 +269,12 @@ impl RationalBezierIntersectionPointEvidence2 {
                 }
             }
         }
+    }
+}
+
+impl From<Point2> for RationalBezierIntersectionPointEvidence2 {
+    fn from(point: Point2) -> Self {
+        Self::Exact(point)
     }
 }
 

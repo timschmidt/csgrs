@@ -24,7 +24,7 @@ use hyperreal::{Real, RealSign};
 use crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicEndpointImage2,
+    BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicEndpointImage2,
     BezierAlgebraicParameter2, BezierParallel2, BezierParameter2, BezierParameterRange2,
     Classification, CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
@@ -286,6 +286,12 @@ pub enum BezierSplitFragment2 {
     },
     /// Exact analytic parallel retained over represented or algebraic source parameters.
     AnalyticParallel(BezierParallelFragment2),
+    /// Exact straight chord with represented or retained algebraic endpoints.
+    ///
+    /// Its local line parameter is `[0, 1]`; endpoint coordinate fields stay
+    /// independent so a chamfer between unrelated selected roots does not
+    /// construct a primitive element merely to enter region topology.
+    AlgebraicChord(BezierAlgebraicChord2),
     /// Exact semicircular join centered at a selected algebraic cusp.
     ///
     /// Its local monotone parameter is retained by the carrier rather than
@@ -361,7 +367,7 @@ impl BezierSplitFragment2 {
             Self::AnalyticParallel(fragment) => {
                 Some((fragment.range.start(), fragment.range.end()))
             }
-            Self::AlgebraicCuspSemicircle(_) => None,
+            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => None,
         }
     }
 
@@ -376,6 +382,10 @@ impl BezierSplitFragment2 {
             Self::AnalyticParallel(fragment) => CurveRegionParameterRange2::new_validated(
                 CurveRegionParameter2::from_bezier(fragment.range.start().clone()),
                 CurveRegionParameter2::from_bezier(fragment.range.end().clone()),
+            ),
+            Self::AlgebraicChord(_) => CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
             ),
             Self::AlgebraicCuspSemicircle(fragment) => CurveRegionParameterRange2::new_validated(
                 CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
@@ -767,7 +777,7 @@ impl BezierSplitFragment2 {
                 Ok(curve.point_at(&half, policy))
             }
             Self::AnalyticParallel(fragment) => fragment.representative_point(policy),
-            Self::AlgebraicCuspSemicircle(_) => {
+            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
             Self::AlgebraicEndpointImages {
@@ -822,6 +832,7 @@ impl BezierSplitFragment2 {
                 end_image: end_image.clone(),
             }),
             Self::AnalyticParallel(fragment) => Ok(Self::AnalyticParallel(fragment.reversed())),
+            Self::AlgebraicChord(chord) => Ok(Self::AlgebraicChord(chord.reversed())),
             Self::AlgebraicCuspSemicircle(fragment) => {
                 Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
             }
@@ -938,6 +949,12 @@ fn validate_bezier_split_fragment(
                     .into(),
             ));
         }
+        BezierSplitFragment2::AlgebraicChord(_) => {
+            return Err(CurveError::Topology(
+                "algebraic chords are region carriers, not native Bezier split materialization"
+                    .into(),
+            ));
+        }
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
             return Err(CurveError::Topology(
                 "algebraic cusp semicircles are region carriers, not native Bezier split materialization"
@@ -1001,8 +1018,9 @@ fn bezier_split_fragment_range(
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Ok((fragment.range().start(), fragment.range().end()))
         }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Err(CurveError::Topology(
-            "algebraic cusp semicircle has a distinct local parameter domain".into(),
+        BezierSplitFragment2::AlgebraicChord(_)
+        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Err(CurveError::Topology(
+            "retained region carrier has a distinct local parameter domain".into(),
         )),
     }
 }

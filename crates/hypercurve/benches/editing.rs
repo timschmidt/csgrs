@@ -1038,6 +1038,30 @@ fn bench_represented_bezier_region_corner_lanes(region: &CurveRegion2, iteration
     let policy = CurveContext::STRICT;
     let next_setback = (s(657).sqrt().expect("positive benchmark radicand") / s(16))
         .expect("nonzero benchmark divisor");
+    if corner_lane_enabled("curve_region_line_quadratic_algebraic_chamfer") {
+        let started = Instant::now();
+        let mut candidates = 0_usize;
+        for _ in 0..iterations {
+            let solutions = black_box(region)
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    s(1),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("algebraic Bezier region chamfer must retain exact carriers")
+                .into_value();
+            candidates += black_box(solutions).candidate_count();
+        }
+        assert_ne!(candidates, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_quadratic_algebraic_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+            elapsed / iterations
+        );
+    }
     if corner_lane_enabled("curve_region_line_quadratic_design_chamfer") {
         let started = Instant::now();
         let mut candidates = 0_usize;

@@ -545,6 +545,13 @@ fn validate_arrangement_fragment_source_range(
                 }
             }
         }
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            if chord.policy() != *policy {
+                return Err(CurveError::Topology(
+                    "algebraic chord arrangement evidence changed predicate policy".into(),
+                ));
+            }
+        }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             fragment.validate_policy(policy)?;
         }
@@ -790,6 +797,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
             analytic_parallel_exact_endpoints(fragment, &CurveContext::STRICT)
         }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
@@ -1040,6 +1048,7 @@ fn materialized_endpoint_data(
             Some(analytic_parallel_endpoint_data(fragment, policy))
         }
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
     }
@@ -1206,6 +1215,25 @@ fn retained_endpoint_data(
                 start_derivative_source: None,
                 end_derivative_source: None,
             }))
+        }
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            let endpoint_key =
+                |endpoint: &crate::RationalBezierIntersectionPointEvidence2| match endpoint {
+                    crate::RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                        Some(RetainedEndpointKey::Exact(Box::new(point.clone())))
+                    }
+                    crate::RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                        let point = point.resolved(policy)?;
+                        Some(RetainedEndpointKey::Algebraic {
+                            x: Box::new(point.x()?.representation()?.clone()),
+                            y: Box::new(point.y()?.representation()?.clone()),
+                        })
+                    }
+                };
+            let mut data = retained_topology_endpoint_data(arrangement_fragment);
+            data.start = endpoint_key(chord.start());
+            data.end = endpoint_key(chord.end());
+            Some(Classification::Decided(data))
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),

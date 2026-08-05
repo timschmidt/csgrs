@@ -1343,7 +1343,8 @@ fn split_fragment_parameter_range(
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Some((fragment.range().start(), fragment.range().end()))
         }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+        BezierSplitFragment2::AlgebraicChord(_)
+        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
     }
 }
 

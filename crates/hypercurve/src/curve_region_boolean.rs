@@ -3542,6 +3542,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierSplitFragment2::Materialized { .. }
             | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
         };
@@ -4886,6 +4887,13 @@ fn build_region_carriers(
                     CurveRegionParameter2::from_bezier(fragment.range().end().clone()),
                     fragment.is_reversed(),
                 ),
+                BezierSplitFragment2::AlgebraicChord(_) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Boolean,
+                        CurveFamily2::RationalBezier,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
                 BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => (
                     RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone()),
                     CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
@@ -7180,7 +7188,8 @@ fn fragment_range(
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Some((fragment.range().start(), fragment.range().end()))
         }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+        BezierSplitFragment2::AlgebraicChord(_)
+        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
     }
 }
 

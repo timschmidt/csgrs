@@ -2073,6 +2073,14 @@ pub struct BezierAlgebraicChord2 {
     data: Arc<BezierAlgebraicChordData2>,
 }
 
+/// Prepared independent-field predicate data for one retained chord.
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+pub(crate) struct BezierAlgebraicChordAlgebraicRay2 {
+    start: RationalBezierAlgebraicPointImage2,
+    end: RationalBezierAlgebraicPointImage2,
+}
+
 impl PartialEq for BezierAlgebraicChord2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
@@ -10280,6 +10288,435 @@ impl BezierAlgebraicChord2 {
                 policy: self.data.policy,
             }),
         }
+    }
+
+    pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "algebraic chord was replayed under a different predicate policy".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Materializes the native fast path when both endpoints are represented.
+    pub fn exact_line(&self) -> Option<LineSeg2> {
+        let (
+            RationalBezierIntersectionPointEvidence2::Exact(start),
+            RationalBezierIntersectionPointEvidence2::Exact(end),
+        ) = (self.start(), self.end())
+        else {
+            return None;
+        };
+        LineSeg2::try_new(start.clone(), end.clone()).ok()
+    }
+
+    /// Returns a conservative exact box containing the complete chord.
+    pub fn conservative_bounds(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
+        self.validate_policy(policy)?;
+        let start = match algebraic_chord_endpoint_bounds(self.start(), policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match algebraic_chord_endpoint_bounds(self.end(), policy) {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(start.union(&end, policy))
+    }
+
+    /// Prepares exact independent-field endpoint predicates for this chord.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn algebraic_ray_evaluator(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordAlgebraicRay2>> {
+        self.validate_policy(policy)?;
+        let [start, end] = match algebraic_chord_endpoint_images(self.start(), self.end(), policy)?
+        {
+            Classification::Decided(images) => images,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(BezierAlgebraicChordAlgebraicRay2 {
+            start,
+            end,
+        }))
+    }
+
+    /// Classifies incidence of one represented affine point on this chord.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn contains_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if let Some(line) = self.exact_line() {
+            return Ok(line.contains_point(point, policy));
+        }
+        let evaluator = match self.algebraic_ray_evaluator(policy)? {
+            Classification::Decided(evaluator) => evaluator,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        evaluator.contains_exact_point(point, policy)
+    }
+
+    /// Returns this chord's half-open winding contribution to a forward ray.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        let evaluator = match self.algebraic_ray_evaluator(policy)? {
+            Classification::Decided(evaluator) => evaluator,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        evaluator.forward_ray_winding_delta_from_exact(origin, direction_x, direction_y, policy)
+    }
+}
+
+fn algebraic_chord_endpoint_bounds(
+    endpoint: &RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let RationalBezierIntersectionPointEvidence2::Algebraic(image) = endpoint else {
+        let RationalBezierIntersectionPointEvidence2::Exact(point) = endpoint else {
+            unreachable!();
+        };
+        return Classification::Decided(Aabb2::from_point(point.clone()));
+    };
+    if let Some(point) = image.exact_rational_point(policy) {
+        return Classification::Decided(Aabb2::from_point(point));
+    }
+    if let Some(bounds) = image.parametric_source_bounds(policy) {
+        return bounds;
+    }
+    let Some(image) = image.resolved(policy) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let (Some(x), Some(y)) = (
+        image.x().and_then(|coordinate| coordinate.representation()),
+        image.y().and_then(|coordinate| coordinate.representation()),
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    if !x.is_valid() || !y.is_valid() {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+    Classification::Decided(Aabb2::new_unchecked(
+        Point2::new(x.interval.lower.clone(), y.interval.lower.clone()),
+        Point2::new(x.interval.upper.clone(), y.interval.upper.clone()),
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_chord_image_parameter(
+    image: &RationalBezierAlgebraicPointImage2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicParameter2>> {
+    if let Some(parameter) = image.retained_parameter() {
+        return Ok(Classification::Decided(parameter.clone()));
+    }
+    Ok(
+        match BezierParameter2::from_algebraic_root_representation(image.parameter(), policy)? {
+            Classification::Decided(BezierParameter2::Algebraic(parameter)) => {
+                Classification::Decided(parameter)
+            }
+            Classification::Decided(BezierParameter2::Exact(_)) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_chord_endpoint_images(
+    start: &RationalBezierIntersectionPointEvidence2,
+    end: &RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<[RationalBezierAlgebraicPointImage2; 2]>> {
+    let normalized = |point: &RationalBezierIntersectionPointEvidence2| match point {
+        RationalBezierIntersectionPointEvidence2::Exact(point) => (Some(point.clone()), None),
+        RationalBezierIntersectionPointEvidence2::Algebraic(image) => image
+            .exact_rational_point(policy)
+            .map_or((None, Some(image.clone())), |point| (Some(point), None)),
+    };
+    let (start_exact, start_algebraic) = normalized(start);
+    let (end_exact, end_algebraic) = normalized(end);
+    match (start_exact, start_algebraic, end_exact, end_algebraic) {
+        (None, Some(start), None, Some(end)) => Ok(Classification::Decided([start, end])),
+        (Some(start), None, None, Some(end)) => {
+            let parameter = match algebraic_chord_image_parameter(&end, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided([
+                algebraic_constant_point_image(&start, &parameter, policy),
+                end,
+            ]))
+        }
+        (None, Some(start), Some(end), None) => {
+            let parameter = match algebraic_chord_image_parameter(&start, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(Classification::Decided([
+                start,
+                algebraic_constant_point_image(&end, &parameter, policy),
+            ]))
+        }
+        (Some(_), None, Some(_), None) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        _ => Err(CurveError::Topology(
+            "algebraic chord endpoint normalization was inconsistent".into(),
+        )),
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicChordAlgebraicRay2 {
+    fn exact_point_image(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
+        let parameter = match algebraic_chord_image_parameter(&self.start, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(algebraic_constant_point_image(
+            point, &parameter, policy,
+        )))
+    }
+
+    fn endpoint_predicates<'a>(
+        &'a self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[RationalBezierAlgebraicPointPredicate2<'a>; 2]>> {
+        let start = match self.start.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.end.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided([start, end]))
+    }
+
+    pub(crate) fn endpoint_side_signs(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        side_x: &Real,
+        side_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[RealSign; 2]>> {
+        let [start, end] = match self.endpoint_predicates(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match signed_algebraic_point_linear_difference(
+            &start, point, side_x, side_y, policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end =
+            match signed_algebraic_point_linear_difference(&end, point, side_x, side_y, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        Ok(Classification::Decided([start, end]))
+    }
+
+    pub(crate) fn contains_exact_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let point = match self.exact_point_image(point, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match point.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.contains_point(&point, policy)
+    }
+
+    pub(crate) fn contains_point(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let [start, end] = match self.endpoint_predicates(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match algebraic_point_oriented_line_side(&start, &end, point, policy)? {
+            Classification::Decided(crate::classify::LineSide::On) => {}
+            Classification::Decided(
+                crate::classify::LineSide::Left | crate::classify::LineSide::Right,
+            ) => return Ok(Classification::Decided(false)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let one = Real::one();
+        let zero = Real::zero();
+        let axis =
+            match signed_algebraic_point_linear_difference(&end, &start, &one, &zero, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => (&one, &zero),
+                Classification::Decided(RealSign::Zero) => (&zero, &one),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let start_order = match algebraic_point_linear_order(&start, point, axis.0, axis.1, policy)?
+        {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_order = match algebraic_point_linear_order(&end, point, axis.0, axis.1, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(!matches!(
+            (start_order, end_order),
+            (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+        )))
+    }
+
+    pub(crate) fn forward_ray_winding_delta_from_exact(
+        &self,
+        point: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        let point = match self.exact_point_image(point, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let point = match point.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.forward_ray_winding_delta(&point, direction_x, direction_y, policy)
+    }
+
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        let [start, end] = match self.endpoint_predicates(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let side_x = -direction_y.clone();
+        let side_y = direction_x.clone();
+        let start_side =
+            match algebraic_point_linear_order(&start, point, &side_x, &side_y, policy)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let end_side = match algebraic_point_linear_order(&end, point, &side_x, &side_y, policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if matches!(
+            (start_side, end_side),
+            (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+        ) {
+            return Ok(Classification::Decided(0));
+        }
+        let side = match algebraic_point_oriented_line_side(&start, &end, point, policy)? {
+            Classification::Decided(side) => side,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if side == crate::classify::LineSide::On {
+            return match self.contains_point(point, policy)? {
+                Classification::Decided(true) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                }
+                Classification::Decided(false) => Ok(Classification::Decided(0)),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
+        Ok(Classification::Decided(
+            if start_side != std::cmp::Ordering::Greater
+                && end_side == std::cmp::Ordering::Greater
+                && side == crate::classify::LineSide::Left
+            {
+                1
+            } else if start_side == std::cmp::Ordering::Greater
+                && end_side != std::cmp::Ordering::Greater
+                && side == crate::classify::LineSide::Right
+            {
+                -1
+            } else {
+                0
+            },
+        ))
     }
 }
 
@@ -24018,6 +24455,55 @@ mod conversion_tests {
             assert_eq!(chord.start(), &start);
             assert_eq!(chord.end(), &end);
             assert_eq!(chord.policy(), policy);
+            assert!(matches!(
+                chord.conservative_bounds(&policy).unwrap(),
+                Classification::Decided(_)
+            ));
+            assert_eq!(
+                chord
+                    .contains_point(&Point2::from_values(0, 0), &policy)
+                    .unwrap(),
+                Classification::Decided(false)
+            );
+            let evaluator = match chord.algebraic_ray_evaluator(&policy).unwrap() {
+                Classification::Decided(evaluator) => evaluator,
+                Classification::Uncertain(reason) => {
+                    panic!("independent chord evaluator: {reason:?}")
+                }
+            };
+            let start_predicate = match evaluator.start.predicate_evaluator(&policy).unwrap() {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("first chord endpoint predicate: {reason:?}")
+                }
+            };
+            assert_eq!(
+                evaluator.contains_point(&start_predicate, &policy).unwrap(),
+                Classification::Decided(true)
+            );
+            assert_eq!(
+                chord
+                    .forward_ray_winding_delta(
+                        &Point2::from_values(0, 0),
+                        &Real::one(),
+                        &Real::zero(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(1)
+            );
+            assert_eq!(
+                chord
+                    .reversed()
+                    .forward_ray_winding_delta(
+                        &Point2::from_values(0, 0),
+                        &Real::one(),
+                        &Real::zero(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(-1)
+            );
         }
     }
 

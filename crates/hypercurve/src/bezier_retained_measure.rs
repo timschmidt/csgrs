@@ -305,6 +305,19 @@ impl CurveEnvelopeAccumulator {
                     }
                 }
             }
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                match chord.conservative_bounds(policy) {
+                    Ok(Classification::Decided(curve_box)) => {
+                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
+                    }
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                }
+            }
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 match fragment.conservative_bounds() {
                     Ok(Classification::Decided(curve_box)) => {
@@ -722,6 +735,24 @@ impl EndpointEnvelopeAccumulator {
                     }
                 }
                 self.include_endpoint(native_endpoint_interval(&end), policy)
+            }
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                let bounds = match chord.conservative_bounds(policy) {
+                    Ok(Classification::Decided(bounds)) => bounds,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                };
+                match self.include_endpoint(native_endpoint_interval(bounds.min()), policy) {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+                self.include_endpoint(native_endpoint_interval(bounds.max()), policy)
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                 Classification::Uncertain(UncertaintyReason::Boundary)

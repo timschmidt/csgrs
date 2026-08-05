@@ -891,6 +891,136 @@ fn unified_region_corners_use_represented_bezier_incidence() {
 }
 
 #[test]
+fn unified_region_chamfer_retains_algebraic_bezier_cut() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        let fragments = chamfered.boundary_loops()[0].fragments();
+        assert_eq!(fragments.len(), 5);
+        assert!(matches!(
+            fragments[1],
+            BezierSplitFragment2::AlgebraicChord(_)
+        ));
+        assert!(matches!(
+            fragments[2],
+            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        ));
+        assert_eq!(
+            decided(chamfered.loop_roles(&policy).unwrap()),
+            vec![CurveRegionLoopRole::Material]
+        );
+        #[cfg(feature = "predicates")]
+        {
+            assert_eq!(
+                certified(chamfered.classify_point(&p(-2, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+            assert_eq!(
+                certified(chamfered.classify_point(&p(0, 0), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside)
+            );
+            assert_eq!(
+                certified(chamfered.classify_point(&p(-1, 0), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Boundary)
+            );
+        }
+    }
+}
+
+#[test]
+fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
+    let previous = Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0)));
+    let next = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
+    let close = Curve2::from(LineSeg2::try_new(p(1, 2), p(-1, 2)).unwrap());
+    let paths = [
+        (
+            CurvePath2::try_new(vec![previous.clone(), next.clone(), close.clone()]).unwrap(),
+            1,
+        ),
+        (CurvePath2::try_new(vec![next, close, previous]).unwrap(), 0),
+    ];
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (path, vertex_index) in &paths {
+            let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
+                .unwrap()
+                .into_value();
+            let CurveCornerSolutions2::Unique(chamfered) = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    *vertex_index,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("two algebraic Bezier setbacks must define one retained chamfer");
+            };
+            let fragments = chamfered.boundary_loops()[0].fragments();
+            assert_eq!(fragments.len(), 4);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .count(),
+                1
+            );
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| matches!(
+                        fragment,
+                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    ))
+                    .count(),
+                2
+            );
+            #[cfg(feature = "predicates")]
+            {
+                assert_eq!(
+                    certified(chamfered.classify_point(&p(0, 1), &policy).unwrap()),
+                    Classification::Decided(RegionPointLocation::Inside)
+                );
+                assert_eq!(
+                    certified(chamfered.classify_point(&p(0, 0), &policy).unwrap()),
+                    Classification::Decided(RegionPointLocation::Outside)
+                );
+                assert_eq!(
+                    certified(chamfered.classify_point(&p(-1, 2), &policy).unwrap()),
+                    Classification::Decided(RegionPointLocation::Boundary)
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn unified_region_corners_use_canonical_spline_bezier_spans() {
     let controls = vec![p(0, 0), p(0, 1), p(1, 2)];
     let knots = vec![
