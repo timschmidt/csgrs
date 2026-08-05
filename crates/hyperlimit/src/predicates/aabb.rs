@@ -720,6 +720,29 @@ pub fn ordered_aabb3s_intersect_with_policy(
     second_max: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
+    ordered_aabb3s_intersect_coordinates_with_policy(
+        [&first_min.x, &first_min.y, &first_min.z],
+        [&first_max.x, &first_max.y, &first_max.z],
+        [&second_min.x, &second_min.y, &second_min.z],
+        [&second_max.x, &second_max.y, &second_max.z],
+        policy,
+    )
+}
+
+/// Return whether two ordered closed 3D boxes intersect inclusively using
+/// borrowed coordinates.
+///
+/// Both min/max pairs must already be ordered on every axis. This form keeps
+/// exact extrema that share another geometry owner borrowed through the same
+/// canonical predicate cascade, without cloning them into temporary points.
+#[inline]
+pub fn ordered_aabb3s_intersect_coordinates_with_policy(
+    first_min: [&Real; 3],
+    first_max: [&Real; 3],
+    second_min: [&Real; 3],
+    second_max: [&Real; 3],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
     ordered_aabb3_pairwise_relation(
         first_min,
         first_max,
@@ -742,10 +765,10 @@ pub fn ordered_aabb3_contains_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
     ordered_aabb3_pairwise_relation(
-        outer_min,
-        outer_max,
-        inner_min,
-        inner_max,
+        [&outer_min.x, &outer_min.y, &outer_min.z],
+        [&outer_max.x, &outer_max.y, &outer_max.z],
+        [&inner_min.x, &inner_min.y, &inner_min.z],
+        [&inner_max.x, &inner_max.y, &inner_max.z],
         policy,
         OrderedAabb3Relation::Contains,
     )
@@ -759,18 +782,13 @@ enum OrderedAabb3Relation {
 
 #[inline]
 fn ordered_aabb3_pairwise_relation(
-    first_min: &Point3,
-    first_max: &Point3,
-    second_min: &Point3,
-    second_max: &Point3,
+    first_min: [&Real; 3],
+    first_max: [&Real; 3],
+    second_min: [&Real; 3],
+    second_max: [&Real; 3],
     policy: PredicatePolicy,
     relation: OrderedAabb3Relation,
 ) -> PredicateOutcome<bool> {
-    let first_min = [&first_min.x, &first_min.y, &first_min.z];
-    let first_max = [&first_max.x, &first_max.y, &first_max.z];
-    let second_min = [&second_min.x, &second_min.y, &second_min.z];
-    let second_max = [&second_max.x, &second_max.y, &second_max.z];
-
     if let (Some(first_min), Some(first_max), Some(second_min), Some(second_max)) = (
         exact_rational_coordinates3(first_min),
         exact_rational_coordinates3(first_max),
@@ -1152,6 +1170,50 @@ mod tests {
         let outer_max = p3(4, 4, 4);
         let inner_min = p3(1, 0, 1);
         let inner_max = p3(3, 0, 3);
+
+        for policy in [PredicatePolicy::STRICT, APPROX] {
+            let borrowed = crate::ordered_aabb3s_intersect_coordinates(
+                [&outer_min.x, &outer_min.y, &outer_min.z],
+                [&outer_max.x, &outer_max.y, &outer_max.z],
+                [&inner_min.x, &inner_min.y, &inner_min.z],
+                [&inner_max.x, &inner_max.y, &inner_max.z],
+                policy,
+            );
+            assert!(matches!(
+                borrowed,
+                PredicateOutcome::Decided {
+                    value: true,
+                    certainty: Certainty::Exact,
+                    ..
+                }
+            ));
+        }
+
+        let terminal_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let symbolic_max = Point3::new(terminal_zero, Real::one(), Real::one());
+        let touching_min = p3(0, 0, 0);
+        let touching_max = p3(2, 2, 2);
+        let symbolic = |policy| {
+            crate::ordered_aabb3s_intersect_coordinates(
+                [&outer_min.x, &outer_min.y, &outer_min.z],
+                [&symbolic_max.x, &symbolic_max.y, &symbolic_max.z],
+                [&touching_min.x, &touching_min.y, &touching_min.z],
+                [&touching_max.x, &touching_max.y, &touching_max.z],
+                policy,
+            )
+        };
+        assert!(matches!(
+            symbolic(PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            symbolic(APPROX),
+            PredicateOutcome::Decided {
+                value: true,
+                certainty: Certainty::Approximate,
+                ..
+            }
+        ));
 
         assert_eq!(
             crate::ordered_aabb3s_intersect(&outer_min, &outer_max, &inner_min, &inner_max, APPROX)

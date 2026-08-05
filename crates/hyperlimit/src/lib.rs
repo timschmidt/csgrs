@@ -114,6 +114,7 @@ pub use predicates::aabb::{
     classify_point_aabb3_with_policy as classify_point_aabb3,
     ordered_aabb2s_intersect_coordinates_with_policy as ordered_aabb2s_intersect_coordinates,
     ordered_aabb3_contains_with_policy as ordered_aabb3_contains,
+    ordered_aabb3s_intersect_coordinates_with_policy as ordered_aabb3s_intersect_coordinates,
     ordered_aabb3s_intersect_with_policy as ordered_aabb3s_intersect,
     point_in_aabb2_with_policy as point_in_aabb2, point_in_aabb3_with_policy as point_in_aabb3,
     point_in_ordered_aabb2_coordinates_with_policy as point_in_ordered_aabb2_coordinates,
