@@ -1090,6 +1090,63 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_line_quadratic_algebraic_regularize") {
+        let CurveCornerSolutions2::Unique(chamfered) = region
+            .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
+            .expect("algebraic Bezier region chamfer must retain exact carriers")
+            .into_value()
+        else {
+            panic!("algebraic Bezier region chamfer must be unique");
+        };
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let regularized = black_box(&chamfered)
+                .regularized_region(&policy)
+                .expect("one-field algebraic chamfer regularization must remain exact")
+                .into_value();
+            fragments += black_box(&regularized).boundary_loops()[0]
+                .fragments()
+                .len();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_quadratic_algebraic_regularize: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    if corner_lane_enabled("curve_region_two_quadratic_algebraic_disjoint_boolean") {
+        let CurveCornerSolutions2::Unique(chamfered) = two_bezier_region
+            .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
+            .expect("two algebraic Bezier cuts must retain one exact chord")
+            .into_value()
+        else {
+            panic!("two-Bezier algebraic region chamfer must be unique");
+        };
+        let distant = CurveRegion2::try_from_native_material_contours(
+            vec![rectangle(10, 10, 12, 12)],
+            &policy,
+        )
+        .expect("distant Boolean benchmark region must remain exact")
+        .into_value();
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let results = black_box(&chamfered)
+                .boolean_regions(black_box(&distant), &policy)
+                .expect("disjoint algebraic chamfer Boolean must remain exact")
+                .into_value();
+            loops += black_box(&results).union().boundary_loops().len();
+        }
+        assert_ne!(loops, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_two_quadratic_algebraic_disjoint_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
     if corner_lane_enabled("curve_region_line_quadratic_design_chamfer") {
         let started = Instant::now();
         let mut candidates = 0_usize;

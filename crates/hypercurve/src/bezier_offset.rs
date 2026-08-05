@@ -10385,6 +10385,198 @@ impl BezierAlgebraicChord2 {
         };
         evaluator.forward_ray_winding_delta_from_exact(origin, direction_x, direction_y, policy)
     }
+
+    /// Certifies that a retained algebraic endpoint is the source curve's only
+    /// contact with this chord on the complete unit domain.
+    ///
+    /// This one-field path covers a chord whose opposite endpoint is exact.
+    /// The source endpoint's selected root is kept as the coefficient field,
+    /// the known diagonal contact is deflated exactly, and a local-field Sturm
+    /// count proves that the residual incidence has no root. Independent-field
+    /// chords remain explicit until their two-field fiber counter lands.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn has_only_retained_contact_with_source(
+        &self,
+        source: &RationalBezier2,
+        source_parameter: &BezierAlgebraicParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        let [start, end] = match algebraic_chord_endpoint_images(self.start(), self.end(), policy)?
+        {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match start.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match end.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source_parameter = BezierParameter2::Algebraic(source_parameter.clone());
+        let same_end_field = start
+            .retained_parameter()
+            .same_value(end.retained_parameter(), policy)?;
+        let same_source_parameter = start
+            .retained_parameter()
+            .same_value(&source_parameter, policy)?;
+        if same_end_field != Classification::Decided(true)
+            || same_source_parameter != Classification::Decided(true)
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-source-incidence",
+                "independent-fields",
+            );
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let BezierParameter2::Algebraic(retained_parameter) = start.retained_parameter() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+
+        let (start_x, start_y, start_weight) = start.coordinate_polynomials();
+        let (end_x, end_y, end_weight) = end.coordinate_polynomials();
+        let source = source.homogeneous_power_basis()?;
+        let line_x = polynomial_subtract(
+            &polynomial_multiply(end_x, start_weight),
+            &polynomial_multiply(start_x, end_weight),
+        );
+        let line_y = polynomial_subtract(
+            &polynomial_multiply(end_y, start_weight),
+            &polynomial_multiply(start_y, end_weight),
+        );
+        let point_delta_x = bivariate_subtract(
+            &bivariate_outer_product(start_weight, &source.x_numerator),
+            &bivariate_outer_product(start_x, &source.weight),
+        );
+        let point_delta_y = bivariate_subtract(
+            &bivariate_outer_product(start_weight, &source.y_numerator),
+            &bivariate_outer_product(start_y, &source.weight),
+        );
+        let incidence = bivariate_subtract(
+            &bivariate_multiply_first_parameter(&point_delta_y, &line_x),
+            &bivariate_multiply_first_parameter(&point_delta_x, &line_y),
+        );
+        let retained_root = parameter_representation(retained_parameter, policy);
+        let deflated = deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
+            &incidence,
+            CurveResultantParameter::First,
+            &retained_root,
+            policy.predicate_policy(),
+        );
+        if deflated.certainty == PredicateCertainty::Approximate {
+            policy.observe_approximate_512();
+        }
+        let residual = match deflated.status {
+            AlgebraicFiberDiagonalDeflationStatus::Deflated if deflated.multiplicity > 0 => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-source-incidence",
+                    "diagonal-deflated",
+                );
+                deflated
+                    .reduced_polynomial
+                    .expect("a deflated local fiber retains its quotient")
+            }
+            AlgebraicFiberDiagonalDeflationStatus::NotARoot
+            | AlgebraicFiberDiagonalDeflationStatus::IdenticallyZeroFiber => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            AlgebraicFiberDiagonalDeflationStatus::InvalidEvidence => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberDiagonalDeflationStatus::UnsupportedCoefficient => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-source-incidence",
+                    "unsupported-coefficient",
+                );
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            AlgebraicFiberDiagonalDeflationStatus::Undecided => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            AlgebraicFiberDiagonalDeflationStatus::Deflated => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+        };
+        let count = count_bivariate_fiber_roots_at_algebraic_parameter_closed(
+            &residual,
+            CurveResultantParameter::First,
+            &retained_root,
+            &Real::zero(),
+            &Real::one(),
+            policy.predicate_policy(),
+        );
+        if count.certainty == PredicateCertainty::Approximate {
+            policy.observe_approximate_512();
+        }
+        Ok(match count.status {
+            AlgebraicFiberRootCountStatus::Counted => {
+                Classification::Decided(count.distinct_root_count == Some(0))
+            }
+            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber
+            | AlgebraicFiberRootCountStatus::EndpointRoot => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            AlgebraicFiberRootCountStatus::InvalidEvidence
+            | AlgebraicFiberRootCountStatus::InvalidInterval => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberRootCountStatus::UnsupportedCoefficient => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            AlgebraicFiberRootCountStatus::Undecided => {
+                Classification::Uncertain(UncertaintyReason::Predicate)
+            }
+        })
+    }
+
+    /// Proves that this chord and one represented line have distinct supports.
+    /// Adjacent authored segments on distinct supports can share only their
+    /// already-seeded loop endpoint, so no additional intersection event is
+    /// required.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn has_non_collinear_support_with_exact_line(
+        &self,
+        line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let evaluator = match self.algebraic_ray_evaluator(policy)? {
+            Classification::Decided(evaluator) => evaluator,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let origin = match evaluator.exact_point_image(line.start(), policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let origin = match origin.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let direction_x = line.end().x() - line.start().x();
+        let direction_y = line.end().y() - line.start().y();
+        Ok(evaluator
+            .endpoint_side_signs(&origin, &(-direction_y), &direction_x, policy)?
+            .map(|signs| signs.into_iter().any(|sign| sign != RealSign::Zero)))
+    }
 }
 
 fn algebraic_chord_endpoint_bounds(
@@ -24503,6 +24695,83 @@ mod conversion_tests {
                     )
                     .unwrap(),
                 Classification::Decided(-1)
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/2) must remain algebraic");
+            };
+
+            let single_contact_source = RationalBezier2::try_from_subcurve(
+                &BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(0, 1),
+                    Point2::from_values(1, 2),
+                )),
+            )
+            .unwrap();
+            let single_contact = RationalBezierIntersectionPointEvidence2::Algebraic(
+                single_contact_source
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
+            let Classification::Decided(single_contact_chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
+                single_contact,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the one-field chord must certify distinct endpoints");
+            };
+            assert_eq!(
+                single_contact_chord
+                    .has_only_retained_contact_with_source(
+                        &single_contact_source,
+                        &parameter,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+
+            let repeated_contact_source = RationalBezier2::try_from_subcurve(
+                &BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::new(half.clone(), Real::zero()),
+                    Point2::from_values(1, 1),
+                )),
+            )
+            .unwrap();
+            let repeated_contact = RationalBezierIntersectionPointEvidence2::Algebraic(
+                repeated_contact_source
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
+            let Classification::Decided(repeated_contact_chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                repeated_contact,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the secant chord must certify distinct endpoints");
+            };
+            assert_eq!(
+                repeated_contact_chord
+                    .has_only_retained_contact_with_source(
+                        &repeated_contact_source,
+                        &parameter,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(false)
             );
         }
     }

@@ -1001,6 +1001,25 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
                     .count(),
                 2
             );
+            let distant = CurveRegion2::try_from_native_material_contours(
+                vec![square(10, 10, 12, 12)],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let evidence = chamfered
+                .intersect_region(&distant, &policy)
+                .unwrap()
+                .into_value();
+            assert!(evidence.is_disjoint());
+            assert_eq!(evidence.candidate_carrier_pair_count(), 0);
+            let batch = chamfered
+                .boolean_regions(&distant, &policy)
+                .unwrap()
+                .into_value();
+            assert!(batch.intersection().is_empty());
+            assert_eq!(batch.union().boundary_loops().len(), 2);
+            assert_eq!(batch.difference().boundary_loops().len(), 1);
             #[cfg(feature = "predicates")]
             {
                 assert_eq!(
@@ -1017,6 +1036,107 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
                 );
             }
         }
+    }
+}
+
+#[test]
+fn algebraic_chamfer_participates_in_a_disjoint_boolean_batch() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        let distant =
+            CurveRegion2::try_from_native_material_contours(vec![square(10, 10, 12, 12)], &policy)
+                .unwrap()
+                .into_value();
+
+        let evidence = chamfered
+            .intersect_region(&distant, &policy)
+            .unwrap()
+            .into_value();
+        assert!(evidence.is_disjoint());
+        assert_eq!(evidence.candidate_carrier_pair_count(), 0);
+
+        let batch = chamfered
+            .boolean_regions(&distant, &policy)
+            .unwrap()
+            .into_value();
+        assert!(batch.intersection().is_empty());
+        assert_eq!(batch.union().boundary_loops().len(), 2);
+        assert_eq!(batch.difference().boundary_loops().len(), 1);
+        assert_eq!(batch.xor().boundary_loops().len(), 2);
+        assert!(
+            batch.difference().boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the algebraic line/Bezier setback must have one retained chamfer");
+        };
+        let regularized = chamfered.regularized_region(&policy).unwrap().into_value();
+        assert_eq!(regularized.boundary_loops().len(), 1);
+        assert!(
+            regularized.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+        assert_eq!(
+            certified(regularized.classify_point(&p(-2, 1), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
     }
 }
 
