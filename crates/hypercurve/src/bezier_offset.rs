@@ -13831,27 +13831,9 @@ impl BezierParallel2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
-        if let Some(overlap) = structural_parallel_overlap(self, other, policy)? {
-            return Ok(Classification::Decided(
-                BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([overlap])),
-            ));
-        }
-        match other.exact_rational_parallel_component(policy)? {
-            Classification::Decided(Some(other)) => {
-                return Ok(self
-                    .intersections(&other, policy)?
-                    .map(|result| parallel_pair_set_from_parallel_rational(result, false)));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        match self.exact_rational_parallel_component(policy)? {
-            Classification::Decided(Some(first)) => {
-                return Ok(other
-                    .intersections(&first, policy)?
-                    .map(|result| parallel_pair_set_from_parallel_rational(result, true)));
+        match self.parallel_intersections_fast_path(other, policy)? {
+            Classification::Decided(Some(intersections)) => {
+                return Ok(Classification::Decided(intersections));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
@@ -13876,6 +13858,48 @@ impl BezierParallel2 {
                 }
             };
         self.replay_parallel_pair_projection(other, &system, projection, false, policy)
+    }
+
+    /// Tries the bounded structural and exact-rational parallel-pair routes.
+    ///
+    /// This is the cheap prefix of [`Self::parallel_intersections`]. Corner
+    /// editing uses it while a non-rational algebraic center cannot yet be
+    /// materialized as a public circular carrier; arrangements continue into
+    /// the complete general projection and Hypersolve replay when this returns
+    /// `None`.
+    pub(crate) fn parallel_intersections_fast_path(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParallelPairIntersectionSet2>>> {
+        if let Some(overlap) = structural_parallel_overlap(self, other, policy)? {
+            return Ok(Classification::Decided(Some(
+                BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([overlap])),
+            )));
+        }
+        match other.exact_rational_parallel_component(policy)? {
+            Classification::Decided(Some(other)) => {
+                return Ok(self
+                    .intersections(&other, policy)?
+                    .map(|result| Some(parallel_pair_set_from_parallel_rational(result, false))));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match self.exact_rational_parallel_component(policy)? {
+            Classification::Decided(Some(first)) => {
+                return Ok(other
+                    .intersections(&first, policy)?
+                    .map(|result| Some(parallel_pair_set_from_parallel_rational(result, true))));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        Ok(Classification::Decided(None))
     }
 
     fn replay_parallel_pair_projection(
@@ -15352,6 +15376,43 @@ impl BezierParallel2 {
         &self.data.distance
     }
 
+    /// Evaluates the retained source at one represented parameter.
+    ///
+    /// Corner construction uses this after an offset-incidence solve has
+    /// certified the same parameter on an analytic parallel. Keeping the
+    /// source evaluation on the shared carrier avoids allocating a temporary
+    /// zero-distance parallel merely to recover the tangency contact.
+    pub(crate) fn source_point_at(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Point2>> {
+        match in_closed_unit_interval(parameter, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        Ok(self.source_point_at_unchecked(parameter, policy))
+    }
+
+    fn source_point_at_unchecked(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> Classification<Point2> {
+        match self.source() {
+            BezierParallelSource2::Quadratic(source) => {
+                Classification::Decided(source.point_at(parameter.clone()))
+            }
+            BezierParallelSource2::Cubic(source) => {
+                Classification::Decided(source.point_at(parameter.clone()))
+            }
+            BezierParallelSource2::Rational(source) => {
+                source.point_at_classified(parameter, policy)
+            }
+        }
+    }
+
     fn rational_source(&self) -> Option<&RationalBezier2> {
         match self.source() {
             BezierParallelSource2::Rational(source) => Some(source),
@@ -15371,17 +15432,7 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
-            return Ok(match self.source() {
-                BezierParallelSource2::Quadratic(source) => {
-                    Classification::Decided(source.point_at(parameter.clone()))
-                }
-                BezierParallelSource2::Cubic(source) => {
-                    Classification::Decided(source.point_at(parameter.clone()))
-                }
-                BezierParallelSource2::Rational(source) => {
-                    source.point_at_classified(parameter, policy)
-                }
-            });
+            return Ok(self.source_point_at_unchecked(parameter, policy));
         }
         let differential = self.differential()?;
         let source_point = if let Some(source) = self.rational_source() {

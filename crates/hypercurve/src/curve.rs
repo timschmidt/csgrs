@@ -12,11 +12,11 @@ use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
 };
 use crate::{
-    Aabb2, BezierBoundaryLoop2, BezierSubcurve2, CircularArc2, Classification,
-    ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2, CurveOutcome,
-    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2,
-    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
-    Similarity2,
+    Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
+    Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
+    CurveOutcome, ExactCurveError, ExactCurveResult, LineSeg2, LineSide, NurbsCurve2, ParamRange,
+    Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    Real, Similarity2,
 };
 
 /// Exact planar curve family.
@@ -1788,12 +1788,14 @@ impl CurvePath2 {
     /// Each nonnegative setback is the Euclidean chord distance from the
     /// original corner along its incident curve image. The shared exact carrier
     /// kernel handles native lines and circular arcs, retained degree-elevated
-    /// line images, and rational curves that collapse exactly to one circular
-    /// conic span. Other curve families remain explicit `Unsupported` blockers
-    /// until their point-distance solvers join that kernel.
+    /// line images, exact circular rational carriers, and direct polynomial or
+    /// rational Bezier carriers through complete circle incidence. A
+    /// nonendpoint algebraic trim remains an explicit `Unsupported` blocker
+    /// until public curve subdivision can retain that parameter exactly.
     /// [`CurveCornerMode2::TrimOrExtend`] returns every exact native-support
-    /// candidate in deterministic order; retained rational circles remain
-    /// trim-only until their projective extension domains are authoritative.
+    /// candidate in deterministic order; retained rational circles and general
+    /// Beziers remain trim-only until their projective extension domains are
+    /// authoritative.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -1837,6 +1839,11 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
+        if previous_sign == RealSign::Zero && next_sign == RealSign::Zero {
+            return Ok(CurveCornerSolutions2::NoSolution(
+                CurveCornerNoSolution2::ZeroDesignValue,
+            ));
+        }
         let previous_carrier = exact_corner_carrier(previous, CurveOperation2::Chamfer, policy)?
             .ok_or_else(|| {
                 ExactCurveError::blocked(
@@ -1854,7 +1861,6 @@ impl CurvePath2 {
                 )
             })?;
         if mode == CurveCornerMode2::TrimOrExtend
-            && !(previous_sign == RealSign::Zero && next_sign == RealSign::Zero)
             && (!previous_carrier.supports_extension() || !next_carrier.supports_extension())
         {
             return Err(ExactCurveError::blocked(
@@ -1917,13 +1923,13 @@ impl CurvePath2 {
     /// Solves and applies an exact circular fillet of the requested radius.
     ///
     /// Fillet centers are intersections of equal signed-radius offsets of the
-    /// two incident carriers. The exact native kernel handles lines, retained
-    /// degree-elevated line images, circular arcs, and rational curves that
-    /// collapse exactly to one circular conic span, and orders the left-side
-    /// center before the right-side center. Retained rational circles are
-    /// trim-only until their projective extension domains are authoritative;
-    /// other higher-order pairs remain explicit until they enter the same
-    /// analytic-parallel intersection authority used by region offsets.
+    /// two incident carriers. The shared kernel handles lines, circular arcs,
+    /// retained exact line/circle images, and direct polynomial or rational
+    /// Beziers. Mixed line/Bezier and arc/Bezier pairs use complete analytic
+    /// incidence. Bezier/Bezier pairs currently admit structural and exact
+    /// rational-parallel fast paths; a general algebraic center or trim remains
+    /// an explicit blocker until its public carrier is authoritative. General
+    /// Beziers and retained rational circles are trim-only.
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -1953,6 +1959,11 @@ impl CurvePath2 {
             previous.family(),
             policy,
         )?;
+        if radius_sign == RealSign::Zero {
+            return Ok(CurveCornerSolutions2::NoSolution(
+                CurveCornerNoSolution2::ZeroDesignValue,
+            ));
+        }
         let previous_carrier = exact_corner_carrier(previous, CurveOperation2::Fillet, policy)?
             .ok_or_else(|| {
                 ExactCurveError::blocked(
@@ -1970,7 +1981,6 @@ impl CurvePath2 {
                 )
             })?;
         if mode == CurveCornerMode2::TrimOrExtend
-            && radius_sign != RealSign::Zero
             && (!previous_carrier.supports_extension() || !next_carrier.supports_extension())
         {
             return Err(ExactCurveError::blocked(
@@ -3396,27 +3406,29 @@ impl<T> CornerSolutionAccumulator<T> {
 struct CornerCuts2 {
     first: Option<CornerCut2>,
     second: Option<CornerCut2>,
+    overflow: Vec<CornerCut2>,
 }
 
 impl CornerCuts2 {
     fn push(&mut self, cut: CornerCut2) {
         if self.first.is_none() {
             self.first = Some(cut);
-        } else {
-            debug_assert!(
-                self.second.is_none(),
-                "an exact corner carrier has at most two cuts"
-            );
+        } else if self.second.is_none() {
             self.second = Some(cut);
+        } else {
+            self.overflow.push(cut);
         }
     }
 
     fn iter(&self) -> impl Iterator<Item = &CornerCut2> {
-        self.first.iter().chain(self.second.iter())
+        self.first
+            .iter()
+            .chain(self.second.iter())
+            .chain(self.overflow.iter())
     }
 
     fn is_empty(&self) -> bool {
-        self.first.is_none() && self.second.is_none()
+        self.first.is_none() && self.second.is_none() && self.overflow.is_empty()
     }
 }
 
@@ -3437,6 +3449,7 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     Line(&'a LineSeg2),
     Arc(&'a CircularArc2),
     RetainedRationalArc(Box<RetainedRationalCornerArc2<'a>>),
+    Bezier(&'a Curve2),
 }
 
 pub(crate) enum ExactCornerArc2<'a> {
@@ -3547,11 +3560,12 @@ impl<'a> ExactCornerCarrier2<'a> {
             Self::Line(_) => CurveFamily2::Line,
             Self::Arc(_) => CurveFamily2::CircularArc,
             Self::RetainedRationalArc(retained) => retained.source.family(),
+            Self::Bezier(source) => source.family(),
         }
     }
 
     const fn supports_extension(&self) -> bool {
-        !matches!(self, Self::RetainedRationalArc(_))
+        !matches!(self, Self::RetainedRationalArc(_) | Self::Bezier(_))
     }
 }
 
@@ -3569,6 +3583,7 @@ fn exact_corner_carrier<'a>(
             support,
         }))
     };
+    let bezier = || ExactCornerCarrier2::Bezier(curve);
     Ok(match curve.geometry() {
         CurveGeometry2::CircularArc(arc) => Some(ExactCornerCarrier2::Arc(arc)),
         CurveGeometry2::RationalQuadraticBezier(conic) => {
@@ -3576,10 +3591,7 @@ fn exact_corner_carrier<'a>(
                 .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
             {
                 Classification::Decided(Some(support)) => Some(retained(support)),
-                Classification::Decided(None) => None,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(operation, curve.family(), reason));
-                }
+                Classification::Decided(None) | Classification::Uncertain(_) => Some(bezier()),
             }
         }
         CurveGeometry2::RationalBezier(rational) => {
@@ -3587,18 +3599,35 @@ fn exact_corner_carrier<'a>(
                 .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
             {
                 Classification::Decided(Some(support)) => Some(retained(support)),
-                Classification::Decided(None) => None,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(operation, curve.family(), reason));
-                }
+                Classification::Decided(None) | Classification::Uncertain(_) => Some(bezier()),
             }
         }
+        CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_) => Some(bezier()),
         CurveGeometry2::Line(_)
-        | CurveGeometry2::QuadraticBezier(_)
-        | CurveGeometry2::CubicBezier(_)
         | CurveGeometry2::PolynomialBSpline(_)
         | CurveGeometry2::Nurbs(_) => None,
     })
+}
+
+fn exact_corner_bezier_parallel(
+    source: &Curve2,
+    distance: Real,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+) -> ExactCurveResult<BezierParallel2> {
+    let parallel = match source.geometry() {
+        CurveGeometry2::QuadraticBezier(source) => source.parallel_left(distance),
+        CurveGeometry2::CubicBezier(source) => source.parallel_left(distance),
+        CurveGeometry2::RationalQuadraticBezier(source) => source.parallel_left(distance),
+        CurveGeometry2::RationalBezier(source) => source.parallel_left(distance),
+        CurveGeometry2::Line(_)
+        | CurveGeometry2::CircularArc(_)
+        | CurveGeometry2::PolynomialBSpline(_)
+        | CurveGeometry2::Nurbs(_) => {
+            unreachable!("only direct Bezier corner carriers request an analytic parallel")
+        }
+    };
+    parallel.map_err(|cause| ExactCurveError::invalid(operation, family, cause))
 }
 
 pub(crate) fn try_map_corner_solutions<T, U>(
@@ -3736,7 +3765,7 @@ pub(crate) fn solve_exact_fillet_corner(
                 policy,
             )
         }
-        (previous, next) => solve_native_curved_fillet_corner(
+        (previous, next) => solve_carrier_fillet_corner(
             previous,
             next,
             radius,
@@ -3757,6 +3786,9 @@ enum PreparedFilletCarrier2<'a> {
     Arc {
         source: ExactCornerArc2<'a>,
         radius: Real,
+    },
+    Bezier {
+        source: &'a Curve2,
     },
 }
 
@@ -3795,6 +3827,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 )?;
                 Ok(Self::Arc { source, radius })
             }
+            ExactCornerCarrier2::Bezier(source) => Ok(Self::Bezier { source }),
         }
     }
 
@@ -3848,6 +3881,15 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     )),
                 }
             }
+            Self::Bezier { source } => Ok(FilletOffsetCarrier2::Bezier {
+                source,
+                support: exact_corner_bezier_parallel(
+                    source,
+                    signed_distance.clone(),
+                    CurveOperation2::Fillet,
+                    family,
+                )?,
+            }),
         }
     }
 }
@@ -3865,27 +3907,24 @@ enum FilletOffsetCarrier2<'a, 'b> {
     Point {
         point: &'b Point2,
     },
+    Bezier {
+        source: &'a Curve2,
+        support: BezierParallel2,
+    },
 }
 
 struct FilletCenterWitness2 {
     point: Point2,
-    line_parameter: FilletLineParameter2,
-}
-
-enum FilletLineParameter2 {
-    None,
-    Previous(Real),
-    Next(Real),
+    previous_parameter: Option<Real>,
+    next_parameter: Option<Real>,
 }
 
 impl FilletCenterWitness2 {
-    fn line_parameter(&self, previous: bool) -> Option<&Real> {
-        match (&self.line_parameter, previous) {
-            (FilletLineParameter2::Previous(parameter), true)
-            | (FilletLineParameter2::Next(parameter), false) => Some(parameter),
-            (FilletLineParameter2::None, _)
-            | (FilletLineParameter2::Previous(_), false)
-            | (FilletLineParameter2::Next(_), true) => None,
+    fn parameter(&self, previous: bool) -> Option<&Real> {
+        if previous {
+            self.previous_parameter.as_ref()
+        } else {
+            self.next_parameter.as_ref()
         }
     }
 }
@@ -3894,6 +3933,7 @@ impl FilletCenterWitness2 {
 struct FilletCenters2 {
     first: Option<FilletCenterWitness2>,
     second: Option<FilletCenterWitness2>,
+    overflow: Vec<FilletCenterWitness2>,
     coincident: bool,
 }
 
@@ -3901,19 +3941,23 @@ impl FilletCenters2 {
     fn push(&mut self, witness: FilletCenterWitness2) {
         if self.first.is_none() {
             self.first = Some(witness);
-        } else {
-            debug_assert!(self.second.is_none());
+        } else if self.second.is_none() {
             self.second = Some(witness);
+        } else {
+            self.overflow.push(witness);
         }
     }
 
     fn iter(&self) -> impl Iterator<Item = &FilletCenterWitness2> {
-        self.first.iter().chain(self.second.iter())
+        self.first
+            .iter()
+            .chain(self.second.iter())
+            .chain(self.overflow.iter())
     }
 }
 
 #[allow(clippy::too_many_arguments)]
-fn solve_native_curved_fillet_corner(
+fn solve_carrier_fillet_corner(
     previous: ExactCornerCarrier2<'_>,
     next: ExactCornerCarrier2<'_>,
     radius: &Real,
@@ -3938,8 +3982,13 @@ fn solve_native_curved_fillet_corner(
         };
         let previous_offset = previous.offset(&signed_distance, previous_family, policy)?;
         let next_offset = next.offset(&signed_distance, next_family, policy)?;
-        let centers =
-            fillet_offset_centers(&previous_offset, &next_offset, previous_family, policy)?;
+        let centers = fillet_offset_centers(
+            &previous_offset,
+            &next_offset,
+            previous_family,
+            next_family,
+            policy,
+        )?;
         if centers.coincident {
             saw_degenerate = true;
             continue;
@@ -3948,7 +3997,7 @@ fn solve_native_curved_fillet_corner(
             let Some(previous_cut) = fillet_cut_from_center(
                 &previous_offset,
                 &center.point,
-                center.line_parameter(true),
+                center.parameter(true),
                 true,
                 mode,
                 previous_family,
@@ -3961,7 +4010,7 @@ fn solve_native_curved_fillet_corner(
             let Some(next_cut) = fillet_cut_from_center(
                 &next_offset,
                 &center.point,
-                center.line_parameter(false),
+                center.parameter(false),
                 false,
                 mode,
                 next_family,
@@ -4006,7 +4055,8 @@ fn solve_native_curved_fillet_corner(
 fn fillet_offset_centers(
     previous: &FilletOffsetCarrier2<'_, '_>,
     next: &FilletOffsetCarrier2<'_, '_>,
-    family: CurveFamily2,
+    previous_family: CurveFamily2,
+    next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCenters2> {
     let mut centers = FilletCenters2::default();
@@ -4017,7 +4067,12 @@ fn fillet_offset_centers(
                 (other, FilletOffsetCarrier2::Point { point }) => (*point, other),
                 _ => unreachable!(),
             };
-            if point_on_fillet_offset(point, other, family, policy)? {
+            let other_family = if matches!(previous, FilletOffsetCarrier2::Point { .. }) {
+                next_family
+            } else {
+                previous_family
+            };
+            if point_on_fillet_offset(point, other, other_family, policy)? {
                 // The center is isolated, but tangency on the collapsed source
                 // offset is not. Do not manufacture one contact from a
                 // continuum of equally valid source-circle contacts.
@@ -4051,16 +4106,19 @@ fn fillet_offset_centers(
                 &(signed_radius * signed_radius),
                 policy,
             )
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+            })?;
             let mut push = |point, parameter| {
-                let line_parameter = if line_is_previous {
-                    FilletLineParameter2::Previous(parameter)
+                let (previous_parameter, next_parameter) = if line_is_previous {
+                    (Some(parameter), None)
                 } else {
-                    FilletLineParameter2::Next(parameter)
+                    (None, Some(parameter))
                 };
                 centers.push(FilletCenterWitness2 {
                     point,
-                    line_parameter,
+                    previous_parameter,
+                    next_parameter,
                 });
             };
             match relation {
@@ -4080,7 +4138,7 @@ fn fillet_offset_centers(
                 crate::LineCircleRelation::Uncertain { reason } => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
-                        family,
+                        previous_family,
                         reason,
                     ));
                 }
@@ -4104,13 +4162,15 @@ fn fillet_offset_centers(
             &(next_radius * next_radius),
             policy,
         )
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
+        .map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+        })? {
             crate::CircleCircleRelation::Disjoint => {}
             crate::CircleCircleRelation::Tangent { point } => {
                 centers.push(FilletCenterWitness2 {
                     point,
-                    line_parameter: FilletLineParameter2::None,
+                    previous_parameter: None,
+                    next_parameter: None,
                 });
             }
             crate::CircleCircleRelation::Secant {
@@ -4119,22 +4179,251 @@ fn fillet_offset_centers(
             } => {
                 centers.push(FilletCenterWitness2 {
                     point: first_point,
-                    line_parameter: FilletLineParameter2::None,
+                    previous_parameter: None,
+                    next_parameter: None,
                 });
                 centers.push(FilletCenterWitness2 {
                     point: second_point,
-                    line_parameter: FilletLineParameter2::None,
+                    previous_parameter: None,
+                    next_parameter: None,
                 });
             }
             crate::CircleCircleRelation::Coincident => centers.coincident = true,
             crate::CircleCircleRelation::Uncertain { reason } => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
-                    family,
+                    previous_family,
                     reason,
                 ));
             }
         },
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Bezier { .. })
+        | (FilletOffsetCarrier2::Bezier { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (line, bezier, bezier_is_previous) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Line { support, .. },
+                    FilletOffsetCarrier2::Bezier {
+                        support: bezier, ..
+                    },
+                ) => (support, bezier, false),
+                (
+                    FilletOffsetCarrier2::Bezier {
+                        support: bezier, ..
+                    },
+                    FilletOffsetCarrier2::Line { support, .. },
+                ) => (support, bezier, true),
+                _ => unreachable!(),
+            };
+            let bezier_family = if bezier_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let incidence = bezier
+                .supporting_line_incidence(line, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, bezier_family, cause)
+                })?;
+            let parameters = match incidence {
+                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                    centers.coincident = true;
+                    Vec::new()
+                }
+                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                    parameters,
+                )) => parameters,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        bezier_family,
+                        reason,
+                    ));
+                }
+            };
+            for parameter in parameters {
+                let Some(parameter) = represented_bezier_trim_parameter(
+                    &parameter,
+                    CurveOperation2::Fillet,
+                    bezier_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let point = decided_parallel_point(
+                    bezier,
+                    &parameter,
+                    false,
+                    CurveOperation2::Fillet,
+                    bezier_family,
+                    policy,
+                )?;
+                let line_parameter = line_parameter_at_point(
+                    line,
+                    &point,
+                    CurveOperation2::Fillet,
+                    if bezier_is_previous {
+                        next_family
+                    } else {
+                        previous_family
+                    },
+                )?;
+                let (previous_parameter, next_parameter) = if bezier_is_previous {
+                    (Some(parameter), Some(line_parameter))
+                } else {
+                    (Some(line_parameter), Some(parameter))
+                };
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter,
+                    next_parameter,
+                });
+            }
+        }
+        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Bezier { .. })
+        | (FilletOffsetCarrier2::Bezier { .. }, FilletOffsetCarrier2::Arc { .. }) => {
+            let (arc, signed_radius, bezier, bezier_is_previous) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        signed_radius,
+                        ..
+                    },
+                    FilletOffsetCarrier2::Bezier {
+                        support: bezier, ..
+                    },
+                ) => (source, signed_radius, bezier, false),
+                (
+                    FilletOffsetCarrier2::Bezier {
+                        support: bezier, ..
+                    },
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        signed_radius,
+                        ..
+                    },
+                ) => (source, signed_radius, bezier, true),
+                _ => unreachable!(),
+            };
+            let bezier_family = if bezier_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let parameters = match bezier
+                .circle_incidence(
+                    arc.support().center(),
+                    &(signed_radius * signed_radius),
+                    &[],
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, bezier_family, cause)
+                })? {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        bezier_family,
+                        reason,
+                    ));
+                }
+            };
+            for (parameter, _) in parameters {
+                let Some(parameter) = represented_bezier_trim_parameter(
+                    &parameter,
+                    CurveOperation2::Fillet,
+                    bezier_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let point = decided_parallel_point(
+                    bezier,
+                    &parameter,
+                    false,
+                    CurveOperation2::Fillet,
+                    bezier_family,
+                    policy,
+                )?;
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter: bezier_is_previous.then_some(parameter.clone()),
+                    next_parameter: (!bezier_is_previous).then_some(parameter),
+                });
+            }
+        }
+        (
+            FilletOffsetCarrier2::Bezier {
+                support: previous, ..
+            },
+            FilletOffsetCarrier2::Bezier { support: next, .. },
+        ) => {
+            let intersections = match previous
+                .parallel_intersections_fast_path(next, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })? {
+                Classification::Decided(Some(intersections)) => intersections,
+                Classification::Decided(None) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        crate::UncertaintyReason::Unsupported,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    ));
+                }
+            };
+            if !intersections.is_complete() {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Predicate,
+                ));
+            }
+            centers.coincident = !intersections.overlaps().is_empty()
+                || !intersections.parameter_components().is_empty();
+            for contact in intersections.contacts() {
+                let Some(previous_parameter) = represented_bezier_trim_parameter(
+                    contact.first_parameter(),
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let Some(next_parameter) = represented_bezier_trim_parameter(
+                    contact.second_parameter(),
+                    CurveOperation2::Fillet,
+                    next_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let point = decided_parallel_point(
+                    previous,
+                    &previous_parameter,
+                    false,
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    policy,
+                )?;
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter: Some(previous_parameter),
+                    next_parameter: Some(next_parameter),
+                });
+            }
+        }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Line { .. }) => {
             unreachable!("line/line fillets use the specialized exact fast path")
         }
@@ -4148,6 +4437,19 @@ fn point_on_fillet_offset(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    if let FilletOffsetCarrier2::Bezier { support, .. } = support {
+        return match support
+            .contains_point(point, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(contains) => Ok(contains),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            )),
+        };
+    }
     let residual = match support {
         FilletOffsetCarrier2::Line { support, .. } => {
             let (dx, dy) = support.delta();
@@ -4160,6 +4462,7 @@ fn point_on_fillet_offset(
             ..
         } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
         FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
+        FilletOffsetCarrier2::Bezier { .. } => unreachable!(),
     };
     crate::classify::is_zero(&residual, policy).ok_or_else(|| {
         ExactCurveError::blocked(
@@ -4174,7 +4477,7 @@ fn point_on_fillet_offset(
 fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
     center: &Point2,
-    line_parameter: Option<&Real>,
+    retained_parameter: Option<&Real>,
     previous: bool,
     mode: CurveCornerMode2,
     family: CurveFamily2,
@@ -4182,7 +4485,7 @@ fn fillet_cut_from_center(
 ) -> ExactCurveResult<Option<CornerCut2>> {
     match offset {
         FilletOffsetCarrier2::Line { source, .. } => {
-            let parameter = line_parameter
+            let parameter = retained_parameter
                 .expect("a line offset intersection retains its affine parameter")
                 .clone();
             Ok(corner_parameter_placement(
@@ -4218,7 +4521,50 @@ fn fillet_cut_from_center(
         FilletOffsetCarrier2::Point { .. } => {
             unreachable!("a collapsed arc offset has no isolated tangency contact")
         }
+        FilletOffsetCarrier2::Bezier { source, support } => {
+            let parameter = retained_parameter
+                .expect("a represented Bezier offset intersection retains its source parameter")
+                .clone();
+            let Some(placement) = corner_parameter_placement(
+                &parameter,
+                previous,
+                mode,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            let point = decided_parallel_point(
+                support,
+                &parameter,
+                true,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            )?;
+            Ok(Some(CornerCut2 {
+                point,
+                parameter: Some(public_parameter_from_unit(source, &parameter)),
+                placement,
+            }))
+        }
     }
+}
+
+fn line_parameter_at_point(
+    line: &LineSeg2,
+    point: &Point2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+) -> ExactCurveResult<Real> {
+    let delta = line.delta();
+    let from_start = point.delta_from(line.start());
+    let numerator = &from_start.0 * &delta.0 + &from_start.1 * &delta.1;
+    let denominator = &delta.0 * &delta.0 + &delta.1 * &delta.1;
+    (numerator / denominator)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4441,6 +4787,61 @@ fn corner_parameter_placement(
     Ok(None)
 }
 
+fn represented_bezier_trim_parameter(
+    parameter: &BezierParameter2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<Real>> {
+    let zero = BezierParameter2::Exact(Real::zero());
+    let one = BezierParameter2::Exact(Real::one());
+    let compare = |boundary: &BezierParameter2| {
+        parameter
+            .cmp_by_refinement(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|result| match result {
+                Classification::Decided(order) => Ok(order),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
+    };
+    if compare(&zero)? != std::cmp::Ordering::Greater || compare(&one)? != std::cmp::Ordering::Less
+    {
+        return Ok(None);
+    }
+    parameter.as_exact().cloned().map(Some).ok_or_else(|| {
+        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
+    })
+}
+
+fn public_parameter_from_unit(source: &Curve2, parameter: &Real) -> Real {
+    let domain = source.parameter_domain();
+    domain.start() + (domain.end() - domain.start()) * parameter
+}
+
+fn decided_parallel_point(
+    parallel: &BezierParallel2,
+    parameter: &Real,
+    source_point: bool,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Point2> {
+    let point = if source_point {
+        parallel.source_point_at(parameter, policy)
+    } else {
+        parallel.point_at(parameter, policy)
+    }
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    match point {
+        Classification::Decided(point) => Ok(point),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn corner_chamfer_cuts(
     carrier: ExactCornerCarrier2<'_>,
@@ -4483,7 +4884,75 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
+        ExactCornerCarrier2::Bezier(source) => bezier_chamfer_cuts(
+            source,
+            setback,
+            setback_sign,
+            previous,
+            operation,
+            family,
+            policy,
+        ),
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bezier_chamfer_cuts(
+    source: &Curve2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CornerCuts2> {
+    let corner = if previous {
+        source.end()
+    } else {
+        source.start()
+    };
+    if setback_sign == RealSign::Zero {
+        return Ok(CornerCuts2 {
+            first: Some(CornerCut2 {
+                parameter: Some(if previous {
+                    source.parameter_domain().end().clone()
+                } else {
+                    source.parameter_domain().start().clone()
+                }),
+                point: corner.clone(),
+                placement: CornerPlacement2::Corner,
+            }),
+            second: None,
+            overflow: Vec::new(),
+        });
+    }
+
+    let radius_squared = setback * setback;
+    let parallel = exact_corner_bezier_parallel(source, Real::zero(), operation, family)?;
+    let parameters = match parallel
+        .circle_incidence(corner, &radius_squared, &[], policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    let mut cuts = CornerCuts2::default();
+    for (parameter, _) in parameters {
+        let Some(parameter) =
+            represented_bezier_trim_parameter(&parameter, operation, family, policy)?
+        else {
+            continue;
+        };
+        let point = decided_parallel_point(&parallel, &parameter, true, operation, family, policy)?;
+        cuts.push(CornerCut2 {
+            parameter: Some(public_parameter_from_unit(source, &parameter)),
+            point,
+            placement: CornerPlacement2::Trim,
+        });
+    }
+    Ok(cuts)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4512,6 +4981,7 @@ fn arc_chamfer_cuts(
                 placement: CornerPlacement2::Corner,
             }),
             second: None,
+            overflow: Vec::new(),
         });
     }
 
@@ -4832,6 +5302,7 @@ fn line_chamfer_cuts(
                 placement: CornerPlacement2::Corner,
             }),
             second: None,
+            overflow: Vec::new(),
         });
     }
     let (dx, dy) = line.delta();

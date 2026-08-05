@@ -4748,11 +4748,12 @@ impl CurveRegion2 {
 
     /// Solves a boundary-loop chamfer from two exact chord setbacks.
     ///
-    /// Native trim-only line/arc vertices and losslessly lowered retained line
-    /// images use one shared exact interaction solver. Every candidate is
-    /// rebuilt with this region's material/hole and fill semantics;
-    /// nonmaterializable and higher-order pairs remain explicit blockers rather
-    /// than falling through to historical contour machinery.
+    /// Native line/arc vertices, retained exact line/circle images, and direct
+    /// polynomial or rational Bezier carriers use the same exact interaction
+    /// solver as open paths. Every candidate is rebuilt with this region's
+    /// material/hole and fill semantics. Algebraic trims that cannot yet be
+    /// retained remain explicit blockers rather than falling through to
+    /// historical contour machinery.
     pub fn chamfer_loop_vertex_by_setbacks(
         &self,
         loop_index: usize,
@@ -4897,11 +4898,10 @@ impl CurveRegion2 {
 
     /// Solves a boundary-loop circular fillet from an exact radius.
     ///
-    /// Exact candidates come from the same native carrier-interaction authority
-    /// used by open [`CurvePath2`] editing and are rebuilt without changing loop
-    /// role or fill rule. Native trim-only vertices retain their contour fast
-    /// path; trim-or-extend requests preserve all exact candidates for caller
-    /// selection.
+    /// Exact candidates come from the same carrier-interaction authority used
+    /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
+    /// or fill rule. Native trim-only vertices retain their contour fast path;
+    /// represented direct Bezier trims use the retained path authority.
     pub fn fillet_loop_vertex_by_radius(
         &self,
         loop_index: usize,

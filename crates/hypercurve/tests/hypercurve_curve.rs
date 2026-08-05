@@ -1815,8 +1815,12 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
 #[test]
 fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
     let path = CurvePath2::try_new(vec![
-        Curve2::from(QuadraticBezier2::new(p(-4, 0), p(-2, 0), p(0, 0))),
-        Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(
+            Point2::new(-q(4, 5), q(3, 5)),
+            Point2::new(-q(4, 5), q(1, 10)),
+            p(0, 0),
+        )),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 1), p(0, 2))),
     ])
     .unwrap();
     assert!(matches!(
@@ -1832,23 +1836,20 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
                 && blocker.reason() == UncertaintyReason::Unsupported
     ));
 
-    let noncircular_conic = CurvePath2::try_new(vec![
-        Curve2::from(
-            RationalQuadraticBezier2::try_new(
-                p(-4, 0),
-                p(-2, 1),
-                p(0, 0),
-                Real::one(),
-                Real::one(),
-                Real::one(),
-            )
-            .unwrap(),
-        ),
+    let spline = CurvePath2::try_new(vec![
+        Curve2::try_polynomial_bspline(
+            2,
+            vec![p(-4, 0), p(-2, 1), p(0, 0)],
+            vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
         Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
     ])
     .unwrap();
     assert!(matches!(
-        noncircular_conic.fillet_vertex_by_radius(
+        spline.fillet_vertex_by_radius(
             1,
             Real::one(),
             CurveCornerMode2::TrimOnly,
@@ -1856,9 +1857,364 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
         ),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Fillet
-                && blocker.family() == CurveFamily2::RationalQuadraticBezier
+                && blocker.family() == CurveFamily2::PolynomialBSpline
                 && blocker.reason() == UncertaintyReason::Unsupported
     ));
+    assert_eq!(
+        spline
+            .fillet_vertex_by_radius(
+                1,
+                Real::zero(),
+                CurveCornerMode2::TrimOrExtend,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+    assert_eq!(
+        spline
+            .chamfer_vertex_by_setbacks(
+                1,
+                Real::zero(),
+                Real::zero(),
+                CurveCornerMode2::TrimOrExtend,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+    );
+
+    let algebraic_cut = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+    ])
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            algebraic_cut.chamfer_vertex_by_setbacks(
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            ),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.operation() == CurveOperation2::Chamfer
+                    && blocker.family() == CurveFamily2::QuadraticBezier
+                    && blocker.reason() == UncertaintyReason::Unsupported
+        ));
+    }
+}
+
+#[test]
+fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
+    let conic = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(0, 1),
+        p(1, 2),
+        Real::one(),
+        Real::one(),
+        Real::one(),
+    )
+    .unwrap();
+    let carriers = [
+        (
+            CurveFamily2::QuadraticBezier,
+            Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        ),
+        (
+            CurveFamily2::CubicBezier,
+            Curve2::from(CubicBezier2::new(
+                p(0, 0),
+                Point2::new(Real::zero(), q(2, 3)),
+                Point2::new(q(1, 3), q(4, 3)),
+                p(1, 2),
+            )),
+        ),
+        (
+            CurveFamily2::RationalQuadraticBezier,
+            Curve2::from(conic.clone()),
+        ),
+        (
+            CurveFamily2::RationalBezier,
+            Curve2::from(RationalBezier2::from(conic).elevated_to_degree(5).unwrap()),
+        ),
+    ];
+    let expected_center = Point2::new(-q(39, 16), q(15, 4));
+    let next_setback = (r(657).sqrt().unwrap() / r(16)).unwrap();
+    for (family, carrier) in carriers {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+            carrier,
+        ])
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let solutions = path
+                .fillet_vertex_by_radius(1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                candidate.curves()[2].family() == family
+                    && fillet
+                        .center()
+                        .distance_squared(&expected_center)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+            };
+            match &solutions {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the represented line/quadratic contact was lost: {reason:?}")
+                }
+            }
+
+            let CurveCornerSolutions2::Unique(chamfered) = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    Real::one(),
+                    next_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the represented quadratic circle contact must define one chamfer");
+            };
+            assert_eq!(chamfered.curves()[0].end(), &p(-1, 0));
+            assert_eq!(
+                chamfered.curves()[2].start(),
+                &Point2::new(q(9, 16), q(3, 2))
+            );
+            assert_eq!(chamfered.curves()[2].family(), family);
+
+            let reversed = path.clone().reversed(&policy).unwrap().into_value();
+            let reversed_solutions = reversed
+                .fillet_vertex_by_radius(1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let reversed_has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                candidate.curves()[0].family() == family
+                    && candidate.curves()[2].family() == CurveFamily2::Line
+                    && fillet
+                        .center()
+                        .distance_squared(&expected_center)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+            };
+            match &reversed_solutions {
+                CurveCornerSolutions2::Unique(candidate) => {
+                    assert!(reversed_has_expected(candidate));
+                }
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(reversed_has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the reversed represented curve/line contact was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn represented_arc_bezier_fillets_use_circle_incidence() {
+    let source_center = Point2::new(-q(7, 16), q(207, 512));
+    let source_start = Point2::new(-q(7, 16), -q(49, 256));
+    let previous =
+        CircularArc2::try_from_center(source_start, p(0, 0), source_center, true).unwrap();
+    let conic = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(0, 1),
+        p(1, 2),
+        Real::one(),
+        Real::one(),
+        Real::one(),
+    )
+    .unwrap();
+    let carriers = [
+        (
+            CurveFamily2::QuadraticBezier,
+            Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        ),
+        (
+            CurveFamily2::CubicBezier,
+            Curve2::from(CubicBezier2::new(
+                p(0, 0),
+                Point2::new(Real::zero(), q(2, 3)),
+                Point2::new(q(1, 3), q(4, 3)),
+                p(1, 2),
+            )),
+        ),
+        (
+            CurveFamily2::RationalQuadraticBezier,
+            Curve2::from(conic.clone()),
+        ),
+        (
+            CurveFamily2::RationalBezier,
+            Curve2::from(RationalBezier2::from(conic).elevated_to_degree(5).unwrap()),
+        ),
+    ];
+    let expected_center = Point2::new(-q(7, 16), q(9, 4));
+
+    for (family, carrier) in carriers {
+        let path = CurvePath2::try_new(vec![Curve2::from(previous.clone()), carrier]).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let solutions = path
+                .fillet_vertex_by_radius(1, q(5, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                fillet
+                    .center()
+                    .distance_squared(&expected_center)
+                    .certified_eq_until(&Real::zero(), -4096)
+                    .as_bool()
+                    == Some(true)
+                    && candidate.curves()[0].family() == CurveFamily2::CircularArc
+                    && candidate.curves()[2].family() == family
+            };
+            match &solutions {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the represented arc/quadratic contact was lost: {reason:?}")
+                }
+            }
+
+            let reversed = path.clone().reversed(&policy).unwrap().into_value();
+            let reversed_solutions = reversed
+                .fillet_vertex_by_radius(1, q(5, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let reversed_has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                candidate.curves()[0].family() == family
+                    && candidate.curves()[2].family() == CurveFamily2::CircularArc
+                    && fillet
+                        .center()
+                        .distance_squared(&expected_center)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+            };
+            match &reversed_solutions {
+                CurveCornerSolutions2::Unique(candidate) => {
+                    assert!(reversed_has_expected(candidate));
+                }
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(reversed_has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the reversed represented curve/arc contact was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn represented_bezier_chamfer_retains_more_than_two_exact_cuts() {
+    // This regular cubic meets the unit circle about its start at t = 1/4,
+    // 1/2, and 3/4. The remaining cubic factor of the circle equation has no
+    // root in [0, 1], so these are the complete cuts rather than samples.
+    let cubic = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(266, 195), q(200, 117)),
+        Point2::new(q(28, 65), q(272, 585)),
+        Point2::new(-q(30, 13), q(56, 65)),
+    );
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap()),
+        Curve2::from(cubic),
+    ])
+    .unwrap();
+    let expected = [
+        Point2::new(q(3, 5), q(4, 5)),
+        Point2::new(q(5, 13), q(12, 13)),
+        Point2::new(-q(3, 5), q(4, 5)),
+    ];
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let CurveCornerSolutions2::Multiple(candidates) = path
+            .chamfer_vertex_by_setbacks(
+                1,
+                Real::zero(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("all three represented cubic circle contacts must be retained");
+        };
+        assert_eq!(candidates.len(), expected.len());
+        for (candidate, expected) in candidates.iter().zip(&expected) {
+            assert_eq!(candidate.curves()[2].family(), CurveFamily2::CubicBezier);
+            assert_eq!(candidate.curves()[2].start(), expected);
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(undecidable_zero, Real::one()),
+            p(1, 2),
+        )),
+    ])
+    .unwrap();
+
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            q(15, 4),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Fillet
+                && blocker.family() == CurveFamily2::QuadraticBezier
+    ));
+    let approximate = path
+        .fillet_vertex_by_radius(
+            1,
+            q(15, 4),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_ne!(approximate.value.candidate_count(), 0);
 }
 
 #[cfg(feature = "predicates")]

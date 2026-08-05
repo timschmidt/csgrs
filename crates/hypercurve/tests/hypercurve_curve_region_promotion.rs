@@ -838,6 +838,58 @@ fn unified_region_corners_use_rational_circular_carriers() {
     }
 }
 
+#[test]
+fn unified_region_corners_use_represented_bezier_incidence() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Unique(filleted) = source
+            .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the represented line/Bezier region corner must have one fillet");
+        };
+        let fillet_paths = decided(filleted.materialized_boundary_paths(&policy).unwrap());
+        assert_eq!(fillet_paths[0].curves().len(), 5);
+        assert_eq!(
+            fillet_paths[0].curves()[2].family(),
+            CurveFamily2::QuadraticBezier
+        );
+
+        let next_setback = (Real::from(657).sqrt().unwrap() / Real::from(16)).unwrap();
+        let CurveCornerSolutions2::Unique(chamfered) = source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                Real::one(),
+                next_setback,
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the represented line/Bezier region corner must have one chamfer");
+        };
+        let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+        assert_eq!(chamfer_paths[0].curves().len(), 5);
+        assert_eq!(
+            chamfer_paths[0].curves()[2].family(),
+            CurveFamily2::QuadraticBezier
+        );
+    }
+}
+
 #[cfg(feature = "predicates")]
 #[test]
 fn unified_region_corner_solver_obeys_terminal_policy_once() {
