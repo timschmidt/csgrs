@@ -520,6 +520,41 @@ impl CurveString2 {
         next_param: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
+        self.chamfer_vertex_by_parameters_with_certified_points(
+            vertex_index,
+            previous_param,
+            next_param,
+            None,
+            policy,
+        )
+    }
+
+    pub(crate) fn chamfer_vertex_by_certified_parameters_and_points(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        previous_point: Point2,
+        next_point: Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveString2>> {
+        self.chamfer_vertex_by_parameters_with_certified_points(
+            vertex_index,
+            previous_param,
+            next_param,
+            Some((previous_point, next_point)),
+            policy,
+        )
+    }
+
+    fn chamfer_vertex_by_parameters_with_certified_points(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        certified_points: Option<(Point2, Point2)>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
         }
@@ -550,23 +585,28 @@ impl CurveString2 {
 
         let previous_source = &self.segments[previous_segment_index];
         let next_source = &self.segments[next_segment_index];
-        let previous_cut = match segment_point_at_trim_parameter(
-            previous_source,
-            previous_trim.param(),
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let next_cut =
-            match segment_point_at_trim_parameter(next_source, next_trim.param(), policy)? {
+        let (previous_cut, next_cut) = if let Some(points) = certified_points {
+            points
+        } else {
+            let previous_cut = match segment_point_at_trim_parameter(
+                previous_source,
+                previous_trim.param(),
+                policy,
+            )? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            let next_cut =
+                match segment_point_at_trim_parameter(next_source, next_trim.param(), policy)? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            (previous_cut, next_cut)
+        };
 
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
         let next_range = ParamRange::new(next_trim.param().clone(), Real::one());

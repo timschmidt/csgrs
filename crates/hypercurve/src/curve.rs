@@ -3277,10 +3277,15 @@ pub(crate) struct ChamferCorner2 {
 }
 
 impl ChamferCorner2 {
-    pub(crate) fn into_native_trim_parameters(self) -> Option<(Real, Real)> {
+    pub(crate) fn into_native_trim_evidence(self) -> Option<(Real, Point2, Real, Point2)> {
         (self.previous.placement == CornerPlacement2::Trim
             && self.next.placement == CornerPlacement2::Trim)
-            .then_some((self.previous.parameter, self.next.parameter))
+            .then_some((
+                self.previous.parameter,
+                self.previous.point,
+                self.next.parameter,
+                self.next.point,
+            ))
     }
 }
 

@@ -4828,8 +4828,8 @@ impl CurveRegion2 {
                     ordinal,
                     CurveCornerSolutions2::Unique(solution),
                 )) => {
-                    if let Some((previous_parameter, next_parameter)) =
-                        solution.into_native_trim_parameters()
+                    if let Some((previous_parameter, previous_point, next_parameter, next_point)) =
+                        solution.into_native_trim_evidence()
                     {
                         let edited = Self::rebuild_native_corner_region(
                             region,
@@ -4838,10 +4838,12 @@ impl CurveRegion2 {
                             CurveOperation2::Chamfer,
                             policy,
                             |contour| {
-                                contour.chamfer_vertex_by_parameters(
+                                contour.chamfer_vertex_by_certified_parameters_and_points(
                                     vertex_index,
                                     previous_parameter,
                                     next_parameter,
+                                    previous_point,
+                                    next_point,
                                     policy,
                                 )
                             },
