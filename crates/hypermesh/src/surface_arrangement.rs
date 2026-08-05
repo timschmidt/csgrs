@@ -6,7 +6,6 @@
 
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
 
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::Rational;
@@ -2223,8 +2222,9 @@ fn boundary_line_for_segment(
                 reason: "coplanar contact face has no edge identities",
             })?;
     let mut found = None;
-    for edge in 0..polygon.edges.len() {
-        let plane = &polygon.edges[(edge + 1) % polygon.edges.len()];
+    let edge_planes = polygon.edge_planes();
+    for edge in 0..edge_planes.len() {
+        let plane = &edge_planes[(edge + 1) % edge_planes.len()];
         if classify_point_decision(decisions, first, plane)? == Classification::On
             && classify_point_decision(decisions, second, plane)? == Classification::On
         {
@@ -2264,7 +2264,8 @@ impl IdentifiedPolygon {
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
                     reason: "coplanar overlap face has no edge identities",
                 })?;
-        if polygon.edges.len() != outgoing.len() || polygon.edges.len() < 3 {
+        let edge_planes = polygon.edge_planes();
+        if edge_planes.len() != outgoing.len() || edge_planes.len() < 3 {
             return Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "coplanar overlap edge planes and identities are not aligned",
             });
@@ -2291,7 +2292,7 @@ impl IdentifiedPolygon {
         // projective representation names vertex i by edge planes i and i+1.
         // A clip clears the retained cycle; clear it up front as well so a
         // no-op (coincident/contained) overlay uses exactly the same indexing.
-        polygon.known_vertices = None;
+        polygon.clear_known_vertices();
         polygon.known_identities = None;
         polygon.approx_bounds = None;
         Ok(Self {
@@ -2341,9 +2342,10 @@ impl IdentifiedPolygon {
             .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "coplanar overlay edge identities",
             })?;
+        let polygon_edges = self.polygon.edge_planes();
         for index in 0..count {
             let next = (index + 1) % count;
-            let segment_plane = self.polygon.edges[next].clone();
+            let segment_plane = polygon_edges[next].clone();
             let segment_identity = self.plane_edges[next].clone();
             match (
                 classifications[index].is_non_positive(),
@@ -2365,8 +2367,8 @@ impl IdentifiedPolygon {
         if edges.len() < 3 || edges.len() != identities.len() {
             return Ok(None);
         }
-        self.polygon.edges = Arc::new(edges);
-        self.polygon.known_vertices = None;
+        self.polygon.replace_edge_planes(edges);
+        self.polygon.clear_known_vertices();
         self.polygon.known_identities = None;
         self.polygon.approx_bounds = None;
         self.plane_edges = identities;
@@ -2387,17 +2389,18 @@ fn coplanar_overlay(
             .ok_or(HypermeshError::SurfaceArrangementFailed {
                 reason: "coplanar overlap face has no edge identities",
             })?;
-    if right.edges.len() != right_edges.len() {
+    let right_planes = right.edge_planes();
+    if right_planes.len() != right_edges.len() {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "coplanar overlap clip planes and identities are not aligned",
         });
     }
     let mut overlap = IdentifiedPolygon::from_source(left)?;
-    for edge in 0..right.edges.len() {
+    for (edge, right_plane) in right_planes.iter().enumerate() {
         overlap = overlap
             .clip_negative(
                 decisions,
-                &right.edges[edge],
+                right_plane,
                 right_edges
                     .get(edge)
                     .ok_or(HypermeshError::SurfaceArrangementFailed {
@@ -2578,7 +2581,9 @@ fn corefine_face(
     for edge in constraint_lines.keys() {
         point_ids.extend(edge);
     }
-    let projection_axis = projection_axis(decisions, &polygon.support)?;
+    let support = polygon.support_plane();
+    let edges = polygon.edge_planes();
+    let projection_axis = projection_axis(decisions, support)?;
     let axes =
         projection_axes(projection_axis).ok_or(HypermeshError::SurfaceArrangementFailed {
             reason: "source face projection axis is invalid",
@@ -2592,8 +2597,8 @@ fn corefine_face(
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
                     reason: "face constraint references an absent point",
                 })?;
-        if classify_point_decision(decisions, materialized, &polygon.support)? != Classification::On
-            || polygon.edges.iter().try_fold(false, |outside, edge| {
+        if classify_point_decision(decisions, materialized, support)? != Classification::On
+            || edges.iter().try_fold(false, |outside, edge| {
                 Ok::<_, HypermeshError>(
                     outside
                         || classify_point_decision(decisions, materialized, edge)?
@@ -2638,12 +2643,12 @@ fn corefine_face(
             if !segments_properly_cross(decisions, left_points, right_points)? {
                 continue;
             }
-            let support = pairwise_support_identity(face)?.ok_or(
+            let support_identity = pairwise_support_identity(face)?.ok_or(
                 HypermeshError::SurfaceArrangementFailed {
                     reason: "source face has no operation-local support identity",
                 },
             )?;
-            let identity = intersect_arrangement_lines(&left.line, &right.line, support)?;
+            let identity = intersect_arrangement_lines(&left.line, &right.line, support_identity)?;
             let point_id = if let Some(point) = arena.retained_point(&identity) {
                 point
             } else {
@@ -2657,10 +2662,8 @@ fn corefine_face(
                     reason: "proper face constraints have no intersection point",
                 })?;
                 let planar = hypertri::ExactPoint::new(intersection.x, intersection.y);
-                let point = lift_planar_point(&planar, &polygon.support, projection_axis, axes)?;
-                if classify_point_decision(decisions, &point, &polygon.support)?
-                    != Classification::On
-                {
+                let point = lift_planar_point(&planar, support, projection_axis, axes)?;
+                if classify_point_decision(decisions, &point, support)? != Classification::On {
                     return Err(HypermeshError::SurfaceArrangementFailed {
                         reason: "lifted face crossing does not lie on its source support",
                     });

@@ -16,8 +16,9 @@ use crate::geometry::{
 };
 use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::polygon::{
-    ConvexPolygon, RetainedSourcePositions, convex_source_triangle_decision,
-    points_require_wide_dyadic_plane_normalization,
+    CompactSourcePolygon, CompactSourcePolygons, ConvexPolygon, RetainedSourcePlanes,
+    RetainedSourcePositions, points_require_wide_dyadic_plane_normalization,
+    source_triangle_planes,
 };
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
@@ -50,98 +51,8 @@ pub(crate) struct TriangleMeshFacts {
     exact_bounds: OnceLock<Option<Arc<ExactAabb>>>,
     valid_pwn: CertaintyFact,
     axis_aligned_box: OnceLock<Option<Arc<ExactAabb>>>,
-    source_polygon_planes: OnceLock<CompactSourcePolygons>,
+    source_polygon_planes: OnceLock<Arc<CompactSourcePolygons>>,
     wide_dyadic_plane_schedule: AtomicU8,
-}
-
-/// Lossless primitive encodings of one source triangle's support and edge planes.
-///
-/// Admission requires every coefficient to round-trip exactly through
-/// `Real::to_f64_exact_dyadic`; the complete mesh uses binary32 storage when a
-/// second lossless round-trip permits it and binary64 otherwise. Rebuilding a
-/// `Real` therefore changes storage, not value. A mesh that does not satisfy
-/// that representation invariant keeps the complete source construction path.
-#[derive(Clone, Copy, Debug)]
-struct CompactSourcePolygon<T> {
-    planes: [[T; 4]; 4],
-}
-
-impl CompactSourcePolygon<f64> {
-    fn from_polygon(polygon: &ConvexPolygon) -> Option<Self> {
-        let [first, second, third] = polygon.edges.as_slice() else {
-            return None;
-        };
-        let [support, first, second, third] =
-            [&polygon.support, first, second, third].map(exact_dyadic_plane_coefficients);
-        Some(Self {
-            planes: [support?, first?, second?, third?],
-        })
-    }
-}
-
-impl CompactSourcePolygon<f32> {
-    fn from_polygon(polygon: &ConvexPolygon) -> Option<Self> {
-        let wide = CompactSourcePolygon::<f64>::from_polygon(polygon)?;
-        let [support, first, second, third] = wide.planes.map(|plane| {
-            let [a, b, c, d] = plane.map(exact_binary32);
-            Some([a?, b?, c?, d?])
-        });
-        Some(Self {
-            planes: [support?, first?, second?, third?],
-        })
-    }
-}
-
-#[derive(Debug)]
-enum CompactSourcePolygons {
-    Binary32(Box<[CompactSourcePolygon<f32>]>),
-    Binary64(Box<[CompactSourcePolygon<f64>]>),
-}
-
-impl CompactSourcePolygons {
-    fn from_polygons(polygons: &[ConvexPolygon]) -> Option<Self> {
-        if polygons
-            .iter()
-            .all(|polygon| CompactSourcePolygon::<f32>::from_polygon(polygon).is_some())
-        {
-            let compact = polygons
-                .iter()
-                .map(|polygon| {
-                    CompactSourcePolygon::<f32>::from_polygon(polygon)
-                        .expect("binary32 admission was checked")
-                })
-                .collect::<Vec<_>>();
-            return Some(Self::Binary32(compact.into_boxed_slice()));
-        }
-        let compact = polygons
-            .iter()
-            .map(CompactSourcePolygon::<f64>::from_polygon)
-            .collect::<Option<Vec<_>>>()?;
-        Some(Self::Binary64(compact.into_boxed_slice()))
-    }
-
-    fn len(&self) -> usize {
-        match self {
-            Self::Binary32(polygons) => polygons.len(),
-            Self::Binary64(polygons) => polygons.len(),
-        }
-    }
-}
-
-fn exact_binary32(value: f64) -> Option<f32> {
-    let narrowed = value as f32;
-    (f64::from(narrowed) == value).then_some(narrowed)
-}
-
-fn exact_dyadic_plane_coefficients(plane: &Plane) -> Option<[f64; 4]> {
-    let [a, b, c, d] = [
-        &plane.normal.x,
-        &plane.normal.y,
-        &plane.normal.z,
-        &plane.offset,
-    ]
-    .map(Real::to_f64_exact_dyadic);
-    Some([a?, b?, c?, d?])
 }
 
 impl TriangleMeshFacts {
@@ -1250,7 +1161,7 @@ fn certify_convex_mesh_decision(
     let soup = build_polygon_soup_internal(decisions, &[mesh])?;
     for polygon in &soup.polygons {
         for point in mesh.positions {
-            if classify_point_decision(decisions, point, &polygon.support)?
+            if classify_point_decision(decisions, point, polygon.support_plane())?
                 == Classification::Positive
             {
                 return Err(HypermeshError::NonConvexInput);
@@ -1296,75 +1207,52 @@ pub(crate) fn build_polygon_soup_internal(
             || points_require_wide_dyadic_plane_normalization(mesh.positions),
             |native| native.facts.normalizes_wide_dyadic_planes(mesh.positions),
         );
-        if let Some(source_polygon_planes) = mesh
+        validate_source_triangles(decisions, *mesh, mesh_index, !edge_balance_is_certified)?;
+        let retained_compact = mesh
             .native
             .and_then(|native| native.facts.source_polygon_planes.get())
-        {
-            debug_assert_eq!(source_polygon_planes.len(), mesh.triangles.len());
-            match source_polygon_planes {
-                CompactSourcePolygons::Binary32(source_polygon_planes) => {
-                    for (triangle, compact) in
-                        mesh.triangles.iter().zip(source_polygon_planes.iter())
-                    {
-                        append_compact_source_polygon(
-                            decisions,
-                            &source_positions,
-                            triangle,
-                            compact.planes.map(|plane| plane.map(f64::from)),
-                            mesh_index,
-                            signed_mesh_index,
-                            meshes.len(),
-                            &mut polygons,
-                        )?;
-                    }
-                }
-                CompactSourcePolygons::Binary64(source_polygon_planes) => {
-                    for (triangle, compact) in
-                        mesh.triangles.iter().zip(source_polygon_planes.iter())
-                    {
-                        append_compact_source_polygon(
-                            decisions,
-                            &source_positions,
-                            triangle,
-                            compact.planes,
-                            mesh_index,
-                            signed_mesh_index,
-                            meshes.len(),
-                            &mut polygons,
-                        )?;
-                    }
-                }
-            }
-        } else {
-            let cacheable =
-                mesh.native.is_some() && decisions.certainty() == MeshCertainty::Certified;
-            let first_polygon = polygons.len();
-            for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
-                let polygon_index = isize::try_from(polygons.len()).map_err(|_| {
-                    HypermeshError::CapacityOverflow {
-                        operation: "source polygon index",
-                    }
-                })?;
-                polygons.push(build_source_polygon(
-                    decisions,
-                    &source_positions,
-                    triangle,
-                    mesh_index,
-                    signed_mesh_index,
-                    triangle_index,
-                    polygon_index,
-                    meshes.len(),
-                    normalize_wide_dyadic,
-                )?);
-            }
-            if cacheable
+            .cloned();
+        let compact = if retained_compact.is_some() {
+            retained_compact
+        } else if mesh.native.is_some() && decisions.certainty() == MeshCertainty::Certified {
+            let compact =
+                compact_source_polygons(&source_positions, mesh.triangles, normalize_wide_dyadic)
+                    .map(Arc::new);
+            if let Some(compact) = &compact
                 && decisions.certainty() == MeshCertainty::Certified
-                && let Some(compact) =
-                    CompactSourcePolygons::from_polygons(&polygons[first_polygon..])
             {
-                let facts = &mesh.native.expect("cacheable mesh is native").facts;
-                let _ = facts.source_polygon_planes.set(compact);
+                let facts = &mesh
+                    .native
+                    .expect("native source cache owner is present")
+                    .facts;
+                let _ = facts.source_polygon_planes.set(Arc::clone(compact));
             }
+            compact
+        } else {
+            None
+        };
+        let source_planes =
+            RetainedSourcePlanes::new(mesh.triangles.len(), compact, normalize_wide_dyadic)?;
+        for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
+            let polygon_index =
+                isize::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "source polygon index",
+                })?;
+            let vertices = triangle.indices().map(|vertex| {
+                debug_assert!(u32::try_from(vertex).is_ok());
+                vertex as u32
+            });
+            let polygon = ConvexPolygon::from_source_triangle(
+                decisions,
+                Arc::clone(&source_planes),
+                Arc::clone(&source_positions),
+                vertices,
+                triangle_index,
+                mesh_index,
+                signed_mesh_index,
+                polygon_index,
+            )?;
+            polygons.push(finish_source_polygon(polygon, mesh_index, meshes.len()));
         }
         if !edge_balance_is_certified {
             let local = decisions.isolated();
@@ -1397,70 +1285,58 @@ pub(crate) fn build_polygon_soup_internal(
     })
 }
 
-fn build_source_polygon(
+fn validate_source_triangles(
     decisions: &DecisionContext,
-    source_positions: &Arc<RetainedSourcePositions>,
-    triangle: &Triangle,
+    mesh: TriangleMeshRef<'_>,
     mesh_index: usize,
-    signed_mesh_index: isize,
-    triangle_index: usize,
-    polygon_index: isize,
-    operand_count: usize,
-    normalize_wide_dyadic: bool,
-) -> HypermeshResult<ConvexPolygon> {
-    let polygon = convex_source_triangle_decision(
-        decisions,
-        source_positions,
-        triangle.indices(),
-        mesh_index,
-        signed_mesh_index,
-        polygon_index,
-        normalize_wide_dyadic,
-    )?;
-    if !polygon.support.decide_is_valid(decisions)? {
-        return Err(HypermeshError::DegenerateTriangle {
-            mesh_index,
-            triangle_index,
+    validate_nondegenerate: bool,
+) -> HypermeshResult<()> {
+    for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
+        let indices = triangle.indices();
+        let points = indices.map(|index| {
+            mesh.positions
+                .get(index)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index,
+                    vertex_count: mesh.positions.len(),
+                })
         });
+        let [first, second, third] = points;
+        let [first, second, third] = [first?, second?, third?];
+        if validate_nondegenerate
+            && !Plane::decide_points_are_nondegenerate(decisions, first, second, third)?
+        {
+            return Err(HypermeshError::DegenerateTriangle {
+                mesh_index,
+                triangle_index,
+            });
+        }
+        let vertices = indices.map(|index| {
+            u32::try_from(index).map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "source triangle vertex ID",
+            })
+        });
+        let [first, second, third] = vertices;
+        let _ = [first?, second?, third?];
     }
-    Ok(finish_source_polygon(polygon, mesh_index, operand_count))
+    Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-fn append_compact_source_polygon(
-    decisions: &DecisionContext,
-    source_positions: &Arc<RetainedSourcePositions>,
-    triangle: &Triangle,
-    planes: [[f64; 4]; 4],
-    mesh_index: usize,
-    signed_mesh_index: isize,
-    operand_count: usize,
-    polygons: &mut Vec<ConvexPolygon>,
-) -> HypermeshResult<()> {
-    let [support, first, second, third] = planes.map(|[a, b, c, d]| {
-        Plane::from_coefficients(
-            Real::try_from(a).expect("cached exact-dyadic coefficient is finite"),
-            Real::try_from(b).expect("cached exact-dyadic coefficient is finite"),
-            Real::try_from(c).expect("cached exact-dyadic coefficient is finite"),
-            Real::try_from(d).expect("cached exact-dyadic coefficient is finite"),
-        )
-    });
-    let polygon_index =
-        isize::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "source polygon index",
-        })?;
-    let polygon = ConvexPolygon::from_source_triangle_planes(
-        decisions,
-        Arc::clone(source_positions),
-        triangle.indices(),
-        support,
-        Vec::from([first, second, third]),
-        mesh_index,
-        signed_mesh_index,
-        polygon_index,
-    )?;
-    polygons.push(finish_source_polygon(polygon, mesh_index, operand_count));
-    Ok(())
+fn compact_source_polygons(
+    positions: &RetainedSourcePositions,
+    triangles: &[Triangle],
+    normalize_wide_dyadic: bool,
+) -> Option<CompactSourcePolygons> {
+    let rows = triangles
+        .iter()
+        .map(|triangle| {
+            let points = triangle.indices().map(|vertex| positions.get(vertex));
+            let [first, second, third] = points;
+            let planes = source_triangle_planes([first?, second?, third?], normalize_wide_dyadic);
+            CompactSourcePolygon::<f64>::from_planes(planes.each_ref())
+        })
+        .collect::<Option<Vec<_>>>()?;
+    Some(CompactSourcePolygons::from_binary64_rows(rows))
 }
 
 fn finish_source_polygon(
@@ -1654,6 +1530,10 @@ mod tests {
         let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let strict = DecisionContext::new(&strict_context);
         let first = build_polygon_soup_internal(&strict, &[mesh.as_ref()]).unwrap();
+        assert_eq!(
+            first.polygons[0].source_plane_materialization_counts(),
+            Some((true, mesh.triangles.len(), mesh.triangles.len()))
+        );
         let cached = mesh
             .facts
             .source_polygon_planes
@@ -1663,14 +1543,18 @@ mod tests {
 
         let second = build_polygon_soup_internal(&strict, &[mesh.as_ref()]).unwrap();
         assert_eq!(first, second);
-        assert!(matches!(cached, CompactSourcePolygons::Binary32(_)));
-        let cached_support = match cached {
+        assert!(matches!(
+            cached.as_ref(),
+            CompactSourcePolygons::Binary32(_)
+        ));
+        let cached_support = match cached.as_ref() {
             CompactSourcePolygons::Binary32(polygons) => polygons[0].planes[0].map(f64::from),
             CompactSourcePolygons::Binary64(polygons) => polygons[0].planes[0],
         };
         assert_eq!(
             cached_support,
-            exact_dyadic_plane_coefficients(&second.polygons[0].support).unwrap()
+            crate::polygon::exact_dyadic_plane_coefficients(second.polygons[0].support_plane(),)
+                .unwrap()
         );
 
         let consumed = DecisionContext::new(&approximate_context);
@@ -1762,10 +1646,16 @@ mod tests {
         let binary64 = translated_tetrahedron(&Real::try_from(1.0 + 2f64.powi(-30)).unwrap());
         let decisions = DecisionContext::new(&context);
         let first = build_polygon_soup_internal(&decisions, &[binary64.as_ref()]).unwrap();
-        assert!(matches!(
-            binary64.facts.source_polygon_planes.get(),
-            Some(CompactSourcePolygons::Binary64(_))
-        ));
+        assert!(
+            binary64
+                .facts
+                .source_polygon_planes
+                .get()
+                .is_some_and(|planes| matches!(
+                    planes.as_ref(),
+                    CompactSourcePolygons::Binary64(_)
+                ))
+        );
         let decisions = DecisionContext::new(&context);
         assert_eq!(
             build_polygon_soup_internal(&decisions, &[binary64.as_ref()]).unwrap(),
@@ -1783,6 +1673,40 @@ mod tests {
             first
         );
         assert!(general.facts.source_polygon_planes.get().is_none());
+    }
+
+    #[test]
+    fn borrowed_source_planes_materialize_only_on_exact_demand() {
+        let mesh = tetrahedron_with_independent_face_indices();
+        let borrowed = TriangleMeshRef::new(&mesh.positions, &mesh.triangles);
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let soup = build_polygon_soup_internal(&decisions, &[borrowed]).unwrap();
+        let polygon = &soup.polygons[0];
+        assert_eq!(
+            polygon.source_plane_materialization_counts(),
+            Some((false, 0, 0))
+        );
+
+        let points = mesh.triangles[0]
+            .indices()
+            .map(|vertex| &mesh.positions[vertex]);
+        let expected = source_triangle_planes(points, false);
+        assert_eq!(polygon.support_plane(), &expected[0]);
+        assert_eq!(
+            polygon.source_plane_materialization_counts(),
+            Some((false, 1, 0))
+        );
+        assert_eq!(polygon.edge_planes(), &expected[1..]);
+        assert_eq!(
+            polygon.source_plane_materialization_counts(),
+            Some((false, 1, 1))
+        );
+
+        let mut projective = polygon.clone();
+        projective.clear_known_vertices();
+        assert_eq!(projective.support_plane(), &expected[0]);
+        assert_eq!(projective.edge_planes(), &expected[1..]);
     }
 
     #[test]

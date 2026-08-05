@@ -1,7 +1,7 @@
 //! Convex polygon representation backed by hyperreal planes.
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
@@ -124,6 +124,253 @@ impl RetainedSourcePositions {
     #[cfg(test)]
     pub(crate) fn owner(&self) -> &Arc<[Point3]> {
         &self.0
+    }
+}
+
+/// Lossless primitive encodings of one source triangle's support and edges.
+///
+/// These are exact representations, not predicate results: admission requires
+/// every coefficient to survive a lossless binary round trip.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct CompactSourcePolygon<T> {
+    pub(crate) planes: [[T; 4]; 4],
+}
+
+impl CompactSourcePolygon<f64> {
+    pub(crate) fn from_planes(planes: [&Plane; 4]) -> Option<Self> {
+        let [support, first, second, third] = planes.map(exact_dyadic_plane_coefficients);
+        Some(Self {
+            planes: [support?, first?, second?, third?],
+        })
+    }
+}
+
+impl CompactSourcePolygon<f32> {
+    fn from_binary64(wide: CompactSourcePolygon<f64>) -> Option<Self> {
+        let [support, first, second, third] = wide.planes.map(|plane| {
+            let [a, b, c, d] = plane.map(exact_binary32);
+            Some([a?, b?, c?, d?])
+        });
+        Some(Self {
+            planes: [support?, first?, second?, third?],
+        })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum CompactSourcePolygons {
+    Binary32(Box<[CompactSourcePolygon<f32>]>),
+    Binary64(Box<[CompactSourcePolygon<f64>]>),
+}
+
+impl CompactSourcePolygons {
+    pub(crate) fn from_binary64_rows(rows: Vec<CompactSourcePolygon<f64>>) -> Self {
+        let binary32 = rows
+            .iter()
+            .copied()
+            .map(CompactSourcePolygon::<f32>::from_binary64)
+            .collect::<Option<Vec<_>>>();
+        match binary32 {
+            Some(rows) => Self::Binary32(rows.into_boxed_slice()),
+            None => Self::Binary64(rows.into_boxed_slice()),
+        }
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        match self {
+            Self::Binary32(polygons) => polygons.len(),
+            Self::Binary64(polygons) => polygons.len(),
+        }
+    }
+
+    fn plane(&self, face: usize, plane: usize) -> Plane {
+        let coefficients = match self {
+            Self::Binary32(polygons) => polygons[face].planes[plane].map(f64::from),
+            Self::Binary64(polygons) => polygons[face].planes[plane],
+        };
+        plane_from_exact_dyadic_coefficients(coefficients)
+    }
+}
+
+fn exact_binary32(value: f64) -> Option<f32> {
+    let narrowed = value as f32;
+    (f64::from(narrowed) == value).then_some(narrowed)
+}
+
+pub(crate) fn exact_dyadic_plane_coefficients(plane: &Plane) -> Option<[f64; 4]> {
+    let [a, b, c, d] = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+    .map(Real::to_f64_exact_dyadic);
+    Some([a?, b?, c?, d?])
+}
+
+fn plane_from_exact_dyadic_coefficients([a, b, c, d]: [f64; 4]) -> Plane {
+    Plane::from_coefficients(
+        Real::try_from(a).expect("retained exact-dyadic coefficient is finite"),
+        Real::try_from(b).expect("retained exact-dyadic coefficient is finite"),
+        Real::try_from(c).expect("retained exact-dyadic coefficient is finite"),
+        Real::try_from(d).expect("retained exact-dyadic coefficient is finite"),
+    )
+}
+
+#[derive(Debug)]
+struct SourceTrianglePlaneCache {
+    support: OnceLock<Box<Plane>>,
+    edges: OnceLock<Box<[Plane; 3]>>,
+}
+
+#[derive(Debug)]
+struct SourceTrianglePlanes {
+    support: Plane,
+    edges: [Plane; 3],
+}
+
+#[derive(Debug)]
+enum SourcePlaneStorage {
+    /// Lossless primitive rows are cheap to reconstruct and serve dense exact
+    /// consumers without an atomic lazy-cache probe on every plane access.
+    Eager(Box<[SourceTrianglePlanes]>),
+    /// General `Real` planes retain source expressions and are materialized
+    /// only for faces reached by the conservative candidate schedule.
+    Lazy(Box<[SourceTrianglePlaneCache]>),
+}
+
+/// One operation-local plane owner shared by every face of a source mesh.
+///
+/// Source positions remain the canonical geometry. General `Real` support and
+/// edge planes are constructed only when a consuming arrangement path demands
+/// them. Native lossless primitive rows eagerly reconstruct the same exact
+/// planes without repeating source arithmetic or adding lazy-cache probes to
+/// their dense fast path.
+#[derive(Debug)]
+pub(crate) struct RetainedSourcePlanes {
+    storage: SourcePlaneStorage,
+    normalize_wide_dyadic: bool,
+}
+
+impl RetainedSourcePlanes {
+    pub(crate) fn new(
+        face_count: usize,
+        compact: Option<Arc<CompactSourcePolygons>>,
+        normalize_wide_dyadic: bool,
+    ) -> HypermeshResult<Arc<Self>> {
+        if compact
+            .as_deref()
+            .is_some_and(|compact| compact.len() != face_count)
+        {
+            return Err(crate::error::HypermeshError::SurfaceArrangementFailed {
+                reason: "retained source-plane and triangle counts differ",
+            });
+        }
+        let storage = compact.map_or_else(
+            || {
+                SourcePlaneStorage::Lazy(
+                    (0..face_count)
+                        .map(|_| SourceTrianglePlaneCache {
+                            support: OnceLock::new(),
+                            edges: OnceLock::new(),
+                        })
+                        .collect(),
+                )
+            },
+            |compact| {
+                SourcePlaneStorage::Eager(
+                    (0..face_count)
+                        .map(|face| SourceTrianglePlanes {
+                            support: compact.plane(face, 0),
+                            edges: [
+                                compact.plane(face, 1),
+                                compact.plane(face, 2),
+                                compact.plane(face, 3),
+                            ],
+                        })
+                        .collect(),
+                )
+            },
+        );
+        Ok(Arc::new(Self {
+            storage,
+            normalize_wide_dyadic,
+        }))
+    }
+
+    fn len(&self) -> usize {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => planes.len(),
+            SourcePlaneStorage::Lazy(cache) => cache.len(),
+        }
+    }
+
+    #[inline]
+    fn support<'point>(&self, face: usize, points: impl FnOnce() -> [&'point Point3; 3]) -> &Plane {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => &planes[face].support,
+            SourcePlaneStorage::Lazy(cache) => {
+                let support = &cache[face].support;
+                if let Some(support) = support.get() {
+                    return support;
+                }
+                let [first, second, third] = points();
+                support
+                    .get_or_init(|| Box::new(Plane::from_points(first, second, third)))
+                    .as_ref()
+            }
+        }
+    }
+
+    #[inline]
+    fn edges<'point>(&self, face: usize, points: impl FnOnce() -> [&'point Point3; 3]) -> &[Plane] {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => &planes[face].edges,
+            SourcePlaneStorage::Lazy(cache) => {
+                let edges = &cache[face].edges;
+                if let Some(edges) = edges.get() {
+                    return edges.as_slice();
+                }
+                let points @ [first, second, third] = points();
+                edges
+                    .get_or_init(|| {
+                        Box::new(source_triangle_edge_planes(
+                            [first, second, third],
+                            self.support(face, || points),
+                            self.normalize_wide_dyadic,
+                        ))
+                    })
+                    .as_slice()
+            }
+        }
+    }
+
+    #[cfg(test)]
+    fn materialization_counts(&self) -> (bool, usize, usize) {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => (true, planes.len(), planes.len()),
+            SourcePlaneStorage::Lazy(cache) => (
+                false,
+                cache
+                    .iter()
+                    .filter(|face| face.support.get().is_some())
+                    .count(),
+                cache
+                    .iter()
+                    .filter(|face| face.edges.get().is_some())
+                    .count(),
+            ),
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    fn face_is_materialized(&self, face: usize) -> bool {
+        match &self.storage {
+            SourcePlaneStorage::Eager(planes) => face < planes.len(),
+            SourcePlaneStorage::Lazy(cache) => cache
+                .get(face)
+                .is_some_and(|face| face.support.get().is_some() && face.edges.get().is_some()),
+        }
     }
 }
 
@@ -436,13 +683,31 @@ impl ApproxBounds {
     }
 }
 
+#[derive(Clone, Debug)]
+struct OwnedPolygonPlanes {
+    support: Plane,
+    edges: Vec<Plane>,
+}
+
+#[derive(Clone, Debug)]
+enum PolygonPlanes {
+    Owned(Arc<OwnedPolygonPlanes>),
+    SourceTriangle {
+        owner: Arc<RetainedSourcePlanes>,
+        face: u32,
+    },
+}
+
+impl PolygonPlanes {
+    fn owned(support: Plane, edges: Vec<Plane>) -> Self {
+        Self::Owned(Arc::new(OwnedPolygonPlanes { support, edges }))
+    }
+}
+
 /// Plane-bounded convex polygon.
 #[derive(Clone, Debug)]
 pub struct ConvexPolygon {
-    /// Supporting plane.
-    pub support: Plane,
-    /// Edge planes. Interior is on the non-positive side of each edge.
-    pub edges: Arc<Vec<Plane>>,
+    planes: PolygonPlanes,
     /// Source mesh index.
     pub mesh_index: isize,
     /// Source polygon index.
@@ -461,8 +726,8 @@ pub struct ConvexPolygon {
 
 impl PartialEq for ConvexPolygon {
     fn eq(&self, other: &Self) -> bool {
-        self.support == other.support
-            && self.edges == other.edges
+        self.support_plane() == other.support_plane()
+            && self.edge_planes() == other.edge_planes()
             && self.mesh_index == other.mesh_index
             && self.polygon_index == other.polygon_index
             && self.delta_w == other.delta_w
@@ -471,6 +736,68 @@ impl PartialEq for ConvexPolygon {
 }
 
 impl ConvexPolygon {
+    /// Returns the exact supporting plane, constructing a retained source
+    /// plane on first demand when necessary.
+    #[inline]
+    pub fn support_plane(&self) -> &Plane {
+        match &self.planes {
+            PolygonPlanes::Owned(planes) => &planes.support,
+            PolygonPlanes::SourceTriangle { owner, face } => owner.support(*face as usize, || {
+                self.retained_source_triangle_points()
+                    .expect("an unmaterialized source plane retains its checked source vertices")
+            }),
+        }
+    }
+
+    /// Returns the exact interior-facing edge planes, constructing a retained
+    /// source edge cycle on first demand when necessary.
+    #[inline]
+    pub fn edge_planes(&self) -> &[Plane] {
+        match &self.planes {
+            PolygonPlanes::Owned(planes) => planes.edges.as_slice(),
+            PolygonPlanes::SourceTriangle { owner, face } => owner.edges(*face as usize, || {
+                self.retained_source_triangle_points().expect(
+                    "an unmaterialized source edge cycle retains its checked source vertices",
+                )
+            }),
+        }
+    }
+
+    fn retained_source_triangle_points(&self) -> Option<[&Point3; 3]> {
+        let vertices = self.known_vertices.as_ref()?;
+        Some([vertices.get(0)?, vertices.get(1)?, vertices.get(2)?])
+    }
+
+    #[cfg(test)]
+    pub(crate) fn source_plane_materialization_counts(&self) -> Option<(bool, usize, usize)> {
+        match &self.planes {
+            PolygonPlanes::SourceTriangle { owner, .. } => Some(owner.materialization_counts()),
+            PolygonPlanes::Owned(_) => None,
+        }
+    }
+
+    fn replace_planes(&mut self, support: Plane, edges: Vec<Plane>) {
+        self.planes = PolygonPlanes::owned(support, edges);
+    }
+
+    pub(crate) fn replace_edge_planes(&mut self, edges: Vec<Plane>) {
+        self.replace_planes(self.support_plane().clone(), edges);
+    }
+
+    pub(crate) fn clear_edge_planes(&mut self) {
+        self.replace_edge_planes(Vec::new());
+    }
+
+    /// Releases an exact retained vertex cycle after its plane carrier has
+    /// been made self-sufficient by `edge_planes` or `replace_edge_planes`.
+    pub(crate) fn clear_known_vertices(&mut self) {
+        #[cfg(debug_assertions)]
+        if let PolygonPlanes::SourceTriangle { owner, face } = &self.planes {
+            debug_assert!(owner.face_is_materialized(*face as usize));
+        }
+        self.known_vertices = None;
+    }
+
     pub(crate) fn retained_bounds(&self) -> Option<ApproxBoundsRef<'_>> {
         self.approx_bounds
             .as_deref()
@@ -496,13 +823,10 @@ impl ConvexPolygon {
     /// Constructs an empty polygon carrier.
     pub fn empty() -> Self {
         Self {
-            support: Plane::from_coefficients(
-                Real::zero(),
-                Real::zero(),
-                Real::zero(),
-                Real::zero(),
+            planes: PolygonPlanes::owned(
+                Plane::from_coefficients(Real::zero(), Real::zero(), Real::zero(), Real::zero()),
+                Vec::new(),
             ),
-            edges: Arc::new(Vec::new()),
             mesh_index: -1,
             polygon_index: -1,
             delta_w: Vec::new(),
@@ -516,7 +840,7 @@ impl ConvexPolygon {
     pub fn vertex_count(&self) -> usize {
         self.known_vertices
             .as_ref()
-            .map_or(self.edges.len(), |vertices| vertices.len())
+            .map_or_else(|| self.edge_planes().len(), RetainedVertexCycle::len)
     }
 
     pub(crate) fn has_retained_vertex(&self, point: &Point3) -> bool {
@@ -541,7 +865,7 @@ impl ConvexPolygon {
     /// non-zero support normal.
     pub fn is_valid(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<bool>> {
         let decisions = DecisionContext::new(context);
-        let valid = self.vertex_count() >= 3 && self.support.decide_is_valid(&decisions)?;
+        let valid = self.vertex_count() >= 3 && self.support_plane().decide_is_valid(&decisions)?;
         Ok(decisions.finish(valid))
     }
 
@@ -549,7 +873,9 @@ impl ConvexPolygon {
     /// adjacent edge planes.
     pub fn vertex(&self, i: usize) -> HomogeneousPoint3 {
         let n = self.vertex_count();
-        intersect_three_planes(&self.support, &self.edges[i], &self.edges[(i + 1) % n])
+        let support = self.support_plane();
+        let edges = self.edge_planes();
+        intersect_three_planes(support, &edges[i], &edges[(i + 1) % n])
     }
 
     /// Computes an affine vertex.
@@ -596,8 +922,10 @@ impl ConvexPolygon {
     /// remains on every edge's non-positive side after orientation reversal.
     pub fn inverted(&self) -> Self {
         let mut result = self.clone();
-        result.support = self.support.inverted();
-        result.edges = Arc::new(self.edges.iter().rev().cloned().collect::<Vec<_>>());
+        result.replace_planes(
+            self.support_plane().inverted(),
+            self.edge_planes().iter().rev().cloned().collect(),
+        );
         result.known_vertices = self
             .known_vertices
             .as_ref()
@@ -654,12 +982,12 @@ impl ConvexPolygon {
         decisions: &DecisionContext,
         point: &HomogeneousPoint3,
     ) -> HypermeshResult<bool> {
-        if classify_projective_point_decision(decisions, point, &self.support)?
-            != Classification::On
-        {
+        let support = self.support_plane();
+        if classify_projective_point_decision(decisions, point, support)? != Classification::On {
             return Ok(false);
         }
-        for edge in self.edges.iter() {
+        let edges = self.edge_planes();
+        for edge in edges {
             if classify_projective_point_decision(decisions, point, edge)?.is_positive() {
                 return Ok(false);
             }
@@ -683,12 +1011,12 @@ impl ConvexPolygon {
         decisions: &DecisionContext,
         point: &HomogeneousPoint3,
     ) -> HypermeshResult<bool> {
-        if classify_projective_point_decision(decisions, point, &self.support)?
-            != Classification::On
-        {
+        let support = self.support_plane();
+        if classify_projective_point_decision(decisions, point, support)? != Classification::On {
             return Ok(false);
         }
-        for edge in self.edges.iter() {
+        let edges = self.edge_planes();
+        for edge in edges {
             if classify_projective_point_decision(decisions, point, edge)?.is_non_negative() {
                 return Ok(false);
             }
@@ -745,44 +1073,6 @@ pub(crate) fn convex_triangle_decision(
     )
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn convex_source_triangle_decision(
-    decisions: &DecisionContext,
-    positions: &Arc<RetainedSourcePositions>,
-    vertices: [usize; 3],
-    mesh_index: usize,
-    signed_mesh_index: isize,
-    polygon_index: isize,
-    normalize_wide_dyadic: bool,
-) -> HypermeshResult<ConvexPolygon> {
-    let points = vertices.map(|index| {
-        positions
-            .get(index)
-            .ok_or(crate::error::HypermeshError::VertexIndexOutOfBounds {
-                index,
-                vertex_count: positions.len(),
-            })
-    });
-    let [p0, p1, p2] = points;
-    let [p0, p1, p2] = [p0?, p1?, p2?];
-    let support = Plane::from_points(p0, p1, p2);
-    let edges = Vec::from([
-        edge_plane(decisions, p0, p1, p2, &support, normalize_wide_dyadic)?,
-        edge_plane(decisions, p1, p2, p0, &support, normalize_wide_dyadic)?,
-        edge_plane(decisions, p2, p0, p1, &support, normalize_wide_dyadic)?,
-    ]);
-    ConvexPolygon::from_source_triangle_planes(
-        decisions,
-        Arc::clone(positions),
-        vertices,
-        support,
-        edges,
-        mesh_index,
-        signed_mesh_index,
-        polygon_index,
-    )
-}
-
 impl ConvexPolygon {
     pub(crate) fn from_triangle_planes(
         decisions: &DecisionContext,
@@ -794,8 +1084,7 @@ impl ConvexPolygon {
     ) -> HypermeshResult<Self> {
         debug_assert_eq!(edges.len(), 3);
         Ok(Self {
-            support,
-            edges: Arc::new(edges),
+            planes: PolygonPlanes::owned(support, edges),
             mesh_index,
             polygon_index,
             delta_w: Vec::new(),
@@ -810,41 +1099,39 @@ impl ConvexPolygon {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn from_source_triangle_planes(
+    pub(crate) fn from_source_triangle(
         decisions: &DecisionContext,
+        source_planes: Arc<RetainedSourcePlanes>,
         positions: Arc<RetainedSourcePositions>,
-        vertices: [usize; 3],
-        support: Plane,
-        edges: Vec<Plane>,
+        vertices: [u32; 3],
+        face: usize,
         mesh_index: usize,
         signed_mesh_index: isize,
         polygon_index: isize,
     ) -> HypermeshResult<Self> {
-        debug_assert_eq!(edges.len(), 3);
         let mesh = compact_construction_index(mesh_index, "source triangle mesh ID")?;
-        let vertices =
-            vertices.map(|vertex| compact_construction_index(vertex, "source triangle vertex ID"));
-        let [first, second, third] = vertices;
-        let vertices = [first?, second?, third?];
+        let compact_face = compact_construction_index(face, "source triangle plane-cache ID")?;
+        if face >= source_planes.len() {
+            return Err(crate::error::HypermeshError::SurfaceArrangementFailed {
+                reason: "source triangle has no retained plane-cache row",
+            });
+        }
         let points = vertices.map(|vertex| {
-            let index = usize::try_from(vertex).map_err(|_| {
-                crate::error::HypermeshError::CapacityOverflow {
-                    operation: "source triangle vertex ID",
-                }
-            })?;
-            positions
-                .get(index)
-                .ok_or(crate::error::HypermeshError::VertexIndexOutOfBounds {
-                    index,
+            positions.get(vertex as usize).ok_or(
+                crate::error::HypermeshError::VertexIndexOutOfBounds {
+                    index: vertex as usize,
                     vertex_count: positions.len(),
-                })
+                },
+            )
         });
         let [p0, p1, p2] = points;
         let [p0, p1, p2] = [p0?, p1?, p2?];
         let extrema = bounds_extrema_for_triangle(decisions, [p0, p1, p2])?;
         Ok(Self {
-            support,
-            edges: Arc::new(edges),
+            planes: PolygonPlanes::SourceTriangle {
+                owner: Arc::clone(&source_planes),
+                face: compact_face,
+            },
             mesh_index: signed_mesh_index,
             polygon_index,
             delta_w: Vec::new(),
@@ -897,8 +1184,7 @@ pub(crate) fn convex_quad_decision(
     ]);
 
     Ok(ConvexPolygon {
-        support,
-        edges: Arc::new(edges),
+        planes: PolygonPlanes::owned(support, edges),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
@@ -911,6 +1197,32 @@ pub(crate) fn convex_quad_decision(
         ]))),
         known_identities: None,
     })
+}
+
+pub(crate) fn source_triangle_planes(
+    points @ [first, second, third]: [&Point3; 3],
+    normalize_wide_dyadic: bool,
+) -> [Plane; 4] {
+    let support = Plane::from_points(first, second, third);
+    let edges = source_triangle_edge_planes(points, &support, normalize_wide_dyadic);
+    let [first, second, third] = edges;
+    [support, first, second, third]
+}
+
+fn source_triangle_edge_planes(
+    [first, second, third]: [&Point3; 3],
+    support: &Plane,
+    normalize_wide_dyadic: bool,
+) -> [Plane; 3] {
+    // For n = (b-a) x (c-a), ((b-a) x n) . (c-a) = -(n . n).
+    // A validated source triangle therefore puts its opposite vertex on the
+    // negative side of each cyclic edge plane by construction. This algebraic
+    // invariant fixes orientation without a second numeric predicate.
+    [
+        oriented_edge_plane(first, second, support, normalize_wide_dyadic),
+        oriented_edge_plane(second, third, support, normalize_wide_dyadic),
+        oriented_edge_plane(third, first, support, normalize_wide_dyadic),
+    ]
 }
 
 pub(crate) fn edge_plane(
@@ -1114,6 +1426,12 @@ mod tests {
         assert_eq!(std::mem::size_of::<RetainedIdentityCycles>(), 32);
         assert_eq!(std::mem::size_of::<SourceTriangleExtrema>(), 2);
         assert_eq!(std::mem::size_of::<RetainedVertexCycle>(), 24);
+        #[cfg(target_pointer_width = "64")]
+        {
+            assert_eq!(std::mem::size_of::<PolygonPlanes>(), 16);
+            assert_eq!(std::mem::size_of::<SourceTrianglePlaneCache>(), 32);
+            assert_eq!(std::mem::size_of::<ConvexPolygon>(), 128);
+        }
         assert_eq!(
             polygon
                 .known_vertex_identities()
@@ -1161,6 +1479,87 @@ mod tests {
     }
 
     #[test]
+    fn source_edge_orientation_is_fixed_by_the_valid_triangle_identity() {
+        let points = [point(-3, 2, 5), point(7, -1, 4), point(2, 9, -6)];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(
+                Plane::decide_points_are_nondegenerate(
+                    &decisions, &points[0], &points[1], &points[2],
+                )
+                .unwrap()
+            );
+            let planes = source_triangle_planes([&points[0], &points[1], &points[2]], false);
+            for edge in 0..3 {
+                let first = &points[edge];
+                let second = &points[(edge + 1) % 3];
+                let opposite = &points[(edge + 2) % 3];
+                assert_eq!(
+                    crate::predicate::classify_point_decision(
+                        &decisions,
+                        opposite,
+                        &planes[edge + 1],
+                    )
+                    .unwrap(),
+                    Classification::Negative
+                );
+                assert_eq!(
+                    edge_plane(&decisions, first, second, opposite, &planes[0], false).unwrap(),
+                    planes[edge + 1]
+                );
+            }
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn retained_source_planes_reject_misaligned_compact_rows() {
+        let positions = RetainedSourcePositions::shared(Arc::from([
+            point(0, 0, 0),
+            point(1, 0, 0),
+            point(0, 1, 0),
+        ]));
+        let compact = Arc::new(CompactSourcePolygons::Binary64(
+            vec![CompactSourcePolygon {
+                planes: [[0.0; 4]; 4],
+            }]
+            .into_boxed_slice(),
+        ));
+        let error = RetainedSourcePlanes::new(2, Some(compact), false).unwrap_err();
+        assert!(matches!(
+            error,
+            crate::HypermeshError::SurfaceArrangementFailed {
+                reason: "retained source-plane and triangle counts differ"
+            }
+        ));
+
+        let source_planes = RetainedSourcePlanes::new(1, None, false).unwrap();
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let error = ConvexPolygon::from_source_triangle(
+            &decisions,
+            source_planes,
+            positions,
+            [0, 1, 2],
+            1,
+            0,
+            0,
+            0,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            error,
+            crate::HypermeshError::SurfaceArrangementFailed {
+                reason: "source triangle has no retained plane-cache row"
+            }
+        ));
+    }
+
+    #[test]
     fn wide_dyadic_triangle_uses_primitive_support_and_edge_planes() {
         let denominator = Rational::new(2)
             .powi(2048_i64.into())
@@ -1179,14 +1578,14 @@ mod tests {
             assert_eq!(outcome.certainty, crate::MeshCertainty::Certified);
             let polygon = outcome.value;
             assert_eq!(
-                polygon.support,
+                polygon.support_plane().clone(),
                 Plane::new(
                     Point3::new(Real::zero(), Real::zero(), Real::one()),
                     Real::zero(),
                 )
             );
             assert_eq!(
-                polygon.edges.as_slice(),
+                polygon.edge_planes(),
                 [
                     Plane::new(
                         Point3::new(Real::zero(), Real::from(-1), Real::zero()),

@@ -5,7 +5,6 @@ use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, Classification, Plane};
 use crate::polygon::ConvexPolygon;
 use crate::predicate::classify_projective_point_decision;
-use std::sync::Arc;
 
 /// Result side from clipping a polygon against a plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -86,7 +85,7 @@ pub(crate) fn clip_polygon_decision(
 
     for index in 0..n {
         let next = (index + 1) % n;
-        let seg_edge = poly.edges[next].clone();
+        let seg_edge = poly.edge_planes()[next].clone();
         match (
             classifications[index].is_non_positive(),
             classifications[next].is_non_positive(),
@@ -107,12 +106,12 @@ pub(crate) fn clip_polygon_decision(
     }
 
     let mut left = poly.clone();
-    left.edges = Arc::new(left_edges);
-    left.known_vertices = None;
+    left.replace_edge_planes(left_edges);
+    left.clear_known_vertices();
     left.known_identities = None;
     let mut right = poly.clone();
-    right.edges = Arc::new(right_edges);
-    right.known_vertices = None;
+    right.replace_edge_planes(right_edges);
+    right.clear_known_vertices();
     right.known_identities = None;
 
     Ok(ClipResult {
@@ -141,7 +140,7 @@ pub(crate) fn clip_polygon_to_aabb_decision(
     let mut current = poly.clone();
 
     for axis in 0..3 {
-        if current.edges.is_empty() {
+        if current.edge_planes().is_empty() {
             break;
         }
 
@@ -152,8 +151,8 @@ pub(crate) fn clip_polygon_to_aabb_decision(
             current = match min_clip.side {
                 ClipSide::Left => {
                     let mut empty = current;
-                    Arc::make_mut(&mut empty.edges).clear();
-                    empty.known_vertices = None;
+                    empty.clear_edge_planes();
+                    empty.clear_known_vertices();
                     empty.known_identities = None;
                     empty
                 }
@@ -162,7 +161,7 @@ pub(crate) fn clip_polygon_to_aabb_decision(
             };
         }
 
-        if current.edges.is_empty() {
+        if current.edge_planes().is_empty() {
             break;
         }
 
@@ -173,8 +172,8 @@ pub(crate) fn clip_polygon_to_aabb_decision(
             current = match max_clip.side {
                 ClipSide::Right => {
                     let mut empty = current;
-                    Arc::make_mut(&mut empty.edges).clear();
-                    empty.known_vertices = None;
+                    empty.clear_edge_planes();
+                    empty.clear_known_vertices();
                     empty.known_identities = None;
                     empty
                 }

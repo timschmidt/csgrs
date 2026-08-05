@@ -1132,8 +1132,10 @@ fn intersect_polygons_with_vertices_constructed(
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
         return Ok(ConstructedPairwiseIntersection::Disjoint);
     }
+    let polygon_support = polygon.support_plane();
+    let other_support = other.support_plane();
     let Some(support_line_axis) =
-        support_line_order_axis(decisions, &polygon.support, &other.support)?
+        support_line_order_axis(decisions, polygon_support, other_support)?
     else {
         let retain_construction =
             polygon_support_identity.is_some() && other_support_identity.is_some();
@@ -1141,7 +1143,7 @@ fn intersect_polygons_with_vertices_constructed(
         let other_vertex = other_vertices
             .first()
             .ok_or(HypermeshError::UnknownClassification)?;
-        return if classify_point_decision(decisions, other_vertex, &polygon.support)?
+        return if classify_point_decision(decisions, other_vertex, polygon_support)?
             == Classification::On
         {
             intersect_coplanar_constructed(
@@ -1180,6 +1182,8 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     other_support_identity: Option<ConstructionPlaneIdentity>,
     support_line_axis: SupportLineAxis,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
+    let polygon_support = polygon.support_plane();
+    let other_support = other.support_plane();
     // A closed triangle reaches a plane only through an on-plane vertex or a
     // pair of vertices on opposite sides. Certifying this symmetric support
     // separator before constructing crossings avoids exact points that the
@@ -1189,18 +1193,18 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     let triangle_classes = if let ([p0, p1, p2], [q0, q1, q2]) = (polygon_vertices, other_vertices)
     {
         let polygon_classes = [
-            classify_point_decision(decisions, p0, &other.support)?,
-            classify_point_decision(decisions, p1, &other.support)?,
-            classify_point_decision(decisions, p2, &other.support)?,
+            classify_point_decision(decisions, p0, other_support)?,
+            classify_point_decision(decisions, p1, other_support)?,
+            classify_point_decision(decisions, p2, other_support)?,
         ];
         if !triangle_reaches_plane(polygon_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
         }
         let other_classes = [
-            classify_point_decision(decisions, q0, &polygon.support)?,
-            classify_point_decision(decisions, q1, &polygon.support)?,
-            classify_point_decision(decisions, q2, &polygon.support)?,
+            classify_point_decision(decisions, q0, polygon_support)?,
+            classify_point_decision(decisions, q1, polygon_support)?,
+            classify_point_decision(decisions, q2, polygon_support)?,
         ];
         if !triangle_reaches_plane(other_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
@@ -1217,7 +1221,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         polygon,
         polygon_vertices,
         triangle_classes.as_ref().map(|classes| &classes[0]),
-        &other.support,
+        other_support,
         other_support_identity,
         support_line_axis,
         false,
@@ -1229,7 +1233,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         other,
         other_vertices,
         triangle_classes.as_ref().map(|classes| &classes[1]),
-        &polygon.support,
+        polygon_support,
         polygon_support_identity,
         support_line_axis,
         true,
@@ -1696,9 +1700,9 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             }
             let left_opposite = &left[(left_index + 2) % 3];
             let right_opposite = &right[(right_index + 2) % 3];
-            if classify_point_decision(decisions, right_opposite, &left_polygon.support)?
+            if classify_point_decision(decisions, right_opposite, left_polygon.support_plane())?
                 != Classification::On
-                || classify_point_decision(decisions, left_opposite, &right_polygon.support)?
+                || classify_point_decision(decisions, left_opposite, right_polygon.support_plane())?
                     != Classification::On
             {
                 return Ok(true);
@@ -1710,12 +1714,12 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             return Ok(classify_point_decision(
                 decisions,
                 right_opposite,
-                &left_polygon.edges[left_index],
+                &left_polygon.edge_planes()[left_index],
             )? == Classification::Positive
                 && classify_point_decision(
                     decisions,
                     left_opposite,
-                    &right_polygon.edges[right_index],
+                    &right_polygon.edge_planes()[right_index],
                 )? == Classification::Positive);
         }
     }
@@ -1788,7 +1792,7 @@ fn intersect_coplanar_constructed(
     }
     dedup_constructed_points(decisions, points)?;
 
-    match exact_constructed_intersection_span(decisions, &polygon.support, points)? {
+    match exact_constructed_intersection_span(decisions, polygon.support_plane(), points)? {
         ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
         ConstructedIntersectionSpan::Point(point) => {
             Ok(ConstructedPairwiseIntersection::CoplanarPoint(point))
@@ -1814,6 +1818,7 @@ struct CoplanarClassificationCache<'geometry, 'scratch> {
 struct CoplanarClassificationMatrix<'geometry, 'scratch> {
     decisions: &'geometry DecisionContext,
     container: &'geometry ConvexPolygon,
+    edges: &'geometry [Plane],
     vertices: &'geometry [Point3],
     values: &'scratch mut [Option<Classification>],
     queries: &'scratch mut [Option<Point3PredicateQuery>],
@@ -1829,12 +1834,14 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
         values: &'scratch mut Vec<Option<Classification>>,
         queries: &'scratch mut Vec<Option<Point3PredicateQuery>>,
     ) -> HypermeshResult<Self> {
-        let left_matrix_len = left.edges.len().checked_mul(right_vertices.len()).ok_or(
+        let left_edges = left.edge_planes();
+        let right_edges = right.edge_planes();
+        let left_matrix_len = left_edges.len().checked_mul(right_vertices.len()).ok_or(
             HypermeshError::CapacityOverflow {
                 operation: "coplanar classification matrix",
             },
         )?;
-        let right_matrix_len = right.edges.len().checked_mul(left_vertices.len()).ok_or(
+        let right_matrix_len = right_edges.len().checked_mul(left_vertices.len()).ok_or(
             HypermeshError::CapacityOverflow {
                 operation: "coplanar classification matrix",
             },
@@ -1870,6 +1877,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
             right_vertices_against_left: CoplanarClassificationMatrix {
                 decisions,
                 container: left,
+                edges: left_edges,
                 vertices: right_vertices,
                 values: left_values,
                 queries: right_queries,
@@ -1877,6 +1885,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
             left_vertices_against_right: CoplanarClassificationMatrix {
                 decisions,
                 container: right,
+                edges: right_edges,
                 vertices: left_vertices,
                 values: right_values,
                 queries: left_queries,
@@ -1913,7 +1922,7 @@ impl CoplanarClassificationMatrix<'_, '_> {
         if self.vertices.is_empty() {
             return Ok(true);
         }
-        for edge in 0..self.container.edges.len() {
+        for edge in 0..self.edges.len() {
             let mut reaches_negative_halfspace = false;
             for vertex in 0..self.vertices.len() {
                 if self.classification(edge, vertex)? == Classification::Negative {
@@ -1948,7 +1957,7 @@ impl CoplanarClassificationMatrix<'_, '_> {
         }
 
         let mut saw_unknown = false;
-        for edge in 0..self.container.edges.len() {
+        for edge in 0..self.edges.len() {
             match self.classification(edge, vertex) {
                 Ok(Classification::Positive) => return Ok(false),
                 Ok(Classification::Negative | Classification::On) => {}
@@ -1975,7 +1984,7 @@ impl CoplanarClassificationMatrix<'_, '_> {
             return Err(HypermeshError::UnknownClassification);
         }
         let mut missing = false;
-        for edge in 0..self.container.edges.len() {
+        for edge in 0..self.edges.len() {
             match self
                 .values
                 .get(self.index(edge, vertex)?)
@@ -2000,7 +2009,6 @@ impl CoplanarClassificationMatrix<'_, '_> {
             .get(vertex)
             .ok_or(HypermeshError::UnknownClassification)?;
         let plane = self
-            .container
             .edges
             .get(edge)
             .ok_or(HypermeshError::UnknownClassification)?;
@@ -2018,7 +2026,7 @@ impl CoplanarClassificationMatrix<'_, '_> {
     }
 
     fn index(&self, edge: usize, vertex: usize) -> HypermeshResult<usize> {
-        if edge >= self.container.edges.len() || vertex >= self.vertices.len() {
+        if edge >= self.edges.len() || vertex >= self.vertices.len() {
             return Err(HypermeshError::UnknownClassification);
         }
         edge.checked_mul(self.vertices.len())
@@ -3448,7 +3456,7 @@ mod tests {
             1,
             1,
         );
-        constructed.known_vertices = None;
+        constructed.clear_known_vertices();
         let expected_constructed = constructed.vertices_decision(&decisions).unwrap();
 
         let arena = PolygonVertexArena::build(
@@ -3566,12 +3574,14 @@ mod tests {
         );
         let point = triangle.vertices_decision(&decisions).unwrap()[0].clone();
         let vertices = [point];
-        let mut values = vec![None; triangle.edges.len()];
+        let edges = triangle.edge_planes();
+        let mut values = vec![None; edges.len()];
         values[0] = Some(Classification::Positive);
         let mut queries = vec![None];
         let mut matrix = CoplanarClassificationMatrix {
             decisions: &decisions,
             container: &triangle,
+            edges,
             vertices: &vertices,
             values: &mut values,
             queries: &mut queries,
