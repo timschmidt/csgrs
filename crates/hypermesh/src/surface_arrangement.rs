@@ -2706,22 +2706,19 @@ fn corefine_face(
         // directly and reserve policy-aware incidence tests for other points
         // that may split it through crossings, contacts, or overlaps.
         on_segment.extend_from_slice(&constraint.endpoints);
+        let segment = [
+            projected
+                .get(&constraint.endpoints[0])
+                .expect("constraint endpoint is projected"),
+            projected
+                .get(&constraint.endpoints[1])
+                .expect("constraint endpoint is projected"),
+        ];
         for (&point_id, point) in &projected {
             if constraint.endpoints.contains(&point_id) {
                 continue;
             }
-            if planar_point_on_segment(
-                decisions,
-                [
-                    projected
-                        .get(&constraint.endpoints[0])
-                        .expect("constraint endpoint is projected"),
-                    projected
-                        .get(&constraint.endpoints[1])
-                        .expect("constraint endpoint is projected"),
-                ],
-                point,
-            )? {
+            if planar_point_on_segment(decisions, segment, point)? {
                 on_segment.push(point_id);
             }
         }
