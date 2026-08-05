@@ -973,6 +973,192 @@ fn bench_retained_circle_corner_solvers(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_represented_bezier_chamfer_lane(
+    name: &str,
+    path: &CurvePath2,
+    previous_setback: &Real,
+    next_setback: &Real,
+    iterations: u32,
+) {
+    if !corner_lane_enabled(name) {
+        return;
+    }
+    let policy = CurveContext::STRICT;
+    let started = Instant::now();
+    let mut candidates = 0_usize;
+    for _ in 0..iterations {
+        let solutions = black_box(path)
+            .chamfer_vertex_by_setbacks(
+                1,
+                previous_setback.clone(),
+                next_setback.clone(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("represented Bezier chamfer must remain exact")
+            .into_value();
+        candidates += black_box(solutions).candidate_count();
+    }
+    assert_ne!(candidates, 0);
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+        elapsed / iterations
+    );
+}
+
+fn bench_represented_bezier_fillet_lane(
+    name: &str,
+    path: &CurvePath2,
+    radius: &Real,
+    iterations: u32,
+) {
+    if !corner_lane_enabled(name) {
+        return;
+    }
+    let policy = CurveContext::STRICT;
+    let started = Instant::now();
+    let mut candidates = 0_usize;
+    for _ in 0..iterations {
+        let solutions = black_box(path)
+            .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+            .expect("represented Bezier fillet must remain exact")
+            .into_value();
+        candidates += black_box(solutions).candidate_count();
+    }
+    assert_ne!(candidates, 0);
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+        elapsed / iterations
+    );
+}
+
+fn bench_represented_bezier_region_corner_lanes(region: &CurveRegion2, iterations: u32) {
+    let policy = CurveContext::STRICT;
+    let next_setback = (s(657).sqrt().expect("positive benchmark radicand") / s(16))
+        .expect("nonzero benchmark divisor");
+    if corner_lane_enabled("curve_region_line_quadratic_design_chamfer") {
+        let started = Instant::now();
+        let mut candidates = 0_usize;
+        for _ in 0..iterations {
+            let solutions = black_box(region)
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    s(1),
+                    next_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("represented Bezier region chamfer must remain exact")
+                .into_value();
+            candidates += black_box(solutions).candidate_count();
+        }
+        assert_ne!(candidates, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_quadratic_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+            elapsed / iterations
+        );
+    }
+    if corner_lane_enabled("curve_region_line_quadratic_design_fillet") {
+        let started = Instant::now();
+        let mut candidates = 0_usize;
+        for _ in 0..iterations {
+            let solutions = black_box(region)
+                .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .expect("represented Bezier region fillet must remain exact")
+                .into_value();
+            candidates += black_box(solutions).candidate_count();
+        }
+        assert_ne!(candidates, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_quadratic_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+            elapsed / iterations
+        );
+    }
+}
+
+fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
+    let quadratic = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
+    let rational = RationalBezier2::try_new(
+        quadratic.control_points().into_iter().cloned().collect(),
+        vec![s(1), s(1), s(1)],
+    )?
+    .elevated_to_degree(5)
+    .expect("benchmark degree elevation must remain exact");
+    let line_quadratic = CurvePath2::try_new(vec![
+        Curve2::from(line(-4, 0, 0, 0)),
+        Curve2::from(quadratic.clone()),
+    ])
+    .expect("line/quadratic benchmark path must remain exact");
+    let line_rational = CurvePath2::try_new(vec![
+        Curve2::from(line(-4, 0, 0, 0)),
+        Curve2::from(rational),
+    ])
+    .expect("line/rational benchmark path must remain exact");
+    let source_center = Point2::new(-q(7, 16), q(207, 512));
+    let source_start = Point2::new(-q(7, 16), -q(49, 256));
+    let arc_quadratic = CurvePath2::try_new(vec![
+        Curve2::from(CircularArc2::try_from_center(
+            source_start,
+            p(0, 0),
+            source_center,
+            true,
+        )?),
+        Curve2::from(quadratic.clone()),
+    ])
+    .expect("arc/quadratic benchmark path must remain exact");
+    let region_path = CurvePath2::try_new(vec![
+        Curve2::from(line(-4, 0, 0, 0)),
+        Curve2::from(quadratic),
+        Curve2::from(line(1, 2, -4, 2)),
+        Curve2::from(line(-4, 2, -4, 0)),
+    ])
+    .expect("region benchmark path must remain exact");
+    let region = CurveRegion2::try_from_boundary_paths(&[region_path], &CurveContext::STRICT)
+        .expect("represented Bezier benchmark region must remain exact")
+        .into_value();
+    let next_setback = (s(657).sqrt()? / s(16))?;
+
+    bench_represented_bezier_chamfer_lane(
+        "curve_path_line_quadratic_design_chamfer",
+        &line_quadratic,
+        &s(1),
+        &next_setback,
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_line_quadratic_design_fillet",
+        &line_quadratic,
+        &q(15, 4),
+        iterations,
+    );
+    bench_represented_bezier_chamfer_lane(
+        "curve_path_line_degree5_rational_design_chamfer",
+        &line_rational,
+        &s(1),
+        &next_setback,
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_line_degree5_rational_design_fillet",
+        &line_rational,
+        &q(15, 4),
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_arc_quadratic_design_fillet",
+        &arc_quadratic,
+        &q(5, 4),
+        iterations,
+    );
+    bench_represented_bezier_region_corner_lanes(&region, iterations);
+    Ok(())
+}
+
 fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
     let previous_arc = CircularArc2::try_from_center(
         Point2::new(s(3), q(13, 3)),
@@ -1631,6 +1817,10 @@ fn main() -> CurveResult<()> {
             bench_retained_circle_corner_solvers(iterations)?;
             return Ok(());
         }
+        if selection == "represented-bezier-corner" {
+            bench_represented_bezier_corner_solvers(iterations)?;
+            return Ok(());
+        }
     }
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
@@ -1645,6 +1835,7 @@ fn main() -> CurveResult<()> {
     bench_native_arc_chamfer_solvers(iterations)?;
     bench_native_arc_fillet_solvers(iterations)?;
     bench_retained_circle_corner_solvers(iterations)?;
+    bench_represented_bezier_corner_solvers(iterations)?;
     bench_curve_region_mutations(iterations)?;
     bench_higher_order_curve_edits(iterations);
     bench_arc_extension(iterations)?;
