@@ -468,6 +468,7 @@ where
     {
         debug_assert!(self.exact_only);
         self.exact_only = false;
+        reserve(self.candidates.try_reserve(points.len()))?;
         reserve(self.intervals.try_reserve(points.len()))?;
         reserve(self.candidate_marks.try_reserve(points.len()))?;
         reserve(self.cells.try_reserve(points.len()))?;
@@ -511,8 +512,8 @@ where
         reserve(self.exact_storage.try_reserve(capacity))?;
         reserve(self.exact_heads.try_reserve(capacity))?;
         reserve(self.next_exact.try_reserve(capacity))?;
-        reserve(self.candidates.try_reserve(capacity))?;
         if !self.exact_only {
+            reserve(self.candidates.try_reserve(capacity))?;
             reserve(self.intervals.try_reserve(capacity))?;
             reserve(self.candidate_marks.try_reserve(capacity))?;
             reserve(self.cells.try_reserve(capacity))?;
@@ -762,6 +763,9 @@ mod tests {
 
         let mut points = Vec::new();
         let mut interner = PointInterner::<()>::try_with_capacity(2, true, false).unwrap();
+        assert_eq!(interner.candidates.capacity(), 0);
+        assert_eq!(interner.intervals.capacity(), 0);
+        assert!(interner.cells.is_empty());
         interner
             .intern_cloned(
                 &crate::test_support::approximate_decisions(),
@@ -780,6 +784,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(points.len(), 2);
+        assert!(!interner.exact_only);
+        assert!(interner.candidates.capacity() >= 1);
+        assert_eq!(interner.intervals.len(), 2);
+        assert_eq!(interner.candidate_marks.len(), 2);
     }
 
     #[test]
@@ -901,5 +909,46 @@ mod tests {
             approximate.certainty(),
             MeshCertainty::Approximate512Consumed
         );
+    }
+
+    #[test]
+    fn exact_prefix_promotion_preserves_terminal_policy() {
+        let zero = point(Real::zero());
+        let terminal = point(terminal_zero());
+
+        for (policy, expected) in [
+            (PredicatePolicy::STRICT, None),
+            (PredicatePolicy::APPROXIMATE_512, Some(0)),
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let mut points = Vec::new();
+            let mut interner = PointInterner::<()>::try_with_capacity(2, true, false).unwrap();
+            assert_eq!(
+                interner
+                    .intern_cloned(&decisions, &mut points, &zero, None)
+                    .unwrap(),
+                0
+            );
+
+            let result = interner.intern_cloned(&decisions, &mut points, &terminal, None);
+            match expected {
+                None => assert!(matches!(
+                    result,
+                    Err(HypermeshError::PredicateUndecided { .. })
+                )),
+                Some(index) => assert_eq!(result.unwrap(), index),
+            }
+            assert!(!interner.exact_only);
+            assert_eq!(points.len(), 1);
+            assert_eq!(
+                decisions.certainty(),
+                if policy == PredicatePolicy::STRICT {
+                    MeshCertainty::Certified
+                } else {
+                    MeshCertainty::Approximate512Consumed
+                }
+            );
+        }
     }
 }

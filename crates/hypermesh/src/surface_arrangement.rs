@@ -86,7 +86,11 @@ impl ArrangementPointArena {
             identities,
             structural,
             source_edge_points: Vec::new(),
-            numeric: PointInterner::try_with_capacity(capacity, false, false)?,
+            // Exact-rational points have a complete identity/fingerprint
+            // schedule and need no interval grid. The interner promotes all
+            // retained points to its policy-aware general schedule on the
+            // first non-rational coordinate.
+            numeric: PointInterner::try_with_capacity(capacity, true, false)?,
         })
     }
 
