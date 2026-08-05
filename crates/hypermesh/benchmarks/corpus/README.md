@@ -41,6 +41,14 @@ manifolds, while some exact closed-PWN results are intentionally non-manifold
 at the lower-dimensional contact. They remain mandatory Hypermesh cases but
 are not mislabeled as shared boolmesh/Manifold/CGAL output-contract rows.
 
+`crossing_octahedra` preserves the historical no-contained-source-vertex
+regression: the two convex boundaries cross even though vertex containment
+cannot discover their intersection. `affine_boxes` applies a determinant-eight
+integer shear/scale to the ordinary overlap case, retaining exact volume and
+topology oracles on non-axis-aligned support planes. Both are named executable
+fixtures in the shared competitive corpus rather than placeholders for an old
+implementation test family.
+
 `clipped_voxel_torus_9`, `clipped_voxel_torus_33`, and
 `clipped_voxel_torus_65` form one deterministic indexed high-genus family.
 They use the same exact symmetry-plane clipping operation at 460, 6,412, and
@@ -67,6 +75,23 @@ broad-phase work from 64 through 4,096 input triangles without coplanar
 overlap or arbitrary-rational width growth. The largest member has a unique
 both-policy kernel/process heap selector and every member is exact-CGAL
 exportable.
+
+`transverse_self_pwn_clusters_8`, `transverse_self_pwn_clusters_64`, and
+`transverse_self_pwn_clusters_512` scale same-operand corefinement. Each
+separated cluster contains two transversely crossing tetrahedral shells in one
+PWN, so winding multiplicity two and internal arrangement cells are exercised
+without changing local topology or scalar width. A distant tetrahedron keeps
+all five bounded Boolean expressions meaningful. The 4,100-triangle member is
+a dedicated both-policy heap fixture.
+
+`deep_symbolic_translated_boxes_1`, `_8`, `_32`, and `_128` keep box topology
+and rational relative geometry fixed while increasing a shared nested
+non-rational translation. The shallow case remains fully certified. At deeper
+levels STRICT preserves an unresolved exact predicate as
+`PredicateUndecided`, while APPROXIMATE_512 alone may consume its terminal and
+must reproduce the same oriented geometry and source provenance with
+`Approximate512Consumed` certainty. This family tests Hyperreal retained facts
+and policy propagation independently of mesh size.
 
 `wide_rational_boxes_64`, `wide_rational_boxes_512`, and
 `wide_rational_boxes_2048` hold the 6,144-triangle overlapping-box topology

@@ -126,6 +126,8 @@ replacement_tests = [
   "tests/boolean.rs::overlapping_boxes_materialize_every_operation_under_both_policies",
   "tests/boolean.rs::unary_disjoint_containment_and_contact_paths_are_total",
   "tests/competitive.rs::boolmesh_and_manifold_match_hypermesh_on_shared_boolean_corpus",
+  "tests/competitive.rs::transverse_self_pwn_clusters_scale_under_both_policies",
+  "tests/competitive.rs::deep_symbolic_translation_obeys_policy_at_every_depth",
   "surface_arrangement::tests::one_arrangement_materializes_every_builtin_operation_deterministically",
   "surface_arrangement::tests::exact_embedding_and_operand_permutation_preserve_cell_truth",
 ]
@@ -137,9 +139,12 @@ fixture_ids = [
   "face_touching_boxes",
   "partial_face_touching_boxes",
   "overlapping_tetrahedra",
-  "general_nonconvex_regression_suite",
+  "crossing_octahedra",
+  "affine_boxes",
+  "transverse_self_pwn_clusters_8",
+  "deep_symbolic_translated_boxes_128",
 ]
-rationale = "Historical relation and topology cases remain at the public Boolean boundary under both policies, with exact closure, cell truth, volume/differential, determinism, and metamorphic checks rather than engine-path assertions."
+rationale = "Historical relation and topology cases remain as named executable public Boolean fixtures under both policies, including crossing octahedra with no contained source vertex, affine sheared boxes, scaled same-operand transverse PWNs, and deep shared symbolic translations. Exact closure, cell truth, volume/differential, determinism, and metamorphic checks replace engine-path assertions."
 
 [[mapping]]
 id = "direct_output_certification"

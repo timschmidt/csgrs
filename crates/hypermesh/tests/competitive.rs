@@ -70,6 +70,80 @@ fn exact_six_volume(batch: &hypermesh::BooleanMeshBatch, output: usize) -> Ratio
         .expect("exact-rational mesh has an exact-rational volume")
 }
 
+fn canonical_oriented_triangle([a, b, c]: [u32; 3]) -> [u32; 3] {
+    if a <= b && a <= c {
+        [a, b, c]
+    } else if b <= c {
+        [b, c, a]
+    } else {
+        [c, a, b]
+    }
+}
+
+fn assert_translated_batch_equivalent(
+    context: &MeshContext,
+    actual: &hypermesh::BooleanMeshBatch,
+    offsets: &[Real; 3],
+    expected: &hypermesh::BooleanMeshBatch,
+    label: &str,
+) {
+    assert_eq!(actual.results.len(), expected.results.len(), "{label}");
+    assert_eq!(actual.vertices.len(), expected.vertices.len(), "{label}");
+
+    let mut vertex_map = Vec::with_capacity(actual.vertices.len());
+    for point in &actual.vertices {
+        let translated = [
+            &point.x - &offsets[0],
+            &point.y - &offsets[1],
+            &point.z - &offsets[2],
+        ];
+        let matches = expected
+            .vertices
+            .iter()
+            .enumerate()
+            .filter_map(|(index, candidate)| {
+                let equal = translated
+                    .iter()
+                    .zip([&candidate.x, &candidate.y, &candidate.z])
+                    .all(|(coordinate, candidate)| {
+                        hypermesh::geometry::compare_real(context, coordinate, candidate)
+                            .is_ok_and(|comparison| comparison.value.is_eq())
+                    });
+                equal.then_some(index as u32)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(matches.len(), 1, "{label} translated vertex identity");
+        vertex_map.push(matches[0]);
+    }
+
+    for (output, (actual, expected)) in actual.results.iter().zip(&expected.results).enumerate() {
+        assert_eq!(
+            actual.exterior_inside, expected.exterior_inside,
+            "{label} output {output}"
+        );
+        let mut actual_facets = actual
+            .triangles
+            .iter()
+            .zip(&actual.sources)
+            .map(|(triangle, source)| {
+                (
+                    canonical_oriented_triangle(triangle.map(|index| vertex_map[index as usize])),
+                    *source,
+                )
+            })
+            .collect::<Vec<_>>();
+        let mut expected_facets = expected
+            .triangles
+            .iter()
+            .zip(&expected.sources)
+            .map(|(&triangle, &source)| (canonical_oriented_triangle(triangle), source))
+            .collect::<Vec<_>>();
+        actual_facets.sort_unstable();
+        expected_facets.sort_unstable();
+        assert_eq!(actual_facets, expected_facets, "{label} output {output}");
+    }
+}
+
 #[test]
 fn boolmesh_and_manifold_match_hypermesh_on_shared_boolean_corpus() {
     for case in corpus() {
@@ -244,6 +318,76 @@ fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
 }
 
 #[test]
+fn transverse_self_pwn_clusters_scale_under_both_policies() {
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(3),
+        BooleanExpression::And([4, 5]),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let roots = [0_u32, 1, 2, 6, 7];
+
+    for cluster_count in support::SELF_PWN_CLUSTER_COUNTS {
+        let case = support::transverse_self_pwn_cluster_case(cluster_count);
+        let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+        let expected_triangles = [
+            cluster_count * 16 + 4,
+            0,
+            cluster_count * 16,
+            4,
+            cluster_count * 16 + 4,
+        ];
+        let expected_six_volumes = [
+            cluster_count * 127 + 64,
+            0,
+            cluster_count * 127,
+            64,
+            cluster_count * 127 + 64,
+        ];
+        let mut strict = None;
+
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            )
+            .unwrap_or_else(|error| panic!("{} {policy}: {error}", case.name));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            if let Some(strict) = &strict {
+                assert_eq!(outcome.value, *strict, "policy outputs differ");
+            } else {
+                strict = Some(outcome.value.clone());
+            }
+            assert_eq!(outcome.value.vertices.len(), cluster_count * 10 + 4);
+            for output in 0..roots.len() {
+                assert_eq!(
+                    outcome.value.results[output].triangles.len(),
+                    expected_triangles[output],
+                    "{policy} output {output} triangle count"
+                );
+                assert!(boundary_is_balanced(&outcome.value.results[output]));
+                assert_eq!(
+                    exact_six_volume(&outcome.value, output),
+                    Rational::new(
+                        i64::try_from(expected_six_volumes[output])
+                            .expect("self-PWN fixture volume fits i64"),
+                    ),
+                    "{policy} output {output} exact volume"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
     let case = support::dense_coplanar_box_case(4);
     let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
@@ -387,6 +531,108 @@ fn wide_rational_similarity_preserves_every_boolean_under_both_policies() {
                 }
             }
         }
+    }
+}
+
+#[test]
+fn deep_symbolic_translation_obeys_policy_at_every_depth() {
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(4),
+        BooleanExpression::And([5, 6]),
+    ];
+    let roots = [0_u32, 1, 2, 7, 3];
+    let base = support::exact_mesh_pair(
+        corpus()
+            .into_iter()
+            .find(|case| case.name == "overlapping_boxes")
+            .expect("base exact box case"),
+    );
+    let reference = boolean(
+        &MeshContext::new(PredicatePolicy::STRICT),
+        &[base.left.as_ref(), base.right.as_ref()],
+        BooleanProgram::Expressions {
+            nodes: &nodes,
+            roots: &roots,
+        },
+    )
+    .expect("rational reference arrangement")
+    .into_value();
+    for depth in support::DEEP_SYMBOLIC_TRANSLATION_DEPTHS {
+        let (case, offsets) = support::deep_symbolic_translated_box_case(depth);
+        assert!(
+            offsets
+                .iter()
+                .all(|coordinate| coordinate.exact_rational_ref().is_none()),
+            "depth {depth} must remain genuinely non-rational"
+        );
+        let strict_context = MeshContext::new(PredicatePolicy::STRICT);
+        let strict_input =
+            polygon_soup(&strict_context, &[case.left.as_ref(), case.right.as_ref()])
+                .unwrap_or_else(|error| panic!("{} STRICT input: {error}", case.name));
+        assert_eq!(strict_input.certainty, hypermesh::MeshCertainty::Certified);
+        let strict = boolean(
+            &strict_context,
+            &[case.left.as_ref(), case.right.as_ref()],
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
+        );
+        if depth == 1 {
+            let strict = strict.unwrap_or_else(|error| panic!("{} STRICT: {error}", case.name));
+            assert_eq!(strict.certainty, hypermesh::MeshCertainty::Certified);
+            assert_translated_batch_equivalent(
+                &strict_context,
+                &strict.value,
+                &offsets,
+                &reference,
+                case.name,
+            );
+        } else {
+            assert!(
+                matches!(
+                    strict,
+                    Err(hypermesh::HypermeshError::PredicateUndecided { .. })
+                ),
+                "{} STRICT must preserve an unresolved exact predicate",
+                case.name
+            );
+        }
+
+        let context = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
+        let input = polygon_soup(&context, &[case.left.as_ref(), case.right.as_ref()])
+            .unwrap_or_else(|error| panic!("{} APPROXIMATE_512 input: {error}", case.name));
+        assert_eq!(input.certainty, hypermesh::MeshCertainty::Certified);
+        let outcome = boolean(
+            &context,
+            &[case.left.as_ref(), case.right.as_ref()],
+            BooleanProgram::Expressions {
+                nodes: &nodes,
+                roots: &roots,
+            },
+        )
+        .unwrap_or_else(|error| panic!("{} APPROXIMATE_512: {error}", case.name));
+        assert_eq!(
+            outcome.certainty,
+            if depth == 1 {
+                hypermesh::MeshCertainty::Certified
+            } else {
+                hypermesh::MeshCertainty::Approximate512Consumed
+            }
+        );
+        assert_translated_batch_equivalent(
+            &context,
+            &outcome.value,
+            &offsets,
+            &reference,
+            case.name,
+        );
     }
 }
 

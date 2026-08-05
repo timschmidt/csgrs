@@ -177,6 +177,42 @@ expected_certainty = "Certified"
 expected_volumes = [21.166666666666668, 0.16666666666666666, 10.5]
 
 [[fixture]]
+id = "crossing_octahedra"
+status = "permanent"
+provenance = "Historical tests/regression.rs crossing_octahedra public behavior"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::crossing_octahedra_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "no-contained-source-vertex", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 16
+expected_signed_six_volumes = [351, 81, 135, 135, 270]
+
+[[fixture]]
+id = "affine_boxes"
+status = "permanent"
+provenance = "Historical tests/regression.rs affine_box_pair public behavior"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::affine_boxes_case"
+coordinate_class = "integer-affine"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "non-axis-aligned-support", "exact-affine-embedding", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "competitive", "fuzz-seed"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 24
+expected_signed_six_volumes = [576, 192, 192, 192, 384]
+
+[[fixture]]
 id = "sparse_multishell_tetrahedra_8"
 status = "permanent"
 provenance = "Hypermesh deterministic disconnected-shell sparse-intersection corpus"
@@ -241,6 +277,70 @@ input_coordinate_max = 61
 heap_probe_modes = ["sparse-shells-512"]
 
 [[fixture]]
+id = "transverse_self_pwn_clusters_8"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(8)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 8
+input_triangles = 68
+expected_output_triangles = [132, 0, 128, 4, 132]
+expected_signed_six_volumes = [1080, 0, 1016, 64, 1080]
+
+[[fixture]]
+id = "transverse_self_pwn_clusters_64"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(64)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 64
+input_triangles = 516
+expected_output_triangles = [1028, 0, 1024, 4, 1028]
+expected_signed_six_volumes = [8192, 0, 8128, 64, 8192]
+
+[[fixture]]
+id = "transverse_self_pwn_clusters_512"
+status = "permanent"
+provenance = "Scaling sibling of surface_arrangement_transverse_self_pwn and historical overlapping closed components"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::transverse_self_pwn_cluster_case(512)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "winding-multiplicity-two", "disconnected-components", "fixed-local-topology", "same-operand-scaling", "transverse-face-intersection", "large-mesh"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "heap"]
+size = "large"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "transverse_self_pwn_clusters"
+scale_parameter = 512
+input_triangles = 4100
+expected_output_triangles = [8196, 0, 8192, 4, 8196]
+expected_signed_six_volumes = [65088, 0, 65024, 64, 65088]
+heap_probe_modes = ["self-pwn-clusters-512"]
+
+[[fixture]]
 id = "clipped_voxel_torus_9"
 status = "permanent"
 provenance = "Hypermesh deterministic high-genus scaling and competitive corpus"
@@ -248,7 +348,7 @@ license = "MIT"
 source_kind = "deterministic-generator"
 generator = "competitive::support::clipped_voxel_torus_case(9)"
 coordinate_class = "integer-and-dyadic"
-topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane"]
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane"]
 operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
 policies = ["STRICT", "APPROXIMATE_512"]
 tiers = ["competitive", "scaling"]
@@ -268,7 +368,7 @@ license = "MIT"
 source_kind = "deterministic-generator"
 generator = "competitive::support::clipped_voxel_torus_case(33)"
 coordinate_class = "integer-and-dyadic"
-topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
 operations = ["intersection"]
 policies = ["STRICT", "APPROXIMATE_512"]
 tiers = ["competitive", "scaling", "heap"]
@@ -288,7 +388,7 @@ license = "MIT"
 source_kind = "deterministic-generator"
 generator = "competitive::support::clipped_voxel_torus_case(65)"
 coordinate_class = "integer-and-dyadic"
-topology = ["closed-pwn", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
+topology = ["closed-pwn", "concave", "nonconvex", "genus-one", "transverse-face-intersection", "exact-symmetry-plane", "large-mesh"]
 operations = ["intersection"]
 policies = ["STRICT", "APPROXIMATE_512"]
 tiers = ["competitive", "scaling", "heap"]
@@ -549,6 +649,92 @@ cgal_eligible = false
 expected_certainty = "policy-dependent"
 
 [[fixture]]
+id = "deep_symbolic_translated_boxes_1"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(1)"
+coordinate_class = "quadratic-surd"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 1
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_8"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(8)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 8
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_32"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(32)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 32
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
+id = "deep_symbolic_translated_boxes_128"
+status = "permanent"
+provenance = "Deep non-rational exact-translation scaling family"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::deep_symbolic_translated_box_case(128)"
+coordinate_class = "nested-symbolic-computable"
+topology = ["closed-pwn", "convex", "transverse-face-intersection", "exact-translation", "deep-symbolic-construction", "retained-symbolic-facts", "fixed-topology-scalar-scaling"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "STRICT PredicateUndecided; APPROXIMATE_512 Approximate512Consumed"
+strict_result = "PredicateUndecided"
+approximate_512_result = "complete topology; Approximate512Consumed"
+scaling_family = "deep_symbolic_translation"
+scale_parameter = 128
+input_triangles = 24
+expected_normalized_signed_six_volumes = [504, 72, 312, 120, 432]
+
+[[fixture]]
 id = "exact_pairwise_intersection_microcases"
 status = "permanent"
 provenance = "tests/intersection_corpus.rs"
@@ -717,19 +903,3 @@ operand_count = 40
 input_triangles = 160
 requested_expressions = 3
 expected_cells = 80
-
-[[fixture]]
-id = "general_nonconvex_regression_suite"
-status = "migration-required"
-provenance = "tests/regression.rs and behavior-level tests/core.rs"
-license = "MIT"
-source_kind = "test-family"
-generator = "tests::regression"
-coordinate_class = "integer-rational-symbolic"
-topology = ["closed-pwn", "concave", "multi-component", "coplanar", "tangent", "nonmanifold-incidence"]
-operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
-policies = ["STRICT", "APPROXIMATE_512"]
-tiers = ["regression", "fuzz-seed"]
-size = "small-medium"
-cgal_eligible = false
-expected_certainty = "case-specific"

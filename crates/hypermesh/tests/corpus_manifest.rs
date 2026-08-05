@@ -40,13 +40,20 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 38, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 46, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
     for fixture in fixtures {
         let id = fixture["id"].as_str().expect("fixture requires string id");
         assert!(ids.insert(id), "duplicate fixture id {id}");
+        assert!(
+            matches!(
+                fixture["status"].as_str(),
+                Some("permanent" | "permanent-opt-in")
+            ),
+            "fixture {id} is not permanently admitted"
+        );
         for field in [
             "status",
             "provenance",
@@ -183,6 +190,11 @@ fn corpus_spans_initial_replacement_path_classes() {
         "sparse-broad-phase",
         "component-scaling",
         "fixed-local-topology",
+        "no-contained-source-vertex",
+        "non-axis-aligned-support",
+        "same-operand-scaling",
+        "deep-symbolic-construction",
+        "retained-symbolic-facts",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -267,6 +279,7 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
             "dense-coplanar-16",
             "dense-coplanar-32",
             "sparse-shells-512",
+            "self-pwn-clusters-512",
             "voxel-torus-33",
             "voxel-torus-65",
             "wide-rational-64",
@@ -354,6 +367,134 @@ fn sparse_multishell_family_scales_components_at_fixed_local_topology() {
             .map(|count| count as i64)
         );
     }
+}
+
+#[test]
+fn transverse_self_pwn_family_scales_same_operand_intersections() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str)
+                == Some("transverse_self_pwn_clusters")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), support::SELF_PWN_CLUSTER_COUNTS.len());
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        support::SELF_PWN_CLUSTER_COUNTS.map(|count| count as i64)
+    );
+
+    for cluster_count in support::SELF_PWN_CLUSTER_COUNTS {
+        let case = support::transverse_self_pwn_cluster_case(cluster_count);
+        assert_eq!(case.left.positions.len(), cluster_count * 8);
+        assert_eq!(case.left.triangles.len(), cluster_count * 8);
+        assert_eq!(case.right.positions.len(), 4);
+        assert_eq!(case.right.triangles.len(), 4);
+        let left = support::summarize(&case.left);
+        assert!(left.closed);
+        assert!(left.nondegenerate);
+        assert_eq!(left.components, cluster_count * 2);
+        assert_eq!(left.volume, cluster_count as f64 * 128.0 / 6.0);
+        assert!(
+            case.left
+                .positions
+                .iter()
+                .chain(case.right.positions.iter())
+                .flatten()
+                .all(|coordinate| coordinate.fract() == 0.0)
+        );
+
+        let fixture = family
+            .iter()
+            .find(|fixture| fixture["scale_parameter"].as_integer() == Some(cluster_count as i64))
+            .expect("every self-PWN cluster count is manifested");
+        assert_eq!(
+            fixture["input_triangles"].as_integer(),
+            Some((cluster_count * 8 + 4) as i64)
+        );
+        assert_eq!(
+            fixture["expected_output_triangles"]
+                .as_array()
+                .expect("self-PWN outputs are manifested")
+                .iter()
+                .map(|value| value.as_integer().unwrap())
+                .collect::<Vec<_>>(),
+            [
+                cluster_count * 16 + 4,
+                0,
+                cluster_count * 16,
+                4,
+                cluster_count * 16 + 4,
+            ]
+            .map(|count| count as i64)
+        );
+    }
+}
+
+#[test]
+fn deep_symbolic_family_scales_construction_depth_at_fixed_topology() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str)
+                == Some("deep_symbolic_translation")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        family.len(),
+        support::DEEP_SYMBOLIC_TRANSLATION_DEPTHS.len()
+    );
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        support::DEEP_SYMBOLIC_TRANSLATION_DEPTHS.map(|depth| depth as i64)
+    );
+
+    let mut topology = None;
+    for depth in support::DEEP_SYMBOLIC_TRANSLATION_DEPTHS {
+        assert_eq!(
+            support::deep_symbolic_translation_depth(&format!(
+                "deep_symbolic_translated_boxes_{depth}"
+            )),
+            Some(depth)
+        );
+        let (case, offsets) = support::deep_symbolic_translated_box_case(depth);
+        assert!(
+            offsets
+                .iter()
+                .all(|coordinate| coordinate.exact_rational_ref().is_none())
+        );
+        assert_eq!(case.left.triangles.len() + case.right.triangles.len(), 24);
+        let current = [case.left.triangles.to_vec(), case.right.triangles.to_vec()];
+        if let Some(topology) = &topology {
+            assert_eq!(&current, topology);
+        } else {
+            topology = Some(current);
+        }
+        assert_eq!(
+            family
+                .iter()
+                .find(|fixture| fixture["scale_parameter"].as_integer() == Some(depth as i64))
+                .expect("every symbolic depth is manifested")["input_triangles"]
+                .as_integer(),
+            Some(24)
+        );
+    }
+    assert_eq!(
+        support::deep_symbolic_translation_depth("overlapping_boxes"),
+        None
+    );
 }
 
 #[test]

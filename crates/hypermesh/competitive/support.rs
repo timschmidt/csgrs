@@ -23,6 +23,8 @@ pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const DENSE_COPLANAR_DIVISIONS: [usize; 3] = [4, 16, 32];
 pub const SPARSE_MULTISHELL_COUNTS: [usize; 3] = [8, 64, 512];
+pub const SELF_PWN_CLUSTER_COUNTS: [usize; 3] = [8, 64, 512];
+pub const DEEP_SYMBOLIC_TRANSLATION_DEPTHS: [usize; 4] = [1, 8, 32, 128];
 pub const WIDE_RATIONAL_DIVISIONS: usize = 16;
 pub const WIDE_RATIONAL_SHIFTS: [u32; 3] = [64, 512, 2048];
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
@@ -109,6 +111,13 @@ pub fn wide_rational_shift(name: &str) -> Option<u32> {
         .filter(|shift| *shift != 0)
 }
 
+pub fn deep_symbolic_translation_depth(name: &str) -> Option<usize> {
+    name.strip_prefix("deep_symbolic_translated_boxes_")?
+        .parse::<usize>()
+        .ok()
+        .filter(|depth| *depth != 0)
+}
+
 impl Case {
     pub fn expected_volume(&self, operation: Operation) -> f64 {
         self.expected_volumes[operation_index(operation)]
@@ -183,6 +192,66 @@ fn box_case(name: &'static str, inputs: [([f64; 3], [f64; 3]); 2]) -> Case {
     }
 }
 
+fn transform_mesh(mesh: &RawMesh, transform: impl Fn([f64; 3]) -> [f64; 3]) -> RawMesh {
+    RawMesh {
+        positions: mesh.positions.iter().copied().map(transform).collect(),
+        triangles: mesh.triangles.clone(),
+    }
+}
+
+/// Two crossing L1 balls. Their intersection has no strictly contained source
+/// vertex, so classification must be derived from the complete face
+/// arrangement rather than a vertex-containment shortcut.
+pub fn crossing_octahedra_case() -> Case {
+    Case {
+        name: "crossing_octahedra",
+        left: octahedron([0.0; 3], 3.0),
+        right: octahedron([1.0; 3], 3.0),
+        expected_volumes: [58.5, 13.5, 22.5],
+        expected_bounds: [
+            Some(Bounds {
+                min: [-3.0; 3],
+                max: [4.0; 3],
+            }),
+            Some(Bounds {
+                min: [-1.5; 3],
+                max: [2.5; 3],
+            }),
+            Some(Bounds {
+                min: [-3.0; 3],
+                max: [3.0; 3],
+            }),
+        ],
+    }
+}
+
+/// Two boxes under the integer affine map `(u, v, w) -> (2u + v, 2v, 2w)`.
+/// This preserves a closed convex oracle while making every side plane
+/// non-axis-aligned in at least one coordinate pair.
+pub fn affine_boxes_case() -> Case {
+    let affine = |mesh: &RawMesh| transform_mesh(mesh, |[u, v, w]| [2.0 * u + v, 2.0 * v, 2.0 * w]);
+    Case {
+        name: "affine_boxes",
+        left: affine(&box_mesh([0.0; 3], [2.0; 3])),
+        right: affine(&box_mesh([1.0, 0.0, 0.0], [3.0, 2.0, 2.0])),
+        expected_volumes: [96.0, 32.0, 32.0],
+        expected_bounds: [
+            Some(Bounds {
+                min: [0.0; 3],
+                max: [8.0, 4.0, 4.0],
+            }),
+            Some(Bounds {
+                min: [2.0, 0.0, 0.0],
+                max: [6.0, 4.0, 4.0],
+            }),
+            Some(Bounds {
+                min: [0.0; 3],
+                max: [4.0, 4.0, 4.0],
+            }),
+        ],
+    }
+}
+
 pub fn corpus() -> Vec<Case> {
     vec![
         box_case(
@@ -247,6 +316,8 @@ pub fn corpus() -> Vec<Case> {
                 }),
             ],
         },
+        crossing_octahedra_case(),
+        affine_boxes_case(),
         sparse_multishell_tetrahedra_case(SPARSE_MULTISHELL_COUNTS[0]),
         clipped_voxel_torus_case(9),
     ]
@@ -954,6 +1025,30 @@ fn tetrahedron(origin: [f64; 3], size: f64) -> RawMesh {
     }
 }
 
+fn octahedron(center: [f64; 3], radius: f64) -> RawMesh {
+    let [x, y, z] = center;
+    RawMesh {
+        positions: vec![
+            [x + radius, y, z],
+            [x - radius, y, z],
+            [x, y + radius, z],
+            [x, y - radius, z],
+            [x, y, z + radius],
+            [x, y, z - radius],
+        ],
+        triangles: vec![
+            [0, 2, 4],
+            [2, 1, 4],
+            [1, 3, 4],
+            [3, 0, 4],
+            [2, 0, 5],
+            [1, 2, 5],
+            [3, 1, 5],
+            [0, 3, 5],
+        ],
+    }
+}
+
 fn append_raw_mesh(target: &mut RawMesh, source: RawMesh) {
     let vertex_offset = target.positions.len();
     target.positions.extend(source.positions);
@@ -968,6 +1063,36 @@ fn append_raw_mesh(target: &mut RawMesh, source: RawMesh) {
         }));
 }
 
+fn cubic_grid_side(item_count: usize) -> usize {
+    let mut side = 1_usize;
+    while side
+        .checked_pow(3)
+        .is_some_and(|capacity| capacity < item_count)
+    {
+        side = side
+            .checked_add(1)
+            .expect("competitive fixture grid side fits usize");
+    }
+    side
+}
+
+fn grid_cell(item: usize, side: usize) -> [usize; 3] {
+    [item % side, (item / side) % side, item / side / side]
+}
+
+fn grid_origin(cell: [usize; 3]) -> [f64; 3] {
+    cell.map(|coordinate| {
+        f64::from(
+            u32::try_from(
+                coordinate
+                    .checked_mul(8)
+                    .expect("grid coordinate fits usize"),
+            )
+            .expect("competitive fixture grid coordinate fits u32"),
+        )
+    })
+}
+
 /// Builds two operands containing the same number of widely separated
 /// tetrahedral shells. Each corresponding pair has the geometry of the
 /// permanent overlapping-tetrahedra case, while different grid cells are
@@ -976,15 +1101,7 @@ fn append_raw_mesh(target: &mut RawMesh, source: RawMesh) {
 /// coordinate representation class.
 pub fn sparse_multishell_tetrahedra_case(shell_count: usize) -> Case {
     assert!(shell_count > 0);
-    let mut side = 1_usize;
-    while side
-        .checked_pow(3)
-        .is_some_and(|capacity| capacity < shell_count)
-    {
-        side = side
-            .checked_add(1)
-            .expect("competitive fixture grid side fits usize");
-    }
+    let side = cubic_grid_side(shell_count);
 
     let mut left = RawMesh {
         positions: Vec::with_capacity(shell_count.saturating_mul(4)),
@@ -996,20 +1113,11 @@ pub fn sparse_multishell_tetrahedra_case(shell_count: usize) -> Case {
     };
     let mut max_cell = [0_usize; 3];
     for shell in 0..shell_count {
-        let cell = [shell % side, (shell / side) % side, shell / side / side];
+        let cell = grid_cell(shell, side);
         for axis in 0..3 {
             max_cell[axis] = max_cell[axis].max(cell[axis]);
         }
-        let origin = cell.map(|coordinate| {
-            f64::from(
-                u32::try_from(
-                    coordinate
-                        .checked_mul(8)
-                        .expect("grid coordinate fits usize"),
-                )
-                .expect("competitive fixture grid coordinate fits u32"),
-            )
-        });
+        let origin = grid_origin(cell);
         append_raw_mesh(&mut left, tetrahedron(origin, 4.0));
         append_raw_mesh(
             &mut right,
@@ -1058,6 +1166,123 @@ pub fn sparse_multishell_tetrahedra_case(shell_count: usize) -> Case {
             }),
         ],
     }
+}
+
+/// Builds one self-intersecting PWN operand from separated clusters of two
+/// crossing tetrahedral shells. A disjoint tetrahedron is retained as the
+/// second operand so all bounded binary Boolean results remain meaningful.
+pub fn transverse_self_pwn_cluster_case(cluster_count: usize) -> Case {
+    assert!(cluster_count > 0);
+    let fixture_name = match cluster_count {
+        8 => "transverse_self_pwn_clusters_8",
+        64 => "transverse_self_pwn_clusters_64",
+        512 => "transverse_self_pwn_clusters_512",
+        _ => "transverse_self_pwn_clusters",
+    };
+    let side = cubic_grid_side(cluster_count);
+    let mut left = RawMesh {
+        positions: Vec::with_capacity(cluster_count.saturating_mul(8)),
+        triangles: Vec::with_capacity(cluster_count.saturating_mul(8)),
+    };
+    let mut max_cell = [0_usize; 3];
+    for cluster in 0..cluster_count {
+        let cell = grid_cell(cluster, side);
+        for axis in 0..3 {
+            max_cell[axis] = max_cell[axis].max(cell[axis]);
+        }
+        let origin = grid_origin(cell);
+        append_raw_mesh(&mut left, tetrahedron(origin, 4.0));
+        append_raw_mesh(
+            &mut left,
+            tetrahedron(origin.map(|coordinate| coordinate + 1.0), 4.0),
+        );
+    }
+
+    let max_origin = grid_origin(max_cell);
+    let right_origin = [max_origin[0] + 16.0, 0.0, 0.0];
+    let cluster_count_f64 =
+        f64::from(u32::try_from(cluster_count).expect("cluster count fits u32"));
+    Case {
+        name: fixture_name,
+        left,
+        right: tetrahedron(right_origin, 4.0),
+        expected_volumes: [
+            (cluster_count_f64 * 127.0 + 64.0) / 6.0,
+            0.0,
+            cluster_count_f64 * 127.0 / 6.0,
+        ],
+        expected_bounds: [
+            Some(Bounds {
+                min: [0.0; 3],
+                max: [
+                    right_origin[0] + 4.0,
+                    (max_origin[1] + 5.0).max(4.0),
+                    (max_origin[2] + 5.0).max(4.0),
+                ],
+            }),
+            None,
+            Some(Bounds {
+                min: [0.0; 3],
+                max: max_origin.map(|coordinate| coordinate + 5.0),
+            }),
+        ],
+    }
+}
+
+/// Translates the ordinary overlapping-box case by one shared, genuinely
+/// non-rational expression of controlled construction depth. Geometry and
+/// topology stay fixed while the family exercises retained symbolic facts and,
+/// when an exact sign remains unresolved, the configured terminal policy.
+pub fn deep_symbolic_translated_box_case(depth: usize) -> (ExactMeshPair, [Real; 3]) {
+    assert!(depth > 0);
+    let mut translation = Real::from(2_i32)
+        .sqrt()
+        .expect("sqrt(2) is a valid symbolic translation");
+    for _ in 1..depth {
+        translation = translation.sin();
+    }
+    let offsets = [
+        translation.clone(),
+        -translation.clone(),
+        &translation * Real::from(2_i32),
+    ];
+    let base = box_case(
+        "overlapping_boxes",
+        [
+            ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            ([2.0, 1.0, 1.0], [6.0, 3.0, 5.0]),
+        ],
+    );
+    let translate = |mesh: &RawMesh| {
+        let mesh = to_hypermesh(mesh);
+        TriangleMesh::new(
+            mesh.positions
+                .iter()
+                .map(|point| {
+                    Point3::new(
+                        &point.x + &offsets[0],
+                        &point.y + &offsets[1],
+                        &point.z + &offsets[2],
+                    )
+                })
+                .collect(),
+            mesh.triangles.to_vec(),
+        )
+    };
+    (
+        ExactMeshPair {
+            name: match depth {
+                1 => "deep_symbolic_translated_boxes_1",
+                8 => "deep_symbolic_translated_boxes_8",
+                32 => "deep_symbolic_translated_boxes_32",
+                128 => "deep_symbolic_translated_boxes_128",
+                _ => "deep_symbolic_translated_boxes",
+            },
+            left: translate(&base.left),
+            right: translate(&base.right),
+        },
+        offsets,
+    )
 }
 
 fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {

@@ -223,9 +223,7 @@ impl BoundsBvh {
                 .map(|&index| (index, &primitives[index])),
             self.primitive_extrema.is_some(),
         )?;
-        let children_axis = (end - start > LEAF_SIZE)
-            .then(|| longest_axis(decisions, &bounds))
-            .transpose()?;
+        let children_axis = (end - start > LEAF_SIZE).then(|| longest_approximate_axis(&bounds));
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
             certified_filter: CertifiedAabbFilter::from_bounds(&bounds),
@@ -261,9 +259,7 @@ impl BoundsBvh {
         end: usize,
     ) -> HypermeshResult<usize> {
         let bounds = bounds_for_ordered_points(decisions, points, &self.order[start..end])?;
-        let children_axis = (end - start > LEAF_SIZE)
-            .then(|| longest_axis(decisions, &bounds))
-            .transpose()?;
+        let children_axis = (end - start > LEAF_SIZE).then(|| longest_approximate_axis(&bounds));
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
             certified_filter: CertifiedAabbFilter::from_bounds(&bounds),
@@ -1333,19 +1329,32 @@ fn bounds_for_ordered_points(
     Ok(result)
 }
 
-fn longest_axis(decisions: &DecisionContext, bounds: &ApproxBounds) -> HypermeshResult<usize> {
-    let extents = [
-        &bounds.max.x - &bounds.min.x,
-        &bounds.max.y - &bounds.min.y,
-        &bounds.max.z - &bounds.min.z,
-    ];
+/// Chooses a BVH partition axis from the node's approximate exact-bound span.
+///
+/// This controls work ordering only: exact bounds remain on every node, and
+/// only certified filters or consuming exact predicates may reject a candidate.
+/// An unavailable or unordered lossy span contributes zero and leaves the
+/// lower axis preferred deterministically.
+fn longest_approximate_axis(bounds: &ApproxBounds) -> usize {
+    let extents: [f64; 3] = std::array::from_fn(|axis| {
+        match (
+            axis_ref(&bounds.min, axis).to_f64_lossy(),
+            axis_ref(&bounds.max, axis).to_f64_lossy(),
+        ) {
+            (Some(minimum), Some(maximum)) if minimum <= maximum => {
+                let extent = maximum - minimum;
+                if extent.is_nan() { 0.0 } else { extent }
+            }
+            _ => 0.0,
+        }
+    });
     let mut axis = 0;
     for candidate in 1..3 {
-        if compare_real_decision(decisions, &extents[candidate], &extents[axis])?.is_gt() {
+        if extents[candidate] > extents[axis] {
             axis = candidate;
         }
     }
-    Ok(axis)
+    axis
 }
 
 fn approximate_center(bounds: &ApproxBounds, axis: usize) -> f64 {
@@ -1389,6 +1398,25 @@ mod tests {
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn approximate_split_axis_uses_finite_span_and_stable_ties() {
+        assert_eq!(
+            longest_approximate_axis(&ApproxBounds::new(point(0, 0, 0), point(4, 14, 2))),
+            1
+        );
+        assert_eq!(
+            longest_approximate_axis(&ApproxBounds::new(point(0, 0, 0), point(4, 4, 1))),
+            0
+        );
+
+        let huge = (0..1_100).fold(Real::one(), |value, _| &value + &value);
+        let unavailable = ApproxBounds::new(
+            Point3::new(huge.clone(), Real::zero(), Real::zero()),
+            Point3::new(&huge + Real::one(), Real::zero(), Real::zero()),
+        );
+        assert_eq!(longest_approximate_axis(&unavailable), 0);
     }
 
     #[test]
