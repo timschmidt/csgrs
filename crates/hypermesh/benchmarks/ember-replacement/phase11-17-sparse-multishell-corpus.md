@@ -117,8 +117,10 @@ exact topology and deterministic retired work are unchanged.
 ## Retired-work slope
 
 Three `perf stat` repetitions run 100, 20, and 5 shared-arrangement calls per
-process. Counts below divide the averaged process total by calls, excluding
-fixture construction but including the repeated production Boolean boundary.
+process. Counts below divide the averaged whole-process total by calls. They
+include one deterministic fixture construction, exact import, and PWN-prime
+pass per process, amortized across the repeated production Boolean boundary;
+they are not isolated Boolean-only counters.
 
 | Shells | Instructions per arrangement | Branches per arrangement | Instructions per shell |
 | ---: | ---: | ---: | ---: |

@@ -239,7 +239,8 @@ executable = "competitive_arrangement_probe"
 operation = "all"
 policy = "STRICT"
 perf_repetitions = 3
-counters_exclude_fixture_construction = true
+counters_exclude_fixture_construction = false
+scope = "whole process: one deterministic fixture construction, exact import, and PWN-prime pass amortized across repeated production Boolean calls"
 
 [[hardware_counters.scale]]
 shells = 8
