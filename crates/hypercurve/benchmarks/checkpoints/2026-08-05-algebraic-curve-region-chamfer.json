@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "algebraic-curve-region-chamfer",
+  "source_revision": "76a7e4a2854c325bc4d4bfb4523ce0a92b59c572",
+  "implementation_revision": "f9bfccb3d0bd17b97d1fcfb3edba8f67ecbdebbb",
+  "optimization_revisions": [
+    "632ecb04993d2f9163a8b8c3b735ac7d75e311f4",
+    "76a7e4a2854c325bc4d4bfb4523ce0a92b59c572"
+  ],
+  "benchmark_revision": "632ecb04993d2f9163a8b8c3b735ac7d75e311f4",
+  "matched_control_revision": "0bc7b0e0b1612eef2fc2d7680b99dd52a4158978",
+  "preceding_checkpoint": "2026-08-04-spline-corner-span-promotion.json",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "73a3d9e34ee92c280731b4fcc1abb6e5515a3b5c",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "cc1cb281351b9842e33e3ecbc3ae530c5947d40e",
+    "hypermesh_modified_by_checkpoint": false,
+    "workspace_note": "The matched control worktree used the same live lower-layer dependency revisions. Hypermesh remained outside this work."
+  },
+  "semantic_evidence": {
+    "new_retained_carrier": "BezierSplitFragment2::AlgebraicChord(BezierAlgebraicChord2)",
+    "carrier_layout": "BezierAlgebraicChord2 is one Arc-backed word on the measured 64-bit target and retains two independently defined exact endpoint images without coordinate rounding.",
+    "authoritative_region_route": "CurveRegion2 retains materialized incident Bezier carriers, calls the shared exact_corner_carrier and solve_exact_chamfer_corner authorities, trims with exact or algebraic parameters, and inserts either an ordinary line or one retained algebraic chord.",
+    "exact_fast_path": "Rational contacts stay in Real and do not construct rational source evidence. The algebraic source and its retained parameter Arc are created only after the solver returns a non-Real root.",
+    "endpoint_validation": "An algebraic endpoint is accepted only when its lazy first-order source evidence exactly replays and matches the required source. Equality uncertainty is never converted into equality.",
+    "classification": "The chord supplies conservative bounds, exact point incidence, endpoint-side signs, and an independent-field algebraic forward-ray winding evaluator. Exact endpoints use the ordinary line fast path.",
+    "topology": "Loop roles, fill rules, filled side, seam rotation, and source fragment order survive the rebuild.",
+    "strict_policy": "STRICT executes only proof-producing comparison, root-isolation, source-replay, incidence, winding, and topology paths; an undecidable equality remains blocked.",
+    "approximate_512_policy": "APPROXIMATE_512 executes the identical proof graph and may terminate only through Hyperlimit's shared 512-bit equality decision. Both algebraic fixtures and independent endpoint fields are exercised under this policy without an earlier floating approximation.",
+    "no_compatibility_shim": true,
+    "lower_layer_fix_required": false
+  },
+  "historical_behavior": {
+    "at_revision": "0bc7b0e0b1612eef2fc2d7680b99dd52a4158978",
+    "line_quadratic_quartic_cut_chamfer": "Typed Unsupported after the exact solver found a non-Real trim parameter because CurveRegion2 could not materialize the endpoint or joining chord.",
+    "two_quadratic_algebraic_cut_chamfer": "Typed Unsupported for the same carrier gap.",
+    "successful_historical_throughput": false,
+    "capability_change": "Both operations now produce exact retained CurveRegion2 values and classify their interiors, exteriors, and boundaries under both policies."
+  },
+  "mathematical_paths_covered": [
+    "line/quadratic chamfer with one quartic algebraic trim and one exact trim",
+    "quadratic/quadratic chamfer with two algebraic trims",
+    "independently generated endpoint fields on one chord",
+    "exact endpoint degeneration to an ordinary materialized line",
+    "algebraic endpoint images retained on source subcurves",
+    "loop seam at vertex zero and an interior vertex",
+    "clockwise/counterclockwise endpoint-side and arbitrary forward-ray winding",
+    "inside, outside, and boundary classification",
+    "STRICT and APPROXIMATE_512 policy execution",
+    "predicate-enabled and no-default topology construction"
+  ],
+  "verification": {
+    "cargo_check_all_features": "pass",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "52 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "49 passed",
+    "cargo_test_all_features_hypercurve_curve": "38 passed",
+    "cargo_test_no_default_features_hypercurve_curve": "31 passed",
+    "cargo_test_all_features_lib_algebraic_chord": "4 passed",
+    "cargo_test_all_features_hypercurve_analytic_parallel_region": "4 passed",
+    "cargo_clippy_all_features_all_targets_no_deps_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing warning",
+    "cargo_clippy_no_default_features_all_targets_no_deps_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing warning",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "known_unrelated_no_default_test": "hypercurve_analytic_parallel_region radical-cusp offset expects predicate-backed behavior while predicates are disabled; this pre-existing configuration mismatch was not changed."
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 20000,
+    "repeats": 3,
+    "selector": "HYPERCURVE_EDIT_BENCH=represented-bezier-corner",
+    "counter_command": "taskset -c 11 perf stat -x, -r 3 -e instructions,branches env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=20000 <editing-binary>",
+    "primary_metric": "retired instructions; wall samples are reported but not used for deltas because the host showed substantial preemption",
+    "candidate_executable": "target/release/deps/editing-b5410c9846133a0b",
+    "candidate_executable_sha256": "4533d3aee011419661b45083297118fe42c39f94bb0deb5ad7026cc404f06da3",
+    "candidate_executable_file_bytes": 9030136,
+    "candidate_executable_text_bytes": 6948462,
+    "control_executable_sha256": "63c88517c4c5c5f5923d34daa45e4b9797b7c172d28e6804f32c272d3560050a",
+    "control_executable_file_bytes": 8695768,
+    "control_executable_text_bytes": 6663586,
+    "benchmark_source_sha256": "7880ef48496fbf848b574bbf193a5972405d1688dc025a4b1c1bbac8dec41ed7",
+    "matched_control": "Detached worktree at 0bc7b0e using the same live workspace dependencies and release profile."
+  },
+  "matched_exact_fast_path": {
+    "curve_path_line_quadratic_design_chamfer": {
+      "control_instructions": 12649397671,
+      "candidate_instructions": 12655387040,
+      "control_instructions_per_operation": 632469.88355,
+      "candidate_instructions_per_operation": 632769.352,
+      "instruction_change_percent": 0.047349045,
+      "control_branches": 2361596899,
+      "candidate_branches": 2362289229,
+      "control_branches_per_operation": 118079.84495,
+      "candidate_branches_per_operation": 118114.46145,
+      "branch_change_percent": 0.02931618,
+      "control_wall_us_samples": [50.573, 51.266, 51.062],
+      "candidate_wall_us_samples": [51.665, 52.353, 52.593]
+    },
+    "curve_region_line_quadratic_design_chamfer": {
+      "control_instructions": 14489041855,
+      "candidate_instructions": 14556114156,
+      "control_instructions_per_operation": 724452.09275,
+      "candidate_instructions_per_operation": 727805.7078,
+      "instruction_change_percent": 0.462917436,
+      "control_branches": 2727808622,
+      "candidate_branches": 2748065783,
+      "control_branches_per_operation": 136390.4311,
+      "candidate_branches_per_operation": 137403.28915,
+      "branch_change_percent": 0.74261665,
+      "control_wall_us_samples": [64.598, 65.197, 65.872],
+      "candidate_wall_us_samples": [131.894, 116.78, 65.51],
+      "wall_note": "The candidate's first two repeats were host-preempted; stable hardware counters and the third wall sample are the meaningful comparison."
+    }
+  },
+  "new_exact_capability_performance": {
+    "curve_region_line_quadratic_algebraic_chamfer": {
+      "instructions": 95772182127,
+      "instructions_per_operation": 4788609.10635,
+      "branches": 17718622842,
+      "branches_per_operation": 885931.1421,
+      "wall_us_samples": [638.259, 820.526, 576.003],
+      "historical_successful_control": false
+    },
+    "curve_region_two_quadratic_algebraic_chamfer": {
+      "instructions": 228504457017,
+      "instructions_per_operation": 11425222.85085,
+      "branches": 42340291997,
+      "branches_per_operation": 2117014.59985,
+      "wall_us_samples": [1497.155, 1277.101, 1468.433],
+      "historical_successful_control": false
+    },
+    "optimization_note": "Algebraic source replay, independent-field comparisons, Sturm isolation, and exact winding dominate these new lanes. Allocation reduction and shared-field shortcuts are the next performance targets; no proof step may be replaced by a floating predicate."
+  },
+  "heaptrack_1000_operations": {
+    "method": "Heaptrack record-only release benchmark processes; heaptrack_print summaries are authoritative and include fixed process and fixture construction.",
+    "matched_control_exact_curve_region_chamfer": {
+      "allocation_calls": 1143801,
+      "temporary_allocations": 182020,
+      "peak_heap_kib": 140.62
+    },
+    "candidate_exact_curve_region_chamfer": {
+      "allocation_calls": 1136846,
+      "temporary_allocations": 182024,
+      "peak_heap_kib": 142.44,
+      "allocation_calls_change_per_operation": -6.955,
+      "temporary_allocations_change_total": 4,
+      "peak_heap_change_kib": 1.82
+    },
+    "line_quadratic_algebraic_curve_region_chamfer": {
+      "allocation_calls": 5763010,
+      "temporary_allocations": 635023,
+      "peak_heap_kib": 343.28
+    },
+    "two_quadratic_algebraic_curve_region_chamfer": {
+      "allocation_calls": 14590067,
+      "temporary_allocations": 2503022,
+      "peak_heap_kib": 502.0
+    }
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "matched build of 0bc7b0e with identical dependency revisions",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "candidate_sha256": "4895027005fb1b20ba98b61de0389cd875bd2ba599c9c99376f1b4d27b7a6d9e",
+      "control_sha256": "346f88e3a11472fa2245cf0940ae935d27f931c942696db1c981490e0e3a8aed",
+      "candidate_text_bytes": 6647882,
+      "control_text_bytes": 6619054,
+      "text_change_bytes": 28828,
+      "text_change_percent": 0.435530515,
+      "candidate_file_bytes": 8699960,
+      "control_file_bytes": 8670664,
+      "file_change_bytes": 29296,
+      "file_change_percent": 0.337874931
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "candidate_sha256": "976491cf1230f29cfe2d49bfa1fda11f2273014528e83b2f474975f9e1297124",
+      "control_sha256": "00f60658d3261cf0492f0e2191e4e465c810c684c9206a8ff3ad18de7a2f8446",
+      "candidate_text_bytes": 6068217,
+      "control_text_bytes": 6061797,
+      "text_change_bytes": 6420,
+      "text_change_percent": 0.105909188,
+      "candidate_file_bytes": 7983432,
+      "control_file_bytes": 7975728,
+      "file_change_bytes": 7704,
+      "file_change_percent": 0.096593063
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-algebraic-chamfer-76a7e4a --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-algebraic-chamfer-76a7e4a/callgraph.json",
+    "nodes": 24624,
+    "edges": 47046,
+    "authoritative_route": "CurveRegion2::chamfer_loop_vertex_by_setbacks_raw -> CurveRegion2::retained_materialized_chamfer_solutions -> exact_corner_carrier + solve_exact_chamfer_corner -> CurveRegion2::rebuild_retained_materialized_chamfer -> BezierAlgebraicChord2::try_new.",
+    "shared_path_route": "CurvePath2::chamfer_vertex_by_setbacks_raw reaches the same solve_exact_chamfer_corner authority; CurvePath2 intentionally blocks when its public carrier cannot retain an algebraic endpoint.",
+    "boolean_boundary": "CurveRegionBooleanContext::try_new and try_new_unary reach build_region_carriers, which still rejects AlgebraicChord explicitly. This is the next consolidation boundary, not a silent approximation.",
+    "duplicate_algebraic_chamfer_solver_added": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "historical_throughput": "No successful throughput existed at the matched control revision for either algebraic chamfer fixture.",
+    "finite_peer_control": "The preceding checkpoints retain current Cavalier Contours and Curvo comparisons. Those f64/heuristic engines expose no canonical-Real algebraic endpoint, exact chord winding, or STRICT/APPROXIMATE_512 proof evidence, so they are optimization sentinels rather than correctness-equivalent peers.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329
+  },
+  "remaining_scope": [
+    "make algebraic chords participate in the authoritative CurveRegion2 Boolean carrier/intersection graph",
+    "support finite projection and exact transformations of retained algebraic endpoints",
+    "route retained algebraic boundaries through offset re-entry",
+    "retain algebraic fillet circles/arcs without rationalization",
+    "support two cuts on one retained source fragment",
+    "complete zero-setback, mixed exact/algebraic, coincident, tangent, singular, and multi-contact branch matrices",
+    "define projective TrimOrExtend semantics for algebraic and represented carriers",
+    "reduce Sturm/source-replay allocations and independently measured algebraic throughput cost",
+    "complete the single authoritative CurveRegion2 Boolean, offset, fillet, and chamfer engine and remove superseded historical paths"
+  ]
+}
