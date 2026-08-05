@@ -32,7 +32,8 @@ pub fn boolean(
     crate::trace_dispatch!("boolean", "start");
     let soup = build_polygon_soup_internal(&decisions, meshes)?;
     crate::trace_dispatch!("boolean", "input-certified");
-    let arrangement = build_surface_arrangement(&decisions, &soup.polygons)?;
+    let arrangement =
+        build_surface_arrangement(&decisions, &soup.polygons, soup.source_vertex_count)?;
     crate::trace_dispatch!("boolean", "surface-arranged");
     let output = arrangement.materialize_program(&decisions, &soup.polygons, program)?;
     crate::trace_dispatch!("boolean", "output-certified");

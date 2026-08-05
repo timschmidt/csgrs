@@ -1798,35 +1798,18 @@ fn corefine_surface(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     intersections: &PairwiseIntersectionGraph,
+    source_vertex_count: usize,
 ) -> HypermeshResult<SurfaceCorefinement> {
     if intersections.len() != polygons.len() {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "intersection graph and source-face counts differ",
         });
     }
-    let initial_points = {
-        let mut identities = StorageHashMap::<ConstructionVertexIdentity, ()>::default();
-        for polygon in polygons {
-            if let Some(vertices) = polygon.known_vertex_identities() {
-                for identity in vertices {
-                    if !identities.contains_key(&identity) {
-                        identities.try_reserve(1).map_err(|_| {
-                            HypermeshError::CapacityOverflow {
-                                operation: "surface arrangement source identity count",
-                            }
-                        })?;
-                        identities.insert(identity, ());
-                    }
-                }
-            }
-        }
-        identities
-            .len()
-            .checked_add(intersections.construction_point_count())
-            .ok_or(HypermeshError::CapacityOverflow {
-                operation: "surface arrangement initial points",
-            })?
-    };
+    let initial_points = source_vertex_count
+        .checked_add(intersections.construction_point_count())
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface arrangement initial points",
+        })?;
     let mut arena = ArrangementPointArena::with_capacity(initial_points)?;
     let mut work = Vec::new();
     work.try_reserve_exact(polygons.len())
@@ -3059,6 +3042,7 @@ pub(crate) struct ExactSurfaceArrangement {
 pub(crate) fn build_surface_arrangement(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
+    source_vertex_count: usize,
 ) -> HypermeshResult<ExactSurfaceArrangement> {
     let source_bvh = ExactBvh::build_for_query_hierarchy_decision(decisions, polygons)?;
     let graph = crate::intersection::pairwise_intersections_by_polygon_from_bvh(
@@ -3068,7 +3052,7 @@ pub(crate) fn build_surface_arrangement(
         &source_bvh,
     )?;
     let source_bvh = source_bvh.into_query_hierarchy(polygons)?;
-    let corefinement = corefine_surface(decisions, polygons, &graph)?;
+    let corefinement = corefine_surface(decisions, polygons, &graph, source_vertex_count)?;
     let radially_separated_face_pair_keys = graph.into_radially_separated_face_pair_keys();
     let cells = assemble_surface_cells(
         decisions,
@@ -3518,6 +3502,30 @@ mod tests {
         polygon
     }
 
+    fn source_vertex_count(polygons: &[ConvexPolygon]) -> usize {
+        polygons
+            .iter()
+            .filter_map(ConvexPolygon::known_vertex_identities)
+            .flatten()
+            .collect::<BTreeSet<_>>()
+            .len()
+    }
+
+    fn arrange_surface(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<ExactSurfaceArrangement> {
+        build_surface_arrangement(decisions, polygons, source_vertex_count(polygons))
+    }
+
+    fn corefine_test_surface(
+        decisions: &DecisionContext,
+        polygons: &[ConvexPolygon],
+        graph: &PairwiseIntersectionGraph,
+    ) -> HypermeshResult<SurfaceCorefinement> {
+        corefine_surface(decisions, polygons, graph, source_vertex_count(polygons))
+    }
+
     #[test]
     fn unchanged_face_work_keeps_its_boundary_inline() {
         assert_eq!(std::mem::size_of::<FaceWork>(), 64);
@@ -3697,7 +3705,7 @@ mod tests {
     ) -> (MeshCertainty, SurfaceCorefinement, SurfaceCellComplex) {
         let context = MeshContext::new(policy);
         let decisions = DecisionContext::new(&context);
-        let arrangement = build_surface_arrangement(&decisions, polygons).unwrap();
+        let arrangement = arrange_surface(&decisions, polygons).unwrap();
         (
             decisions.certainty(),
             arrangement.corefinement,
@@ -3883,7 +3891,7 @@ mod tests {
         ] {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
-            let arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
             for operation in [
                 crate::winding::BooleanOp::Union,
                 crate::winding::BooleanOp::Intersection,
@@ -3929,7 +3937,7 @@ mod tests {
 
             let mut disjoint = tetrahedron([0, 0, 0], 1, 0, 0, 0, 0, 2);
             disjoint.extend(tetrahedron([3, 0, 0], 1, 1, 4, 4, 1, 2));
-            let arrangement = build_surface_arrangement(&decisions, &disjoint).unwrap();
+            let arrangement = arrange_surface(&decisions, &disjoint).unwrap();
             let empty = arrangement
                 .materialize_operation(
                     &decisions,
@@ -3950,7 +3958,7 @@ mod tests {
                 1,
                 2,
             ));
-            let arrangement = build_surface_arrangement(&decisions, &tangent).unwrap();
+            let arrangement = arrange_surface(&decisions, &tangent).unwrap();
             let union = arrangement
                 .materialize_operation(&decisions, &tangent, crate::winding::BooleanOp::Union)
                 .unwrap();
@@ -3967,7 +3975,7 @@ mod tests {
         let polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
-        let mut arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+        let mut arrangement = arrange_surface(&decisions, &polygons).unwrap();
         let classifications = (0..arrangement.cells.facets.len())
             .map(|facet| {
                 arrangement
@@ -4382,7 +4390,7 @@ mod tests {
         ] {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
-            let arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
             let cells = &arrangement.cells;
             assert_eq!(cells.component_count, 3);
             assert_eq!(cells.cell_count, 6);
@@ -4534,7 +4542,7 @@ mod tests {
         ] {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
-            let arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
             let cells = &arrangement.cells;
             assert_eq!(cells.facets.len(), 7);
             assert_eq!(cells.contributions.len(), 8);
@@ -4835,7 +4843,7 @@ mod tests {
         ] {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
-            let arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
             let cells = &arrangement.cells;
             assert_eq!(cells.operand_count, OPERAND_COUNT);
             assert_eq!(cells.component_count as usize, OPERAND_COUNT);
@@ -4893,7 +4901,7 @@ mod tests {
         ] {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
-            let arrangement = build_surface_arrangement(&decisions, &polygons).unwrap();
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
             let surface = &arrangement.corefinement;
             let cells = &arrangement.cells;
             assert_eq!(surface.points.len(), shell_count * 4);
@@ -4939,7 +4947,7 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-            let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
             let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
                 .unwrap()
                 .into_query_hierarchy(&polygons)
@@ -4961,7 +4969,7 @@ mod tests {
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let mut surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let mut surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
         let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
             .unwrap()
             .into_query_hierarchy(&polygons)
@@ -5011,7 +5019,7 @@ mod tests {
         let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
         let source_bvh = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
             .unwrap()
             .into_query_hierarchy(&polygons)
@@ -5092,7 +5100,7 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-            let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
 
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
             assert_eq!(surface.face_triangles(0).len(), 13);
@@ -5111,7 +5119,7 @@ mod tests {
         ];
         let decisions = crate::test_support::approximate_decisions();
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
 
         let center = surface
             .points
@@ -5137,7 +5145,7 @@ mod tests {
         let polygons = [first, second];
         let decisions = crate::test_support::approximate_decisions();
         let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+        let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
 
         let canonical = |face: usize| {
             let mut triangles = surface.face_triangles(face).to_vec();
@@ -5175,7 +5183,7 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-            let surface = corefine_surface(&decisions, &polygons, &graph).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
             let overlap = surface
                 .points
                 .iter()

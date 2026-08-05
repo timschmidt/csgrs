@@ -1103,6 +1103,8 @@ pub struct PolygonSoup {
     pub bounds: Aabb,
     /// Number of input meshes.
     pub num_meshes: usize,
+    /// Exact number of source vertex identities referenced by the soup.
+    pub(crate) source_vertex_count: usize,
 }
 
 impl PolygonSoup {
@@ -1191,6 +1193,7 @@ pub(crate) fn build_polygon_soup_internal(
         })
         .ok_or(HypermeshError::UnknownClassification)?;
     let mut polygons: Vec<ConvexPolygon> = Vec::with_capacity(polygon_capacity);
+    let mut source_vertex_count = 0_usize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let source_positions = RetainedSourcePositions::shared(mesh.native.map_or_else(
             || Arc::<[Point3]>::from(mesh.positions),
@@ -1207,7 +1210,16 @@ pub(crate) fn build_polygon_soup_internal(
             || points_require_wide_dyadic_plane_normalization(mesh.positions),
             |native| native.facts.normalizes_wide_dyadic_planes(mesh.positions),
         );
-        validate_source_triangles(decisions, *mesh, mesh_index, !edge_balance_is_certified)?;
+        source_vertex_count = source_vertex_count
+            .checked_add(validate_source_triangles(
+                decisions,
+                *mesh,
+                mesh_index,
+                !edge_balance_is_certified,
+            )?)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "source vertex identity count",
+            })?;
         let retained_compact = mesh
             .native
             .and_then(|native| native.facts.source_polygon_planes.get())
@@ -1276,12 +1288,12 @@ pub(crate) fn build_polygon_soup_internal(
             }
         }
     }
-
     crate::trace_dispatch!("build-polygon-soup", "complete");
     Ok(PolygonSoup {
         polygons,
         bounds,
         num_meshes: meshes.len(),
+        source_vertex_count,
     })
 }
 
@@ -1290,7 +1302,18 @@ fn validate_source_triangles(
     mesh: TriangleMeshRef<'_>,
     mesh_index: usize,
     validate_nondegenerate: bool,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<usize> {
+    // Source IDs index one dense position owner. Count their referenced subset
+    // while validation already has every checked index, so corefinement can
+    // size its final identity table without cloning and hashing all IDs first.
+    let mut referenced = Vec::new();
+    referenced
+        .try_reserve_exact(mesh.positions.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "source vertex usage",
+        })?;
+    referenced.resize(mesh.positions.len(), false);
+    let mut referenced_count = 0_usize;
     for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
         let indices = triangle.indices();
         let points = indices.map(|index| {
@@ -1318,8 +1341,14 @@ fn validate_source_triangles(
         });
         let [first, second, third] = vertices;
         let _ = [first?, second?, third?];
+        for index in indices {
+            if !referenced[index] {
+                referenced[index] = true;
+                referenced_count += 1;
+            }
+        }
     }
-    Ok(())
+    Ok(referenced_count)
 }
 
 fn compact_source_polygons(
@@ -1738,6 +1767,29 @@ mod tests {
             assert_eq!(polygon.mesh_index, 1);
             assert_eq!(polygon.delta_w, [0, 1]);
         }
+    }
+
+    #[test]
+    fn polygon_soup_counts_only_referenced_source_vertex_identities() {
+        let first = tetrahedron_with_independent_face_indices();
+        let mut positions = first.positions.to_vec();
+        positions.push(Point3::new(
+            Real::from(17_u8),
+            Real::from(19_u8),
+            Real::from(23_u8),
+        ));
+        let with_unused = TriangleMesh::new(positions, first.triangles.to_vec());
+        let second = tetrahedron_with_independent_face_indices();
+        let decisions = crate::test_support::approximate_decisions();
+        let soup =
+            build_polygon_soup_internal(&decisions, &[with_unused.as_ref(), second.as_ref()])
+                .unwrap();
+
+        // Each tetrahedron intentionally uses three separate source IDs per
+        // face even though exact coordinates alias to four numeric points.
+        assert_eq!(soup.source_vertex_count, 24);
+        assert_eq!(soup.polygons.len(), 8);
+        assert_eq!(decisions.certainty(), MeshCertainty::Certified);
     }
 
     #[test]
