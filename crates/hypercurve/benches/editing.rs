@@ -404,6 +404,184 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
     }
 }
 
+fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let half_root_three =
+        (s(3).sqrt().expect("sqrt(3) must exist") / s(2)).expect("division by two must exist");
+    let next_cut = Point2::new(s(1) + &half_root_three, q(1, 2));
+    let next_arc = CircularArc2::try_from_center(p(1, 0), p(2, 1), p(1, 1), false)?;
+    let Classification::Decided(next_sweep) = next_arc.sweep_fraction(&next_cut, &policy)? else {
+        panic!("line-arc benchmark sweep must remain exact");
+    };
+    let Classification::Decided(next_public_parameter) =
+        next_arc.parameter_at_sweep_fraction(&next_sweep, &policy)?
+    else {
+        panic!("line-arc benchmark public parameter must remain exact");
+    };
+    let line_arc_path = CurvePath2::try_new(vec![
+        Curve2::from(line(-1, 0, 1, 0)),
+        Curve2::from(next_arc.clone()),
+    ])
+    .expect("line-arc benchmark path must remain exact");
+
+    if corner_lane_enabled("curve_path_line_arc_parameter_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let chamfered = black_box(&line_arc_path)
+                .chamfer_vertex_by_parameters(1, q(3, 4), next_public_parameter.clone(), &policy)
+                .expect("line-arc parameter chamfer must remain exact")
+                .into_value();
+            curves += black_box(chamfered).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_line_arc_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_path_line_arc_design_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(chamfered) = black_box(&line_arc_path)
+                .chamfer_vertex_by_setbacks(1, q(1, 2), s(1), CurveCornerMode2::TrimOnly, &policy)
+                .expect("line-arc design chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc design chamfer must remain unique");
+            };
+            curves += black_box(chamfered).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_line_arc_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    let previous_cut = Point2::new(s(1) - &half_root_three, q(-1, 2));
+    let previous_arc = CircularArc2::try_from_center(p(0, -1), p(1, 0), p(1, -1), true)?;
+    let Classification::Decided(previous_sweep) =
+        previous_arc.sweep_fraction(&previous_cut, &policy)?
+    else {
+        panic!("arc-arc benchmark previous sweep must remain exact");
+    };
+    let Classification::Decided(previous_public_parameter) =
+        previous_arc.parameter_at_sweep_fraction(&previous_sweep, &policy)?
+    else {
+        panic!("arc-arc benchmark previous public parameter must remain exact");
+    };
+    let arc_arc_path = CurvePath2::try_new(vec![
+        Curve2::from(previous_arc),
+        Curve2::from(next_arc.clone()),
+    ])
+    .expect("arc-arc benchmark path must remain exact");
+
+    if corner_lane_enabled("curve_path_arc_arc_parameter_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let chamfered = black_box(&arc_arc_path)
+                .chamfer_vertex_by_parameters(
+                    1,
+                    previous_public_parameter.clone(),
+                    next_public_parameter.clone(),
+                    &policy,
+                )
+                .expect("arc-arc parameter chamfer must remain exact")
+                .into_value();
+            curves += black_box(chamfered).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_arc_arc_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_path_arc_arc_design_chamfer") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(chamfered) = black_box(&arc_arc_path)
+                .chamfer_vertex_by_setbacks(1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
+                .expect("arc-arc design chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("arc-arc design chamfer must remain unique");
+            };
+            curves += black_box(chamfered).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_arc_arc_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    let rounded_contour = Contour2::try_new(vec![
+        Segment2::Line(line(-1, 0, 1, 0)),
+        Segment2::Arc(next_arc),
+        Segment2::Line(line(2, 1, 2, 3)),
+        Segment2::Line(line(2, 3, -1, 3)),
+        Segment2::Line(line(-1, 3, -1, 0)),
+    ])?;
+    let region = CurveRegion2::try_from_native_material_contours(vec![rounded_contour], &policy)
+        .expect("line-arc benchmark region must promote")
+        .into_value();
+
+    if corner_lane_enabled("curve_region_line_arc_parameter_chamfer") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let Classification::Decided(chamfered) = black_box(&region)
+                .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), next_sweep.clone(), &policy)
+                .expect("line-arc region parameter chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc region parameter chamfer must remain decided");
+            };
+            loops += black_box(chamfered).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_arc_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_region_line_arc_design_chamfer") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(chamfered) = black_box(&region)
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    q(1, 2),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("line-arc region design chamfer must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc region design chamfer must remain unique");
+            };
+            loops += black_box(chamfered).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_arc_design_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    Ok(())
+}
+
 fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
     let previous_arc = CircularArc2::try_from_center(
         Point2::new(s(3), q(13, 3)),
@@ -1050,6 +1228,10 @@ fn main() -> CurveResult<()> {
             bench_curve_region_mutations(iterations)?;
             return Ok(());
         }
+        if selection == "native-arc-chamfer" {
+            bench_native_arc_chamfer_solvers(iterations)?;
+            return Ok(());
+        }
     }
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
@@ -1061,6 +1243,7 @@ fn main() -> CurveResult<()> {
     bench_line_fillet(iterations)?;
     bench_arc_fillet(iterations)?;
     bench_line_curve_corner_solvers(iterations);
+    bench_native_arc_chamfer_solvers(iterations)?;
     bench_curve_region_mutations(iterations)?;
     bench_higher_order_curve_edits(iterations);
     bench_arc_extension(iterations)?;
