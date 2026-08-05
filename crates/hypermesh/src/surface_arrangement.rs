@@ -5,7 +5,7 @@
 //! materializes one or many results from a shared exact arrangement.
 
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::Rational;
@@ -2532,6 +2532,11 @@ struct FaceResult {
     contacts: Vec<u32>,
 }
 
+struct ProjectedFacePoint {
+    id: u32,
+    point: hypertri::ExactPoint,
+}
+
 fn corefine_face(
     decisions: &DecisionContext,
     face: usize,
@@ -2592,12 +2597,31 @@ fn corefine_face(
             })
             .or_insert_with(|| constraint.line.clone());
     }
-    let mut point_ids = BTreeSet::new();
+    let point_capacity = boundary
+        .len()
+        .checked_add(work.contacts.len())
+        .and_then(|count| {
+            constraint_lines
+                .len()
+                .checked_mul(2)
+                .and_then(|endpoints| count.checked_add(endpoints))
+        })
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "face arrangement point schedule",
+        })?;
+    let mut point_ids = Vec::new();
+    point_ids
+        .try_reserve_exact(point_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face arrangement point schedule",
+        })?;
     point_ids.extend(boundary.iter().copied());
     point_ids.extend(work.contacts.iter().copied());
     for edge in constraint_lines.keys() {
         point_ids.extend(edge);
     }
+    point_ids.sort_unstable();
+    point_ids.dedup();
     let support = polygon.support_plane();
     let edges = polygon.edge_planes();
     let projection_axis = projection_axis(decisions, support)?;
@@ -2605,7 +2629,12 @@ fn corefine_face(
         projection_axes(projection_axis).ok_or(HypermeshError::SurfaceArrangementFailed {
             reason: "source face projection axis is invalid",
         })?;
-    let mut projected = BTreeMap::new();
+    let mut projected = Vec::new();
+    projected
+        .try_reserve_exact(point_ids.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face projected point schedule",
+        })?;
     for &point in &point_ids {
         let materialized =
             arena
@@ -2627,7 +2656,10 @@ fn corefine_face(
                 reason: "face arrangement point lies outside its source face",
             });
         }
-        projected.insert(point, project_point(materialized, axes));
+        projected.push(ProjectedFacePoint {
+            id: point,
+            point: project_point(materialized, axes),
+        });
     }
 
     let authored = constraint_lines
@@ -2637,6 +2669,7 @@ fn corefine_face(
             line: line.clone(),
         })
         .collect::<Vec<_>>();
+    let mut crossing_points = Vec::new();
     for left_index in 0..authored.len() {
         let left = &authored[left_index];
         for right in &authored[(left_index + 1)..] {
@@ -2647,16 +2680,8 @@ fn corefine_face(
             {
                 continue;
             }
-            let left_points = left.endpoints.map(|point| {
-                projected
-                    .get(&point)
-                    .expect("constraint endpoint is projected")
-            });
-            let right_points = right.endpoints.map(|point| {
-                projected
-                    .get(&point)
-                    .expect("constraint endpoint is projected")
-            });
+            let left_points = projected_segment(&projected, left.endpoints)?;
+            let right_points = projected_segment(&projected, right.endpoints)?;
             if !segments_properly_cross(decisions, left_points, right_points)? {
                 continue;
             }
@@ -2687,11 +2712,30 @@ fn corefine_face(
                 }
                 arena.insert(decisions, identity, point)?
             };
-            projected
-                .entry(point_id)
-                .or_insert_with(|| project_point(&arena.points[point_id as usize], axes));
+            if projected
+                .binary_search_by_key(&point_id, |projected| projected.id)
+                .is_err()
+            {
+                crossing_points
+                    .try_reserve(1)
+                    .map_err(|_| HypermeshError::CapacityOverflow {
+                        operation: "face crossing point schedule",
+                    })?;
+                crossing_points.push(ProjectedFacePoint {
+                    id: point_id,
+                    point: project_point(&arena.points[point_id as usize], axes),
+                });
+            }
         }
     }
+    projected
+        .try_reserve(crossing_points.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face projected point schedule",
+        })?;
+    projected.extend(crossing_points);
+    projected.sort_unstable_by_key(|projected| projected.id);
+    projected.dedup_by_key(|projected| projected.id);
 
     let mut split_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
     let mut on_segment = Vec::new();
@@ -2706,20 +2750,13 @@ fn corefine_face(
         // directly and reserve policy-aware incidence tests for other points
         // that may split it through crossings, contacts, or overlaps.
         on_segment.extend_from_slice(&constraint.endpoints);
-        let segment = [
-            projected
-                .get(&constraint.endpoints[0])
-                .expect("constraint endpoint is projected"),
-            projected
-                .get(&constraint.endpoints[1])
-                .expect("constraint endpoint is projected"),
-        ];
-        for (&point_id, point) in &projected {
-            if constraint.endpoints.contains(&point_id) {
+        let segment = projected_segment(&projected, constraint.endpoints)?;
+        for projected_point in &projected {
+            if constraint.endpoints.contains(&projected_point.id) {
                 continue;
             }
-            if planar_point_on_segment(decisions, segment, point)? {
-                on_segment.push(point_id);
+            if planar_point_on_segment(decisions, segment, &projected_point.point)? {
+                on_segment.push(projected_point.id);
             }
         }
         sort_point_ids_on_segment(decisions, &projected, constraint.endpoints, &mut on_segment)?;
@@ -2738,15 +2775,15 @@ fn corefine_face(
         }
     }
 
-    let boundary_edges = boundary
-        .iter()
-        .copied()
-        .zip(boundary.iter().copied().cycle().skip(1))
-        .take(boundary.len())
-        .map(|edge| sorted_edge([edge.0, edge.1]))
-        .collect::<BTreeSet<_>>();
+    let mut boundary_edges = [
+        sorted_edge([boundary[0], boundary[1]]),
+        sorted_edge([boundary[1], boundary[2]]),
+        sorted_edge([boundary[2], boundary[0]]),
+    ];
+    boundary_edges.sort_unstable();
     let only_source_boundary = projected.len() == boundary.len()
-        && split_lines.keys().copied().collect::<BTreeSet<_>>() == boundary_edges;
+        && split_lines.len() == boundary_edges.len()
+        && split_lines.keys().copied().eq(boundary_edges);
     #[cfg(test)]
     let contacts = {
         let mut contacts = work.contacts.clone();
@@ -2758,26 +2795,47 @@ fn corefine_face(
         return Ok(FaceResult {
             triangles: triangulate_convex_boundary(boundary),
             #[cfg(test)]
-            constraints: boundary_edges.into_iter().collect(),
+            constraints: boundary_edges.to_vec(),
             #[cfg(test)]
             contacts,
         });
     }
 
-    let point_ids = projected.keys().copied().collect::<Vec<_>>();
-    let local = point_ids
-        .iter()
-        .enumerate()
-        .map(|(local, &global)| (global, local))
-        .collect::<BTreeMap<_, _>>();
-    let points = point_ids
-        .iter()
-        .map(|point| projected[point].clone())
-        .collect::<Vec<_>>();
-    let constraints = split_lines
-        .keys()
-        .map(|edge| hypertri::Constraint::new(local[&edge[0]], local[&edge[1]]))
-        .collect::<Vec<_>>();
+    let mut point_ids = Vec::new();
+    let mut points = Vec::new();
+    point_ids
+        .try_reserve_exact(projected.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face triangulation point IDs",
+        })?;
+    points
+        .try_reserve_exact(projected.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face triangulation points",
+        })?;
+    for projected_point in &projected {
+        point_ids.push(projected_point.id);
+        points.push(projected_point.point.clone());
+    }
+    let mut constraints = Vec::new();
+    constraints
+        .try_reserve_exact(split_lines.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face triangulation constraints",
+        })?;
+    for edge in split_lines.keys() {
+        let from = point_ids.binary_search(&edge[0]).map_err(|_| {
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "face constraint start is absent from the projected point schedule",
+            }
+        })?;
+        let to = point_ids.binary_search(&edge[1]).map_err(|_| {
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "face constraint end is absent from the projected point schedule",
+            }
+        })?;
+        constraints.push(hypertri::Constraint::new(from, to));
+    }
     let context = hypertri::TriangulationContext::new(decisions.policy());
     let outcome =
         hypertri::cdt::constrained_triangulation_convex_hull(&context, &points, &constraints)
@@ -2835,15 +2893,15 @@ fn triangulate_convex_boundary(boundary: &[u32]) -> Vec<[u32; 3]> {
 
 fn source_projection_is_positive(
     decisions: &DecisionContext,
-    projected: &BTreeMap<u32, hypertri::ExactPoint>,
+    projected: &[ProjectedFacePoint],
     boundary: &[u32],
 ) -> HypermeshResult<bool> {
     for index in 1..boundary.len().saturating_sub(1) {
         match planar_orientation(
             decisions,
-            &projected[&boundary[0]],
-            &projected[&boundary[index]],
-            &projected[&boundary[index + 1]],
+            projected_face_point(projected, boundary[0])?,
+            projected_face_point(projected, boundary[index])?,
+            projected_face_point(projected, boundary[index + 1])?,
         )? {
             Classification::Positive => return Ok(true),
             Classification::Negative => return Ok(false),
@@ -2853,6 +2911,29 @@ fn source_projection_is_positive(
     Err(HypermeshError::SurfaceArrangementFailed {
         reason: "source face projection is degenerate",
     })
+}
+
+fn projected_face_point(
+    points: &[ProjectedFacePoint],
+    id: u32,
+) -> HypermeshResult<&hypertri::ExactPoint> {
+    points
+        .binary_search_by_key(&id, |point| point.id)
+        .ok()
+        .map(|index| &points[index].point)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "face constraint references an absent projected point",
+        })
+}
+
+fn projected_segment(
+    points: &[ProjectedFacePoint],
+    endpoints: [u32; 2],
+) -> HypermeshResult<[&hypertri::ExactPoint; 2]> {
+    Ok([
+        projected_face_point(points, endpoints[0])?,
+        projected_face_point(points, endpoints[1])?,
+    ])
 }
 
 fn segments_properly_cross(
@@ -2894,17 +2975,21 @@ fn planar_point_on_segment(
 
 fn sort_point_ids_on_segment(
     decisions: &DecisionContext,
-    points: &BTreeMap<u32, hypertri::ExactPoint>,
+    points: &[ProjectedFacePoint],
     edge: [u32; 2],
     indices: &mut [u32],
 ) -> HypermeshResult<()> {
-    let use_x =
-        !compare_real_decision(decisions, &points[&edge[0]].x, &points[&edge[1]].x)?.is_eq();
+    let use_x = !compare_real_decision(
+        decisions,
+        &projected_face_point(points, edge[0])?.x,
+        &projected_face_point(points, edge[1])?.x,
+    )?
+    .is_eq();
     for index in 1..indices.len() {
         let mut cursor = index;
         while cursor > 0 {
-            let left = &points[&indices[cursor]];
-            let right = &points[&indices[cursor - 1]];
+            let left = projected_face_point(points, indices[cursor])?;
+            let right = projected_face_point(points, indices[cursor - 1])?;
             let ordering = if use_x {
                 compare_real_decision(decisions, &left.x, &right.x)?
             } else {
@@ -3475,6 +3560,7 @@ mod tests {
     use crate::context::MeshContext;
     use crate::intersection::pairwise_intersections_by_polygon;
     use crate::test_support::approximate_convex_triangle;
+    use std::collections::BTreeSet;
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
