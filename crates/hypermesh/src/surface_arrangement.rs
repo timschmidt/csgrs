@@ -1839,7 +1839,26 @@ fn corefine_surface(
             ..FaceWork::default()
         });
     }
-    append_intersection_constraints(decisions, polygons, intersections, &mut arena, &mut work)?;
+    // Pairwise point IDs are already operation-wide aliases. Translate each
+    // one only after source vertices establish identity precedence, then
+    // release this transient table before per-face triangulation.
+    let point_count = intersections.construction_point_count();
+    let mut point_map = Vec::new();
+    point_map
+        .try_reserve_exact(point_count)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface arrangement graph point remap",
+        })?;
+    point_map.resize(point_count, None);
+    append_intersection_constraints(
+        decisions,
+        polygons,
+        intersections,
+        &mut point_map,
+        &mut arena,
+        &mut work,
+    )?;
+    drop(point_map);
     propagate_retained_source_edge_points(polygons, &mut arena, &mut work)?;
 
     let offset_capacity =
@@ -1982,6 +2001,7 @@ fn append_intersection_constraints(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
     intersections: &PairwiseIntersectionGraph,
+    point_map: &mut [Option<u32>],
     arena: &mut ArrangementPointArena,
     work: &mut [FaceWork],
 ) -> HypermeshResult<()> {
@@ -1996,15 +2016,16 @@ fn append_intersection_constraints(
                     point,
                     other_polygon: _,
                 } => {
-                    let point = insert_graph_point(decisions, intersections, arena, point)?;
+                    let point = map_graph_point(decisions, intersections, point_map, arena, point)?;
                     work[face].contacts.push(point);
                 }
                 PairwiseIntersectionEventIds::NonCoplanarSegment {
                     endpoints,
                     other_polygon,
                 } => {
-                    let endpoints = endpoints
-                        .map(|point| insert_graph_point(decisions, intersections, arena, point));
+                    let endpoints = endpoints.map(|point| {
+                        map_graph_point(decisions, intersections, point_map, arena, point)
+                    });
                     let endpoints = [endpoints[0].clone()?, endpoints[1].clone()?];
                     work[face].constraints.push(RawConstraint {
                         endpoints,
@@ -2020,8 +2041,8 @@ fn append_intersection_constraints(
                     let line =
                         boundary_line_for_segment(decisions, &polygons[face], first, second)?;
                     let endpoints = [
-                        insert_graph_point(decisions, intersections, arena, endpoints[0])?,
-                        insert_graph_point(decisions, intersections, arena, endpoints[1])?,
+                        map_graph_point(decisions, intersections, point_map, arena, endpoints[0])?,
+                        map_graph_point(decisions, intersections, point_map, arena, endpoints[1])?,
                     ];
                     work[face]
                         .constraints
@@ -2156,18 +2177,30 @@ fn propagate_retained_source_edge_points(
     Ok(())
 }
 
-fn insert_graph_point(
+fn map_graph_point(
     decisions: &DecisionContext,
     graph: &PairwiseIntersectionGraph,
+    point_map: &mut [Option<u32>],
     arena: &mut ArrangementPointArena,
     point: u32,
 ) -> HypermeshResult<u32> {
+    let remapped =
+        point_map
+            .get_mut(point as usize)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "intersection event references an absent construction point",
+            })?;
+    if let Some(point) = *remapped {
+        return Ok(point);
+    }
     let (materialized, identity) = graph.construction_point(point)?;
-    arena.insert(
+    let point = arena.insert(
         decisions,
         ArrangementPointIdentity::Construction(identity.clone()),
         materialized.clone(),
-    )
+    )?;
+    *remapped = Some(point);
+    Ok(point)
 }
 
 fn pairwise_split_line(face: usize, other: usize) -> HypermeshResult<ConstructionEdgeIdentity> {
@@ -3495,6 +3528,37 @@ mod tests {
         assert!(!work.is_changed());
         assert_eq!(work.constraints.capacity(), 0);
         assert_eq!(work.contacts.capacity(), 0);
+    }
+
+    #[test]
+    fn directed_graph_events_reuse_one_arrangement_point_transfer() {
+        let polygons = [
+            triangle([p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)], 0, 0, [0, 1, 2]),
+            triangle([p(1, -1, -1), p(1, 3, -1), p(1, -1, 3)], 1, 1, [0, 1, 2]),
+        ];
+        let decisions = crate::test_support::approximate_decisions();
+        let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+        let point = match graph.event_ids(0).unwrap().next().unwrap().unwrap() {
+            PairwiseIntersectionEventIds::NonCoplanarSegment { endpoints, .. } => endpoints[0],
+            _ => panic!("transverse triangles must produce a segment"),
+        };
+        let mut remap = vec![None; graph.construction_point_count()];
+        let mut arena = ArrangementPointArena::with_capacity(remap.len()).unwrap();
+        assert_eq!(
+            map_graph_point(&decisions, &graph, &mut [], &mut arena, point).unwrap_err(),
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "intersection event references an absent construction point",
+            }
+        );
+        let first = map_graph_point(&decisions, &graph, &mut remap, &mut arena, point).unwrap();
+        let structural_count = arena.structural.len();
+        let second = map_graph_point(&decisions, &graph, &mut remap, &mut arena, point).unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(remap[point as usize], Some(first));
+        assert_eq!(arena.structural.len(), structural_count);
+        assert_eq!(arena.points.len(), 1);
+        assert_eq!(decisions.certainty(), MeshCertainty::Certified);
     }
 
     fn tetrahedron(
