@@ -74,7 +74,7 @@ fn constrained_topology_reports_terminal_policy_consumption() {
     ));
     let outcome =
         hypertri::cdt::constrained_triangulation_convex_hull(&APPROX, &points, &[]).unwrap();
-    assert_eq!(outcome.value.triangles().len(), 2);
+    assert_eq!(outcome.value.len(), 2);
     assert_eq!(
         outcome.certainty,
         TriangulationCertainty::Approximate512Consumed

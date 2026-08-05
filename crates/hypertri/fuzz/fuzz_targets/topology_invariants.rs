@@ -153,13 +153,9 @@ fn exercise_separated_cycle_cdt(input: RawInput) {
     )
     .expect("generated separated cycles must have exact constrained topology")
     .value;
-    topology
-        .validate(&APPROX)
-        .expect("topology-only constrained triangulation must validate");
     for constraint in constraints {
         assert!(
             topology
-                .triangles()
                 .iter()
                 .any(|triangle| triangle.contains(&constraint.from)
                     && triangle.contains(&constraint.to)),

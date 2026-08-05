@@ -344,14 +344,15 @@ pub fn constrained_delaunay_convex_hull(
 /// Constraints must already be planarized: they may not cross, overlap, or
 /// contain an input point other than an endpoint. Every returned triangle is
 /// strictly positively oriented in the caller's coordinate axes, and every
-/// input constraint is present in [`ConstrainedTriangulation::constraint_edges`]
-/// as a triangulation edge. The active policy and aggregate certainty govern
-/// every predicate used to establish those postconditions.
+/// input constraint is present as a triangulation edge. Because this checked
+/// entry point never inserts Steiner points, the returned triangles index the
+/// caller's point slice directly. The active policy and aggregate certainty
+/// govern every predicate used to establish those postconditions.
 pub fn constrained_triangulation_convex_hull(
     context: &TriangulationContext,
     points: &[ExactPoint],
     constraints: &[Constraint],
-) -> Result<TriangulationOutcome<ConstrainedTriangulation>> {
+) -> Result<TriangulationOutcome<Vec<Triangle>>> {
     let kernel = ExactKernel::new(context);
     validate_constraints(points.len(), constraints)?;
     validate_unique_points(&kernel, points)?;
@@ -360,19 +361,13 @@ pub fn constrained_triangulation_convex_hull(
     let triangles = topology::triangulate_point_set(&kernel, points)?;
     let triangles =
         crate::cdt_insert::insert_constraints_topology(&kernel, points, triangles, constraints)?;
-    let triangulation = ConstrainedTriangulation::from_parts_with_constraint_edges(
-        points.to_vec(),
-        constraints.to_vec(),
-        constraints.to_vec(),
-        triangles,
-    );
     crate::cdt_validate::validate_constrained_convex_hull_topology(
         &kernel,
-        &triangulation.points,
-        &triangulation.constraint_edges,
-        &triangulation.triangles,
+        points,
+        constraints,
+        &triangles,
     )?;
-    Ok(kernel.finish(triangulation))
+    Ok(kernel.finish(triangles))
 }
 
 pub(crate) fn constrained_delaunay_inner(
@@ -1900,22 +1895,18 @@ mod tests {
                 .expect("the topology-only PSLG must be exactly triangulable");
 
             assert_eq!(outcome.certainty, crate::TriangulationCertainty::Certified);
-            assert_eq!(outcome.value.points(), points);
-            assert_eq!(outcome.value.triangles().len(), 13);
+            assert_eq!(outcome.value.len(), 13);
             assert!(points.iter().enumerate().all(|(point, _)| {
                 outcome
                     .value
-                    .triangles()
                     .iter()
                     .any(|triangle| triangle.contains(&point))
             }));
             assert!(
-                constraints.iter().all(|constraint| triangulation_has_edge(
-                    outcome.value.triangles(),
-                    *constraint
-                ))
+                constraints
+                    .iter()
+                    .all(|constraint| triangulation_has_edge(&outcome.value, *constraint))
             );
-            outcome.value.validate(&context).unwrap();
         }
     }
 
