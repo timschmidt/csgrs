@@ -1810,7 +1810,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                         let rational = RationalBezier2::try_from_subcurve(curve)
                             .map_err(|cause| self.invalid(other_index, cause))?;
-                        let source_parameter = if authored_adjacent {
+                        let shared_source_parameter = if authored_adjacent {
                             let chord_carrier = &self.data.carriers[chord_index];
                             let boundary = match chord_carrier.operand {
                                 CurvePathBooleanOperand2::First => self.data.first,
@@ -1829,21 +1829,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             } else {
                                 carrier_traversal_end(other_carrier)
                             };
-                            match shared_parameter.as_bezier_parameter() {
-                                Some(BezierParameter2::Algebraic(parameter)) => Some(parameter),
-                                Some(BezierParameter2::Exact(_)) | None => None,
-                            }
+                            shared_parameter.as_bezier_parameter()
                         } else {
                             None
                         };
-                        match chord
-                            .source_related_intersections(
-                                &rational,
-                                source_parameter,
-                                &self.data.policy,
-                            )
-                            .map_err(|cause| self.invalid(other_index, cause))?
-                        {
+                        let source_parameter = match shared_source_parameter {
+                            Some(BezierParameter2::Algebraic(parameter)) => Some(parameter),
+                            Some(BezierParameter2::Exact(_)) | None => None,
+                        };
+                        let general_intersections = || {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-chord-pair",
+                                "general-rational",
+                            );
+                            chord
+                                .rational_intersections(
+                                    &rational,
+                                    shared_source_parameter,
+                                    &self.data.policy,
+                                )
+                                .map_err(|cause| self.invalid(other_index, cause))
+                        };
+                        let intersections = if let Some(source_parameter) = source_parameter {
+                            match chord
+                                .source_related_intersections(
+                                    &rational,
+                                    source_parameter,
+                                    &self.data.policy,
+                                )
+                                .map_err(|cause| self.invalid(other_index, cause))?
+                            {
+                                Classification::Decided(
+                                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+                                )
+                                | Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                                    general_intersections()?
+                                }
+                                intersections => intersections,
+                            }
+                        } else {
+                            // The source-related kernel removes its authored
+                            // endpoint by construction. Only adjacent carriers
+                            // own that endpoint through common loop topology;
+                            // every nonadjacent pair requires the complete
+                            // general contact set.
+                            general_intersections()?
+                        };
+                        match intersections {
                             Classification::Decided(
                                 BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
                             ) => {
@@ -7901,6 +7935,28 @@ mod certified_successor_tests {
         )
     }
 
+    fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![(-1).into(), 0.into(), 3.into()],
+                policy,
+            )
+            .expect("valid parameter polynomial"),
+        );
+        let interval = decided(
+            crate::BezierParameterInterval::try_new(
+                (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                Real::one(),
+                policy,
+            )
+            .expect("valid parameter interval"),
+        );
+        decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+                .expect("isolated parameter"),
+        )
+    }
+
     fn rational_line(start_x: i32, end_x: i32) -> RationalBezier2 {
         RationalBezier2::try_new(
             vec![
@@ -8173,7 +8229,7 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn nonadjacent_source_related_algebraic_chord_pair_replays_every_contact() {
+    fn nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");
             let source_curve = BezierSubcurve2::Cubic(CubicBezier2::new(
@@ -8281,13 +8337,273 @@ mod certified_successor_tests {
             assert!(!context.authored_carriers_are_adjacent(pair));
             let result = context
                 .pair_result(pair)
-                .expect("nonadjacent source-related replay must complete");
+                .expect("nonadjacent general source/chord replay must complete");
             assert!(
                 result.blockers.is_empty(),
-                "nonadjacent source-related result: {result:?}"
+                "nonadjacent general source/chord result: {result:?}"
+            );
+            assert_eq!(result.contacts.len(), 2);
+            assert!(
+                result
+                    .contacts
+                    .iter()
+                    .all(RegionPairContactEvidence::is_certified_transverse)
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn independent_field_algebraic_chord_uses_general_boolean_pair_engine() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+            let x_axis = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                    .expect("valid x axis"),
+            ));
+            let y_axis = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
+                    .expect("valid y axis"),
+            ));
+            let x_rational =
+                RationalBezier2::try_from_subcurve(&x_axis).expect("valid rational x axis");
+            let y_rational =
+                RationalBezier2::try_from_subcurve(&y_axis).expect("valid rational y axis");
+            let start = exact_contact_point_evidence(&x_rational, &first_parameter, &policy)
+                .expect("exact first endpoint")
+                .expect("first endpoint evidence");
+            let end = exact_contact_point_evidence(&y_rational, &second_parameter, &policy)
+                .expect("exact second endpoint")
+                .expect("second endpoint evidence");
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(start, end, &policy)
+                    .expect("valid independent-field chord"),
+            );
+            let x_fragment = decided(
+                x_axis
+                    .split_at_parameters(std::slice::from_ref(&first_parameter), &policy)
+                    .expect("exact x-axis split"),
+            )
+            .fragments()[0]
+                .clone();
+            let y_fragment = decided(
+                y_axis
+                    .split_at_parameters(std::slice::from_ref(&second_parameter), &policy)
+                    .expect("exact y-axis split"),
+            )
+            .fragments()[0]
+                .reversed()
+                .expect("exact y-axis reversal");
+            let chord_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                    y_fragment,
+                    x_fragment,
+                ],
+                &policy,
+            )
+            .expect("independent-field chord loop must close");
+
+            let diagonal = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1))
+                    .expect("valid diagonal"),
+            ));
+            let materialized = |curve| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve,
+            };
+            let source_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    materialized(diagonal),
+                    materialized(BezierSubcurve2::Quadratic(
+                        QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(
+                                Point2::from_values(1, 1),
+                                Point2::from_values(-1, 1),
+                            )
+                            .expect("valid source-loop top"),
+                        ),
+                    )),
+                    materialized(BezierSubcurve2::Quadratic(
+                        QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(
+                                Point2::from_values(-1, 1),
+                                Point2::from_values(0, 0),
+                            )
+                            .expect("valid source-loop closure"),
+                        ),
+                    )),
+                ],
+                &policy,
+            )
+            .expect("source loop must close");
+            let chord_region = CurveRegion2::try_new_with_loop_topology(
+                vec![chord_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid independent-field chord region");
+            let source_region = CurveRegion2::try_new_with_loop_topology(
+                vec![source_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid diagonal source region");
+            let context =
+                CurveRegionBooleanContext::try_new(&chord_region, &source_region, &policy)
+                    .expect("valid independent-field Boolean context");
+            let chord_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| {
+                    carrier.operand == CurvePathBooleanOperand2::First
+                        && matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
+                })
+                .expect("retained independent-field chord carrier");
+            let source_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| {
+                    carrier.operand == CurvePathBooleanOperand2::Second
+                        && carrier.fragment_index == 0
+                })
+                .expect("nonadjacent diagonal carrier");
+            let pair = context
+                .data
+                .pairs
+                .iter()
+                .find(|pair| {
+                    (pair.first_carrier_index == chord_index
+                        && pair.second_carrier_index == source_index)
+                        || (pair.first_carrier_index == source_index
+                            && pair.second_carrier_index == chord_index)
+                })
+                .expect("overlapping chord/diagonal bounds must schedule the pair");
+            assert!(!context.authored_carriers_are_adjacent(pair));
+            let result = context
+                .pair_result(pair)
+                .expect("general independent-field pair replay must complete");
+            assert!(
+                result.blockers.is_empty(),
+                "independent-field pair result: {result:?}"
             );
             assert_eq!(result.contacts.len(), 1);
             assert!(result.contacts[0].is_certified_transverse());
+            let topology = context.build_split_topology();
+            assert!(
+                topology.is_ok(),
+                "independent-field contact must enter split topology: {topology:?}"
+            );
+            let booleans = context.build_boolean_regions();
+            assert!(
+                booleans.is_ok(),
+                "independent-field contact must traverse all Booleans: {booleans:?}"
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn adjacent_general_chord_fallback_excludes_the_authored_endpoint() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+            let source_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let independent_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+            let source_curve = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                Point2::new(Real::zero(), -half.clone()),
+                Point2::new(half.clone(), -half.clone()),
+                Point2::new(Real::one(), half.clone()),
+            ));
+            let source_rational =
+                RationalBezier2::try_from_subcurve(&source_curve).expect("valid parabola");
+            let shared_endpoint =
+                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
+                    .expect("exact shared endpoint")
+                    .expect("shared endpoint evidence");
+            let y_axis = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
+                    .expect("valid y axis"),
+            ));
+            let y_rational =
+                RationalBezier2::try_from_subcurve(&y_axis).expect("valid rational y axis");
+            let independent_endpoint =
+                exact_contact_point_evidence(&y_rational, &independent_parameter, &policy)
+                    .expect("exact independent endpoint")
+                    .expect("independent endpoint evidence");
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    shared_endpoint,
+                    independent_endpoint.clone(),
+                    &policy,
+                )
+                .expect("valid independent-field chord"),
+            );
+            let closure = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    independent_endpoint,
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                        Real::zero(),
+                        -half,
+                    )),
+                    &policy,
+                )
+                .expect("valid algebraic closure"),
+            );
+            let source_fragment = decided(
+                source_curve
+                    .split_at_parameters(std::slice::from_ref(&source_parameter), &policy)
+                    .expect("exact source split"),
+            )
+            .fragments()[0]
+                .clone();
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    source_fragment,
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                    BezierSplitFragment2::AlgebraicChord(closure),
+                ],
+                &policy,
+            )
+            .expect("adjacent independent-field loop must close");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid adjacent independent-field region");
+            let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
+                .expect("valid adjacent Boolean context");
+            let pair = context
+                .data
+                .pairs
+                .iter()
+                .find(|pair| {
+                    [pair.first_carrier_index, pair.second_carrier_index]
+                        .into_iter()
+                        .map(|index| &context.data.carriers[index])
+                        .any(|carrier| carrier.fragment_index == 0)
+                        && [pair.first_carrier_index, pair.second_carrier_index]
+                            .into_iter()
+                            .map(|index| &context.data.carriers[index])
+                            .any(|carrier| carrier.fragment_index == 1)
+                })
+                .expect("adjacent source/chord endpoint must schedule the pair");
+            assert!(context.authored_carriers_are_adjacent(pair));
+            let result = context
+                .pair_result(pair)
+                .expect("adjacent independent-field fallback must complete");
+            assert!(result.blockers.is_empty(), "adjacent result: {result:?}");
+            assert!(
+                result.contacts.is_empty(),
+                "authored adjacency owns the shared endpoint: {result:?}"
+            );
         }
     }
 
