@@ -61,14 +61,28 @@ replacement_tests = [
   "surface_arrangement::tests::exact_radial_tetrahedron_builds_two_reciprocal_cells",
   "surface_arrangement::tests::disconnected_nested_shells_receive_global_absolute_windings",
   "surface_arrangement::tests::surface_topology_rejects_malformed_incidence_and_winding_dimensions",
+  "surface_arrangement::tests::bounded_face_pslg_keeps_disconnected_inner_cells",
+  "surface_arrangement::tests::bounded_face_pslg_keeps_nested_constraint_loops",
+  "surface_arrangement::tests::crossing_face_constraints_share_one_triple_point",
+  "surface_arrangement::tests::opposite_winding_coincident_faces_reuse_one_point_set",
+  "surface_arrangement::tests::collinear_overlaps_and_t_junctions_split_into_one_edge_set",
+  "tests/competitive.rs::dense_crossing_grid_exhausts_the_public_arrangement_under_both_policies",
 ]
 fixture_ids = [
   "surface_arrangement_negative_cavity",
   "surface_arrangement_genus_one_voxel_ring",
   "surface_arrangement_transverse_self_pwn",
   "surface_arrangement_forty_operand_truth",
+  "face_arrangement_disconnected_inner_cells",
+  "face_arrangement_nested_constraint_loops",
+  "face_arrangement_crossing_constraints",
+  "face_arrangement_opposite_winding_coincidence",
+  "face_arrangement_collinear_overlap_t_junctions",
+  "dense_crossing_grid_5",
+  "dense_crossing_grid_17",
+  "dense_crossing_grid_65",
 ]
-rationale = "Cache-hit ordering, recursive split ranking, reference escape, detour replay, probe budgets, and local-BSP leaf shape were correctness obligations only for the removed spatial-search algorithm. Finite arrangement exhaustion, exact radial incidence, global cell winding, policy propagation, and malformed-state rejection now prove the corresponding public behavior without preserving that control model."
+rationale = "Cache-hit ordering, recursive split ranking, reference escape, detour replay, probe budgets, and local-BSP leaf shape were correctness obligations only for the removed spatial-search algorithm. Finite arrangement exhaustion now includes disjoint and nested loops, crossing/overlapping constraints, opposite winding, and a scalable public crossing grid beyond every historical pass count. Exact radial incidence, global cell winding, policy propagation, and malformed-state rejection prove the remaining public behavior without preserving that control model."
 
 [[mapping]]
 id = "canonical_public_contract"

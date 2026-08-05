@@ -65,6 +65,22 @@ input coordinate stays on the same denominator-at-most-eight dyadic lattice,
 separating mesh growth from input scalar-storage growth. The large and XL
 siblings have distinct both-policy kernel/process heap selectors.
 
+The bounded face-arrangement microcases independently retain disjoint inner
+components, strictly nested constraint loops, proper crossing lines with one
+canonical plane-triple point, opposite-winding coincident edges, and collinear
+overlaps with T-junctions. Each runs the same exact PSLG/corefinement routines
+under both policies and requires `Certified` certainty.
+
+`dense_crossing_grid_5`, `_17`, and `_65` intersect one closed slab with a PWN
+of perpendicular closed box strips. Their integer scalar class and local shell
+topology stay fixed while the slab face receives 100, 1,156, and 16,900 exact
+grid crossings. The medium point exceeds every historical repair-pass count;
+the large point has its own both-policy kernel/process heap selector. This
+family exposed a valid crossed-triangle corridor whose boundary enclosed an
+interior triangulation component. Hypertri now closes only such unprotected
+cavity holes before exact retriangulation; exterior and previously constrained
+components remain barriers.
+
 `sparse_multishell_tetrahedra_8`, `sparse_multishell_tetrahedra_64`, and
 `sparse_multishell_tetrahedra_512` place independently overlapping
 tetrahedron pairs in a 2x2x2, 4x4x4, or 8x8x8 integer grid. Each operand is one

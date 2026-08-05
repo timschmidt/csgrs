@@ -7,9 +7,9 @@ use std::{env, hint::black_box, time::Instant};
 use competitive_support::{
     THIN_DYADIC_DIVISIONS, WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus,
     deep_symbolic_translated_box_case, deep_symbolic_translation_depth, dense_coplanar_box_case,
-    exact_mesh_pair, large_boolean_case, sparse_multishell_tetrahedra_case,
-    thin_dyadic_overlapping_box_case, thin_dyadic_shift, transverse_self_pwn_cluster_case,
-    wide_rational_overlapping_box_case, wide_rational_shift,
+    dense_crossing_grid_case, exact_mesh_pair, large_boolean_case,
+    sparse_multishell_tetrahedra_case, thin_dyadic_overlapping_box_case, thin_dyadic_shift,
+    transverse_self_pwn_cluster_case, wide_rational_overlapping_box_case, wide_rational_shift,
 };
 use hypermesh::{
     BooleanExpression, BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, MeshOutcome,
@@ -117,6 +117,9 @@ fn main() {
             "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
             "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
             "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
+            "dense_crossing_grid_5" => dense_crossing_grid_case(5),
+            "dense_crossing_grid_17" => dense_crossing_grid_case(17),
+            "dense_crossing_grid_65" => dense_crossing_grid_case(65),
             "sparse_multishell_tetrahedra_64" => sparse_multishell_tetrahedra_case(64),
             "sparse_multishell_tetrahedra_512" => sparse_multishell_tetrahedra_case(512),
             "transverse_self_pwn_clusters_8" => transverse_self_pwn_cluster_case(8),

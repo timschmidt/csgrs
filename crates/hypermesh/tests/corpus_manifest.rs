@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 49, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 57, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -200,6 +200,17 @@ fn corpus_spans_initial_replacement_path_classes() {
         "thin-shell",
         "sliver-triangles",
         "extreme-exponent",
+        "disjoint-coplanar-components",
+        "nested-constraint-loops",
+        "properly-crossing-constraints",
+        "coincident-edges",
+        "opposite-winding",
+        "collinear-overlap",
+        "dense-crossing-constraints",
+        "finite-work-exhaustion",
+        "historical-pass-limit-exceeded",
+        "weakly-simple-cavity",
+        "cavity-hole-closure",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -283,6 +294,7 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
             "boxes-3072-general",
             "dense-coplanar-16",
             "dense-coplanar-32",
+            "dense-crossing-65",
             "sparse-shells-512",
             "self-pwn-clusters-512",
             "thin-dyadic-64",
@@ -301,6 +313,57 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         .into_iter()
         .collect()
     );
+}
+
+#[test]
+fn dense_crossing_grid_scales_complete_public_cavity_recovery() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str) == Some("dense_crossing_grid")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), support::DENSE_CROSSING_GRID_LINE_COUNTS.len());
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        support::DENSE_CROSSING_GRID_LINE_COUNTS.map(|count| count as i64)
+    );
+
+    for line_count in support::DENSE_CROSSING_GRID_LINE_COUNTS {
+        let case = support::dense_crossing_grid_case(line_count);
+        let expected_triangles = 12 + 24 * line_count;
+        let expected_intersections = 4 * line_count * line_count;
+        let expected_volume = 3 * line_count * line_count + 2 * line_count;
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            expected_triangles
+        );
+        assert!(support::summarize(&case.left).closed);
+        assert!(support::summarize(&case.right).closed);
+
+        let fixture = family
+            .iter()
+            .find(|fixture| fixture["scale_parameter"].as_integer() == Some(line_count as i64))
+            .expect("every crossing-grid scale is manifested");
+        assert_eq!(
+            fixture["input_triangles"].as_integer(),
+            Some(expected_triangles as i64)
+        );
+        assert_eq!(
+            fixture["grid_intersections"].as_integer(),
+            Some(expected_intersections as i64)
+        );
+        assert_eq!(
+            fixture["expected_intersection_volume"].as_integer(),
+            Some(expected_volume as i64)
+        );
+    }
 }
 
 #[test]

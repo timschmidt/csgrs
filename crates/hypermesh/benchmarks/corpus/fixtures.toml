@@ -978,3 +978,155 @@ operand_count = 40
 input_triangles = 160
 requested_expressions = 3
 expected_cells = 80
+
+[[fixture]]
+id = "face_arrangement_disconnected_inner_cells"
+status = "permanent"
+provenance = "surface_arrangement::tests::bounded_face_pslg_keeps_disconnected_inner_cells"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one exact source triangle containing two disjoint coplanar triangular constraint loops"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "bounded-face-corefinement", "disjoint-coplanar-components", "disconnected-inner-cells"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_source_face_triangles = 13
+expected_source_face_constraints = 9
+
+[[fixture]]
+id = "face_arrangement_nested_constraint_loops"
+status = "permanent"
+provenance = "surface_arrangement::tests::bounded_face_pslg_keeps_nested_constraint_loops"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one exact source triangle containing two strictly nested coplanar triangular constraint loops"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "bounded-face-corefinement", "nested-constraint-loops", "nested-holes"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_source_face_triangles = 13
+expected_source_face_constraints = 9
+
+[[fixture]]
+id = "face_arrangement_crossing_constraints"
+status = "permanent"
+provenance = "surface_arrangement::tests::crossing_face_constraints_share_one_triple_point"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two transverse exact source planes cut one bounded source triangle at a shared triple point"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "bounded-face-corefinement", "properly-crossing-constraints", "plane-triple-construction", "shared-crossing-point"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_shared_crossing_points = 1
+
+[[fixture]]
+id = "face_arrangement_opposite_winding_coincidence"
+status = "permanent"
+provenance = "surface_arrangement::tests::opposite_winding_coincident_faces_reuse_one_point_set"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "two geometrically identical exact triangles with opposite winding and independent source identity"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "coplanar-overlay", "coincident-face", "coincident-edges", "opposite-winding", "shared-point-set"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_arrangement_points = 3
+
+[[fixture]]
+id = "face_arrangement_collinear_overlap_t_junctions"
+status = "permanent"
+provenance = "surface_arrangement::tests::collinear_overlaps_and_t_junctions_split_into_one_edge_set"
+license = "MIT"
+source_kind = "unit-generator"
+generator = "one bounded exact triangle with nested collinear segments and T-junctions on both sides"
+coordinate_class = "integer"
+topology = ["triangle-pslg", "bounded-face-corefinement", "collinear-overlap", "t-junction", "canonical-split-edge-set"]
+operations = ["face-corefinement"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_arrangement_points = 11
+expected_source_face_constraints = 10
+
+[[fixture]]
+id = "dense_crossing_grid_5"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "weakly-simple-cavity", "cavity-hole-closure"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "scaling", "fuzz-seed"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 5
+input_triangles = 132
+grid_intersections = 100
+expected_intersection_volume = 85
+
+[[fixture]]
+id = "dense_crossing_grid_17"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "historical-pass-limit-exceeded", "weakly-simple-cavity", "cavity-hole-closure"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["regression", "scaling", "fuzz-seed"]
+size = "medium"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 17
+input_triangles = 420
+grid_intersections = 1156
+expected_intersection_volume = 901
+
+[[fixture]]
+id = "dense_crossing_grid_65"
+status = "permanent"
+provenance = "Hypermesh deterministic public Boolean crossing-cavity corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::dense_crossing_grid_case"
+coordinate_class = "integer"
+topology = ["closed-pwn", "self-intersecting-pwn", "same-operand-corefinement", "dense-crossing-constraints", "finite-work-exhaustion", "historical-pass-limit-exceeded", "weakly-simple-cavity", "cavity-hole-closure", "large-mesh"]
+operations = ["intersection"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["scaling", "heap"]
+size = "large"
+cgal_eligible = false
+expected_certainty = "Certified"
+scaling_family = "dense_crossing_grid"
+scale_parameter = 65
+input_triangles = 1572
+grid_intersections = 16900
+expected_intersection_volume = 12805
+heap_probe_modes = ["dense-crossing-65"]

@@ -5253,30 +5253,64 @@ mod tests {
     }
 
     #[test]
+    fn bounded_face_pslg_keeps_nested_constraint_loops() {
+        let polygons = vec![
+            triangle([p(0, 0, 0), p(30, 0, 0), p(0, 30, 0)], 0, 0, [0, 1, 2]),
+            triangle([p(4, 4, 0), p(16, 4, 0), p(4, 16, 0)], 1, 1, [0, 1, 2]),
+            triangle([p(6, 6, 0), p(9, 6, 0), p(6, 9, 0)], 2, 2, [0, 1, 2]),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
+
+            assert_eq!(surface.face_triangles(0).len(), 13);
+            assert_eq!(surface.face_constraints(0).len(), 9);
+            assert!(surface.face_contacts(0).is_empty());
+            for face in 0..polygons.len() {
+                assert_constraints_are_edges(&surface, face);
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
     fn crossing_face_constraints_share_one_triple_point() {
         let polygons = vec![
             triangle([p(0, 0, 0), p(20, 0, 0), p(0, 20, 0)], 0, 0, [0, 1, 2]),
             triangle([p(5, -2, -2), p(5, 20, -2), p(5, -2, 2)], 1, 1, [0, 1, 2]),
             triangle([p(-2, 5, -2), p(20, 5, -2), p(-2, 5, 2)], 2, 2, [0, 1, 2]),
         ];
-        let decisions = crate::test_support::approximate_decisions();
-        let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
 
-        let center = surface
-            .points
-            .iter()
-            .position(|point| point == &p(5, 5, 0))
-            .expect("the two cuts have one exact crossing");
-        assert!(surface.face_triangles(0).len() >= 8);
-        for face in 0..polygons.len() {
-            assert!(
-                surface
-                    .face_triangles(face)
-                    .iter()
-                    .any(|triangle| triangle.contains(&(center as u32)))
-            );
-            assert_constraints_are_edges(&surface, face);
+            let center = surface
+                .points
+                .iter()
+                .position(|point| point == &p(5, 5, 0))
+                .expect("the two cuts have one exact crossing");
+            assert!(surface.face_triangles(0).len() >= 8);
+            for face in 0..polygons.len() {
+                assert!(
+                    surface
+                        .face_triangles(face)
+                        .iter()
+                        .any(|triangle| triangle.contains(&(center as u32)))
+                );
+                assert_constraints_are_edges(&surface, face);
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
     }
 
@@ -5285,22 +5319,29 @@ mod tests {
         let first = triangle([p(0, 0, 0), p(6, 0, 0), p(0, 6, 0)], 0, 0, [0, 1, 2]);
         let second = triangle([p(0, 6, 0), p(6, 0, 0), p(0, 0, 0)], 1, 1, [0, 1, 2]);
         let polygons = [first, second];
-        let decisions = crate::test_support::approximate_decisions();
-        let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
-        let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let graph = pairwise_intersections_by_polygon(&decisions, &polygons).unwrap();
+            let surface = corefine_test_surface(&decisions, &polygons, &graph).unwrap();
 
-        let canonical = |face: usize| {
-            let mut triangles = surface.face_triangles(face).to_vec();
-            for triangle in &mut triangles {
-                triangle.sort_unstable();
-            }
-            triangles.sort_unstable();
-            triangles
-        };
-        assert_eq!(surface.points.len(), 3);
-        assert_eq!(canonical(0), canonical(1));
-        assert_constraints_are_edges(&surface, 0);
-        assert_constraints_are_edges(&surface, 1);
+            let canonical = |face: usize| {
+                let mut triangles = surface.face_triangles(face).to_vec();
+                for triangle in &mut triangles {
+                    triangle.sort_unstable();
+                }
+                triangles.sort_unstable();
+                triangles
+            };
+            assert_eq!(surface.points.len(), 3);
+            assert_eq!(canonical(0), canonical(1));
+            assert_constraints_are_edges(&surface, 0);
+            assert_constraints_are_edges(&surface, 1);
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
     }
 
     #[test]

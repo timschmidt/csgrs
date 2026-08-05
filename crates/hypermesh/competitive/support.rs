@@ -22,6 +22,7 @@ pub const STRICT_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const DENSE_COPLANAR_DIVISIONS: [usize; 3] = [4, 16, 32];
+pub const DENSE_CROSSING_GRID_LINE_COUNTS: [usize; 3] = [5, 17, 65];
 pub const SPARSE_MULTISHELL_COUNTS: [usize; 3] = [8, 64, 512];
 pub const SELF_PWN_CLUSTER_COUNTS: [usize; 3] = [8, 64, 512];
 pub const DEEP_SYMBOLIC_TRANSLATION_DEPTHS: [usize; 4] = [1, 8, 32, 128];
@@ -1275,6 +1276,77 @@ pub fn transverse_self_pwn_cluster_case(cluster_count: usize) -> Case {
             Some(Bounds {
                 min: [0.0; 3],
                 max: max_origin.map(|coordinate| coordinate + 5.0),
+            }),
+        ],
+    }
+}
+
+/// Intersects one enclosing slab with a PWN made from perpendicular box
+/// strips. Every strip is a complete closed shell. On the slab's top face,
+/// the two strip directions induce a finite grid of proper arrangement-line
+/// crossings; increasing `line_count` scales that crossing schedule without
+/// changing the scalar representation or local intersection topology.
+pub fn dense_crossing_grid_case(line_count: usize) -> Case {
+    assert!(line_count > 0);
+    let line_count_u32 = u32::try_from(line_count).expect("crossing-grid size fits u32");
+    let extent_u32 = line_count_u32
+        .checked_mul(2)
+        .and_then(|value| value.checked_add(1))
+        .expect("crossing-grid extent fits u32");
+    let extent = f64::from(extent_u32);
+    let left = box_mesh([0.0, 0.0, -2.0], [extent, extent, 0.0]);
+    let mut right = RawMesh {
+        positions: Vec::with_capacity(line_count.saturating_mul(16)),
+        triangles: Vec::with_capacity(line_count.saturating_mul(24)),
+    };
+    for line in 0..line_count_u32 {
+        let coordinate = f64::from(line * 2 + 1);
+        append_raw_mesh(
+            &mut right,
+            box_mesh(
+                [coordinate, -1.0, -1.0],
+                [coordinate + 1.0, extent + 1.0, 1.0],
+            ),
+        );
+        append_raw_mesh(
+            &mut right,
+            box_mesh(
+                [-1.0, coordinate, -1.0],
+                [extent + 1.0, coordinate + 1.0, 1.0],
+            ),
+        );
+    }
+
+    let lines = f64::from(line_count_u32);
+    let left_volume = 2.0 * extent * extent;
+    let right_volume = 4.0 * lines * (extent + 2.0) - 2.0 * lines * lines;
+    let intersection_volume = 2.0 * lines * extent - lines * lines;
+    Case {
+        name: match line_count {
+            5 => "dense_crossing_grid_5",
+            17 => "dense_crossing_grid_17",
+            65 => "dense_crossing_grid_65",
+            _ => "dense_crossing_grid",
+        },
+        left,
+        right,
+        expected_volumes: [
+            left_volume + right_volume - intersection_volume,
+            intersection_volume,
+            left_volume - intersection_volume,
+        ],
+        expected_bounds: [
+            Some(Bounds {
+                min: [-1.0, -1.0, -2.0],
+                max: [extent + 1.0, extent + 1.0, 1.0],
+            }),
+            Some(Bounds {
+                min: [0.0, 0.0, -1.0],
+                max: [extent, extent, 0.0],
+            }),
+            Some(Bounds {
+                min: [0.0, 0.0, -2.0],
+                max: [extent, extent, 0.0],
             }),
         ],
     }

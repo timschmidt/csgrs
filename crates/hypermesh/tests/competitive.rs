@@ -376,6 +376,39 @@ fn transverse_self_pwn_clusters_scale_under_both_policies() {
 }
 
 #[test]
+fn dense_crossing_grid_exhausts_the_public_arrangement_under_both_policies() {
+    for line_count in support::DENSE_CROSSING_GRID_LINE_COUNTS[..2]
+        .iter()
+        .copied()
+    {
+        let case = support::dense_crossing_grid_case(line_count);
+        let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+        let expected_six_volume = Rational::new(
+            i64::try_from(6 * (3 * line_count * line_count + 2 * line_count))
+                .expect("crossing-grid six-volume fits i64"),
+        );
+        let mut strict = None;
+
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Operation(BooleanOp::Intersection),
+            )
+            .unwrap_or_else(|error| panic!("{} {policy}: {error}", case.name));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            if let Some(strict) = &strict {
+                assert_eq!(&outcome.value, strict, "policy outputs differ");
+            } else {
+                strict = Some(outcome.value.clone());
+            }
+            assert!(boundary_is_balanced(&outcome.value.results[0]));
+            assert_eq!(exact_six_volume(&outcome.value, 0), expected_six_volume);
+        }
+    }
+}
+
+#[test]
 fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
     let case = support::dense_coplanar_box_case(4);
     let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
