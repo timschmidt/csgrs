@@ -49,8 +49,21 @@ impl CertifiedAabbFilter {
             let Some(maximum) = certified_coordinate_enclosure(bounds.max[axis]) else {
                 return Self::default();
             };
-            filter.min[axis] = outward_f32_lower(minimum[0]);
-            filter.max[axis] = outward_f32_upper(maximum[1]);
+            // A nonzero binary64 endpoint below the normal binary32 range
+            // collapses into only a handful of subnormal scheduling buckets.
+            // At that scale the compact filter is still conservative, but it
+            // can admit far more work than the borrowed exact AABB predicate.
+            // Mark the whole filter unavailable so overlap follows that exact
+            // route instead. Exact zero remains fully representable.
+            let minimum = minimum[0];
+            let maximum = maximum[1];
+            if (minimum != 0.0 && minimum.abs() < f64::from(f32::MIN_POSITIVE))
+                || (maximum != 0.0 && maximum.abs() < f64::from(f32::MIN_POSITIVE))
+            {
+                return Self::default();
+            }
+            filter.min[axis] = outward_f32_lower(minimum);
+            filter.max[axis] = outward_f32_upper(maximum);
         }
         filter
     }
@@ -1518,6 +1531,34 @@ mod tests {
             let decisions = DecisionContext::new(&context);
             assert!(!bounds_overlap_decision(&decisions, &left, &near_right).unwrap());
             assert!(!bounds_overlap_decision(&decisions, &left, &far_right).unwrap());
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn subnormal_binary32_filter_declines_to_exact_policy_aware_overlap() {
+        let tiny = Real::try_from(f64::from_bits((1023_u64 - 512) << 52)).unwrap();
+        let twice_tiny = &tiny + &tiny;
+        let thrice_tiny = &twice_tiny + &tiny;
+        let left = ApproxBounds::new(point(0, 0, 0), Point3::new(Real::one(), Real::one(), tiny));
+        let right = ApproxBounds::new(
+            Point3::new(Real::zero(), Real::zero(), twice_tiny),
+            Point3::new(Real::one(), Real::one(), thrice_tiny),
+        );
+
+        assert_eq!(
+            CertifiedAabbFilter::from_bounds(&left)
+                .may_overlap(CertifiedAabbFilter::from_bounds(&right)),
+            None,
+            "a collapsed binary32 scale should use the borrowed exact AABB predicate",
+        );
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(!bounds_overlap_decision(&decisions, &left, &right).unwrap());
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
     }
