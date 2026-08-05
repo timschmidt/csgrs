@@ -107,16 +107,16 @@ pub use bezier_flatten::{
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub use bezier_offset::{
-    BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2, BezierOffsetPreflight2,
-    BezierOffsetRisk, BezierParallel2, BezierParallelApproximationCurve2, BezierParallelIncidence2,
-    BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
-    BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
-    BezierParallelPairIntersectionCandidates2, BezierParallelPairIntersectionContact2,
-    BezierParallelPairIntersectionParameterComponent2, BezierParallelPairIntersectionSet2,
-    BezierParallelSingularityAnalysis2, BezierParallelSource2, BezierParallelVerificationOptions,
-    Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
-    CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
-    CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
+    BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2,
+    BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2, BezierParallelApproximationCurve2,
+    BezierParallelIncidence2, BezierParallelIntersectionCandidates2,
+    BezierParallelIntersectionContact2, BezierParallelIntersectionParameterComponent2,
+    BezierParallelIntersectionSet2, BezierParallelPairIntersectionCandidates2,
+    BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionParameterComponent2,
+    BezierParallelPairIntersectionSet2, BezierParallelSingularityAnalysis2, BezierParallelSource2,
+    BezierParallelVerificationOptions, Blend2dCubicQuadraticReduction2,
+    Blend2dQuadraticOffsetCandidate2, CertifiedBezierParallelApproximation2,
+    CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
 };
 pub use bezier_parameter::{

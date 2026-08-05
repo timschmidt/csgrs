@@ -2696,11 +2696,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ) {
                                 Classification::Decided(equal) => Classification::Decided(equal),
                                 Classification::Uncertain(_) => {
-                                    same_contact_point(existing_point, point, &self.data.policy)
+                                    existing_point.same_point(point, &self.data.policy)
                                 }
                             }
                         } else {
-                            same_contact_point(existing_point, point, &self.data.policy)
+                            existing_point.same_point(point, &self.data.policy)
                         };
                         match same {
                             Classification::Decided(true) => {
@@ -7322,108 +7322,6 @@ impl RegionCarrierGeometry {
     }
 }
 
-fn same_contact_point(
-    first: &RationalBezierIntersectionPointEvidence2,
-    second: &RationalBezierIntersectionPointEvidence2,
-    policy: &CurveContext,
-) -> Classification<bool> {
-    match (first, second) {
-        (
-            RationalBezierIntersectionPointEvidence2::Exact(first),
-            RationalBezierIntersectionPointEvidence2::Exact(second),
-        ) => {
-            if first.shares_storage(second) {
-                return Classification::Decided(true);
-            }
-            match crate::classify::is_zero(&first.distance_squared(second), policy) {
-                Some(equal) => Classification::Decided(equal),
-                None => Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-        (
-            RationalBezierIntersectionPointEvidence2::Algebraic(first),
-            RationalBezierIntersectionPointEvidence2::Algebraic(second),
-        ) => {
-            if let Some(classification) =
-                first.same_injective_parametric_source_point(second, policy)
-            {
-                return classification;
-            }
-            // A decided same-sign rational Bezier control hull contains the
-            // entire affine curve image, so disjoint source hulls prove that
-            // these retained point images cannot represent the same contact.
-            if let (
-                Some(Classification::Decided(first_bounds)),
-                Some(Classification::Decided(second_bounds)),
-            ) = (
-                first.parametric_source_bounds(policy),
-                second.parametric_source_bounds(policy),
-            ) && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "contact-point-equality",
-                    "source-bounds-disjoint",
-                );
-                return Classification::Decided(false);
-            }
-            let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
-            else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
-                first.x().and_then(|image| image.representation()),
-                first.y().and_then(|image| image.representation()),
-                second.x().and_then(|image| image.representation()),
-                second.y().and_then(|image| image.representation()),
-            ) else {
-                return if first == second {
-                    Classification::Decided(true)
-                } else {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                };
-            };
-            match (
-                crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy),
-                crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy),
-            ) {
-                (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
-                _ => Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-        (
-            RationalBezierIntersectionPointEvidence2::Exact(exact),
-            RationalBezierIntersectionPointEvidence2::Algebraic(algebraic),
-        )
-        | (
-            RationalBezierIntersectionPointEvidence2::Algebraic(algebraic),
-            RationalBezierIntersectionPointEvidence2::Exact(exact),
-        ) => {
-            let Some(algebraic) = algebraic.resolved(policy) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let (Some(x), Some(y)) = (
-                algebraic.x().and_then(|image| image.representation()),
-                algebraic.y().and_then(|image| image.representation()),
-            ) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let exact_x =
-                crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.x());
-            let exact_y =
-                crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.y());
-            match (
-                crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
-                crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
-            ) {
-                (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
-                _ => Classification::Uncertain(UncertaintyReason::RealSign),
-            }
-        }
-    }
-}
-
 fn empty_operand_result(
     first: &CurveRegion2,
     second: &CurveRegion2,
@@ -8882,7 +8780,7 @@ mod certified_successor_tests {
                 .is_none()
         );
         assert_eq!(
-            same_contact_point(&first, &second, &policy),
+            first.same_point(&second, &policy),
             Classification::Decided(false)
         );
         assert!(
@@ -8918,7 +8816,7 @@ mod certified_successor_tests {
         );
 
         assert_eq!(
-            same_contact_point(&first, &second, &policy),
+            first.same_point(&second, &policy),
             Classification::Decided(true)
         );
         #[cfg(feature = "predicates")]

@@ -2061,6 +2061,36 @@ pub struct BezierAlgebraicCuspSemicircleFragment2 {
     data: Arc<BezierAlgebraicCuspSemicircleFragmentData2>,
 }
 
+/// One-word exact straight chord whose endpoints may remain algebraic.
+///
+/// The endpoint images are retained independently. In particular, this does
+/// not construct a primitive element when a chamfer joins cuts from two
+/// unrelated curve fields. Exact predicates combine those fields only at the
+/// decision boundary, and `policy` remains part of the carrier so replay
+/// cannot silently weaken a STRICT construction.
+#[derive(Clone, Debug)]
+pub struct BezierAlgebraicChord2 {
+    data: Arc<BezierAlgebraicChordData2>,
+}
+
+impl PartialEq for BezierAlgebraicChord2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+            || (self.data.start == other.data.start
+                && self.data.end == other.data.end
+                && self.data.reversed == other.data.reversed
+                && self.data.policy == other.data.policy)
+    }
+}
+
+#[derive(Debug)]
+struct BezierAlgebraicChordData2 {
+    start: RationalBezierIntersectionPointEvidence2,
+    end: RationalBezierIntersectionPointEvidence2,
+    reversed: bool,
+    policy: CurveContext,
+}
+
 impl PartialEq for BezierAlgebraicCuspSemicircleFragment2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
@@ -10184,6 +10214,72 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
                 0
             },
         ))
+    }
+}
+
+impl BezierAlgebraicChord2 {
+    /// Constructs a nonzero exact chord from retained affine endpoint evidence.
+    ///
+    /// Algebraic equality is certified from shared source evidence, disjoint
+    /// source bounds, or represented coordinate roots. A decision unavailable
+    /// under `policy` is returned as uncertainty; no endpoint is rounded.
+    pub fn try_new(
+        start: RationalBezierIntersectionPointEvidence2,
+        end: RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match start.same_point(&end, policy) {
+            Classification::Decided(true) => Err(CurveError::ZeroLengthLine),
+            Classification::Decided(false) => Ok(Classification::Decided(Self {
+                data: Arc::new(BezierAlgebraicChordData2 {
+                    start,
+                    end,
+                    reversed: false,
+                    policy: *policy,
+                }),
+            })),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Returns the endpoint at the start of boundary traversal.
+    pub fn start(&self) -> &RationalBezierIntersectionPointEvidence2 {
+        if self.data.reversed {
+            &self.data.end
+        } else {
+            &self.data.start
+        }
+    }
+
+    /// Returns the endpoint at the end of boundary traversal.
+    pub fn end(&self) -> &RationalBezierIntersectionPointEvidence2 {
+        if self.data.reversed {
+            &self.data.start
+        } else {
+            &self.data.end
+        }
+    }
+
+    /// Returns whether traversal opposes the chord's construction order.
+    pub fn is_reversed(&self) -> bool {
+        self.data.reversed
+    }
+
+    /// Returns the predicate policy under which endpoint inequality was certified.
+    pub fn policy(&self) -> CurveContext {
+        self.data.policy
+    }
+
+    /// Returns the same exact chord in the opposite traversal direction.
+    pub fn reversed(&self) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start: self.data.start.clone(),
+                end: self.data.end.clone(),
+                reversed: !self.data.reversed,
+                policy: self.data.policy,
+            }),
+        }
     }
 }
 
@@ -23832,6 +23928,97 @@ mod conversion_tests {
             panic!("expected one unit-interval algebraic parameter");
         };
         parameter.clone()
+    }
+
+    #[test]
+    fn algebraic_chord_is_one_word_and_reverses_without_rounding() {
+        let policy = CurveContext::STRICT;
+        let start = RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0));
+        let end = RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(2, 1));
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(start.clone(), end.clone(), &policy).unwrap()
+        else {
+            panic!("distinct exact endpoints must construct a chord");
+        };
+
+        assert_eq!(
+            std::mem::size_of::<BezierAlgebraicChord2>(),
+            std::mem::size_of::<Arc<()>>()
+        );
+        assert_eq!(chord.start(), &start);
+        assert_eq!(chord.end(), &end);
+        assert!(!chord.is_reversed());
+        assert_eq!(chord.policy(), policy);
+
+        let clone = chord.clone();
+        assert!(Arc::ptr_eq(&chord.data, &clone.data));
+        let reversed = chord.reversed();
+        assert_eq!(reversed.start(), &end);
+        assert_eq!(reversed.end(), &start);
+        assert!(reversed.is_reversed());
+        assert_eq!(reversed.reversed(), chord);
+    }
+
+    #[test]
+    fn algebraic_chord_rejects_a_certified_zero_length() {
+        let point = RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(3, -4));
+        assert_eq!(
+            BezierAlgebraicChord2::try_new(point.clone(), point, &CurveContext::STRICT)
+                .unwrap_err(),
+            CurveError::ZeroLengthLine
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(first_parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/2) must remain algebraic");
+            };
+            let BezierParameter2::Algebraic(second_parameter) =
+                algebraic_parameter(vec![-third.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/3) must remain algebraic");
+            };
+            let first_curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                        .unwrap(),
+                ),
+            ))
+            .unwrap();
+            let second_curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
+                        .unwrap(),
+                ),
+            ))
+            .unwrap();
+            let start = RationalBezierIntersectionPointEvidence2::Algebraic(
+                first_curve
+                    .point_at_algebraic_parameter(&first_parameter, &policy)
+                    .unwrap(),
+            );
+            let end = RationalBezierIntersectionPointEvidence2::Algebraic(
+                second_curve
+                    .point_at_algebraic_parameter(&second_parameter, &policy)
+                    .unwrap(),
+            );
+
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(start.clone(), end.clone(), &policy).unwrap()
+            else {
+                panic!("independent selected endpoint fields must certify distinct");
+            };
+            assert_eq!(chord.start(), &start);
+            assert_eq!(chord.end(), &end);
+            assert_eq!(chord.policy(), policy);
+        }
     }
 
     #[cfg(feature = "predicates")]

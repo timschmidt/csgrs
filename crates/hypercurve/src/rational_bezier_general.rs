@@ -164,6 +164,98 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     Algebraic(RationalBezierAlgebraicPointImage2),
 }
 
+impl RationalBezierIntersectionPointEvidence2 {
+    /// Compares two retained affine points without materializing an algebraic
+    /// coordinate or sampling either isolating interval.
+    ///
+    /// Exact points use the canonical [`Point2`] predicate. Algebraic points
+    /// first reuse shared parametric provenance and disjoint source bounds,
+    /// then compare their represented coordinate roots. Mixed points compare
+    /// against constant represented-root evidence. Any predicate that remains
+    /// unproved stays explicit under `policy`.
+    pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
+        match (self, other) {
+            (Self::Exact(first), Self::Exact(second)) => {
+                if first.shares_storage(second) {
+                    return Classification::Decided(true);
+                }
+                match is_zero(&first.distance_squared(second), policy) {
+                    Some(equal) => Classification::Decided(equal),
+                    None => Classification::Uncertain(UncertaintyReason::RealSign),
+                }
+            }
+            (Self::Algebraic(first), Self::Algebraic(second)) => {
+                if let Some(classification) =
+                    first.same_injective_parametric_source_point(second, policy)
+                {
+                    return classification;
+                }
+                if let (
+                    Some(Classification::Decided(first_bounds)),
+                    Some(Classification::Decided(second_bounds)),
+                ) = (
+                    first.parametric_source_bounds(policy),
+                    second.parametric_source_bounds(policy),
+                ) && first_bounds.overlaps(&second_bounds, policy)
+                    == Classification::Decided(false)
+                {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "contact-point-equality",
+                        "source-bounds-disjoint",
+                    );
+                    return Classification::Decided(false);
+                }
+                let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
+                else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
+                    first.x().and_then(|image| image.representation()),
+                    first.y().and_then(|image| image.representation()),
+                    second.x().and_then(|image| image.representation()),
+                    second.y().and_then(|image| image.representation()),
+                ) else {
+                    return if first == second {
+                        Classification::Decided(true)
+                    } else {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    };
+                };
+                match (
+                    crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy),
+                    crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy),
+                ) {
+                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                    _ => Classification::Uncertain(UncertaintyReason::RealSign),
+                }
+            }
+            (Self::Exact(exact), Self::Algebraic(algebraic))
+            | (Self::Algebraic(algebraic), Self::Exact(exact)) => {
+                let Some(algebraic) = algebraic.resolved(policy) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let (Some(x), Some(y)) = (
+                    algebraic.x().and_then(|image| image.representation()),
+                    algebraic.y().and_then(|image| image.representation()),
+                ) else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let exact_x = exact_real_algebraic_representation(exact.x());
+                let exact_y = exact_real_algebraic_representation(exact.y());
+                match (
+                    crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
+                    crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
+                ) {
+                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                    _ => Classification::Uncertain(UncertaintyReason::RealSign),
+                }
+            }
+        }
+    }
+}
+
 /// One exactly replayed parameter pair shared by two rational Bezier images.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBezierIntersectionContact2 {
