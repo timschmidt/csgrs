@@ -383,6 +383,69 @@ impl Rational {
         ))
     }
 
+    fn add_sub_wide_dyadic(&self, other: &Self, subtract: bool) -> Option<Self> {
+        let left_shift = self.dyadic_denominator_shift_if_reduced()?;
+        let right_shift = other.dyadic_denominator_shift_if_reduced()?;
+        let denominator_shift = left_shift.max(right_shift);
+        let mut left = self.numerator.clone();
+        let mut right = other.numerator.clone();
+        let left_alignment = usize::try_from(denominator_shift - left_shift).ok()?;
+        let right_alignment = usize::try_from(denominator_shift - right_shift).ok()?;
+        if left_alignment != 0 {
+            left <<= left_alignment;
+        }
+        if right_alignment != 0 {
+            right <<= right_alignment;
+        }
+
+        let right_sign = if subtract { -other.sign } else { other.sign };
+        let (sign, mut numerator) = if self.sign == right_sign {
+            (self.sign, left + right)
+        } else {
+            match left.cmp(&right) {
+                Ordering::Greater => (self.sign, left - right),
+                Ordering::Less => (right_sign, right - left),
+                Ordering::Equal => return Some(Self::zero()),
+            }
+        };
+
+        // Unequal reduced dyadic scales align an odd numerator with an even
+        // one, so their result is already reduced. Equal scales may expose a
+        // shared power of two, which is removed with shifts alone.
+        let common_shift = if left_shift == right_shift {
+            numerator
+                .trailing_zeros()
+                .expect("nonzero dyadic sum has trailing zeros")
+                .min(denominator_shift)
+        } else {
+            0
+        };
+        if common_shift != 0 {
+            numerator >>= usize::try_from(common_shift).ok()?;
+        }
+        let result_denominator_shift = denominator_shift - common_shift;
+        if result_denominator_shift < u64::from(u128::BITS)
+            && let Some(magnitude) = numerator.to_u128()
+        {
+            return Some(Self::from_reduced_word_parts(
+                sign,
+                magnitude,
+                1_u128 << result_denominator_shift,
+            ));
+        }
+
+        let mut denominator = if left_shift >= right_shift {
+            self.denominator.clone()
+        } else {
+            other.denominator.clone()
+        };
+        if common_shift != 0 {
+            denominator >>= usize::try_from(common_shift).ok()?;
+        }
+        trace_rational_temporary!();
+        Some(Self::from_parts_raw(sign, numerator, denominator))
+    }
+
     #[inline]
     fn word_parts_provably_reduced(numerator: u128, denominator: u128) -> bool {
         denominator == 1
@@ -966,6 +1029,11 @@ impl Rational {
             self.retain_sum_pair(other, &result);
             return result;
         }
+        if let Some(result) = self.add_sub_wide_dyadic(other, false) {
+            crate::trace_dispatch!("rational", "add", "wide-dyadic");
+            self.retain_sum_pair(other, &result);
+            return result;
+        }
         let common_denominator = Rational::gcd_magnitudes_with_mixed_width_fast_path(
             &self.denominator,
             &other.denominator,
@@ -1205,6 +1273,11 @@ impl Rational {
         }
         if let Some(result) = self.add_sub_words(other, true) {
             crate::trace_dispatch!("rational", "sub", "word-sized");
+            self.retain_difference_pair(other, &result);
+            return result;
+        }
+        if let Some(result) = self.add_sub_wide_dyadic(other, true) {
+            crate::trace_dispatch!("rational", "sub", "wide-dyadic");
             self.retain_difference_pair(other, &result);
             return result;
         }

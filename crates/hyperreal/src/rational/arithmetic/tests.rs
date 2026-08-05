@@ -3549,6 +3549,108 @@ mod tests {
     }
 
     #[test]
+    fn wide_dyadic_add_sub_matches_fraction_construction() {
+        let magnitude = (BigUint::one() << 180_usize) + 3_u8;
+        for left_shift in [0_u64, 1, 127, 128, 255, 300] {
+            for right_shift in [0_u64, 1, 127, 128, 255, 300] {
+                let common_shift = left_shift.max(right_shift);
+                for left_sign in [Plus, Minus] {
+                    for right_sign in [Plus, Minus] {
+                        let left_magnitude = &magnitude + BigUint::from(left_shift * 2);
+                        let right_magnitude =
+                            &magnitude + BigUint::from(right_shift * 2 + 2);
+                        let left = Rational::from_parts_raw(
+                            left_sign,
+                            left_magnitude.clone(),
+                            BigUint::one() << usize::try_from(left_shift).unwrap(),
+                        );
+                        let right = Rational::from_parts_raw(
+                            right_sign,
+                            right_magnitude.clone(),
+                            BigUint::one() << usize::try_from(right_shift).unwrap(),
+                        );
+                        let signed = |sign, value: BigUint| match sign {
+                            Plus => BigInt::from(value),
+                            Minus => -BigInt::from(value),
+                            NoSign => BigInt::zero(),
+                        };
+                        let left_aligned = left_magnitude
+                            << usize::try_from(common_shift - left_shift).unwrap();
+                        let right_aligned = right_magnitude
+                            << usize::try_from(common_shift - right_shift).unwrap();
+                        let left_integer = signed(left_sign, left_aligned);
+                        let right_integer = signed(right_sign, right_aligned);
+                        let denominator = BigUint::one()
+                            << usize::try_from(common_shift).unwrap();
+                        let expected_sum = Rational::from_bigint_fraction(
+                            &left_integer + &right_integer,
+                            denominator.clone(),
+                        )
+                        .unwrap();
+                        let expected_difference = Rational::from_bigint_fraction(
+                            &left_integer - &right_integer,
+                            denominator,
+                        )
+                        .unwrap();
+
+                        assert_eq!(&left + &right, expected_sum);
+                        assert_eq!(&left - &right, expected_difference);
+                    }
+                }
+            }
+        }
+
+        let value = Rational::from_parts_raw(
+            Plus,
+            (BigUint::one() << 180_usize) + 3_u8,
+            BigUint::one() << 300_usize,
+        );
+        assert_eq!(&value - &value, Rational::zero());
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn wide_dyadic_add_sub_uses_shift_only_reduction() {
+        let left = Rational::from_parts_raw(
+            Plus,
+            (BigUint::one() << 180_usize) + 3_u8,
+            BigUint::one() << 300_usize,
+        );
+        let right = Rational::from_parts_raw(
+            Minus,
+            (BigUint::one() << 181_usize) + 5_u8,
+            BigUint::one() << 255_usize,
+        );
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let _ = &left + &right;
+            let _ = &left - &right;
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(trace.path_count("rational", "add", "wide-dyadic"), 1);
+        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 1);
+        assert_eq!(trace.rational.gcds, 0);
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::one() << 300_usize,
+        );
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(6_u8)
+                + (BigInt::from_biguint(Plus, right.numerator.clone()) << 45_usize),
+            BigUint::one() << 300_usize,
+        )
+        .unwrap();
+        crate::dispatch_trace::reset();
+        let actual = crate::dispatch_trace::with_recording(|| &unreduced - &right);
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(actual, expected);
+        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 0);
+        assert_ne!(trace.rational.gcds, 0);
+    }
+
+    #[test]
     fn integer_add_sub_preserves_reduced_fraction_denominator() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
         let five = Rational::from(5_u8);
