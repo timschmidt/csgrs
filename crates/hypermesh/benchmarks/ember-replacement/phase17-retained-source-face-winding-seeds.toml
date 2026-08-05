@@ -1,0 +1,269 @@
+schema = 1
+date = "2026-08-04"
+status = "accepted"
+implementation = "d103dcf8d484995343de580c38e6ea5eb7b532a9"
+parent = "611defa86758888c181b5642ecd784c6d0b4792e"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+
+[design]
+winding_boundary = "original exact closed-PWN source triangles"
+corefinement_role = "surface arrangement topology only"
+ray_predicate = "one exact predicate over borrowed Point3 references"
+source_real_clones_per_test = 0
+origin_validation = "checked arranged-facet contribution row"
+degenerate_direction_retry_unchanged = true
+strict_terminal_approximation = false
+approximate_512_terminal_owner = "Hyperlimit"
+fixture_branch = false
+component_count_branch = false
+operation_branch = false
+compatibility_surface = false
+
+[perf_protocol]
+cpu = 11
+perf_processes = 3
+events = ["instructions:u", "branches:u"]
+primary = "retired instructions and branches"
+whole_process = true
+includes_one_fixture_import_and_pwn_prime = true
+same_compiler = true
+same_lockfiles = true
+paired_parent_archive = true
+benchmark_specific_code = false
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_8"
+workload = "all x100"
+parent_instructions = 1087048451
+current_instructions = 1004682832
+instruction_movement_percent = -7.576996
+parent_branches = 197773290
+current_branches = 183061918
+branch_movement_percent = -7.438503
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_64"
+workload = "all x20"
+parent_instructions = 1902817815
+current_instructions = 1705807591
+instruction_movement_percent = -10.353604
+parent_branches = 347295502
+current_branches = 313147112
+branch_movement_percent = -9.832661
+
+[[perf]]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all x5"
+parent_instructions = 4447657362
+current_instructions = 3750586752
+instruction_movement_percent = -15.672759
+parent_branches = 815062679
+current_branches = 689826654
+branch_movement_percent = -15.365202
+
+[[perf]]
+fixture = "overlapping_boxes"
+workload = "all x1000"
+parent_instructions = 5205693181
+current_instructions = 5027801344
+instruction_movement_percent = -3.417256
+parent_branches = 915433758
+current_branches = 882399897
+branch_movement_percent = -3.608547
+
+[[perf_control]]
+fixture = "clipped_voxel_torus_33"
+workload = "all x3"
+instruction_movement_percent = -0.007620
+branch_movement_percent = 0.126068
+
+[[perf_control]]
+fixture = "clipped_voxel_torus_65"
+workload = "all x1"
+instruction_movement_percent = -0.010668
+branch_movement_percent = 0.082248
+
+[[perf_control]]
+fixture = "subdivided_overlapping_boxes_3072_each"
+workload = "union x5"
+instruction_movement_percent = 0.014917
+branch_movement_percent = 0.056793
+
+[[perf_control]]
+fixture = "dense_coplanar_boxes_32"
+workload = "all x1"
+instruction_movement_percent = 0.013501
+branch_movement_percent = -0.168930
+
+[[perf_control]]
+fixture = "wide_rational_boxes_2048"
+workload = "union x5"
+instruction_movement_percent = -0.003618
+branch_movement_percent = -0.008038
+
+[[perf_control]]
+fixture = "yeahright-full-rotated"
+workload = "intersection x1"
+instruction_movement_percent = 0.001328
+branch_movement_percent = 0.003309
+
+[sparse_scaling]
+shells = [8, 64, 512]
+instructions_per_arrangement = [10046828.32, 85290379.55, 750117350.4]
+instruction_growth = [8.489284, 8.794865]
+parent_instruction_growth = [8.757934, 9.349643]
+superlinear_retired_work_open = true
+
+[callgrind]
+fixture = "sparse_multishell_tetrahedra_512"
+workload = "all x1"
+parent_total_instructions = 1010417613
+current_total_instructions = 861194927
+total_movement_percent = -14.768417
+parent_build_surface_arrangement_inclusive = 780950557
+current_build_surface_arrangement_inclusive = 631603902
+arrangement_movement_percent = -19.123702
+parent_classify_surface_cells_inclusive = 222586741
+current_classify_surface_cells_inclusive = 83020645
+classification_movement_percent = -62.701891
+current_corefine_surface_inclusive = 418808194
+artifact = "target/phase17-source-face-winding-sparse-512.callgrind"
+
+[cgal_protocol]
+engine = "CGAL 6.0.3 EPECK"
+cgal_repetitions = 21
+hypermesh_perf_processes = 3
+exact_off = true
+cgal_records = 126
+all_cgal_rows_valid_closed_structurally_valid = true
+
+[[cgal]]
+shells = 8
+hypermesh_strict_median_ns = 880405
+hypermesh_approximate_512_median_ns = 868336
+cgal_outside_median_ns = 287640
+cgal_inside_median_ns = 279381
+strict_to_cgal_outside = 3.060786
+approximate_512_to_cgal_outside = 3.018830
+
+[[cgal]]
+shells = 64
+hypermesh_strict_median_ns = 6917317
+hypermesh_approximate_512_median_ns = 6853897
+cgal_outside_median_ns = 2027341
+cgal_inside_median_ns = 2063618
+strict_to_cgal_outside = 3.412014
+approximate_512_to_cgal_outside = 3.380732
+
+[[cgal]]
+shells = 512
+hypermesh_strict_median_ns = 60583762
+hypermesh_approximate_512_median_ns = 57567381
+cgal_outside_median_ns = 18227912
+cgal_inside_median_ns = 18231192
+strict_to_cgal_outside = 3.323681
+approximate_512_to_cgal_outside = 3.158199
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+selectors = 14
+policies = ["STRICT", "APPROXIMATE_512"]
+all_selectors_executed = true
+all_policy_rows_byte_identical = true
+all_certainty = "Certified"
+all_parent_candidate_peaks_byte_identical = true
+
+[[heap]]
+fixture = "sparse-shells-512"
+parent_total_peak = 15540295
+current_total_peak = 15540295
+parent_kernel_peak = 14578138
+current_kernel_peak = 14578138
+parent_allocations = 513202
+current_allocations = 470296
+parent_added_bytes = 53235212
+current_added_bytes = 50905532
+parent_post_boolean_retained_incremental = 1077200
+current_post_boolean_retained_incremental = 1070024
+
+[[heap]]
+fixture = "dense-coplanar-32"
+parent_total_peak = 78750901
+current_total_peak = 78750901
+parent_kernel_peak = 74724848
+current_kernel_peak = 74724848
+parent_allocations = 2049835
+current_allocations = 2049708
+
+[[heap]]
+fixture = "yeahright-full-rotated"
+parent_total_peak = 165381598
+current_total_peak = 165381598
+parent_kernel_peak = 158258204
+current_kernel_peak = 158258204
+parent_allocations = 15558650
+current_allocations = 15558650
+
+[[size]]
+profile = "release"
+consumer = "general"
+parent_native_text = 1987146
+current_native_text = 1984718
+parent_wasm_oz = 1410174
+current_wasm_oz = 1408990
+
+[[size]]
+profile = "release"
+consumer = "immediate"
+parent_native_text = 1990290
+current_native_text = 1987862
+parent_wasm_oz = 1412032
+current_wasm_oz = 1410857
+
+[[size]]
+profile = "size"
+consumer = "general"
+parent_native_text = 1080175
+current_native_text = 1080047
+parent_wasm_oz = 674376
+current_wasm_oz = 674493
+
+[[size]]
+profile = "size"
+consumer = "immediate"
+parent_native_text = 1081131
+current_native_text = 1081003
+parent_wasm_oz = 674786
+current_wasm_oz = 674902
+
+[callgraph.production]
+root = "workspace"
+crates = ["hypermesh", "hyperreal", "hyperlimit", "hypertri", "hyperlattice"]
+include_examples = false
+include_tests = false
+nodes = 14905
+edges = 24866
+artifact = "target/callgraph-hypermesh-source-face-winding-production/callgraph.json"
+
+[callgraph.evidence]
+include_examples = true
+include_tests = true
+nodes = 17187
+edges = 28093
+artifact = "target/callgraph-hypermesh-source-face-winding/callgraph.json"
+
+[validation]
+default_executed_tests = 185
+all_feature_executed_tests = 186
+documented_ignored_tests = 6
+focused_artificial_corefinement_edge_policy_test = true
+clippy_warning_denied = true
+rustdoc_warning_denied = true
+no_default_check = true
+all_fuzz_bins_checked = true
+benchmarks_compiled = true
+exact_cgal_checked = true
+canonical_size_harness = true
+format_and_diff_checks = true
