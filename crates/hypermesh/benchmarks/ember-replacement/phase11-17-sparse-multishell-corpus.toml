@@ -1,0 +1,402 @@
+schema = 1
+status = "retained-checkpoint-phase-11-17-and-18-open"
+captured_at = "2026-08-04"
+checkpoint = "fixed-local-topology-sparse-multishell-scaling-corpus"
+implementation_commit = "c66aac67367eec607bfa03259b6a14118a40f27d"
+previous_hypermesh_commit = "1aac821da92a65caf2fa767a20e4d72cde5a8cb6"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[component_heads]
+hyperreal = "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4"
+hyperlattice = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit = "76281a340160f30ab86aa1f59b0fff4762d51dea"
+hypertri = "de12f48ef4ffb3c655838fdcf024879da8c12e60"
+hypermesh = "c66aac67367eec607bfa03259b6a14118a40f27d"
+
+[scope]
+production_boolean_engine_count = 1
+production_module_changed = false
+dependency_changed = false
+cargo_feature_changed = false
+compatibility_shim = false
+benchmark_engine_dispatch = false
+fixture_component_triangle_coordinate_or_result_dispatch_in_engine = false
+hypercurve_edited = false
+hypersolve_edited = false
+phase_11_complete = false
+phase_17_complete = false
+phase_18_complete = false
+cgal_parity = false
+
+[corpus]
+manifest_records_before = 35
+manifest_records_after = 38
+new_scale_points = 3
+new_large_heap_selectors = 1
+closed_named_gaps = ["first fixed-local-topology sparse multi-shell component-scaling family"]
+open_named_gaps = ["legally distributable external real-world pathologies", "deeper non-rational symbolic scaling", "further adversarial and self-intersecting scaling", "stage-specific arena attribution"]
+policies = ["STRICT", "APPROXIMATE_512"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+all_successful_rows_certainty = "Certified"
+approximate_512_terminal_consumed = false
+policy_outputs_exactly_equal = true
+all_boundaries_exactly_balanced = true
+
+[generator]
+function = "competitive::support::sparse_multishell_tetrahedra_case"
+kind = "two indexed operands with disconnected tetrahedral shells on one exact integer grid"
+shell_counts = [8, 64, 512]
+grid_sides = [2, 4, 8]
+grid_spacing = 8
+tetrahedron_size = 4
+right_translation = [1, 1, 1]
+minimum_cross_cell_aabb_gap = 3
+vertices_per_operand_shell = 4
+triangles_per_operand_shell = 4
+coordinate_class = "bounded-word-integer"
+fixed_local_topology = true
+production_special_case = false
+
+[[scale]]
+id = "sparse_multishell_tetrahedra_8"
+shells_per_operand = 8
+input_triangles = 64
+input_coordinate_max = 13
+shared_output_vertices = 88
+output_triangles = [128, 32, 96, 64, 160]
+heap_selector = false
+
+[[scale]]
+id = "sparse_multishell_tetrahedra_64"
+shells_per_operand = 64
+input_triangles = 512
+input_coordinate_max = 29
+shared_output_vertices = 704
+output_triangles = [1024, 256, 768, 512, 1280]
+heap_selector = false
+
+[[scale]]
+id = "sparse_multishell_tetrahedra_512"
+shells_per_operand = 512
+input_triangles = 4096
+input_coordinate_max = 61
+shared_output_vertices = 5632
+output_triangles = [8192, 2048, 6144, 4096, 10240]
+heap_selector = "sparse-shells-512"
+
+[correctness]
+exact_six_volume_per_shell = [127, 1, 63, 63, 126]
+finite = true
+nondegenerate = true
+directionally_balanced = true
+strict_approximate_batches_equal = true
+cgal_valid = true
+cgal_closed = true
+cgal_structurally_valid = true
+cgal_xor_representation = "two complementary difference meshes"
+
+[exact_off]
+exporter = "examples/export_cgal_exact_off.rs"
+scalar_encoding = "reduced numerator/denominator from Real::exact_rational"
+rounds_through_decimal_approximation = false
+cgal_version = "6.0.3"
+cgal_kernel = "Exact_predicates_exact_constructions_kernel"
+
+[[exact_off.asset]]
+fixture = "sparse_multishell_tetrahedra_8"
+left_sha256 = "d65d0990dbf511a4c97f72ef46c77ad811acc2097f094d631145cd5d2ca3bcfc"
+right_sha256 = "1d8dc6bf249a6738f6ed7dacbad36f1c61aa775d12de8d6bd7caca3e97857e13"
+
+[[exact_off.asset]]
+fixture = "sparse_multishell_tetrahedra_64"
+left_sha256 = "e1919b96595326b21f3cb2628fef97aa238fe0263a0e917bee2dd1ebd2290d03"
+right_sha256 = "4d6fbd9408e4c3f36fd011aec0513b1094b86e976cd5f918b34242c6a4dc74d8"
+
+[[exact_off.asset]]
+fixture = "sparse_multishell_tetrahedra_512"
+left_sha256 = "b3115b50f2f23ad56513640d53bacd2d7e984e50d55db91df6f98a2bff1c572a"
+right_sha256 = "26e69cd18c3a613e8a86aeeb7f90cdda3a02e1803026cf1c85e675e4e45f9725"
+
+[runtime_protocol]
+threads = 1
+pinned_cpu = 11
+hypermesh_executable = "competitive_arrangement_probe"
+hypermesh_boundary = "repeated production Boolean calls after exact import and policy-qualified PWN priming"
+hypermesh_independent_processes = 7
+hypermesh_statistic = "median of independent aggregate elapsed-per-call means"
+cgal_executable = "hypermesh_cgal_epeck"
+cgal_boundary = "corefine_and_compute_boolean_operations"
+cgal_repetitions = 21
+cgal_statistic = "median"
+cgal_copy_modes = ["outside", "inside"]
+
+[[runtime_shared_all]]
+fixture = "sparse_multishell_tetrahedra_8"
+repetitions_per_hypermesh_process = 50
+hypermesh_strict_min_ns = 1052411
+hypermesh_strict_median_ns = 1062617
+hypermesh_strict_max_ns = 1175785
+hypermesh_approximate_512_min_ns = 1047467
+hypermesh_approximate_512_median_ns = 1056929
+hypermesh_approximate_512_max_ns = 1235130
+cgal_outside_min_ns = 258872
+cgal_outside_median_ns = 267721
+cgal_outside_max_ns = 408602
+cgal_inside_median_ns = 282470
+strict_to_cgal_outside = 3.969121
+approximate_512_to_cgal_outside = 3.947875
+
+[[runtime_shared_all]]
+fixture = "sparse_multishell_tetrahedra_64"
+repetitions_per_hypermesh_process = 20
+hypermesh_strict_min_ns = 8407726
+hypermesh_strict_median_ns = 8473328
+hypermesh_strict_max_ns = 8752454
+hypermesh_approximate_512_min_ns = 8361496
+hypermesh_approximate_512_median_ns = 8434242
+hypermesh_approximate_512_max_ns = 8541446
+cgal_outside_min_ns = 1982894
+cgal_outside_median_ns = 2009832
+cgal_outside_max_ns = 2351239
+cgal_inside_median_ns = 2048180
+strict_to_cgal_outside = 4.215938
+approximate_512_to_cgal_outside = 4.196491
+
+[[runtime_shared_all]]
+fixture = "sparse_multishell_tetrahedra_512"
+repetitions_per_hypermesh_process = 5
+hypermesh_strict_min_ns = 76780591
+hypermesh_strict_median_ns = 78087183
+hypermesh_strict_max_ns = 83489443
+hypermesh_approximate_512_min_ns = 76580496
+hypermesh_approximate_512_median_ns = 78303248
+hypermesh_approximate_512_max_ns = 79869107
+cgal_outside_min_ns = 16870734
+cgal_outside_median_ns = 17304464
+cgal_outside_max_ns = 18978229
+cgal_inside_median_ns = 17520209
+strict_to_cgal_outside = 4.512546
+approximate_512_to_cgal_outside = 4.525032
+
+[[runtime_union]]
+fixture = "sparse_multishell_tetrahedra_8"
+repetitions_per_hypermesh_process = 100
+hypermesh_strict_min_ns = 1131430
+hypermesh_strict_median_ns = 1281897
+hypermesh_strict_max_ns = 1636017
+hypermesh_approximate_512_min_ns = 1068603
+hypermesh_approximate_512_median_ns = 1186089
+hypermesh_approximate_512_max_ns = 1392431
+cgal_outside_min_ns = 215575
+cgal_outside_median_ns = 226145
+cgal_outside_max_ns = 350986
+cgal_inside_min_ns = 221235
+cgal_inside_median_ns = 232404
+cgal_inside_max_ns = 497676
+strict_to_cgal_outside = 5.668474
+approximate_512_to_cgal_outside = 5.244816
+
+[[runtime_union]]
+fixture = "sparse_multishell_tetrahedra_64"
+repetitions_per_hypermesh_process = 20
+hypermesh_strict_min_ns = 8479538
+hypermesh_strict_median_ns = 8758038
+hypermesh_strict_max_ns = 8906627
+hypermesh_approximate_512_min_ns = 8480965
+hypermesh_approximate_512_median_ns = 8952828
+hypermesh_approximate_512_max_ns = 9084296
+cgal_outside_min_ns = 1666766
+cgal_outside_median_ns = 1709493
+cgal_outside_max_ns = 2029181
+cgal_inside_min_ns = 1659976
+cgal_inside_median_ns = 1709153
+cgal_inside_max_ns = 1944496
+strict_to_cgal_outside = 5.123179
+approximate_512_to_cgal_outside = 5.237125
+
+[[runtime_union]]
+fixture = "sparse_multishell_tetrahedra_512"
+repetitions_per_hypermesh_process = 5
+hypermesh_strict_min_ns = 75142513
+hypermesh_strict_median_ns = 80977559
+hypermesh_strict_max_ns = 85561193
+hypermesh_approximate_512_min_ns = 75690615
+hypermesh_approximate_512_median_ns = 76047067
+hypermesh_approximate_512_max_ns = 82268597
+cgal_outside_min_ns = 13897807
+cgal_outside_median_ns = 14531014
+cgal_outside_max_ns = 16345340
+cgal_inside_min_ns = 13891768
+cgal_inside_median_ns = 14124302
+cgal_inside_max_ns = 15826096
+strict_to_cgal_outside = 5.572740
+approximate_512_to_cgal_outside = 5.233432
+
+[hardware_counters]
+executable = "competitive_arrangement_probe"
+operation = "all"
+policy = "STRICT"
+perf_repetitions = 3
+counters_exclude_fixture_construction = true
+
+[[hardware_counters.scale]]
+shells = 8
+calls_per_process = 100
+average_process_instructions = 1168218243
+average_process_branches = 211796723
+instructions_per_arrangement = 11682182.43
+branches_per_arrangement = 2117967.23
+
+[[hardware_counters.scale]]
+shells = 64
+calls_per_process = 20
+average_process_instructions = 2037655064
+average_process_branches = 369868843
+instructions_per_arrangement = 101882753.2
+branches_per_arrangement = 18493442.15
+
+[[hardware_counters.scale]]
+shells = 512
+calls_per_process = 5
+average_process_instructions = 4734236442
+average_process_branches = 859970070
+instructions_per_arrangement = 946847288.4
+branches_per_arrangement = 171994014.0
+
+[hardware_counters.scaling]
+shell_growth_per_step = 8.0
+instruction_growth = [8.721209, 9.293499]
+branch_growth = [8.731694, 9.300270]
+instructions_per_shell = [1460272.804, 1591918.019, 1849311.110]
+superlinear_retired_work_open = true
+
+[heap_protocol]
+executable = "large_mesh_kernel_heap_probe"
+fixture = "sparse_multishell_tetrahedra_512"
+selector = "sparse-shells-512"
+allocator = "System wrapped only in the measurement executable"
+metric = "successful GlobalAlloc requested layout payload bytes"
+boundary = "prepared input versus one production Boolean call versus output/input drop"
+serialized = true
+policies = ["STRICT", "APPROXIMATE_512"]
+policy_rows_byte_identical = true
+
+[heap]
+input_triangles = 4096
+output_vertices = 5120
+output_triangles = 8192
+process_baseline_live_bytes = 637
+process_baseline_live_blocks = 4
+input_retained_live_bytes = 699949
+input_retained_live_blocks = 156
+input_payload_bytes = 699312
+input_payload_blocks = 152
+boolean_peak_live_bytes = 15717359
+kernel_peak_incremental_bytes = 15017410
+post_boolean_retained_incremental_bytes = 1077200
+output_live_payload_bytes = 1032248
+input_fact_growth_bytes = 44952
+post_input_drop_incremental_bytes = 55960
+allocation_calls = 516658
+deallocation_calls = 516030
+reallocation_calls = 14099
+added_bytes = 53812724
+removed_bytes = 52735524
+
+[process_rss]
+metric = "fresh-process maximum RSS from /usr/bin/time -v"
+hypermesh_scope = "fixture generation, exact import, PWN priming, and one union"
+cgal_scope = "exact OFF read, common-contract validation, and one union"
+hypermesh_strict_kib = 21156
+hypermesh_approximate_512_kib = 21136
+cgal_copy_outside_kib = 13544
+cgal_copy_inside_kib = 13392
+hypermesh_strict_to_cgal_outside = 1.562020
+hypermesh_approximate_512_to_cgal_outside = 1.560543
+
+[historical]
+ember_row_exists_for_family = false
+historical_speedup_inferred = false
+deleted_engine_rebuilt_or_linked = false
+existing_scorecards = ["overlapping boxes", "full YeahRight"]
+
+[callgraph]
+reused_checkpoint = "phase17-policy-owned-direct-real-ordering"
+production_source_changed = false
+nodes = 14846
+edges = 24749
+hypercurve_included = false
+hypersolve_included = false
+ember_route_present = false
+compatibility_route_present = false
+
+[size]
+feature_set = "default"
+baseline = "phase17-policy-owned-direct-real-ordering"
+production_changed = false
+all_eight_artifacts_byte_identical = true
+release_general_native_text_bytes = 1970782
+release_general_wasm_opt_oz_bytes = 1394510
+release_immediate_native_text_bytes = 1973926
+release_immediate_wasm_opt_oz_bytes = 1396354
+size_general_native_text_bytes = 1072367
+size_general_wasm_opt_oz_bytes = 668271
+size_immediate_native_text_bytes = 1073331
+size_immediate_wasm_opt_oz_bytes = 668678
+
+[size.hashes]
+release_general_native_sha256 = "a71ddbd00c6e350bd28318a406b80cc94112cb94bc4a5a2c55cde0c31971eef6"
+release_immediate_native_sha256 = "b79c4ef7c6052e1daf2c60cb159f9ef0043284d5cfcf13d30216ad38a1e16fd5"
+release_general_wasm_opt_oz_sha256 = "e64d2789b577e2d30076096d15bcbfd3004ff9277be698f82a45ab06debcbbd6"
+release_immediate_wasm_opt_oz_sha256 = "5227aa92d8426e18ee8368c55f74c263c587441ee237b427f2f0760e315b9f03"
+size_general_native_sha256 = "043719d311d8902d4cc0f4ea83b5c56668c2792f22922054c431511c8d948ba5"
+size_immediate_native_sha256 = "e0a535dc6805f01ad50b49a7293c0cba7e20683258e33778ab0687271b5f330f"
+size_general_wasm_opt_oz_sha256 = "4efafac5ac77c697f7ffcf43ee821ca6bb19b7761cc8590697e7a4fe49cd0528"
+size_immediate_wasm_opt_oz_sha256 = "4b0f408a13b68807f8076e34df1701b2867c67af3d7b33ebb04bed3da364adfb"
+
+[footprint]
+implementation_insertions = 351
+implementation_deletions = 8
+production_rust_modules_changed = 0
+cargo_metadata_changed = false
+native_or_wasm_consumer_code_changed = false
+
+[validation]
+unit_all_features = 138
+unit_default = 137
+boolean = 8
+competitive_executed = 9
+competitive_ignored = 6
+manifest = 12
+intersection = 3
+policy = 9
+readme = 2
+all_features_executed_total = 181
+default_executed_total = 180
+failed = 0
+release_probe_builds = true
+both_policy_large_heap_executions = 2
+cgal_outputs_valid_closed_and_volume_checked = true
+cgal_xor_checked = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_deny_warnings = true
+no_default_check = true
+fuzz_bins_check = true
+bench_compile = true
+fmt = true
+diff_check = true
+default_size_harness = true
+
+[open]
+real_world_external_pathologies = true
+deeper_symbolic_scaling = true
+additional_adversarial_self_intersecting_scaling = true
+stage_specific_heap_attribution = true
+sparse_component_runtime_slope = true
+sparse_component_allocation_churn = true
+per_case_cgal_runtime_parity = true
+per_case_cgal_heap_rss_parity = true
+linked_size_recovery = true
+phase_18_completion_audit = true
