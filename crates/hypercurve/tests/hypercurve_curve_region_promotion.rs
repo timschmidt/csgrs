@@ -890,6 +890,121 @@ fn unified_region_corners_use_represented_bezier_incidence() {
     }
 }
 
+#[test]
+fn unified_region_corners_use_canonical_spline_bezier_spans() {
+    let controls = vec![p(0, 0), p(0, 1), p(1, 2)];
+    let knots = vec![
+        Real::from(2),
+        Real::from(2),
+        Real::from(2),
+        Real::from(5),
+        Real::from(5),
+        Real::from(5),
+    ];
+    let carriers = [
+        (
+            CurveFamily2::PolynomialBSpline,
+            Curve2::try_polynomial_bspline(
+                2,
+                controls.clone(),
+                knots.clone(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        ),
+        (
+            CurveFamily2::Nurbs,
+            Curve2::try_nurbs(
+                2,
+                controls,
+                vec![Real::one(); 3],
+                knots,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        ),
+    ];
+    let expected_cut = Point2::new(q(9, 16), q(3, 2));
+    let expected_line_cut = Point2::new(-q(39, 16), Real::zero());
+    let next_setback = (Real::from(657).sqrt().unwrap() / Real::from(16)).unwrap();
+
+    for (family, carrier) in carriers {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+            carrier,
+            Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap()),
+        ])
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source =
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+                    .unwrap()
+                    .into_value();
+            let source_paths = decided(source.materialized_boundary_paths(&policy).unwrap());
+            let canonical_family = source_paths[0].curves()[1].family();
+            assert_eq!(
+                canonical_family,
+                match family {
+                    CurveFamily2::PolynomialBSpline => CurveFamily2::QuadraticBezier,
+                    CurveFamily2::Nurbs => CurveFamily2::RationalQuadraticBezier,
+                    _ => unreachable!(),
+                }
+            );
+            let CurveCornerSolutions2::Unique(chamfered) = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    Real::one(),
+                    next_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the {family:?} region span must define one exact chamfer");
+            };
+            let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+            assert_eq!(chamfer_paths[0].curves()[2].family(), canonical_family);
+            assert_eq!(chamfer_paths[0].curves()[2].start(), &expected_cut);
+
+            let fillets = source
+                .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let has_expected = |candidate: &CurveRegion2| {
+                let paths = decided(candidate.materialized_boundary_paths(&policy).unwrap());
+                paths[0].curves()[2].family() == canonical_family
+                    && paths[0].curves()[1].family() == CurveFamily2::RationalQuadraticBezier
+                    && paths[0].curves()[0]
+                        .end()
+                        .distance_squared(&expected_line_cut)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+                    && paths[0].curves()[2]
+                        .start()
+                        .distance_squared(&expected_cut)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+            };
+            match &fillets {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the {family:?} region span lost its exact fillet: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
 #[cfg(feature = "predicates")]
 #[test]
 fn unified_region_corner_solver_obeys_terminal_policy_once() {

@@ -4750,7 +4750,9 @@ impl CurveRegion2 {
     ///
     /// Native line/arc vertices, retained exact line/circle images, and direct
     /// polynomial or rational Bezier carriers use the same exact interaction
-    /// solver as open paths. Every candidate is rebuilt with this region's
+    /// solver as open paths. Authored spline and NURBS boundaries are already
+    /// canonical native Bezier spans here, so they take that route without a
+    /// second decomposition. Every candidate is rebuilt with this region's
     /// material/hole and fill semantics. Algebraic trims that cannot yet be
     /// retained remain explicit blockers rather than falling through to
     /// historical contour machinery.
@@ -4901,7 +4903,8 @@ impl CurveRegion2 {
     /// Exact candidates come from the same carrier-interaction authority used
     /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
     /// or fill rule. Native trim-only vertices retain their contour fast path;
-    /// represented direct Bezier trims use the retained path authority.
+    /// represented direct and canonical spline/NURBS Bezier trims use the
+    /// retained path authority.
     pub fn fillet_loop_vertex_by_radius(
         &self,
         loop_index: usize,
@@ -5317,11 +5320,14 @@ impl CurveRegion2 {
     /// Materializes every retained boundary loop as an exact top-level path.
     ///
     /// Native and represented polynomial/rational fragments preserve their
-    /// exact curve carriers and source parameters. Regions whose traversal
-    /// still contains an algebraic endpoint that cannot be represented by a
-    /// public [`Curve2`] return explicit `Unsupported` uncertainty rather than
-    /// segmenting the boundary. This is the lossless interchange counterpart
-    /// to [`CurveRegion2::project_to_finite_profiles`]. The returned
+    /// exact canonical curve carriers and local parameters. Authored spline and
+    /// NURBS curves were intentionally collapsed to their exact native Bezier
+    /// spans during region construction; this method does not reconstruct the
+    /// larger authored carrier. Regions whose traversal still contains an
+    /// algebraic endpoint that cannot be represented by a public [`Curve2`]
+    /// return explicit `Unsupported` uncertainty rather than segmenting the
+    /// boundary. This is the lossless interchange counterpart to
+    /// [`CurveRegion2::project_to_finite_profiles`]. The returned
     /// [`CurveOutcome`] records whether validating exact joins consumed the
     /// `APPROXIMATE_512` terminal.
     pub fn materialized_boundary_paths(

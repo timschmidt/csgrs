@@ -2051,6 +2051,197 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
 }
 
 #[test]
+fn spline_incident_spans_reuse_represented_bezier_corner_incidence() {
+    let controls = vec![p(0, 0), p(0, 1), p(1, 2), p(2, 1), p(4, 2)];
+    let knots = vec![r(2), r(2), r(2), r(5), r(5), r(9), r(9), r(9)];
+    let carriers = [
+        (
+            CurveFamily2::PolynomialBSpline,
+            Curve2::try_polynomial_bspline(
+                2,
+                controls.clone(),
+                knots.clone(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        ),
+        (
+            CurveFamily2::Nurbs,
+            Curve2::try_nurbs(
+                2,
+                controls,
+                vec![Real::one(); 5],
+                knots,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+        ),
+    ];
+    let expected_cut = Point2::new(q(9, 16), q(3, 2));
+    let expected_public_parameter = q(17, 4);
+    let expected_reversed_parameter = q(27, 4);
+    let next_setback = (r(657).sqrt().unwrap() / r(16)).unwrap();
+    let expected_center = Point2::new(-q(39, 16), q(15, 4));
+
+    for (family, carrier) in carriers {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+            carrier,
+        ])
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let CurveCornerSolutions2::Unique(chamfered) = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    Real::one(),
+                    next_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the incident {family:?} span must define one exact chamfer");
+            };
+            let trimmed = &chamfered.curves()[2];
+            assert_eq!(trimmed.family(), family);
+            assert_eq!(trimmed.start(), &expected_cut);
+            assert_eq!(
+                trimmed.parameter_domain().start(),
+                &expected_public_parameter
+            );
+            assert_eq!(trimmed.parameter_domain().end(), &r(9));
+
+            let fillets = path
+                .fillet_vertex_by_radius(1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                candidate.curves()[2].family() == family
+                    && candidate.curves()[2].start() == &expected_cut
+                    && fillet
+                        .center()
+                        .distance_squared(&expected_center)
+                        .certified_eq_until(&Real::zero(), -4096)
+                        .as_bool()
+                        == Some(true)
+            };
+            match &fillets {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the incident {family:?} span lost its exact fillet: {reason:?}")
+                }
+            }
+
+            let reversed = path.clone().reversed(&policy).unwrap().into_value();
+            let CurveCornerSolutions2::Unique(reversed_chamfered) = reversed
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    next_setback.clone(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the reversed incident {family:?} span must remain exact");
+            };
+            let reversed_trimmed = &reversed_chamfered.curves()[0];
+            assert_eq!(reversed_trimmed.family(), family);
+            assert_eq!(reversed_trimmed.end(), &expected_cut);
+            assert_eq!(reversed_trimmed.parameter_domain().start(), &r(2));
+            assert_eq!(
+                reversed_trimmed.parameter_domain().end(),
+                &expected_reversed_parameter
+            );
+        }
+    }
+}
+
+#[test]
+fn spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path() {
+    let make_spline =
+        |family: CurveFamily2, controls: Vec<Point2>, start: i32, end: i32| match family {
+            CurveFamily2::PolynomialBSpline => Curve2::try_polynomial_bspline(
+                3,
+                controls,
+                vec![r(start); 4]
+                    .into_iter()
+                    .chain(vec![r(end); 4])
+                    .collect(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+            CurveFamily2::Nurbs => Curve2::try_nurbs(
+                3,
+                controls,
+                vec![Real::one(); 4],
+                vec![r(start); 4]
+                    .into_iter()
+                    .chain(vec![r(end); 4])
+                    .collect(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value(),
+            _ => unreachable!(),
+        };
+    let previous_controls = vec![
+        p(-4, 0),
+        Point2::new(-q(8, 3), Real::zero()),
+        Point2::new(-q(4, 3), Real::zero()),
+        p(0, 0),
+    ];
+    let next_controls = vec![
+        p(0, 0),
+        Point2::new(Real::zero(), q(4, 3)),
+        Point2::new(Real::zero(), q(8, 3)),
+        p(0, 4),
+    ];
+
+    for previous_family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+        for next_family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+            let path = CurvePath2::try_new(vec![
+                make_spline(previous_family, previous_controls.clone(), 2, 5),
+                make_spline(next_family, next_controls.clone(), 7, 11),
+            ])
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let CurveCornerSolutions2::Unique(filleted) = path
+                    .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                    .unwrap()
+                    .into_value()
+                else {
+                    panic!(
+                        "the exact {previous_family:?}/{next_family:?} PH spans must define one fillet"
+                    );
+                };
+                assert_eq!(filleted.curves()[0].family(), previous_family);
+                assert_eq!(filleted.curves()[0].end(), &p(-1, 0));
+                assert_eq!(filleted.curves()[0].parameter_domain().end(), &q(17, 4));
+                assert_eq!(filleted.curves()[2].family(), next_family);
+                assert_eq!(filleted.curves()[2].start(), &p(0, 1));
+                assert_eq!(filleted.curves()[2].parameter_domain().start(), &r(8));
+                let CurveGeometry2::CircularArc(fillet) = filleted.curves()[1].geometry() else {
+                    panic!("the exact PH-span fillet must remain circular");
+                };
+                assert_eq!(fillet.center(), &p(-1, 1));
+            }
+        }
+    }
+}
+
+#[test]
 fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes() {
     let next = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
     let previous = QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0));
@@ -2308,6 +2499,65 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
         CurveCertainty::Approximate512Consumed
     );
     assert_ne!(approximate.value.candidate_count(), 0);
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+        let controls = vec![
+            p(0, 0),
+            Point2::new(undecidable_zero.clone(), Real::one()),
+            p(1, 2),
+        ];
+        let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
+        let carrier = match family {
+            CurveFamily2::PolynomialBSpline => {
+                Curve2::try_polynomial_bspline(2, controls, knots, &CurveContext::STRICT)
+            }
+            CurveFamily2::Nurbs => Curve2::try_nurbs(
+                2,
+                controls,
+                vec![Real::one(); 3],
+                knots,
+                &CurveContext::STRICT,
+            ),
+            _ => unreachable!(),
+        }
+        .unwrap()
+        .into_value();
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+            carrier,
+        ])
+        .unwrap();
+
+        assert!(matches!(
+            path.fillet_vertex_by_radius(
+                1,
+                q(15, 4),
+                CurveCornerMode2::TrimOnly,
+                &CurveContext::STRICT,
+            ),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.operation() == CurveOperation2::Fillet
+                    && blocker.family() == family
+        ));
+        let approximate = path
+            .fillet_vertex_by_radius(
+                1,
+                q(15, 4),
+                CurveCornerMode2::TrimOnly,
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap();
+        assert_eq!(
+            approximate.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert_ne!(approximate.value.candidate_count(), 0);
+    }
 }
 
 #[cfg(feature = "predicates")]
