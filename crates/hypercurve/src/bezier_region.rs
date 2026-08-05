@@ -37,8 +37,8 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::{
-    solve_line_chamfer_corner, solve_line_fillet_corner, try_map_corner_solutions,
-    validate_corner_design_value,
+    ExactCornerCarrier2, solve_exact_chamfer_corner, solve_line_fillet_corner,
+    try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -4748,7 +4748,7 @@ impl CurveRegion2 {
 
     /// Solves a boundary-loop chamfer from two exact chord setbacks.
     ///
-    /// Native trim-only line vertices and losslessly lowered retained line
+    /// Native trim-only line/arc vertices and losslessly lowered retained line
     /// images use one shared exact interaction solver. Every candidate is
     /// rebuilt with this region's material/hole and fill semantics;
     /// nonmaterializable and higher-order pairs remain explicit blockers rather
@@ -4784,36 +4784,39 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         if mode == CurveCornerMode2::TrimOnly {
-            match self.solve_native_line_corner(
+            match self.solve_native_corner(
                 loop_index,
                 vertex_index,
                 CurveOperation2::Chamfer,
                 policy,
                 |previous, next| {
+                    let previous_carrier = ExactCornerCarrier2::from_segment(previous);
+                    let next_carrier = ExactCornerCarrier2::from_segment(next);
                     let previous_sign = validate_corner_design_value(
                         &previous_setback,
                         CurveOperation2::Chamfer,
-                        CurveFamily2::Line,
+                        previous_carrier.family(),
                         policy,
                     )?;
                     let next_sign = validate_corner_design_value(
                         &next_setback,
                         CurveOperation2::Chamfer,
-                        CurveFamily2::Line,
+                        next_carrier.family(),
                         policy,
                     )?;
-                    solve_line_chamfer_corner(
-                        previous,
-                        next,
+                    solve_exact_chamfer_corner(
+                        previous_carrier,
+                        next_carrier,
                         &previous_setback,
                         &next_setback,
                         previous_sign,
                         next_sign,
                         mode,
-                        CurveFamily2::Line,
-                        CurveFamily2::Line,
+                        previous_carrier.family(),
+                        next_carrier.family(),
                         policy,
                     )
+                    .map(Classification::Decided)
                 },
             )? {
                 Classification::Decided((_, _, _, CurveCornerSolutions2::NoSolution(reason))) => {
@@ -4826,7 +4829,7 @@ impl CurveRegion2 {
                     CurveCornerSolutions2::Unique(solution),
                 )) => {
                     if let Some((previous_parameter, next_parameter)) =
-                        solution.into_trim_parameters()
+                        solution.into_native_trim_parameters()
                     {
                         let edited = Self::rebuild_native_corner_region(
                             region,
@@ -4917,12 +4920,15 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         if mode == CurveCornerMode2::TrimOnly {
-            match self.solve_native_line_corner(
+            match self.solve_native_corner(
                 loop_index,
                 vertex_index,
                 CurveOperation2::Fillet,
                 policy,
                 |previous, next| {
+                    let (Segment2::Line(previous), Segment2::Line(next)) = (previous, next) else {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    };
                     let radius_sign = validate_corner_design_value(
                         &radius,
                         CurveOperation2::Fillet,
@@ -4939,6 +4945,7 @@ impl CurveRegion2 {
                         CurveFamily2::Line,
                         policy,
                     )
+                    .map(Classification::Decided)
                 },
             )? {
                 Classification::Decided((_, _, _, CurveCornerSolutions2::NoSolution(reason))) => {
@@ -5212,13 +5219,13 @@ impl CurveRegion2 {
         Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
-    fn solve_native_line_corner<T>(
+    fn solve_native_corner<T>(
         &self,
         loop_index: usize,
         vertex_index: usize,
         operation: CurveOperation2,
         policy: &CurveContext,
-        solve: impl FnOnce(&LineSeg2, &LineSeg2) -> ExactCurveResult<T>,
+        solve: impl FnOnce(&Segment2, &Segment2) -> ExactCurveResult<Classification<T>>,
     ) -> ExactCurveResult<Classification<(LineArcRegion2, CurveRegionLoopRole, usize, T)>> {
         let (region, role, ordinal) =
             match self.native_region_loop_for_edit(loop_index, operation, policy)? {
@@ -5240,14 +5247,10 @@ impl CurveRegion2 {
         } else {
             vertex_index - 1
         };
-        let (Segment2::Line(previous), Segment2::Line(next)) = (
-            &contour.segments()[previous_index],
-            &contour.segments()[vertex_index],
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
+        let previous = &contour.segments()[previous_index];
+        let next = &contour.segments()[vertex_index];
         solve(previous, next)
-            .map(|solution| Classification::Decided((region, role, ordinal, solution)))
+            .map(|solution| solution.map(|solution| (region, role, ordinal, solution)))
     }
 
     fn materialized_boundary_paths_for_edit(

@@ -931,6 +931,263 @@ fn oblique_line_corner_solvers_preserve_exact_orientation() {
 }
 
 #[test]
+fn exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let next_arc = CircularArc2::try_from_center(p(1, 0), p(2, 1), p(1, 1), false).unwrap();
+        let line_arc = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
+            Curve2::from(next_arc.clone()),
+        ])
+        .unwrap();
+        let CurveCornerSolutions2::Unique(chamfered) = line_arc
+            .chamfer_vertex_by_setbacks(
+                1,
+                q(1, 2),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the line-arc carrier pair must have one exact trim solution");
+        };
+        assert_eq!(
+            chamfered
+                .curves()
+                .iter()
+                .map(Curve2::family)
+                .collect::<Vec<_>>(),
+            vec![
+                CurveFamily2::Line,
+                CurveFamily2::Line,
+                CurveFamily2::CircularArc,
+            ]
+        );
+        let line_cut = Point2::new(q(1, 2), Real::zero());
+        let next_cut = chamfered.curves()[2].start();
+        assert_eq!(chamfered.curves()[0].end(), &line_cut);
+        assert_eq!(chamfered.curves()[1].start(), &line_cut);
+        assert_eq!(chamfered.curves()[1].end(), next_cut);
+        assert!(matches!(
+            next_cut
+                .distance_squared(&p(1, 0))
+                .certified_eq_until(&Real::one(), -4096),
+            CertifiedRealEquality::Equal { .. }
+        ));
+
+        let CurveCornerSolutions2::Multiple(extended) = line_arc
+            .chamfer_vertex_by_setbacks(
+                1,
+                q(1, 2),
+                Real::one(),
+                CurveCornerMode2::TrimOrExtend,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("line-arc extension mode must retain all four support choices");
+        };
+        assert_eq!(extended.len(), 4);
+        assert_eq!(
+            extended[0].curves()[0].end(),
+            &Point2::new(q(1, 2), Real::zero())
+        );
+        assert_eq!(extended[0].curves()[0].end(), extended[1].curves()[0].end());
+        assert_eq!(
+            extended[2].curves()[0].end(),
+            &Point2::new(q(3, 2), Real::zero())
+        );
+        assert_eq!(extended[2].curves()[0].end(), extended[3].curves()[0].end());
+        assert_eq!(
+            extended[0].curves()[2].start(),
+            extended[2].curves()[2].start()
+        );
+        assert_eq!(
+            extended[1].curves()[2].start(),
+            extended[3].curves()[2].start()
+        );
+        assert_ne!(
+            extended[0].curves()[2].start(),
+            extended[1].curves()[2].start()
+        );
+        let mut retained_corner_membership = extended[..2]
+            .iter()
+            .map(|candidate| {
+                let CurveGeometry2::CircularArc(arc) = candidate.curves()[2].geometry() else {
+                    panic!("every line-arc candidate must retain a circular carrier");
+                };
+                assert_eq!(arc.center(), &p(1, 1));
+                assert_eq!(arc.end(), &p(2, 1));
+                arc.contains_point(&p(1, 0), &policy)
+            })
+            .collect::<Vec<_>>();
+        retained_corner_membership
+            .sort_by_key(|classification| matches!(classification, Classification::Decided(true)));
+        assert_eq!(
+            retained_corner_membership,
+            vec![
+                Classification::Decided(false),
+                Classification::Decided(true)
+            ]
+        );
+        assert_eq!(
+            line_arc
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    q(1, 2),
+                    r(2).sqrt().unwrap(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value(),
+            CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain),
+            "a cut at the opposite arc endpoint is not an interior trim"
+        );
+
+        let previous_arc =
+            CircularArc2::try_from_center(p(0, -1), p(1, 0), p(1, -1), true).unwrap();
+        let arc_arc =
+            CurvePath2::try_new(vec![Curve2::from(previous_arc), Curve2::from(next_arc)]).unwrap();
+        let CurveCornerSolutions2::Unique(chamfered) = arc_arc
+            .chamfer_vertex_by_setbacks(
+                1,
+                Real::one(),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the arc-arc carrier pair must have one exact trim solution");
+        };
+        assert_eq!(
+            chamfered
+                .curves()
+                .iter()
+                .map(Curve2::family)
+                .collect::<Vec<_>>(),
+            vec![
+                CurveFamily2::CircularArc,
+                CurveFamily2::Line,
+                CurveFamily2::CircularArc,
+            ]
+        );
+        let previous_cut = chamfered.curves()[0].end();
+        let next_cut = chamfered.curves()[2].start();
+        assert_eq!(chamfered.curves()[1].start(), previous_cut);
+        assert_eq!(chamfered.curves()[1].end(), next_cut);
+        for cut in [previous_cut, next_cut] {
+            assert!(matches!(
+                cut.distance_squared(&p(1, 0))
+                    .certified_eq_until(&Real::one(), -4096),
+                CertifiedRealEquality::Equal { .. }
+            ));
+        }
+    }
+}
+
+#[test]
+fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
+    let major_arc =
+        CircularArc2::try_from_center(p(1, 0), Point2::new(q(3, 5), q(4, 5)), p(0, 0), true)
+            .unwrap();
+    let half_root_three = (r(3).sqrt().unwrap() / r(2)).unwrap();
+    for cut in [
+        Point2::new(q(1, 2), -half_root_three.clone()),
+        Point2::new(q(1, 2), half_root_three),
+    ] {
+        let contains = major_arc.contains_point(&cut, &CurveContext::STRICT);
+        assert!(
+            matches!(contains, Classification::Decided(true)),
+            "major-arc cut incidence must be strict: {contains:?}"
+        );
+        let sweep = major_arc
+            .sweep_fraction(&cut, &CurveContext::STRICT)
+            .unwrap();
+        let Classification::Decided(sweep) = sweep else {
+            panic!("major-arc cut sweep fraction must be strict: {sweep:?}");
+        };
+        let parameter = major_arc
+            .parameter_at_sweep_fraction(&sweep, &CurveContext::STRICT)
+            .unwrap();
+        assert!(
+            matches!(parameter, Classification::Decided(_)),
+            "major-arc public parameter must be strict: {parameter:?}"
+        );
+    }
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(1, -2), p(1, 0)).unwrap()),
+        Curve2::from(major_arc),
+    ])
+    .unwrap();
+
+    let CurveCornerSolutions2::Unique(tangent) = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            Real::one(),
+            r(2),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("the diametric major-arc setback must retain its tangent cut");
+    };
+    assert_eq!(tangent.curves()[0].end(), &p(1, -1));
+    assert_eq!(tangent.curves()[1].end(), &p(-1, 0));
+    assert_eq!(tangent.curves()[2].start(), &p(-1, 0));
+    assert_eq!(
+        path.chamfer_vertex_by_setbacks(
+            1,
+            Real::one(),
+            r(3),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
+        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+    );
+
+    let CurveCornerSolutions2::Multiple(chamfers) = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            Real::one(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("a major arc crossing the setback circle twice must retain both cuts");
+    };
+    assert_eq!(chamfers.len(), 2);
+    let next_starts = chamfers
+        .iter()
+        .map(|chamfer| {
+            assert_eq!(chamfer.curves()[0].end(), &p(1, -1));
+            assert_eq!(chamfer.curves()[1].start(), &p(1, -1));
+            assert_eq!(chamfer.curves()[2].family(), CurveFamily2::CircularArc);
+            chamfer.curves()[2].start().clone()
+        })
+        .collect::<Vec<_>>();
+    assert_ne!(next_starts[0], next_starts[1]);
+    for cut in next_starts {
+        assert!(matches!(
+            cut.distance_squared(&p(1, 0))
+                .certified_eq_until(&Real::one(), -4096),
+            CertifiedRealEquality::Equal { .. }
+        ));
+    }
+}
+
+#[test]
 fn radical_line_image_fillets_preserve_retained_families() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::from_line_segment(

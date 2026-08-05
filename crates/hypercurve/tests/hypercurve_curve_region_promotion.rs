@@ -655,6 +655,64 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
     );
 }
 
+#[test]
+fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
+    let rounded = Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+        Segment2::Arc(CircularArc2::try_from_center(p(4, 0), p(5, 1), p(4, 1), false).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(5, 1), p(5, 4)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(5, 4), p(0, 4)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source =
+            CurveRegion2::try_from_native_material_contours(vec![rounded.clone()], &policy)
+                .unwrap()
+                .into_value();
+        let CurveCornerSolutions2::Unique(chamfered) = source
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                q(1, 2),
+                Real::one(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the native line-arc vertex must have one exact chamfer");
+        };
+        let native = decided(chamfered.native_contours_fast_path(&policy).unwrap());
+        let segments = native.material_contours()[0].segments();
+        assert_eq!(segments.len(), 6);
+        let Segment2::Line(previous) = &segments[0] else {
+            panic!("the previous native line must remain a line");
+        };
+        let Segment2::Line(chamfer) = &segments[1] else {
+            panic!("the inserted native chamfer must be a line");
+        };
+        let Segment2::Arc(next) = &segments[2] else {
+            panic!("the next native arc must remain an arc");
+        };
+        let previous_cut = Point2::new(q(7, 2), Real::zero());
+        assert_eq!(previous.end(), &previous_cut);
+        assert_eq!(chamfer.start(), &previous_cut);
+        assert_eq!(chamfer.end(), next.start());
+        assert_eq!(next.center(), &p(4, 1));
+        assert_eq!(next.end(), &p(5, 1));
+        assert_eq!(
+            next.start()
+                .distance_squared(&p(4, 0))
+                .certified_eq_until(&Real::one(), -4096)
+                .as_bool(),
+            Some(true)
+        );
+    }
+}
+
 #[cfg(feature = "predicates")]
 #[test]
 fn unified_region_corner_solver_obeys_terminal_policy_once() {
