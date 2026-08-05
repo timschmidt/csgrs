@@ -128,7 +128,46 @@ mod tests {
     }
 
     #[test]
-    fn rational_linear_form4_filter_normalizes_only_safe_exponent_spans() {
+    fn rational_linear_form4_filter_never_disagrees_across_wide_exponent_spans() {
+        fn next_small_rational(state: &mut u64) -> Rational {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            Rational::from(if *state & 8 == 0 { 1 } else { -1 })
+        }
+
+        let mut state = 0xa409_3822_299f_31d0;
+        let mut certified = 0;
+        for span in [501_u64, 512, 900, 1022] {
+            let scale = Rational::try_from(f64::from_bits((1023 - span) << 52)).unwrap();
+            for _ in 0..512 {
+                let coefficient_base: [Rational; 4] =
+                    std::array::from_fn(|_| next_small_rational(&mut state));
+                let point_base: [Rational; 4] =
+                    std::array::from_fn(|_| next_small_rational(&mut state));
+                let coefficients = [
+                    coefficient_base[0].clone(),
+                    &coefficient_base[1] * &scale,
+                    coefficient_base[2].clone(),
+                    &coefficient_base[3] * &scale,
+                ];
+                let point = [
+                    &point_base[0] * &scale,
+                    point_base[1].clone(),
+                    point_base[2].clone(),
+                    &point_base[3] * &scale,
+                ];
+                certified += usize::from(rational_linear_form4_filter_matches_exact_sum(
+                    coefficients,
+                    point,
+                ));
+            }
+        }
+        assert!(certified > 2_000);
+    }
+
+    #[test]
+    fn rational_linear_form4_filter_normalizes_representable_spans_and_bounds_underflow() {
         fn rational(value: f64) -> Rational {
             Rational::try_from(value).unwrap()
         }
@@ -136,7 +175,7 @@ mod tests {
         let one = rational(1.0);
         let zero = Rational::zero();
         let minimum_safe = rational(f64::from_bits((1023_u64 - 500) << 52));
-        let first_unsafe = rational(f64::from_bits((1023_u64 - 501) << 52));
+        let wide_lane = rational(f64::from_bits((1023_u64 - 501) << 52));
 
         let safe_coefficients = [
             Real::new(one.clone()),
@@ -156,27 +195,45 @@ mod tests {
                 .expect("a 500-bit query span keeps every product normal");
         assert_eq!(safe_filter.sign(&safe_query), Some(RealSign::Positive),);
 
-        let unsafe_coefficients = [
+        let wide_coefficients = [
             Real::new(one.clone()),
-            Real::new(first_unsafe.clone()),
+            Real::new(wide_lane.clone()),
             Real::zero(),
             Real::zero(),
         ];
-        assert!(
-            RationalLinearForm4Filter::from_reals([
-                &unsafe_coefficients[0],
-                &unsafe_coefficients[1],
-                &unsafe_coefficients[2],
-                &unsafe_coefficients[3],
-            ])
-            .is_none()
-        );
-        assert!(
-            RationalLinearForm4Query::from_rationals([&one, &first_unsafe, &zero, &zero,])
-                .is_none()
-        );
-        assert!(
-            RationalLinearForm4Query::from_affine_point3([&first_unsafe, &zero, &zero,]).is_none()
+        let wide_filter = RationalLinearForm4Filter::from_reals([
+            &wide_coefficients[0],
+            &wide_coefficients[1],
+            &wide_coefficients[2],
+            &wide_coefficients[3],
+        ])
+        .expect("every normalized lane remains a normal binary64 value");
+        let wide_query = RationalLinearForm4Query::from_rationals([&zero, &wide_lane, &one, &zero])
+            .expect("the 501-bit query span remains representable");
+        assert_eq!(wide_filter.sign(&wide_query), Some(RealSign::Positive));
+        assert!(RationalLinearForm4Query::from_affine_point3([&wide_lane, &zero, &zero]).is_some());
+
+        let underflow_lane = rational(f64::from_bits((1023_u64 - 512) << 52));
+        let underflow_coefficients = [
+            Real::new(one.clone()),
+            Real::new(underflow_lane.clone()),
+            Real::zero(),
+            Real::zero(),
+        ];
+        let underflow_filter = RationalLinearForm4Filter::from_reals([
+            &underflow_coefficients[0],
+            &underflow_coefficients[1],
+            &underflow_coefficients[2],
+            &underflow_coefficients[3],
+        ])
+        .expect("the 512-bit coefficient span remains representable");
+        let underflow_query =
+            RationalLinearForm4Query::from_rationals([&zero, &underflow_lane, &one, &zero])
+                .expect("the 512-bit query span remains representable");
+        assert_eq!(
+            underflow_filter.sign(&underflow_query),
+            None,
+            "the absolute error floor must decline when the only nonzero product underflows",
         );
 
         let largest_power = rational(f64::from_bits(2046_u64 << 52));

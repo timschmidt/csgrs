@@ -802,7 +802,7 @@ mod tests {
     fn rational_linear_form4_normalization_handles_every_normal_exponent() {
         fn reference(mut values: [f64; 4]) -> Option<[f64; 4]> {
             const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
-            const SAFE_MIN_MAGNITUDE_BITS: u64 = (1023_u64 - 500) << 52;
+            const MIN_NORMAL_MAGNITUDE_BITS: u64 = f64::MIN_POSITIVE.to_bits();
             let max_magnitude_bits = values
                 .iter()
                 .map(|value| value.to_bits() & i64::MAX as u64)
@@ -820,7 +820,7 @@ mod tests {
                 let was_nonzero = value.to_bits() << 1 != 0;
                 *value *= inverse_scale;
                 let magnitude_bits = value.to_bits() & i64::MAX as u64;
-                if was_nonzero && magnitude_bits < SAFE_MIN_MAGNITUDE_BITS {
+                if was_nonzero && magnitude_bits < MIN_NORMAL_MAGNITUDE_BITS {
                     return None;
                 }
             }
@@ -829,7 +829,7 @@ mod tests {
 
         for exponent in 1..=2046_u64 {
             let scale = f64::from_bits(exponent << 52);
-            for span in [0, 1, 499, 500, 501, 1022, 2045] {
+            for span in [0, 1, 499, 500, 501, 511, 512, 1022, 2045] {
                 let lane_exponent = exponent.saturating_sub(span).max(1);
                 let lane = f64::from_bits(
                     (lane_exponent << 52)

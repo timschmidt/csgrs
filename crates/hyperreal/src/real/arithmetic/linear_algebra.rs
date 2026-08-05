@@ -1037,8 +1037,10 @@ impl Real {
         const NORMAL_MAGNITUDE_RANGE: u64 =
             INFINITY_MAGNITUDE_BITS - MIN_NORMAL_MAGNITUDE_BITS;
         // Preparation scales both vectors by exact positive powers of two and
-        // rejects exponent spans that could make a nonzero product subnormal.
-        // Every product is therefore finite normal or exact zero.
+        // keeps every nonzero input lane normal. Products and intermediate
+        // sums may nevertheless underflow when the two vectors have a large
+        // combined exponent span; the absolute floor below covers every such
+        // rounded product/sum instead of rejecting unrelated safe lane pairs.
         let magnitude_sum = products[0].abs()
             + products[1].abs()
             + products[2].abs()
@@ -1046,16 +1048,19 @@ impl Real {
         let value =
             ((products[0] + products[1]) + products[2]) + products[3];
 
-        // Each rational conversion is bounded by 32 eps. For one product,
+        // Each rational conversion is bounded by 32 eps. For one normal product,
         // coefficient and point conversion therefore contribute at most
         // (64 eps + 1024 eps^2) times its magnitude. Four rounded products,
         // the magnitude accumulation, and the value accumulation remain below
         // another 18 eps. A single 82-eps radius covers all of these errors
-        // while avoiding per-lane interval arithmetic in this hot filter.
-        // If an intermediate signed sum underflows, this bound either remains
-        // normal and dominates the lost subnormal value or is itself rejected.
+        // while avoiding per-lane interval arithmetic in this hot filter. The
+        // absolute floor covers at most four underflowing products and the
+        // seven sum operations with margin; it is too small to affect a normal
+        // relative bound outside that boundary.
         const ERROR_FACTOR: f64 = 82.0 * f64::EPSILON;
-        let error_bound = ERROR_FACTOR * magnitude_sum;
+        const UNDERFLOW_ERROR_FLOOR: f64 =
+            16.0 * f64::MIN_POSITIVE;
+        let error_bound = ERROR_FACTOR * magnitude_sum + UNDERFLOW_ERROR_FLOOR;
         let error_magnitude_bits =
             error_bound.to_bits() & i64::MAX as u64;
         if error_magnitude_bits
@@ -1077,8 +1082,8 @@ impl Real {
         mut values: [f64; 4],
     ) -> Option<[f64; 4]> {
         const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
-        const SAFE_MIN_MAGNITUDE_BITS: u64 =
-            (1023_u64 - 500) << 52;
+        const MIN_NORMAL_MAGNITUDE_BITS: u64 =
+            f64::MIN_POSITIVE.to_bits();
         let max_magnitude_bits = values
             .iter()
             .map(|value| value.to_bits() & i64::MAX as u64)
@@ -1101,7 +1106,7 @@ impl Real {
             let magnitude_bits =
                 value.to_bits() & i64::MAX as u64;
             if was_nonzero
-                && magnitude_bits < SAFE_MIN_MAGNITUDE_BITS
+                && magnitude_bits < MIN_NORMAL_MAGNITUDE_BITS
             {
                 return None;
             }
