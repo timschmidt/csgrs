@@ -1083,12 +1083,15 @@ fn bench_represented_bezier_region_corner_lanes(region: &CurveRegion2, iteration
 
 fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     let quadratic = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
-    let rational = RationalBezier2::try_new(
-        quadratic.control_points().into_iter().cloned().collect(),
-        vec![s(1), s(1), s(1)],
-    )?
-    .elevated_to_degree(5)
-    .expect("benchmark degree elevation must remain exact");
+    let quadratic_controls = quadratic
+        .control_points()
+        .into_iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    let quadratic_knots = vec![s(2), s(2), s(2), s(5), s(5), s(5)];
+    let rational = RationalBezier2::try_new(quadratic_controls.clone(), vec![s(1), s(1), s(1)])?
+        .elevated_to_degree(5)
+        .expect("benchmark degree elevation must remain exact");
     let line_quadratic = CurvePath2::try_new(vec![
         Curve2::from(line(-4, 0, 0, 0)),
         Curve2::from(quadratic.clone()),
@@ -1099,6 +1102,31 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         Curve2::from(rational),
     ])
     .expect("line/rational benchmark path must remain exact");
+    let line_polynomial_spline = CurvePath2::try_new(vec![
+        Curve2::from(line(-4, 0, 0, 0)),
+        Curve2::try_polynomial_bspline(
+            2,
+            quadratic_controls.clone(),
+            quadratic_knots.clone(),
+            &CurveContext::STRICT,
+        )
+        .expect("polynomial spline benchmark carrier must remain exact")
+        .into_value(),
+    ])
+    .expect("line/polynomial-spline benchmark path must remain exact");
+    let line_nurbs = CurvePath2::try_new(vec![
+        Curve2::from(line(-4, 0, 0, 0)),
+        Curve2::try_nurbs(
+            2,
+            quadratic_controls,
+            vec![s(1), s(1), s(1)],
+            quadratic_knots,
+            &CurveContext::STRICT,
+        )
+        .expect("NURBS benchmark carrier must remain exact")
+        .into_value(),
+    ])
+    .expect("line/NURBS benchmark path must remain exact");
     let cubic_ph_pair = CurvePath2::try_new(vec![
         Curve2::from(hypercurve::CubicBezier2::new(
             p(-4, 0),
@@ -1114,6 +1142,36 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         )),
     ])
     .expect("exact PH cubic benchmark path must remain exact");
+    let spline_ph_pair = CurvePath2::try_new(vec![
+        Curve2::try_polynomial_bspline(
+            3,
+            vec![
+                p(-4, 0),
+                Point2::new(-q(8, 3), s(0)),
+                Point2::new(-q(4, 3), s(0)),
+                p(0, 0),
+            ],
+            vec![s(2), s(2), s(2), s(2), s(5), s(5), s(5), s(5)],
+            &CurveContext::STRICT,
+        )
+        .expect("polynomial PH spline benchmark carrier must remain exact")
+        .into_value(),
+        Curve2::try_nurbs(
+            3,
+            vec![
+                p(0, 0),
+                Point2::new(s(0), q(4, 3)),
+                Point2::new(s(0), q(8, 3)),
+                p(0, 4),
+            ],
+            vec![s(1), s(1), s(1), s(1)],
+            vec![s(7), s(7), s(7), s(7), s(11), s(11), s(11), s(11)],
+            &CurveContext::STRICT,
+        )
+        .expect("NURBS PH spline benchmark carrier must remain exact")
+        .into_value(),
+    ])
+    .expect("exact PH spline benchmark path must remain exact");
     let source_center = Point2::new(-q(7, 16), q(207, 512));
     let source_start = Point2::new(-q(7, 16), -q(49, 256));
     let arc_quadratic = CurvePath2::try_new(vec![
@@ -1164,6 +1222,32 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         &q(15, 4),
         iterations,
     );
+    bench_represented_bezier_chamfer_lane(
+        "curve_path_line_polynomial_spline_design_chamfer",
+        &line_polynomial_spline,
+        &s(1),
+        &next_setback,
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_line_polynomial_spline_design_fillet",
+        &line_polynomial_spline,
+        &q(15, 4),
+        iterations,
+    );
+    bench_represented_bezier_chamfer_lane(
+        "curve_path_line_nurbs_design_chamfer",
+        &line_nurbs,
+        &s(1),
+        &next_setback,
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_line_nurbs_design_fillet",
+        &line_nurbs,
+        &q(15, 4),
+        iterations,
+    );
     bench_represented_bezier_fillet_lane(
         "curve_path_arc_quadratic_design_fillet",
         &arc_quadratic,
@@ -1173,6 +1257,12 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     bench_represented_bezier_fillet_lane(
         "curve_path_cubic_ph_pair_design_fillet",
         &cubic_ph_pair,
+        &s(1),
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_polynomial_spline_nurbs_ph_pair_design_fillet",
+        &spline_ph_pair,
         &s(1),
         iterations,
     );
