@@ -69,6 +69,82 @@ impl BivariatePolynomial {
     }
 }
 
+/// Exact polynomial in three parameters.
+///
+/// `coefficients[first_power][second_power][third_power]` multiplies the
+/// corresponding ascending powers. Rows and columns may be ragged; omitted
+/// coefficients are zero.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TrivariatePolynomial {
+    /// Coefficient tensor in ascending powers of all three parameters.
+    pub coefficients: Vec<Vec<Vec<Real>>>,
+}
+
+impl TrivariatePolynomial {
+    /// Constructs a trivariate polynomial from its ascending-power tensor.
+    pub const fn new(coefficients: Vec<Vec<Vec<Real>>>) -> Self {
+        Self { coefficients }
+    }
+}
+
+/// Selects one axis of a [`TrivariatePolynomial`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TrivariatePolynomialAxis {
+    /// The first tensor index.
+    First,
+    /// The second tensor index.
+    Second,
+    /// The third tensor index.
+    Third,
+}
+
+impl TrivariatePolynomialAxis {
+    const fn index(self) -> usize {
+        match self {
+            Self::First => 0,
+            Self::Second => 1,
+            Self::Third => 2,
+        }
+    }
+}
+
+/// Final status for eliminating one trivariate axis constrained to a selected
+/// univariate algebraic root.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TrivariateConstraintResultantStatus {
+    /// The two-retained-axis resultant was reconstructed exactly.
+    Constructed,
+    /// The trivariate polynomial or univariate constraint was empty.
+    EmptyPolynomial,
+    /// A coefficient needed for exact degree certification remained undecided.
+    UndecidedCoefficient,
+    /// The constraint was constant after certified trimming.
+    InvalidConstraint,
+    /// At least one retained-axis degree exceeded the configured budget.
+    DegreeBoundExceeded,
+    /// A sampled univariate resultant failed.
+    ResultantError,
+    /// Exact tensor-grid interpolation failed.
+    InterpolationDivisionFailed,
+}
+
+/// Exact report for eliminating one constrained trivariate axis.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TrivariateConstraintResultantReport {
+    /// Final construction status.
+    pub status: TrivariateConstraintResultantStatus,
+    /// Tensor axis removed by the resultant.
+    pub eliminated_axis: TrivariatePolynomialAxis,
+    /// Remaining tensor axes, in ascending original-axis order.
+    pub retained_axes: [TrivariatePolynomialAxis; 2],
+    /// Conservative resultant degree bound on each retained axis.
+    pub degree_bounds: [usize; 2],
+    /// Exact resultant in `retained_axes` order when construction succeeded.
+    pub resultant: Option<BivariatePolynomial>,
+    /// Sampled resultant error, when construction stopped at that boundary.
+    pub resultant_error: Option<UnivariateResultantError>,
+}
+
 /// Final status for exact univariate axis-factor extraction from two bivariate equations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BivariatePolynomialAxisFactorStatus {
@@ -312,6 +388,205 @@ impl Default for CurveIntersectionResultantConfig {
             max_resultant_degree: 32,
         }
     }
+}
+
+/// Eliminates one axis of a trivariate polynomial under a univariate algebraic
+/// constraint on that axis.
+///
+/// The result is a candidate polynomial on the other two axes. The constraint
+/// is normalized to monic form, so specializations where the trivariate
+/// polynomial drops degree retain the same resultant scale. Exact resultants
+/// are sampled on a tensor-product integer grid and reconstructed by nested
+/// Lagrange interpolation. Downstream callers must still isolate and replay
+/// candidate roots against the selected algebraic branches.
+pub fn resultant_trivariate_polynomial_univariate_constraint(
+    polynomial: &TrivariatePolynomial,
+    constraint: &[Real],
+    eliminated_axis: TrivariatePolynomialAxis,
+    config: CurveIntersectionResultantConfig,
+) -> TrivariateConstraintResultantReport {
+    let retained_axis_indices = match eliminated_axis {
+        TrivariatePolynomialAxis::First => [1, 2],
+        TrivariatePolynomialAxis::Second => [0, 2],
+        TrivariatePolynomialAxis::Third => [0, 1],
+    };
+    let retained_axes = retained_axis_indices.map(trivariate_axis_from_index);
+    let report =
+        |status, degree_bounds, resultant, resultant_error| TrivariateConstraintResultantReport {
+            status,
+            eliminated_axis,
+            retained_axes,
+            degree_bounds,
+            resultant,
+            resultant_error,
+        };
+    if trivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
+        return report(
+            TrivariateConstraintResultantStatus::EmptyPolynomial,
+            [0, 0],
+            None,
+            None,
+        );
+    }
+    let degrees = match certified_trivariate_degree(polynomial, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintResultantStatus::Constructed,
+                [0, 0],
+                Some(BivariatePolynomial::new(vec![vec![Real::zero()]])),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                [0, 0],
+                None,
+                None,
+            );
+        }
+    };
+    let constraint = match trim_trailing_zeroes(constraint.to_vec(), config.min_precision) {
+        Ok(constraint) => constraint,
+        Err(()) => {
+            return report(
+                TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                [0, 0],
+                None,
+                None,
+            );
+        }
+    };
+    if constraint.len() <= 1 {
+        return report(
+            TrivariateConstraintResultantStatus::InvalidConstraint,
+            [0, 0],
+            None,
+            None,
+        );
+    }
+    let leading = constraint
+        .last()
+        .expect("a nonconstant constraint has a leading coefficient");
+    let Some(constraint) = constraint
+        .iter()
+        .map(|coefficient| (coefficient / leading).ok())
+        .collect::<Option<Vec<_>>>()
+    else {
+        return report(
+            TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
+            [0, 0],
+            None,
+            None,
+        );
+    };
+    let constraint_degree = constraint.len() - 1;
+    let degree_bounds =
+        retained_axis_indices.map(|axis| constraint_degree.saturating_mul(degrees[axis]));
+    if degree_bounds
+        .into_iter()
+        .any(|degree| degree > config.max_resultant_degree)
+    {
+        return report(
+            TrivariateConstraintResultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            None,
+            None,
+        );
+    }
+
+    let mut second_axis_polynomials = Vec::with_capacity(degree_bounds[0] + 1);
+    for first_sample_index in 0..=degree_bounds[0] {
+        let first_value = Real::from(first_sample_index as u64);
+        let mut second_samples = Vec::with_capacity(degree_bounds[1] + 1);
+        for second_sample_index in 0..=degree_bounds[1] {
+            let second_value = Real::from(second_sample_index as u64);
+            let fiber = evaluate_trivariate_at_retained_parameters(
+                polynomial,
+                eliminated_axis,
+                &first_value,
+                &second_value,
+            );
+            let fiber_degree = match certified_nonzero_degree(&fiber, config.min_precision) {
+                Ok(degree) => degree,
+                Err(()) => {
+                    return report(
+                        TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                        degree_bounds,
+                        None,
+                        None,
+                    );
+                }
+            };
+            let resultant = if fiber_degree.is_none() {
+                Real::zero()
+            } else {
+                match resultant_univariate_polynomials(&constraint, &fiber, config.min_precision) {
+                    Ok(resultant) => resultant.resultant,
+                    Err(error) => {
+                        return report(
+                            TrivariateConstraintResultantStatus::ResultantError,
+                            degree_bounds,
+                            None,
+                            Some(error),
+                        );
+                    }
+                }
+            };
+            second_samples.push(CurveIntersectionResultantSample {
+                parameter_value: second_value,
+                resultant,
+            });
+        }
+        let Some(interpolated) = interpolate_samples(&second_samples, config.min_precision) else {
+            return report(
+                TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
+                degree_bounds,
+                None,
+                None,
+            );
+        };
+        second_axis_polynomials.push(interpolated);
+    }
+
+    let mut interpolated_columns = Vec::with_capacity(degree_bounds[1] + 1);
+    for second_power in 0..=degree_bounds[1] {
+        let first_samples = second_axis_polynomials
+            .iter()
+            .enumerate()
+            .map(
+                |(sample_index, polynomial)| CurveIntersectionResultantSample {
+                    parameter_value: Real::from(sample_index as u64),
+                    resultant: polynomial
+                        .get(second_power)
+                        .cloned()
+                        .unwrap_or_else(Real::zero),
+                },
+            )
+            .collect::<Vec<_>>();
+        let Some(interpolated) = interpolate_samples(&first_samples, config.min_precision) else {
+            return report(
+                TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
+                degree_bounds,
+                None,
+                None,
+            );
+        };
+        interpolated_columns.push(interpolated);
+    }
+    let mut coefficients = vec![vec![Real::zero(); degree_bounds[1] + 1]; degree_bounds[0] + 1];
+    for (second_power, column) in interpolated_columns.into_iter().enumerate() {
+        for (row, coefficient) in coefficients.iter_mut().zip(column) {
+            row[second_power] = coefficient;
+        }
+    }
+    report(
+        TrivariateConstraintResultantStatus::Constructed,
+        degree_bounds,
+        Some(canonical_exact_bivariate(coefficients)),
+        None,
+    )
 }
 
 /// Final status for a curve intersection resultant report.
@@ -2716,6 +2991,104 @@ fn exact_bivariate_is_zero(polynomial: &BivariatePolynomial) -> bool {
         .all(exact_real_is_zero)
 }
 
+const fn trivariate_axis_from_index(index: usize) -> TrivariatePolynomialAxis {
+    match index {
+        0 => TrivariatePolynomialAxis::First,
+        1 => TrivariatePolynomialAxis::Second,
+        2 => TrivariatePolynomialAxis::Third,
+        _ => unreachable!(),
+    }
+}
+
+fn trivariate_polynomial_is_empty(polynomial: &TrivariatePolynomial) -> bool {
+    polynomial.coefficients.is_empty()
+        || polynomial
+            .coefficients
+            .iter()
+            .all(|rows| rows.iter().all(Vec::is_empty))
+}
+
+fn certified_trivariate_degree(
+    polynomial: &TrivariatePolynomial,
+    min_precision: i32,
+) -> Result<Option<[usize; 3]>, ()> {
+    let mut degrees = None;
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                match coefficient.certified_sign_until(min_precision) {
+                    CertifiedRealSign::Known {
+                        sign: RealSign::Zero,
+                        ..
+                    } => {}
+                    CertifiedRealSign::Known { .. } => {
+                        let degrees = degrees.get_or_insert([0, 0, 0]);
+                        degrees[0] = degrees[0].max(first);
+                        degrees[1] = degrees[1].max(second);
+                        degrees[2] = degrees[2].max(third);
+                    }
+                    CertifiedRealSign::Unknown { .. } => return Err(()),
+                }
+            }
+        }
+    }
+    Ok(degrees)
+}
+
+fn evaluate_trivariate_at_retained_parameters(
+    polynomial: &TrivariatePolynomial,
+    eliminated_axis: TrivariatePolynomialAxis,
+    first_retained_value: &Real,
+    second_retained_value: &Real,
+) -> Vec<Real> {
+    let dimensions = [
+        polynomial.coefficients.len(),
+        polynomial
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+        polynomial
+            .coefficients
+            .iter()
+            .flat_map(|rows| rows.iter())
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+    ];
+    let eliminated_axis = eliminated_axis.index();
+    let retained_axes = match eliminated_axis {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!(),
+    };
+    let powers = |value: &Real, count: usize| {
+        let mut powers = Vec::with_capacity(count);
+        let mut power = Real::one();
+        for _ in 0..count {
+            powers.push(power.clone());
+            power *= value;
+        }
+        powers
+    };
+    let first_powers = powers(first_retained_value, dimensions[retained_axes[0]]);
+    let second_powers = powers(second_retained_value, dimensions[retained_axes[1]]);
+    let mut fiber = vec![Real::zero(); dimensions[eliminated_axis]];
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                let exponents = [first, second, third];
+                fiber[exponents[eliminated_axis]] += coefficient
+                    * &first_powers[exponents[retained_axes[0]]]
+                    * &second_powers[exponents[retained_axes[1]]];
+            }
+        }
+    }
+    fiber
+}
+
 fn exact_polynomial_is_zero(polynomial: &[Real]) -> bool {
     polynomial.iter().all(exact_real_is_zero)
 }
@@ -4452,6 +4825,62 @@ mod tests {
                 .is_some_and(|sample| sample.parameter_value > real(report.degree_bound as i64)),
             "a degree-drop sample must be replaced, not interpolated at lower Sylvester degree"
         );
+    }
+
+    #[test]
+    fn trivariate_constraint_resultant_eliminates_every_tensor_axis() {
+        // F(a,b,t) = a + b + t and P(x) = x^2 - 2. For any eliminated
+        // axis, Res(P,F) is (u+v)^2 - 2 on the two retained axes.
+        let polynomial = TrivariatePolynomial::new(vec![
+            vec![vec![real(0), real(1)], vec![real(1)]],
+            vec![vec![real(1)]],
+        ]);
+        let expected = BivariatePolynomial::new(vec![
+            vec![real(-2), real(0), real(1)],
+            vec![real(0), real(2)],
+            vec![real(1)],
+        ]);
+        for axis in [
+            TrivariatePolynomialAxis::First,
+            TrivariatePolynomialAxis::Second,
+            TrivariatePolynomialAxis::Third,
+        ] {
+            let report = resultant_trivariate_polynomial_univariate_constraint(
+                &polynomial,
+                &[real(-2), real(0), real(1)],
+                axis,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(
+                report.status,
+                TrivariateConstraintResultantStatus::Constructed
+            );
+            assert_eq!(report.degree_bounds, [2, 2]);
+            assert_eq!(report.resultant, Some(expected.clone()));
+        }
+    }
+
+    #[test]
+    fn trivariate_constraint_resultant_obeys_each_retained_degree_budget() {
+        let polynomial = TrivariatePolynomial::new(vec![
+            vec![vec![real(0), real(1)], vec![real(1)]],
+            vec![vec![real(1)]],
+        ]);
+        let report = resultant_trivariate_polynomial_univariate_constraint(
+            &polynomial,
+            &[real(-2), real(0), real(1)],
+            TrivariatePolynomialAxis::First,
+            CurveIntersectionResultantConfig {
+                max_resultant_degree: 1,
+                ..CurveIntersectionResultantConfig::default()
+            },
+        );
+        assert_eq!(
+            report.status,
+            TrivariateConstraintResultantStatus::DegreeBoundExceeded
+        );
+        assert_eq!(report.degree_bounds, [2, 2]);
+        assert!(report.resultant.is_none());
     }
 
     proptest! {
