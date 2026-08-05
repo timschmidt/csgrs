@@ -1694,12 +1694,19 @@ mod tests {
             let Some(RetainedVertexCycle::SourceTriangle {
                 positions,
                 vertices,
+                ..
             }) = &polygon.known_vertices
             else {
                 panic!("native source face must retain an indexed vertex cycle");
             };
             assert!(Arc::ptr_eq(positions.owner(), &mesh.positions));
             assert_eq!(*vertices, triangle.indices().map(|index| index as u32));
+            assert!(polygon.approx_bounds.is_none());
+            let points = triangle.indices().map(|index| &mesh.positions[index]);
+            let expected = crate::polygon::ApproxBounds::for_points(&context, &points)
+                .unwrap()
+                .value;
+            assert_eq!(polygon.retained_bounds(), Some(expected.borrowed()));
         }
 
         let borrowed = TriangleMeshRef::new(&mesh.positions, &mesh.triangles);
@@ -1722,9 +1729,14 @@ mod tests {
         }
 
         let inverted = native.polygons[0].inverted();
+        assert_eq!(
+            inverted.retained_bounds(),
+            native.polygons[0].retained_bounds()
+        );
         let Some(RetainedVertexCycle::SourceTriangle {
             positions,
             vertices,
+            ..
         }) = inverted.known_vertices
         else {
             panic!("inversion must preserve an indexed source cycle");

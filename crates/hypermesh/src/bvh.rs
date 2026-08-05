@@ -10,7 +10,7 @@ use crate::Point3;
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, axis_ref};
-use crate::polygon::{ApproxBounds, ConvexPolygon};
+use crate::polygon::{ApproxBounds, ApproxBoundsRef, ConvexPolygon};
 use crate::predicate::{classify_point_decision, compare_real_decision};
 
 const LEAF_SIZE: usize = 8;
@@ -37,12 +37,16 @@ impl Default for CertifiedAabbFilter {
 
 impl CertifiedAabbFilter {
     fn from_bounds(bounds: &ApproxBounds) -> Self {
+        Self::from_bounds_ref(bounds.borrowed())
+    }
+
+    fn from_bounds_ref(bounds: ApproxBoundsRef<'_>) -> Self {
         let mut filter = Self::default();
         for axis in 0..3 {
-            let Some(minimum) = certified_coordinate_enclosure(axis_ref(&bounds.min, axis)) else {
+            let Some(minimum) = certified_coordinate_enclosure(bounds.min[axis]) else {
                 return Self::default();
             };
-            let Some(maximum) = certified_coordinate_enclosure(axis_ref(&bounds.max, axis)) else {
+            let Some(maximum) = certified_coordinate_enclosure(bounds.max[axis]) else {
                 return Self::default();
             };
             filter.min[axis] = outward_f32_lower(minimum[0]);
@@ -51,19 +55,16 @@ impl CertifiedAabbFilter {
         filter
     }
 
-    fn from_axis_bounds(minimum: &crate::Real, maximum: &crate::Real, axis: usize) -> Self {
-        let Some(minimum) = certified_coordinate_enclosure(minimum) else {
+    fn from_axis_filters(minimum: Self, maximum: Self, axis: usize) -> Self {
+        if !minimum.is_available() || !maximum.is_available() {
             return Self::default();
-        };
-        let Some(maximum) = certified_coordinate_enclosure(maximum) else {
-            return Self::default();
-        };
+        }
         let mut filter = Self {
             min: [f32::NEG_INFINITY; 3],
             max: [f32::INFINITY; 3],
         };
-        filter.min[axis] = outward_f32_lower(minimum[0]);
-        filter.max[axis] = outward_f32_upper(maximum[1]);
+        filter.min[axis] = minimum.min[axis];
+        filter.max[axis] = maximum.max[axis];
         filter
     }
 
@@ -372,6 +373,7 @@ pub(crate) struct ExactBvhQueryHierarchy {
     order: Box<[u32]>,
     nodes: Box<[CompactBvhNode]>,
     extrema: Box<[[u32; 6]]>,
+    primitive_filters: Box<[CertifiedAabbFilter]>,
     missing_bounds: Box<[(u32, ApproxBounds)]>,
 }
 
@@ -498,7 +500,7 @@ impl ExactBvh {
                     reason: "compact source hierarchy references an absent polygon",
                 },
             )?;
-            if polygon.approx_bounds.is_none() {
+            if polygon.retained_bounds().is_none() {
                 missing_bounds
                     .try_reserve(1)
                     .map_err(|_| HypermeshError::CapacityOverflow {
@@ -513,10 +515,16 @@ impl ExactBvh {
                 ));
             }
         }
+        if self.tree.primitive_filters.len() != polygons.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy filter and polygon counts differ",
+            });
+        }
         Ok(ExactBvhQueryHierarchy {
             order: order.into_boxed_slice(),
             nodes: nodes.into_boxed_slice(),
             extrema: extrema.into_boxed_slice(),
+            primitive_filters: self.tree.primitive_filters.into_boxed_slice(),
             missing_bounds: missing_bounds.into_boxed_slice(),
         })
     }
@@ -823,9 +831,10 @@ impl ExactBvhQueryHierarchy {
                     })?;
                 for &face in faces {
                     let face_bounds = self.primitive_bounds(polygons, face)?;
-                    if !CertifiedAabbFilter::from_bounds(face_bounds)
+                    if !self
+                        .primitive_filter(face)?
                         .definitely_disjoint(query_filter)
-                        && bounds_overlap_decision(decisions, face_bounds, bounds)?
+                        && bounds_refs_overlap_decision(decisions, face_bounds, bounds.borrowed())?
                     {
                         matches.push(face);
                     }
@@ -848,11 +857,9 @@ impl ExactBvhQueryHierarchy {
         query_filter: CertifiedAabbFilter,
     ) -> HypermeshResult<bool> {
         for axis in 0..3 {
-            let minimum = self.primitive_bounds(polygons, extrema[axis])?;
-            let maximum = self.primitive_bounds(polygons, extrema[axis + 3])?;
-            let node_axis_filter = CertifiedAabbFilter::from_axis_bounds(
-                axis_ref(&minimum.min, axis),
-                axis_ref(&maximum.max, axis),
+            let node_axis_filter = CertifiedAabbFilter::from_axis_filters(
+                self.primitive_filter(extrema[axis])?,
+                self.primitive_filter(extrema[axis + 3])?,
                 axis,
             );
             match node_axis_filter.may_overlap(query_filter) {
@@ -860,18 +867,10 @@ impl ExactBvhQueryHierarchy {
                 Some(true) => continue,
                 None => {}
             }
-            if compare_real_decision(
-                decisions,
-                axis_ref(&minimum.min, axis),
-                axis_ref(&query.max, axis),
-            )?
-            .is_gt()
-                || compare_real_decision(
-                    decisions,
-                    axis_ref(&maximum.max, axis),
-                    axis_ref(&query.min, axis),
-                )?
-                .is_lt()
+            let minimum = self.primitive_bound(polygons, extrema[axis], axis, false)?;
+            let maximum = self.primitive_bound(polygons, extrema[axis + 3], axis, true)?;
+            if compare_real_decision(decisions, minimum, axis_ref(&query.max, axis))?.is_gt()
+                || compare_real_decision(decisions, maximum, axis_ref(&query.min, axis))?.is_lt()
             {
                 return Ok(false);
             }
@@ -879,25 +878,60 @@ impl ExactBvhQueryHierarchy {
         Ok(true)
     }
 
+    fn primitive_filter(&self, polygon: u32) -> HypermeshResult<CertifiedAabbFilter> {
+        self.primitive_filters.get(polygon as usize).copied().ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent primitive filter",
+            },
+        )
+    }
+
+    fn primitive_bound<'a>(
+        &'a self,
+        polygons: &'a [ConvexPolygon],
+        polygon: u32,
+        axis: usize,
+        maximum: bool,
+    ) -> HypermeshResult<&'a crate::Real> {
+        let source_polygon =
+            polygons
+                .get(polygon as usize)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "compact source hierarchy references an absent polygon",
+                })?;
+        if let Some(bound) = source_polygon.retained_bound(axis, maximum) {
+            return Ok(bound);
+        }
+        self.missing_bounds
+            .binary_search_by_key(&polygon, |(face, _)| *face)
+            .ok()
+            .map(|index| {
+                let bounds = &self.missing_bounds[index].1;
+                axis_ref(if maximum { &bounds.max } else { &bounds.min }, axis)
+            })
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy has no exact primitive bounds",
+            })
+    }
+
     fn primitive_bounds<'a>(
         &'a self,
         polygons: &'a [ConvexPolygon],
         polygon: u32,
-    ) -> HypermeshResult<&'a ApproxBounds> {
-        if let Some(bounds) = polygons
-            .get(polygon as usize)
-            .ok_or(HypermeshError::SurfaceArrangementFailed {
-                reason: "compact source hierarchy references an absent polygon",
-            })?
-            .approx_bounds
-            .as_deref()
-        {
+    ) -> HypermeshResult<ApproxBoundsRef<'a>> {
+        let source_polygon =
+            polygons
+                .get(polygon as usize)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "compact source hierarchy references an absent polygon",
+                })?;
+        if let Some(bounds) = source_polygon.retained_bounds() {
             return Ok(bounds);
         }
         self.missing_bounds
             .binary_search_by_key(&polygon, |(face, _)| *face)
             .ok()
-            .map(|index| &self.missing_bounds[index].1)
+            .map(|index| self.missing_bounds[index].1.borrowed())
             .ok_or(HypermeshError::SurfaceArrangementFailed {
                 reason: "compact source hierarchy has no exact primitive bounds",
             })
@@ -1238,12 +1272,20 @@ pub(crate) fn bounds_overlap_decision(
     left: &ApproxBounds,
     right: &ApproxBounds,
 ) -> HypermeshResult<bool> {
+    bounds_refs_overlap_decision(decisions, left.borrowed(), right.borrowed())
+}
+
+fn bounds_refs_overlap_decision(
+    decisions: &DecisionContext,
+    left: ApproxBoundsRef<'_>,
+    right: ApproxBoundsRef<'_>,
+) -> HypermeshResult<bool> {
     decisions.decide(
-        hyperlimit::ordered_aabb3s_intersect(
-            &left.min,
-            &left.max,
-            &right.min,
-            &right.max,
+        hyperlimit::ordered_aabb3s_intersect_coordinates(
+            left.min,
+            left.max,
+            right.min,
+            right.max,
             decisions.policy(),
         ),
         "ordered AABB overlap",
@@ -1380,8 +1422,8 @@ fn polygon_bounds(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<ApproxBounds> {
-    if let Some(bounds) = &polygon.approx_bounds {
-        return Ok(bounds.as_ref().clone());
+    if let Some(bounds) = polygon.retained_bounds() {
+        return Ok(bounds.to_owned());
     }
 
     let vertices = polygon.vertices_decision(decisions)?;
@@ -1835,6 +1877,16 @@ mod tests {
             })
         ));
 
+        let mut missing_filter =
+            ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons).unwrap();
+        missing_filter.tree.primitive_filters.pop();
+        assert!(matches!(
+            missing_filter.into_query_hierarchy(&polygons),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy filter and polygon counts differ"
+            })
+        ));
+
         assert!(matches!(
             ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
                 .unwrap()
@@ -1861,6 +1913,18 @@ mod tests {
             compact.query_bounds_decision(&decisions, &polygons, &bounds, |_| {}),
             Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "compact source hierarchy node has no exact extrema"
+            })
+        ));
+
+        let mut compact = ExactBvh::build_for_query_hierarchy_decision(&decisions, &polygons)
+            .unwrap()
+            .into_query_hierarchy(&polygons)
+            .unwrap();
+        compact.primitive_filters = Box::new([]);
+        assert!(matches!(
+            compact.query_bounds_decision(&decisions, &polygons, &bounds, |_| {}),
+            Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "compact source hierarchy references an absent primitive filter"
             })
         ));
 

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::HypermeshResult;
 use crate::geometry::{
-    Classification, Plane, affine_projective_point_decision, cross_arrays, sub_points,
+    Classification, Plane, affine_projective_point_decision, axis_ref, cross_arrays, sub_points,
 };
 use crate::predicate::{classify_projective_point_decision, compare_real_decision};
 use crate::winding::WindingNumberTransitionVector;
@@ -77,6 +77,30 @@ pub struct ApproxBounds {
     pub max: Point3,
 }
 
+/// Borrowed exact extrema whose coordinates may share another geometry owner.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct ApproxBoundsRef<'a> {
+    pub(crate) min: [&'a Real; 3],
+    pub(crate) max: [&'a Real; 3],
+}
+
+impl ApproxBoundsRef<'_> {
+    pub(crate) fn to_owned(self) -> ApproxBounds {
+        ApproxBounds::new(
+            Point3::new(
+                self.min[0].clone(),
+                self.min[1].clone(),
+                self.min[2].clone(),
+            ),
+            Point3::new(
+                self.max[0].clone(),
+                self.max[1].clone(),
+                self.max[2].clone(),
+            ),
+        )
+    }
+}
+
 #[derive(Clone, Debug)]
 /// One exact position owner shared by every retained face of a source mesh.
 ///
@@ -111,7 +135,30 @@ pub(crate) enum RetainedVertexCycle {
     SourceTriangle {
         positions: Arc<RetainedSourcePositions>,
         vertices: [u32; 3],
+        extrema: SourceTriangleExtrema,
     },
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct SourceTriangleExtrema(u16);
+
+impl SourceTriangleExtrema {
+    fn new(vertices: [u8; 6]) -> Self {
+        let mut packed = 0_u16;
+        for (slot, vertex) in vertices.into_iter().enumerate() {
+            debug_assert!(vertex < 3);
+            packed |= u16::from(vertex) << (slot * 2);
+        }
+        Self(packed)
+    }
+
+    fn get(self, slot: usize) -> usize {
+        usize::from((self.0 >> (slot * 2)) & 3)
+    }
+
+    fn reversed(self) -> Self {
+        Self::new(std::array::from_fn(|slot| 2 - self.get(slot) as u8))
+    }
 }
 
 impl RetainedVertexCycle {
@@ -128,6 +175,7 @@ impl RetainedVertexCycle {
             Self::SourceTriangle {
                 positions,
                 vertices,
+                ..
             } => positions.get(usize::try_from(*vertices.get(index)?).ok()?),
         }
     }
@@ -151,11 +199,46 @@ impl RetainedVertexCycle {
             Self::SourceTriangle {
                 positions,
                 vertices: [first, second, third],
+                extrema,
             } => Self::SourceTriangle {
                 positions: Arc::clone(positions),
                 vertices: [*third, *second, *first],
+                extrema: extrema.reversed(),
             },
         }
+    }
+
+    fn source_bounds(&self) -> Option<ApproxBoundsRef<'_>> {
+        let Self::SourceTriangle { .. } = self else {
+            return None;
+        };
+        Some(ApproxBoundsRef {
+            min: std::array::from_fn(|axis| {
+                self.source_bound(axis, false)
+                    .expect("source triangles retain every minimum extremum")
+            }),
+            max: std::array::from_fn(|axis| {
+                self.source_bound(axis, true)
+                    .expect("source triangles retain every maximum extremum")
+            }),
+        })
+    }
+
+    fn source_bound(&self, axis: usize, maximum: bool) -> Option<&Real> {
+        let Self::SourceTriangle {
+            positions,
+            vertices,
+            extrema,
+        } = self
+        else {
+            return None;
+        };
+        let slot = axis + usize::from(maximum) * 3;
+        let triangle_vertex = extrema.get(slot);
+        let source_vertex = *vertices.get(triangle_vertex)? as usize;
+        positions
+            .get(source_vertex)
+            .map(|point| axis_ref(point, axis))
     }
 }
 
@@ -328,6 +411,13 @@ impl ApproxBounds {
         Self { min, max }
     }
 
+    pub(crate) fn borrowed(&self) -> ApproxBoundsRef<'_> {
+        ApproxBoundsRef {
+            min: [&self.min.x, &self.min.y, &self.min.z],
+            max: [&self.max.x, &self.max.y, &self.max.z],
+        }
+    }
+
     /// Computes bounds for a non-empty borrowed point slice.
     pub fn for_points(
         context: &MeshContext,
@@ -376,11 +466,33 @@ impl PartialEq for ConvexPolygon {
             && self.mesh_index == other.mesh_index
             && self.polygon_index == other.polygon_index
             && self.delta_w == other.delta_w
-            && self.approx_bounds == other.approx_bounds
+            && self.retained_bounds() == other.retained_bounds()
     }
 }
 
 impl ConvexPolygon {
+    pub(crate) fn retained_bounds(&self) -> Option<ApproxBoundsRef<'_>> {
+        self.approx_bounds
+            .as_deref()
+            .map(ApproxBounds::borrowed)
+            .or_else(|| {
+                self.known_vertices
+                    .as_ref()
+                    .and_then(RetainedVertexCycle::source_bounds)
+            })
+    }
+
+    pub(crate) fn retained_bound(&self, axis: usize, maximum: bool) -> Option<&Real> {
+        self.approx_bounds
+            .as_deref()
+            .map(|bounds| axis_ref(if maximum { &bounds.max } else { &bounds.min }, axis))
+            .or_else(|| {
+                self.known_vertices
+                    .as_ref()
+                    .and_then(|vertices| vertices.source_bound(axis, maximum))
+            })
+    }
+
     /// Constructs an empty polygon carrier.
     pub fn empty() -> Self {
         Self {
@@ -729,17 +841,18 @@ impl ConvexPolygon {
         });
         let [p0, p1, p2] = points;
         let [p0, p1, p2] = [p0?, p1?, p2?];
-        let approx_bounds = bounds_for_points(decisions, &[p0, p1, p2])?;
+        let extrema = bounds_extrema_for_triangle(decisions, [p0, p1, p2])?;
         Ok(Self {
             support,
             edges: Arc::new(edges),
             mesh_index: signed_mesh_index,
             polygon_index,
             delta_w: Vec::new(),
-            approx_bounds: Some(Box::new(approx_bounds)),
+            approx_bounds: None,
             known_vertices: Some(RetainedVertexCycle::SourceTriangle {
                 positions,
                 vertices,
+                extrema,
             }),
             known_identities: Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices }),
         })
@@ -880,6 +993,31 @@ pub(crate) fn points_require_wide_dyadic_plane_normalization<'a>(
     content.is_some()
 }
 
+fn bounds_extrema_for_triangle(
+    decisions: &DecisionContext,
+    points: [&Point3; 3],
+) -> HypermeshResult<SourceTriangleExtrema> {
+    let mut extrema = [0_u8; 6];
+    for axis in 0..3 {
+        let values = points.map(|point| axis_ref(point, axis));
+        let (mut minimum, maximum) = match compare_real_decision(decisions, values[1], values[0])? {
+            std::cmp::Ordering::Less => (1, 0),
+            std::cmp::Ordering::Greater => (0, 1),
+            std::cmp::Ordering::Equal => (0, 0),
+        };
+        if compare_real_decision(decisions, values[2], values[minimum])?.is_lt() {
+            minimum = 2;
+        }
+        let mut maximum = maximum;
+        if compare_real_decision(decisions, values[2], values[maximum])?.is_gt() {
+            maximum = 2;
+        }
+        extrema[axis] = minimum as u8;
+        extrema[axis + 3] = maximum as u8;
+    }
+    Ok(SourceTriangleExtrema::new(extrema))
+}
+
 fn bounds_for_points(
     decisions: &DecisionContext,
     points: &[&Point3],
@@ -974,6 +1112,8 @@ mod tests {
         assert_eq!(std::mem::size_of::<ConstructionEdgeIdentity>(), 20);
         assert_eq!(std::mem::size_of::<ConstructionVertexIdentity>(), 28);
         assert_eq!(std::mem::size_of::<RetainedIdentityCycles>(), 32);
+        assert_eq!(std::mem::size_of::<SourceTriangleExtrema>(), 2);
+        assert_eq!(std::mem::size_of::<RetainedVertexCycle>(), 24);
         assert_eq!(
             polygon
                 .known_vertex_identities()
