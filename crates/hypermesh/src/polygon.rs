@@ -565,21 +565,41 @@ pub(crate) fn convex_triangle_decision(
         edge_plane(decisions, p1, p2, p0, &support, normalize_wide_dyadic)?,
         edge_plane(decisions, p2, p0, p1, &support, normalize_wide_dyadic)?,
     ]);
-
-    Ok(ConvexPolygon {
+    ConvexPolygon::from_triangle_planes(
+        decisions,
+        [p0, p1, p2],
         support,
-        edges: Arc::new(edges),
+        edges,
         mesh_index,
         polygon_index,
-        delta_w: Vec::new(),
-        approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
-        known_vertices: Some(RetainedVertexCycle(Arc::new([
-            p0.clone(),
-            p1.clone(),
-            p2.clone(),
-        ]))),
-        known_identities: None,
-    })
+    )
+}
+
+impl ConvexPolygon {
+    pub(crate) fn from_triangle_planes(
+        decisions: &DecisionContext,
+        [p0, p1, p2]: [&Point3; 3],
+        support: Plane,
+        edges: Vec<Plane>,
+        mesh_index: isize,
+        polygon_index: isize,
+    ) -> HypermeshResult<Self> {
+        debug_assert_eq!(edges.len(), 3);
+        Ok(Self {
+            support,
+            edges: Arc::new(edges),
+            mesh_index,
+            polygon_index,
+            delta_w: Vec::new(),
+            approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
+            known_vertices: Some(RetainedVertexCycle(Arc::new([
+                p0.clone(),
+                p1.clone(),
+                p2.clone(),
+            ]))),
+            known_identities: None,
+        })
+    }
 }
 
 /// Returns a convex quad from four coplanar exact positions in winding order.
