@@ -2674,9 +2674,22 @@ fn corefine_face(
     }
 
     let mut split_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
+    let mut on_segment = Vec::new();
+    on_segment.try_reserve_exact(projected.len()).map_err(|_| {
+        HypermeshError::CapacityOverflow {
+            operation: "face constraint point schedule",
+        }
+    })?;
     for constraint in &authored {
-        let mut on_segment = Vec::new();
+        on_segment.clear();
+        // Authored endpoints define this exact closed segment. Seed them
+        // directly and reserve policy-aware incidence tests for other points
+        // that may split it through crossings, contacts, or overlaps.
+        on_segment.extend_from_slice(&constraint.endpoints);
         for (&point_id, point) in &projected {
+            if constraint.endpoints.contains(&point_id) {
+                continue;
+            }
             if planar_point_on_segment(
                 decisions,
                 [
