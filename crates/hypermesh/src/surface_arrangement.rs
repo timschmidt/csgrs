@@ -2820,14 +2820,21 @@ fn corefine_face(
         });
     }
 
+    point_ids.clear();
+    point_ids
+        .try_reserve_exact(projected.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face triangulation point IDs",
+        })?;
     let mut points = Vec::new();
     points
         .try_reserve_exact(projected.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "face triangulation points",
         })?;
-    for projected_point in &projected {
-        points.push(projected_point.point.clone());
+    for projected_point in projected {
+        point_ids.push(projected_point.id);
+        points.push(projected_point.point);
     }
     let mut constraints = Vec::new();
     constraints
@@ -2836,16 +2843,16 @@ fn corefine_face(
             operation: "face triangulation constraints",
         })?;
     for edge in &split_edges {
-        let from = projected
-            .binary_search_by_key(&edge[0], |point| point.id)
-            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
+        let from = point_ids.binary_search(&edge[0]).map_err(|_| {
+            HypermeshError::SurfaceArrangementFailed {
                 reason: "face constraint start is absent from the projected point schedule",
-            })?;
-        let to = projected
-            .binary_search_by_key(&edge[1], |point| point.id)
-            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
+            }
+        })?;
+        let to = point_ids.binary_search(&edge[1]).map_err(|_| {
+            HypermeshError::SurfaceArrangementFailed {
                 reason: "face constraint end is absent from the projected point schedule",
-            })?;
+            }
+        })?;
         constraints.push(hypertri::Constraint::new(from, to));
     }
     let context = hypertri::TriangulationContext::new(decisions.policy());
@@ -2858,20 +2865,15 @@ fn corefine_face(
             MeshCertainty::Approximate512Consumed
         }
     });
-    if outcome.value.points().len() != points.len() {
-        return Err(HypermeshError::SurfaceArrangementFailed {
-            reason: "preplanarized face constraints produced an unexpected Steiner point",
-        });
-    }
-    let source_positive = source_projection_is_positive(decisions, &projected, boundary)?;
+    let source_positive = source_projection_is_positive(decisions, &point_ids, &points, boundary)?;
     let mut triangles = Vec::new();
     triangles
-        .try_reserve_exact(outcome.value.triangles().len())
+        .try_reserve_exact(outcome.value.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface arrangement face triangles",
         })?;
-    for triangle in outcome.value.triangles() {
-        let mut triangle = triangle.map(|vertex| projected[vertex].id);
+    for triangle in &outcome.value {
+        let mut triangle = triangle.map(|vertex| point_ids[vertex]);
         // Hypertri's checked topology entry point returns only strictly
         // positive triangles and has already absorbed every predicate into its
         // outcome certainty. Preserve that exact postcondition instead of
@@ -2882,11 +2884,9 @@ fn corefine_face(
         triangles.push(triangle);
     }
     #[cfg(test)]
-    let constraints = outcome
-        .value
-        .constraint_edges()
+    let constraints = constraints
         .iter()
-        .map(|constraint| sorted_edge([projected[constraint.from].id, projected[constraint.to].id]))
+        .map(|constraint| sorted_edge([point_ids[constraint.from], point_ids[constraint.to]]))
         .collect::<Vec<_>>();
     Ok(FaceResult {
         triangles,
@@ -2905,15 +2905,16 @@ fn triangulate_convex_boundary(boundary: &[u32]) -> Vec<[u32; 3]> {
 
 fn source_projection_is_positive(
     decisions: &DecisionContext,
-    projected: &[ProjectedFacePoint],
+    point_ids: &[u32],
+    points: &[hypertri::ExactPoint],
     boundary: &[u32],
 ) -> HypermeshResult<bool> {
     for index in 1..boundary.len().saturating_sub(1) {
         match planar_orientation(
             decisions,
-            projected_face_point(projected, boundary[0])?,
-            projected_face_point(projected, boundary[index])?,
-            projected_face_point(projected, boundary[index + 1])?,
+            triangulation_point(point_ids, points, boundary[0])?,
+            triangulation_point(point_ids, points, boundary[index])?,
+            triangulation_point(point_ids, points, boundary[index + 1])?,
         )? {
             Classification::Positive => return Ok(true),
             Classification::Negative => return Ok(false),
@@ -2923,6 +2924,20 @@ fn source_projection_is_positive(
     Err(HypermeshError::SurfaceArrangementFailed {
         reason: "source face projection is degenerate",
     })
+}
+
+fn triangulation_point<'point>(
+    point_ids: &[u32],
+    points: &'point [hypertri::ExactPoint],
+    id: u32,
+) -> HypermeshResult<&'point hypertri::ExactPoint> {
+    point_ids
+        .binary_search(&id)
+        .ok()
+        .map(|index| &points[index])
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "source boundary references an absent triangulation point",
+        })
 }
 
 fn projected_face_point(
