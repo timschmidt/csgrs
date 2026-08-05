@@ -698,38 +698,50 @@ impl CurveString2 {
             &next_point,
             center,
             clockwise,
-            None,
             policy,
         )
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn fillet_vertex_by_certified_parameters_and_points(
+    pub(crate) fn fillet_vertex_by_certified_points(
         &self,
         vertex_index: usize,
-        previous_param: Real,
-        next_param: Real,
         previous_point: Point2,
         next_point: Point2,
         center: &Point2,
         radius_squared: Real,
         clockwise: bool,
-        policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
         }
-        self.fillet_vertex(
-            vertex_index,
-            previous_param,
-            next_param,
-            &previous_point,
-            &next_point,
-            center,
+        let previous_segment_index = vertex_index - 1;
+        let next_segment_index = vertex_index;
+        let previous_output = certified_native_fillet_fragment(
+            &self.segments[previous_segment_index],
+            previous_point.clone(),
+            true,
+        );
+        let next_output = certified_native_fillet_fragment(
+            &self.segments[next_segment_index],
+            next_point.clone(),
+            false,
+        );
+        let fillet_segment = CircularArc2::new_with_certified_radius(
+            previous_point,
+            next_point,
+            center.clone(),
+            radius_squared,
             clockwise,
-            Some(radius_squared),
-            policy,
-        )
+            None,
+        );
+
+        let mut segments = Vec::with_capacity(self.len() + 1);
+        segments.extend(self.segments[..previous_segment_index].iter().cloned());
+        segments.push(previous_output);
+        segments.push(Segment2::Arc(fillet_segment));
+        segments.push(next_output);
+        segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
+        CurveString2::try_new(segments).map(Classification::Decided)
     }
 
     /// Fillets one interior native-segment vertex from exact tangent points and center.
@@ -764,7 +776,6 @@ impl CurveString2 {
             next_point,
             center,
             clockwise,
-            None,
             policy,
         )
     }
@@ -779,7 +790,6 @@ impl CurveString2 {
         next_point: &Point2,
         center: &Point2,
         clockwise: bool,
-        certified_radius_squared: Option<Real>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let previous_segment_index = vertex_index - 1;
@@ -809,46 +819,34 @@ impl CurveString2 {
             _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
 
-        let certified = certified_radius_squared.is_some();
-        let radius_squared = if let Some(radius_squared) = certified_radius_squared {
-            radius_squared
-        } else {
-            let radius_squared = previous_point.distance_squared(center);
-            match is_zero(&radius_squared, policy) {
-                Some(false) => {}
-                Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        let radius_squared = previous_point.distance_squared(center);
+        match is_zero(&radius_squared, policy) {
+            Some(false) => {}
+            Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radius_delta = &radius_squared - &next_point.distance_squared(center);
+        match is_zero(&radius_delta, policy) {
+            Some(true) => {}
+            Some(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            let radius_delta = &radius_squared - &next_point.distance_squared(center);
-            match is_zero(&radius_delta, policy) {
-                Some(true) => {}
-                Some(false) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-            radius_squared
-        };
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
 
-        if !certified {
-            if let Some(reason) = segment_fillet_validation_blocker(
-                previous_segment,
-                previous_point,
-                center,
-                clockwise,
-                policy,
-            ) {
-                return Ok(Classification::Uncertain(reason));
-            }
-            if let Some(reason) = segment_fillet_validation_blocker(
-                next_segment,
-                next_point,
-                center,
-                clockwise,
-                policy,
-            ) {
-                return Ok(Classification::Uncertain(reason));
-            }
+        if let Some(reason) = segment_fillet_validation_blocker(
+            previous_segment,
+            previous_point,
+            center,
+            clockwise,
+            policy,
+        ) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        if let Some(reason) =
+            segment_fillet_validation_blocker(next_segment, next_point, center, clockwise, policy)
+        {
+            return Ok(Classification::Uncertain(reason));
         }
 
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
@@ -1232,6 +1230,42 @@ impl CurveString2 {
             distance_squared,
             connection,
         })
+    }
+}
+
+fn certified_native_fillet_fragment(source: &Segment2, cut: Point2, previous: bool) -> Segment2 {
+    match source {
+        Segment2::Line(line) => {
+            let (start, end) = if previous {
+                (line.start().clone(), cut)
+            } else {
+                (cut, line.end().clone())
+            };
+            Segment2::Line(line.fragment_between_after_distinct_endpoints(
+                start,
+                end,
+                line.fragment_support(),
+            ))
+        }
+        Segment2::Arc(arc) => Segment2::Arc(if previous {
+            CircularArc2::new_with_certified_radius(
+                arc.start().clone(),
+                cut,
+                arc.center().clone(),
+                arc.radius_squared(),
+                arc.is_clockwise(),
+                None,
+            )
+        } else {
+            CircularArc2::new_with_certified_radius(
+                cut,
+                arc.end().clone(),
+                arc.center().clone(),
+                arc.radius_squared(),
+                arc.is_clockwise(),
+                None,
+            )
+        }),
     }
 }
 

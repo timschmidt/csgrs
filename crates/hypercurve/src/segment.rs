@@ -62,6 +62,13 @@ pub(crate) enum RetainedLineRelation2 {
     Uncertain,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ArcSweepPointLocation2 {
+    Endpoint,
+    Interior,
+    Outside,
+}
+
 impl LineSeg2 {
     /// Constructs a line segment and rejects equal endpoints when provable.
     pub fn try_new(start: Point2, end: Point2) -> CurveResult<Self> {
@@ -738,6 +745,14 @@ impl CircularArc2 {
             return Classification::Decided(true);
         }
 
+        self.contains_non_endpoint_sweep_point(point, policy)
+    }
+
+    fn contains_non_endpoint_sweep_point(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
         let sweep_kind = match crate::arc_bezier::classify_sweep_with_policy(self, policy) {
             Ok(Classification::Decided(kind)) => kind,
             Ok(Classification::Uncertain(reason)) => {
@@ -758,6 +773,30 @@ impl CircularArc2 {
         };
 
         self.contains_classified_sweep_sides(start_side, end_side, sweep_kind)
+    }
+
+    pub(crate) fn strict_sweep_point_location(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> Classification<ArcSweepPointLocation2> {
+        match point_matches_arc_endpoint(self, point, policy) {
+            Some(true) => {
+                return Classification::Decided(ArcSweepPointLocation2::Endpoint);
+            }
+            Some(false) => {}
+            None => {
+                return Classification::Uncertain(crate::UncertaintyReason::RealSign);
+            }
+        }
+        self.contains_non_endpoint_sweep_point(point, policy)
+            .map(|contains| {
+                if contains {
+                    ArcSweepPointLocation2::Interior
+                } else {
+                    ArcSweepPointLocation2::Outside
+                }
+            })
     }
 
     pub(crate) fn contains_classified_sweep_sides(

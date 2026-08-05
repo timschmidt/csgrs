@@ -4958,14 +4958,8 @@ impl CurveRegion2 {
                     ordinal,
                     CurveCornerSolutions2::Unique(solution),
                 )) => {
-                    if let Some((
-                        previous_parameter,
-                        previous_point,
-                        next_parameter,
-                        next_point,
-                        center,
-                        clockwise,
-                    )) = solution.into_native_trim_evidence()
+                    if let Some((previous_point, next_point, center, clockwise)) =
+                        solution.into_native_trim_evidence()
                     {
                         let radius_squared = &radius * &radius;
                         let edited = Self::rebuild_native_corner_region(
@@ -4975,16 +4969,13 @@ impl CurveRegion2 {
                             CurveOperation2::Fillet,
                             policy,
                             |contour| {
-                                contour.fillet_vertex_by_certified_parameters_and_points(
+                                contour.fillet_vertex_by_certified_points(
                                     vertex_index,
-                                    previous_parameter,
-                                    next_parameter,
                                     previous_point,
                                     next_point,
                                     &center,
                                     radius_squared,
                                     clockwise,
-                                    policy,
                                 )
                             },
                         )?;
