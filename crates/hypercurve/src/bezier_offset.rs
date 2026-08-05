@@ -2083,7 +2083,16 @@ pub struct BezierAlgebraicChord2 {
 /// primitive element merely to materialize the normalized scalar in `[0, 1]`.
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordParameter2 {
-    data: Arc<BezierAlgebraicChordParameterData2>,
+    data: BezierAlgebraicChordParameterStorage2,
+}
+
+#[derive(Clone, Debug)]
+enum BezierAlgebraicChordParameterStorage2 {
+    Endpoint {
+        chord: BezierAlgebraicChord2,
+        at_end: bool,
+    },
+    Interior(Arc<BezierAlgebraicChordParameterData2>),
 }
 
 #[cfg(feature = "predicates")]
@@ -2153,8 +2162,23 @@ struct BezierAlgebraicChordData2 {
 
 impl PartialEq for BezierAlgebraicChordParameter2 {
     fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.data, &other.data)
-            || (self.data.point == other.data.point && self.data.axis == other.data.axis)
+        match (&self.data, &other.data) {
+            (
+                BezierAlgebraicChordParameterStorage2::Endpoint {
+                    chord: first,
+                    at_end: first_at_end,
+                },
+                BezierAlgebraicChordParameterStorage2::Endpoint {
+                    chord: second,
+                    at_end: second_at_end,
+                },
+            ) if Arc::ptr_eq(&first.data, &second.data) => first_at_end == second_at_end,
+            (
+                BezierAlgebraicChordParameterStorage2::Interior(first),
+                BezierAlgebraicChordParameterStorage2::Interior(second),
+            ) if Arc::ptr_eq(first, second) => true,
+            _ => self.axis() == other.axis() && self.point() == other.point(),
+        }
     }
 }
 
@@ -10378,11 +10402,21 @@ impl BezierAlgebraicChord2 {
     }
 
     pub(crate) fn start_parameter(&self) -> BezierAlgebraicChordParameter2 {
-        BezierAlgebraicChordParameter2::new(self.start().clone(), self.data.parameter_axis)
+        BezierAlgebraicChordParameter2 {
+            data: BezierAlgebraicChordParameterStorage2::Endpoint {
+                chord: self.clone(),
+                at_end: false,
+            },
+        }
     }
 
     pub(crate) fn end_parameter(&self) -> BezierAlgebraicChordParameter2 {
-        BezierAlgebraicChordParameter2::new(self.end().clone(), self.data.parameter_axis)
+        BezierAlgebraicChordParameter2 {
+            data: BezierAlgebraicChordParameterStorage2::Endpoint {
+                chord: self.clone(),
+                at_end: true,
+            },
+        }
     }
 
     #[cfg_attr(not(feature = "predicates"), allow(dead_code))]
@@ -10392,7 +10426,14 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordParameter2>>> {
         self.validate_policy(policy)?;
-        let parameter = BezierAlgebraicChordParameter2::new(point, self.data.parameter_axis);
+        let parameter = BezierAlgebraicChordParameter2 {
+            data: BezierAlgebraicChordParameterStorage2::Interior(Arc::new(
+                BezierAlgebraicChordParameterData2 {
+                    point,
+                    axis: self.data.parameter_axis,
+                },
+            )),
+        };
         let start = self.start_parameter();
         let end = self.end_parameter();
         let lower = match parameter.cmp_by_refinement(&start, policy)? {
@@ -10407,9 +10448,12 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        Ok(Classification::Decided(
-            (!lower.is_lt() && !upper.is_gt()).then_some(parameter),
-        ))
+        Ok(Classification::Decided(match (lower, upper) {
+            (std::cmp::Ordering::Equal, _) => Some(start),
+            (_, std::cmp::Ordering::Equal) => Some(end),
+            (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => Some(parameter),
+            _ => None,
+        }))
     }
 
     #[cfg(feature = "predicates")]
@@ -10991,17 +11035,26 @@ impl BezierAlgebraicChord2 {
 }
 
 impl BezierAlgebraicChordParameter2 {
-    fn new(
-        point: RationalBezierIntersectionPointEvidence2,
-        axis: BezierAlgebraicChordParameterAxis2,
-    ) -> Self {
-        Self {
-            data: Arc::new(BezierAlgebraicChordParameterData2 { point, axis }),
+    fn axis(&self) -> BezierAlgebraicChordParameterAxis2 {
+        match &self.data {
+            BezierAlgebraicChordParameterStorage2::Endpoint { chord, .. } => {
+                chord.data.parameter_axis
+            }
+            BezierAlgebraicChordParameterStorage2::Interior(data) => data.axis,
         }
     }
 
     pub(crate) fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
-        &self.data.point
+        match &self.data {
+            BezierAlgebraicChordParameterStorage2::Endpoint { chord, at_end } => {
+                if *at_end {
+                    chord.end()
+                } else {
+                    chord.start()
+                }
+            }
+            BezierAlgebraicChordParameterStorage2::Interior(data) => &data.point,
+        }
     }
 
     pub(crate) fn cmp_by_refinement(
@@ -11009,18 +11062,29 @@ impl BezierAlgebraicChordParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        if self.data.axis != other.data.axis {
+        if let (
+            BezierAlgebraicChordParameterStorage2::Endpoint {
+                chord: first,
+                at_end: first_at_end,
+            },
+            BezierAlgebraicChordParameterStorage2::Endpoint {
+                chord: second,
+                at_end: second_at_end,
+            },
+        ) = (&self.data, &other.data)
+            && Arc::ptr_eq(&first.data, &second.data)
+        {
+            return Ok(Classification::Decided(first_at_end.cmp(second_at_end)));
+        }
+        let axis = self.axis();
+        if axis != other.axis() {
             return Err(CurveError::Topology(
                 "cannot compare parameters from distinct algebraic-chord domains".into(),
             ));
         }
-        let order = algebraic_chord_point_coordinate_order(
-            &self.data.point,
-            &other.data.point,
-            self.data.axis.axis,
-            policy,
-        )?;
-        Ok(if self.data.axis.coordinate_increases {
+        let order =
+            algebraic_chord_point_coordinate_order(self.point(), other.point(), axis.axis, policy)?;
+        Ok(if axis.coordinate_increases {
             order
         } else {
             order.map(std::cmp::Ordering::reverse)
@@ -25257,6 +25321,17 @@ mod conversion_tests {
         assert_eq!(
             std::mem::size_of::<BezierAlgebraicChord2>(),
             std::mem::size_of::<Arc<()>>()
+        );
+        assert!(
+            std::mem::size_of::<BezierAlgebraicChordParameter2>()
+                <= std::mem::size_of::<Arc<()>>() * 2
+        );
+        assert_eq!(
+            chord
+                .start_parameter()
+                .cmp_by_refinement(&chord.end_parameter(), &policy)
+                .unwrap(),
+            Classification::Decided(std::cmp::Ordering::Less)
         );
         assert_eq!(chord.start(), &start);
         assert_eq!(chord.end(), &end);
