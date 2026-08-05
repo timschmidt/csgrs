@@ -1099,6 +1099,21 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         Curve2::from(rational),
     ])
     .expect("line/rational benchmark path must remain exact");
+    let cubic_ph_pair = CurvePath2::try_new(vec![
+        Curve2::from(hypercurve::CubicBezier2::new(
+            p(-4, 0),
+            Point2::new(-q(8, 3), s(0)),
+            Point2::new(-q(4, 3), s(0)),
+            p(0, 0),
+        )),
+        Curve2::from(hypercurve::CubicBezier2::new(
+            p(0, 0),
+            Point2::new(s(0), q(4, 3)),
+            Point2::new(s(0), q(8, 3)),
+            p(0, 4),
+        )),
+    ])
+    .expect("exact PH cubic benchmark path must remain exact");
     let source_center = Point2::new(-q(7, 16), q(207, 512));
     let source_start = Point2::new(-q(7, 16), -q(49, 256));
     let arc_quadratic = CurvePath2::try_new(vec![
@@ -1153,6 +1168,12 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         "curve_path_arc_quadratic_design_fillet",
         &arc_quadratic,
         &q(5, 4),
+        iterations,
+    );
+    bench_represented_bezier_fillet_lane(
+        "curve_path_cubic_ph_pair_design_fillet",
+        &cubic_ph_pair,
+        &s(1),
         iterations,
     );
     bench_represented_bezier_region_corner_lanes(&region, iterations);

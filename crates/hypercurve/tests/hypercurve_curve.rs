@@ -2026,7 +2026,100 @@ fn represented_line_bezier_corners_use_the_general_incidence_kernel() {
                     panic!("the reversed represented curve/line contact was lost: {reason:?}")
                 }
             }
+
+            let CurveCornerSolutions2::Unique(reversed_chamfered) = reversed
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    next_setback.clone(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the reversed represented curve/line chamfer must be unique");
+            };
+            assert_eq!(reversed_chamfered.curves()[0].family(), family);
+            assert_eq!(
+                reversed_chamfered.curves()[0].end(),
+                &Point2::new(q(9, 16), q(3, 2))
+            );
+            assert_eq!(reversed_chamfered.curves()[2].start(), &p(-1, 0));
         }
+    }
+}
+
+#[test]
+fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes() {
+    let next = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
+    let previous = QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0));
+    let chamfer_path =
+        CurvePath2::try_new(vec![Curve2::from(previous), Curve2::from(next)]).unwrap();
+    let setback = (r(657).sqrt().unwrap() / r(16)).unwrap();
+
+    let cubic_line_path = CurvePath2::try_new(vec![
+        Curve2::from(CubicBezier2::new(
+            p(-4, 0),
+            Point2::new(-q(8, 3), Real::zero()),
+            Point2::new(-q(4, 3), Real::zero()),
+            p(0, 0),
+        )),
+        Curve2::from(CubicBezier2::new(
+            p(0, 0),
+            Point2::new(Real::zero(), q(4, 3)),
+            Point2::new(Real::zero(), q(8, 3)),
+            p(0, 4),
+        )),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let CurveCornerSolutions2::Unique(chamfered) = chamfer_path
+            .chamfer_vertex_by_setbacks(
+                1,
+                setback.clone(),
+                setback.clone(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the represented quadratic pair must define one chamfer");
+        };
+        assert_eq!(
+            chamfered.curves()[0].end(),
+            &Point2::new(-q(9, 16), q(3, 2))
+        );
+        assert_eq!(
+            chamfered.curves()[2].start(),
+            &Point2::new(q(9, 16), q(3, 2))
+        );
+        assert_eq!(
+            chamfered.curves()[0].family(),
+            CurveFamily2::QuadraticBezier
+        );
+        assert_eq!(
+            chamfered.curves()[2].family(),
+            CurveFamily2::QuadraticBezier
+        );
+
+        let CurveCornerSolutions2::Unique(filleted) = cubic_line_path
+            .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the exact PH cubic pair must define one fillet");
+        };
+        assert_eq!(filleted.curves()[0].end(), &p(-1, 0));
+        assert_eq!(filleted.curves()[2].start(), &p(0, 1));
+        assert_eq!(filleted.curves()[0].family(), CurveFamily2::CubicBezier);
+        assert_eq!(filleted.curves()[2].family(), CurveFamily2::CubicBezier);
+        let CurveGeometry2::CircularArc(fillet) = filleted.curves()[1].geometry() else {
+            panic!("the exact PH pair must insert a circular fillet");
+        };
+        assert_eq!(fillet.center(), &p(-1, 1));
     }
 }
 
