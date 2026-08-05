@@ -545,11 +545,6 @@ impl Rational {
     }
 
     #[inline]
-    pub(crate) fn observe_relative_f64_filter_view(&self) -> bool {
-        self.observe_retained_fact(RETAINED_RELATIVE_F64_FILTER_SEEN)
-    }
-
-    #[inline]
     pub(crate) fn mark_relative_f64_filter_view(&self) {
         self.retain_fact(RETAINED_RELATIVE_F64_FILTER_VIEW);
     }

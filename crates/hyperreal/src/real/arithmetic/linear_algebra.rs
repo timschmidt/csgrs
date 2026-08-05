@@ -908,39 +908,30 @@ impl Real {
                 rational.is_zero(),
             );
         }
-        Self::observe_exact_rational_real_f64_with_error(value, rational)
+        Self::establish_exact_rational_real_f64_with_error(value, rational)
     }
 
     #[inline(never)]
-    fn observe_exact_rational_real_f64_with_error(
+    fn establish_exact_rational_real_f64_with_error(
         value: &Real,
         rational: &Rational,
     ) -> Option<(f64, f64)> {
         // Establish the same direct Rational conversion bound used before
-        // consulting `Real`'s scalar-local approximation cache. A first
-        // observation records reuse potential without writing the cache. A
-        // second successful observation installs the directly bounded value;
-        // only then may later calls consume a cached view as predicate input.
+        // consulting `Real`'s scalar-local approximation cache. The first
+        // successful proof installs that directly bounded value; every later
+        // call may then consume the cached view as predicate input.
         let approximation = rational.to_f64_lossy()?;
         let certified =
             Self::rational_approximation_with_error(approximation, rational.is_zero())?;
-        if rational.observe_relative_f64_filter_view() {
-            rational.mark_relative_f64_filter_view();
-            crate::trace_dispatch!(
-                "real",
-                "rational-relative-filter-view",
-                "retained-after-reuse"
-            );
-            value
-                .primitive_approx_cache
-                .set(PrimitiveApproxCache::F64(Some(approximation)));
-        } else {
-            crate::trace_dispatch!(
-                "real",
-                "rational-relative-filter-view",
-                "reuse-observed"
-            );
-        }
+        rational.mark_relative_f64_filter_view();
+        crate::trace_dispatch!(
+            "real",
+            "rational-relative-filter-view",
+            "established"
+        );
+        value
+            .primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(Some(approximation)));
         Some(certified)
     }
 

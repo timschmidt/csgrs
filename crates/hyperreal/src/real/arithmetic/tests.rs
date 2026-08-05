@@ -922,7 +922,7 @@ mod tests {
         let retained_real = Real::from(retained.clone());
         let first_view = Real::exact_rational_real_f64_with_error(&retained_real)
             .expect("ordinary rational should support a relative filter view");
-        assert!(!retained.has_relative_f64_filter_view());
+        assert!(retained.has_relative_f64_filter_view());
         assert_eq!(
             Real::exact_rational_real_f64_with_error(&retained_real),
             Some(first_view)
