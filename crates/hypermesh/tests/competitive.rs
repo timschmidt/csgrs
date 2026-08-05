@@ -186,6 +186,64 @@ fn shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies(
 }
 
 #[test]
+fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
+    let nodes = [
+        BooleanExpression::Operation(BooleanOp::Union),
+        BooleanExpression::Operation(BooleanOp::Intersection),
+        BooleanExpression::Operation(BooleanOp::Difference),
+        BooleanExpression::Operand(0),
+        BooleanExpression::Operand(1),
+        BooleanExpression::Not(3),
+        BooleanExpression::And([4, 5]),
+        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    ];
+    let roots = [0_u32, 1, 2, 6, 7];
+
+    for shell_count in support::SPARSE_MULTISHELL_COUNTS {
+        let case = support::sparse_multishell_tetrahedra_case(shell_count);
+        let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
+        let expected_triangles = [16, 4, 12, 8, 20].map(|count| count * shell_count);
+        let expected_six_volumes = [127, 1, 63, 63, 126].map(|value| value * shell_count);
+        let mut strict = None;
+
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots: &roots,
+                },
+            )
+            .unwrap_or_else(|error| panic!("{} {policy}: {error}", case.name));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            if let Some(strict) = &strict {
+                assert_eq!(outcome.value, *strict, "policy outputs differ");
+            } else {
+                strict = Some(outcome.value.clone());
+            }
+            assert_eq!(outcome.value.vertices.len(), shell_count * 11);
+            for output in 0..roots.len() {
+                assert_eq!(
+                    outcome.value.results[output].triangles.len(),
+                    expected_triangles[output],
+                    "{policy} output {output} triangle count"
+                );
+                assert!(boundary_is_balanced(&outcome.value.results[output]));
+                assert_eq!(
+                    exact_six_volume(&outcome.value, output),
+                    Rational::new(
+                        i64::try_from(expected_six_volumes[output])
+                            .expect("sparse fixture volume fits i64"),
+                    ),
+                    "{policy} output {output} exact volume"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
     let case = support::dense_coplanar_box_case(4);
     let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];

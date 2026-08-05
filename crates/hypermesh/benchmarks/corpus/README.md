@@ -57,6 +57,17 @@ input coordinate stays on the same denominator-at-most-eight dyadic lattice,
 separating mesh growth from input scalar-storage growth. The large and XL
 siblings have distinct both-policy kernel/process heap selectors.
 
+`sparse_multishell_tetrahedra_8`, `sparse_multishell_tetrahedra_64`, and
+`sparse_multishell_tetrahedra_512` place independently overlapping
+tetrahedron pairs in a 2x2x2, 4x4x4, or 8x8x8 integer grid. Each operand is one
+mesh with many disconnected closed shells. Corresponding shells retain the
+same exact local Boolean topology, while distinct grid cells are separated by
+an exact gap. The family therefore scales component/cell assembly and sparse
+broad-phase work from 64 through 4,096 input triangles without coplanar
+overlap or arbitrary-rational width growth. The largest member has a unique
+both-policy kernel/process heap selector and every member is exact-CGAL
+exportable.
+
 `wide_rational_boxes_64`, `wide_rational_boxes_512`, and
 `wide_rational_boxes_2048` hold the 6,144-triangle overlapping-box topology
 fixed while applying the positive exact similarity

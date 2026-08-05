@@ -6,8 +6,8 @@ use std::{env, hint::black_box, time::Instant};
 
 use competitive_support::{
     WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus, dense_coplanar_box_case,
-    exact_mesh_pair, large_boolean_case, run_hypermesh_all, wide_rational_overlapping_box_case,
-    wide_rational_shift,
+    exact_mesh_pair, large_boolean_case, run_hypermesh_all, sparse_multishell_tetrahedra_case,
+    wide_rational_overlapping_box_case, wide_rational_shift,
 };
 use hypermesh::{
     BooleanMeshBatch, BooleanOp, BooleanProgram, MeshContext, PredicatePolicy, TriangleMesh,
@@ -78,6 +78,8 @@ fn main() {
             "dense_coplanar_boxes_4" => dense_coplanar_box_case(4),
             "dense_coplanar_boxes_16" => dense_coplanar_box_case(16),
             "dense_coplanar_boxes_32" => dense_coplanar_box_case(32),
+            "sparse_multishell_tetrahedra_64" => sparse_multishell_tetrahedra_case(64),
+            "sparse_multishell_tetrahedra_512" => sparse_multishell_tetrahedra_case(512),
             "subdivided_overlapping_boxes_3072_each" => large_boolean_case(),
             _ => corpus()
                 .into_iter()

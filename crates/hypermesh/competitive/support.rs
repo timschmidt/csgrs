@@ -22,6 +22,7 @@ pub const STRICT_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const DENSE_COPLANAR_DIVISIONS: [usize; 3] = [4, 16, 32];
+pub const SPARSE_MULTISHELL_COUNTS: [usize; 3] = [8, 64, 512];
 pub const WIDE_RATIONAL_DIVISIONS: usize = 16;
 pub const WIDE_RATIONAL_SHIFTS: [u32; 3] = [64, 512, 2048];
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
@@ -246,6 +247,7 @@ pub fn corpus() -> Vec<Case> {
                 }),
             ],
         },
+        sparse_multishell_tetrahedra_case(SPARSE_MULTISHELL_COUNTS[0]),
         clipped_voxel_torus_case(9),
     ]
 }
@@ -949,6 +951,112 @@ fn tetrahedron(origin: [f64; 3], size: f64) -> RawMesh {
             [x, y, z + size],
         ],
         triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
+    }
+}
+
+fn append_raw_mesh(target: &mut RawMesh, source: RawMesh) {
+    let vertex_offset = target.positions.len();
+    target.positions.extend(source.positions);
+    target
+        .triangles
+        .extend(source.triangles.into_iter().map(|triangle| {
+            triangle.map(|vertex| {
+                vertex
+                    .checked_add(vertex_offset)
+                    .expect("competitive fixture vertex index fits usize")
+            })
+        }));
+}
+
+/// Builds two operands containing the same number of widely separated
+/// tetrahedral shells. Each corresponding pair has the geometry of the
+/// permanent overlapping-tetrahedra case, while different grid cells are
+/// provably disjoint. The family therefore scales disconnected components and
+/// sparse broad-phase work without changing local intersection topology or
+/// coordinate representation class.
+pub fn sparse_multishell_tetrahedra_case(shell_count: usize) -> Case {
+    assert!(shell_count > 0);
+    let mut side = 1_usize;
+    while side
+        .checked_pow(3)
+        .is_some_and(|capacity| capacity < shell_count)
+    {
+        side = side
+            .checked_add(1)
+            .expect("competitive fixture grid side fits usize");
+    }
+
+    let mut left = RawMesh {
+        positions: Vec::with_capacity(shell_count.saturating_mul(4)),
+        triangles: Vec::with_capacity(shell_count.saturating_mul(4)),
+    };
+    let mut right = RawMesh {
+        positions: Vec::with_capacity(shell_count.saturating_mul(4)),
+        triangles: Vec::with_capacity(shell_count.saturating_mul(4)),
+    };
+    let mut max_cell = [0_usize; 3];
+    for shell in 0..shell_count {
+        let cell = [shell % side, (shell / side) % side, shell / side / side];
+        for axis in 0..3 {
+            max_cell[axis] = max_cell[axis].max(cell[axis]);
+        }
+        let origin = cell.map(|coordinate| {
+            f64::from(
+                u32::try_from(
+                    coordinate
+                        .checked_mul(8)
+                        .expect("grid coordinate fits usize"),
+                )
+                .expect("competitive fixture grid coordinate fits u32"),
+            )
+        });
+        append_raw_mesh(&mut left, tetrahedron(origin, 4.0));
+        append_raw_mesh(
+            &mut right,
+            tetrahedron(origin.map(|coordinate| coordinate + 1.0), 4.0),
+        );
+    }
+
+    let shell_count_f64 =
+        f64::from(u32::try_from(shell_count).expect("competitive fixture shell count fits u32"));
+    let max_origin = max_cell.map(|coordinate| {
+        f64::from(
+            u32::try_from(
+                coordinate
+                    .checked_mul(8)
+                    .expect("competitive fixture bound fits usize"),
+            )
+            .expect("competitive fixture bound fits u32"),
+        )
+    });
+    Case {
+        name: match shell_count {
+            8 => "sparse_multishell_tetrahedra_8",
+            64 => "sparse_multishell_tetrahedra_64",
+            512 => "sparse_multishell_tetrahedra_512",
+            _ => "sparse_multishell_tetrahedra",
+        },
+        left,
+        right,
+        expected_volumes: [
+            shell_count_f64 * 127.0 / 6.0,
+            shell_count_f64 / 6.0,
+            shell_count_f64 * 63.0 / 6.0,
+        ],
+        expected_bounds: [
+            Some(Bounds {
+                min: [0.0; 3],
+                max: max_origin.map(|coordinate| coordinate + 5.0),
+            }),
+            Some(Bounds {
+                min: [1.0; 3],
+                max: max_origin.map(|coordinate| coordinate + 2.0),
+            }),
+            Some(Bounds {
+                min: [0.0; 3],
+                max: max_origin.map(|coordinate| coordinate + 4.0),
+            }),
+        ],
     }
 }
 

@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 35, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 38, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -178,6 +178,11 @@ fn corpus_spans_initial_replacement_path_classes() {
         "exact-similarity",
         "fixed-topology-scalar-scaling",
         "wide-rational",
+        "multi-shell-input",
+        "disconnected-components",
+        "sparse-broad-phase",
+        "component-scaling",
+        "fixed-local-topology",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -261,6 +266,7 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
             "boxes-3072-general",
             "dense-coplanar-16",
             "dense-coplanar-32",
+            "sparse-shells-512",
             "voxel-torus-33",
             "voxel-torus-65",
             "wide-rational-64",
@@ -274,6 +280,80 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
         .into_iter()
         .collect()
     );
+}
+
+#[test]
+fn sparse_multishell_family_scales_components_at_fixed_local_topology() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str)
+                == Some("sparse_multishell_tetrahedra")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), support::SPARSE_MULTISHELL_COUNTS.len());
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        support::SPARSE_MULTISHELL_COUNTS.map(|count| count as i64)
+    );
+
+    for shell_count in support::SPARSE_MULTISHELL_COUNTS {
+        let case = support::sparse_multishell_tetrahedra_case(shell_count);
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            shell_count * 8
+        );
+        assert_eq!(
+            case.left.positions.len() + case.right.positions.len(),
+            shell_count * 8
+        );
+        for mesh in [&case.left, &case.right] {
+            let summary = support::summarize(mesh);
+            assert!(summary.closed);
+            assert!(summary.nondegenerate);
+            assert_eq!(summary.components, shell_count);
+            assert_eq!(summary.triangles, shell_count * 4);
+            assert_eq!(summary.vertices, shell_count * 4);
+            assert_eq!(summary.volume, shell_count as f64 * 64.0 / 6.0);
+            assert!(
+                mesh.positions
+                    .iter()
+                    .flatten()
+                    .all(|coordinate| coordinate.fract() == 0.0)
+            );
+        }
+
+        let fixture = family
+            .iter()
+            .find(|fixture| fixture["scale_parameter"].as_integer() == Some(shell_count as i64))
+            .expect("every generated shell count is manifested");
+        assert_eq!(
+            fixture["input_triangles"].as_integer(),
+            Some((shell_count * 8) as i64)
+        );
+        assert_eq!(
+            fixture["expected_output_triangles"]
+                .as_array()
+                .expect("sparse shell outputs are manifested")
+                .iter()
+                .map(|value| value.as_integer().unwrap())
+                .collect::<Vec<_>>(),
+            [
+                shell_count * 16,
+                shell_count * 4,
+                shell_count * 12,
+                shell_count * 8,
+                shell_count * 20,
+            ]
+            .map(|count| count as i64)
+        );
+    }
 }
 
 #[test]

@@ -177,6 +177,70 @@ expected_certainty = "Certified"
 expected_volumes = [21.166666666666668, 0.16666666666666666, 10.5]
 
 [[fixture]]
+id = "sparse_multishell_tetrahedra_8"
+status = "permanent"
+provenance = "Hypermesh deterministic disconnected-shell sparse-intersection corpus"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(8)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "regression"]
+size = "small"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 64
+expected_output_triangles = [128, 32, 96, 64, 160]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 8
+input_coordinate_max = 13
+
+[[fixture]]
+id = "sparse_multishell_tetrahedra_64"
+status = "permanent"
+provenance = "Deterministic 64-component sibling of sparse_multishell_tetrahedra_8"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(64)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling"]
+size = "medium"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 512
+expected_output_triangles = [1024, 256, 768, 512, 1280]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 64
+input_coordinate_max = 29
+
+[[fixture]]
+id = "sparse_multishell_tetrahedra_512"
+status = "permanent"
+provenance = "Deterministic 512-component sibling of sparse_multishell_tetrahedra_8"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "competitive::support::sparse_multishell_tetrahedra_case(512)"
+coordinate_class = "bounded-word-integer"
+topology = ["closed-pwn", "multi-shell-input", "disconnected-components", "sparse-broad-phase", "component-scaling", "transverse-face-intersection", "fixed-local-topology", "bounded-coordinate-complexity", "large-mesh"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 4096
+expected_output_triangles = [8192, 2048, 6144, 4096, 10240]
+scaling_family = "sparse_multishell_tetrahedra"
+scale_parameter = 512
+input_coordinate_max = 61
+heap_probe_modes = ["sparse-shells-512"]
+
+[[fixture]]
 id = "clipped_voxel_torus_9"
 status = "permanent"
 provenance = "Hypermesh deterministic high-genus scaling and competitive corpus"
