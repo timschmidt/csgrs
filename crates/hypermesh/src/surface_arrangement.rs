@@ -47,15 +47,22 @@ struct RawConstraint {
 
 #[derive(Default)]
 struct FaceWork {
-    boundary: Vec<u32>,
+    boundary: [u32; 3],
+    // Source-boundary constraints are implied by this triangle and its
+    // retained edge identities. Store only additional arrangement work so an
+    // untouched source face needs no face-local heap allocation.
     constraints: Vec<RawConstraint>,
     contacts: Vec<u32>,
-    changed: bool,
+}
+
+impl FaceWork {
+    fn is_changed(&self) -> bool {
+        !self.constraints.is_empty() || !self.contacts.is_empty()
+    }
 }
 
 struct ArrangementPointArena {
     points: Vec<Point3>,
-    identities: Vec<ArrangementPointIdentity>,
     structural: StorageHashMap<ArrangementPointIdentity, u32>,
     source_edge_points: Vec<(u32, [u32; 2], u32)>,
     numeric: PointInterner<()>,
@@ -69,12 +76,6 @@ impl ArrangementPointArena {
             .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "surface arrangement point arena",
             })?;
-        let mut identities = Vec::new();
-        identities
-            .try_reserve_exact(capacity)
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "surface arrangement point identity arena",
-            })?;
         let mut structural = StorageHashMap::default();
         structural
             .try_reserve(capacity)
@@ -83,7 +84,6 @@ impl ArrangementPointArena {
             })?;
         Ok(Self {
             points,
-            identities,
             structural,
             source_edge_points: Vec::new(),
             // Exact-rational points have a complete identity/fingerprint
@@ -114,31 +114,12 @@ impl ArrangementPointArena {
             .map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "surface arrangement point identity index",
             })?;
-        self.identities
-            .try_reserve(1)
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "surface arrangement point identity arena",
-            })?;
-        let old_len = self.points.len();
         let index = self
             .numeric
             .intern_owned(decisions, &mut self.points, point, None)?;
         let compact = u32::try_from(index).map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface arrangement point arena",
         })?;
-        if index == old_len {
-            self.identities.push(identity.clone());
-        } else {
-            let canonical =
-                self.identities
-                    .get_mut(index)
-                    .ok_or(HypermeshError::SurfaceArrangementFailed {
-                        reason: "numeric point alias has no construction identity",
-                    })?;
-            if identity < *canonical {
-                *canonical = identity.clone();
-            }
-        }
         self.structural.insert(identity, compact);
         Ok(compact)
     }
@@ -195,7 +176,6 @@ impl ArrangementPointArena {
 #[derive(Debug)]
 struct SurfaceCorefinement {
     points: Vec<Point3>,
-    identities: Vec<ArrangementPointIdentity>,
     face_offsets: Box<[u32]>,
     triangles: Vec<[u32; 3]>,
     #[cfg(test)]
@@ -549,9 +529,7 @@ fn assemble_surface_cells(
     radially_separated_face_pair_keys: &[u64],
     source_bvh: &ExactBvhQueryHierarchy,
 ) -> HypermeshResult<SurfaceCellComplex> {
-    if surface.face_offsets.len() != polygons.len().saturating_add(1)
-        || surface.identities.len() != surface.points.len()
-    {
+    if surface.face_offsets.len() != polygons.len().saturating_add(1) {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface corefinement topology is not aligned with its sources",
         });
@@ -1855,13 +1833,14 @@ fn corefine_surface(
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface arrangement face work",
         })?;
-    work.resize_with(polygons.len(), FaceWork::default);
-
-    for (face, polygon) in polygons.iter().enumerate() {
-        add_source_boundary(decisions, face, polygon, &mut arena, &mut work[face])?;
+    for polygon in polygons {
+        work.push(FaceWork {
+            boundary: add_source_boundary(decisions, polygon, &mut arena)?,
+            ..FaceWork::default()
+        });
     }
     append_intersection_constraints(decisions, polygons, intersections, &mut arena, &mut work)?;
-    propagate_retained_source_edge_points(&mut arena, &mut work)?;
+    propagate_retained_source_edge_points(polygons, &mut arena, &mut work)?;
 
     let offset_capacity =
         polygons
@@ -1895,8 +1874,8 @@ fn corefine_surface(
     let mut constraints = Vec::new();
     #[cfg(test)]
     let mut contacts = Vec::new();
-    for (face, (polygon, face_work)) in polygons.iter().zip(&work).enumerate() {
-        let result = corefine_face(decisions, face, polygon, face_work, &mut arena)?;
+    for (face, (polygon, face_work)) in polygons.iter().zip(work).enumerate() {
+        let result = corefine_face(decisions, face, polygon, &face_work, &mut arena)?;
         triangles.try_reserve(result.triangles.len()).map_err(|_| {
             HypermeshError::CapacityOverflow {
                 operation: "surface arrangement triangles",
@@ -1939,7 +1918,6 @@ fn corefine_surface(
     }
     Ok(SurfaceCorefinement {
         points: arena.points,
-        identities: arena.identities,
         face_offsets: face_offsets.into_boxed_slice(),
         triangles,
         #[cfg(test)]
@@ -1959,11 +1937,9 @@ fn compact_len(len: usize, operation: &'static str) -> HypermeshResult<u32> {
 
 fn add_source_boundary(
     decisions: &DecisionContext,
-    _face: usize,
     polygon: &ConvexPolygon,
     arena: &mut ArrangementPointArena,
-    work: &mut FaceWork,
-) -> HypermeshResult<()> {
+) -> HypermeshResult<[u32; 3]> {
     let vertices =
         polygon
             .known_vertices
@@ -1983,7 +1959,7 @@ fn add_source_boundary(
             .ok_or(HypermeshError::SurfaceArrangementFailed {
                 reason: "source face has no canonical edge identities",
             })?;
-    if vertices.len() < 3
+    if vertices.len() != 3
         || vertices.len() != vertex_identities.len()
         || vertices.len() != edge_identities.len()
     {
@@ -1991,37 +1967,15 @@ fn add_source_boundary(
             reason: "source face geometry and identity cycles are not aligned",
         });
     }
-    work.boundary
-        .try_reserve_exact(vertices.len())
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface arrangement face boundary",
-        })?;
-    work.constraints
-        .try_reserve(vertices.len())
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface arrangement face constraints",
-        })?;
-    for (point, identity) in vertices.iter().zip(vertex_identities) {
-        work.boundary.push(arena.insert(
+    let mut boundary = [0; 3];
+    for (slot, (point, identity)) in vertices.iter().zip(vertex_identities).enumerate() {
+        boundary[slot] = arena.insert(
             decisions,
             ArrangementPointIdentity::Construction(identity),
             point.clone(),
-        )?);
+        )?;
     }
-    for index in 0..work.boundary.len() {
-        work.constraints.push(RawConstraint {
-            endpoints: [
-                work.boundary[index],
-                work.boundary[(index + 1) % work.boundary.len()],
-            ],
-            line: edge_identities
-                .get(index)
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "source edge identity cycle is incomplete",
-                })?,
-        });
-    }
-    Ok(())
+    Ok(boundary)
 }
 
 fn append_intersection_constraints(
@@ -2044,7 +1998,6 @@ fn append_intersection_constraints(
                 } => {
                     let point = insert_graph_point(decisions, intersections, arena, point)?;
                     work[face].contacts.push(point);
-                    work[face].changed = true;
                 }
                 PairwiseIntersectionEventIds::NonCoplanarSegment {
                     endpoints,
@@ -2057,7 +2010,6 @@ fn append_intersection_constraints(
                         endpoints,
                         line: pairwise_split_line(face, other_polygon as usize)?,
                     });
-                    work[face].changed = true;
                 }
                 PairwiseIntersectionEventIds::CoplanarSegment {
                     endpoints,
@@ -2074,7 +2026,6 @@ fn append_intersection_constraints(
                     work[face]
                         .constraints
                         .push(RawConstraint { endpoints, line });
-                    work[face].changed = true;
                 }
                 PairwiseIntersectionEventIds::CoplanarOverlap { other_polygon } => {
                     let other = other_polygon as usize;
@@ -2119,8 +2070,6 @@ fn append_intersection_constraints(
                         work[face].constraints.push(constraint.clone());
                         work[other].constraints.push(constraint);
                     }
-                    work[face].changed = true;
-                    work[other].changed = true;
                 }
             }
         }
@@ -2129,6 +2078,7 @@ fn append_intersection_constraints(
 }
 
 fn propagate_retained_source_edge_points(
+    polygons: &[ConvexPolygon],
     arena: &mut ArrangementPointArena,
     work: &mut [FaceWork],
 ) -> HypermeshResult<()> {
@@ -2139,19 +2089,37 @@ fn propagate_retained_source_edge_points(
         return Ok(());
     }
 
-    for face_work in work {
-        let FaceWork {
-            boundary,
-            constraints,
-            contacts,
-            changed,
-        } = face_work;
+    if polygons.len() != work.len() {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "source polygons and face work differ",
+        });
+    }
+    for (polygon, face_work) in polygons.iter().zip(work) {
+        let boundary = face_work.boundary;
+        let edge_identities =
+            polygon
+                .known_edge_identities()
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "source face has no canonical edge identities",
+                })?;
+        if edge_identities.len() != boundary.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "source face boundary and edge identities are not aligned",
+            });
+        }
         let mut inserted = false;
-        for constraint in constraints.iter().take(boundary.len()) {
-            let ConstructionEdgeIdentity::Source { mesh, endpoints } = &constraint.line else {
+        for edge in 0..boundary.len() {
+            let line =
+                edge_identities
+                    .get(edge)
+                    .ok_or(HypermeshError::SurfaceArrangementFailed {
+                        reason: "source edge identity cycle is incomplete",
+                    })?;
+            let ConstructionEdgeIdentity::Source { mesh, endpoints } = line else {
                 continue;
             };
-            let key = (*mesh, *endpoints);
+            let key = (mesh, endpoints);
+            let edge_boundary = [boundary[edge], boundary[(edge + 1) % boundary.len()]];
             let start =
                 source_edge_points.partition_point(|&(candidate_mesh, candidate_endpoints, _)| {
                     (candidate_mesh, candidate_endpoints) < key
@@ -2160,22 +2128,29 @@ fn propagate_retained_source_edge_points(
                 source_edge_points.partition_point(|&(candidate_mesh, candidate_endpoints, _)| {
                     (candidate_mesh, candidate_endpoints) <= key
                 });
-            contacts
-                .try_reserve(end - start)
-                .map_err(|_| HypermeshError::CapacityOverflow {
-                    operation: "retained source-edge face schedule",
+            let retained = &source_edge_points[start..end];
+            let additional = retained
+                .iter()
+                .filter(|(_, _, point)| !edge_boundary.contains(point))
+                .count();
+            if additional != 0 {
+                face_work.contacts.try_reserve(additional).map_err(|_| {
+                    HypermeshError::CapacityOverflow {
+                        operation: "retained source-edge face schedule",
+                    }
                 })?;
-            for &(_, _, point) in &source_edge_points[start..end] {
-                if !constraint.endpoints.contains(&point) {
-                    contacts.push(point);
-                    inserted = true;
-                }
+                face_work.contacts.extend(
+                    retained
+                        .iter()
+                        .map(|&(_, _, point)| point)
+                        .filter(|point| !edge_boundary.contains(point)),
+                );
+                inserted = true;
             }
         }
         if inserted {
-            contacts.sort_unstable();
-            contacts.dedup();
-            *changed = true;
+            face_work.contacts.sort_unstable();
+            face_work.contacts.dedup();
         }
     }
     Ok(())
@@ -2548,7 +2523,7 @@ fn corefine_face(
     work: &FaceWork,
     arena: &mut ArrangementPointArena,
 ) -> HypermeshResult<FaceResult> {
-    if !work.changed {
+    if !work.is_changed() {
         return Ok(FaceResult {
             triangles: triangulate_convex_boundary(&work.boundary),
             #[cfg(test)]
@@ -2564,7 +2539,29 @@ fn corefine_face(
             contacts: Vec::new(),
         });
     }
+    let boundary = &work.boundary;
     let mut constraint_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
+    let edge_identities =
+        polygon
+            .known_edge_identities()
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "source face has no canonical edge identities",
+            })?;
+    if edge_identities.len() != boundary.len() {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "source face boundary and edge identities are not aligned",
+        });
+    }
+    for edge in 0..boundary.len() {
+        constraint_lines.insert(
+            sorted_edge([boundary[edge], boundary[(edge + 1) % boundary.len()]]),
+            edge_identities
+                .get(edge)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "source edge identity cycle is incomplete",
+                })?,
+        );
+    }
     for constraint in &work.constraints {
         let endpoints = sorted_edge(constraint.endpoints);
         if endpoints[0] == endpoints[1] {
@@ -2580,7 +2577,7 @@ fn corefine_face(
             .or_insert_with(|| constraint.line.clone());
     }
     let mut point_ids = BTreeSet::new();
-    point_ids.extend(work.boundary.iter().copied());
+    point_ids.extend(boundary.iter().copied());
     point_ids.extend(work.contacts.iter().copied());
     for edge in constraint_lines.keys() {
         point_ids.extend(edge);
@@ -2728,15 +2725,14 @@ fn corefine_face(
         }
     }
 
-    let boundary_edges = work
-        .boundary
+    let boundary_edges = boundary
         .iter()
         .copied()
-        .zip(work.boundary.iter().copied().cycle().skip(1))
-        .take(work.boundary.len())
+        .zip(boundary.iter().copied().cycle().skip(1))
+        .take(boundary.len())
         .map(|edge| sorted_edge([edge.0, edge.1]))
         .collect::<BTreeSet<_>>();
-    let only_source_boundary = projected.len() == work.boundary.len()
+    let only_source_boundary = projected.len() == boundary.len()
         && split_lines.keys().copied().collect::<BTreeSet<_>>() == boundary_edges;
     #[cfg(test)]
     let contacts = {
@@ -2747,7 +2743,7 @@ fn corefine_face(
     };
     if only_source_boundary {
         return Ok(FaceResult {
-            triangles: triangulate_convex_boundary(&work.boundary),
+            triangles: triangulate_convex_boundary(boundary),
             #[cfg(test)]
             constraints: boundary_edges.into_iter().collect(),
             #[cfg(test)]
@@ -2784,7 +2780,7 @@ fn corefine_face(
             reason: "preplanarized face constraints produced an unexpected Steiner point",
         });
     }
-    let source_positive = source_projection_is_positive(decisions, &projected, &work.boundary)?;
+    let source_positive = source_projection_is_positive(decisions, &projected, boundary)?;
     let mut triangles = Vec::new();
     triangles
         .try_reserve_exact(outcome.value.triangles().len())
@@ -3489,6 +3485,18 @@ mod tests {
         polygon
     }
 
+    #[test]
+    fn unchanged_face_work_keeps_its_boundary_inline() {
+        assert_eq!(std::mem::size_of::<FaceWork>(), 64);
+        let work = FaceWork {
+            boundary: [0, 1, 2],
+            ..FaceWork::default()
+        };
+        assert!(!work.is_changed());
+        assert_eq!(work.constraints.capacity(), 0);
+        assert_eq!(work.contacts.capacity(), 0);
+    }
+
     fn tetrahedron(
         origin: [i64; 3],
         extent: i64,
@@ -4096,7 +4104,6 @@ mod tests {
                 Point3::new(Real::one(), Real::one(), Real::zero()),
                 Point3::new(left, right, Real::zero()),
             ],
-            identities: Vec::new(),
             face_offsets: Vec::new().into_boxed_slice(),
             triangles: Vec::new(),
             constraint_offsets: Vec::new().into_boxed_slice(),
@@ -4969,6 +4976,29 @@ mod tests {
         ConstructionEdgeIdentity::Split { planes }
     }
 
+    #[test]
+    fn crossing_split_lines_produce_the_canonical_plane_triple_identity() {
+        let support = pairwise_support_identity(0).unwrap().unwrap();
+        let identity = intersect_arrangement_lines(
+            &pairwise_split_line(0, 1).unwrap(),
+            &pairwise_split_line(0, 2).unwrap(),
+            support,
+        )
+        .unwrap();
+        let mut planes = [
+            pairwise_support_identity(0).unwrap().unwrap(),
+            pairwise_support_identity(1).unwrap().unwrap(),
+            pairwise_support_identity(2).unwrap().unwrap(),
+        ];
+        planes.sort_unstable();
+        assert_eq!(
+            identity,
+            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::PlaneTriple {
+                planes,
+            })
+        );
+    }
+
     fn insert_test_point(
         decisions: &DecisionContext,
         arena: &mut ArrangementPointArena,
@@ -5024,10 +5054,6 @@ mod tests {
             .iter()
             .position(|point| point == &p(5, 5, 0))
             .expect("the two cuts have one exact crossing");
-        assert!(matches!(
-            &surface.identities[center],
-            ArrangementPointIdentity::Construction(ConstructionVertexIdentity::PlaneTriple { .. })
-        ));
         assert!(surface.face_triangles(0).len() >= 8);
         for face in 0..polygons.len() {
             assert!(
@@ -5131,8 +5157,11 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             let mut arena = ArrangementPointArena::with_capacity(11).unwrap();
-            let mut work = FaceWork::default();
-            add_source_boundary(&decisions, 0, &polygon, &mut arena, &mut work).unwrap();
+            let boundary = add_source_boundary(&decisions, &polygon, &mut arena).unwrap();
+            let mut work = FaceWork {
+                boundary,
+                ..FaceWork::default()
+            };
             let mut vertex = 0;
             for (line, endpoints) in [
                 (0, [p(2, 5, 0), p(18, 5, 0)]),
@@ -5147,8 +5176,6 @@ mod tests {
                     line: test_split_line(0, line),
                 });
             }
-            work.changed = true;
-
             let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
             assert_eq!(arena.points.len(), 11);
             assert_eq!(result.constraints.len(), 10);
@@ -5168,8 +5195,11 @@ mod tests {
             let context = MeshContext::new(policy);
             let decisions = DecisionContext::new(&context);
             let mut arena = ArrangementPointArena::with_capacity(3).unwrap();
-            let mut work = FaceWork::default();
-            add_source_boundary(&decisions, 0, &polygon, &mut arena, &mut work).unwrap();
+            let boundary = add_source_boundary(&decisions, &polygon, &mut arena).unwrap();
+            let mut work = FaceWork {
+                boundary,
+                ..FaceWork::default()
+            };
             work.constraints
                 .try_reserve((LINE_COUNT * 2) as usize)
                 .unwrap();
@@ -5190,8 +5220,6 @@ mod tests {
                     line: test_split_line(0, LINE_COUNT + coordinate - 1),
                 });
             }
-            work.changed = true;
-
             let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
             assert_eq!(
                 arena.points.len(),
@@ -5211,8 +5239,11 @@ mod tests {
         let polygon = triangle([p(0, 0, 0), p(8, 0, 0), p(0, 8, 0)], 0, 0, [0, 1, 2]);
         let decisions = crate::test_support::approximate_decisions();
         let mut arena = ArrangementPointArena::with_capacity(4).unwrap();
-        let mut work = FaceWork::default();
-        add_source_boundary(&decisions, 0, &polygon, &mut arena, &mut work).unwrap();
+        let boundary = add_source_boundary(&decisions, &polygon, &mut arena).unwrap();
+        let mut work = FaceWork {
+            boundary,
+            ..FaceWork::default()
+        };
         let contact = arena
             .insert(
                 &decisions,
@@ -5227,8 +5258,6 @@ mod tests {
             )
             .unwrap();
         work.contacts.push(contact);
-        work.changed = true;
-
         let result = corefine_face(&decisions, 0, &polygon, &work, &mut arena).unwrap();
         assert_eq!(result.contacts, [contact]);
         assert_eq!(result.triangles.len(), 3);
