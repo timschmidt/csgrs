@@ -40,7 +40,7 @@ fn fixture_manifest_is_complete_unique_and_reproducible() {
     let fixtures = manifest["fixture"]
         .as_array()
         .expect("fixture manifest must contain [[fixture]] records");
-    assert!(fixtures.len() >= 46, "fixture registry unexpectedly shrank");
+    assert!(fixtures.len() >= 49, "fixture registry unexpectedly shrank");
 
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut ids = BTreeSet::new();
@@ -195,6 +195,11 @@ fn corpus_spans_initial_replacement_path_classes() {
         "same-operand-scaling",
         "deep-symbolic-construction",
         "retained-symbolic-facts",
+        "exact-affine-embedding",
+        "near-degenerate",
+        "thin-shell",
+        "sliver-triangles",
+        "extreme-exponent",
     ] {
         assert!(tags.contains(required), "fixture topology gap: {required}");
     }
@@ -280,6 +285,9 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
             "dense-coplanar-32",
             "sparse-shells-512",
             "self-pwn-clusters-512",
+            "thin-dyadic-64",
+            "thin-dyadic-512",
+            "thin-dyadic-2048",
             "voxel-torus-33",
             "voxel-torus-65",
             "wide-rational-64",
@@ -560,6 +568,83 @@ fn wide_rational_family_scales_scalar_width_without_changing_topology() {
         );
         assert_eq!(fixture["input_triangles"].as_integer(), Some(6_144));
     }
+}
+
+#[test]
+fn thin_dyadic_family_scales_exact_near_degeneracy_without_changing_topology() {
+    let manifest = manifest();
+    let family = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .filter(|fixture| {
+            fixture.get("scaling_family").and_then(Value::as_str) == Some("thin_dyadic_boxes")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(family.len(), support::THIN_DYADIC_SHIFTS.len());
+    assert_eq!(
+        family
+            .iter()
+            .map(|fixture| fixture["scale_parameter"].as_integer().unwrap())
+            .collect::<Vec<_>>(),
+        [64, 512, 2048]
+    );
+
+    let mut topology = None;
+    for shift in support::THIN_DYADIC_SHIFTS {
+        assert_eq!(
+            support::thin_dyadic_shift(&format!("thin_dyadic_boxes_{shift}")),
+            Some(shift)
+        );
+        let scale = support::thin_dyadic_scale(shift)
+            .exact_rational()
+            .expect("fixture scale is exact dyadic");
+        assert_eq!(scale.numerator().bits(), 1);
+        assert_eq!(scale.denominator().bits(), u64::from(shift) + 1);
+        assert_eq!(
+            support::thin_dyadic_scale(shift).to_f64_lossy(),
+            Some(2.0_f64.powi(-(shift as i32)))
+        );
+
+        let case = support::thin_dyadic_overlapping_box_case(support::THIN_DYADIC_DIVISIONS, shift);
+        assert_eq!(
+            case.left.triangles.len() + case.right.triangles.len(),
+            6_144
+        );
+        let current = [case.left.triangles.to_vec(), case.right.triangles.to_vec()];
+        if let Some(topology) = &topology {
+            assert_eq!(&current, topology);
+        } else {
+            topology = Some(current);
+        }
+        assert!(
+            case.left
+                .positions
+                .iter()
+                .chain(case.right.positions.iter())
+                .flat_map(|point| [&point.x, &point.y, &point.z])
+                .all(|coordinate| coordinate.exact_rational_ref().is_some())
+        );
+
+        let fixture = family
+            .iter()
+            .find(|fixture| fixture["scale_parameter"].as_integer() == Some(i64::from(shift)))
+            .expect("every generated thin exponent is manifested");
+        assert_eq!(
+            fixture["scale_denominator_bits"].as_integer(),
+            Some(i64::from(shift) + 1)
+        );
+        assert_eq!(fixture["input_triangles"].as_integer(), Some(6_144));
+        assert_eq!(
+            fixture["binary64_scale"].as_str(),
+            Some(if shift > 1_074 {
+                "underflows-to-zero"
+            } else {
+                "nonzero"
+            })
+        );
+    }
+    assert_eq!(support::thin_dyadic_shift("overlapping_boxes"), None);
 }
 
 #[test]

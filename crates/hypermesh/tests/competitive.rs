@@ -26,6 +26,18 @@ const HYPERMESH_OPERATIONS: [(&str, BooleanOp); 4] = [
     ("symmetric difference", BooleanOp::SymmetricDifference),
 ];
 
+const ALL_BOOLEAN_NODES: [BooleanExpression; 8] = [
+    BooleanExpression::Operation(BooleanOp::Union),
+    BooleanExpression::Operation(BooleanOp::Intersection),
+    BooleanExpression::Operation(BooleanOp::Difference),
+    BooleanExpression::Operation(BooleanOp::SymmetricDifference),
+    BooleanExpression::Operand(0),
+    BooleanExpression::Operand(1),
+    BooleanExpression::Not(4),
+    BooleanExpression::And([5, 6]),
+];
+const ALL_BOOLEAN_ROOTS: [u32; 5] = [0, 1, 2, 7, 3];
+
 fn predicate_contexts() -> [(&'static str, MeshContext); 2] {
     [
         ("STRICT", MeshContext::new(PredicatePolicy::STRICT)),
@@ -261,18 +273,6 @@ fn shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies(
 
 #[test]
 fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(3),
-        BooleanExpression::And([4, 5]),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-    ];
-    let roots = [0_u32, 1, 2, 6, 7];
-
     for shell_count in support::SPARSE_MULTISHELL_COUNTS {
         let case = support::sparse_multishell_tetrahedra_case(shell_count);
         let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
@@ -285,8 +285,8 @@ fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
                 &context,
                 &[inputs[0].as_ref(), inputs[1].as_ref()],
                 BooleanProgram::Expressions {
-                    nodes: &nodes,
-                    roots: &roots,
+                    nodes: &ALL_BOOLEAN_NODES,
+                    roots: &ALL_BOOLEAN_ROOTS,
                 },
             )
             .unwrap_or_else(|error| panic!("{} {policy}: {error}", case.name));
@@ -297,7 +297,7 @@ fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
                 strict = Some(outcome.value.clone());
             }
             assert_eq!(outcome.value.vertices.len(), shell_count * 11);
-            for output in 0..roots.len() {
+            for output in 0..ALL_BOOLEAN_ROOTS.len() {
                 assert_eq!(
                     outcome.value.results[output].triangles.len(),
                     expected_triangles[output],
@@ -319,18 +319,6 @@ fn sparse_multishell_arrangement_scales_componentwise_under_both_policies() {
 
 #[test]
 fn transverse_self_pwn_clusters_scale_under_both_policies() {
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(3),
-        BooleanExpression::And([4, 5]),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-    ];
-    let roots = [0_u32, 1, 2, 6, 7];
-
     for cluster_count in support::SELF_PWN_CLUSTER_COUNTS {
         let case = support::transverse_self_pwn_cluster_case(cluster_count);
         let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
@@ -355,8 +343,8 @@ fn transverse_self_pwn_clusters_scale_under_both_policies() {
                 &context,
                 &[inputs[0].as_ref(), inputs[1].as_ref()],
                 BooleanProgram::Expressions {
-                    nodes: &nodes,
-                    roots: &roots,
+                    nodes: &ALL_BOOLEAN_NODES,
+                    roots: &ALL_BOOLEAN_ROOTS,
                 },
             )
             .unwrap_or_else(|error| panic!("{} {policy}: {error}", case.name));
@@ -367,7 +355,7 @@ fn transverse_self_pwn_clusters_scale_under_both_policies() {
                 strict = Some(outcome.value.clone());
             }
             assert_eq!(outcome.value.vertices.len(), cluster_count * 10 + 4);
-            for output in 0..roots.len() {
+            for output in 0..ALL_BOOLEAN_ROOTS.len() {
                 assert_eq!(
                     outcome.value.results[output].triangles.len(),
                     expected_triangles[output],
@@ -391,17 +379,6 @@ fn transverse_self_pwn_clusters_scale_under_both_policies() {
 fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
     let case = support::dense_coplanar_box_case(4);
     let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(4),
-        BooleanExpression::And([5, 6]),
-    ];
-    let roots = [0_u32, 1, 2, 7, 3];
     let expected_triangles = [384, 384, 0, 0, 0];
     let expected_volumes = [64.0, 64.0, 0.0, 0.0, 0.0];
     let mut strict = None;
@@ -411,8 +388,8 @@ fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
             &context,
             &[inputs[0].as_ref(), inputs[1].as_ref()],
             BooleanProgram::Expressions {
-                nodes: &nodes,
-                roots: &roots,
+                nodes: &ALL_BOOLEAN_NODES,
+                roots: &ALL_BOOLEAN_ROOTS,
             },
         )
         .unwrap_or_else(|error| panic!("{} {policy} failed: {error}", case.name));
@@ -454,17 +431,6 @@ fn opposite_diagonal_coplanar_overlay_is_exact_under_both_policies() {
 
 #[test]
 fn wide_rational_similarity_preserves_every_boolean_under_both_policies() {
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(4),
-        BooleanExpression::And([5, 6]),
-    ];
-    let roots = [0_u32, 1, 2, 7, 3];
     let normalized_six_volumes = [504, 72, 312, 120, 432];
     let mut reference = None;
 
@@ -482,8 +448,8 @@ fn wide_rational_similarity_preserves_every_boolean_under_both_policies() {
                 &context,
                 &[inputs[0].as_ref(), inputs[1].as_ref()],
                 BooleanProgram::Expressions {
-                    nodes: &nodes,
-                    roots: &roots,
+                    nodes: &ALL_BOOLEAN_NODES,
+                    roots: &ALL_BOOLEAN_ROOTS,
                 },
             )
             .unwrap_or_else(|error| panic!("wide-rational shift {shift} {policy}: {error}"));
@@ -535,18 +501,75 @@ fn wide_rational_similarity_preserves_every_boolean_under_both_policies() {
 }
 
 #[test]
+fn thin_dyadic_affine_embedding_preserves_every_boolean_under_both_policies() {
+    let normalized_six_volumes = [504, 72, 312, 120, 432];
+    let mut reference = None;
+
+    for shift in support::THIN_DYADIC_SHIFTS {
+        let case = support::thin_dyadic_overlapping_box_case(2, shift);
+        let inputs = [case.left, case.right];
+        let scale = support::thin_dyadic_scale(shift)
+            .exact_rational()
+            .expect("fixture scale is exact dyadic");
+        let mut strict = None;
+
+        for (policy, context) in predicate_contexts() {
+            let outcome = boolean(
+                &context,
+                &[inputs[0].as_ref(), inputs[1].as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &ALL_BOOLEAN_NODES,
+                    roots: &ALL_BOOLEAN_ROOTS,
+                },
+            )
+            .unwrap_or_else(|error| panic!("thin-dyadic shift {shift} {policy}: {error}"));
+            assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
+            if let Some(strict) = &strict {
+                assert_eq!(outcome.value, *strict, "shift {shift} policy output");
+            } else {
+                strict = Some(outcome.value.clone());
+            }
+
+            for (output, normalized_six_volume) in normalized_six_volumes.into_iter().enumerate() {
+                assert!(boundary_is_balanced(&outcome.value.results[output]));
+                assert_eq!(
+                    exact_six_volume(&outcome.value, output),
+                    Rational::new(normalized_six_volume) * &scale,
+                    "shift {shift} {policy} output {output} volume",
+                );
+            }
+
+            if policy == "STRICT" {
+                let normalized_vertices = outcome
+                    .value
+                    .vertices
+                    .iter()
+                    .map(|point| {
+                        let x = point.x.exact_rational().expect("thin-dyadic x");
+                        let y = point.y.exact_rational().expect("thin-dyadic y");
+                        let z = point.z.exact_rational().expect("thin-dyadic z") / &scale;
+                        [x - &z, y, z]
+                    })
+                    .collect::<Vec<_>>();
+                let topology = outcome
+                    .value
+                    .results
+                    .iter()
+                    .map(|result| result.triangles.clone())
+                    .collect::<Vec<_>>();
+                if let Some((reference_vertices, reference_topology)) = &reference {
+                    assert_eq!(&normalized_vertices, reference_vertices);
+                    assert_eq!(&topology, reference_topology);
+                } else {
+                    reference = Some((normalized_vertices, topology));
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn deep_symbolic_translation_obeys_policy_at_every_depth() {
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(4),
-        BooleanExpression::And([5, 6]),
-    ];
-    let roots = [0_u32, 1, 2, 7, 3];
     let base = support::exact_mesh_pair(
         corpus()
             .into_iter()
@@ -557,8 +580,8 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
         &MeshContext::new(PredicatePolicy::STRICT),
         &[base.left.as_ref(), base.right.as_ref()],
         BooleanProgram::Expressions {
-            nodes: &nodes,
-            roots: &roots,
+            nodes: &ALL_BOOLEAN_NODES,
+            roots: &ALL_BOOLEAN_ROOTS,
         },
     )
     .expect("rational reference arrangement")
@@ -580,8 +603,8 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
             &strict_context,
             &[case.left.as_ref(), case.right.as_ref()],
             BooleanProgram::Expressions {
-                nodes: &nodes,
-                roots: &roots,
+                nodes: &ALL_BOOLEAN_NODES,
+                roots: &ALL_BOOLEAN_ROOTS,
             },
         );
         if depth == 1 {
@@ -613,8 +636,8 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
             &context,
             &[case.left.as_ref(), case.right.as_ref()],
             BooleanProgram::Expressions {
-                nodes: &nodes,
-                roots: &roots,
+                nodes: &ALL_BOOLEAN_NODES,
+                roots: &ALL_BOOLEAN_ROOTS,
             },
         )
         .unwrap_or_else(|error| panic!("{} APPROXIMATE_512: {error}", case.name));
@@ -638,17 +661,6 @@ fn deep_symbolic_translation_obeys_policy_at_every_depth() {
 
 #[test]
 fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
-    let nodes = [
-        BooleanExpression::Operation(BooleanOp::Union),
-        BooleanExpression::Operation(BooleanOp::Intersection),
-        BooleanExpression::Operation(BooleanOp::Difference),
-        BooleanExpression::Operation(BooleanOp::SymmetricDifference),
-        BooleanExpression::Operand(0),
-        BooleanExpression::Operand(1),
-        BooleanExpression::Not(4),
-        BooleanExpression::And([5, 6]),
-    ];
-    let roots = [0_u32, 1, 2, 7, 3];
     for case in lower_dimensional_contact_corpus() {
         let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
         let right_volume = summarize(&case.right).volume;
@@ -664,13 +676,13 @@ fn lower_dimensional_closed_pwn_contacts_are_total_under_both_policies() {
                 &context,
                 &[inputs[0].as_ref(), inputs[1].as_ref()],
                 BooleanProgram::Expressions {
-                    nodes: &nodes,
-                    roots: &roots,
+                    nodes: &ALL_BOOLEAN_NODES,
+                    roots: &ALL_BOOLEAN_ROOTS,
                 },
             )
             .unwrap_or_else(|error| panic!("{} {policy} failed: {error}", case.name));
             assert_eq!(outcome.certainty, hypermesh::MeshCertainty::Certified);
-            assert_eq!(outcome.value.results.len(), roots.len());
+            assert_eq!(outcome.value.results.len(), ALL_BOOLEAN_ROOTS.len());
             for (output_index, (output, expected_volume)) in outcome
                 .value
                 .results

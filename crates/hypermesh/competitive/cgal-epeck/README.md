@@ -54,6 +54,12 @@ growing the exact similarity numerator and denominator through 65, 513, and
 2,049 bits; the exporter retains the exact rational rather than its binary64
 approximation of one.
 
+It also accepts `thin_dyadic_boxes_64`, `thin_dyadic_boxes_512`, and
+`thin_dyadic_boxes_2048`. They retain one fixed 6,144-triangle topology under
+the exact affine map `(x, y, z) -> (x + z, y, z / 2^shift)`, so the last member
+has an exact nonzero thin coordinate even though its binary64 approximation is
+zero.
+
 The exporter writes reduced `numerator/denominator` tokens from
 `Real::exact_rational`; it does not round through a display approximation.
 

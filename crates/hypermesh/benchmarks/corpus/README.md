@@ -102,6 +102,17 @@ separates arbitrary-rational scalar width from mesh/event growth, crosses the
 512-bit policy precision without consuming an approximate terminal, and gives
 each point a distinct both-policy kernel/process heap selector.
 
+`thin_dyadic_boxes_64`, `thin_dyadic_boxes_512`, and
+`thin_dyadic_boxes_2048` hold that same 6,144-triangle connectivity fixed while
+applying the exact affine map `(x, y, z) -> (x + z, y, z / 2^shift)`. Its
+determinant is `2^-shift`: exact topology and inverse-embedded geometry remain
+constant while parallel supports and their surface triangles become
+arbitrarily close. The 2,048-bit member's thin coordinate underflows binary64
+to zero, but remains an ordinary exact dyadic `Real`; the family is therefore
+an exact near-degenerate/extreme-exponent gate rather than a floating-point
+epsilon test. All three points are exact-CGAL exportable and have distinct
+both-policy kernel/process heap selectors.
+
 `large_mesh_heap_probe` exposes both `boxes-3072` and
 `boxes-3072-general`. They contain the same 6,144 exact input triangles; the
 first primes the native policy-qualified closed-PWN fact, while the second uses

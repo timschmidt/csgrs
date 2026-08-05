@@ -27,6 +27,8 @@ pub const SELF_PWN_CLUSTER_COUNTS: [usize; 3] = [8, 64, 512];
 pub const DEEP_SYMBOLIC_TRANSLATION_DEPTHS: [usize; 4] = [1, 8, 32, 128];
 pub const WIDE_RATIONAL_DIVISIONS: usize = 16;
 pub const WIDE_RATIONAL_SHIFTS: [u32; 3] = [64, 512, 2048];
+pub const THIN_DYADIC_DIVISIONS: usize = 16;
+pub const THIN_DYADIC_SHIFTS: [u32; 3] = [64, 512, 2048];
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
@@ -105,7 +107,15 @@ pub fn exact_mesh_pair(case: Case) -> ExactMeshPair {
 }
 
 pub fn wide_rational_shift(name: &str) -> Option<u32> {
-    name.strip_prefix("wide_rational_boxes_")?
+    fixture_shift(name, "wide_rational_boxes_")
+}
+
+pub fn thin_dyadic_shift(name: &str) -> Option<u32> {
+    fixture_shift(name, "thin_dyadic_boxes_")
+}
+
+fn fixture_shift(name: &str, prefix: &str) -> Option<u32> {
+    name.strip_prefix(prefix)?
         .parse::<u32>()
         .ok()
         .filter(|shift| *shift != 0)
@@ -252,15 +262,19 @@ pub fn affine_boxes_case() -> Case {
     }
 }
 
+pub fn overlapping_boxes_case() -> Case {
+    box_case(
+        "overlapping_boxes",
+        [
+            ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
+            ([2.0, 1.0, 1.0], [6.0, 3.0, 5.0]),
+        ],
+    )
+}
+
 pub fn corpus() -> Vec<Case> {
     vec![
-        box_case(
-            "overlapping_boxes",
-            [
-                ([0.0, 0.0, 0.0], [4.0, 4.0, 4.0]),
-                ([2.0, 1.0, 1.0], [6.0, 3.0, 5.0]),
-            ],
-        ),
+        overlapping_boxes_case(),
         box_case(
             "disjoint_boxes",
             [
@@ -481,23 +495,30 @@ fn voxel_torus_mesh(outer: usize, wall: usize, depth: usize) -> RawMesh {
 }
 
 pub fn large_boolean_case() -> Case {
-    let mut case = corpus()
-        .into_iter()
-        .next()
-        .expect("competitive corpus contains the overlapping-box case");
+    let mut case = subdivided_overlapping_boxes(LARGE_SUBDIVISIONS);
     case.name = "subdivided_overlapping_boxes_3072_each";
-    case.left = subdivide(&case.left, LARGE_SUBDIVISIONS);
-    case.right = subdivide(&case.right, LARGE_SUBDIVISIONS);
     assert_eq!(case.left.triangles.len(), LARGE_TRIANGLES_PER_MESH);
     assert_eq!(case.right.triangles.len(), LARGE_TRIANGLES_PER_MESH);
     case
 }
 
+fn subdivided_overlapping_boxes(divisions: usize) -> Case {
+    assert!(divisions > 0 && divisions.is_power_of_two());
+    let mut case = overlapping_boxes_case();
+    case.left = subdivide(&case.left, divisions);
+    case.right = subdivide(&case.right, divisions);
+    case
+}
+
 pub fn wide_rational_scale(shift: u32) -> Real {
-    let denominator = Rational::new(2)
-        .powi(i64::from(shift).into())
-        .expect("wide-rational fixture shift fits Hyperreal's eager exact budget");
+    let denominator = fixture_power_of_two(shift);
     Real::new((&denominator + Rational::one()) / &denominator)
+}
+
+fn fixture_power_of_two(shift: u32) -> Rational {
+    Rational::new(2)
+        .powi(i64::from(shift).into())
+        .expect("fixture shift fits Hyperreal's eager exact budget")
 }
 
 /// Applies one positive exact-rational similarity to an overlapping-box
@@ -505,7 +526,6 @@ pub fn wide_rational_scale(shift: u32) -> Real {
 /// binary64 approximation bounded while growing exact numerator and
 /// denominator width through fixed-word and arbitrary-width schedules.
 pub fn wide_rational_overlapping_box_case(divisions: usize, shift: u32) -> ExactMeshPair {
-    assert!(divisions > 0 && divisions.is_power_of_two());
     let scale = wide_rational_scale(shift);
     let scale_mesh = |mesh: &RawMesh| {
         let exact = to_hypermesh(mesh);
@@ -518,12 +538,7 @@ pub fn wide_rational_overlapping_box_case(divisions: usize, shift: u32) -> Exact
             exact.triangles.to_vec(),
         )
     };
-    let mut case = corpus()
-        .into_iter()
-        .next()
-        .expect("competitive corpus contains the overlapping-box case");
-    case.left = subdivide(&case.left, divisions);
-    case.right = subdivide(&case.right, divisions);
+    let case = subdivided_overlapping_boxes(divisions);
     ExactMeshPair {
         name: match (divisions, shift) {
             (WIDE_RATIONAL_DIVISIONS, 64) => "wide_rational_boxes_64",
@@ -533,6 +548,42 @@ pub fn wide_rational_overlapping_box_case(divisions: usize, shift: u32) -> Exact
         },
         left: scale_mesh(&case.left),
         right: scale_mesh(&case.right),
+    }
+}
+
+pub fn thin_dyadic_scale(shift: u32) -> Real {
+    let denominator = fixture_power_of_two(shift);
+    Real::new(Rational::one() / denominator)
+}
+
+/// Applies the exact affine map `(x, y, z) -> (x + z, y, z / 2^shift)` to a
+/// subdivided overlapping-box pair. Its determinant is `2^-shift`, so topology
+/// stays fixed while parallel faces and their triangles become arbitrarily
+/// close in exact geometry. At the largest corpus point the thin coordinate
+/// underflows binary64, but remains an ordinary exact dyadic `Real`.
+pub fn thin_dyadic_overlapping_box_case(divisions: usize, shift: u32) -> ExactMeshPair {
+    let scale = thin_dyadic_scale(shift);
+    let flatten_mesh = |mesh: &RawMesh| {
+        let exact = to_hypermesh(mesh);
+        TriangleMesh::new(
+            exact
+                .positions
+                .iter()
+                .map(|point| Point3::new(&point.x + &point.z, point.y.clone(), &point.z * &scale))
+                .collect(),
+            exact.triangles.to_vec(),
+        )
+    };
+    let case = subdivided_overlapping_boxes(divisions);
+    ExactMeshPair {
+        name: match (divisions, shift) {
+            (THIN_DYADIC_DIVISIONS, 64) => "thin_dyadic_boxes_64",
+            (THIN_DYADIC_DIVISIONS, 512) => "thin_dyadic_boxes_512",
+            (THIN_DYADIC_DIVISIONS, 2048) => "thin_dyadic_boxes_2048",
+            _ => "thin_dyadic_boxes",
+        },
+        left: flatten_mesh(&case.left),
+        right: flatten_mesh(&case.right),
     }
 }
 

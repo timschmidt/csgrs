@@ -495,6 +495,81 @@ similarity_component_bits = 2049
 heap_probe_modes = ["wide-rational-2048"]
 
 [[fixture]]
+id = "thin_dyadic_boxes_64"
+status = "permanent"
+provenance = "Hypermesh deterministic near-degenerate exact-affine corpus"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 64)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 64
+affine_determinant = "1 / 2^64"
+scale_denominator_bits = 65
+binary64_scale = "nonzero"
+heap_probe_modes = ["thin-dyadic-64"]
+
+[[fixture]]
+id = "thin_dyadic_boxes_512"
+status = "permanent"
+provenance = "Deterministic 512-bit-exponent sibling of thin_dyadic_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 512)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 512
+affine_determinant = "1 / 2^512"
+scale_denominator_bits = 513
+binary64_scale = "nonzero"
+heap_probe_modes = ["thin-dyadic-512"]
+
+[[fixture]]
+id = "thin_dyadic_boxes_2048"
+status = "permanent"
+provenance = "Deterministic 2,048-bit-exponent sibling of thin_dyadic_boxes_64"
+license = "MIT"
+source_kind = "deterministic-exact-generator"
+generator = "competitive::support::thin_dyadic_overlapping_box_case(16, 2048)"
+coordinate_class = "extreme-exponent-exact-dyadic"
+topology = ["closed-pwn", "convex", "dense-coplanar-input", "transverse-face-intersection", "exact-affine-embedding", "fixed-topology-scalar-scaling", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+operations = ["union"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["competitive", "scaling", "heap"]
+size = "large"
+cgal_eligible = true
+expected_certainty = "Certified"
+input_triangles = 6144
+expected_output_triangles = 4816
+expected_normalized_volume = 84
+scaling_family = "thin_dyadic_boxes"
+scale_parameter = 2048
+affine_determinant = "1 / 2^2048"
+scale_denominator_bits = 2049
+binary64_scale = "underflows-to-zero"
+heap_probe_modes = ["thin-dyadic-2048"]
+
+[[fixture]]
 id = "dense_coplanar_boxes_4"
 status = "permanent"
 provenance = "Hypermesh deterministic cross-operand coplanar scaling corpus"

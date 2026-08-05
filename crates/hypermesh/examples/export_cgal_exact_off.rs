@@ -6,8 +6,9 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use competitive_support::{
-    WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus, dense_coplanar_box_case,
-    exact_mesh_pair, large_boolean_case, sparse_multishell_tetrahedra_case,
+    THIN_DYADIC_DIVISIONS, WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus,
+    dense_coplanar_box_case, exact_mesh_pair, large_boolean_case,
+    sparse_multishell_tetrahedra_case, thin_dyadic_overlapping_box_case, thin_dyadic_shift,
     wide_rational_overlapping_box_case, wide_rational_shift,
 };
 use hypermesh::{Real, TriangleMesh};
@@ -70,6 +71,8 @@ fn main() {
         .unwrap_or_else(|error| panic!("failed to create {}: {error}", output_directory.display()));
     let case = if let Some(shift) = wide_rational_shift(&fixture) {
         wide_rational_overlapping_box_case(WIDE_RATIONAL_DIVISIONS, shift)
+    } else if let Some(shift) = thin_dyadic_shift(&fixture) {
+        thin_dyadic_overlapping_box_case(THIN_DYADIC_DIVISIONS, shift)
     } else {
         exact_mesh_pair(match fixture.as_str() {
             "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),
