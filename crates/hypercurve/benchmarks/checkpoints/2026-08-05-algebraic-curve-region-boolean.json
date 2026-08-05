@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "algebraic-curve-region-boolean",
+  "source_revision": "0fb58a1e8ba94703a8e15dc2c47257bbf498b7ea",
+  "implementation_revision": "24e48078fb6b2f7d7739533ae0784e5a25a36ae7",
+  "optimization_revisions": [
+    "b011e0563637ed5bea7013f3d51f9a216ffae165"
+  ],
+  "benchmark_revision": "b011e0563637ed5bea7013f3d51f9a216ffae165",
+  "matched_control_revision": "0fb58a1e8ba94703a8e15dc2c47257bbf498b7ea",
+  "preceding_checkpoint": "2026-08-05-algebraic-curve-region-chamfer.json",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "73a3d9e34ee92c280731b4fcc1abb6e5515a3b5c",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "cc1cb281351b9842e33e3ecbc3ae530c5947d40e",
+    "hypermesh_modified_by_checkpoint": false,
+    "workspace_note": "The detached 0fb58a1 control used the same live lower-layer revisions. No lower-layer repository or Hypermesh was modified."
+  },
+  "semantic_evidence": {
+    "authoritative_route": "CurveRegionBooleanContext admits BezierAlgebraicChord2 directly as a line-family carrier. Binary Boolean, unary regularization, intersection evidence, broad phase, split topology, fragment classification, and output materialization continue through the existing CurveRegion2 arrangement authority.",
+    "disjoint_pairs": "Conservative exact chord bounds participate in the existing broad phase. Bounds-disjoint pairs complete without constructing an intersection system and preserve the retained chord through all four Boolean outputs.",
+    "adjacent_exact_line": "For adjacent authored carriers, direct exact/algebraic endpoint-side predicates prove distinct supporting lines. Certified injectivity makes the already-seeded common endpoint the only possible contact.",
+    "adjacent_source_curve": "For a one-field chord/source pair, the exact homogeneous supporting-line incidence is formed over the selected source field. Hypersolve removes the known diagonal endpoint root and counts the remaining closed-domain roots with a local-field Sturm sequence. Only a residual count of zero completes the pair.",
+    "split_and_output": "An unsplit algebraic chord retains local range [0,1] and traversal orientation. Any interior cut remains an explicit topology error until algebraic chord/contact parameter materialization lands; no event is discarded.",
+    "classification": "Binary fragment classification uses a represented chord endpoint when available and otherwise the existing algebraic point classifier. Unary topology normally propagates classification across the certified adjacent run.",
+    "strict_policy": "STRICT uses only proof-producing bounds, line-side, field-identity, diagonal-deflation, Sturm-count, injectivity, connectivity, and topology paths. Unproved overlap, collinearity, independent-field incidence, or interior splitting remains blocked.",
+    "approximate_512_policy": "APPROXIMATE_512 executes the same graph. Hypercurve observes Hypersolve approximate certainty explicitly, while scalar predicate fallbacks remain limited to the shared Hyperlimit 512-bit equality terminal.",
+    "no_compatibility_shim": true,
+    "lower_layer_fix_required": false
+  },
+  "mathematical_paths_covered": [
+    "line/quadratic algebraic chamfer unary regularization",
+    "line/quadratic algebraic chamfer against a bounds-disjoint exact region",
+    "two-quadratic independently selected algebraic chord against a bounds-disjoint exact region",
+    "all four regularized Boolean outputs from one shared arrangement",
+    "both cyclic seam placements for the two-quadratic authored loop",
+    "one-field chord/source supporting-line incidence with only the retained endpoint contact",
+    "one-field chord/source supporting-line incidence with one additional unit-domain contact",
+    "algebraic chord versus noncollinear adjacent exact line",
+    "algebraic chord versus collinear exact line conservative rejection",
+    "retained chord preservation through difference and regularization",
+    "STRICT and APPROXIMATE_512 policy execution",
+    "predicate-enabled and no-default disjoint Boolean construction"
+  ],
+  "explicit_remaining_blockers": [
+    "overlapping algebraic chord pairs without a complete exact contact/overlap solver",
+    "independent-field algebraic chord/source incidence",
+    "interior algebraic chord split parameters",
+    "collinear or otherwise unproved adjacent chord pairs",
+    "finite projection and general exact transformation of retained algebraic endpoints",
+    "offset re-entry for retained algebraic chords"
+  ],
+  "historical_behavior": {
+    "at_revision": "0fb58a1",
+    "unary_regularization": "Typed Unsupported in build_region_carriers before any algebraic-chord arrangement work.",
+    "binary_boolean": "Typed Unsupported in build_region_carriers even when exact conservative bounds proved the other operand disjoint.",
+    "successful_historical_throughput": false,
+    "capability_change": "One-field unary regularization and bounds-disjoint binary intersection/union/intersection/difference/xor now return exact retained CurveRegion2 values under both policies."
+  },
+  "verification": {
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "54 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "50 passed",
+    "cargo_test_all_features_hypercurve_curve_region_boolean": "29 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_boolean": "12 passed",
+    "cargo_test_all_features_lib_algebraic_chord": "5 focused tests passed before optimization; the optimized source-incidence and collinearity test passed again afterward",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing warning",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "Hypercurve pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "repeats": 5,
+    "primary_metric": "retired instructions; wall samples are secondary because the host showed occasional preemption",
+    "editing_selector": "HYPERCURVE_EDIT_BENCH=represented-bezier-corner and HYPERCURVE_EDIT_CORNER_LANE=<lane>",
+    "editing_candidate_executable": "target/release/deps/editing-1429e5261074e42b",
+    "editing_candidate_sha256": "8e2e0bdac9be4e978056562a32fb849a0a00130ff696f5c31d365aed897f093c",
+    "editing_candidate_file_bytes": 10352512,
+    "editing_candidate_text_bytes": 8029874,
+    "editing_control_sha256": "7465cf17691db306562a6244145873dc393abc9a32b4884a6a3a686f5cc837ed",
+    "editing_control_file_bytes": 9249440,
+    "editing_control_text_bytes": 7117015,
+    "editing_size_note": "The editing executable is not the representative production-size artifact: its new benchmark lanes intentionally link the algebraic regularization, Boolean, and local-field solver route that the parent editing executable did not reference.",
+    "matched_control": "Detached worktree .hypercurve-algebraic-boolean-control at 0fb58a1 using identical live workspace dependencies and release settings."
+  },
+  "matched_existing_fast_paths": {
+    "curve_region_line_quadratic_design_chamfer": {
+      "iterations_per_repeat": 20000,
+      "control_instructions": 15047225774,
+      "candidate_instructions": 15047379681,
+      "control_instructions_per_operation": 752361.2887,
+      "candidate_instructions_per_operation": 752368.98405,
+      "instruction_change_percent": 0.001022826,
+      "control_branches": 2862748404,
+      "candidate_branches": 2862750368,
+      "control_branches_per_operation": 143137.4202,
+      "candidate_branches_per_operation": 143137.5184,
+      "branch_change_percent": 0.000068605,
+      "control_wall_us_samples": [69.145, 68.095, 68.026, 74.594, 70.9],
+      "candidate_wall_us_samples": [69.142, 67.669, 67.73, 69.857, 70.324]
+    },
+    "curve_region_aligned_conic_shared_boolean_batch": {
+      "iterations_per_repeat": 5000,
+      "control_instructions": 12754654492,
+      "candidate_instructions": 12756780627,
+      "control_instructions_per_operation": 2550930.8984,
+      "candidate_instructions_per_operation": 2551356.1254,
+      "instruction_change_percent": 0.016669483,
+      "control_branches": 2553344541,
+      "candidate_branches": 2553508142,
+      "control_branches_per_operation": 510668.9082,
+      "candidate_branches_per_operation": 510701.6284,
+      "branch_change_percent": 0.006407322,
+      "control_wall_us_samples": [361.505, 336.873, 340.086, 333.435, 332.043],
+      "candidate_wall_us_samples": [337.304, 349.31, 348.638, 339.93, 357.299]
+    }
+  },
+  "new_exact_capability_performance": {
+    "curve_region_line_quadratic_algebraic_regularize": {
+      "iterations_per_repeat": 20000,
+      "instructions": 16307750006,
+      "instructions_per_operation": 815387.5003,
+      "branches": 3186441031,
+      "branches_per_operation": 159322.05155,
+      "wall_us_samples": [116.654, 117.572, 132.759, 121.013, 128.051],
+      "historical_successful_control": false
+    },
+    "curve_region_two_quadratic_algebraic_disjoint_boolean": {
+      "iterations_per_repeat": 50000,
+      "instructions": 12748473991,
+      "instructions_per_operation": 254969.47982,
+      "branches": 2484674537,
+      "branches_per_operation": 49693.49074,
+      "wall_us_samples": [31.09, 27.132, 27.374, 26.599, 27.793],
+      "historical_successful_control": false
+    }
+  },
+  "optimization_evidence": {
+    "semantic_revision": "24e4807",
+    "optimized_revision": "b011e05",
+    "change": "The adjacent exact-line proof now signs each chord endpoint directly instead of lifting the line into a third algebraic point. Source incidence validates field identity before refinement and reuses the represented exact endpoint expression without building a redundant predicate evaluator.",
+    "regularize_preoptimization_instructions": 29089232983,
+    "regularize_postoptimization_instructions": 16307750006,
+    "instruction_reduction_percent": 43.938879325,
+    "regularize_preoptimization_branches": 5599423320,
+    "regularize_postoptimization_branches": 3186441031,
+    "branch_reduction_percent": 43.093407144,
+    "carrier_cache_bytes_added": 0,
+    "linked_text_repaid_from_initial_semantic_build_bytes": 3676
+  },
+  "heaptrack_1000_operations": {
+    "method": "Heaptrack record-only release benchmark processes; heaptrack_print summaries are authoritative and include fixed process and fixture construction.",
+    "matched_parent_exact_curve_region_chamfer": {
+      "allocation_calls": 1136846,
+      "temporary_allocations": 182024,
+      "peak_heap_kib": 142.44
+    },
+    "candidate_exact_curve_region_chamfer": {
+      "allocation_calls": 1136848,
+      "temporary_allocations": 182026,
+      "peak_heap_kib": 142.44,
+      "allocation_call_change_per_operation": 0.002,
+      "temporary_allocation_change_per_operation": 0.002
+    },
+    "algebraic_regularize_preoptimization": {
+      "allocation_calls": 2651762,
+      "temporary_allocations": 423655,
+      "peak_heap_kib": 268.0
+    },
+    "algebraic_regularize_optimized": {
+      "allocation_calls": 1264760,
+      "temporary_allocations": 183658,
+      "peak_heap_kib": 268.0,
+      "allocation_reduction_percent": 52.304920276,
+      "temporary_allocation_reduction_percent": 56.649160284
+    },
+    "two_quadratic_algebraic_disjoint_boolean": {
+      "allocation_calls": 251637,
+      "temporary_allocations": 9530,
+      "peak_heap_kib": 356.68
+    }
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "matched 0fb58a1 build with identical dependencies",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "candidate_sha256": "1c59e1328fc643c9518e24912c279d1d230ad5cc220ea80304f5de5a1d2d72ea",
+      "control_sha256": "4895027005fb1b20ba98b61de0389cd875bd2ba599c9c99376f1b4d27b7a6d9e",
+      "candidate_text_bytes": 6663322,
+      "control_text_bytes": 6647882,
+      "text_change_bytes": 15440,
+      "text_change_percent": 0.232254423,
+      "candidate_file_bytes": 8715840,
+      "control_file_bytes": 8699960,
+      "file_change_bytes": 15880,
+      "file_change_percent": 0.182529575
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "candidate_sha256": "2eb32a853da55b24cecb8ec5763cf7585a64d98f6add1c9c0e4772b729c7ff7a",
+      "control_sha256": "976491cf1230f29cfe2d49bfa1fda11f2273014528e83b2f474975f9e1297124",
+      "candidate_text_bytes": 6070229,
+      "control_text_bytes": 6068217,
+      "text_change_bytes": 2012,
+      "text_change_percent": 0.033156362,
+      "candidate_file_bytes": 7982608,
+      "control_file_bytes": 7983432,
+      "file_change_bytes": -824,
+      "file_change_percent": -0.010321376
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-algebraic-boolean-b011e05 --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-algebraic-boolean-b011e05/callgraph.json",
+    "nodes": 24676,
+    "edges": 47194,
+    "authoritative_route": "CurveRegion2::regularized_region -> CurveRegion2::regularized_region_raw -> CurveRegionBooleanContext::try_new_unary -> build_region_carriers -> build_regularized_region -> build_split_topology -> pair_result.",
+    "algebraic_source_route": "pair_result -> BezierAlgebraicChord2::has_only_retained_contact_with_source -> Hypersolve deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter -> count_bivariate_fiber_roots_at_algebraic_parameter_closed.",
+    "algebraic_line_route": "pair_result -> BezierAlgebraicChord2::has_non_collinear_support_with_exact_line -> direct exact/algebraic oriented-line-side predicates.",
+    "duplicate_boolean_engine_added": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "historical_throughput": "The matched parent rejects both new workloads before arrangement construction, so there is no successful historical latency denominator.",
+    "finite_peer_control": "Cavalier Contours, Curvo, and iOverlay cannot retain canonical-Real selected algebraic endpoints, exact local-field Sturm evidence, or STRICT/APPROXIMATE_512 certainty. Demoting this fixture for a timing ratio would change the operation contract and is therefore not reported as a correctness-equivalent comparison.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329,
+    "interpretation": "The finite engines remain optimization sentinels for already comparable native/chord-fallback lanes; they are not mathematical peers for this checkpoint."
+  },
+  "remaining_scope": [
+    "complete algebraic chord contact, overlap, and interior split materialization for overlapping binary operands",
+    "add a two-field exact chord/source and chord/chord predicate package without constructing unnecessary primitive elements",
+    "route retained algebraic chords through raw offset generation and offset re-entry",
+    "retain algebraic fillet circles/arcs and admit them to the same arrangement",
+    "support two cuts on one retained source fragment",
+    "complete zero-setback, mixed exact/algebraic, coincident, tangent, singular, and multi-contact branch matrices",
+    "define projective TrimOrExtend semantics for algebraic and represented carriers",
+    "complete finite projection/transformation and downstream caller migration",
+    "repay the remaining linked-text and exact arithmetic allocation cost without weakening proofs"
+  ]
+}
