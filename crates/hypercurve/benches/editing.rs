@@ -1034,7 +1034,11 @@ fn bench_represented_bezier_fillet_lane(
     );
 }
 
-fn bench_represented_bezier_region_corner_lanes(region: &CurveRegion2, iterations: u32) {
+fn bench_represented_bezier_region_corner_lanes(
+    region: &CurveRegion2,
+    two_bezier_region: &CurveRegion2,
+    iterations: u32,
+) {
     let policy = CurveContext::STRICT;
     let next_setback = (s(657).sqrt().expect("positive benchmark radicand") / s(16))
         .expect("nonzero benchmark divisor");
@@ -1059,6 +1063,30 @@ fn bench_represented_bezier_region_corner_lanes(region: &CurveRegion2, iteration
         let elapsed = started.elapsed();
         println!(
             "curve_region_line_quadratic_algebraic_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
+            elapsed / iterations
+        );
+    }
+    if corner_lane_enabled("curve_region_two_quadratic_algebraic_chamfer") {
+        let started = Instant::now();
+        let mut candidates = 0_usize;
+        for _ in 0..iterations {
+            let solutions = black_box(two_bezier_region)
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    s(1),
+                    s(1),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("two algebraic Bezier cuts must retain one exact chord")
+                .into_value();
+            candidates += black_box(solutions).candidate_count();
+        }
+        assert_ne!(candidates, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_two_quadratic_algebraic_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), candidates={candidates}",
             elapsed / iterations
         );
     }
@@ -1218,6 +1246,16 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     let region = CurveRegion2::try_from_boundary_paths(&[region_path], &CurveContext::STRICT)
         .expect("represented Bezier benchmark region must remain exact")
         .into_value();
+    let two_bezier_region_path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0))),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+        Curve2::from(line(1, 2, -1, 2)),
+    ])
+    .expect("two-Bezier region benchmark path must remain exact");
+    let two_bezier_region =
+        CurveRegion2::try_from_boundary_paths(&[two_bezier_region_path], &CurveContext::STRICT)
+            .expect("two-Bezier benchmark region must remain exact")
+            .into_value();
     let next_setback = (s(657).sqrt()? / s(16))?;
 
     bench_represented_bezier_chamfer_lane(
@@ -1290,7 +1328,7 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         &s(1),
         iterations,
     );
-    bench_represented_bezier_region_corner_lanes(&region, iterations);
+    bench_represented_bezier_region_corner_lanes(&region, &two_bezier_region, iterations);
     Ok(())
 }
 

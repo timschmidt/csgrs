@@ -5134,29 +5134,52 @@ fn bezier_chamfer_cuts(
         }
     };
     let mut cuts = CornerCuts2::default();
-    let rational_source = match parallel.source() {
-        crate::BezierParallelSource2::Quadratic(curve) => {
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(curve.clone()))
-        }
-        crate::BezierParallelSource2::Cubic(curve) => {
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(curve.clone()))
-        }
-        crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
-    }
-    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    let mut rational_source = None;
     for (parameter, _) in parameters {
         if !bezier_trim_parameter_is_interior(&parameter, operation, family, policy)? {
             continue;
         }
-        let point = crate::rational_bezier_general::exact_contact_point_evidence(
-            &rational_source,
-            &parameter,
-            policy,
-        )
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-        .ok_or_else(|| {
-            ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-        })?;
+        let point = match &parameter {
+            BezierParameter2::Exact(parameter) => {
+                decided_parallel_point(&parallel, parameter, true, operation, family, policy)?
+                    .into()
+            }
+            BezierParameter2::Algebraic(_) => {
+                let rational_source = match &rational_source {
+                    Some(source) => source,
+                    None => {
+                        let source = match parallel.source() {
+                            crate::BezierParallelSource2::Quadratic(curve) => {
+                                RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                                    curve.clone(),
+                                ))
+                            }
+                            crate::BezierParallelSource2::Cubic(curve) => {
+                                RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(
+                                    curve.clone(),
+                                ))
+                            }
+                            crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
+                        }
+                        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+                        rational_source.insert(source)
+                    }
+                };
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    rational_source,
+                    &parameter,
+                    policy,
+                )
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                .ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        operation,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?
+            }
+        };
         let (public_parameter, retained_parameter) = match &parameter {
             BezierParameter2::Exact(parameter) => (Some(source.public_parameter(parameter)), None),
             BezierParameter2::Algebraic(_) => (None, Some(parameter)),
