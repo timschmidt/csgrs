@@ -1454,6 +1454,65 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
     }
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = native_arc
+        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .spans()[0]
+        .curve();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let control = Point2::new(
+        conic.control().x() + undecidable_zero,
+        conic.control().y().clone(),
+    );
+    let conic = RationalQuadraticBezier2::try_new(
+        conic.start().clone(),
+        control,
+        conic.end().clone(),
+        conic.start_weight().clone(),
+        conic.control_weight().clone(),
+        conic.end_weight().clone(),
+    )
+    .unwrap();
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+        Curve2::from(conic),
+    ])
+    .unwrap();
+
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            q(1, 2),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Fillet
+                && blocker.family() == CurveFamily2::RationalQuadraticBezier
+    ));
+    let approximate = path
+        .fillet_vertex_by_radius(
+            1,
+            q(1, 2),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        approximate.value,
+        CurveCornerSolutions2::Unique(_)
+    ));
+}
+
 #[test]
 fn exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets() {
     let line_arc = CurvePath2::try_new(vec![
