@@ -318,40 +318,24 @@ fn recover_constraint(
     approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     let target = EdgeKey::new(constraint.from, constraint.to);
-    let mut flipped_edges = Vec::new();
-
-    loop {
-        if triangulation_has_edge(triangles, target) {
-            return Ok(());
-        }
-
-        let (crossing_edge, adjacent) = match first_flippable_edge_crossing_constraint(
-            kernel,
-            points,
-            triangles,
-            constraint,
-            constrained_edges,
-            approximate_points,
-            &flipped_edges,
-        ) {
-            Ok(Some(edge)) => edge,
-            Ok(None) => {
-                recover_constraint_cavity(
-                    kernel,
-                    points,
-                    triangles,
-                    constraint,
-                    constrained_edges,
-                    approximate_points,
-                )?;
-                return Ok(());
-            }
-            Err(error) => return Err(error),
-        };
-
-        replace_adjacent_edge(kernel, points, triangles, crossing_edge, adjacent)?;
-        push_unique_edge(&mut flipped_edges, crossing_edge);
+    if triangulation_has_edge(triangles, target) {
+        return Ok(());
     }
+
+    // Recover one complete crossed-triangle corridor. Rebuilding and sorting
+    // global edge incidence after each individually legal flip repeats work
+    // proportional to the whole triangulation and can become superlinear in
+    // the number of crossings. The exact cavity is the standard structural
+    // unit of segment insertion; unconstrained Delaunay legality is restored
+    // once after all protected segments have been recovered.
+    recover_constraint_cavity(
+        kernel,
+        points,
+        triangles,
+        constraint,
+        constrained_edges,
+        approximate_points,
+    )
 }
 
 fn recover_constraint_cavity(
@@ -363,7 +347,10 @@ fn recover_constraint_cavity(
     approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
     let mut cavity = vec![false; triangles.len()];
-    for topology in TopologyEdges::new(triangles)? {
+    let topology = TopologyEdges::new(triangles)?;
+    let mut lone_crossing = None;
+    let mut crossing_count = 0usize;
+    for topology in topology.iter() {
         let (edge, owners) = topology?;
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
             continue;
@@ -383,19 +370,42 @@ fn recover_constraint_cavity(
             });
         };
         let adjacent = adjacent_triangles(triangles, edge, owners)?;
+        crossing_count += 1;
+        lone_crossing = (crossing_count == 1).then_some((edge, adjacent));
         cavity[adjacent[0].triangle] = true;
         cavity[adjacent[1].triangle] = true;
     }
+    if !cavity.iter().any(|&in_cavity| in_cavity) {
+        return Err(Error::UnsupportedFeature {
+            feature: "constraint cavity contains no crossed triangles",
+        });
+    }
+    if let Some((edge, adjacent)) = lone_crossing {
+        let replacement = EdgeKey::new(adjacent[0].opposite, adjacent[1].opposite);
+        if replacement == EdgeKey::new(constraint.from, constraint.to)
+            && edge_is_flippable(
+                kernel,
+                points,
+                edge,
+                adjacent[0].opposite,
+                adjacent[1].opposite,
+            )?
+        {
+            return replace_adjacent_edge(kernel, points, triangles, edge, adjacent);
+        }
+    }
+    close_constraint_cavity_holes(&topology, constrained_edges, &mut cavity)?;
     let cavity_indices = cavity
         .iter()
         .enumerate()
         .filter_map(|(index, &in_cavity)| in_cavity.then_some(index))
         .collect::<Vec<_>>();
-    if cavity_indices.is_empty() {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity contains no crossed triangles",
-        });
-    }
+    let mut cavity_vertices = cavity_indices
+        .iter()
+        .flat_map(|&triangle| triangles[triangle])
+        .collect::<Vec<_>>();
+    cavity_vertices.sort_unstable();
+    cavity_vertices.dedup();
 
     let mut edge_uses = Vec::with_capacity(cavity_indices.len().saturating_mul(3));
     for &triangle_index in &cavity_indices {
@@ -495,36 +505,14 @@ fn recover_constraint_cavity(
         }
         replacement.extend(triangulate_cavity_side(kernel, points, side)?);
     }
-    for &vertex in &cycle {
+    for vertex in cavity_vertices {
         if replacement
             .iter()
             .any(|triangle| triangle.contains(&vertex))
         {
             continue;
         }
-        let mut split = None;
-        'triangles: for (triangle_index, &triangle) in replacement.iter().enumerate() {
-            for edge_index in 0..3 {
-                let from = triangle[edge_index];
-                let to = triangle[(edge_index + 1) % 3];
-                if predicates::point_on_segment(
-                    kernel,
-                    &points[from],
-                    &points[to],
-                    &points[vertex],
-                )? {
-                    split = Some((triangle_index, from, to, triangle[(edge_index + 2) % 3]));
-                    break 'triangles;
-                }
-            }
-        }
-        let Some((triangle_index, from, to, opposite)) = split else {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint cavity omitted a boundary vertex",
-            });
-        };
-        replacement[triangle_index] = make_oriented(kernel, points, [from, vertex, opposite])?;
-        replacement.push(make_oriented(kernel, points, [vertex, to, opposite])?);
+        crate::cdt::insert_topology_point(kernel, points, &mut replacement, vertex)?;
     }
     if replacement.len() != cavity_indices.len() {
         return Err(Error::UnsupportedFeature {
@@ -542,11 +530,123 @@ fn recover_constraint_cavity(
     Ok(())
 }
 
+/// Close only holes created by the crossed-triangle corridor itself.
+///
+/// A valid segment can cross a fan of triangulation edges whose dual corridor
+/// wraps around an unselected interior component. The resulting boundary is
+/// weakly simple even though both the triangulation and PSLG are valid. A
+/// component is safe to absorb exactly when it reaches neither the convex-hull
+/// boundary nor an already protected edge. This turns the recovery cavity into
+/// one disk without crossing a prior constraint or consuming exterior work.
+fn close_constraint_cavity_holes(
+    topology: &TopologyEdges,
+    constrained_edges: &[EdgeKey],
+    cavity: &mut [bool],
+) -> Result<()> {
+    let missing = usize::MAX;
+    let mut neighbors = vec![[missing; 3]; cavity.len()];
+    let mut open = vec![false; cavity.len()];
+    let mut start = 0;
+    while start < topology.uses.len() {
+        let edge = topology.uses[start].edge;
+        let mut end = start + 1;
+        while end < topology.uses.len() && topology.uses[end].edge == edge {
+            end += 1;
+        }
+        match end - start {
+            1 => open[topology.uses[start].triangle] = true,
+            2 => {
+                let first = topology.uses[start].triangle;
+                let second = topology.uses[start + 1].triangle;
+                if first == second {
+                    return Err(Error::InvalidInput {
+                        reason: "triangle contains the same edge more than once",
+                    });
+                }
+                if constrained_edges.binary_search(&edge).is_ok() {
+                    open[first] = true;
+                    open[second] = true;
+                } else {
+                    for (owner, neighbor) in [(first, second), (second, first)] {
+                        let slot = neighbors[owner]
+                            .iter_mut()
+                            .find(|candidate| **candidate == missing)
+                            .ok_or(Error::InvalidInput {
+                                reason: "triangulation triangle has too many adjacent edges",
+                            })?;
+                        *slot = neighbor;
+                    }
+                }
+            }
+            _ => {
+                return Err(Error::InvalidInput {
+                    reason: "triangulation edge has more than two adjacent triangles",
+                });
+            }
+        }
+        start = end;
+    }
+
+    let mut visited = vec![false; cavity.len()];
+    let mut stack = Vec::new();
+    let mut component = Vec::new();
+    for seed in 0..cavity.len() {
+        if cavity[seed] || visited[seed] {
+            continue;
+        }
+        visited[seed] = true;
+        stack.clear();
+        component.clear();
+        stack.push(seed);
+        let mut enclosed = true;
+        while let Some(triangle) = stack.pop() {
+            component.push(triangle);
+            enclosed &= !open[triangle];
+            for &neighbor in &neighbors[triangle] {
+                if neighbor != missing && !cavity[neighbor] && !visited[neighbor] {
+                    visited[neighbor] = true;
+                    stack.push(neighbor);
+                }
+            }
+        }
+        if enclosed {
+            for &triangle in &component {
+                cavity[triangle] = true;
+            }
+        }
+    }
+    Ok(())
+}
+
 fn triangulate_cavity_side(
     kernel: &ExactKernel,
     points: &[Point2],
     mut ring: Vec<usize>,
 ) -> Result<Vec<Triangle>> {
+    // Remove straight-chain vertices before emitting any ears. If a vertex is
+    // discarded after an adjacent ear has already been committed, it remains
+    // present in that ear while its newly exposed sliver is silently omitted.
+    // The caller reinserts every omitted cavity vertex into the completed
+    // topology, preserving both the boundary and Euler triangle count.
+    loop {
+        let mut collinear = None;
+        for position in 1..ring.len().saturating_sub(1) {
+            let previous = ring[position - 1];
+            let current = ring[position];
+            let next = ring[position + 1];
+            if predicates::orient2(kernel, &points[previous], &points[current], &points[next])?
+                == Sign::Zero
+            {
+                collinear = Some(position);
+                break;
+            }
+        }
+        let Some(position) = collinear else {
+            break;
+        };
+        ring.remove(position);
+    }
+
     let predicate_ring = ring
         .iter()
         .map(|&vertex| hyperlimit::Point2::new(points[vertex].x.clone(), points[vertex].y.clone()))
@@ -567,7 +667,6 @@ fn triangulate_cavity_side(
     let mut triangles = Vec::with_capacity(ring.len().saturating_sub(2));
     while ring.len() > 3 {
         let mut ear = None;
-        let mut collinear = None;
         for position in 0..ring.len() {
             let previous = ring[(position + ring.len() - 1) % ring.len()];
             let current = ring[position];
@@ -575,8 +674,7 @@ fn triangulate_cavity_side(
             let turn =
                 predicates::orient2(kernel, &points[previous], &points[current], &points[next])?;
             if turn == Sign::Zero {
-                collinear = Some(position);
-                break;
+                continue;
             }
             if turn != winding {
                 continue;
@@ -602,10 +700,6 @@ fn triangulate_cavity_side(
                 break;
             }
         }
-        if let Some(position) = collinear {
-            ring.remove(position);
-            continue;
-        }
         let Some((position, triangle)) = ear else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint cavity side has no exact ear",
@@ -618,68 +712,6 @@ fn triangulate_cavity_side(
         triangles.push(make_oriented(kernel, points, [ring[0], ring[1], ring[2]])?);
     }
     Ok(triangles)
-}
-
-fn first_flippable_edge_crossing_constraint(
-    kernel: &ExactKernel,
-    points: &[Point2],
-    triangles: &[Triangle],
-    constraint: Constraint,
-    constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
-    flipped_edges: &[EdgeKey],
-) -> Result<Option<(EdgeKey, [AdjacentTriangle; 2])>> {
-    for topology in TopologyEdges::new(triangles)? {
-        let (edge, owners) = topology?;
-        if edge.contains(constraint.from)
-            || edge.contains(constraint.to)
-            || flipped_edges.binary_search(&edge).is_ok()
-        {
-            continue;
-        }
-        if approximate_points.is_some_and(|points| {
-            !crate::cdt::approximate_constraint_bounds_overlap(
-                points,
-                constraint,
-                Constraint::new(edge.from, edge.to),
-            )
-        }) {
-            continue;
-        }
-        let intersection = predicates::segment_intersection(
-            kernel,
-            &points[constraint.from],
-            &points[constraint.to],
-            &points[edge.from],
-            &points[edge.to],
-        )?;
-        if intersection.is_proper_crossing() {
-            if constrained_edges.binary_search(&edge).is_ok() {
-                return Err(Error::InvalidInput {
-                    reason: "constraint crosses an existing constrained edge",
-                });
-            }
-            let Some(owners) = owners else {
-                continue;
-            };
-            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
-            let new_edge = EdgeKey::new(first.opposite, second.opposite);
-            if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
-                || edge_properly_crosses_constraint(
-                    kernel,
-                    points,
-                    new_edge,
-                    constraint,
-                    approximate_points,
-                )?
-            {
-                continue;
-            }
-            return Ok(Some((edge, [first, second])));
-        }
-    }
-
-    Ok(None)
 }
 
 fn edge_properly_crosses_constraint(
@@ -719,7 +751,7 @@ fn legalize_unconstrained_edges(
 ) -> Result<()> {
     loop {
         let mut flipped = false;
-        for topology in TopologyEdges::new(triangles)? {
+        for topology in TopologyEdges::new(triangles)?.iter() {
             let (edge, owners) = topology?;
             if constrained_edges.binary_search(&edge).is_ok() {
                 continue;
@@ -761,7 +793,7 @@ fn canonicalize_unconstrained_edges(
 ) -> Result<()> {
     loop {
         let mut flipped = false;
-        for topology in TopologyEdges::new(triangles)? {
+        for topology in TopologyEdges::new(triangles)?.iter() {
             let (edge, owners) = topology?;
             if constrained_edges.binary_search(&edge).is_ok() {
                 continue;
@@ -900,7 +932,6 @@ struct EdgeUse {
 
 struct TopologyEdges {
     uses: Vec<EdgeUse>,
-    next: usize,
 }
 
 impl TopologyEdges {
@@ -934,11 +965,23 @@ impl TopologyEdges {
             ]);
         }
         uses.sort_unstable();
-        Ok(Self { uses, next: 0 })
+        Ok(Self { uses })
+    }
+
+    fn iter(&self) -> TopologyEdgeIter<'_> {
+        TopologyEdgeIter {
+            uses: &self.uses,
+            next: 0,
+        }
     }
 }
 
-impl Iterator for TopologyEdges {
+struct TopologyEdgeIter<'a> {
+    uses: &'a [EdgeUse],
+    next: usize,
+}
+
+impl Iterator for TopologyEdgeIter<'_> {
     type Item = Result<(EdgeKey, Option<[usize; 2]>)>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -1080,6 +1123,7 @@ mod tests {
         let triangles = [[0, 1, 2], [1, 0, 3]];
         let edges = TopologyEdges::new(&triangles)
             .unwrap()
+            .iter()
             .collect::<Result<Vec<_>>>()
             .unwrap();
         let (_, owners) = edges
@@ -1110,6 +1154,7 @@ mod tests {
         ));
         let nonmanifold = TopologyEdges::new(&[[0, 1, 2], [1, 0, 3], [0, 1, 4]])
             .unwrap()
+            .iter()
             .collect::<Result<Vec<_>>>();
         assert_eq!(
             nonmanifold,
@@ -1178,6 +1223,97 @@ mod tests {
                 crate::TriangulationCertainty::Certified
             );
         }
+    }
+
+    #[test]
+    fn cavity_side_prunes_straight_chains_before_emitting_ears() {
+        // A narrow, exactly integral polygon whose long straight boundary
+        // chain previously exposed another collinear vertex only after an ear
+        // had already been emitted.
+        let points = vec![
+            p(131, 40),
+            p(136, 48),
+            p(142, 58),
+            p(162, 92),
+            p(182, 126),
+            p(202, 160),
+            p(222, 194),
+            p(242, 228),
+            p(262, 262),
+            p(148, 68),
+            p(134, 44),
+            p(140, 54),
+            p(132, 40),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let kernel = ExactKernel::new(&context);
+            let mut triangles =
+                triangulate_cavity_side(&kernel, &points, (0..points.len()).collect()).unwrap();
+            for vertex in 0..points.len() {
+                if !triangles.iter().any(|triangle| triangle.contains(&vertex)) {
+                    crate::cdt::insert_topology_point(&kernel, &points, &mut triangles, vertex)
+                        .unwrap();
+                }
+            }
+
+            assert_eq!(triangles.len(), points.len() - 2);
+            assert!(triangulation_has_edge(
+                &triangles,
+                EdgeKey::new(0, points.len() - 1)
+            ));
+            assert!(
+                (0..points.len())
+                    .all(|vertex| triangles.iter().any(|triangle| triangle.contains(&vertex)))
+            );
+            assert_eq!(
+                kernel.finish(()).certainty,
+                crate::TriangulationCertainty::Certified
+            );
+        }
+    }
+
+    #[test]
+    fn cavity_closure_absorbs_only_unprotected_enclosed_components() {
+        const SIDE: usize = 5;
+        let vertex = |x: usize, y: usize| y * (SIDE + 1) + x;
+        let mut triangles = Vec::with_capacity(SIDE * SIDE * 2);
+        for y in 0..SIDE {
+            for x in 0..SIDE {
+                let [a, b, c, d] = [
+                    vertex(x, y),
+                    vertex(x + 1, y),
+                    vertex(x, y + 1),
+                    vertex(x + 1, y + 1),
+                ];
+                triangles.extend([[a, b, d], [a, d, c]]);
+            }
+        }
+        let topology = TopologyEdges::new(&triangles).unwrap();
+        let center = |x: usize, y: usize| (y * SIDE + x) * 2;
+        let mut corridor = vec![false; triangles.len()];
+        for y in 1..=3 {
+            for x in 1..=3 {
+                if (x, y) == (2, 2) {
+                    continue;
+                }
+                corridor[center(x, y)] = true;
+                corridor[center(x, y) + 1] = true;
+            }
+        }
+
+        let mut closed = corridor.clone();
+        close_constraint_cavity_holes(&topology, &[], &mut closed).unwrap();
+        assert!(closed[center(2, 2)] && closed[center(2, 2) + 1]);
+        assert!(!closed[center(0, 0)] && !closed[center(4, 4)]);
+
+        let central_diagonal = EdgeKey::new(vertex(2, 2), vertex(3, 3));
+        close_constraint_cavity_holes(&topology, &[central_diagonal], &mut corridor).unwrap();
+        assert!(!corridor[center(2, 2)] && !corridor[center(2, 2) + 1]);
     }
 
     #[test]

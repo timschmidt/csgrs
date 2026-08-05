@@ -204,7 +204,8 @@ fn convex_hull_from_order(
     Ok(lower)
 }
 
-fn insert_point(
+/// Insert one indexed point into an existing exact planar triangulation.
+pub(crate) fn insert_point(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut Vec<Triangle>,

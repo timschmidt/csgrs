@@ -16,6 +16,7 @@ use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
 
 mod topology;
+pub(crate) use topology::insert_point as insert_topology_point;
 
 // Sorting a handful of integer edge handles costs more than the exhaustive
 // exact test, so retain the simple path until a nontrivial mesh exists.
