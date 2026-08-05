@@ -11,8 +11,6 @@ use crate::error::{Error, Result};
 use crate::types::{Point2, Real, Sign, TriangleLocation};
 #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
-#[cfg(any(feature = "earcut", feature = "cdt"))]
-use hyperreal::{RealSign, ZeroKnowledge};
 use std::cell::Cell;
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 use std::cmp::Ordering;
@@ -106,32 +104,11 @@ impl ExactKernel {
     }
 
     #[cfg(any(feature = "earcut", feature = "cdt"))]
-    pub(crate) fn real_sign(&self, value: &Real) -> Result<Sign> {
-        let facts = value.structural_facts();
-
-        if let Some(sign) = facts.sign {
-            return Ok(map_real_sign(sign));
-        }
-
-        match facts.zero {
-            ZeroKnowledge::Zero => return Ok(Sign::Zero),
-            ZeroKnowledge::NonZero | ZeroKnowledge::Unknown => {}
-        }
-
-        self.decide(
-            hyperlimit::classify_real_sign(value, self.policy),
-            "exact Real sign",
-        )
-        .map(map_hyperlimit_sign)
-    }
-
-    #[cfg(any(feature = "earcut", feature = "cdt"))]
     pub(crate) fn cmp(&self, left: &Real, right: &Real) -> Result<Ordering> {
-        match self.real_sign(&Self::sub(left, right))? {
-            Sign::Negative => Ok(Ordering::Less),
-            Sign::Zero => Ok(Ordering::Equal),
-            Sign::Positive => Ok(Ordering::Greater),
-        }
+        self.decide(
+            hyperlimit::compare_reals(left, right, self.policy),
+            "exact Real ordering",
+        )
     }
 
     #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -212,15 +189,6 @@ fn points_equal(kernel: &ExactKernel, left: &Point2, right: &Point2) -> Result<b
 }
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]
-fn map_real_sign(sign: RealSign) -> Sign {
-    match sign {
-        RealSign::Negative => Sign::Negative,
-        RealSign::Zero => Sign::Zero,
-        RealSign::Positive => Sign::Positive,
-    }
-}
-
-#[cfg(any(feature = "earcut", feature = "cdt"))]
 fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
     match sign {
         hyperlimit::Sign::Negative => Sign::Negative,
@@ -255,6 +223,31 @@ mod tests {
             kernel.orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
             Sign::Zero
         );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn exact_kernel_compares_rationals_without_materializing_a_difference() {
+        let context = TriangulationContext::new(PredicatePolicy::STRICT);
+        let kernel = ExactKernel::new(&context);
+        let left = Real::from(hyperreal::Rational::fraction(7, 13).unwrap());
+        let right = Real::from(hyperreal::Rational::fraction(8, 13).unwrap());
+
+        hyperreal::dispatch_trace::reset();
+        let ordering = hyperreal::dispatch_trace::with_recording(|| kernel.cmp(&left, &right));
+
+        assert_eq!(ordering, Ok(Ordering::Less));
+        assert_eq!(
+            kernel.finish(()).certainty,
+            TriangulationCertainty::Certified
+        );
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "compare_reals", "exact-rational"),
+            1
+        );
+        assert_eq!(trace.operation_count("rational", "sub"), 0);
+        assert_eq!(trace.rational.gcds, 0);
     }
 
     #[cfg(feature = "cdt")]
@@ -300,6 +293,19 @@ mod tests {
             ),
             PredicateOutcome::Unknown { .. }
         ));
+
+        let strict_context = TriangulationContext::new(PredicatePolicy::STRICT);
+        let strict_kernel = ExactKernel::new(&strict_context);
+        assert!(matches!(
+            strict_kernel.cmp(&left_point.x, &right_point.x),
+            Err(Error::PredicateUndecided {
+                predicate: "exact Real ordering"
+            })
+        ));
+        assert_eq!(
+            strict_kernel.finish(()).certainty,
+            TriangulationCertainty::Certified
+        );
     }
 
     #[cfg(feature = "earcut")]
