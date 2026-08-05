@@ -93,7 +93,7 @@ fn recover_constraints(
             continue;
         }
 
-        recover_constraint(
+        recover_missing_constraint(
             kernel,
             points,
             &mut triangles,
@@ -309,7 +309,7 @@ fn push_unique_constraint(constraints: &mut Vec<Constraint>, constraint: Constra
     }
 }
 
-fn recover_constraint(
+fn recover_missing_constraint(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
@@ -317,11 +317,6 @@ fn recover_constraint(
     constrained_edges: &[EdgeKey],
     approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
-    let target = EdgeKey::new(constraint.from, constraint.to);
-    if triangulation_has_edge(triangles, target) {
-        return Ok(());
-    }
-
     // Recover one complete crossed-triangle corridor. Rebuilding and sorting
     // global edge incidence after each individually legal flip repeats work
     // proportional to the whole triangulation and can become superlinear in
@@ -346,10 +341,14 @@ fn recover_constraint_cavity(
     constrained_edges: &[EdgeKey],
     approximate_points: Option<&[[f64; 2]]>,
 ) -> Result<()> {
-    let mut cavity = vec![false; triangles.len()];
+    enum CrossedCorridor {
+        Empty,
+        One(EdgeKey, [AdjacentTriangle; 2]),
+        Many(Vec<bool>),
+    }
+
     let topology = TopologyEdges::new(triangles)?;
-    let mut lone_crossing = None;
-    let mut crossing_count = 0usize;
+    let mut crossed = CrossedCorridor::Empty;
     for topology in topology.iter() {
         let (edge, owners) = topology?;
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
@@ -370,30 +369,45 @@ fn recover_constraint_cavity(
             });
         };
         let adjacent = adjacent_triangles(triangles, edge, owners)?;
-        crossing_count += 1;
-        lone_crossing = (crossing_count == 1).then_some((edge, adjacent));
-        cavity[adjacent[0].triangle] = true;
-        cavity[adjacent[1].triangle] = true;
+        crossed = match crossed {
+            CrossedCorridor::Empty => CrossedCorridor::One(edge, adjacent),
+            CrossedCorridor::One(_, first) => {
+                let mut cavity = vec![false; triangles.len()];
+                cavity[first[0].triangle] = true;
+                cavity[first[1].triangle] = true;
+                cavity[adjacent[0].triangle] = true;
+                cavity[adjacent[1].triangle] = true;
+                CrossedCorridor::Many(cavity)
+            }
+            CrossedCorridor::Many(mut cavity) => {
+                cavity[adjacent[0].triangle] = true;
+                cavity[adjacent[1].triangle] = true;
+                CrossedCorridor::Many(cavity)
+            }
+        };
     }
-    if !cavity.iter().any(|&in_cavity| in_cavity) {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity contains no crossed triangles",
-        });
-    }
-    if let Some((edge, adjacent)) = lone_crossing {
-        let replacement = EdgeKey::new(adjacent[0].opposite, adjacent[1].opposite);
-        if replacement == EdgeKey::new(constraint.from, constraint.to)
-            && edge_is_flippable(
-                kernel,
-                points,
-                edge,
-                adjacent[0].opposite,
-                adjacent[1].opposite,
-            )?
-        {
-            return replace_adjacent_edge(kernel, points, triangles, edge, adjacent);
+    let mut cavity = match crossed {
+        CrossedCorridor::Empty => {
+            return Err(Error::UnsupportedFeature {
+                feature: "constraint cavity contains no crossed triangles",
+            });
         }
-    }
+        CrossedCorridor::One(edge, adjacent) => {
+            let replacement = EdgeKey::new(adjacent[0].opposite, adjacent[1].opposite);
+            // A proper crossing between the shared edge and the
+            // opposite-vertex diagonal is already the exact
+            // convex-quadrilateral certificate. Reuse it instead of repeating
+            // the same four side orientations.
+            if replacement == EdgeKey::new(constraint.from, constraint.to) {
+                return replace_adjacent_edge(kernel, points, triangles, edge, adjacent);
+            }
+            let mut cavity = vec![false; triangles.len()];
+            cavity[adjacent[0].triangle] = true;
+            cavity[adjacent[1].triangle] = true;
+            cavity
+        }
+        CrossedCorridor::Many(cavity) => cavity,
+    };
     close_constraint_cavity_holes(&topology, constrained_edges, &mut cavity)?;
     let cavity_indices = cavity
         .iter()
