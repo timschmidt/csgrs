@@ -1,0 +1,403 @@
+schema_version = 1
+date = "2026-08-05"
+status = "accepted corpus checkpoint; Phases 11, 17, and 18 remain open"
+implementation_commit = "8b8f8509"
+parent_evidence_commit = "d5093a9d"
+production_changed = false
+hypercurve_hypersolve_excluded = true
+
+[corpus]
+previous_fixture_count = 46
+current_fixture_count = 49
+previous_heap_selector_count = 15
+current_heap_selector_count = 18
+family = "thin_dyadic_boxes"
+shifts = [64, 512, 2048]
+large_divisions = 16
+large_input_triangles = 6144
+large_output_vertices = 2410
+large_union_triangles = 4816
+exact_affine_map = "(x,y,z) -> (x+z,y,z/2^shift)"
+exact_inverse_map = "(x',y',z') -> (x'-z'/scale,y',z'/scale)"
+determinant = "2^-shift"
+binary64_underflow_shift = 2048
+tags = ["exact-affine-embedding", "near-degenerate", "thin-shell", "sliver-triangles", "extreme-exponent"]
+cgal_eligible = true
+fixture_dispatch_in_production = false
+
+[correctness]
+small_input_triangles = 96
+outputs = ["union", "intersection", "difference", "reverse-difference", "xor"]
+normalized_exact_six_volumes = [504, 72, 312, 120, 432]
+exact_volume_multiplier = "2^-shift"
+inverse_embedded_vertices_identical = true
+oriented_topology_identical = true
+directed_boundaries_balanced = true
+both_policy_outputs_identical = true
+strict_certainty = "Certified"
+approximate_512_certainty = "Certified"
+approximate_terminal_consumed = false
+
+[[perf]]
+shift = 64
+policy = "STRICT"
+instructions = 1194400383
+branches = 205221436
+cycles = 457250995
+repetitions = 3
+
+[[perf]]
+shift = 64
+policy = "APPROXIMATE_512"
+instructions = 1194305160
+branches = 205197738
+cycles = 465779452
+repetitions = 3
+
+[[perf]]
+shift = 512
+policy = "STRICT"
+instructions = 3429452625
+branches = 590847897
+cycles = 1118393189
+repetitions = 3
+
+[[perf]]
+shift = 512
+policy = "APPROXIMATE_512"
+instructions = 3429367787
+branches = 590826709
+cycles = 1129486526
+repetitions = 3
+
+[[perf]]
+shift = 2048
+policy = "STRICT"
+instructions = 2330629672
+branches = 445770817
+cycles = 870224758
+repetitions = 3
+
+[[perf]]
+shift = 2048
+policy = "APPROXIMATE_512"
+instructions = 2330650122
+branches = 445775854
+cycles = 871309014
+repetitions = 3
+
+[perf_scaling]
+strict_512_over_64_instructions = 2.8709
+strict_2048_over_64_instructions = 1.9510
+strict_2048_over_512_instructions = 0.6796
+nonmonotonic_schedule_boundary = true
+
+[[heap]]
+shift = 64
+selector = "thin-dyadic-64"
+input_payload_bytes = 795560
+boolean_peak_bytes = 19495340
+incremental_kernel_peak_bytes = 18699146
+post_boolean_incremental_bytes = 548208
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 27736
+post_input_drop_incremental_bytes = 120096
+allocation_calls = 206411
+deallocation_calls = 206131
+reallocation_calls = 572
+added_bytes = 24443798
+removed_bytes = 23895590
+
+[[heap]]
+shift = 512
+selector = "thin-dyadic-512"
+input_payload_bytes = 798040
+boolean_peak_bytes = 23610989
+incremental_kernel_peak_bytes = 22812314
+post_boolean_incremental_bytes = 548712
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 28240
+post_input_drop_incremental_bytes = 122584
+allocation_calls = 1043381
+deallocation_calls = 1043104
+reallocation_calls = 9236
+added_bytes = 113027238
+removed_bytes = 112478526
+
+[[heap]]
+shift = 2048
+selector = "thin-dyadic-2048"
+input_payload_bytes = 695152
+boolean_peak_bytes = 38676638
+incremental_kernel_peak_bytes = 37980850
+post_boolean_incremental_bytes = 659992
+output_live_payload_bytes = 520472
+input_fact_growth_bytes = 139520
+post_input_drop_incremental_bytes = 129832
+allocation_calls = 1037872
+deallocation_calls = 1036498
+reallocation_calls = 9213
+added_bytes = 356577310
+removed_bytes = 355917318
+
+[heap_policy]
+policies = ["STRICT", "APPROXIMATE_512"]
+all_metrics_byte_identical_within_shift = true
+all_outputs_byte_identical_within_shift = true
+all_certainty = "Certified"
+
+[[rss]]
+shift = 64
+hypermesh_strict_kib = 25204
+hypermesh_approximate_512_kib = 25232
+cgal_kib = 9948
+strict_ratio_to_cgal = 2.534
+
+[[rss]]
+shift = 512
+hypermesh_strict_kib = 29328
+hypermesh_approximate_512_kib = 29160
+cgal_kib = 10016
+strict_ratio_to_cgal = 2.928
+
+[[rss]]
+shift = 2048
+hypermesh_strict_kib = 43944
+hypermesh_approximate_512_kib = 43748
+cgal_kib = 10912
+strict_ratio_to_cgal = 4.027
+
+[[competitive_kernel]]
+shift = 64
+cgal_version = "6.0.3"
+cgal_repetitions = 21
+cgal_outside_median_ns = 5792832
+cgal_inside_median_ns = 5850628
+cgal_outside_min_ns = 5710867
+cgal_outside_max_ns = 6344485
+cgal_inside_min_ns = 5750825
+cgal_inside_max_ns = 6177576
+hypermesh_strict_observed_mean_min_ns = 100442026
+hypermesh_strict_observed_mean_max_ns = 102944220
+hypermesh_approximate_512_observed_mean_min_ns = 100908864
+hypermesh_approximate_512_observed_mean_max_ns = 184939842
+result = "Hypermesh loss"
+gap_open = true
+
+[[competitive_kernel]]
+shift = 512
+cgal_version = "6.0.3"
+cgal_repetitions = 21
+cgal_outside_median_ns = 6295127
+cgal_inside_median_ns = 6483055
+cgal_outside_min_ns = 6220493
+cgal_outside_max_ns = 6710959
+cgal_inside_min_ns = 6381791
+cgal_inside_max_ns = 8656615
+hypermesh_strict_observed_mean_min_ns = 258558916
+hypermesh_strict_observed_mean_max_ns = 370047700
+hypermesh_approximate_512_observed_mean_ns = 257502573
+result = "Hypermesh loss"
+gap_open = true
+
+[[competitive_kernel]]
+shift = 2048
+cgal_version = "6.0.3"
+cgal_repetitions = 21
+cgal_outside_median_ns = 871741506
+cgal_inside_median_ns = 875464860
+cgal_outside_min_ns = 864767055
+cgal_outside_max_ns = 893717266
+cgal_inside_min_ns = 868776589
+cgal_inside_max_ns = 907259826
+hypermesh_strict_observed_mean_min_ns = 199358752
+hypermesh_strict_observed_mean_max_ns = 200384127
+hypermesh_approximate_512_observed_mean_ns = 199091301
+strict_speedup_over_cgal_outside_min = 4.350
+strict_speedup_over_cgal_outside_max = 4.373
+approximate_512_speedup_over_cgal_outside = 4.379
+result = "Hypermesh win"
+gap_open = false
+
+[[competitive_process]]
+shift = 64
+operations = 21
+hypermesh_instructions = 23706979434
+hypermesh_branches = 4077446886
+hypermesh_cycles = 9126231196
+cgal_instructions = 4354313413
+cgal_branches = 821113018
+cgal_cycles = 1693384849
+hypermesh_instruction_loss = 5.444
+hypermesh_branch_loss = 4.966
+hypermesh_cycle_loss = 5.389
+
+[[competitive_process]]
+shift = 512
+operations = 21
+hypermesh_instructions = 70639080634
+hypermesh_branches = 12177322425
+hypermesh_cycles = 32045757750
+cgal_instructions = 4854933811
+cgal_branches = 893866332
+cgal_cycles = 1893795616
+hypermesh_instruction_loss = 14.550
+hypermesh_branch_loss = 13.623
+hypermesh_cycle_loss = 16.921
+
+[[competitive_process]]
+shift = 2048
+operations = 21
+hypermesh_instructions = 47867719632
+hypermesh_branches = 9178856266
+hypermesh_cycles = 17706051385
+cgal_instructions = 244171027338
+cgal_branches = 38680000780
+cgal_cycles = 80125893175
+hypermesh_instruction_speedup = 5.101
+hypermesh_branch_speedup = 4.214
+hypermesh_cycle_speedup = 4.525
+
+[competitive_validation]
+output_vertices = 2410
+output_triangles = 4816
+cgal_valid = true
+cgal_closed = true
+cgal_structurally_valid = true
+cgal_f64_volume_underflows_at_2048 = true
+cgal_f64_volume_used_as_oracle = false
+wall_frequency_variable = true
+aggregate_claim = false
+
+[[exact_off]]
+shift = 64
+side = "left"
+bytes = 88504
+sha256 = "5e82ea3d5abd60ab58efe7991afecf5c004e6e5f7140a7d5c7a56533618f5b7c"
+
+[[exact_off]]
+shift = 64
+side = "right"
+bytes = 95107
+sha256 = "f2d5b83d5ba1c8a7d4f4e7f8bd5a9620f63f52727b17246f2bc74f9e3e5ce9bd"
+
+[[exact_off]]
+shift = 512
+side = "left"
+bytes = 257119
+sha256 = "ca31f8fc287ab7f2b4110faa47dd23289088dd4bb167611f0af4633cae162702"
+
+[[exact_off]]
+shift = 512
+side = "right"
+bytes = 302737
+sha256 = "957f7168683832d581eaf750226890c1c551f4d7a5f7d3e15ed83bee8b366766"
+
+[[exact_off]]
+shift = 2048
+side = "left"
+bytes = 834733
+sha256 = "88728f4fc20d7dba600721a192b0715c90137c3b3f15f726a1254705b069d75a"
+
+[[exact_off]]
+shift = 2048
+side = "right"
+bytes = 1013869
+sha256 = "ff43d7fc5107e643cdbb61bb5fea5c66cbff51b3d2e9691571b609dc18135b26"
+
+[profile.shift_512]
+artifact = "target/phase11-17-thin-dyadic-512.data"
+samples = 2644
+signed_product_sum_ordering_4x2_self_percent = 14.86
+exact_rational_coordinate_classification_self_percent = 10.76
+lossy_rational_export_self_percent = 6.39
+memmove_self_percent = 5.24
+rational_linear_form4_normalization_self_percent = 4.40
+point_query_construction_self_percent = 3.90
+
+[profile.shift_2048]
+artifact = "target/phase11-17-thin-dyadic-2048.data"
+samples = 2068
+shifted_biguint_comparison_self_percent = 9.92
+trailing_zero_discovery_self_percent = 7.93
+exact_rational_coordinate_classification_self_percent = 7.46
+signed_product_sum_ordering_4x2_self_percent = 6.62
+lossy_rational_export_self_percent = 3.16
+memmove_self_percent = 3.84
+point_query_construction_self_percent = 1.39
+
+[source]
+changed_files = 9
+insertions = 381
+deletions = 129
+production_source_changes = 0
+cargo_manifest_changes = 0
+dependency_changes = 0
+test_program_dag_deduplicated = true
+fixture_selection_builds_whole_corpus = false
+
+[size]
+all_sixteen_artifacts_byte_identical_to_parent = true
+default_release_native_general_text = 1957586
+default_release_native_immediate_text = 1960730
+default_release_optimized_wasm_general = 1381518
+default_release_optimized_wasm_immediate = 1383359
+default_size_native_general_text = 1068935
+default_size_native_immediate_text = 1069891
+default_size_optimized_wasm_general = 661997
+default_size_optimized_wasm_immediate = 662410
+all_release_native_general_text = 2093063
+all_release_native_immediate_text = 2095919
+all_release_optimized_wasm_general = 1455501
+all_release_optimized_wasm_immediate = 1457473
+all_size_native_general_text = 1071175
+all_size_native_immediate_text = 1072147
+all_size_optimized_wasm_general = 662255
+all_size_optimized_wasm_immediate = 662294
+
+[call_graph.production]
+nodes = 15140
+edges = 25245
+unchanged = true
+thin_dyadic_nodes = 0
+
+[call_graph.tests_examples]
+nodes = 17477
+edges = 28586
+
+[call_graph.all_evidence]
+nodes = 21522
+edges = 34686
+
+[call_graph.audit]
+production_fixture_selector = false
+production_alternate_engine = false
+production_thin_dyadic_predicate = false
+thin_dyadic_to_hyperlimit_edge = false
+
+[validation]
+default_passed = 202
+default_ignored = 6
+all_features_passed = 203
+all_features_ignored = 6
+minimal_library_passed = 153
+clippy_warning_denied = true
+rustdoc_warning_denied = true
+fuzz_targets_checked = true
+benches_examples_checked = true
+format_checked = true
+default_size_matrix_passed = true
+all_feature_size_matrix_passed = true
+new_large_heap_selectors_both_policies = 3
+call_graphs_regenerated = 3
+
+[open]
+phases_11_17_18 = true
+external_real_world_pathology = true
+unexplained_semantic_cells = true
+shift_64_cgal_runtime = true
+shift_512_cgal_runtime = true
+all_three_cgal_rss = true
+fixed_wide_512_schedule = true
+other_per_case_cgal_gaps = true
+final_requirement_audit = true
