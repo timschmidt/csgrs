@@ -9,6 +9,13 @@ use hypercurve::{
 };
 use hypercurve::{Curve2, CurvePath2};
 
+#[cfg(feature = "predicates")]
+use hypercurve::{
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, CubicBezier2,
+    CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2,
+};
+
 fn s(value: i32) -> Real {
     value.into()
 }
@@ -1034,6 +1041,79 @@ fn bench_represented_bezier_fillet_lane(
     );
 }
 
+#[cfg(feature = "predicates")]
+fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
+    let policy = CurveContext::STRICT;
+    let third = q(1, 3);
+    let controls = vec![
+        p(1, 0),
+        Point2::new(Real::one() + &third, third.clone()),
+        Point2::new(
+            Real::one() + Real::from(2_i8) * &third,
+            Real::from(2_i8) * &third,
+        ),
+        p(2, 0),
+    ];
+    let source = CubicBezier2::new(
+        controls[0].clone(),
+        controls[1].clone(),
+        controls[2].clone(),
+        controls[3].clone(),
+    );
+    let source_rational = RationalBezier2::try_new(controls, vec![Real::one(); 4])?;
+    let polynomial = expect_decided(
+        BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+            &policy,
+        )?,
+        "sqrt(1/2) polynomial must remain exact",
+    );
+    let interval = expect_decided(
+        BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy)?,
+        "sqrt(1/2) interval must remain exact",
+    );
+    let parameter = expect_decided(
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)?,
+        "sqrt(1/2) root must remain isolated",
+    );
+    let split_parameter = BezierParameter2::Algebraic(parameter.clone());
+    let materialization = expect_decided(
+        source.split_at_parameters(std::slice::from_ref(&split_parameter), &policy)?,
+        "algebraic source split must remain exact",
+    );
+    let source_fragment = materialization.fragments()[0].clone();
+    let selected_point = RationalBezierIntersectionPointEvidence2::Algebraic(
+        source_rational.point_at_algebraic_parameter(&parameter, &policy)?,
+    );
+    let chord = expect_decided(
+        BezierAlgebraicChord2::try_new(
+            selected_point,
+            RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)),
+            &policy,
+        )?,
+        "source-related algebraic chord must remain exact",
+    );
+    let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            source_fragment,
+            BezierSplitFragment2::AlgebraicChord(chord),
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(closure),
+            },
+        ],
+        &policy,
+    )?;
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+}
+
 fn bench_represented_bezier_region_corner_lanes(
     region: &CurveRegion2,
     two_bezier_region: &CurveRegion2,
@@ -1114,6 +1194,30 @@ fn bench_represented_bezier_region_corner_lanes(
         let elapsed = started.elapsed();
         println!(
             "curve_region_line_quadratic_algebraic_regularize: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_source_related_algebraic_chord_regularize") {
+        let retained = source_related_algebraic_chord_region()
+            .expect("source-related algebraic chord benchmark fixture must remain exact");
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let regularized = black_box(&retained)
+                .regularized_region(&policy)
+                .expect("source-related algebraic chord regularization must remain exact")
+                .into_value();
+            fragments += black_box(&regularized)
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_source_related_algebraic_chord_regularize: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
             elapsed / iterations
         );
     }
