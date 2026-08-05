@@ -82,6 +82,8 @@ pub enum CurveCornerNoSolution2 {
     ZeroDesignValue,
     /// The incident tangents are parallel or coincident, so no finite fillet center exists.
     ParallelTangents,
+    /// The exact radius-offset supports do not meet, so no tangent circle exists.
+    NoTangentCircle,
     /// Every exact candidate lies outside the permitted trim domains.
     OutsideTrimDomain,
     /// Every candidate collapses the inserted corner carrier.
@@ -1896,11 +1898,11 @@ impl CurvePath2 {
     /// Solves and applies an exact circular fillet of the requested radius.
     ///
     /// Fillet centers are intersections of equal signed-radius offsets of the
-    /// two incident carriers. The current exact fast path handles certified
-    /// line-image pairs, including retained degree-elevated lines, and orders
-    /// the left-side center before the right-side center. Higher-order pairs
-    /// remain explicit until they enter the same analytic-parallel intersection
-    /// authority used by region offsets.
+    /// two incident carriers. The exact native kernel handles lines, retained
+    /// degree-elevated line images, and circular arcs and orders the left-side
+    /// center before the right-side center. Higher-order pairs remain explicit
+    /// until they enter the same analytic-parallel intersection authority used
+    /// by region offsets.
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -1930,22 +1932,23 @@ impl CurvePath2 {
             previous.family(),
             policy,
         )?;
-        let previous_line = exact_linear_corner_line(previous);
-        let next_line = exact_linear_corner_line(next);
-        let (Some(previous_line), Some(next_line)) = (previous_line, next_line) else {
-            return Err(ExactCurveError::blocked(
+        let previous_carrier = exact_corner_carrier(previous).ok_or_else(|| {
+            ExactCurveError::blocked(
                 CurveOperation2::Fillet,
-                if previous_line.is_none() {
-                    previous.family()
-                } else {
-                    next.family()
-                },
+                previous.family(),
                 crate::UncertaintyReason::Unsupported,
-            ));
-        };
-        let solutions = solve_line_fillet_corner(
-            previous_line,
-            next_line,
+            )
+        })?;
+        let next_carrier = exact_corner_carrier(next).ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                next.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        let solutions = solve_exact_fillet_corner(
+            previous_carrier,
+            next_carrier,
             &radius,
             radius_sign,
             mode,
@@ -1954,7 +1957,10 @@ impl CurvePath2 {
             policy,
         )?;
         try_map_corner_solutions(solutions, |solution| {
-            if solution.previous.placement == CornerPlacement2::Trim
+            if matches!(
+                (previous_carrier, next_carrier),
+                (ExactCornerCarrier2::Line(_), ExactCornerCarrier2::Line(_))
+            ) && solution.previous.placement == CornerPlacement2::Trim
                 && solution.next.placement == CornerPlacement2::Trim
             {
                 self.fillet_vertex_by_parameters_raw(
@@ -1968,7 +1974,7 @@ impl CurvePath2 {
             } else {
                 let previous_trim = materialize_corner_cut(
                     previous,
-                    ExactCornerCarrier2::Line(previous_line),
+                    previous_carrier,
                     &solution.previous,
                     true,
                     CurveOperation2::Fillet,
@@ -1976,7 +1982,7 @@ impl CurvePath2 {
                 )?;
                 let next_trim = materialize_corner_cut(
                     next,
-                    ExactCornerCarrier2::Line(next_line),
+                    next_carrier,
                     &solution.next,
                     false,
                     CurveOperation2::Fillet,
@@ -3298,12 +3304,16 @@ pub(crate) struct FilletCorner2 {
 }
 
 impl FilletCorner2 {
-    pub(crate) fn into_trim_evidence(self) -> Option<(Real, Real, Point2, bool)> {
+    pub(crate) fn into_native_trim_evidence(
+        self,
+    ) -> Option<(Real, Point2, Real, Point2, Point2, bool)> {
         (self.previous.placement == CornerPlacement2::Trim
             && self.next.placement == CornerPlacement2::Trim)
             .then_some((
                 self.previous.parameter,
+                self.previous.point,
                 self.next.parameter,
+                self.next.point,
                 self.center,
                 self.clockwise,
             ))
@@ -3520,9 +3530,9 @@ pub(crate) fn solve_exact_chamfer_corner(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn solve_line_fillet_corner(
-    previous: &LineSeg2,
-    next: &LineSeg2,
+pub(crate) fn solve_exact_fillet_corner(
+    previous: ExactCornerCarrier2<'_>,
+    next: ExactCornerCarrier2<'_>,
     radius: &Real,
     radius_sign: RealSign,
     mode: CurveCornerMode2,
@@ -3539,6 +3549,503 @@ pub(crate) fn solve_line_fillet_corner(
         RealSign::Positive => {}
         RealSign::Negative => unreachable!("negative corner values are rejected"),
     }
+    if let (ExactCornerCarrier2::Line(previous), ExactCornerCarrier2::Line(next)) = (previous, next)
+    {
+        return solve_line_fillet_corner(
+            previous,
+            next,
+            radius,
+            mode,
+            previous_family,
+            next_family,
+            policy,
+        );
+    }
+    solve_native_curved_fillet_corner(
+        previous,
+        next,
+        radius,
+        mode,
+        previous_family,
+        next_family,
+        policy,
+    )
+}
+
+enum PreparedFilletCarrier2<'a> {
+    Line {
+        source: &'a LineSeg2,
+        unit_x: Real,
+        unit_y: Real,
+    },
+    Arc {
+        source: &'a CircularArc2,
+        radius: Real,
+    },
+}
+
+impl<'a> PreparedFilletCarrier2<'a> {
+    fn new(
+        carrier: ExactCornerCarrier2<'a>,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        match carrier {
+            ExactCornerCarrier2::Line(source) => {
+                let (dx, dy) = source.delta();
+                let (unit_x, unit_y, _) =
+                    line_unit_direction(&dx, &dy, CurveOperation2::Fillet, family, policy)?;
+                Ok(Self::Line {
+                    source,
+                    unit_x,
+                    unit_y,
+                })
+            }
+            ExactCornerCarrier2::Arc(source) => Ok(Self::Arc {
+                source,
+                radius: exact_corner_arc_radius(source, CurveOperation2::Fillet, family, policy)?,
+            }),
+        }
+    }
+
+    fn offset<'b>(
+        &'b self,
+        signed_distance: &Real,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<FilletOffsetCarrier2<'a, 'b>> {
+        match self {
+            Self::Line {
+                source,
+                unit_x,
+                unit_y,
+            } => {
+                let offset_x = -unit_y * signed_distance;
+                let offset_y = unit_x * signed_distance;
+                // Translation preserves the already-validated nonzero source
+                // direction, so rebuilding an endpoint-distance proof would
+                // only allocate an algebraically identical norm.
+                let support = LineSeg2::new_unchecked(
+                    source
+                        .start()
+                        .translated(offset_x.clone(), offset_y.clone()),
+                    source.end().translated(offset_x, offset_y),
+                );
+                Ok(FilletOffsetCarrier2::Line { source, support })
+            }
+            Self::Arc { source, radius } => {
+                let signed_radius = if source.is_clockwise() {
+                    radius + signed_distance
+                } else {
+                    radius - signed_distance
+                };
+                match crate::classify::real_sign(&signed_radius, policy) {
+                    Some(RealSign::Zero) => Ok(FilletOffsetCarrier2::Point {
+                        point: source.center(),
+                    }),
+                    Some(RealSign::Positive | RealSign::Negative) => {
+                        Ok(FilletOffsetCarrier2::Arc {
+                            source,
+                            source_radius: radius,
+                            signed_radius,
+                        })
+                    }
+                    None => Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::RealSign,
+                    )),
+                }
+            }
+        }
+    }
+}
+
+enum FilletOffsetCarrier2<'a, 'b> {
+    Line {
+        source: &'a LineSeg2,
+        support: LineSeg2,
+    },
+    Arc {
+        source: &'a CircularArc2,
+        source_radius: &'b Real,
+        signed_radius: Real,
+    },
+    Point {
+        point: &'a Point2,
+    },
+}
+
+struct FilletCenterWitness2 {
+    point: Point2,
+    line_parameter: FilletLineParameter2,
+}
+
+enum FilletLineParameter2 {
+    None,
+    Previous(Real),
+    Next(Real),
+}
+
+impl FilletCenterWitness2 {
+    fn line_parameter(&self, previous: bool) -> Option<&Real> {
+        match (&self.line_parameter, previous) {
+            (FilletLineParameter2::Previous(parameter), true)
+            | (FilletLineParameter2::Next(parameter), false) => Some(parameter),
+            (FilletLineParameter2::None, _)
+            | (FilletLineParameter2::Previous(_), false)
+            | (FilletLineParameter2::Next(_), true) => None,
+        }
+    }
+}
+
+#[derive(Default)]
+struct FilletCenters2 {
+    first: Option<FilletCenterWitness2>,
+    second: Option<FilletCenterWitness2>,
+    coincident: bool,
+}
+
+impl FilletCenters2 {
+    fn push(&mut self, witness: FilletCenterWitness2) {
+        if self.first.is_none() {
+            self.first = Some(witness);
+        } else {
+            debug_assert!(self.second.is_none());
+            self.second = Some(witness);
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &FilletCenterWitness2> {
+        self.first.iter().chain(self.second.iter())
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn solve_native_curved_fillet_corner(
+    previous: ExactCornerCarrier2<'_>,
+    next: ExactCornerCarrier2<'_>,
+    radius: &Real,
+    mode: CurveCornerMode2,
+    previous_family: CurveFamily2,
+    next_family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+    let previous = PreparedFilletCarrier2::new(previous, previous_family, policy)?;
+    let next = PreparedFilletCarrier2::new(next, next_family, policy)?;
+    let mut candidates = CornerSolutionAccumulator::Empty;
+    let mut saw_outside_domain = false;
+    let mut saw_degenerate = false;
+
+    // Positive signed distance is the common left offset and therefore gives
+    // a counterclockwise fillet. Preserve that documented candidate order.
+    for clockwise in [false, true] {
+        let signed_distance = if clockwise {
+            -radius.clone()
+        } else {
+            radius.clone()
+        };
+        let previous_offset = previous.offset(&signed_distance, previous_family, policy)?;
+        let next_offset = next.offset(&signed_distance, next_family, policy)?;
+        let centers =
+            fillet_offset_centers(&previous_offset, &next_offset, previous_family, policy)?;
+        if centers.coincident {
+            saw_degenerate = true;
+            continue;
+        }
+        for center in centers.iter() {
+            let Some(previous_cut) = fillet_cut_from_center(
+                &previous_offset,
+                &center.point,
+                center.line_parameter(true),
+                true,
+                mode,
+                previous_family,
+                policy,
+            )?
+            else {
+                saw_outside_domain = true;
+                continue;
+            };
+            let Some(next_cut) = fillet_cut_from_center(
+                &next_offset,
+                &center.point,
+                center.line_parameter(false),
+                false,
+                mode,
+                next_family,
+                policy,
+            )?
+            else {
+                saw_outside_domain = true;
+                continue;
+            };
+            match crate::classify::is_zero(
+                &previous_cut.point.distance_squared(&next_cut.point),
+                policy,
+            ) {
+                Some(true) => saw_degenerate = true,
+                Some(false) => candidates.push(FilletCorner2 {
+                    previous: previous_cut,
+                    next: next_cut,
+                    center: center.point.clone(),
+                    clockwise,
+                }),
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+        }
+    }
+
+    let empty_reason = if saw_outside_domain {
+        CurveCornerNoSolution2::OutsideTrimDomain
+    } else if saw_degenerate {
+        CurveCornerNoSolution2::DegenerateCandidate
+    } else {
+        CurveCornerNoSolution2::NoTangentCircle
+    };
+    Ok(candidates.finish(empty_reason))
+}
+
+fn fillet_offset_centers(
+    previous: &FilletOffsetCarrier2<'_, '_>,
+    next: &FilletOffsetCarrier2<'_, '_>,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<FilletCenters2> {
+    let mut centers = FilletCenters2::default();
+    match (previous, next) {
+        (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
+            let (point, other) = match (previous, next) {
+                (FilletOffsetCarrier2::Point { point }, other) => (*point, other),
+                (other, FilletOffsetCarrier2::Point { point }) => (*point, other),
+                _ => unreachable!(),
+            };
+            if point_on_fillet_offset(point, other, family, policy)? {
+                // The center is isolated, but tangency on the collapsed source
+                // offset is not. Do not manufacture one contact from a
+                // continuum of equally valid source-circle contacts.
+                centers.coincident = true;
+            }
+        }
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Arc { .. })
+        | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (support, source, signed_radius, line_is_previous) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Line { support, .. },
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        signed_radius,
+                        ..
+                    },
+                ) => (support, source, signed_radius, true),
+                (
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        signed_radius,
+                        ..
+                    },
+                    FilletOffsetCarrier2::Line { support, .. },
+                ) => (support, source, signed_radius, false),
+                _ => unreachable!(),
+            };
+            let relation = crate::intersect::line_circle_relation_from_supports(
+                support,
+                source.center(),
+                &(signed_radius * signed_radius),
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
+            let mut push = |point, parameter| {
+                let line_parameter = if line_is_previous {
+                    FilletLineParameter2::Previous(parameter)
+                } else {
+                    FilletLineParameter2::Next(parameter)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    line_parameter,
+                });
+            };
+            match relation {
+                crate::LineCircleRelation::Disjoint => {}
+                crate::LineCircleRelation::Tangent { point, line_param } => {
+                    push(point, line_param);
+                }
+                crate::LineCircleRelation::Secant {
+                    first_point,
+                    first_param,
+                    second_point,
+                    second_param,
+                } => {
+                    push(first_point, first_param);
+                    push(second_point, second_param);
+                }
+                crate::LineCircleRelation::Uncertain { reason } => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            }
+        }
+        (
+            FilletOffsetCarrier2::Arc {
+                source: previous,
+                signed_radius: previous_radius,
+                ..
+            },
+            FilletOffsetCarrier2::Arc {
+                source: next,
+                signed_radius: next_radius,
+                ..
+            },
+        ) => match crate::intersect::circle_relation_from_supports(
+            previous.center(),
+            &(previous_radius * previous_radius),
+            next.center(),
+            &(next_radius * next_radius),
+            policy,
+        )
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            crate::CircleCircleRelation::Disjoint => {}
+            crate::CircleCircleRelation::Tangent { point } => {
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    line_parameter: FilletLineParameter2::None,
+                });
+            }
+            crate::CircleCircleRelation::Secant {
+                first_point,
+                second_point,
+            } => {
+                centers.push(FilletCenterWitness2 {
+                    point: first_point,
+                    line_parameter: FilletLineParameter2::None,
+                });
+                centers.push(FilletCenterWitness2 {
+                    point: second_point,
+                    line_parameter: FilletLineParameter2::None,
+                });
+            }
+            crate::CircleCircleRelation::Coincident => centers.coincident = true,
+            crate::CircleCircleRelation::Uncertain { reason } => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    reason,
+                ));
+            }
+        },
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            unreachable!("line/line fillets use the specialized exact fast path")
+        }
+    }
+    Ok(centers)
+}
+
+fn point_on_fillet_offset(
+    point: &Point2,
+    support: &FilletOffsetCarrier2<'_, '_>,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let residual = match support {
+        FilletOffsetCarrier2::Line { support, .. } => {
+            let (dx, dy) = support.delta();
+            let from_start = point.delta_from(support.start());
+            &dx * &from_start.1 - &dy * &from_start.0
+        }
+        FilletOffsetCarrier2::Arc {
+            source,
+            signed_radius,
+            ..
+        } => point.distance_squared(source.center()) - signed_radius * signed_radius,
+        FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
+    };
+    crate::classify::is_zero(&residual, policy).ok_or_else(|| {
+        ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            crate::UncertaintyReason::RealSign,
+        )
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn fillet_cut_from_center(
+    offset: &FilletOffsetCarrier2<'_, '_>,
+    center: &Point2,
+    line_parameter: Option<&Real>,
+    previous: bool,
+    mode: CurveCornerMode2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerCut2>> {
+    match offset {
+        FilletOffsetCarrier2::Line { source, .. } => {
+            let parameter = line_parameter
+                .expect("a line offset intersection retains its affine parameter")
+                .clone();
+            Ok(corner_parameter_placement(
+                &parameter,
+                previous,
+                mode,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            )?
+            .map(|placement| CornerCut2 {
+                point: source.point_at(parameter.clone()),
+                parameter,
+                placement,
+            }))
+        }
+        FilletOffsetCarrier2::Arc {
+            source,
+            source_radius,
+            signed_radius,
+        } => {
+            let scale = (*source_radius / signed_radius).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
+            })?;
+            let radial = center.delta_from(source.center());
+            let point = source
+                .center()
+                .translated(&radial.0 * &scale, &radial.1 * scale);
+            arc_corner_cut_from_incident_point(
+                source,
+                point,
+                previous,
+                mode,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            )
+        }
+        FilletOffsetCarrier2::Point { .. } => {
+            unreachable!("a collapsed arc offset has no isolated tangency contact")
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn solve_line_fillet_corner(
+    previous: &LineSeg2,
+    next: &LineSeg2,
+    radius: &Real,
+    mode: CurveCornerMode2,
+    previous_family: CurveFamily2,
+    next_family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     let previous_delta = previous.delta();
     let next_delta = next.delta();
     let previous_unit = line_unit_direction(
@@ -3795,28 +4302,7 @@ fn arc_chamfer_cuts(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CornerCuts2> {
-    if !arc.endpoints_on_stored_circle_are_certified() {
-        for endpoint in [arc.start(), arc.end()] {
-            let radius_delta = endpoint.distance_squared(arc.center()) - arc.radius_squared_ref();
-            match crate::classify::is_zero(&radius_delta, policy) {
-                Some(true) => {}
-                Some(false) => {
-                    return Err(ExactCurveError::invalid(
-                        operation,
-                        family,
-                        CurveError::RadiusMismatch,
-                    ));
-                }
-                None => {
-                    return Err(ExactCurveError::blocked(
-                        operation,
-                        family,
-                        crate::UncertaintyReason::RealSign,
-                    ));
-                }
-            }
-        }
-    }
+    validate_exact_corner_arc_support(arc, operation, family, policy)?;
     let corner = if previous { arc.end() } else { arc.start() };
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
@@ -3894,12 +4380,29 @@ fn arc_chamfer_cut_candidate(
     policy: &CurveContext,
     cuts: &mut CornerCuts2,
 ) -> ExactCurveResult<()> {
-    // `circle_relation_from_supports` already certifies that `point` lies on
-    // the source support. Re-expanding the radical construction through
-    // `contains_point` would ask Hyperreal to rediscover an equality that the
-    // intersection kernel has just proved and can block STRICT on an
-    // otherwise exact square-root representation. Only sweep membership is a
-    // new predicate here.
+    if let Some(cut) =
+        arc_corner_cut_from_incident_point(arc, point, previous, mode, operation, family, policy)?
+    {
+        cuts.push(cut);
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn arc_corner_cut_from_incident_point(
+    arc: &CircularArc2,
+    point: Point2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerCut2>> {
+    // The chamfer circle relation or fillet offset/contact construction has
+    // already certified source-support incidence. Re-expanding the radical
+    // construction through `contains_point` would ask Hyperreal to rediscover
+    // that equality and can block STRICT on an otherwise exact square-root
+    // representation. Only sweep membership is a new predicate here.
     match arc.contains_sweep_point(&point, policy) {
         Classification::Decided(true) => {
             let sweep_fraction = match arc
@@ -3920,20 +4423,20 @@ fn arc_chamfer_cut_candidate(
                 policy,
             )? == Some(CornerPlacement2::Trim)
             {
-                cuts.push(CornerCut2 {
+                return Ok(Some(CornerCut2 {
                     parameter: sweep_fraction,
                     point,
                     placement: CornerPlacement2::Trim,
-                });
+                }));
             }
         }
         Classification::Decided(false) if mode == CurveCornerMode2::TrimOrExtend => {
             if arc_extension_contains_corner(arc, &point, previous, operation, family, policy)? {
-                cuts.push(CornerCut2 {
+                return Ok(Some(CornerCut2 {
                     parameter: if previous { Real::one() } else { Real::zero() },
                     point,
                     placement: CornerPlacement2::Extension,
-                });
+                }));
             }
         }
         Classification::Decided(false) => {}
@@ -3941,7 +4444,74 @@ fn arc_chamfer_cut_candidate(
             return Err(ExactCurveError::blocked(operation, family, reason));
         }
     }
+    Ok(None)
+}
+
+fn validate_exact_corner_arc_support(
+    arc: &CircularArc2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<()> {
+    match crate::classify::real_sign(arc.radius_squared_ref(), policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Zero) => {
+            return Err(ExactCurveError::invalid(
+                operation,
+                family,
+                CurveError::ZeroRadiusArc,
+            ));
+        }
+        Some(RealSign::Negative) => {
+            return Err(ExactCurveError::invalid(
+                operation,
+                family,
+                CurveError::RadiusMismatch,
+            ));
+        }
+        None => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                family,
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+    if !arc.endpoints_on_stored_circle_are_certified() {
+        for endpoint in [arc.start(), arc.end()] {
+            let radius_delta = endpoint.distance_squared(arc.center()) - arc.radius_squared_ref();
+            match crate::classify::is_zero(&radius_delta, policy) {
+                Some(true) => {}
+                Some(false) => {
+                    return Err(ExactCurveError::invalid(
+                        operation,
+                        family,
+                        CurveError::RadiusMismatch,
+                    ));
+                }
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        operation,
+                        family,
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            }
+        }
+    }
     Ok(())
+}
+
+fn exact_corner_arc_radius(
+    arc: &CircularArc2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Real> {
+    validate_exact_corner_arc_support(arc, operation, family, policy)?;
+    arc.radius_squared()
+        .sqrt()
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))
 }
 
 fn arc_extension_contains_corner(

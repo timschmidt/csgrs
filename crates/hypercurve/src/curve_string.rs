@@ -698,6 +698,36 @@ impl CurveString2 {
             &next_point,
             center,
             clockwise,
+            None,
+            policy,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn fillet_vertex_by_certified_parameters_and_points(
+        &self,
+        vertex_index: usize,
+        previous_param: Real,
+        next_param: Real,
+        previous_point: Point2,
+        next_point: Point2,
+        center: &Point2,
+        radius_squared: Real,
+        clockwise: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveString2>> {
+        if vertex_index == 0 || vertex_index >= self.len() {
+            return Err(CurveError::InvalidCurveRange);
+        }
+        self.fillet_vertex(
+            vertex_index,
+            previous_param,
+            next_param,
+            &previous_point,
+            &next_point,
+            center,
+            clockwise,
+            Some(radius_squared),
             policy,
         )
     }
@@ -734,6 +764,7 @@ impl CurveString2 {
             next_point,
             center,
             clockwise,
+            None,
             policy,
         )
     }
@@ -748,6 +779,7 @@ impl CurveString2 {
         next_point: &Point2,
         center: &Point2,
         clockwise: bool,
+        certified_radius_squared: Option<Real>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let previous_segment_index = vertex_index - 1;
@@ -777,32 +809,46 @@ impl CurveString2 {
             _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
 
-        let radius_squared = previous_point.distance_squared(center);
-        match is_zero(&radius_squared, policy) {
-            Some(false) => {}
-            Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let radius_delta = &radius_squared - &next_point.distance_squared(center);
-        match is_zero(&radius_delta, policy) {
-            Some(true) => {}
-            Some(false) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
+        let certified = certified_radius_squared.is_some();
+        let radius_squared = if let Some(radius_squared) = certified_radius_squared {
+            radius_squared
+        } else {
+            let radius_squared = previous_point.distance_squared(center);
+            match is_zero(&radius_squared, policy) {
+                Some(false) => {}
+                Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let radius_delta = &radius_squared - &next_point.distance_squared(center);
+            match is_zero(&radius_delta, policy) {
+                Some(true) => {}
+                Some(false) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            radius_squared
+        };
 
-        if let Some(reason) = segment_fillet_validation_blocker(
-            previous_segment,
-            previous_point,
-            center,
-            clockwise,
-            policy,
-        ) {
-            return Ok(Classification::Uncertain(reason));
-        }
-        if let Some(reason) =
-            segment_fillet_validation_blocker(next_segment, next_point, center, clockwise, policy)
-        {
-            return Ok(Classification::Uncertain(reason));
+        if !certified {
+            if let Some(reason) = segment_fillet_validation_blocker(
+                previous_segment,
+                previous_point,
+                center,
+                clockwise,
+                policy,
+            ) {
+                return Ok(Classification::Uncertain(reason));
+            }
+            if let Some(reason) = segment_fillet_validation_blocker(
+                next_segment,
+                next_point,
+                center,
+                clockwise,
+                policy,
+            ) {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
 
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());

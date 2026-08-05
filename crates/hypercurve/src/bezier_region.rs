@@ -37,7 +37,7 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::{
-    ExactCornerCarrier2, solve_exact_chamfer_corner, solve_line_fillet_corner,
+    ExactCornerCarrier2, solve_exact_chamfer_corner, solve_exact_fillet_corner,
     try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::policy::{
@@ -4895,10 +4895,10 @@ impl CurveRegion2 {
 
     /// Solves a boundary-loop circular fillet from an exact radius.
     ///
-    /// Exact candidates come from the same line-interaction authority used by
-    /// open [`CurvePath2`] editing and are rebuilt without changing loop role or
-    /// fill rule. Native trim-only vertices retain their contour fast path;
-    /// trim-or-extend requests preserve all exact candidates for caller
+    /// Exact candidates come from the same native carrier-interaction authority
+    /// used by open [`CurvePath2`] editing and are rebuilt without changing loop
+    /// role or fill rule. Native trim-only vertices retain their contour fast
+    /// path; trim-or-extend requests preserve all exact candidates for caller
     /// selection.
     pub fn fillet_loop_vertex_by_radius(
         &self,
@@ -4928,23 +4928,22 @@ impl CurveRegion2 {
                 CurveOperation2::Fillet,
                 policy,
                 |previous, next| {
-                    let (Segment2::Line(previous), Segment2::Line(next)) = (previous, next) else {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    };
+                    let previous_carrier = ExactCornerCarrier2::from_segment(previous);
+                    let next_carrier = ExactCornerCarrier2::from_segment(next);
                     let radius_sign = validate_corner_design_value(
                         &radius,
                         CurveOperation2::Fillet,
-                        CurveFamily2::Line,
+                        previous_carrier.family(),
                         policy,
                     )?;
-                    solve_line_fillet_corner(
-                        previous,
-                        next,
+                    solve_exact_fillet_corner(
+                        previous_carrier,
+                        next_carrier,
                         &radius,
                         radius_sign,
                         mode,
-                        CurveFamily2::Line,
-                        CurveFamily2::Line,
+                        previous_carrier.family(),
+                        next_carrier.family(),
                         policy,
                     )
                     .map(Classification::Decided)
@@ -4959,9 +4958,16 @@ impl CurveRegion2 {
                     ordinal,
                     CurveCornerSolutions2::Unique(solution),
                 )) => {
-                    if let Some((previous_parameter, next_parameter, center, clockwise)) =
-                        solution.into_trim_evidence()
+                    if let Some((
+                        previous_parameter,
+                        previous_point,
+                        next_parameter,
+                        next_point,
+                        center,
+                        clockwise,
+                    )) = solution.into_native_trim_evidence()
                     {
+                        let radius_squared = &radius * &radius;
                         let edited = Self::rebuild_native_corner_region(
                             region,
                             role,
@@ -4969,11 +4975,14 @@ impl CurveRegion2 {
                             CurveOperation2::Fillet,
                             policy,
                             |contour| {
-                                contour.fillet_vertex_by_parameters(
+                                contour.fillet_vertex_by_certified_parameters_and_points(
                                     vertex_index,
                                     previous_parameter,
                                     next_parameter,
+                                    previous_point,
+                                    next_point,
                                     &center,
+                                    radius_squared,
                                     clockwise,
                                     policy,
                                 )

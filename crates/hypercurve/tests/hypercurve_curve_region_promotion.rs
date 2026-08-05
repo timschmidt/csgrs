@@ -713,6 +713,62 @@ fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
     }
 }
 
+#[test]
+fn unified_region_native_fillet_retains_certified_arc_contacts() {
+    let curved = Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+        Segment2::Arc(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_material_contours(vec![curved.clone()], &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Unique(filleted) = source
+            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the native line/arc vertex must have one exact fillet");
+        };
+        let native = decided(filleted.native_contours_fast_path(&policy).unwrap());
+        let segments = native.material_contours()[0].segments();
+        assert_eq!(segments.len(), 5);
+        let Segment2::Line(previous) = &segments[0] else {
+            panic!("the previous native line must remain a line");
+        };
+        let Segment2::Arc(fillet) = &segments[1] else {
+            panic!("the inserted fillet must remain a circular arc");
+        };
+        let Segment2::Arc(next) = &segments[2] else {
+            panic!("the next native arc must remain a circular arc");
+        };
+        assert_eq!(previous.end(), fillet.start());
+        assert_eq!(fillet.end(), next.start());
+        assert_eq!(next.center(), &p(1, 0));
+        assert_eq!(next.end(), &p(1, 1));
+        assert_eq!(
+            fillet
+                .radius_squared()
+                .certified_eq_until(&q(1, 4), -4096)
+                .as_bool(),
+            Some(true)
+        );
+        let expected_center = Point2::new(Real::one() - Real::from(2).sqrt().unwrap(), q(1, 2));
+        assert_eq!(
+            fillet
+                .center()
+                .distance_squared(&expected_center)
+                .certified_eq_until(&Real::zero(), -4096)
+                .as_bool(),
+            Some(true)
+        );
+    }
+}
+
 #[cfg(feature = "predicates")]
 #[test]
 fn unified_region_corner_solver_obeys_terminal_policy_once() {

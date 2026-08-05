@@ -1188,6 +1188,256 @@ fn exact_arc_chamfer_solver_preserves_both_major_sweep_cuts() {
 }
 
 #[test]
+fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let line_arc = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+        ])
+        .unwrap();
+        let CurveCornerSolutions2::Unique(fillet) = line_arc
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the line/arc corner must have one exact radius fillet");
+        };
+        assert_eq!(
+            fillet
+                .curves()
+                .iter()
+                .map(Curve2::family)
+                .collect::<Vec<_>>(),
+            vec![
+                CurveFamily2::Line,
+                CurveFamily2::CircularArc,
+                CurveFamily2::CircularArc,
+            ]
+        );
+        let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+            panic!("the solved fillet must remain a certified circular arc");
+        };
+        let expected_center = Point2::new(Real::one() - r(2).sqrt().unwrap(), q(1, 2));
+        assert!(matches!(
+            inserted
+                .center()
+                .distance_squared(&expected_center)
+                .certified_eq_until(&Real::zero(), -4096),
+            CertifiedRealEquality::Equal { .. }
+        ));
+        assert!(matches!(
+            inserted
+                .radius_squared()
+                .certified_eq_until(&q(1, 4), -4096),
+            CertifiedRealEquality::Equal { .. }
+        ));
+        assert_eq!(fillet.curves()[0].end(), inserted.start());
+        assert_eq!(fillet.curves()[2].start(), inserted.end());
+        let CurveGeometry2::CircularArc(retained_next) = fillet.curves()[2].geometry() else {
+            panic!("the source circular carrier must be retained");
+        };
+        assert_eq!(retained_next.center(), &p(1, 0));
+        assert_eq!(retained_next.end(), &p(1, 1));
+
+        let extended = line_arc
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(extended.candidate_count(), 3);
+
+        let reversed = line_arc.clone().reversed(&policy).unwrap().into_value();
+        let CurveCornerSolutions2::Unique(reversed_fillet) = reversed
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the reversed arc/line corner must have one exact radius fillet");
+        };
+        assert_eq!(
+            reversed_fillet
+                .curves()
+                .iter()
+                .map(Curve2::family)
+                .collect::<Vec<_>>(),
+            vec![
+                CurveFamily2::CircularArc,
+                CurveFamily2::CircularArc,
+                CurveFamily2::Line,
+            ]
+        );
+
+        let arc_arc = CurvePath2::try_new(vec![
+            Curve2::from(
+                CircularArc2::try_from_center(p(-1, -1), p(0, 0), p(0, -1), true).unwrap(),
+            ),
+            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+        ])
+        .unwrap();
+        let CurveCornerSolutions2::Unique(fillet) = arc_arc
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("the arc/arc corner must have one exact radius fillet");
+        };
+        assert!(
+            fillet
+                .curves()
+                .iter()
+                .all(|curve| curve.family() == CurveFamily2::CircularArc)
+        );
+        let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+            unreachable!();
+        };
+        for source_center in [p(0, -1), p(1, 0)] {
+            assert!(matches!(
+                inserted
+                    .center()
+                    .distance_squared(&source_center)
+                    .certified_eq_until(&q(9, 4), -4096),
+                CertifiedRealEquality::Equal { .. }
+            ));
+        }
+        assert!(matches!(
+            inserted
+                .radius_squared()
+                .certified_eq_until(&q(1, 4), -4096),
+            CertifiedRealEquality::Equal { .. }
+        ));
+        assert_eq!(fillet.curves()[0].end(), inserted.start());
+        assert_eq!(fillet.curves()[2].start(), inserted.end());
+
+        let extended = arc_arc
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(extended.candidate_count(), 2);
+
+        let cross_center = arc_arc
+            .fillet_vertex_by_radius(1, r(2), CurveCornerMode2::TrimOrExtend, &policy)
+            .unwrap()
+            .into_value();
+        let CurveCornerSolutions2::Multiple(cross_center) = cross_center else {
+            panic!("a radius larger than both source radii must retain all exact branches");
+        };
+        assert!(cross_center.iter().any(|candidate| {
+            let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                return false;
+            };
+            fillet.is_clockwise()
+                && fillet
+                    .radius_squared()
+                    .certified_eq_until(&r(4), -4096)
+                    .as_bool()
+                    == Some(true)
+        }));
+    }
+}
+
+#[test]
+fn exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets() {
+    let line_arc = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+        Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+    ])
+    .unwrap();
+    let same_circle = CurvePath2::try_new(vec![
+        Curve2::from(CircularArc2::try_from_center(p(0, -1), p(1, 0), p(0, 0), false).unwrap()),
+        Curve2::from(CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap()),
+    ])
+    .unwrap();
+    let half_root_three = r(3).sqrt().unwrap() / r(2);
+    let shared_corner = Point2::new(q(1, 2), half_root_three.unwrap());
+    let disjoint_offsets = CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(p(-1, 0), shared_corner.clone(), p(0, 0), true).unwrap(),
+        ),
+        Curve2::from(
+            CircularArc2::try_from_center(shared_corner, p(2, 0), p(1, 0), false).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let major_arcs = CurvePath2::try_new(vec![
+        Curve2::from(CircularArc2::try_from_center(p(1, -1), p(0, 0), p(0, -1), true).unwrap()),
+        Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, -1), p(1, 0), true).unwrap()),
+    ])
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            line_arc
+                .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value(),
+            CurveCornerSolutions2::Unique(_)
+        ));
+        assert_eq!(
+            same_circle
+                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value(),
+            CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::DegenerateCandidate)
+        );
+        assert_eq!(
+            disjoint_offsets
+                .fillet_vertex_by_radius(1, q(3, 4), CurveCornerMode2::TrimOrExtend, &policy)
+                .unwrap()
+                .into_value(),
+            CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::NoTangentCircle)
+        );
+        let CurveCornerSolutions2::Multiple(fillets) = major_arcs
+            .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("both exact offset-circle intersections must survive major sweeps");
+        };
+        assert_eq!(fillets.len(), 2);
+        assert_ne!(
+            fillets[0].curves()[1].geometry(),
+            fillets[1].curves()[1].geometry()
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn exact_native_arc_fillet_uses_only_the_shared_approximate_terminal() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+        Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap()),
+    ])
+    .unwrap();
+    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+    let radius = Real::one() + undecidable_zero;
+    assert!(matches!(
+        path.fillet_vertex_by_radius(
+            1,
+            radius.clone(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.reason() == UncertaintyReason::RealSign
+    ));
+    let approximate = path
+        .fillet_vertex_by_radius(
+            1,
+            radius,
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert!(matches!(
+        approximate.value,
+        CurveCornerSolutions2::Unique(_)
+    ));
+}
+
+#[test]
 fn radical_line_image_fillets_preserve_retained_families() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::from_line_segment(
@@ -1548,5 +1798,59 @@ proptest! {
             return Err(TestCaseError::fail("line radius must solve uniquely"));
         };
         prop_assert_eq!(solved_fillet, filleted);
+    }
+
+    #[test]
+    fn exact_line_arc_fillets_retain_rational_radius_across_source_scales(
+        source_radius in 1_i32..16,
+        fillet_numerator in 1_i32..24,
+        fillet_denominator in 1_i32..8,
+    ) {
+        let line_length = 4 * (source_radius + fillet_numerator + fillet_denominator);
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(
+                LineSeg2::try_new(p(-line_length, 0), p(0, 0)).unwrap()
+            ),
+            Curve2::from(
+                CircularArc2::try_from_center(
+                    p(0, 0),
+                    p(source_radius, source_radius),
+                    p(source_radius, 0),
+                    true,
+                )
+                .unwrap()
+            ),
+        ])
+        .unwrap();
+        let radius = q(fillet_numerator, fillet_denominator);
+        let CurveCornerSolutions2::Unique(filleted) = path
+            .fillet_vertex_by_radius(
+                1,
+                radius.clone(),
+                CurveCornerMode2::TrimOnly,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .into_value()
+        else {
+            return Err(TestCaseError::fail("line/arc radius must solve uniquely"));
+        };
+        let CurveGeometry2::CircularArc(inserted) = filleted.curves()[1].geometry() else {
+            return Err(TestCaseError::fail("the solved fillet must remain circular"));
+        };
+        prop_assert_eq!(filleted.curves()[0].end(), inserted.start());
+        prop_assert_eq!(filleted.curves()[2].start(), inserted.end());
+        prop_assert_eq!(
+            inserted
+                .radius_squared()
+                .certified_eq_until(&(&radius * &radius), -4096)
+                .as_bool(),
+            Some(true)
+        );
+        let CurveGeometry2::CircularArc(retained) = filleted.curves()[2].geometry() else {
+            return Err(TestCaseError::fail("the source arc must be retained"));
+        };
+        prop_assert_eq!(retained.center(), &p(source_radius, 0));
+        prop_assert_eq!(retained.end(), &p(source_radius, source_radius));
     }
 }

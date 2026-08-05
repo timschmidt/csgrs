@@ -734,55 +734,64 @@ impl LineSeg2 {
         arc: &CircularArc2,
         policy: &CurveContext,
     ) -> CurveResult<LineCircleRelation> {
-        let (dx, dy) = self.delta();
-        let start_from_center = self.start().delta_from(arc.center());
-        let a = dot(&dx, &dy, &dx, &dy);
-        let half_b = dot(&start_from_center.0, &start_from_center.1, &dx, &dy);
-        let c = dot(
-            &start_from_center.0,
-            &start_from_center.1,
-            &start_from_center.0,
-            &start_from_center.1,
-        ) - arc.radius_squared();
-        let discriminant = (&half_b * &half_b) - (&a * &c);
+        line_circle_relation_from_supports(self, arc.center(), arc.radius_squared_ref(), policy)
+    }
+}
 
-        match crate::classify::real_sign(&discriminant, policy) {
-            Some(RealSign::Negative) => Ok(LineCircleRelation::Disjoint),
-            Some(RealSign::Zero) => {
-                let t = ((-half_b) / &a)?;
-                let point = line_point_at_for_policy(self, &t, policy)?;
-                Ok(LineCircleRelation::Tangent {
-                    point,
-                    line_param: t,
-                })
-            }
-            Some(RealSign::Positive) => {
-                let sqrt_discriminant = discriminant.clone().sqrt()?;
-                let negative_half_b = -half_b;
-                let t0 = ((&negative_half_b - &sqrt_discriminant) / &a)?;
-                let t1 = ((negative_half_b.clone() + sqrt_discriminant) / &a)?;
-                let (first_param, second_param) = match compare_reals(&t0, &t1, policy) {
-                    Some(Ordering::Greater) => (t1, t0),
-                    Some(Ordering::Less | Ordering::Equal) => (t0, t1),
-                    None => {
-                        return Ok(LineCircleRelation::Uncertain {
-                            reason: UncertaintyReason::Ordering,
-                        });
-                    }
-                };
-                let first_point = line_point_at_for_policy(self, &first_param, policy)?;
-                let second_point = line_point_at_for_policy(self, &second_param, policy)?;
-                Ok(LineCircleRelation::Secant {
-                    first_point,
-                    first_param,
-                    second_point,
-                    second_param,
-                })
-            }
-            None => Ok(LineCircleRelation::Uncertain {
-                reason: UncertaintyReason::RealSign,
-            }),
+pub(crate) fn line_circle_relation_from_supports(
+    line: &LineSeg2,
+    circle_center: &Point2,
+    circle_radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<LineCircleRelation> {
+    let (dx, dy) = line.delta();
+    let start_from_center = line.start().delta_from(circle_center);
+    let a = dot(&dx, &dy, &dx, &dy);
+    let half_b = dot(&start_from_center.0, &start_from_center.1, &dx, &dy);
+    let c = dot(
+        &start_from_center.0,
+        &start_from_center.1,
+        &start_from_center.0,
+        &start_from_center.1,
+    ) - circle_radius_squared;
+    let discriminant = (&half_b * &half_b) - (&a * &c);
+
+    match crate::classify::real_sign(&discriminant, policy) {
+        Some(RealSign::Negative) => Ok(LineCircleRelation::Disjoint),
+        Some(RealSign::Zero) => {
+            let parameter = ((-half_b) / &a)?;
+            let point = line_point_at_for_policy(line, &parameter, policy)?;
+            Ok(LineCircleRelation::Tangent {
+                point,
+                line_param: parameter,
+            })
         }
+        Some(RealSign::Positive) => {
+            let sqrt_discriminant = discriminant.clone().sqrt()?;
+            let negative_half_b = -half_b;
+            let first = ((&negative_half_b - &sqrt_discriminant) / &a)?;
+            let second = ((negative_half_b + sqrt_discriminant) / &a)?;
+            let (first_param, second_param) = match compare_reals(&first, &second, policy) {
+                Some(Ordering::Greater) => (second, first),
+                Some(Ordering::Less | Ordering::Equal) => (first, second),
+                None => {
+                    return Ok(LineCircleRelation::Uncertain {
+                        reason: UncertaintyReason::Ordering,
+                    });
+                }
+            };
+            let first_point = line_point_at_for_policy(line, &first_param, policy)?;
+            let second_point = line_point_at_for_policy(line, &second_param, policy)?;
+            Ok(LineCircleRelation::Secant {
+                first_point,
+                first_param,
+                second_point,
+                second_param,
+            })
+        }
+        None => Ok(LineCircleRelation::Uncertain {
+            reason: UncertaintyReason::RealSign,
+        }),
     }
 }
 
