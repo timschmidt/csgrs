@@ -21,7 +21,9 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
-use crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2;
+use crate::bezier_offset::{
+    BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
+};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicEndpointImage2,
@@ -33,10 +35,9 @@ use crate::{
 /// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
 ///
 /// Ordinary Bezier and analytic-parallel carriers expose their canonical
-/// [`BezierParameter2`]. Algebraic cusp joins keep their compact correlated
-/// predicate evidence private; callers can still retain, compare, and inspect
-/// whether a parameter belongs to the ordinary Bezier domain without forcing
-/// an unrelated selected-root tower.
+/// [`BezierParameter2`]. Algebraic chords and cusp joins keep compact local
+/// point/order evidence instead of forcing unrelated selected roots into one
+/// primitive-element tower.
 #[derive(Clone, Debug)]
 pub struct CurveRegionParameter2 {
     data: CurveRegionParameterData2,
@@ -45,6 +46,7 @@ pub struct CurveRegionParameter2 {
 #[derive(Clone, Debug)]
 enum CurveRegionParameterData2 {
     Bezier(BezierParameter2),
+    AlgebraicChord(BezierAlgebraicChordParameter2),
     AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
 }
 
@@ -56,13 +58,23 @@ impl PartialEq for CurveRegionParameter2 {
                 CurveRegionParameterData2::Bezier(second),
             ) => first == second,
             (
+                CurveRegionParameterData2::AlgebraicChord(first),
+                CurveRegionParameterData2::AlgebraicChord(second),
+            ) => first == second,
+            (
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.shares_exact_evidence(second),
-            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
-            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
-                false
-            }
+            (CurveRegionParameterData2::Bezier(_), _)
+            | (
+                CurveRegionParameterData2::AlgebraicChord(_),
+                CurveRegionParameterData2::Bezier(_),
+            )
+            | (
+                CurveRegionParameterData2::AlgebraicChord(_),
+                CurveRegionParameterData2::AlgebraicCusp(_),
+            )
+            | (CurveRegionParameterData2::AlgebraicCusp(_), _) => false,
         }
     }
 }
@@ -80,19 +92,27 @@ impl CurveRegionParameter2 {
         }
     }
 
-    /// Returns the ordinary Bezier/source parameter, when this is not an
-    /// algebraic-cusp local cut.
-    pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
-        match &self.data {
-            CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
-            CurveRegionParameterData2::AlgebraicCusp(_) => None,
+    pub(crate) fn from_algebraic_chord(parameter: BezierAlgebraicChordParameter2) -> Self {
+        Self {
+            data: CurveRegionParameterData2::AlgebraicChord(parameter),
         }
     }
 
-    /// Returns a directly represented local value for either carrier kind.
+    /// Returns the ordinary Bezier/source parameter, when this is not a local
+    /// algebraic-chord or cusp cut.
+    pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_) => None,
+        }
+    }
+
+    /// Returns a directly represented local scalar when this carrier domain has one.
     pub const fn as_exact(&self) -> Option<&Real> {
         match &self.data {
             CurveRegionParameterData2::Bezier(parameter) => parameter.as_exact(),
+            CurveRegionParameterData2::AlgebraicChord(_) => None,
             CurveRegionParameterData2::AlgebraicCusp(
                 BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
             ) => Some(parameter),
@@ -107,6 +127,11 @@ impl CurveRegionParameter2 {
         matches!(self.data, CurveRegionParameterData2::AlgebraicCusp(_))
     }
 
+    /// Returns true for a correlated exact point parameter on an algebraic chord.
+    pub const fn is_algebraic_chord(&self) -> bool {
+        matches!(self.data, CurveRegionParameterData2::AlgebraicChord(_))
+    }
+
     /// Returns true when this carrier parameter is represented directly by a
     /// [`Real`] rather than retained algebraic evidence.
     pub const fn is_exact(&self) -> bool {
@@ -116,7 +141,18 @@ impl CurveRegionParameter2 {
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
             CurveRegionParameterData2::AlgebraicCusp(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_) => None,
+            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
+                None
+            }
+        }
+    }
+
+    pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::AlgebraicChord(parameter) => Some(parameter),
+            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicCusp(_) => {
+                None
+            }
         }
     }
 
@@ -131,15 +167,25 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::Bezier(second),
             ) => first.cmp_by_refinement(second, policy),
             (
+                CurveRegionParameterData2::AlgebraicChord(first),
+                CurveRegionParameterData2::AlgebraicChord(second),
+            ) => first.cmp_by_refinement(second, policy),
+            (
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.cmp_by_refinement(second, policy),
-            (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
-            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
-                Err(CurveError::Topology(
-                    "cannot compare parameters from distinct carrier domains".into(),
-                ))
-            }
+            (CurveRegionParameterData2::Bezier(_), _)
+            | (
+                CurveRegionParameterData2::AlgebraicChord(_),
+                CurveRegionParameterData2::Bezier(_),
+            )
+            | (
+                CurveRegionParameterData2::AlgebraicChord(_),
+                CurveRegionParameterData2::AlgebraicCusp(_),
+            )
+            | (CurveRegionParameterData2::AlgebraicCusp(_), _) => Err(CurveError::Topology(
+                "cannot compare parameters from distinct carrier domains".into(),
+            )),
         }
     }
 
@@ -167,6 +213,10 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.strict_rational_between(second, policy),
+            (CurveRegionParameterData2::AlgebraicChord(_), _)
+            | (_, CurveRegionParameterData2::AlgebraicChord(_)) => Err(CurveError::Topology(
+                "an algebraic chord cut has no represented scalar midpoint".into(),
+            )),
             (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
             | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
                 Err(CurveError::Topology(
@@ -199,8 +249,7 @@ impl CurveRegionParameterRange2 {
         &self.end
     }
 
-    /// Returns both ordinary Bezier parameters when this range does not use an
-    /// algebraic-cusp local cut.
+    /// Returns both ordinary Bezier parameters when this range uses that domain.
     pub fn as_bezier_parameters(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
         Some((
             self.start.as_bezier_parameter()?,
@@ -288,9 +337,9 @@ pub enum BezierSplitFragment2 {
     AnalyticParallel(BezierParallelFragment2),
     /// Exact straight chord with represented or retained algebraic endpoints.
     ///
-    /// Its local line parameter is `[0, 1]`; endpoint coordinate fields stay
-    /// independent so a chamfer between unrelated selected roots does not
-    /// construct a primitive element merely to enter region topology.
+    /// Local cuts retain exact points ordered by one certified monotone chord
+    /// coordinate. Endpoint fields stay independent, so a chamfer between
+    /// unrelated selected roots needs no artificial primitive element.
     AlgebraicChord(BezierAlgebraicChord2),
     /// Exact semicircular join centered at a selected algebraic cusp.
     ///
@@ -383,9 +432,9 @@ impl BezierSplitFragment2 {
                 CurveRegionParameter2::from_bezier(fragment.range.start().clone()),
                 CurveRegionParameter2::from_bezier(fragment.range.end().clone()),
             ),
-            Self::AlgebraicChord(_) => CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
-                CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            Self::AlgebraicChord(chord) => CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
+                CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
             ),
             Self::AlgebraicCuspSemicircle(fragment) => CurveRegionParameterRange2::new_validated(
                 CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
