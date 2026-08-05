@@ -25,6 +25,10 @@ pub(super) fn triangulate_point_set(
         _ => {}
     }
 
+    if let Some(triangles) = triangulate_from_enclosing_prefix_triangle(kernel, points)? {
+        return Ok(triangles);
+    }
+
     let order = lexicographic_point_order(kernel, points)?;
     let mut hull = convex_hull_from_order(kernel, points, &order)?;
     if hull.len() < 3 {
@@ -55,6 +59,76 @@ pub(super) fn triangulate_point_set(
         });
     }
     Ok(triangles)
+}
+
+/// Consume an already useful point order without making it part of the
+/// topology contract. Some producers naturally retain the three vertices of a
+/// convex source triangle before the points constructed inside or on it. An
+/// isolated STRICT three-halfspace check proves that schedule; an undecided
+/// proof or any negative side simply declines to the complete hull discovery
+/// above without changing the operation's aggregate certainty.
+fn triangulate_from_enclosing_prefix_triangle(
+    kernel: &ExactKernel,
+    points: &[Point2],
+) -> Result<Option<Vec<Triangle>>> {
+    let proof_context =
+        crate::context::TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+    let proof_kernel = ExactKernel::new(&proof_context);
+    let (seed, first_edge) = match prove_enclosing_prefix_triangle(&proof_kernel, points) {
+        Ok(Some(proof)) => proof,
+        Ok(None) | Err(Error::PredicateUndecided { .. }) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+
+    // A planar triangulation of n unique points has at most 2n - 5
+    // triangles. Reserve that upper bound once instead of growing the
+    // one-triangle seed.
+    let mut triangles = Vec::with_capacity(points.len().saturating_mul(2).saturating_sub(5));
+    if let Some([from, to, opposite]) = first_edge {
+        triangles.extend([[from, 3, opposite], [3, to, opposite]]);
+    } else {
+        triangles.extend([
+            [seed[0], seed[1], 3],
+            [seed[1], seed[2], 3],
+            [seed[2], seed[0], 3],
+        ]);
+    }
+    for point in 4..points.len() {
+        insert_point(kernel, points, &mut triangles, point)?;
+    }
+    Ok(Some(triangles))
+}
+
+fn prove_enclosing_prefix_triangle(
+    kernel: &ExactKernel,
+    points: &[Point2],
+) -> Result<Option<(Triangle, Option<[usize; 3]>)>> {
+    let Some(seed) = triangle_if_not_degenerate(kernel, points, [0, 1, 2])? else {
+        return Ok(None);
+    };
+    let mut first_edge = None;
+    for (index, point) in points[3..].iter().enumerate() {
+        let mut on_edge = None;
+        for [from, to, opposite] in [
+            [seed[0], seed[1], seed[2]],
+            [seed[1], seed[2], seed[0]],
+            [seed[2], seed[0], seed[1]],
+        ] {
+            match predicates::orient2(kernel, &points[from], &points[to], point)? {
+                Sign::Negative => return Ok(None),
+                Sign::Zero if on_edge.is_some() => return Ok(None),
+                Sign::Zero => on_edge = Some((from, to, opposite)),
+                Sign::Positive => {}
+            }
+        }
+        if index == 0
+            && let Some((from, to, opposite)) = on_edge
+        {
+            first_edge = Some([from, to, opposite]);
+        }
+    }
+
+    Ok(Some((seed, first_edge)))
 }
 
 fn lexicographic_point_order(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<usize>> {
@@ -263,4 +337,69 @@ fn split_edge(
         triangles.push(second);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::context::TriangulationContext;
+    use crate::types::Real;
+
+    fn p(x: i64, y: i64) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn enclosing_prefix_triangle_is_a_complete_exact_schedule() {
+        for points in [
+            [p(0, 0), p(6, 0), p(0, 6), p(1, 1), p(3, 0), p(0, 3)],
+            [p(0, 0), p(0, 6), p(6, 0), p(3, 0), p(1, 1), p(0, 3)],
+        ] {
+            for policy in [
+                hyperlimit::PredicatePolicy::STRICT,
+                hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            ] {
+                let context = TriangulationContext::new(policy);
+                let kernel = ExactKernel::new(&context);
+                let triangles = triangulate_from_enclosing_prefix_triangle(&kernel, &points)
+                    .unwrap()
+                    .expect("the prefix triangle exactly encloses every other point");
+
+                assert!(
+                    crate::cdt_validate::triangulates_convex_hull(&kernel, &points, &triangles)
+                        .unwrap()
+                );
+                assert_eq!(
+                    kernel.finish(()).certainty,
+                    crate::TriangulationCertainty::Certified
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn nonenclosing_prefix_declines_to_general_hull_discovery() {
+        let points = [p(0, 0), p(1, 0), p(0, 1), p(2, 2)];
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let kernel = ExactKernel::new(&context);
+
+        assert_eq!(
+            triangulate_from_enclosing_prefix_triangle(&kernel, &points).unwrap(),
+            None
+        );
+        assert_eq!(triangulate_point_set(&kernel, &points).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn degenerate_prefix_declines_to_general_hull_discovery() {
+        let points = [p(0, 0), p(1, 0), p(2, 0), p(0, 1)];
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let kernel = ExactKernel::new(&context);
+
+        assert_eq!(
+            triangulate_from_enclosing_prefix_triangle(&kernel, &points).unwrap(),
+            None
+        );
+        assert_eq!(triangulate_point_set(&kernel, &points).unwrap().len(), 2);
+    }
 }
