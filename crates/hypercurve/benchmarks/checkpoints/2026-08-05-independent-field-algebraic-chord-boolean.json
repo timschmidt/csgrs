@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "independent-field-algebraic-chord-boolean",
+  "source_revision": "15adce55ad438d85caf9cb91180c9d5d0a11ef42",
+  "implementation_revision": "009500bbb3dc5110d78f19bb2eb8d5f96ea2aa19",
+  "benchmark_revision": "2321bbcb58a920345225bd5803588bb321316ebc",
+  "matched_control_revision": "15adce55ad438d85caf9cb91180c9d5d0a11ef42",
+  "preceding_checkpoint": "2026-08-05-algebraic-chord-contact-regularization.json",
+  "dependency_snapshot": {
+    "hyperreal": "e238dc1615e0c5945c8fc1f25c12fde6ef3eb756",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypertri": "d42d89a6a840eab8f0af82677d9ba47419994d42",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false,
+    "workspace_note": "Hypermesh was deliberately left out of scope. The Hypersolve revision supplies the reusable exact constrained-trivariate resultant used by this checkpoint."
+  },
+  "semantic_evidence": {
+    "authoritative_route": "CurveRegion2 pair scheduling continues through one CurveRegionBooleanContext arrangement. A non-adjacent algebraic chord/rational pair enters BezierAlgebraicChord2::rational_intersections; an authored-adjacent pair alone may use source_related_intersections as a residual-contact fast path.",
+    "independent_field_incidence": "The supporting-line determinant is constructed homogeneously over the independent selected endpoint fields alpha and beta and the rational source parameter t. Hypersolve eliminates alpha against its defining polynomial, then eliminates beta against its defining polynomial to produce the exact univariate source candidate polynomial.",
+    "selected_root_replay": "Every candidate t is replayed against the selected alpha/beta/t root triple. This rejects foreign conjugates, source poles, points outside the finite chord, and non-incidences before publishing a contact.",
+    "contact_evidence": "Accepted contacts retain the exact source parameter, exact algebraic image point, exact chord-local parameter/order evidence, and exact tangent-cross sign. Tangencies remain contacts with zero tangent cross rather than being silently discarded.",
+    "adjacent_endpoint_ownership": "General non-adjacent scheduling retains a legitimate authored-endpoint contact. The adjacent fallback explicitly excludes only its known shared authored parameter, preventing duplicate topology events without guessing field identity.",
+    "strict_policy": "STRICT accepts only exact polynomial elimination, isolating intervals, certified signs, selected-root replay, and exact topology. Any unproved or positive-dimensional case remains an explicit blocker.",
+    "approximate_512_policy": "APPROXIMATE_512 follows the same proof graph. Hypercurve observes every approximate certainty from Hypersolve; only the shared terminal may decide an equality at 512 bits, and returned geometry remains hyperreal::Real evidence.",
+    "no_compatibility_shim": true,
+    "lower_layer_fix": "Hypersolve f3cf746 adds the reusable exact trivariate-polynomial/univariate-constraint resultant instead of embedding a duplicate solver in Hypercurve."
+  },
+  "mathematical_paths_covered": [
+    "independent algebraic fields for both chord endpoints",
+    "a third algebraic field for the rational-source intersection parameter",
+    "zero-contact, one-contact, and multiple-candidate systems",
+    "transverse contact and regular tangency",
+    "foreign conjugate candidates inside the source domain",
+    "exact finite-chord containment",
+    "source pole rejection",
+    "non-adjacent authored-endpoint retention",
+    "adjacent authored-endpoint exclusion",
+    "split-topology construction and all four binary CurveRegion2 Booleans",
+    "STRICT and APPROXIMATE_512 policy execution"
+  ],
+  "correctness_repairs": [
+    "A non-adjacent source/chord pair now publishes both an authored-endpoint contact and its residual contact instead of losing the endpoint.",
+    "The historical source-parameter inference heuristic was removed; only an explicit authored adjacent parameter can select the residual fast path."
+  ],
+  "explicit_remaining_blockers": [
+    "collinear chord/rational positive-dimensional overlap and its exact parameter correspondence",
+    "independent-field algebraic chord/chord isolated contacts",
+    "algebraic chord/chord partial, complete, and reversed overlaps",
+    "singular or positive-dimensional projections not reducible by the admitted exact path",
+    "finite projection and general exact transformation of retained algebraic endpoints",
+    "offset re-entry for retained algebraic chords",
+    "retained algebraic fillet circle and arc arrangement participation"
+  ],
+  "historical_behavior": {
+    "at_revision": "15adce5",
+    "independent_field_source_chord": "The implementation explicitly returned Unsupported because both chord endpoint fields could not be represented by the one-field residual solver.",
+    "successful_historical_fixture_throughput": false,
+    "matched_historical_result": "No correctness-equivalent completed operation exists, so no speedup ratio is reported."
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "459 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "54 passed",
+    "cargo_check_no_default_features_with_deny_warnings": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing ExactKernel::sub dead-code warning",
+    "cargo_check_all_features_editing_benchmark": "pass",
+    "cargo_clippy_all_features_editing_benchmark_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "primary_metric": "retired userspace instructions from taskset-pinned perf stat with the disabled-lane process control subtracted",
+    "secondary_metric": "taskset-pinned release wall time",
+    "editing_executable": "target/release/deps/editing-1429e5261074e42b",
+    "editing_executable_sha256": "41512f1b31e2a4ce792b2fe41aa26fbf56dad2211561d3b25eb8eb171c3a6f02",
+    "fixture": "A triangle bounded by an algebraic chord from (sqrt(1/2),0) to (0,sqrt(1/3)) intersects a rational-source triangle. One operation computes all four exact CurveRegion2 Booleans and observes eight output topology fragments."
+  },
+  "new_exact_capability_performance": {
+    "curve_region_independent_field_algebraic_chord_boolean": {
+      "wall_iterations": 5000,
+      "wall_seconds": 5.98216702,
+      "wall_ms_per_operation": 1.196433,
+      "perf_iterations": 1000,
+      "target_instructions": 11467479913,
+      "disabled_lane_control_instructions": 1957887012,
+      "subtracted_instructions": 9509592901,
+      "instructions_per_operation": 9509592.901,
+      "target_cycles": 5792220443,
+      "disabled_lane_control_cycles": 814314685,
+      "cycles_per_operation_after_subtraction": 4977905.758,
+      "target_branches": 2360214915,
+      "disabled_lane_control_branches": 400869724,
+      "branches_per_operation_after_subtraction": 1959345.191,
+      "target_branch_misses": 37075379,
+      "disabled_lane_control_branch_misses": 618545,
+      "branch_misses_per_operation_after_subtraction": 36456.834,
+      "target_cache_misses": 60029156,
+      "disabled_lane_control_cache_misses": 865955,
+      "cache_misses_per_operation_after_subtraction": 59163.201,
+      "perf_wall_ms_per_operation": 1.185733,
+      "topology_fragments_per_operation": 8,
+      "historical_successful_control": false
+    }
+  },
+  "allocation_evidence": {
+    "method": "Heaptrack release processes with 100 target operations and a matching disabled-lane control; reported calls are process totals unless explicitly divided.",
+    "target": {
+      "allocation_calls": 2064156,
+      "temporary_allocations": 115597,
+      "total_memory_leaked_bytes": 2360
+    },
+    "disabled_lane_control": {
+      "allocation_calls": 798880,
+      "temporary_allocations": 29634,
+      "total_memory_leaked_bytes": 880
+    },
+    "difference": {
+      "allocation_calls": 1265276,
+      "allocation_calls_per_operation": 12652.76,
+      "heaptrack_print_temporary_allocation_difference": 90254,
+      "raw_counter_temporary_allocation_difference": 85963,
+      "peak_heap_kib": 151.42,
+      "total_memory_leaked_kib": 109.71
+    },
+    "dominant_route": "trivariate_parameter_triple_sign_by_refinement through power-to-Bernstein conversion and reduced dyadic arithmetic",
+    "interpretation": "The retained leaked/peak differential includes fixture and process caches. The allocation-call rate is directional evidence only: it is lower than the earlier residual-contact fixture, but the operations are not a matched semantic pair."
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "matched 15adce5 build against the same live dependencies",
+    "all_features": {
+      "candidate_sha256": "a4b3fdfe317bc29c60de67f2ffb7a5353184a79a971066fc3950381d96c024d3",
+      "candidate_text_bytes": 6731034,
+      "control_text_bytes": 6706754,
+      "text_change_bytes": 24280,
+      "text_change_percent": 0.362018,
+      "candidate_data_bytes": 272816,
+      "control_data_bytes": 272664,
+      "candidate_bss_bytes": 2216,
+      "control_bss_bytes": 2080,
+      "candidate_total_bytes": 7006066,
+      "control_total_bytes": 6981498,
+      "total_change_bytes": 24568,
+      "total_change_percent": 0.351903
+    },
+    "no_default_features": {
+      "candidate_sha256": "11a7a195fc1d87ba7760ec8bd8f0ddec3b56bcfbe330ce2e10136a8e45896353",
+      "candidate_text_bytes": 6081825,
+      "control_text_bytes": 6081825,
+      "candidate_data_bytes": 267984,
+      "control_data_bytes": 267984,
+      "candidate_bss_bytes": 4832,
+      "control_bss_bytes": 4832,
+      "candidate_total_bytes": 6354641,
+      "control_total_bytes": 6354641,
+      "text_change_bytes": 0,
+      "total_change_bytes": 0,
+      "interpretation": "The predicates-gated independent-field engine contributes no code or binary growth to the no-default artifact."
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/callgraph-hypercurve-independent-field-chord-009500b --format json --crate-name hypercurve,hypersolve --include-tests --include-bench --per-library",
+    "artifact": "../target/callgraph-hypercurve-independent-field-chord-009500b/callgraph.json",
+    "libraries": [
+      "hypercurve",
+      "hypersolve"
+    ],
+    "nodes": 33022,
+    "edges": 64351,
+    "authoritative_route": "CurveRegionBooleanContext::pair_result -> BezierAlgebraicChord2::rational_intersections -> independent_incidence_system -> constrained trivariate resultant -> bivariate resultant -> trivariate_parameter_triple_sign_by_refinement -> existing split topology",
+    "adjacent_fast_path": "CurveRegionBooleanContext::pair_result -> BezierAlgebraicChord2::source_related_intersections only when an explicit authored adjacent parameter exists",
+    "resolution_note": "The utility is a syntax-level approximation and records imported Hypersolve calls under the Hypercurve module alias; source inspection and the Hypersolve API test confirm the cross-crate ownership.",
+    "duplicate_boolean_engine_added": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "finite_peer_control": "Cavalier Contours, Curvo, iOverlay, Clipper2, CGAL, and Open CASCADE do not expose a correctness-equivalent operation retaining three independently selected canonical-Real algebraic fields plus STRICT/APPROXIMATE_512 proof evidence.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329,
+    "interpretation": "Finite and approximating engines remain useful sentinels on comparable native/approximate lanes, but fabricating a ratio for this exact operation would compare different contracts."
+  },
+  "next_priority": {
+    "correctness": "Implement exact collinear chord/rational overlap evidence and parameter correspondence, then independent-field chord/chord isolated contacts and overlaps in the same arrangement.",
+    "performance_and_memory": "Reduce repeated trivariate selected-root replay allocation after the remaining mathematical branches are complete, without caching policy-derived certainty or weakening exact replay."
+  }
+}
