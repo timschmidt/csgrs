@@ -5,7 +5,6 @@
 //! materializes one or many results from a shared exact arrangement.
 
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
 
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::Rational;
@@ -39,10 +38,30 @@ enum ArrangementPointIdentity {
     CoplanarEdges([ConstructionEdgeIdentity; 2]),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, Ord, PartialEq, PartialOrd)]
 struct RawConstraint {
     endpoints: [u32; 2],
     line: ConstructionEdgeIdentity,
+}
+
+fn canonicalize_constraint_lines(constraints: &mut Vec<RawConstraint>) {
+    // Derived order is endpoints then line, so deduplication retains the
+    // canonical minimum construction identity for each exact segment.
+    constraints.sort_unstable();
+    constraints.dedup_by_key(|constraint| constraint.endpoints);
+}
+
+fn insert_sorted_edge(edges: &mut Vec<[u32; 2]>, edge: [u32; 2]) -> HypermeshResult<()> {
+    let Err(index) = edges.binary_search(&edge) else {
+        return Ok(());
+    };
+    edges
+        .try_reserve(1)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face split constraint schedule",
+        })?;
+    edges.insert(index, edge);
+    Ok(())
 }
 
 #[derive(Default)]
@@ -2561,7 +2580,6 @@ fn corefine_face(
         });
     }
     let boundary = &work.boundary;
-    let mut constraint_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
     let edge_identities =
         polygon
             .known_edge_identities()
@@ -2573,35 +2591,43 @@ fn corefine_face(
             reason: "source face boundary and edge identities are not aligned",
         });
     }
+    let authored_capacity = boundary.len().checked_add(work.constraints.len()).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "face authored constraint schedule",
+        },
+    )?;
+    let mut authored = Vec::new();
+    authored.try_reserve_exact(authored_capacity).map_err(|_| {
+        HypermeshError::CapacityOverflow {
+            operation: "face authored constraint schedule",
+        }
+    })?;
     for edge in 0..boundary.len() {
-        constraint_lines.insert(
-            sorted_edge([boundary[edge], boundary[(edge + 1) % boundary.len()]]),
-            edge_identities
+        authored.push(RawConstraint {
+            endpoints: sorted_edge([boundary[edge], boundary[(edge + 1) % boundary.len()]]),
+            line: edge_identities
                 .get(edge)
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
                     reason: "source edge identity cycle is incomplete",
                 })?,
-        );
+        });
     }
     for constraint in &work.constraints {
         let endpoints = sorted_edge(constraint.endpoints);
         if endpoints[0] == endpoints[1] {
             continue;
         }
-        constraint_lines
-            .entry(endpoints)
-            .and_modify(|line| {
-                if constraint.line < *line {
-                    *line = constraint.line.clone();
-                }
-            })
-            .or_insert_with(|| constraint.line.clone());
+        authored.push(RawConstraint {
+            endpoints,
+            line: constraint.line.clone(),
+        });
     }
+    canonicalize_constraint_lines(&mut authored);
     let point_capacity = boundary
         .len()
         .checked_add(work.contacts.len())
         .and_then(|count| {
-            constraint_lines
+            authored
                 .len()
                 .checked_mul(2)
                 .and_then(|endpoints| count.checked_add(endpoints))
@@ -2617,8 +2643,8 @@ fn corefine_face(
         })?;
     point_ids.extend(boundary.iter().copied());
     point_ids.extend(work.contacts.iter().copied());
-    for edge in constraint_lines.keys() {
-        point_ids.extend(edge);
+    for constraint in &authored {
+        point_ids.extend(constraint.endpoints);
     }
     point_ids.sort_unstable();
     point_ids.dedup();
@@ -2662,13 +2688,6 @@ fn corefine_face(
         });
     }
 
-    let authored = constraint_lines
-        .iter()
-        .map(|(&endpoints, line)| RawConstraint {
-            endpoints,
-            line: line.clone(),
-        })
-        .collect::<Vec<_>>();
     let mut crossing_points = Vec::new();
     for left_index in 0..authored.len() {
         let left = &authored[left_index];
@@ -2737,7 +2756,14 @@ fn corefine_face(
     projected.sort_unstable_by_key(|projected| projected.id);
     projected.dedup_by_key(|projected| projected.id);
 
-    let mut split_lines = BTreeMap::<[u32; 2], ConstructionEdgeIdentity>::new();
+    // Line identities have served crossing construction by this point. CDT
+    // consumes only the unique canonical endpoint pairs, kept sorted here.
+    let mut split_edges = Vec::new();
+    split_edges.try_reserve_exact(authored.len()).map_err(|_| {
+        HypermeshError::CapacityOverflow {
+            operation: "face split constraint schedule",
+        }
+    })?;
     let mut on_segment = Vec::new();
     on_segment.try_reserve_exact(projected.len()).map_err(|_| {
         HypermeshError::CapacityOverflow {
@@ -2763,14 +2789,7 @@ fn corefine_face(
         for pair in on_segment.windows(2) {
             let edge = sorted_edge([pair[0], pair[1]]);
             if edge[0] != edge[1] {
-                split_lines
-                    .entry(edge)
-                    .and_modify(|line| {
-                        if constraint.line < *line {
-                            *line = constraint.line.clone();
-                        }
-                    })
-                    .or_insert_with(|| constraint.line.clone());
+                insert_sorted_edge(&mut split_edges, edge)?;
             }
         }
     }
@@ -2782,8 +2801,8 @@ fn corefine_face(
     ];
     boundary_edges.sort_unstable();
     let only_source_boundary = projected.len() == boundary.len()
-        && split_lines.len() == boundary_edges.len()
-        && split_lines.keys().copied().eq(boundary_edges);
+        && split_edges.len() == boundary_edges.len()
+        && split_edges.as_slice() == boundary_edges;
     #[cfg(test)]
     let contacts = {
         let mut contacts = work.contacts.clone();
@@ -2801,39 +2820,32 @@ fn corefine_face(
         });
     }
 
-    let mut point_ids = Vec::new();
     let mut points = Vec::new();
-    point_ids
-        .try_reserve_exact(projected.len())
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "face triangulation point IDs",
-        })?;
     points
         .try_reserve_exact(projected.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "face triangulation points",
         })?;
     for projected_point in &projected {
-        point_ids.push(projected_point.id);
         points.push(projected_point.point.clone());
     }
     let mut constraints = Vec::new();
     constraints
-        .try_reserve_exact(split_lines.len())
+        .try_reserve_exact(split_edges.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "face triangulation constraints",
         })?;
-    for edge in split_lines.keys() {
-        let from = point_ids.binary_search(&edge[0]).map_err(|_| {
-            HypermeshError::SurfaceArrangementFailed {
+    for edge in &split_edges {
+        let from = projected
+            .binary_search_by_key(&edge[0], |point| point.id)
+            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
                 reason: "face constraint start is absent from the projected point schedule",
-            }
-        })?;
-        let to = point_ids.binary_search(&edge[1]).map_err(|_| {
-            HypermeshError::SurfaceArrangementFailed {
+            })?;
+        let to = projected
+            .binary_search_by_key(&edge[1], |point| point.id)
+            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
                 reason: "face constraint end is absent from the projected point schedule",
-            }
-        })?;
+            })?;
         constraints.push(hypertri::Constraint::new(from, to));
     }
     let context = hypertri::TriangulationContext::new(decisions.policy());
@@ -2859,7 +2871,7 @@ fn corefine_face(
             operation: "surface arrangement face triangles",
         })?;
     for triangle in outcome.value.triangles() {
-        let mut triangle = triangle.map(|vertex| point_ids[vertex]);
+        let mut triangle = triangle.map(|vertex| projected[vertex].id);
         // Hypertri's checked topology entry point returns only strictly
         // positive triangles and has already absorbed every predicate into its
         // outcome certainty. Preserve that exact postcondition instead of
@@ -2874,7 +2886,7 @@ fn corefine_face(
         .value
         .constraint_edges()
         .iter()
-        .map(|constraint| sorted_edge([point_ids[constraint.from], point_ids[constraint.to]]))
+        .map(|constraint| sorted_edge([projected[constraint.from].id, projected[constraint.to].id]))
         .collect::<Vec<_>>();
     Ok(FaceResult {
         triangles,
@@ -3560,7 +3572,7 @@ mod tests {
     use crate::context::MeshContext;
     use crate::intersection::pairwise_intersections_by_polygon;
     use crate::test_support::approximate_convex_triangle;
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -5129,6 +5141,38 @@ mod tests {
         ];
         planes.sort_unstable();
         ConstructionEdgeIdentity::Split { planes }
+    }
+
+    #[test]
+    fn flat_constraint_schedules_preserve_canonical_order_and_identity() {
+        let low = test_split_line(0, 1);
+        let high = test_split_line(0, 2);
+        assert!(low < high);
+        let mut constraints = vec![
+            RawConstraint {
+                endpoints: [4, 7],
+                line: high.clone(),
+            },
+            RawConstraint {
+                endpoints: [1, 9],
+                line: high,
+            },
+            RawConstraint {
+                endpoints: [4, 7],
+                line: low.clone(),
+            },
+        ];
+        canonicalize_constraint_lines(&mut constraints);
+        assert_eq!(constraints.len(), 2);
+        assert_eq!(constraints[0].endpoints, [1, 9]);
+        assert_eq!(constraints[1].endpoints, [4, 7]);
+        assert_eq!(constraints[1].line, low);
+
+        let mut split_edges = Vec::new();
+        for edge in [[4, 7], [1, 9], [2, 3], [4, 7], [1, 9]] {
+            insert_sorted_edge(&mut split_edges, edge).unwrap();
+        }
+        assert_eq!(split_edges, [[1, 9], [2, 3], [4, 7]]);
     }
 
     #[test]
