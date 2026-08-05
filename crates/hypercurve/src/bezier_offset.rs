@@ -2118,7 +2118,8 @@ struct BezierAlgebraicChordParameterData2 {
 #[derive(Debug)]
 struct BezierAlgebraicChordSourceIncidence2 {
     incidence: BivariatePolynomial,
-    tangent_cross: BivariatePolynomial,
+    line_x: Vec<Real>,
+    line_y: Vec<Real>,
     chord_denominator_sign: RealSign,
 }
 
@@ -10767,6 +10768,16 @@ impl BezierAlgebraicChord2 {
                 }
             };
         let retained_parameter = BezierParameter2::Algebraic(source_parameter.clone());
+        // Most authored chord/source pairs have no residual root. Build the
+        // tangent-cross polynomial only after the root count proves that a
+        // contact needs orientation replay.
+        let source_power = source.homogeneous_power_basis()?;
+        let [source_tangent_x, source_tangent_y] =
+            rational_parametric_tangent_numerator(source_power);
+        let tangent_cross = bivariate_subtract(
+            &bivariate_outer_product(&system.line_x, &source_tangent_y),
+            &bivariate_outer_product(&system.line_y, &source_tangent_x),
+        );
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
             let point = match exact_contact_point_evidence(source, &candidate, policy)? {
@@ -10795,7 +10806,7 @@ impl BezierAlgebraicChord2 {
             };
             let tangent_cross_sign = match algebraic_selected_correlated_predicate_sign(
                 &residual,
-                &system.tangent_cross,
+                &tangent_cross,
                 &retained_parameter,
                 &candidate,
                 policy,
@@ -10915,11 +10926,6 @@ impl BezierAlgebraicChord2 {
             &bivariate_multiply_first_parameter(&point_delta_y, &line_x),
             &bivariate_multiply_first_parameter(&point_delta_x, &line_y),
         );
-        let [source_tangent_x, source_tangent_y] = rational_parametric_tangent_numerator(source);
-        let tangent_cross = bivariate_subtract(
-            &bivariate_outer_product(&line_x, &source_tangent_y),
-            &bivariate_outer_product(&line_y, &source_tangent_x),
-        );
         let start_denominator_sign = start_predicate
             .as_ref()
             .map_or(RealSign::Positive, |point| point.denominator_sign());
@@ -10929,7 +10935,8 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(
             BezierAlgebraicChordSourceIncidence2 {
                 incidence,
-                tangent_cross,
+                line_x,
+                line_y,
                 chord_denominator_sign: product_sign(start_denominator_sign, end_denominator_sign),
             },
         ))

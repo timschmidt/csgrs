@@ -2760,12 +2760,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut contact_vertex_counts = Vec::<usize>::new();
         let mut transition_candidates = Vec::<Option<TransitionContactCandidate>>::new();
         let mut reclassification_vertices = Vec::<bool>::new();
-        seed_loop_topology_vertices(
-            &self.data.carriers,
-            &mut events,
-            &mut next_topology_vertex,
-            &self.data.policy,
-        )?;
+        seed_loop_topology_vertices(&self.data.carriers, &mut events, &mut next_topology_vertex);
         contact_vertex_counts.resize(next_topology_vertex, 0);
         transition_candidates.resize(next_topology_vertex, None);
         reclassification_vertices.resize(next_topology_vertex, false);
@@ -5393,6 +5388,33 @@ fn split_algebraic_chord_carrier(
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
     chord.validate_policy(policy)?;
+    // The common no-contact path already carries the two authenticated domain
+    // endpoints. Preserve the original chord instead of reordering its
+    // algebraic fields and reconstructing identical endpoint evidence.
+    if events.len() == 2 {
+        let start = events.iter().find(|event| event.parameter == carrier.start);
+        let end = events.iter().find(|event| event.parameter == carrier.end);
+        if let (Some(start), Some(end)) = (start, end) {
+            let (fragment, start_topology_vertex, end_topology_vertex) = if carrier.reversed {
+                (
+                    BezierSplitFragment2::AlgebraicChord(chord.reversed()),
+                    end.topology_vertex,
+                    start.topology_vertex,
+                )
+            } else {
+                (
+                    BezierSplitFragment2::AlgebraicChord(chord.clone()),
+                    start.topology_vertex,
+                    end.topology_vertex,
+                )
+            };
+            return Ok(vec![SplitCarrierFragment {
+                fragment,
+                start_topology_vertex,
+                end_topology_vertex,
+            }]);
+        }
+    }
     let mut boundaries = events.to_vec();
     for index in 1..boundaries.len() {
         let mut cursor = index;
@@ -6292,8 +6314,7 @@ fn seed_loop_topology_vertices(
     carriers: &[RegionCarrier],
     events: &mut [Vec<CarrierEvent>],
     next_topology_vertex: &mut usize,
-    policy: &CurveContext,
-) -> ExactCurveResult<()> {
+) {
     let mut loop_start = 0_usize;
     while loop_start < carriers.len() {
         let operand = carriers[loop_start].operand;
@@ -6313,24 +6334,20 @@ fn seed_loop_topology_vertices(
             };
             let vertex = *next_topology_vertex;
             *next_topology_vertex += 1;
-            push_carrier_event(
-                &mut events[current_index],
-                carrier_traversal_end(&carriers[current_index]).clone(),
-                Some(vertex),
-                &carriers[current_index],
-                policy,
-            )?;
-            push_carrier_event(
-                &mut events[next_index],
-                carrier_traversal_start(&carriers[next_index]).clone(),
-                Some(vertex),
-                &carriers[next_index],
-                policy,
-            )?;
+            // Carrier construction has already certified a nonempty ordered
+            // domain. Authored endpoint events therefore need no predicate;
+            // later contact insertion still performs exact deduplication.
+            events[current_index].push(CarrierEvent {
+                parameter: carrier_traversal_end(&carriers[current_index]).clone(),
+                topology_vertex: Some(vertex),
+            });
+            events[next_index].push(CarrierEvent {
+                parameter: carrier_traversal_start(&carriers[next_index]).clone(),
+                topology_vertex: Some(vertex),
+            });
         }
         loop_start = loop_end;
     }
-    Ok(())
 }
 
 fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveRegionParameter2 {
