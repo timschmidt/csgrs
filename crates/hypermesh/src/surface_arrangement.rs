@@ -716,6 +716,8 @@ fn assemble_surface_cells(
         &surface.points,
         &facets,
         &transitions,
+        &contribution_offsets,
+        &contributions,
         operand_count,
         cell_count,
         &edges,
@@ -1355,6 +1357,8 @@ fn classify_surface_cells(
     points: &[Point3],
     facets: &[SurfaceFacet],
     transitions: &[i32],
+    contribution_offsets: &[u32],
+    contributions: &[FacetContribution],
     operand_count: usize,
     cell_count: u32,
     edges: &[[u32; 2]],
@@ -1419,6 +1423,8 @@ fn classify_surface_cells(
             bounds,
             points,
             facets,
+            contribution_offsets,
+            contributions,
             operand_count,
             edges,
             seed_facet,
@@ -1494,6 +1500,8 @@ fn seed_surface_cell_winding(
     bounds: &ApproxBounds,
     points: &[Point3],
     facets: &[SurfaceFacet],
+    contribution_offsets: &[u32],
+    contributions: &[FacetContribution],
     operand_count: usize,
     edges: &[[u32; 2]],
     seed_facet: usize,
@@ -1523,12 +1531,13 @@ fn seed_surface_cell_winding(
             match try_seed_surface_cell_winding(
                 &local,
                 polygons,
-                surface,
                 source_bvh,
                 bounds,
                 primary_axis,
                 points,
                 facets,
+                contribution_offsets,
+                contributions,
                 operand_count,
                 seed_facet,
                 &point,
@@ -1628,12 +1637,13 @@ fn surface_facet_centroid(points: &[Point3], triangle: [u32; 3]) -> HypermeshRes
 fn try_seed_surface_cell_winding(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
-    surface: &SurfaceCorefinement,
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     primary_axis: usize,
     points: &[Point3],
     facets: &[SurfaceFacet],
+    contribution_offsets: &[u32],
+    contributions: &[FacetContribution],
     operand_count: usize,
     seed_facet: usize,
     point: &Point3,
@@ -1665,33 +1675,39 @@ fn try_seed_surface_cell_winding(
 
     let mut winding = vec![0_i32; operand_count];
     let mut saw_origin = false;
+    let seed_contributions =
+        checked_contribution_row(contribution_offsets, contributions, seed_facet)?;
     for face in candidate_faces {
         let polygon = polygons
             .get(face)
             .ok_or(HypermeshError::SurfaceArrangementFailed {
                 reason: "surface seed broad phase returned an absent source face",
             })?;
-        for &triangle in surface.face_triangles(face) {
-            match ray_facet_relation(decisions, points, triangle, point, direction)? {
-                RayFacetRelation::Miss => {}
-                RayFacetRelation::Degenerate => return Ok(None),
-                RayFacetRelation::Ahead { frontward } => {
-                    crate::winding::apply_transition_in_place(
-                        &mut winding,
-                        if frontward { 1 } else { -1 },
-                        &polygon.delta_w,
-                    )?;
+        // Absolute winding belongs to the original PWN boundary. Corefinement
+        // only subdivides that boundary for topology, so an exact ray crosses
+        // each convex source triangle at most once and applies its transition
+        // once. Testing the subdivisions here would also make their artificial
+        // internal edges unnecessary ray degeneracies.
+        match ray_source_polygon_relation(decisions, polygon, point, direction)? {
+            RayFacetRelation::Miss => {}
+            RayFacetRelation::Degenerate => return Ok(None),
+            RayFacetRelation::Ahead { frontward } => {
+                crate::winding::apply_transition_in_place(
+                    &mut winding,
+                    if frontward { 1 } else { -1 },
+                    &polygon.delta_w,
+                )?;
+            }
+            RayFacetRelation::Origin { .. } => {
+                if !seed_contributions
+                    .iter()
+                    .any(|contribution| contribution.face as usize == face)
+                {
+                    return Err(HypermeshError::SurfaceArrangementFailed {
+                        reason: "surface seed lies inside more than one geometric facet",
+                    });
                 }
-                RayFacetRelation::Origin { .. } => {
-                    let mut canonical = triangle;
-                    canonical.sort_unstable();
-                    if canonical != seed.vertices {
-                        return Err(HypermeshError::SurfaceArrangementFailed {
-                            reason: "surface seed lies inside more than one geometric facet",
-                        });
-                    }
-                    saw_origin = true;
-                }
+                saw_origin = true;
             }
         }
     }
@@ -1720,19 +1736,52 @@ fn ray_facet_relation(
     origin: &Point3,
     direction: &Vector3,
 ) -> HypermeshResult<RayFacetRelation> {
-    let [a, b, c] = triangle
-        .map(|vertex| point_by_id(points, vertex))
-        .map(|vertex| vertex.cloned());
-    let [a, b, c] = [a?, b?, c?];
-    let edge_ab = &b - &a;
-    let edge_ac = &c - &a;
+    let [a, b, c] = triangle.map(|vertex| point_by_id(points, vertex));
+    ray_triangle_relation(decisions, [a?, b?, c?], origin, direction)
+}
+
+fn ray_source_polygon_relation(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    origin: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<RayFacetRelation> {
+    let vertices =
+        polygon
+            .known_vertices
+            .as_ref()
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "source face has no retained vertex cycle",
+            })?;
+    if vertices.len() != 3 {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "source face retained vertex cycle is not triangular",
+        });
+    }
+    let [a, b, c] = [vertices.get(0), vertices.get(1), vertices.get(2)];
+    let [a, b, c] = [a, b, c].map(|vertex| {
+        vertex.ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "source face retained vertex cycle is incomplete",
+        })
+    });
+    ray_triangle_relation(decisions, [a?, b?, c?], origin, direction)
+}
+
+fn ray_triangle_relation(
+    decisions: &DecisionContext,
+    [a, b, c]: [&Point3; 3],
+    origin: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<RayFacetRelation> {
+    let edge_ab = b - a;
+    let edge_ac = c - a;
     let cross = direction.cross(&edge_ac);
     let determinant = edge_ab.dot(&cross);
     let determinant_sign = classify_real(decisions, &determinant)?;
     if determinant_sign == Classification::On {
         return Ok(RayFacetRelation::Degenerate);
     }
-    let from_a = origin - &a;
+    let from_a = origin - a;
     let u = from_a.dot(&cross);
     let u_sign = classify_real(decisions, &u)?;
     let cross_from_a = from_a.cross(&edge_ab);
@@ -3703,6 +3752,33 @@ mod tests {
                 + &a.z * &(&b.x * &c.y - &b.y * &c.x);
         }
         volume
+    }
+
+    #[test]
+    fn source_winding_ray_ignores_artificial_corefinement_edges() {
+        let source = triangle([p(0, 0, 0), p(4, 0, 0), p(0, 4, 0)], 0, 0, [0, 1, 2]);
+        let points = [p(0, 0, 0), p(4, 0, 0), p(2, 2, 0), p(0, 4, 0)];
+        let origin = p(1, 1, -1);
+        let direction = Vector3::new([Real::zero(), Real::zero(), Real::one()]);
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            assert!(matches!(
+                ray_source_polygon_relation(&decisions, &source, &origin, &direction).unwrap(),
+                RayFacetRelation::Ahead { frontward: true }
+            ));
+            for triangle in [[0, 1, 2], [0, 2, 3]] {
+                assert!(matches!(
+                    ray_facet_relation(&decisions, &points, triangle, &origin, &direction).unwrap(),
+                    RayFacetRelation::Degenerate
+                ));
+            }
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
     }
 
     #[test]
