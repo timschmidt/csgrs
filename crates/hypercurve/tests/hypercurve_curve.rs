@@ -1335,6 +1335,126 @@ fn exact_native_arc_fillet_solver_handles_every_native_pair_order() {
 }
 
 #[test]
+fn retained_circular_conics_share_the_native_corner_kernel() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = native_arc
+        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .unwrap();
+    let carriers = [
+        (CurveFamily2::RationalQuadraticBezier, Curve2::from(conic)),
+        (CurveFamily2::RationalBezier, Curve2::from(elevated)),
+    ];
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (family, carrier) in &carriers {
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+                carrier.clone(),
+            ])
+            .unwrap();
+
+            let CurveCornerSolutions2::Unique(chamfer) = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    q(1, 2),
+                    q(1, 2),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the retained circular conic must have one exact chamfer");
+            };
+            assert_eq!(chamfer.curves()[2].family(), *family);
+            assert_eq!(chamfer.curves()[0].end(), chamfer.curves()[1].start());
+            assert_eq!(chamfer.curves()[1].end(), chamfer.curves()[2].start());
+
+            let CurveCornerSolutions2::Unique(fillet) = path
+                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the retained circular conic must have one exact fillet");
+            };
+            assert_eq!(fillet.curves()[2].family(), *family);
+            assert_eq!(fillet.curves()[0].end(), fillet.curves()[1].start());
+            assert_eq!(fillet.curves()[1].end(), fillet.curves()[2].start());
+            let CurveGeometry2::CircularArc(inserted) = fillet.curves()[1].geometry() else {
+                panic!("the inserted fillet must remain circular");
+            };
+            assert!(matches!(
+                inserted
+                    .radius_squared()
+                    .certified_eq_until(&q(1, 4), -4096),
+                CertifiedRealEquality::Equal { .. }
+            ));
+
+            for operation in [CurveOperation2::Chamfer, CurveOperation2::Fillet] {
+                let blocked = match operation {
+                    CurveOperation2::Chamfer => path
+                        .chamfer_vertex_by_setbacks(
+                            1,
+                            q(1, 2),
+                            q(1, 2),
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .map(|_| ()),
+                    CurveOperation2::Fillet => path
+                        .fillet_vertex_by_radius(
+                            1,
+                            q(1, 2),
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .map(|_| ()),
+                    _ => unreachable!(),
+                };
+                assert!(matches!(
+                    blocked,
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.operation() == operation
+                            && blocker.family() == *family
+                            && blocker.reason() == UncertaintyReason::Unsupported
+                ));
+            }
+
+            assert_eq!(
+                path.chamfer_vertex_by_setbacks(
+                    1,
+                    Real::zero(),
+                    Real::zero(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .unwrap()
+                .into_value(),
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+            );
+            assert_eq!(
+                path.fillet_vertex_by_radius(
+                    1,
+                    Real::zero(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .unwrap()
+                .into_value(),
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+            );
+        }
+    }
+}
+
+#[test]
 fn exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets() {
     let line_arc = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
@@ -1650,6 +1770,34 @@ fn automatic_corner_solver_keeps_unsupported_pairs_explicit() {
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Fillet
                 && blocker.family() == CurveFamily2::QuadraticBezier
+                && blocker.reason() == UncertaintyReason::Unsupported
+    ));
+
+    let noncircular_conic = CurvePath2::try_new(vec![
+        Curve2::from(
+            RationalQuadraticBezier2::try_new(
+                p(-4, 0),
+                p(-2, 1),
+                p(0, 0),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            )
+            .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 4)).unwrap()),
+    ])
+    .unwrap();
+    assert!(matches!(
+        noncircular_conic.fillet_vertex_by_radius(
+            1,
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::Fillet
+                && blocker.family() == CurveFamily2::RationalQuadraticBezier
                 && blocker.reason() == UncertaintyReason::Unsupported
     ));
 }

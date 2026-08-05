@@ -1,10 +1,10 @@
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
     CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerNoSolution2,
-    CurveCornerSolutions2, CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole,
-    ExactCurveError, FillRule, FiniteProjectionOptions, LineArcRegion2, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
-    Segment2, Similarity2,
+    CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions, LineArcRegion2,
+    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -766,6 +766,75 @@ fn unified_region_native_fillet_retains_certified_arc_contacts() {
                 .as_bool(),
             Some(true)
         );
+    }
+}
+
+#[test]
+fn unified_region_corners_use_rational_circular_carriers() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = native_arc
+        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .unwrap();
+    let carriers = [Curve2::from(conic), Curve2::from(elevated)];
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for carrier in &carriers {
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+                carrier.clone(),
+                Curve2::from(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+            ])
+            .unwrap();
+            let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                .unwrap()
+                .into_value();
+
+            let CurveCornerSolutions2::Unique(chamfered) = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    q(1, 2),
+                    q(1, 2),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the retained circular region corner must have one chamfer");
+            };
+            let chamfer_paths = decided(chamfered.materialized_boundary_paths(&policy).unwrap());
+            assert!(
+                chamfer_paths[0]
+                    .curves()
+                    .iter()
+                    .any(|curve| curve.family() == CurveFamily2::RationalQuadraticBezier)
+            );
+
+            let CurveCornerSolutions2::Unique(filleted) = source
+                .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value()
+            else {
+                panic!("the retained circular region corner must have one fillet");
+            };
+            let fillet_paths = decided(filleted.materialized_boundary_paths(&policy).unwrap());
+            assert_eq!(fillet_paths[0].curves().len(), 5);
+            assert!(
+                fillet_paths[0]
+                    .curves()
+                    .iter()
+                    .any(|curve| curve.family() == CurveFamily2::RationalQuadraticBezier)
+            );
+        }
     }
 }
 

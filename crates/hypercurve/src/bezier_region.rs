@@ -4792,16 +4792,18 @@ impl CurveRegion2 {
                 |previous, next| {
                     let previous_carrier = ExactCornerCarrier2::from_segment(previous);
                     let next_carrier = ExactCornerCarrier2::from_segment(next);
+                    let previous_family = previous_carrier.family();
+                    let next_family = next_carrier.family();
                     let previous_sign = validate_corner_design_value(
                         &previous_setback,
                         CurveOperation2::Chamfer,
-                        previous_carrier.family(),
+                        previous_family,
                         policy,
                     )?;
                     let next_sign = validate_corner_design_value(
                         &next_setback,
                         CurveOperation2::Chamfer,
-                        next_carrier.family(),
+                        next_family,
                         policy,
                     )?;
                     solve_exact_chamfer_corner(
@@ -4812,8 +4814,8 @@ impl CurveRegion2 {
                         previous_sign,
                         next_sign,
                         mode,
-                        previous_carrier.family(),
-                        next_carrier.family(),
+                        previous_family,
+                        next_family,
                         policy,
                     )
                     .map(Classification::Decided)
@@ -4930,10 +4932,12 @@ impl CurveRegion2 {
                 |previous, next| {
                     let previous_carrier = ExactCornerCarrier2::from_segment(previous);
                     let next_carrier = ExactCornerCarrier2::from_segment(next);
+                    let previous_family = previous_carrier.family();
+                    let next_family = next_carrier.family();
                     let radius_sign = validate_corner_design_value(
                         &radius,
                         CurveOperation2::Fillet,
-                        previous_carrier.family(),
+                        previous_family,
                         policy,
                     )?;
                     solve_exact_fillet_corner(
@@ -4942,8 +4946,8 @@ impl CurveRegion2 {
                         &radius,
                         radius_sign,
                         mode,
-                        previous_carrier.family(),
-                        next_carrier.family(),
+                        previous_family,
+                        next_family,
                         policy,
                     )
                     .map(Classification::Decided)
