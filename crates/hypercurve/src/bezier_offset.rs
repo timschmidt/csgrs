@@ -10409,25 +10409,21 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let start = match start.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
+        let start_field = match algebraic_chord_image_parameter(&start, policy)? {
+            Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end = match end.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
+        let end_field = match algebraic_chord_image_parameter(&end, policy)? {
+            Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let source_parameter = BezierParameter2::Algebraic(source_parameter.clone());
-        let same_end_field = start
-            .retained_parameter()
-            .same_value(end.retained_parameter(), policy)?;
-        let same_source_parameter = start
-            .retained_parameter()
-            .same_value(&source_parameter, policy)?;
+        let source_field = BezierParameter2::Algebraic(source_parameter.clone());
+        let same_end_field = start_field.same_value(&end_field, policy)?;
+        let same_source_parameter = start_field.same_value(&source_field, policy)?;
         if same_end_field != Classification::Decided(true)
             || same_source_parameter != Classification::Decided(true)
         {
@@ -10439,12 +10435,42 @@ impl BezierAlgebraicChord2 {
             );
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        let BezierParameter2::Algebraic(retained_parameter) = start.retained_parameter() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let start_predicate = if self.start().as_exact().is_none() {
+            Some(match start.predicate_evaluator(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            })
+        } else {
+            None
         };
-
-        let (start_x, start_y, start_weight) = start.coordinate_polynomials();
-        let (end_x, end_y, end_weight) = end.coordinate_polynomials();
+        let end_predicate = if self.end().as_exact().is_none() {
+            Some(match end.predicate_evaluator(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            })
+        } else {
+            None
+        };
+        let (start_x, start_y, start_weight) = if let Some(point) = &start_predicate {
+            point.coordinate_polynomials()
+        } else {
+            let Some(coordinates) = start.retained_coordinate_polynomials() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            coordinates
+        };
+        let (end_x, end_y, end_weight) = if let Some(point) = &end_predicate {
+            point.coordinate_polynomials()
+        } else {
+            let Some(coordinates) = end.retained_coordinate_polynomials() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            coordinates
+        };
         let source = source.homogeneous_power_basis()?;
         let line_x = polynomial_subtract(
             &polynomial_multiply(end_x, start_weight),
@@ -10466,7 +10492,7 @@ impl BezierAlgebraicChord2 {
             &bivariate_multiply_first_parameter(&point_delta_y, &line_x),
             &bivariate_multiply_first_parameter(&point_delta_x, &line_y),
         );
-        let retained_root = parameter_representation(retained_parameter, policy);
+        let retained_root = parameter_representation(source_parameter, policy);
         let deflated = deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
             &incidence,
             CurveResultantParameter::First,
@@ -10553,29 +10579,41 @@ impl BezierAlgebraicChord2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let evaluator = match self.algebraic_ray_evaluator(policy)? {
-            Classification::Decided(evaluator) => evaluator,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        self.validate_policy(policy)?;
+        let mut uncertainty = None;
+        for endpoint in [self.start(), self.end()] {
+            let side = match endpoint {
+                RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                    line.classify_point(point, policy)
+                }
+                RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                    let point = match point.predicate_evaluator(policy)? {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => {
+                            uncertainty.get_or_insert(reason);
+                            continue;
+                        }
+                    };
+                    match point.oriented_line_side(line.start(), line.end(), policy)? {
+                        Classification::Decided(side) => Classification::Decided(side),
+                        Classification::Uncertain(reason) => {
+                            uncertainty.get_or_insert(reason);
+                            continue;
+                        }
+                    }
+                }
+            };
+            match side {
+                Classification::Decided(crate::classify::LineSide::On) => {}
+                Classification::Decided(
+                    crate::classify::LineSide::Left | crate::classify::LineSide::Right,
+                ) => return Ok(Classification::Decided(true)),
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                }
             }
-        };
-        let origin = match evaluator.exact_point_image(line.start(), policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let origin = match origin.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let direction_x = line.end().x() - line.start().x();
-        let direction_y = line.end().y() - line.start().y();
-        Ok(evaluator
-            .endpoint_side_signs(&origin, &(-direction_y), &direction_x, policy)?
-            .map(|signs| signs.into_iter().any(|sign| sign != RealSign::Zero)))
+        }
+        Ok(uncertainty.map_or(Classification::Decided(false), Classification::Uncertain))
     }
 }
 
@@ -24740,6 +24778,42 @@ mod conversion_tests {
                     )
                     .unwrap(),
                 Classification::Decided(true)
+            );
+            let x_axis =
+                LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(3, 0)).unwrap();
+            assert_eq!(
+                single_contact_chord
+                    .has_non_collinear_support_with_exact_line(&x_axis, &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+
+            let collinear_source = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 0),
+                    Point2::from_values(2, 0),
+                ),
+            ))
+            .unwrap();
+            let collinear_contact = RationalBezierIntersectionPointEvidence2::Algebraic(
+                collinear_source
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
+            let Classification::Decided(collinear_chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
+                collinear_contact,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the collinear chord must certify distinct endpoints");
+            };
+            assert_eq!(
+                collinear_chord
+                    .has_non_collinear_support_with_exact_line(&x_axis, &policy)
+                    .unwrap(),
+                Classification::Decided(false)
             );
 
             let repeated_contact_source = RationalBezier2::try_from_subcurve(

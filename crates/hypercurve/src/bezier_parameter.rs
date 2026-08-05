@@ -1624,12 +1624,11 @@ impl BezierParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if self == other
-            || matches!(
-                (self, other),
-                (Self::Algebraic(left), Self::Algebraic(right))
-                    if Arc::ptr_eq(&left.data.shared, &right.data.shared)
-            )
+        if matches!(
+            (self, other),
+            (Self::Algebraic(left), Self::Algebraic(right))
+                if Arc::ptr_eq(&left.data.shared, &right.data.shared)
+        ) || self == other
         {
             return Ok(Classification::Decided(true));
         }
