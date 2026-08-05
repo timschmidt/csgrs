@@ -16,7 +16,8 @@ use crate::geometry::{
 };
 use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::polygon::{
-    ConvexPolygon, convex_triangle_decision, points_require_wide_dyadic_plane_normalization,
+    ConvexPolygon, RetainedSourcePositions, convex_source_triangle_decision,
+    points_require_wide_dyadic_plane_normalization,
 };
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
@@ -1280,6 +1281,10 @@ pub(crate) fn build_polygon_soup_internal(
         .ok_or(HypermeshError::UnknownClassification)?;
     let mut polygons: Vec<ConvexPolygon> = Vec::with_capacity(polygon_capacity);
     for (mesh_index, mesh) in meshes.iter().enumerate() {
+        let source_positions = RetainedSourcePositions::shared(mesh.native.map_or_else(
+            || Arc::<[Point3]>::from(mesh.positions),
+            |native| Arc::clone(&native.positions),
+        ));
         let signed_mesh_index =
             isize::try_from(mesh_index).map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "source polygon mesh index",
@@ -1303,7 +1308,7 @@ pub(crate) fn build_polygon_soup_internal(
                     {
                         append_compact_source_polygon(
                             decisions,
-                            mesh,
+                            &source_positions,
                             triangle,
                             compact.planes.map(|plane| plane.map(f64::from)),
                             mesh_index,
@@ -1319,7 +1324,7 @@ pub(crate) fn build_polygon_soup_internal(
                     {
                         append_compact_source_polygon(
                             decisions,
-                            mesh,
+                            &source_positions,
                             triangle,
                             compact.planes,
                             mesh_index,
@@ -1342,7 +1347,7 @@ pub(crate) fn build_polygon_soup_internal(
                 })?;
                 polygons.push(build_source_polygon(
                     decisions,
-                    mesh,
+                    &source_positions,
                     triangle,
                     mesh_index,
                     signed_mesh_index,
@@ -1394,7 +1399,7 @@ pub(crate) fn build_polygon_soup_internal(
 
 fn build_source_polygon(
     decisions: &DecisionContext,
-    mesh: &TriangleMeshRef<'_>,
+    source_positions: &Arc<RetainedSourcePositions>,
     triangle: &Triangle,
     mesh_index: usize,
     signed_mesh_index: isize,
@@ -1403,20 +1408,11 @@ fn build_source_polygon(
     operand_count: usize,
     normalize_wide_dyadic: bool,
 ) -> HypermeshResult<ConvexPolygon> {
-    let [i0, i1, i2] = triangle.indices();
-    let [p0, p1, p2] = [i0, i1, i2].map(|index| {
-        mesh.positions
-            .get(index)
-            .ok_or(HypermeshError::VertexIndexOutOfBounds {
-                index,
-                vertex_count: mesh.positions.len(),
-            })
-    });
-    let polygon = convex_triangle_decision(
+    let polygon = convex_source_triangle_decision(
         decisions,
-        p0?,
-        p1?,
-        p2?,
+        source_positions,
+        triangle.indices(),
+        mesh_index,
         signed_mesh_index,
         polygon_index,
         normalize_wide_dyadic,
@@ -1427,13 +1423,13 @@ fn build_source_polygon(
             triangle_index,
         });
     }
-    finish_source_polygon(polygon, triangle, mesh_index, operand_count)
+    Ok(finish_source_polygon(polygon, mesh_index, operand_count))
 }
 
 #[allow(clippy::too_many_arguments)]
 fn append_compact_source_polygon(
     decisions: &DecisionContext,
-    mesh: &TriangleMeshRef<'_>,
+    source_positions: &Arc<RetainedSourcePositions>,
     triangle: &Triangle,
     planes: [[f64; 4]; 4],
     mesh_index: usize,
@@ -1441,15 +1437,6 @@ fn append_compact_source_polygon(
     operand_count: usize,
     polygons: &mut Vec<ConvexPolygon>,
 ) -> HypermeshResult<()> {
-    let [i0, i1, i2] = triangle.indices();
-    let [p0, p1, p2] = [i0, i1, i2].map(|index| {
-        mesh.positions
-            .get(index)
-            .ok_or(HypermeshError::VertexIndexOutOfBounds {
-                index,
-                vertex_count: mesh.positions.len(),
-            })
-    });
     let [support, first, second, third] = planes.map(|[a, b, c, d]| {
         Plane::from_coefficients(
             Real::try_from(a).expect("cached exact-dyadic coefficient is finite"),
@@ -1462,33 +1449,28 @@ fn append_compact_source_polygon(
         isize::try_from(polygons.len()).map_err(|_| HypermeshError::CapacityOverflow {
             operation: "source polygon index",
         })?;
-    let polygon = ConvexPolygon::from_triangle_planes(
+    let polygon = ConvexPolygon::from_source_triangle_planes(
         decisions,
-        [p0?, p1?, p2?],
+        Arc::clone(source_positions),
+        triangle.indices(),
         support,
         Vec::from([first, second, third]),
+        mesh_index,
         signed_mesh_index,
         polygon_index,
     )?;
-    polygons.push(finish_source_polygon(
-        polygon,
-        triangle,
-        mesh_index,
-        operand_count,
-    )?);
+    polygons.push(finish_source_polygon(polygon, mesh_index, operand_count));
     Ok(())
 }
 
 fn finish_source_polygon(
     mut polygon: ConvexPolygon,
-    triangle: &Triangle,
     mesh_index: usize,
     operand_count: usize,
-) -> HypermeshResult<ConvexPolygon> {
-    polygon.set_source_triangle_edge_identities(mesh_index, triangle.indices())?;
+) -> ConvexPolygon {
     polygon.delta_w = vec![0; operand_count];
     polygon.delta_w[mesh_index] = 1;
-    Ok(polygon)
+    polygon
 }
 
 fn canonical_position_indices(
@@ -1698,6 +1680,58 @@ mod tests {
             first
         );
         assert_eq!(consumed.certainty(), MeshCertainty::Approximate512Consumed);
+    }
+
+    #[test]
+    fn source_polygon_vertex_cycles_share_one_checked_position_owner() {
+        use crate::polygon::RetainedVertexCycle;
+
+        let mesh = tetrahedron_with_independent_face_indices();
+        let context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let native =
+            build_polygon_soup_internal(&DecisionContext::new(&context), &[mesh.as_ref()]).unwrap();
+        for (polygon, triangle) in native.polygons.iter().zip(mesh.triangles.iter()) {
+            let Some(RetainedVertexCycle::SourceTriangle {
+                positions,
+                vertices,
+            }) = &polygon.known_vertices
+            else {
+                panic!("native source face must retain an indexed vertex cycle");
+            };
+            assert!(Arc::ptr_eq(positions.owner(), &mesh.positions));
+            assert_eq!(*vertices, triangle.indices().map(|index| index as u32));
+        }
+
+        let borrowed = TriangleMeshRef::new(&mesh.positions, &mesh.triangles);
+        let borrowed =
+            build_polygon_soup_internal(&DecisionContext::new(&context), &[borrowed]).unwrap();
+        let Some(RetainedVertexCycle::SourceTriangle {
+            positions: shared, ..
+        }) = &borrowed.polygons[0].known_vertices
+        else {
+            panic!("borrowed source face must retain an indexed vertex cycle");
+        };
+        assert!(!Arc::ptr_eq(shared.owner(), &mesh.positions));
+        for polygon in &borrowed.polygons[1..] {
+            let Some(RetainedVertexCycle::SourceTriangle { positions, .. }) =
+                &polygon.known_vertices
+            else {
+                panic!("borrowed source face must retain an indexed vertex cycle");
+            };
+            assert!(Arc::ptr_eq(positions, shared));
+        }
+
+        let inverted = native.polygons[0].inverted();
+        let Some(RetainedVertexCycle::SourceTriangle {
+            positions,
+            vertices,
+        }) = inverted.known_vertices
+        else {
+            panic!("inversion must preserve an indexed source cycle");
+        };
+        assert!(Arc::ptr_eq(positions.owner(), &mesh.positions));
+        let [first, second, third] = mesh.triangles[0].indices().map(|index| index as u32);
+        assert_eq!(vertices, [third, second, first]);
     }
 
     #[test]

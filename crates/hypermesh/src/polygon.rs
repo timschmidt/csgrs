@@ -78,15 +78,58 @@ pub struct ApproxBounds {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct RetainedVertexCycle(Arc<[Point3]>);
+/// One exact position owner shared by every retained face of a source mesh.
+///
+/// The sized wrapper keeps the `Arc` stored in each indexed face thin while
+/// the inner slice remains the canonical native or copied borrowed owner.
+pub(crate) struct RetainedSourcePositions(Arc<[Point3]>);
 
-impl RetainedVertexCycle {
-    pub(crate) fn len(&self) -> usize {
-        self.0.len()
+impl RetainedSourcePositions {
+    pub(crate) fn shared(positions: Arc<[Point3]>) -> Arc<Self> {
+        Arc::new(Self(positions))
     }
 
     pub(crate) fn get(&self, index: usize) -> Option<&Point3> {
         self.0.get(index)
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn owner(&self) -> &Arc<[Point3]> {
+        &self.0
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum RetainedVertexCycle {
+    /// Standalone polygon vertices owned by this cycle.
+    Owned(Arc<[Point3]>),
+    /// One indexed triangle in a shared source-mesh position owner.
+    SourceTriangle {
+        positions: Arc<RetainedSourcePositions>,
+        vertices: [u32; 3],
+    },
+}
+
+impl RetainedVertexCycle {
+    pub(crate) fn len(&self) -> usize {
+        match self {
+            Self::Owned(vertices) => vertices.len(),
+            Self::SourceTriangle { .. } => 3,
+        }
+    }
+
+    pub(crate) fn get(&self, index: usize) -> Option<&Point3> {
+        match self {
+            Self::Owned(vertices) => vertices.get(index),
+            Self::SourceTriangle {
+                positions,
+                vertices,
+            } => positions.get(usize::try_from(*vertices.get(index)?).ok()?),
+        }
     }
 
     pub(crate) fn iter(&self) -> impl DoubleEndedIterator<Item = &Point3> + ExactSizeIterator {
@@ -98,6 +141,21 @@ impl RetainedVertexCycle {
 
     fn to_vec(&self) -> Vec<Point3> {
         self.iter().cloned().collect()
+    }
+
+    fn reversed(&self) -> Self {
+        match self {
+            Self::Owned(vertices) => Self::Owned(Arc::from(
+                vertices.iter().rev().cloned().collect::<Vec<_>>(),
+            )),
+            Self::SourceTriangle {
+                positions,
+                vertices: [first, second, third],
+            } => Self::SourceTriangle {
+                positions: Arc::clone(positions),
+                vertices: [*third, *second, *first],
+            },
+        }
     }
 }
 
@@ -305,8 +363,8 @@ pub struct ConvexPolygon {
     pub approx_bounds: Option<Box<ApproxBounds>>,
     /// Exact vertices retained when supplied directly by the input owner.
     ///
-    /// Derived clipping and BSP polygons clear this cache when their edge
-    /// cycle changes.
+    /// Arrangement-derived polygons clear this cache when their edge cycle
+    /// changes.
     pub(crate) known_vertices: Option<RetainedVertexCycle>,
     pub(crate) known_identities: Option<RetainedIdentityCycles>,
 }
@@ -428,11 +486,10 @@ impl ConvexPolygon {
         let mut result = self.clone();
         result.support = self.support.inverted();
         result.edges = Arc::new(self.edges.iter().rev().cloned().collect::<Vec<_>>());
-        result.known_vertices = self.known_vertices.as_ref().map(|vertices| {
-            RetainedVertexCycle(Arc::from(
-                vertices.iter().rev().cloned().collect::<Vec<_>>(),
-            ))
-        });
+        result.known_vertices = self
+            .known_vertices
+            .as_ref()
+            .map(RetainedVertexCycle::reversed);
         result.known_identities = self.known_identities.as_ref().map(|identities| {
             let vertices = Arc::from(identities.vertices().iter().rev().collect::<Vec<_>>());
             let edges = identities.edges();
@@ -452,6 +509,7 @@ impl ConvexPolygon {
     }
 
     #[inline]
+    #[cfg(test)]
     pub(crate) fn set_source_triangle_edge_identities(
         &mut self,
         mesh: usize,
@@ -575,6 +633,44 @@ pub(crate) fn convex_triangle_decision(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn convex_source_triangle_decision(
+    decisions: &DecisionContext,
+    positions: &Arc<RetainedSourcePositions>,
+    vertices: [usize; 3],
+    mesh_index: usize,
+    signed_mesh_index: isize,
+    polygon_index: isize,
+    normalize_wide_dyadic: bool,
+) -> HypermeshResult<ConvexPolygon> {
+    let points = vertices.map(|index| {
+        positions
+            .get(index)
+            .ok_or(crate::error::HypermeshError::VertexIndexOutOfBounds {
+                index,
+                vertex_count: positions.len(),
+            })
+    });
+    let [p0, p1, p2] = points;
+    let [p0, p1, p2] = [p0?, p1?, p2?];
+    let support = Plane::from_points(p0, p1, p2);
+    let edges = Vec::from([
+        edge_plane(decisions, p0, p1, p2, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p1, p2, p0, &support, normalize_wide_dyadic)?,
+        edge_plane(decisions, p2, p0, p1, &support, normalize_wide_dyadic)?,
+    ]);
+    ConvexPolygon::from_source_triangle_planes(
+        decisions,
+        Arc::clone(positions),
+        vertices,
+        support,
+        edges,
+        mesh_index,
+        signed_mesh_index,
+        polygon_index,
+    )
+}
+
 impl ConvexPolygon {
     pub(crate) fn from_triangle_planes(
         decisions: &DecisionContext,
@@ -592,12 +688,60 @@ impl ConvexPolygon {
             polygon_index,
             delta_w: Vec::new(),
             approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2])?)),
-            known_vertices: Some(RetainedVertexCycle(Arc::new([
+            known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
                 p0.clone(),
                 p1.clone(),
                 p2.clone(),
             ]))),
             known_identities: None,
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn from_source_triangle_planes(
+        decisions: &DecisionContext,
+        positions: Arc<RetainedSourcePositions>,
+        vertices: [usize; 3],
+        support: Plane,
+        edges: Vec<Plane>,
+        mesh_index: usize,
+        signed_mesh_index: isize,
+        polygon_index: isize,
+    ) -> HypermeshResult<Self> {
+        debug_assert_eq!(edges.len(), 3);
+        let mesh = compact_construction_index(mesh_index, "source triangle mesh ID")?;
+        let vertices =
+            vertices.map(|vertex| compact_construction_index(vertex, "source triangle vertex ID"));
+        let [first, second, third] = vertices;
+        let vertices = [first?, second?, third?];
+        let points = vertices.map(|vertex| {
+            let index = usize::try_from(vertex).map_err(|_| {
+                crate::error::HypermeshError::CapacityOverflow {
+                    operation: "source triangle vertex ID",
+                }
+            })?;
+            positions
+                .get(index)
+                .ok_or(crate::error::HypermeshError::VertexIndexOutOfBounds {
+                    index,
+                    vertex_count: positions.len(),
+                })
+        });
+        let [p0, p1, p2] = points;
+        let [p0, p1, p2] = [p0?, p1?, p2?];
+        let approx_bounds = bounds_for_points(decisions, &[p0, p1, p2])?;
+        Ok(Self {
+            support,
+            edges: Arc::new(edges),
+            mesh_index: signed_mesh_index,
+            polygon_index,
+            delta_w: Vec::new(),
+            approx_bounds: Some(Box::new(approx_bounds)),
+            known_vertices: Some(RetainedVertexCycle::SourceTriangle {
+                positions,
+                vertices,
+            }),
+            known_identities: Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices }),
         })
     }
 }
@@ -646,7 +790,7 @@ pub(crate) fn convex_quad_decision(
         polygon_index,
         delta_w: Vec::new(),
         approx_bounds: Some(Box::new(bounds_for_points(decisions, &[p0, p1, p2, p3])?)),
-        known_vertices: Some(RetainedVertexCycle(Arc::new([
+        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
             p2.clone(),
