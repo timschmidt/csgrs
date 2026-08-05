@@ -2109,6 +2109,7 @@ pub(crate) struct BezierAlgebraicChordRationalContact2 {
 pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
     Contacts(Vec<BezierAlgebraicChordRationalContact2>),
     DegenerateProjection,
+    NotSourceRelated,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -10699,9 +10700,26 @@ impl BezierAlgebraicChord2 {
     pub(crate) fn source_related_intersections(
         &self,
         source: &RationalBezier2,
-        source_parameter: &BezierAlgebraicParameter2,
+        source_parameter: Option<&BezierAlgebraicParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        let inferred_source_parameter;
+        let source_parameter = if let Some(source_parameter) = source_parameter {
+            source_parameter
+        } else {
+            inferred_source_parameter = match self.inferred_source_parameter(policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            &inferred_source_parameter
+        };
         let system = match self.source_incidence_system(source, source_parameter, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
@@ -10736,8 +10754,8 @@ impl BezierAlgebraicChord2 {
                 ));
             }
             AlgebraicFiberDiagonalDeflationStatus::NotARoot => {
-                return Err(CurveError::Topology(
-                    "the retained chord/source endpoint was not an incidence root".into(),
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
                 ));
             }
             AlgebraicFiberDiagonalDeflationStatus::InvalidEvidence => {
@@ -10870,6 +10888,31 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(
             BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
         ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn inferred_source_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicParameter2>>> {
+        for endpoint in [self.start(), self.end()] {
+            let Some(image) = endpoint.as_algebraic() else {
+                continue;
+            };
+            if let Some(parameter) = image.retained_parameter() {
+                return Ok(Classification::Decided(Some(parameter.clone())));
+            }
+            match BezierParameter2::from_algebraic_root_representation(image.parameter(), policy)? {
+                Classification::Decided(BezierParameter2::Algebraic(parameter)) => {
+                    return Ok(Classification::Decided(Some(parameter)));
+                }
+                Classification::Decided(BezierParameter2::Exact(_)) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(None))
     }
 
     #[cfg(feature = "predicates")]
@@ -25493,7 +25536,7 @@ mod conversion_tests {
             let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 single_contacts,
             )) = single_contact_chord
-                .source_related_intersections(&single_contact_source, &parameter, &policy)
+                .source_related_intersections(&single_contact_source, Some(&parameter), &policy)
                 .unwrap()
             else {
                 panic!("the source-related chord pair must complete");
@@ -25568,7 +25611,7 @@ mod conversion_tests {
             let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 repeated_contacts,
             )) = repeated_contact_chord
-                .source_related_intersections(&repeated_contact_source, &parameter, &policy)
+                .source_related_intersections(&repeated_contact_source, Some(&parameter), &policy)
                 .unwrap()
             else {
                 panic!("the repeated source-related chord pair must complete");

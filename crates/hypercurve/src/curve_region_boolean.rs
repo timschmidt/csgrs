@@ -1753,7 +1753,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             RegionCarrierPairContext::AlgebraicChordPair => {
                 #[cfg(feature = "predicates")]
-                if self.authored_carriers_are_adjacent(pair) {
+                {
                     let (chord, chord_index, other, other_index) =
                         match (&first.geometry, &second.geometry) {
                             (RegionCarrierGeometry::AlgebraicChord(chord), other) => (
@@ -1772,9 +1772,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         };
                     if let RegionCarrierGeometry::Bezier(curve) = other {
                         let other_carrier = &self.data.carriers[other_index];
-                        if other_carrier
-                            .geometry
-                            .has_certified_injective_image(&self.data.policy)
+                        let authored_adjacent = self.authored_carriers_are_adjacent(pair);
+                        if authored_adjacent
+                            && other_carrier
+                                .geometry
+                                .has_certified_injective_image(&self.data.policy)
                             && subcurve_is_strict_line_image(curve)
                             && let (Some(start), Some(end)) = (
                                 exact_carrier_point(
@@ -1808,106 +1810,114 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                         let rational = RationalBezier2::try_from_subcurve(curve)
                             .map_err(|cause| self.invalid(other_index, cause))?;
-                        let chord_carrier = &self.data.carriers[chord_index];
-                        let boundary = match chord_carrier.operand {
-                            CurvePathBooleanOperand2::First => self.data.first,
-                            CurvePathBooleanOperand2::Second => self.data.second,
-                        }
-                        .boundary_loops()
-                        .get(chord_carrier.loop_index)
-                        .expect("an admitted carrier retains its authored loop");
-                        let chord_precedes_other = chord_carrier.fragment_index.checked_add(1)
-                            == Some(other_carrier.fragment_index)
-                            || (chord_carrier.fragment_index.checked_add(1)
-                                == Some(boundary.fragments().len())
-                                && other_carrier.fragment_index == 0);
-                        let shared_parameter = if chord_precedes_other {
-                            carrier_traversal_start(other_carrier)
+                        let source_parameter = if authored_adjacent {
+                            let chord_carrier = &self.data.carriers[chord_index];
+                            let boundary = match chord_carrier.operand {
+                                CurvePathBooleanOperand2::First => self.data.first,
+                                CurvePathBooleanOperand2::Second => self.data.second,
+                            }
+                            .boundary_loops()
+                            .get(chord_carrier.loop_index)
+                            .expect("an admitted carrier retains its authored loop");
+                            let chord_precedes_other = chord_carrier.fragment_index.checked_add(1)
+                                == Some(other_carrier.fragment_index)
+                                || (chord_carrier.fragment_index.checked_add(1)
+                                    == Some(boundary.fragments().len())
+                                    && other_carrier.fragment_index == 0);
+                            let shared_parameter = if chord_precedes_other {
+                                carrier_traversal_start(other_carrier)
+                            } else {
+                                carrier_traversal_end(other_carrier)
+                            };
+                            match shared_parameter.as_bezier_parameter() {
+                                Some(BezierParameter2::Algebraic(parameter)) => Some(parameter),
+                                Some(BezierParameter2::Exact(_)) | None => None,
+                            }
                         } else {
-                            carrier_traversal_end(other_carrier)
+                            None
                         };
-                        if let Some(BezierParameter2::Algebraic(source_parameter)) =
-                            shared_parameter.as_bezier_parameter()
+                        match chord
+                            .source_related_intersections(
+                                &rational,
+                                source_parameter,
+                                &self.data.policy,
+                            )
+                            .map_err(|cause| self.invalid(other_index, cause))?
                         {
-                            match chord
-                                .source_related_intersections(
-                                    &rational,
-                                    source_parameter,
-                                    &self.data.policy,
-                                )
-                                .map_err(|cause| self.invalid(other_index, cause))?
-                            {
-                                Classification::Decided(
-                                    BezierAlgebraicChordRationalIntersections2::Contacts(
-                                        contacts,
-                                    ),
-                                ) => {
-                                    #[cfg(feature = "dispatch-trace")]
-                                    hyperreal::dispatch_trace::record(
-                                        "hypercurve",
-                                        "algebraic-chord-pair",
-                                        "adjacent-source-complete",
-                                    );
-                                    let chord_is_first = chord_index == pair.first_carrier_index;
-                                    let contacts = contacts
-                                        .into_iter()
-                                        .map(|contact| {
-                                            let tangent_cross_sign = if chord_is_first {
-                                                contact.tangent_cross_sign()
-                                            } else {
-                                                match contact.tangent_cross_sign() {
-                                                    RealSign::Positive => RealSign::Negative,
-                                                    RealSign::Negative => RealSign::Positive,
-                                                    RealSign::Zero => RealSign::Zero,
-                                                }
-                                            };
-                                            let chord_parameter =
-                                                CurveRegionParameter2::from_algebraic_chord(
-                                                    contact.chord_parameter().clone(),
-                                                );
-                                            let other_parameter =
-                                                CurveRegionParameter2::from_bezier(
-                                                    contact.other_parameter().clone(),
-                                                );
-                                            let (first_parameter, second_parameter) =
-                                                if chord_is_first {
-                                                    (chord_parameter, other_parameter)
-                                                } else {
-                                                    (other_parameter, chord_parameter)
-                                                };
-                                            RegionPairContactEvidence::direct(
-                                                first_parameter,
-                                                second_parameter,
-                                                Some(contact.point().clone()),
-                                                tangent_cross_sign != RealSign::Zero,
-                                                Some(tangent_cross_sign),
-                                            )
-                                        })
-                                        .collect();
-                                    return Ok(RegionPairResult {
-                                        contacts,
-                                        overlaps: Vec::new(),
-                                        blockers: Vec::new(),
-                                    });
-                                }
-                                Classification::Decided(
-                                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-                                ) => {
-                                    return Ok(RegionPairResult {
-                                        contacts: Vec::new(),
-                                        overlaps: Vec::new(),
-                                        blockers: vec![RegionPairBlocker::Uncertain(
-                                            UncertaintyReason::Boundary,
-                                        )],
-                                    });
-                                }
-                                Classification::Uncertain(reason) => {
-                                    return Ok(RegionPairResult {
-                                        contacts: Vec::new(),
-                                        overlaps: Vec::new(),
-                                        blockers: vec![RegionPairBlocker::Uncertain(reason)],
-                                    });
-                                }
+                            Classification::Decided(
+                                BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+                            ) => {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-pair",
+                                    if authored_adjacent {
+                                        "adjacent-source-complete"
+                                    } else {
+                                        "source-complete"
+                                    },
+                                );
+                                let chord_is_first = chord_index == pair.first_carrier_index;
+                                let contacts = contacts
+                                    .into_iter()
+                                    .map(|contact| {
+                                        let tangent_cross_sign = if chord_is_first {
+                                            contact.tangent_cross_sign()
+                                        } else {
+                                            match contact.tangent_cross_sign() {
+                                                RealSign::Positive => RealSign::Negative,
+                                                RealSign::Negative => RealSign::Positive,
+                                                RealSign::Zero => RealSign::Zero,
+                                            }
+                                        };
+                                        let chord_parameter =
+                                            CurveRegionParameter2::from_algebraic_chord(
+                                                contact.chord_parameter().clone(),
+                                            );
+                                        let other_parameter = CurveRegionParameter2::from_bezier(
+                                            contact.other_parameter().clone(),
+                                        );
+                                        let (first_parameter, second_parameter) = if chord_is_first
+                                        {
+                                            (chord_parameter, other_parameter)
+                                        } else {
+                                            (other_parameter, chord_parameter)
+                                        };
+                                        RegionPairContactEvidence::direct(
+                                            first_parameter,
+                                            second_parameter,
+                                            Some(contact.point().clone()),
+                                            tangent_cross_sign != RealSign::Zero,
+                                            Some(tangent_cross_sign),
+                                        )
+                                    })
+                                    .collect();
+                                return Ok(RegionPairResult {
+                                    contacts,
+                                    overlaps: Vec::new(),
+                                    blockers: Vec::new(),
+                                });
+                            }
+                            Classification::Decided(
+                                BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                            ) => {
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps: Vec::new(),
+                                    blockers: vec![RegionPairBlocker::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    )],
+                                });
+                            }
+                            Classification::Decided(
+                                BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+                            ) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps: Vec::new(),
+                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                                });
                             }
                         }
                     }
@@ -8158,6 +8168,126 @@ mod certified_successor_tests {
                 regularized.is_ok(),
                 "the split algebraic chord must traverse the arrangement: {regularized:?}"
             );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn nonadjacent_source_related_algebraic_chord_pair_replays_every_contact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");
+            let source_curve = BezierSubcurve2::Cubic(CubicBezier2::new(
+                Point2::from_values(1, 0),
+                Point2::new(Real::one() + &third, third.clone()),
+                Point2::new(
+                    Real::one() + Real::from(2_i8) * &third,
+                    Real::from(2_i8) * &third,
+                ),
+                Point2::from_values(2, 0),
+            ));
+            let source_rational =
+                RationalBezier2::try_from_subcurve(&source_curve).expect("valid rational source");
+            let parameter = sqrt_half_parameter(&policy);
+            let source_parameter = BezierParameter2::Algebraic(parameter);
+            let source_fragment = decided(
+                source_curve
+                    .split_at_parameters(std::slice::from_ref(&source_parameter), &policy)
+                    .expect("exact algebraic source split"),
+            )
+            .fragments()[0]
+                .clone();
+            let selected_point =
+                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
+                    .expect("exact selected point construction")
+                    .expect("selected point evidence");
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    selected_point,
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                    &policy,
+                )
+                .expect("valid algebraic chord"),
+            );
+            let chord_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    source_fragment,
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                                .expect("valid chord-loop closure"),
+                        )),
+                    },
+                ],
+                &policy,
+            )
+            .expect("the retained chord loop must close");
+            let source_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: source_curve,
+                    },
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(Point2::from_values(2, 0), Point2::from_values(1, 0))
+                                .expect("valid source-loop closure"),
+                        )),
+                    },
+                ],
+                &policy,
+            )
+            .expect("the complete source loop must close");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![chord_loop, source_loop],
+                vec![CurveRegionLoopRole::Material; 2],
+                vec![FillRule::NonZero; 2],
+                vec![crate::CurveBoundaryInteriorSide2::Left; 2],
+            )
+            .expect("valid multi-loop retained test region");
+            let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
+                .expect("valid unary Boolean context");
+            let chord_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| {
+                    carrier.loop_index == 0
+                        && matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
+                })
+                .expect("retained chord carrier");
+            let source_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| carrier.loop_index == 1 && carrier.fragment_index == 0)
+                .expect("nonadjacent source carrier");
+            let pair = context
+                .data
+                .pairs
+                .iter()
+                .find(|pair| {
+                    (pair.first_carrier_index == chord_index
+                        && pair.second_carrier_index == source_index)
+                        || (pair.first_carrier_index == source_index
+                            && pair.second_carrier_index == chord_index)
+                })
+                .expect("the overlapping chord/source bounds must schedule the pair");
+            assert!(!context.authored_carriers_are_adjacent(pair));
+            let result = context
+                .pair_result(pair)
+                .expect("nonadjacent source-related replay must complete");
+            assert!(
+                result.blockers.is_empty(),
+                "nonadjacent source-related result: {result:?}"
+            );
+            assert_eq!(result.contacts.len(), 1);
+            assert!(result.contacts[0].is_certified_transverse());
         }
     }
 
