@@ -2,6 +2,7 @@
 mod tests {
     use super::*;
     use std::mem::size_of;
+    use std::sync::atomic::Ordering as AtomicOrdering;
 
     fn limbs_to_biguint(limbs: &[u64]) -> BigUint {
         limbs.iter().rev().fold(BigUint::ZERO, |value, limb| {
@@ -4963,6 +4964,57 @@ mod tests {
             BigUint::from(4_u8),
         );
         assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
+    }
+
+    #[test]
+    fn wide_dyadic_comparison_reuses_retained_denominator_shifts() {
+        use std::cmp::Ordering;
+
+        let left = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(5_u8),
+            BigUint::one() << 512_usize,
+        );
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::one() << 511_usize,
+        );
+        assert_eq!(
+            left.retained_facts.load(AtomicOrdering::Relaxed)
+                & RETAINED_DYADIC_SHIFT_MASK,
+            0
+        );
+        assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+
+        let left_facts = left.retained_facts.load(AtomicOrdering::Relaxed);
+        let right_facts = right.retained_facts.load(AtomicOrdering::Relaxed);
+        assert_eq!(
+            (left_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            513
+        );
+        assert_eq!(
+            (right_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            512
+        );
+        for _ in 0..128 {
+            assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+        }
+        assert_eq!(
+            left.retained_facts.load(AtomicOrdering::Relaxed),
+            left_facts
+        );
+        assert_eq!(
+            right.retained_facts.load(AtomicOrdering::Relaxed),
+            right_facts
+        );
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(10_u8),
+            BigUint::one() << 513_usize,
+        );
+        assert_eq!(unreduced.partial_cmp(&left), Some(Ordering::Equal));
     }
 
     #[cfg(feature = "dispatch-trace")]

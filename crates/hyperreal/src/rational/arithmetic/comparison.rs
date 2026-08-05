@@ -194,8 +194,8 @@ fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp
 }
 
 fn compare_dyadic_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {
-    let left_denominator_shift = power_of_two_shift(&left.denominator)?;
-    let right_denominator_shift = power_of_two_shift(&right.denominator)?;
+    let left_denominator_shift = left.dyadic_denominator_shift_if_reduced()?;
+    let right_denominator_shift = right.dyadic_denominator_shift_if_reduced()?;
     crate::trace_dispatch!("rational", "comparison", "dyadic-borrowed-digits");
     Some(compare_shifted_biguints(
         &left.numerator,
@@ -203,11 +203,6 @@ fn compare_dyadic_magnitudes(left: &Rational, right: &Rational) -> Option<std::c
         &right.numerator,
         left_denominator_shift,
     ))
-}
-
-fn power_of_two_shift(value: &BigUint) -> Option<u64> {
-    let shift = value.trailing_zeros()?;
-    (shift == value.bits() - 1).then_some(shift)
 }
 
 fn compare_shifted_biguints(
