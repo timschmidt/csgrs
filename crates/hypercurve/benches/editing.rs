@@ -582,6 +582,290 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let radius = q(1, 2);
+    let root_two = s(2).sqrt().expect("sqrt(2) must exist");
+    let line_arc_center = Point2::new(s(1) - &root_two, radius.clone());
+    let line_arc_previous_parameter = ((s(3) - &root_two) / s(2))?;
+    let line_arc_next_contact = Point2::new(s(1) - (&root_two * q(2, 3)), q(1, 3));
+    let next_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true)?;
+    let Classification::Decided(line_arc_next_sweep) =
+        next_arc.sweep_fraction(&line_arc_next_contact, &policy)?
+    else {
+        panic!("line-arc fillet benchmark sweep must remain exact");
+    };
+    let Classification::Decided(line_arc_next_public_parameter) =
+        next_arc.parameter_at_sweep_fraction(&line_arc_next_sweep, &policy)?
+    else {
+        panic!("line-arc fillet benchmark public parameter must remain exact");
+    };
+    let line_arc_path = CurvePath2::try_new(vec![
+        Curve2::from(line(-2, 0, 0, 0)),
+        Curve2::from(next_arc.clone()),
+    ])
+    .expect("line-arc fillet benchmark path must remain exact");
+
+    if corner_lane_enabled("curve_path_line_arc_parameter_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let filleted = black_box(&line_arc_path)
+                .fillet_vertex_by_parameters(
+                    1,
+                    line_arc_previous_parameter.clone(),
+                    line_arc_next_public_parameter.clone(),
+                    &line_arc_center,
+                    false,
+                    &policy,
+                )
+                .expect("line-arc parameter fillet must remain exact")
+                .into_value();
+            curves += black_box(filleted).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_line_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_path_line_arc_design_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&line_arc_path)
+                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+                .expect("line-arc design fillet must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc design fillet must remain unique");
+            };
+            curves += black_box(filleted).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_line_arc_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    let root_fourteen = s(14).sqrt().expect("sqrt(14) must exist");
+    let arc_arc_center = Point2::new(
+        ((s(2) - &root_fourteen) / s(4))?,
+        ((&root_fourteen - s(2)) / s(4))?,
+    );
+    let previous_contact = Point2::new(
+        ((s(2) - &root_fourteen) / s(6))?,
+        ((&root_fourteen - s(4)) / s(6))?,
+    );
+    let next_contact = Point2::new(
+        ((s(4) - &root_fourteen) / s(6))?,
+        ((&root_fourteen - s(2)) / s(6))?,
+    );
+    let previous_arc = CircularArc2::try_from_center(p(-1, -1), p(0, 0), p(0, -1), true)?;
+    let Classification::Decided(previous_sweep) =
+        previous_arc.sweep_fraction(&previous_contact, &policy)?
+    else {
+        panic!("arc-arc fillet benchmark previous sweep must remain exact");
+    };
+    let Classification::Decided(previous_public_parameter) =
+        previous_arc.parameter_at_sweep_fraction(&previous_sweep, &policy)?
+    else {
+        panic!("arc-arc fillet benchmark previous public parameter must remain exact");
+    };
+    let Classification::Decided(next_sweep) = next_arc.sweep_fraction(&next_contact, &policy)?
+    else {
+        panic!("arc-arc fillet benchmark next sweep must remain exact");
+    };
+    let Classification::Decided(next_public_parameter) =
+        next_arc.parameter_at_sweep_fraction(&next_sweep, &policy)?
+    else {
+        panic!("arc-arc fillet benchmark next public parameter must remain exact");
+    };
+    let arc_arc_path = CurvePath2::try_new(vec![
+        Curve2::from(previous_arc.clone()),
+        Curve2::from(next_arc.clone()),
+    ])
+    .expect("arc-arc fillet benchmark path must remain exact");
+
+    if corner_lane_enabled("curve_path_arc_arc_parameter_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let filleted = black_box(&arc_arc_path)
+                .fillet_vertex_by_parameters(
+                    1,
+                    previous_public_parameter.clone(),
+                    next_public_parameter.clone(),
+                    &arc_arc_center,
+                    false,
+                    &policy,
+                )
+                .expect("arc-arc parameter fillet must remain exact")
+                .into_value();
+            curves += black_box(filleted).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_arc_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_path_arc_arc_design_fillet") {
+        let started = Instant::now();
+        let mut curves = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&arc_arc_path)
+                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+                .expect("arc-arc design fillet must remain exact")
+                .into_value()
+            else {
+                panic!("arc-arc design fillet must remain unique");
+            };
+            curves += black_box(filleted).curves().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_path_arc_arc_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+            elapsed / iterations
+        );
+    }
+
+    let line_arc_contour = Contour2::try_new(vec![
+        Segment2::Line(line(-2, 0, 0, 0)),
+        Segment2::Arc(next_arc.clone()),
+        Segment2::Line(line(1, 1, -2, 1)),
+        Segment2::Line(line(-2, 1, -2, 0)),
+    ])?;
+    let line_arc_region =
+        CurveRegion2::try_from_native_material_contours(vec![line_arc_contour], &policy)
+            .expect("line-arc fillet benchmark region must promote")
+            .into_value();
+
+    if corner_lane_enabled("curve_region_line_arc_parameter_fillet") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let Classification::Decided(filleted) = black_box(&line_arc_region)
+                .fillet_loop_vertex_by_parameters(
+                    0,
+                    1,
+                    line_arc_previous_parameter.clone(),
+                    line_arc_next_sweep.clone(),
+                    &line_arc_center,
+                    false,
+                    &policy,
+                )
+                .expect("line-arc region parameter fillet must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc region parameter fillet must remain decided");
+            };
+            loops += black_box(filleted).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_region_line_arc_design_fillet") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&line_arc_region)
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    radius.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("line-arc region design fillet must remain exact")
+                .into_value()
+            else {
+                panic!("line-arc region design fillet must remain unique");
+            };
+            loops += black_box(filleted).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_line_arc_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    let arc_arc_contour = Contour2::try_new(vec![
+        Segment2::Arc(previous_arc),
+        Segment2::Arc(next_arc),
+        Segment2::Line(line(1, 1, -1, 1)),
+        Segment2::Line(line(-1, 1, -1, -1)),
+    ])?;
+    let arc_arc_region =
+        CurveRegion2::try_from_native_material_contours(vec![arc_arc_contour], &policy)
+            .expect("arc-arc fillet benchmark region must promote")
+            .into_value();
+
+    if corner_lane_enabled("curve_region_arc_arc_parameter_fillet") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let Classification::Decided(filleted) = black_box(&arc_arc_region)
+                .fillet_loop_vertex_by_parameters(
+                    0,
+                    1,
+                    previous_sweep.clone(),
+                    next_sweep.clone(),
+                    &arc_arc_center,
+                    false,
+                    &policy,
+                )
+                .expect("arc-arc region parameter fillet must remain exact")
+                .into_value()
+            else {
+                panic!("arc-arc region parameter fillet must remain decided");
+            };
+            loops += black_box(filleted).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_arc_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    if corner_lane_enabled("curve_region_arc_arc_design_fillet") {
+        let started = Instant::now();
+        let mut loops = 0_usize;
+        for _ in 0..iterations {
+            let CurveCornerSolutions2::Unique(filleted) = black_box(&arc_arc_region)
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    radius.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("arc-arc region design fillet must remain exact")
+                .into_value()
+            else {
+                panic!("arc-arc region design fillet must remain unique");
+            };
+            loops += black_box(filleted).boundary_loops().len();
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_arc_arc_design_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+            elapsed / iterations
+        );
+    }
+
+    Ok(())
+}
+
 fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
     let previous_arc = CircularArc2::try_from_center(
         Point2::new(s(3), q(13, 3)),
@@ -1232,6 +1516,10 @@ fn main() -> CurveResult<()> {
             bench_native_arc_chamfer_solvers(iterations)?;
             return Ok(());
         }
+        if selection == "native-arc-fillet" {
+            bench_native_arc_fillet_solvers(iterations)?;
+            return Ok(());
+        }
     }
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
@@ -1244,6 +1532,7 @@ fn main() -> CurveResult<()> {
     bench_arc_fillet(iterations)?;
     bench_line_curve_corner_solvers(iterations);
     bench_native_arc_chamfer_solvers(iterations)?;
+    bench_native_arc_fillet_solvers(iterations)?;
     bench_curve_region_mutations(iterations)?;
     bench_higher_order_curve_edits(iterations);
     bench_arc_extension(iterations)?;
