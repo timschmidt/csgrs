@@ -3446,7 +3446,6 @@ pub(crate) enum ExactCornerArc2<'a> {
 
 pub(crate) struct RetainedRationalCornerArc2<'a> {
     source: &'a Curve2,
-    evaluator: RationalBezier2,
     support: CircularArc2,
 }
 
@@ -3468,8 +3467,19 @@ impl ExactCornerArc2<'_> {
         let Self::RetainedRational(retained) = self else {
             return Ok(None);
         };
-        let parameters = match retained
-            .evaluator
+        let [evaluator] = retained
+            .source
+            .rational_evaluators_for_operation(policy, operation)?
+        else {
+            return Err(ExactCurveError::invalid(
+                operation,
+                family,
+                CurveError::Topology(
+                    "retained circular carrier did not promote to one rational evaluator".into(),
+                ),
+            ));
+        };
+        let parameters = match evaluator
             .retained_circle_point_parameters(point, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
@@ -3553,10 +3563,9 @@ fn exact_corner_carrier<'a>(
     if let Some(line) = exact_linear_corner_line(curve) {
         return Ok(Some(ExactCornerCarrier2::Line(line)));
     }
-    let retained = |evaluator: RationalBezier2, support: CircularArc2| -> ExactCornerCarrier2<'a> {
+    let retained = |support: CircularArc2| -> ExactCornerCarrier2<'a> {
         ExactCornerCarrier2::RetainedRationalArc(Box::new(RetainedRationalCornerArc2 {
             source: curve,
-            evaluator,
             support,
         }))
     };
@@ -3566,9 +3575,7 @@ fn exact_corner_carrier<'a>(
             match rational_quadratic_circular_arc(conic, policy)
                 .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
             {
-                Classification::Decided(Some(support)) => {
-                    Some(retained(RationalBezier2::from(conic.clone()), support))
-                }
+                Classification::Decided(Some(support)) => Some(retained(support)),
                 Classification::Decided(None) => None,
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(operation, curve.family(), reason));
@@ -3579,7 +3586,7 @@ fn exact_corner_carrier<'a>(
             match rational_bezier_circular_arc(rational, policy)
                 .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
             {
-                Classification::Decided(Some(support)) => Some(retained(rational.clone(), support)),
+                Classification::Decided(Some(support)) => Some(retained(support)),
                 Classification::Decided(None) => None,
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(operation, curve.family(), reason));

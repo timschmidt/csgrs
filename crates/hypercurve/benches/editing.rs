@@ -5,7 +5,7 @@ use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
     CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
-    Point2, QuadraticBezier2, Real, Segment2,
+    Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
 };
 use hypercurve::{Curve2, CurvePath2};
 
@@ -866,6 +866,113 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_retained_circle_chamfer_lane(name: &str, path: &CurvePath2, iterations: u32) {
+    let policy = CurveContext::STRICT;
+    let setback = q(1, 2);
+    let started = Instant::now();
+    let mut curves = 0_usize;
+    for _ in 0..iterations {
+        let CurveCornerSolutions2::Unique(chamfered) = black_box(path)
+            .chamfer_vertex_by_setbacks(
+                1,
+                setback.clone(),
+                setback.clone(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("retained circular chamfer must remain exact")
+            .into_value()
+        else {
+            panic!("retained circular chamfer must remain unique");
+        };
+        curves += black_box(chamfered).curves().len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+        elapsed / iterations
+    );
+}
+
+fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: u32) {
+    let policy = CurveContext::STRICT;
+    let radius = q(1, 2);
+    let started = Instant::now();
+    let mut curves = 0_usize;
+    for _ in 0..iterations {
+        let CurveCornerSolutions2::Unique(filleted) = black_box(path)
+            .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+            .expect("retained circular fillet must remain exact")
+            .into_value()
+        else {
+            panic!("retained circular fillet must remain unique");
+        };
+        curves += black_box(filleted).curves().len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curves}",
+        elapsed / iterations
+    );
+}
+
+fn bench_retained_circle_corner_solvers(iterations: u32) -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true)?;
+    let conic = native_arc
+        .rational_bezier_decomposition(&policy)
+        .expect("retained-circle fixture decomposition must remain exact")
+        .into_value()
+        .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .expect("retained-circle fixture elevation must remain exact");
+    let rational_quadratic_path =
+        CurvePath2::try_new(vec![Curve2::from(line(-2, 0, 0, 0)), Curve2::from(conic)])
+            .expect("rational-quadratic circle benchmark path must remain exact");
+    let degree_five_path = CurvePath2::try_new(vec![
+        Curve2::from(line(-2, 0, 0, 0)),
+        Curve2::from(elevated),
+    ])
+    .expect("degree-five rational circle benchmark path must remain exact");
+
+    for (name, path, chamfer) in [
+        (
+            "curve_path_rational_quadratic_circle_design_chamfer",
+            &rational_quadratic_path,
+            true,
+        ),
+        (
+            "curve_path_rational_quadratic_circle_design_fillet",
+            &rational_quadratic_path,
+            false,
+        ),
+        (
+            "curve_path_degree5_rational_circle_design_chamfer",
+            &degree_five_path,
+            true,
+        ),
+        (
+            "curve_path_degree5_rational_circle_design_fillet",
+            &degree_five_path,
+            false,
+        ),
+    ] {
+        if !corner_lane_enabled(name) {
+            continue;
+        }
+        if chamfer {
+            bench_retained_circle_chamfer_lane(name, path, iterations);
+        } else {
+            bench_retained_circle_fillet_lane(name, path, iterations);
+        }
+    }
+
+    Ok(())
+}
+
 fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
     let previous_arc = CircularArc2::try_from_center(
         Point2::new(s(3), q(13, 3)),
@@ -1520,6 +1627,10 @@ fn main() -> CurveResult<()> {
             bench_native_arc_fillet_solvers(iterations)?;
             return Ok(());
         }
+        if selection == "retained-circle-corner" {
+            bench_retained_circle_corner_solvers(iterations)?;
+            return Ok(());
+        }
     }
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
@@ -1533,6 +1644,7 @@ fn main() -> CurveResult<()> {
     bench_line_curve_corner_solvers(iterations);
     bench_native_arc_chamfer_solvers(iterations)?;
     bench_native_arc_fillet_solvers(iterations)?;
+    bench_retained_circle_corner_solvers(iterations)?;
     bench_curve_region_mutations(iterations)?;
     bench_higher_order_curve_edits(iterations);
     bench_arc_extension(iterations)?;
