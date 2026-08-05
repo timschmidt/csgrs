@@ -1239,6 +1239,8 @@ impl RationalBezier2 {
         self.data.lineage.root.circular_conic.get()
     }
 
+    /// Recovers finite parameters for a point already certified on this
+    /// curve's retained circular support.
     pub(crate) fn retained_circle_point_parameters(
         &self,
         point: &Point2,
@@ -1254,14 +1256,10 @@ impl RationalBezier2 {
                 Real::one(),
             )]));
         }
-        if let Classification::Decided(bounds) = self.certified_bounds_classified(policy)
-            && matches!(
-                bounds.contains_point(point, policy),
-                Classification::Decided(false)
-            )
-        {
-            return Ok(Classification::Decided(Vec::new()));
-        }
+        // Circle-relation callers have already certified support incidence.
+        // Recovering the retained projective parameter is therefore both the
+        // direct proof and the finite-domain test; a Cartesian bounds proof
+        // would only repeat exact coordinate work before the same inverse.
         if self.degree() == 2
             || self
                 .data
@@ -1280,6 +1278,14 @@ impl RationalBezier2 {
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 },
             );
+        }
+        if let Classification::Decided(bounds) = self.certified_bounds_classified(policy)
+            && matches!(
+                bounds.contains_point(point, policy),
+                Classification::Decided(false)
+            )
+        {
+            return Ok(Classification::Decided(Vec::new()));
         }
         Ok(match self.point_incidence_classified(point, policy)? {
             Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {
