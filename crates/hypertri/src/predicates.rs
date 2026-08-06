@@ -32,6 +32,22 @@ pub(crate) fn point_in_or_on_triangle(
     ))
 }
 
+/// Decide triangle containment using an orientation already consumed by the
+/// same operation-local kernel.
+pub(crate) fn point_in_or_on_triangle_with_orientation(
+    kernel: &ExactKernel,
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+    orientation: Sign,
+) -> Result<bool> {
+    Ok(matches!(
+        kernel.classify_point_triangle_with_orientation(a, b, c, point, orientation)?,
+        TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex
+    ))
+}
+
 /// Decide whether a point lies on a closed segment.
 pub(crate) fn point_on_segment(
     kernel: &ExactKernel,

@@ -260,11 +260,12 @@ pub(crate) fn insert_point(
             point,
             triangles.len().saturating_sub(1),
         )? {
-            let location = kernel.classify_point_triangle(
+            let location = kernel.classify_point_triangle_with_orientation(
                 &points[triangles[triangle][0]],
                 &points[triangles[triangle][1]],
                 &points[triangles[triangle][2]],
                 &points[point],
+                Sign::Positive,
             )?;
             if location != TriangleLocation::Outside {
                 located = Some((triangle, location));
@@ -273,11 +274,12 @@ pub(crate) fn insert_point(
     }
     if located.is_none() {
         for (triangle_index, triangle) in triangles.iter().copied().enumerate() {
-            let location = kernel.classify_point_triangle(
+            let location = kernel.classify_point_triangle_with_orientation(
                 &points[triangle[0]],
                 &points[triangle[1]],
                 &points[triangle[2]],
                 &points[point],
+                Sign::Positive,
             )?;
             if !matches!(
                 location,

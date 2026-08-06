@@ -906,26 +906,27 @@ fn triangulate_cavity_side(
                 if candidate == previous || candidate == current || candidate == next {
                     continue;
                 }
-                if predicates::point_in_or_on_triangle(
+                if predicates::point_in_or_on_triangle_with_orientation(
                     kernel,
                     &points[previous],
                     &points[current],
                     &points[next],
                     &points[candidate],
+                    turn,
                 )? {
                     contains_vertex = true;
                     break;
                 }
             }
             if !contains_vertex {
-                ear = Some((position, [previous, current, next]));
+                ear = Some((position, [previous, current, next], turn));
                 break;
             }
         }
-        let Some((position, triangle)) = ear else {
+        let Some((position, triangle, turn)) = ear else {
             return Err(Error::NoEarFound);
         };
-        triangles.push(make_oriented(kernel, points, triangle)?);
+        triangles.push(oriented_triangle(turn, triangle)?);
         ring.remove(position);
     }
     if ring.len() == 3 {
@@ -1800,17 +1801,17 @@ fn adjacent_triangles(
     Ok([adjacent(owners[0])?, adjacent(owners[1])?])
 }
 
-fn make_oriented(
-    kernel: &ExactKernel,
-    points: &[Point2],
-    mut triangle: Triangle,
-) -> Result<Triangle> {
+fn make_oriented(kernel: &ExactKernel, points: &[Point2], triangle: Triangle) -> Result<Triangle> {
     let sign = predicates::orient2(
         kernel,
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
     )?;
+    oriented_triangle(sign, triangle)
+}
+
+fn oriented_triangle(sign: Sign, mut triangle: Triangle) -> Result<Triangle> {
     match sign {
         Sign::Positive => Ok(triangle),
         Sign::Negative => {

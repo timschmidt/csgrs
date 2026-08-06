@@ -141,28 +141,42 @@ impl ExactKernel {
         c: &Point2,
         point: &Point2,
     ) -> Result<TriangleLocation> {
-        classify_point_triangle(self, a, b, c, point)
+        let orientation = self.orient2(a, b, c)?;
+        self.classify_point_triangle_with_orientation(a, b, c, point, orientation)
+    }
+
+    /// Classify a point after the ordered triangle orientation has already
+    /// been decided by this operation's exact kernel.
+    ///
+    /// Incremental triangulation retains positive winding for every active
+    /// triangle, and cavity ear selection decides the same turn immediately
+    /// before testing contained vertices. Reusing that topological fact avoids
+    /// rebuilding the fixed determinant while every query-edge orientation
+    /// still enters the normal policy-aware predicate cascade.
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn classify_point_triangle_with_orientation(
+        &self,
+        a: &Point2,
+        b: &Point2,
+        c: &Point2,
+        point: &Point2,
+        orientation: Sign,
+    ) -> Result<TriangleLocation> {
+        classify_point_triangle_with_orientation(self, a, b, c, point, orientation)
     }
 }
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]
-fn classify_point_triangle(
+fn classify_point_triangle_with_orientation(
     kernel: &ExactKernel,
     a: &Point2,
     b: &Point2,
     c: &Point2,
     point: &Point2,
+    orientation: Sign,
 ) -> Result<TriangleLocation> {
-    let orientation = kernel.orient2(a, b, c)?;
     if orientation == Sign::Zero {
         return Ok(TriangleLocation::Degenerate);
-    }
-
-    if points_equal(kernel, point, a)?
-        || points_equal(kernel, point, b)?
-        || points_equal(kernel, point, c)?
-    {
-        return Ok(TriangleLocation::OnVertex);
     }
 
     let ab = kernel.orient2(a, b, point)?;
@@ -170,22 +184,14 @@ fn classify_point_triangle(
     let ca = kernel.orient2(c, a, point)?;
     let signs = [ab, bc, ca];
 
-    let has_negative = signs.contains(&Sign::Negative);
-    let has_positive = signs.contains(&Sign::Positive);
-    if has_negative && has_positive {
+    if signs.contains(&orientation.reversed()) {
         return Ok(TriangleLocation::Outside);
     }
-    if signs.contains(&Sign::Zero) {
-        Ok(TriangleLocation::OnEdge)
-    } else {
-        Ok(TriangleLocation::Inside)
+    match signs.iter().filter(|&&sign| sign == Sign::Zero).count() {
+        0 => Ok(TriangleLocation::Inside),
+        1 => Ok(TriangleLocation::OnEdge),
+        _ => Ok(TriangleLocation::OnVertex),
     }
-}
-
-#[cfg(any(feature = "earcut", feature = "cdt"))]
-fn points_equal(kernel: &ExactKernel, left: &Point2, right: &Point2) -> Result<bool> {
-    Ok(kernel.cmp(&left.x, &right.x)? == Ordering::Equal
-        && kernel.cmp(&left.y, &right.y)? == Ordering::Equal)
 }
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -281,7 +287,10 @@ mod tests {
         let left_point = Point2::new(left, Real::zero());
         let right_point = Point2::new(right, Real::zero());
         let kernel = kernel();
-        assert_eq!(points_equal(&kernel, &left_point, &right_point), Ok(true));
+        assert_eq!(
+            crate::predicates::points_equal(&kernel, &left_point, &right_point),
+            Ok(true)
+        );
         assert_eq!(
             kernel.finish(()).certainty,
             TriangulationCertainty::Approximate512Consumed
@@ -310,7 +319,7 @@ mod tests {
 
     #[cfg(feature = "earcut")]
     #[test]
-    fn triangle_vertex_classification_uses_kernel_coordinate_equality() {
+    fn triangle_vertex_classification_uses_exact_edge_incidence() {
         let left = Real::pi() + Real::e();
         let right = Real::e() + Real::pi();
         let a = Point2::new(left.clone(), Real::zero());
@@ -324,5 +333,89 @@ mod tests {
                 .unwrap(),
             TriangleLocation::OnVertex
         );
+    }
+
+    #[test]
+    fn retained_triangle_orientation_matches_immediate_classification() {
+        let triangle = [p(0, 0), p(4, 0), p(0, 4)];
+        let queries = [
+            (p(1, 1), TriangleLocation::Inside),
+            (p(2, 0), TriangleLocation::OnEdge),
+            (p(0, 0), TriangleLocation::OnVertex),
+            (p(3, 3), TriangleLocation::Outside),
+        ];
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let context = TriangulationContext::new(policy);
+            for (indices, orientation) in [([0, 1, 2], Sign::Positive), ([0, 2, 1], Sign::Negative)]
+            {
+                let [a, b, c] = indices.map(|index| &triangle[index]);
+                for (query, expected) in &queries {
+                    let immediate = ExactKernel::new(&context);
+                    assert_eq!(
+                        immediate.classify_point_triangle(a, b, c, query),
+                        Ok(*expected)
+                    );
+
+                    let retained = ExactKernel::new(&context);
+                    assert_eq!(
+                        retained.classify_point_triangle_with_orientation(
+                            a,
+                            b,
+                            c,
+                            query,
+                            orientation,
+                        ),
+                        Ok(*expected)
+                    );
+                    assert_eq!(
+                        retained.finish(()).certainty,
+                        TriangulationCertainty::Certified
+                    );
+                }
+            }
+
+            let degenerate = ExactKernel::new(&context);
+            assert_eq!(
+                degenerate.classify_point_triangle_with_orientation(
+                    &triangle[0],
+                    &triangle[1],
+                    &triangle[0],
+                    &queries[0].0,
+                    Sign::Zero,
+                ),
+                Ok(TriangleLocation::Degenerate)
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn retained_triangle_orientation_omits_the_fixed_determinant() {
+        let context = TriangulationContext::new(PredicatePolicy::STRICT);
+        let [a, b, c, query] = [p(0, 0), p(4, 0), p(0, 4), p(1, 1)];
+
+        hyperreal::dispatch_trace::reset();
+        let immediate = hyperreal::dispatch_trace::with_recording(|| {
+            ExactKernel::new(&context).classify_point_triangle(&a, &b, &c, &query)
+        });
+        assert_eq!(immediate, Ok(TriangleLocation::Inside));
+        let immediate_trace = hyperreal::dispatch_trace::take_trace();
+
+        hyperreal::dispatch_trace::reset();
+        let retained = hyperreal::dispatch_trace::with_recording(|| {
+            ExactKernel::new(&context).classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &c,
+                &query,
+                Sign::Positive,
+            )
+        });
+        assert_eq!(retained, Ok(TriangleLocation::Inside));
+        let retained_trace = hyperreal::dispatch_trace::take_trace();
+
+        assert_eq!(immediate_trace.operation_count("hyperlimit", "orient2d"), 4);
+        assert_eq!(retained_trace.operation_count("hyperlimit", "orient2d"), 3);
     }
 }
