@@ -5254,38 +5254,73 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(RegionPointLocation::Outside);
         }
         let classification = if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
-            let representative = chord.start().as_exact().or_else(|| chord.end().as_exact());
-            if let Some(point) = representative {
-                other
-                    .classify_point_raw(point, &self.data.policy)
-                    .map_err(|cause| self.invalid(carrier_index, cause))?
-            } else {
-                #[cfg(feature = "predicates")]
+            #[cfg(feature = "predicates")]
+            {
+                // Complete pair replay guarantees that an open split fragment
+                // cannot change faces. Prefer an endpoint that is certified
+                // off the other boundary: this keeps the common exact-point
+                // path cheap, but never promotes an isolated endpoint contact
+                // to a positive-length shared fragment. Multi-field endpoints
+                // retain their compact bounds instead of constructing a joint
+                // algebraic field.
+                let endpoint_classification =
+                    self.classify_chord_endpoint_off_other_boundary(carrier_index, chord, other)?;
+                if let Some(
+                    classification @ Classification::Decided(
+                        RegionPointLocation::Inside | RegionPointLocation::Outside,
+                    ),
+                ) = endpoint_classification
                 {
-                    if let Some(point) = chord
-                        .start()
-                        .as_algebraic()
-                        .or_else(|| chord.end().as_algebraic())
+                    classification
+                } else {
+                    let endpoint_reason = match endpoint_classification {
+                        Some(Classification::Uncertain(reason)) => Some(reason),
+                        Some(Classification::Decided(RegionPointLocation::Boundary))
+                        | Some(Classification::Decided(
+                            RegionPointLocation::Inside | RegionPointLocation::Outside,
+                        ))
+                        | None => None,
+                    };
+                    let interior_classification = match chord
+                        .representative_point(&self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
                     {
-                        other
-                            .classify_algebraic_point_off_boundary_raw(point, &self.data.policy)
-                            .map_err(|cause| self.invalid(carrier_index, cause))?
-                    } else if let Some(classification) = self
-                        .classify_correlated_chord_endpoint_off_other_boundary(
-                            carrier_index,
-                            chord,
-                            other,
-                        )?
-                    {
-                        classification
-                    } else {
-                        return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+                        Classification::Decided(
+                            RationalBezierIntersectionPointEvidence2::Exact(point),
+                        ) => other
+                            .classify_point_raw(&point, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?,
+                        Classification::Decided(
+                            RationalBezierIntersectionPointEvidence2::Algebraic(point),
+                        ) => other
+                            .classify_algebraic_point_off_boundary_raw(&point, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?,
+                        Classification::Decided(
+                            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+                        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    };
+                    match interior_classification {
+                        Classification::Decided(
+                            location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
+                        ) => Classification::Decided(location),
+                        Classification::Decided(RegionPointLocation::Boundary) => {
+                            Classification::Uncertain(UncertaintyReason::Boundary)
+                        }
+                        Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                            Classification::Uncertain(
+                                endpoint_reason.unwrap_or(UncertaintyReason::Unsupported),
+                            )
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
                     }
                 }
-                #[cfg(not(feature = "predicates"))]
-                {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                }
+            }
+            #[cfg(not(feature = "predicates"))]
+            {
+                let _ = chord;
+                Classification::Uncertain(UncertaintyReason::Unsupported)
             }
         } else if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
             let parameter = match fragment
@@ -5336,21 +5371,52 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     #[cfg(feature = "predicates")]
-    fn classify_correlated_chord_endpoint_off_other_boundary(
+    fn classify_chord_endpoint_off_other_boundary(
         &self,
         carrier_index: usize,
         chord: &crate::BezierAlgebraicChord2,
         other_region: &CurveRegion2,
     ) -> ExactCurveResult<Option<Classification<RegionPointLocation>>> {
+        let mut last_reason = None;
         for endpoint in [chord.start(), chord.end()] {
-            let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = endpoint
-            else {
-                continue;
+            let direct = match endpoint {
+                RationalBezierIntersectionPointEvidence2::Exact(point) => Some(
+                    other_region
+                        .classify_point_raw(point, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?,
+                ),
+                RationalBezierIntersectionPointEvidence2::Algebraic(point) => Some(
+                    other_region
+                        .classify_algebraic_point_raw(point, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?,
+                ),
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_) => None,
             };
+            if let Some(classification) = direct {
+                match classification {
+                    Classification::Decided(
+                        location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
+                    ) => return Ok(Some(Classification::Decided(location))),
+                    Classification::Decided(RegionPointLocation::Boundary) => {
+                        last_reason = Some(UncertaintyReason::Boundary);
+                    }
+                    Classification::Uncertain(reason) => last_reason = Some(reason),
+                }
+                continue;
+            }
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-                let Classification::Decided(bounds) =
-                    point.conservative_bounds_refined(refinement_steps, &self.data.policy)
-                else {
+                let bounds = match endpoint {
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
+                        point.conservative_bounds_refined(refinement_steps, &self.data.policy)
+                    }
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) => {
+                        point.conservative_bounds_refined(refinement_steps, &self.data.policy)
+                    }
+                    RationalBezierIntersectionPointEvidence2::Exact(_)
+                    | RationalBezierIntersectionPointEvidence2::Algebraic(_) => unreachable!(),
+                };
+                let Classification::Decided(bounds) = bounds else {
                     continue;
                 };
                 let mut separated_from_boundary = true;
@@ -5383,13 +5449,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     ((bounds.min().y() + bounds.max().y()) / &two)
                         .map_err(|cause| self.invalid(carrier_index, cause.into()))?,
                 );
-                return other_region
+                let classification = other_region
                     .classify_point_raw(&representative, &self.data.policy)
-                    .map(Some)
-                    .map_err(|cause| self.invalid(carrier_index, cause));
+                    .map_err(|cause| self.invalid(carrier_index, cause))?;
+                match classification {
+                    Classification::Decided(
+                        location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
+                    ) => return Ok(Some(Classification::Decided(location))),
+                    Classification::Decided(RegionPointLocation::Boundary) => {
+                        last_reason = Some(UncertaintyReason::Boundary);
+                    }
+                    Classification::Uncertain(reason) => last_reason = Some(reason),
+                }
+                break;
             }
         }
-        Ok(None)
+        Ok(last_reason.map(Classification::Uncertain))
     }
 
     fn carrier_bounds_are_outside_other_region(&self, carrier_index: usize) -> bool {

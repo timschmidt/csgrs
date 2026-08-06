@@ -1883,6 +1883,18 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
             ),
             Classification::Decided(RegionPointLocation::Inside),
         );
+
+        let third = second
+            .transform_similarity(&translation, &policy)
+            .expect("a second exact translation must retain selected round evidence")
+            .into_value();
+        let replay = batch
+            .value
+            .intersection()
+            .boolean_regions(&third, &policy)
+            .expect("a split cusp/chord contact must re-enter a later Boolean exactly");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert!(!replay.value.intersection().is_empty());
     }
 }
 
