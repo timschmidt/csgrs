@@ -106,6 +106,8 @@ pub use bezier_flatten::{
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
+#[cfg(feature = "predicates")]
+pub use bezier_offset::BezierAlgebraicChordPairPoint2;
 pub use bezier_offset::{
     BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2,
     BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2, BezierParallelApproximationCurve2,

@@ -2027,6 +2027,10 @@ fn retained_fragment_endpoint_evidence(
                         ))
                     }),
                 ),
+                #[cfg(feature = "predicates")]
+                crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => {
+                    (None, None)
+                }
             };
             Ok(RetainedEndpointEvidence {
                 point,
@@ -3970,6 +3974,10 @@ impl CurveRegion2 {
             .certify(Arc::from(vec![true; loop_count]));
         data.certified_regularized_filled_left_topology = true;
         Ok(self)
+    }
+
+    pub(crate) fn has_certified_regularized_filled_left_topology(&self) -> bool {
+        self.data.certified_regularized_filled_left_topology
     }
 
     pub(crate) fn with_certified_loop_roles(

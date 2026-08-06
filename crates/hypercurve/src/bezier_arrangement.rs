@@ -1229,6 +1229,8 @@ fn retained_endpoint_data(
                             y: Box::new(point.y()?.representation()?.clone()),
                         })
                     }
+                    #[cfg(feature = "predicates")]
+                    crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => None,
                 };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());

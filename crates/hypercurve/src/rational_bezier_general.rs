@@ -152,7 +152,7 @@ pub enum RationalBezierIntersectionCandidates2 {
     DegenerateResultant,
 }
 
-/// Exact affine point evidence retained for a rational Bezier contact.
+/// Exact affine point evidence retained for a curve contact.
 #[derive(Clone, Debug, PartialEq)]
 pub enum RationalBezierIntersectionPointEvidence2 {
     /// The contact point is represented directly by [`Real`] coordinates.
@@ -162,6 +162,12 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// A retained rational-expression status may defer coordinate images
     /// while preserving the exact source curve and parameter.
     Algebraic(RationalBezierAlgebraicPointImage2),
+    /// A unique nonparallel intersection of two retained algebraic chords.
+    ///
+    /// The four endpoint fields remain separate and are refined only when a
+    /// coordinate comparison or enclosure is requested.
+    #[cfg(feature = "predicates")]
+    AlgebraicChordPair(crate::BezierAlgebraicChordPairPoint2),
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
@@ -170,6 +176,8 @@ impl RationalBezierIntersectionPointEvidence2 {
         match self {
             Self::Exact(point) => Some(point),
             Self::Algebraic(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordPair(_) => None,
         }
     }
 
@@ -178,17 +186,29 @@ impl RationalBezierIntersectionPointEvidence2 {
         match self {
             Self::Exact(_) => None,
             Self::Algebraic(point) => Some(point),
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordPair(_) => None,
+        }
+    }
+
+    /// Returns retained correlated chord-pair point evidence, when present.
+    #[cfg(feature = "predicates")]
+    pub const fn as_algebraic_chord_pair(&self) -> Option<&crate::BezierAlgebraicChordPairPoint2> {
+        match self {
+            Self::AlgebraicChordPair(point) => Some(point),
+            Self::Exact(_) | Self::Algebraic(_) => None,
         }
     }
 
     /// Compares two retained affine points without materializing an algebraic
     /// coordinate or sampling either isolating interval.
     ///
-    /// Exact points use the canonical [`Point2`] predicate. Algebraic points
+    /// Exact points use the canonical [`Point2`] predicate. Algebraic images
     /// first reuse shared parametric provenance and disjoint source bounds,
-    /// then compare their represented coordinate roots. Mixed points compare
-    /// against constant represented-root evidence. Any predicate that remains
-    /// unproved stays explicit under `policy`.
+    /// then compare represented coordinate roots. Correlated chord contacts
+    /// retain their defining supports and refine enclosures without composing
+    /// endpoint fields. Any predicate that remains unproved stays explicit
+    /// under `policy`.
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => {
@@ -267,6 +287,14 @@ impl RationalBezierIntersectionPointEvidence2 {
                     (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
                     _ => Classification::Uncertain(UncertaintyReason::RealSign),
                 }
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicChordPair(first), Self::AlgebraicChordPair(second)) => {
+                first.same_point(second, policy)
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicChordPair(point), other) | (other, Self::AlgebraicChordPair(point)) => {
+                point.same_point_evidence(other, policy)
             }
         }
     }
