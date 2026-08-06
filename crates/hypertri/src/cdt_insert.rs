@@ -1236,7 +1236,6 @@ pub(crate) struct TriangleTopology {
 
 #[derive(Default)]
 struct TopologyPatchScratch {
-    replacement_indices: Vec<usize>,
     old_boundary: Vec<(EdgeKey, Option<usize>)>,
     edge_uses: Vec<EdgeUse>,
     new_neighbors: Vec<[Option<usize>; 3]>,
@@ -1367,7 +1366,6 @@ impl TriangleTopology {
         patch: &mut TopologyPatchScratch,
     ) -> Result<()> {
         let TopologyPatchScratch {
-            replacement_indices,
             old_boundary,
             edge_uses,
             new_neighbors,
@@ -1407,16 +1405,13 @@ impl TriangleTopology {
         }
 
         let appended = replacement.len() - indices.len();
-        let final_len = triangles
+        triangles
             .len()
             .checked_add(appended)
             .ok_or(Error::InvalidInput {
                 reason: "topology replacement triangle count overflow",
             })?;
-        replacement_indices.clear();
-        replacement_indices.reserve(replacement.len());
-        replacement_indices.extend_from_slice(indices);
-        replacement_indices.extend(triangles.len()..final_len);
+        let original_len = triangles.len();
 
         old_boundary.clear();
         for &triangle_index in indices {
@@ -1479,11 +1474,11 @@ impl TriangleTopology {
 
         edge_uses.clear();
         edge_uses.reserve(replacement.len().saturating_mul(3));
-        for (&triangle_index, triangle) in replacement_indices.iter().zip(replacement) {
+        for (local, triangle) in replacement.iter().enumerate() {
             for edge in triangle_edges(*triangle) {
                 edge_uses.push(EdgeUse {
                     edge,
-                    triangle: triangle_index,
+                    triangle: replacement_triangle_index(indices, original_len, local),
                 });
             }
         }
@@ -1508,11 +1503,12 @@ impl TriangleTopology {
                             reason: "topology replacement changes the region boundary",
                         })?;
                     let triangle = edge_uses[start].triangle;
-                    let local = replacement_indices.binary_search(&triangle).map_err(|_| {
-                        Error::InvalidInput {
-                            reason: "topology replacement edge has no triangle slot",
-                        }
-                    })?;
+                    let local = replacement_local_index(
+                        indices,
+                        original_len,
+                        replacement.len(),
+                        triangle,
+                    )?;
                     let slot = triangle_edge_slot(replacement[local], edge)?;
                     let outside = old_boundary[boundary_position].1;
                     new_neighbors[local][slot] = outside;
@@ -1534,17 +1530,10 @@ impl TriangleTopology {
                 2 => {
                     let first = edge_uses[start].triangle;
                     let second = edge_uses[start + 1].triangle;
-                    let first_local = replacement_indices.binary_search(&first).map_err(|_| {
-                        Error::InvalidInput {
-                            reason: "topology replacement edge has no first triangle slot",
-                        }
-                    })?;
+                    let first_local =
+                        replacement_local_index(indices, original_len, replacement.len(), first)?;
                     let second_local =
-                        replacement_indices.binary_search(&second).map_err(|_| {
-                            Error::InvalidInput {
-                                reason: "topology replacement edge has no second triangle slot",
-                            }
-                        })?;
+                        replacement_local_index(indices, original_len, replacement.len(), second)?;
                     let first_slot = triangle_edge_slot(replacement[first_local], edge)?;
                     let second_slot = triangle_edge_slot(replacement[second_local], edge)?;
                     new_neighbors[first_local][first_slot] = Some(second);
@@ -1566,12 +1555,12 @@ impl TriangleTopology {
 
         triangles.reserve(appended);
         self.neighbors.reserve(appended);
-        for (local, ((&triangle_index, triangle), neighbors)) in replacement_indices
+        for (local, (triangle, neighbors)) in replacement
             .iter()
-            .zip(replacement)
             .zip(new_neighbors.iter().copied())
             .enumerate()
         {
+            let triangle_index = replacement_triangle_index(indices, original_len, local);
             if local < indices.len() {
                 triangles[triangle_index] = *triangle;
                 self.neighbors[triangle_index] = neighbors;
@@ -1588,6 +1577,37 @@ impl TriangleTopology {
             self.neighbors[outside][slot] = Some(triangle);
         }
         Ok(())
+    }
+}
+
+fn replacement_triangle_index(indices: &[usize], original_len: usize, local: usize) -> usize {
+    if local < indices.len() {
+        indices[local]
+    } else {
+        original_len + local - indices.len()
+    }
+}
+
+fn replacement_local_index(
+    indices: &[usize],
+    original_len: usize,
+    replacement_len: usize,
+    triangle: usize,
+) -> Result<usize> {
+    if triangle < original_len {
+        return indices
+            .binary_search(&triangle)
+            .map_err(|_| Error::InvalidInput {
+                reason: "topology replacement edge has no triangle slot",
+            });
+    }
+    let local = indices.len() + triangle - original_len;
+    if local < replacement_len {
+        Ok(local)
+    } else {
+        Err(Error::InvalidInput {
+            reason: "topology replacement edge has no appended slot",
+        })
     }
 }
 
