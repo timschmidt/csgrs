@@ -235,6 +235,7 @@ struct PairwiseIntersectionScratch<'point> {
     coplanar_points: Vec<DeferredCoplanarPoint<'point>>,
     coplanar_classifications: Vec<Option<Classification>>,
     coplanar_queries: Vec<Option<Point3PredicateQuery>>,
+    coplanar_plane_predicates: Vec<Option<PointPlanePredicate<'point>>>,
 }
 
 impl ConstructedPairwiseIntersection {
@@ -1250,10 +1251,10 @@ fn classify_polygon_vertex_with_plane_predicate_decision(
 
 fn intersect_polygons_with_vertices_constructed<'point>(
     decisions: &DecisionContext,
-    polygon: &ConvexPolygon,
+    polygon: &'point ConvexPolygon,
     polygon_vertices: &'point [Point3],
     polygon_support_identity: Option<ConstructionPlaneIdentity>,
-    other: &ConvexPolygon,
+    other: &'point ConvexPolygon,
     other_vertices: &'point [Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
     scratch: &mut PairwiseIntersectionScratch<'point>,
@@ -1261,6 +1262,7 @@ fn intersect_polygons_with_vertices_constructed<'point>(
     scratch.coplanar_points.clear();
     scratch.coplanar_classifications.clear();
     scratch.coplanar_queries.clear();
+    scratch.coplanar_plane_predicates.clear();
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
         return Ok(ConstructedPairwiseIntersection::Disjoint);
     }
@@ -1540,7 +1542,7 @@ pub(crate) fn pairwise_intersections_by_polygon(
 
 fn append_pairwise_intersection<'point>(
     decisions: &DecisionContext,
-    polygons: &[ConvexPolygon],
+    polygons: &'point [ConvexPolygon],
     vertices: &'point PolygonVertexArena,
     certified_embedded_inputs: &[bool],
     graph: &mut PairwiseIntersectionGraphBuilder,
@@ -1903,9 +1905,9 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
 
 fn intersect_coplanar_constructed<'point>(
     decisions: &DecisionContext,
-    polygon: &ConvexPolygon,
+    polygon: &'point ConvexPolygon,
     polygon_vertices: &'point [Point3],
-    other: &ConvexPolygon,
+    other: &'point ConvexPolygon,
     other_vertices: &'point [Point3],
     retain_construction: bool,
     scratch: &mut PairwiseIntersectionScratch<'point>,
@@ -1914,6 +1916,7 @@ fn intersect_coplanar_constructed<'point>(
         coplanar_points,
         coplanar_classifications,
         coplanar_queries,
+        coplanar_plane_predicates,
     } = scratch;
     let mut relation = CoplanarClassificationCache::new(
         decisions,
@@ -1923,6 +1926,7 @@ fn intersect_coplanar_constructed<'point>(
         other_vertices,
         coplanar_classifications,
         coplanar_queries,
+        coplanar_plane_predicates,
     )?;
     if relation.polygons_share_area()? {
         return Ok(ConstructedPairwiseIntersection::CoplanarOverlap);
@@ -1970,35 +1974,37 @@ fn intersect_coplanar_constructed<'point>(
     materialize_coplanar_intersection(decisions, polygon.support_plane(), coplanar_points)
 }
 
-/// Lazily retains the exact point/edge classifications shared by the
-/// separating-axis and lower-dimensional-contact passes for one coplanar
-/// polygon pair. The original predicate order and short-circuit behavior stay
-/// intact, so this cache cannot consume a terminal policy decision that the
-/// geometric result did not already require.
-struct CoplanarClassificationCache<'geometry, 'scratch> {
-    right_vertices_against_left: CoplanarClassificationMatrix<'geometry, 'scratch>,
-    left_vertices_against_right: CoplanarClassificationMatrix<'geometry, 'scratch>,
+/// Lazily retains the exact point/edge classifications and each demanded edge
+/// plane schedule shared by the separating-axis and lower-dimensional-contact
+/// passes for one coplanar polygon pair. The original predicate order and
+/// short-circuit behavior stay intact, so this cache cannot consume a terminal
+/// policy decision that the geometric result did not already require.
+struct CoplanarClassificationCache<'context, 'geometry, 'scratch> {
+    right_vertices_against_left: CoplanarClassificationMatrix<'context, 'geometry, 'scratch>,
+    left_vertices_against_right: CoplanarClassificationMatrix<'context, 'geometry, 'scratch>,
 }
 
-struct CoplanarClassificationMatrix<'geometry, 'scratch> {
-    decisions: &'geometry DecisionContext,
+struct CoplanarClassificationMatrix<'context, 'geometry, 'scratch> {
+    decisions: &'context DecisionContext,
     container: &'geometry ConvexPolygon,
     vertex_owner: &'geometry ConvexPolygon,
     edges: &'geometry [Plane],
     vertices: &'geometry [Point3],
     values: &'scratch mut [Option<Classification>],
     queries: &'scratch mut [Option<Point3PredicateQuery>],
+    plane_predicates: &'scratch mut [Option<PointPlanePredicate<'geometry>>],
 }
 
-impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
+impl<'context, 'geometry, 'scratch> CoplanarClassificationCache<'context, 'geometry, 'scratch> {
     fn new(
-        decisions: &'geometry DecisionContext,
+        decisions: &'context DecisionContext,
         left: &'geometry ConvexPolygon,
         left_vertices: &'geometry [Point3],
         right: &'geometry ConvexPolygon,
         right_vertices: &'geometry [Point3],
         values: &'scratch mut Vec<Option<Classification>>,
         queries: &'scratch mut Vec<Option<Point3PredicateQuery>>,
+        plane_predicates: &'scratch mut Vec<Option<PointPlanePredicate<'geometry>>>,
     ) -> HypermeshResult<Self> {
         let left_edges = left.edge_planes();
         let right_edges = right.edge_planes();
@@ -2039,6 +2045,20 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
             })?;
         queries.resize(query_len, None);
         let (right_queries, left_queries) = queries.split_at_mut(right_vertices.len());
+        let predicate_len = left_edges.len().checked_add(right_edges.len()).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "coplanar plane predicate scratch",
+            },
+        )?;
+        plane_predicates.clear();
+        plane_predicates
+            .try_reserve_exact(predicate_len)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "coplanar plane predicate scratch",
+            })?;
+        plane_predicates.resize(predicate_len, None);
+        let (left_plane_predicates, right_plane_predicates) =
+            plane_predicates.split_at_mut(left_edges.len());
         Ok(Self {
             right_vertices_against_left: CoplanarClassificationMatrix {
                 decisions,
@@ -2048,6 +2068,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
                 vertices: right_vertices,
                 values: left_values,
                 queries: right_queries,
+                plane_predicates: left_plane_predicates,
             },
             left_vertices_against_right: CoplanarClassificationMatrix {
                 decisions,
@@ -2057,6 +2078,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
                 vertices: left_vertices,
                 values: right_values,
                 queries: left_queries,
+                plane_predicates: right_plane_predicates,
             },
         })
     }
@@ -2079,7 +2101,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
     }
 }
 
-impl CoplanarClassificationMatrix<'_, '_> {
+impl CoplanarClassificationMatrix<'_, '_, '_> {
     /// Exact convex separating-axis test for positive-area coplanar overlap.
     ///
     /// Every edge plane bounds the polygon's negative halfspace. If every
@@ -2180,17 +2202,24 @@ impl CoplanarClassificationMatrix<'_, '_> {
             .edges
             .get(edge)
             .ok_or(HypermeshError::UnknownClassification)?;
+        let plane_predicate = self
+            .plane_predicates
+            .get_mut(edge)
+            .ok_or(HypermeshError::UnknownClassification)?
+            .get_or_insert_with(|| PointPlanePredicate::new(self.decisions, plane));
         let classification = match self.vertex_owner.known_vertex_predicate_query(vertex) {
-            Some(query) => {
-                classify_point_with_rational_query_decision(self.decisions, point, plane, query)?
-            }
+            Some(query) => plane_predicate.classify(self.decisions, point, Some(query))?,
             None => {
                 let query = self
                     .queries
                     .get_mut(vertex)
                     .ok_or(HypermeshError::UnknownClassification)?
                     .get_or_insert_with(|| Point3PredicateQuery::new(point));
-                query.classify(self.decisions, point, plane)?
+                plane_predicate.classify(
+                    self.decisions,
+                    point,
+                    query.rational_filter_query().as_ref(),
+                )?
             }
         };
         *self
@@ -3852,7 +3881,7 @@ mod tests {
     }
 
     #[test]
-    fn pairwise_scratch_drops_prior_points_and_resets_coplanar_classifications() {
+    fn pairwise_scratch_resets_coplanar_facts_and_schedules() {
         let decisions = crate::test_support::approximate_decisions();
         let triangle = crate::test_support::approximate_convex_triangle(
             &Point3::origin(),
@@ -3894,6 +3923,13 @@ mod tests {
         assert!(scratch.coplanar_points.is_empty());
         assert!(scratch.coplanar_classifications.iter().any(Option::is_some));
         assert!(scratch.coplanar_queries.iter().any(Option::is_some));
+        assert_eq!(scratch.coplanar_plane_predicates.len(), 6);
+        assert!(
+            scratch
+                .coplanar_plane_predicates
+                .iter()
+                .all(Option::is_some)
+        );
 
         assert!(matches!(
             intersect_polygons_with_vertices_constructed(
@@ -3910,6 +3946,18 @@ mod tests {
             ConstructedPairwiseIntersection::Disjoint
         ));
         assert!(scratch.coplanar_points.is_empty());
+        assert_eq!(scratch.coplanar_plane_predicates.len(), 6);
+        assert!(
+            scratch.coplanar_plane_predicates[..3]
+                .iter()
+                .any(Option::is_some)
+        );
+        assert!(
+            scratch
+                .coplanar_plane_predicates
+                .iter()
+                .any(Option::is_none)
+        );
         assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
     }
 
@@ -3930,6 +3978,7 @@ mod tests {
         let mut values = vec![None; edges.len()];
         values[0] = Some(Classification::Positive);
         let mut queries = vec![None];
+        let mut plane_predicates = vec![None; edges.len()];
         let mut matrix = CoplanarClassificationMatrix {
             decisions: &decisions,
             container: &triangle,
@@ -3938,6 +3987,7 @@ mod tests {
             vertices: &vertices,
             values: &mut values,
             queries: &mut queries,
+            plane_predicates: &mut plane_predicates,
         };
 
         assert!(matrix.vertex_is_contained(0).unwrap());
