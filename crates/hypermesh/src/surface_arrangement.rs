@@ -262,13 +262,6 @@ struct SurfaceFacet {
     cells: [u32; 2],
 }
 
-#[derive(Clone, Copy, Debug)]
-struct SurfaceSheet {
-    vertices: [u32; 3],
-    cells: [u32; 2],
-    bundle: u32,
-}
-
 #[derive(Debug)]
 struct SurfaceCellComplex {
     facets: Vec<SurfaceFacet>,
@@ -747,24 +740,16 @@ fn assemble_surface_cells(
     }
 
     let (side_cells, cell_count) = sets.into_cells()?;
-    let mut sheets = Vec::new();
-    sheets.try_reserve_exact(contributions.len()).map_err(|_| {
-        HypermeshError::CapacityOverflow {
-            operation: "surface topology sheets",
-        }
-    })?;
-    for (bundle, pending_facet) in pending.iter().enumerate() {
-        let bundle = compact_len(bundle, "surface topology bundle IDs")?;
-        let start = contribution_offsets[bundle as usize] as usize;
-        let end = contribution_offsets[bundle as usize + 1] as usize;
-        for sheet in start..end {
-            sheets.push(SurfaceSheet {
-                vertices: pending_facet.vertices,
-                cells: [side_cells[sheet * 2], side_cells[sheet * 2 + 1]],
-                bundle,
-            });
-        }
+    if side_cells.len() != side_count {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface topology side cells are incomplete",
+        });
     }
+    let topology_transitions = if has_coincident_sheets {
+        &sheet_transitions
+    } else {
+        &_transitions
+    };
     let bounds = surface_bounds(decisions, &surface.points)?;
     let (cell_windings, _component_count) = classify_surface_cells(
         decisions,
@@ -773,8 +758,9 @@ fn assemble_surface_cells(
         source_bvh,
         &bounds,
         &surface.points,
-        &sheets,
-        &sheet_transitions,
+        &pending,
+        &side_cells,
+        topology_transitions,
         &contribution_offsets,
         &contributions,
         operand_count,
@@ -792,12 +778,19 @@ fn assemble_surface_cells(
     for (bundle, pending_facet) in pending.into_iter().enumerate() {
         let start = contribution_offsets[bundle] as usize;
         let end = contribution_offsets[bundle + 1] as usize;
-        let bundle_sheets =
-            sheets
-                .get(start..end)
-                .ok_or(HypermeshError::SurfaceArrangementFailed {
-                    reason: "surface geometric facet has no topology sheet",
-                })?;
+        let side_start = start
+            .checked_mul(2)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface geometric facet sheet sides",
+            })?;
+        let side_end = end.checked_mul(2).ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface geometric facet sheet sides",
+        })?;
+        let bundle_sheets = side_cells.get(side_start..side_end).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet has no topology sheet",
+            },
+        )?;
         let transition_start = bundle * operand_count;
         let cells = geometric_facet_outer_cells(
             bundle_sheets,
@@ -831,24 +824,27 @@ fn assemble_surface_cells(
 }
 
 fn geometric_facet_outer_cells(
-    sheets: &[SurfaceSheet],
+    sheet_side_cells: &[u32],
     cell_windings: &[i32],
     operand_count: usize,
     transition: &[i32],
     scratch: &mut Vec<u64>,
 ) -> HypermeshResult<[u32; 2]> {
-    if sheets.is_empty() || transition.len() != operand_count {
+    if sheet_side_cells.is_empty()
+        || !sheet_side_cells.len().is_multiple_of(2)
+        || transition.len() != operand_count
+    {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface geometric facet has incomplete sheet topology",
         });
     }
-    let Some(cells) = geometric_facet_side_cells(sheets, scratch)? else {
+    let Some(cells) = geometric_facet_side_cells(sheet_side_cells, scratch)? else {
         if transition.iter().any(|&delta| delta != 0) {
             return Err(HypermeshError::SurfaceArrangementFailed {
                 reason: "surface geometric facet sheet stack has no outer sides",
             });
         }
-        return Ok([sheets[0].cells[FRONT]; 2]);
+        return Ok([sheet_side_cells[FRONT]; 2]);
     };
     let front_start = (cells[FRONT] as usize).checked_mul(operand_count).ok_or(
         HypermeshError::CapacityOverflow {
@@ -885,30 +881,27 @@ fn geometric_facet_outer_cells(
 }
 
 fn geometric_facet_side_cells(
-    sheets: &[SurfaceSheet],
+    sheet_side_cells: &[u32],
     scratch: &mut Vec<u64>,
 ) -> HypermeshResult<Option<[u32; 2]>> {
-    if sheets.is_empty() {
+    if sheet_side_cells.is_empty() || !sheet_side_cells.len().is_multiple_of(2) {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface geometric facet has incomplete sheet topology",
         });
     }
+    if let [front, back] = sheet_side_cells {
+        return Ok(Some([*front, *back]));
+    }
     scratch.clear();
-    let side_count = sheets
-        .len()
-        .checked_mul(2)
-        .ok_or(HypermeshError::CapacityOverflow {
-            operation: "surface geometric facet sheet sides",
-        })?;
     scratch
-        .try_reserve(side_count)
+        .try_reserve(sheet_side_cells.len())
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "surface geometric facet sheet sides",
         })?;
-    scratch.extend(sheets.iter().flat_map(|sheet| {
+    scratch.extend(sheet_side_cells.chunks_exact(2).flat_map(|cells| {
         [
-            u64::from(sheet.cells[FRONT]) << 1,
-            (u64::from(sheet.cells[BACK]) << 1) | 1,
+            u64::from(cells[FRONT]) << 1,
+            (u64::from(cells[BACK]) << 1) | 1,
         ]
     }));
     scratch.sort_unstable();
@@ -953,17 +946,18 @@ fn geometric_facet_side_cells(
 }
 
 fn surface_sheet_bundle_side_cells(
-    sheets: &[SurfaceSheet],
+    sheet_side_cells: &[u32],
     contribution_offsets: &[u32],
     sheet: usize,
     scratch: &mut Vec<u64>,
-) -> HypermeshResult<Option<[u32; 2]>> {
-    let bundle = sheets
-        .get(sheet)
+) -> HypermeshResult<(usize, Option<[u32; 2]>)> {
+    let sheet = compact_len(sheet, "surface cell seed sheet IDs")?;
+    let boundary = contribution_offsets.partition_point(|&offset| offset <= sheet);
+    let bundle = boundary
+        .checked_sub(1)
         .ok_or(HypermeshError::SurfaceArrangementFailed {
-            reason: "surface cell seed references an absent facet",
-        })?
-        .bundle as usize;
+            reason: "surface cell seed references an absent geometric facet",
+        })?;
     let start = contribution_offsets.get(bundle).copied().ok_or(
         HypermeshError::SurfaceArrangementFailed {
             reason: "surface cell seed references an absent geometric facet",
@@ -974,24 +968,33 @@ fn surface_sheet_bundle_side_cells(
             reason: "surface cell seed references an absent geometric facet",
         },
     )? as usize;
-    let bundle_sheets = sheets
-        .get(start..end)
-        .ok_or(HypermeshError::SurfaceArrangementFailed {
-            reason: "surface cell seed geometric facet storage is malformed",
-        })?;
-    if bundle_sheets.is_empty()
-        || bundle_sheets
-            .iter()
-            .any(|candidate| candidate.bundle as usize != bundle)
-    {
+    if sheet < start as u32 || sheet >= end as u32 {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface cell seed geometric facet storage is malformed",
         });
     }
-    if let [sheet] = bundle_sheets {
-        return Ok(Some(sheet.cells));
+    let side_start = start
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell seed sheet sides",
+        })?;
+    let side_end = end.checked_mul(2).ok_or(HypermeshError::CapacityOverflow {
+        operation: "surface cell seed sheet sides",
+    })?;
+    let bundle_sheets = sheet_side_cells.get(side_start..side_end).ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed geometric facet storage is malformed",
+        },
+    )?;
+    if bundle_sheets.is_empty() || !bundle_sheets.len().is_multiple_of(2) {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed geometric facet storage is malformed",
+        });
     }
-    geometric_facet_side_cells(bundle_sheets, scratch)
+    if let [front, back] = bundle_sheets {
+        return Ok((bundle, Some([*front, *back])));
+    }
+    geometric_facet_side_cells(bundle_sheets, scratch).map(|cells| (bundle, cells))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1152,31 +1155,35 @@ fn bundle_surface_facets(
             reason: "surface facet contributions are incomplete",
         });
     }
-    let sheet_transition_capacity =
-        contributions
-            .len()
-            .checked_mul(operand_count)
-            .ok_or(HypermeshError::CapacityOverflow {
-                operation: "surface sheet winding transitions",
-            })?;
+    // With one authored contribution per geometric bundle, the aggregate
+    // transition is already the sheet transition. Retain a second row owner
+    // only when coincident contributions genuinely require independent sheet
+    // topology.
     let mut sheet_transitions = Vec::new();
-    sheet_transitions
-        .try_reserve_exact(sheet_transition_capacity)
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "surface sheet winding transitions",
-        })?;
-    for contribution in &contributions {
-        let polygon = polygons.get(contribution.face as usize).ok_or(
-            HypermeshError::SurfaceArrangementFailed {
-                reason: "surface contribution references an absent source face",
+    if contributions.len() != facets.len() {
+        let sheet_transition_capacity = contributions.len().checked_mul(operand_count).ok_or(
+            HypermeshError::CapacityOverflow {
+                operation: "surface sheet winding transitions",
             },
         )?;
-        for &delta in &polygon.delta_w {
-            sheet_transitions.push(
-                i32::from(contribution.orientation)
-                    .checked_mul(delta)
-                    .ok_or(HypermeshError::WindingOverflow)?,
-            );
+        sheet_transitions
+            .try_reserve_exact(sheet_transition_capacity)
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "surface sheet winding transitions",
+            })?;
+        for contribution in &contributions {
+            let polygon = polygons.get(contribution.face as usize).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface contribution references an absent source face",
+                },
+            )?;
+            for &delta in &polygon.delta_w {
+                sheet_transitions.push(
+                    i32::from(contribution.orientation)
+                        .checked_mul(delta)
+                        .ok_or(HypermeshError::WindingOverflow)?,
+                );
+            }
         }
     }
     Ok((
@@ -1912,7 +1919,7 @@ fn choose_surface_component_seed_facet(
     start_cell: u32,
     heads: &[u32],
     next: &[u32],
-    facets: &[SurfaceSheet],
+    sheet_side_cells: &[u32],
     contribution_offsets: &[u32],
     visited: &mut [bool],
     queue: &mut Vec<u32>,
@@ -1926,8 +1933,14 @@ fn choose_surface_component_seed_facet(
             reason: "surface cell has no incident facet",
         })?;
     let first_facet = first_incidence as usize / 2;
-    if surface_sheet_bundle_side_cells(facets, contribution_offsets, first_facet, side_scratch)?
-        .is_some()
+    if surface_sheet_bundle_side_cells(
+        sheet_side_cells,
+        contribution_offsets,
+        first_facet,
+        side_scratch,
+    )?
+    .1
+    .is_some()
     {
         return Ok(first_facet);
     }
@@ -1948,14 +1961,24 @@ fn choose_surface_component_seed_facet(
         let mut incidence = heads[cell as usize];
         while incidence != u32::MAX {
             let facet = incidence as usize / 2;
-            if surface_sheet_bundle_side_cells(facets, contribution_offsets, facet, side_scratch)?
-                .is_some()
+            if surface_sheet_bundle_side_cells(
+                sheet_side_cells,
+                contribution_offsets,
+                facet,
+                side_scratch,
+            )?
+            .1
+            .is_some()
             {
                 selected = Some(facet);
                 break 'search;
             }
             let side = incidence as usize & 1;
-            let neighbor = facets[facet].cells[1 - side];
+            let neighbor = *sheet_side_cells.get(facet * 2 + 1 - side).ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface facet references an absent cell",
+                },
+            )?;
             if !visited[neighbor as usize] {
                 visited[neighbor as usize] = true;
                 queue.push(neighbor);
@@ -1977,7 +2000,8 @@ fn classify_surface_cells(
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
-    facets: &[SurfaceSheet],
+    bundles: &[PendingFacet],
+    sheet_side_cells: &[u32],
     transitions: &[i32],
     contribution_offsets: &[u32],
     contributions: &[FacetContribution],
@@ -1985,13 +2009,18 @@ fn classify_surface_cells(
     cell_count: u32,
     edges: &[[u32; 2]],
 ) -> HypermeshResult<(Vec<i32>, u32)> {
-    if transitions.len() != facets.len().saturating_mul(operand_count) {
+    if !sheet_side_cells.len().is_multiple_of(2) {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface facet side-cell dimensions are incomplete",
+        });
+    }
+    let facet_count = sheet_side_cells.len() / 2;
+    if transitions.len() != facet_count.saturating_mul(operand_count) {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface facet transition dimensions are incomplete",
         });
     }
-    let incidence_count = facets
-        .len()
+    let incidence_count = facet_count
         .checked_mul(2)
         .ok_or(HypermeshError::CapacityOverflow {
             operation: "surface cell incidences",
@@ -2003,9 +2032,9 @@ fn classify_surface_cells(
     }
     let mut heads = vec![u32::MAX; cell_count as usize];
     let mut next = vec![u32::MAX; incidence_count];
-    for (facet, surface_facet) in facets.iter().enumerate() {
+    for facet in 0..facet_count {
         for side in [FRONT, BACK] {
-            let cell = surface_facet.cells[side] as usize;
+            let cell = sheet_side_cells[facet * 2 + side] as usize;
             let head = heads
                 .get_mut(cell)
                 .ok_or(HypermeshError::SurfaceArrangementFailed {
@@ -2041,7 +2070,7 @@ fn classify_surface_cells(
             cell,
             &heads,
             &next,
-            facets,
+            sheet_side_cells,
             contribution_offsets,
             &mut visited,
             &mut queue,
@@ -2054,7 +2083,8 @@ fn classify_surface_cells(
             source_bvh,
             bounds,
             points,
-            facets,
+            bundles,
+            sheet_side_cells,
             contribution_offsets,
             contributions,
             operand_count,
@@ -2079,7 +2109,7 @@ fn classify_surface_cells(
             while incidence != u32::MAX {
                 let facet = incidence as usize / 2;
                 let side = incidence as usize & 1;
-                let neighbor = facets[facet].cells[1 - side];
+                let neighbor = sheet_side_cells[facet * 2 + 1 - side];
                 let sign = if side == FRONT { 1_i32 } else { -1_i32 };
                 let current_start = current as usize * operand_count;
                 let neighbor_start = neighbor as usize * operand_count;
@@ -2131,21 +2161,44 @@ fn seed_surface_cell_winding(
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
-    facets: &[SurfaceSheet],
+    bundles: &[PendingFacet],
+    sheet_side_cells: &[u32],
     contribution_offsets: &[u32],
     contributions: &[FacetContribution],
     operand_count: usize,
     edges: &[[u32; 2]],
     seed_facet: usize,
 ) -> HypermeshResult<(u32, Vec<i32>)> {
-    let seed = facets
-        .get(seed_facet)
-        .ok_or(HypermeshError::SurfaceArrangementFailed {
-            reason: "surface cell seed references an absent facet",
+    let seed_side_start = seed_facet
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell seed sheet sides",
         })?;
-    let triangle = seed.vertices;
-    let seed_outer_cells =
-        surface_sheet_bundle_side_cells(facets, contribution_offsets, seed_facet, &mut Vec::new())?;
+    let seed_side_end = seed_side_start
+        .checked_add(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface cell seed sheet sides",
+        })?;
+    let seed_cells = sheet_side_cells.get(seed_side_start..seed_side_end).ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent facet",
+        },
+    )?;
+    let seed_cells = [seed_cells[FRONT], seed_cells[BACK]];
+    let (seed_bundle, seed_outer_cells) = surface_sheet_bundle_side_cells(
+        sheet_side_cells,
+        contribution_offsets,
+        seed_facet,
+        &mut Vec::new(),
+    )?;
+    let triangle = bundles
+        .get(seed_bundle)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent geometric facet",
+        })?
+        .vertices;
+    let seed_contributions =
+        checked_contribution_row(contribution_offsets, contributions, seed_bundle)?;
     let point = surface_facet_centroid(points, triangle)?;
     let constraint_count = surface.triangles.len().checked_add(edges.len()).ok_or(
         HypermeshError::CapacityOverflow {
@@ -2169,11 +2222,10 @@ fn seed_surface_cell_winding(
                 bounds,
                 primary_axis,
                 points,
-                facets,
-                contribution_offsets,
-                contributions,
+                seed_contributions,
                 operand_count,
-                seed_facet,
+                seed_cells,
+                triangle,
                 seed_outer_cells,
                 &point,
                 direction,
@@ -2276,17 +2328,15 @@ fn try_seed_surface_cell_winding(
     bounds: &ApproxBounds,
     primary_axis: usize,
     points: &[Point3],
-    facets: &[SurfaceSheet],
-    contribution_offsets: &[u32],
-    contributions: &[FacetContribution],
+    seed_contributions: &[FacetContribution],
     operand_count: usize,
-    seed_facet: usize,
+    seed_cells: [u32; 2],
+    seed_triangle: [u32; 3],
     seed_outer_cells: Option<[u32; 2]>,
     point: &Point3,
     direction: &Vector3,
 ) -> HypermeshResult<Option<(u32, Vec<i32>)>> {
-    let seed = &facets[seed_facet];
-    let frontward = match ray_facet_relation(decisions, points, seed.vertices, point, direction)? {
+    let frontward = match ray_facet_relation(decisions, points, seed_triangle, point, direction)? {
         RayFacetRelation::Origin { frontward } => frontward,
         RayFacetRelation::Degenerate => return Ok(None),
         RayFacetRelation::Miss | RayFacetRelation::Ahead { .. } => {
@@ -2311,8 +2361,6 @@ fn try_seed_surface_cell_winding(
 
     let mut winding = vec![0_i32; operand_count];
     let mut saw_origin = false;
-    let seed_contributions =
-        checked_contribution_row(contribution_offsets, contributions, seed.bundle as usize)?;
     for face in candidate_faces {
         let polygon = polygons
             .get(face)
@@ -2354,7 +2402,7 @@ fn try_seed_surface_cell_winding(
     }
     let side = if frontward { FRONT } else { BACK };
     Ok(Some((
-        seed_outer_cells.map_or(seed.cells[side], |cells| cells[side]),
+        seed_outer_cells.map_or(seed_cells[side], |cells| cells[side]),
         winding,
     )))
 }
@@ -5244,12 +5292,7 @@ mod tests {
 
     #[test]
     fn directed_sheet_balance_recovers_only_one_geometric_outer_pair() {
-        let sheet = |cells| SurfaceSheet {
-            vertices: [0, 1, 2],
-            cells,
-            bundle: 0,
-        };
-        let chain = [sheet([0, 1]), sheet([1, 2])];
+        let chain = [0, 1, 1, 2];
         let mut scratch = Vec::new();
         assert_eq!(
             geometric_facet_side_cells(&chain, &mut scratch).unwrap(),
@@ -5261,12 +5304,12 @@ mod tests {
             [0, 2]
         );
 
-        let reversed = [sheet([1, 0]), sheet([2, 1])];
+        let reversed = [1, 0, 2, 1];
         assert_eq!(
             geometric_facet_side_cells(&reversed, &mut scratch).unwrap(),
             Some([2, 0])
         );
-        let canceling_cycle = [sheet([0, 1]), sheet([1, 0])];
+        let canceling_cycle = [0, 1, 1, 0];
         assert_eq!(
             geometric_facet_side_cells(&canceling_cycle, &mut scratch).unwrap(),
             None
@@ -5276,10 +5319,7 @@ mod tests {
             [0, 0]
         );
 
-        for malformed in [
-            vec![sheet([0, 1]), sheet([0, 2])],
-            vec![sheet([0, 1]), sheet([2, 3])],
-        ] {
+        for malformed in [vec![0, 1, 0, 2], vec![0, 1, 2, 3]] {
             assert_eq!(
                 geometric_facet_side_cells(&malformed, &mut scratch).unwrap_err(),
                 HypermeshError::SurfaceArrangementFailed {
@@ -5293,6 +5333,21 @@ mod tests {
                 reason: "surface geometric facet outer winding transition is inconsistent",
             }
         );
+
+        let side_cells = [0, 1, 2, 3, 3, 4];
+        let offsets = [0, 1, 3];
+        assert_eq!(
+            surface_sheet_bundle_side_cells(&side_cells, &offsets, 0, &mut scratch).unwrap(),
+            (0, Some([0, 1]))
+        );
+        for sheet in [1, 2] {
+            assert_eq!(
+                surface_sheet_bundle_side_cells(&side_cells, &offsets, sheet, &mut scratch)
+                    .unwrap(),
+                (1, Some([2, 4]))
+            );
+        }
+        assert!(surface_sheet_bundle_side_cells(&side_cells, &offsets, 3, &mut scratch).is_err());
     }
 
     #[test]
