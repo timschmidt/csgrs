@@ -694,7 +694,7 @@ status = "permanent-opt-in"
 provenance = "Content-addressed YeahRight control and exact rotated-box hard gate"
 license = "external"
 source_kind = "content-addressed-external-generator"
-generator = "tests::competitive::full_resolution_yeahright"
+generator = "competitive::support::yeahright_full_rotated_case"
 coordinate_class = "decimal-input-and-symbolic-rotation"
 topology = ["closed-pwn", "high-genus", "nonconvex", "dense-intersection", "empty-result"]
 operations = ["intersection"]
@@ -704,8 +704,13 @@ size = "xl"
 cgal_eligible = true
 expected_certainty = "Certified"
 input_triangles = 23788
+input_triangles_per_operand = [11894, 11894]
+expected_output_vertices = 0
 expected_output_triangles = 0
 heap_probe_modes = ["yeahright-full-rotated"]
+competitive_probe_selectors = ["yeahright_full_resolution_rotated_intersection"]
+left_exact_off_sha256 = "5352f571af1df60fd5acc8015aae82f5542c229e683e9f689b03fe452305e310"
+right_exact_off_sha256 = "c10b3a3d0774126a664e8880c01f38a6a9765c2ab1a6be7dc3a93894a7ebeaa1"
 
 [[fixture]]
 id = "symbolic_terminal_box_contact"

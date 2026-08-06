@@ -316,6 +316,52 @@ fn every_large_heap_fixture_has_a_distinct_probe_selector() {
 }
 
 #[test]
+fn full_yeahright_fixture_pins_one_shared_exact_generator() {
+    let manifest = manifest();
+    let fixture = manifest["fixture"]
+        .as_array()
+        .expect("fixture records")
+        .iter()
+        .find(|fixture| fixture["id"].as_str() == Some("yeahright_full_resolution_rotated_box"))
+        .expect("full-resolution YeahRight fixture");
+
+    assert_eq!(
+        fixture["generator"].as_str(),
+        Some("competitive::support::yeahright_full_rotated_case")
+    );
+    assert_eq!(
+        fixture["input_triangles"].as_integer(),
+        Some((support::YEAHRIGHT_CONTROL_TRIANGLES * 2) as i64)
+    );
+    assert_eq!(
+        fixture["input_triangles_per_operand"]
+            .as_array()
+            .expect("full fixture operand triangle counts")
+            .iter()
+            .map(Value::as_integer)
+            .collect::<Vec<_>>(),
+        vec![
+            Some(support::YEAHRIGHT_CONTROL_TRIANGLES as i64),
+            Some(support::YEAHRIGHT_CONTROL_TRIANGLES as i64),
+        ]
+    );
+    assert_eq!(fixture["expected_output_vertices"].as_integer(), Some(0));
+    assert_eq!(fixture["expected_output_triangles"].as_integer(), Some(0));
+    assert_eq!(
+        string_array(fixture, "competitive_probe_selectors"),
+        ["yeahright_full_resolution_rotated_intersection"]
+    );
+    assert_eq!(
+        fixture["left_exact_off_sha256"].as_str(),
+        Some("5352f571af1df60fd5acc8015aae82f5542c229e683e9f689b03fe452305e310")
+    );
+    assert_eq!(
+        fixture["right_exact_off_sha256"].as_str(),
+        Some("c10b3a3d0774126a664e8880c01f38a6a9765c2ab1a6be7dc3a93894a7ebeaa1")
+    );
+}
+
+#[test]
 fn dense_crossing_grid_scales_complete_public_cavity_recovery() {
     let manifest = manifest();
     let family = manifest["fixture"]
