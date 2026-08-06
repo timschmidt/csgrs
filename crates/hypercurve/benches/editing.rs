@@ -5,7 +5,7 @@ use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
     CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult,
     CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
-    Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
 };
 use hypercurve::{Curve2, CurvePath2};
 
@@ -1317,6 +1317,52 @@ fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     Ok([region(first_loop)?, region(second_loop)?])
 }
 
+#[cfg(feature = "predicates")]
+fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
+    let policy = CurveContext::STRICT;
+    let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
+    let horizontal = |height: Real| {
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), height.clone()),
+                Point2::new(Real::one(), height),
+            ],
+            vec![Real::one(); 2],
+        )
+    };
+    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,
+    );
+    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,
+    );
+    let bottom_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+    let top_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+    let chord = |start, end| {
+        BezierAlgebraicChord2::try_new(start, end, &policy).map(|chord| {
+            BezierSplitFragment2::AlgebraicChord(expect_decided(
+                chord,
+                "axis-aligned benchmark chord must remain exact",
+            ))
+        })
+    };
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            chord(bottom_left.clone(), bottom_right.clone())?,
+            chord(bottom_right, top_right.clone())?,
+            chord(top_right, top_left.clone())?,
+            chord(top_left, bottom_left)?,
+        ],
+        &policy,
+    )?;
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+}
+
 fn bench_represented_bezier_region_corner_lanes(
     region: &CurveRegion2,
     two_bezier_region: &CurveRegion2,
@@ -1482,6 +1528,56 @@ fn bench_represented_bezier_region_corner_lanes(
         let elapsed = started.elapsed();
         println!(
             "curve_region_strict_interior_algebraic_chord_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), topology fragments={topology_fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_axis_algebraic_miter_offset") {
+        let source = axis_aligned_algebraic_offset_region()
+            .expect("axis-aligned offset benchmark fixture must remain exact");
+        let style = OffsetCornerStyle2::Miter {
+            limit: Real::from(2_u8),
+        };
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let offset = black_box(&source)
+                .offset(q(1, 10), black_box(&style), &policy)
+                .expect("axis-aligned algebraic offset must remain exact")
+                .into_value();
+            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_axis_algebraic_miter_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_axis_algebraic_repeated_miter_offset") {
+        let source = axis_aligned_algebraic_offset_region()
+            .expect("axis-aligned repeated-offset benchmark fixture must remain exact");
+        let style = OffsetCornerStyle2::Miter {
+            limit: Real::from(2_u8),
+        };
+        let expanded = source
+            .offset(q(1, 10), &style, &policy)
+            .expect("first algebraic benchmark offset must remain exact")
+            .into_value();
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let offset = black_box(&expanded)
+                .offset(q(1, 10), black_box(&style), &policy)
+                .expect("repeated algebraic offset must remain exact")
+                .into_value();
+            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_axis_algebraic_repeated_miter_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
             elapsed / iterations
         );
     }
