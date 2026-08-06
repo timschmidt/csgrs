@@ -13,6 +13,12 @@ use curvo::prelude::{
     NurbsCurve2D as CurvoNurbsCurve2D, Offset as CurvoOffset, Split as _,
 };
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
+#[cfg(feature = "predicates")]
+use hypercurve::{
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2,
+    CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2,
+};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
@@ -604,6 +610,138 @@ fn benchmark_contour_offset(runner: &Runner) {
     runner.measure(name, "cavalier_contours", || {
         cavalier_contour
             .parallel_offset(black_box(5.0))
+            .iter()
+            .map(PlineSource::vertex_count)
+            .sum()
+    });
+}
+
+#[cfg(feature = "predicates")]
+fn benchmark_algebraic_round_offset(runner: &Runner) {
+    let name = "algebraic_round_offset/rectangle";
+    if !runner.group_enabled(name) {
+        return;
+    }
+    let policy = CurveContext::STRICT;
+    let half = (Real::one() / Real::from(2_u8)).expect("exact benchmark half");
+    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+        vec![-half, Real::zero(), Real::one()],
+        &policy,
+    )
+    .expect("valid benchmark parameter polynomial")
+    {
+        Classification::Decided(polynomial) => polynomial,
+        Classification::Uncertain(reason) => panic!("benchmark polynomial: {reason:?}"),
+    };
+    let interval = match BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)
+        .expect("valid benchmark parameter interval")
+    {
+        Classification::Decided(interval) => interval,
+        Classification::Uncertain(reason) => panic!("benchmark interval: {reason:?}"),
+    };
+    let parameter = match BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+        .expect("valid benchmark parameter isolator")
+    {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => panic!("benchmark parameter: {reason:?}"),
+    };
+    let horizontal = |height: Real| {
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), height.clone()),
+                Point2::new(Real::one(), height),
+            ],
+            vec![Real::one(); 2],
+        )
+        .expect("valid benchmark line image")
+    };
+    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::zero())
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .expect("selected benchmark endpoint"),
+    );
+    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::one())
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .expect("selected benchmark endpoint"),
+    );
+    let bottom_left =
+        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::zero(), Real::zero()));
+    let top_left =
+        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::zero(), Real::one()));
+    let chord = |start, end| {
+        let chord =
+            BezierAlgebraicChord2::try_new(start, end, &policy).expect("valid benchmark chord");
+        BezierSplitFragment2::AlgebraicChord(match chord {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => panic!("benchmark chord: {reason:?}"),
+        })
+    };
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            chord(bottom_left.clone(), bottom_right.clone()),
+            chord(bottom_right, top_right.clone()),
+            chord(top_right, top_left.clone()),
+            chord(top_left, bottom_left),
+        ],
+        &policy,
+    )
+    .expect("closed benchmark boundary");
+    let hypercurve = CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .expect("valid benchmark region");
+    let cavalier = cavalier_polyline(
+        &[
+            [0.0, 0.0],
+            [std::f64::consts::FRAC_1_SQRT_2, 0.0],
+            [std::f64::consts::FRAC_1_SQRT_2, 1.0],
+            [0.0, 1.0],
+        ],
+        None,
+    );
+    let distance = (Real::one() / Real::from(10_u8)).expect("exact benchmark distance");
+    let round = OffsetCornerStyle2::Round;
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2_u8),
+    };
+    assert_eq!(
+        hypercurve
+            .offset(distance.clone(), &round, &policy)
+            .expect("exact algebraic round offset completes")
+            .into_value()
+            .boundary_loops()
+            .len(),
+        1,
+    );
+    assert!(!cavalier.parallel_offset(-0.1).is_empty());
+
+    runner.measure(name, "hypercurve_exact_round", || {
+        hypercurve
+            .offset(distance.clone(), &round, &policy)
+            .expect("exact algebraic round offset completes")
+            .into_value()
+            .boundary_loops()
+            .iter()
+            .map(|boundary| boundary.fragments().len())
+            .sum()
+    });
+    runner.measure(name, "hypercurve_exact_miter", || {
+        hypercurve
+            .offset(distance.clone(), &miter, &policy)
+            .expect("exact algebraic miter offset completes")
+            .into_value()
+            .boundary_loops()
+            .iter()
+            .map(|boundary| boundary.fragments().len())
+            .sum()
+    });
+    runner.measure(name, "cavalier_f64", || {
+        cavalier
+            .parallel_offset(black_box(-0.1))
             .iter()
             .map(PlineSource::vertex_count)
             .sum()
@@ -1242,6 +1380,8 @@ fn main() {
     benchmark_polygon_booleans(&runner);
     benchmark_line_arc_boolean(&runner);
     benchmark_contour_offset(&runner);
+    #[cfg(feature = "predicates")]
+    benchmark_algebraic_round_offset(&runner);
     benchmark_orthogonal_neck_split(&runner);
     benchmark_bezier_offset(&runner);
     benchmark_rational_bezier_self_contacts(&runner);

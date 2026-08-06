@@ -1632,6 +1632,27 @@ fn bench_represented_bezier_region_corner_lanes(
         );
     }
     #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_axis_algebraic_round_offset") {
+        let source = axis_aligned_algebraic_offset_region()
+            .expect("axis-aligned round-offset benchmark fixture must remain exact");
+        let style = OffsetCornerStyle2::Round;
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let offset = black_box(&source)
+                .offset(q(1, 10), black_box(&style), &policy)
+                .expect("axis-aligned algebraic round offset must remain exact")
+                .into_value();
+            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_axis_algebraic_round_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_axis_algebraic_repeated_miter_offset") {
         let source = axis_aligned_algebraic_offset_region()
             .expect("axis-aligned repeated-offset benchmark fixture must remain exact");
