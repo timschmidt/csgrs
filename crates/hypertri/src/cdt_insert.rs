@@ -464,7 +464,7 @@ fn recover_constraint_cavity(
         constrained_edges,
         approximate_points,
         cavity,
-        incident_triangles: _,
+        incident_triangles,
     } = recovery;
     let ConstraintCrossing {
         edge: first_edge,
@@ -477,6 +477,34 @@ fn recover_constraint_cavity(
         });
     }
     let first_adjacent = adjacent_triangles(triangles, first_edge, [first_before, first_after])?;
+    // Build both half-hole boundaries while walking the exact line corridor.
+    // A non-crossed edge shared by nonconsecutive corridor faces appears once
+    // in each direction in its side chain. Retaining that weakly-simple spike
+    // preserves prior constrained chords without absorbing the component that
+    // they protect or searching the global cavity boundary afterward.
+    let mut left_chain = vec![constraint.from];
+    let mut right_chain = vec![constraint.from];
+    for vertex in [first_edge.from, first_edge.to] {
+        match predicates::orient2(
+            kernel,
+            &points[constraint.from],
+            &points[constraint.to],
+            &points[vertex],
+        )? {
+            Sign::Positive => left_chain.push(vertex),
+            Sign::Negative => right_chain.push(vertex),
+            Sign::Zero => {
+                return Err(Error::InvalidInput {
+                    reason: "constraint corridor contains an unsplit collinear vertex",
+                });
+            }
+        }
+    }
+    if left_chain.len() != 2 || right_chain.len() != 2 {
+        return Err(Error::InvalidInput {
+            reason: "constraint corridor first edge does not straddle the target",
+        });
+    }
     let mut crossing_count = 1usize;
     let mut incoming = first_edge;
     let mut current = first_after;
@@ -515,6 +543,27 @@ fn recover_constraint_cavity(
                 feature: "constraint cavity crosses a boundary edge",
             });
         };
+        let next_vertex = triangles[current]
+            .iter()
+            .copied()
+            .find(|&vertex| !incoming.contains(vertex))
+            .ok_or(Error::InvalidInput {
+                reason: "constraint corridor triangle has no advancing vertex",
+            })?;
+        match predicates::orient2(
+            kernel,
+            &points[constraint.from],
+            &points[constraint.to],
+            &points[next_vertex],
+        )? {
+            Sign::Positive => left_chain.push(next_vertex),
+            Sign::Negative => right_chain.push(next_vertex),
+            Sign::Zero => {
+                return Err(Error::InvalidInput {
+                    reason: "constraint corridor contains an unsplit collinear vertex",
+                });
+            }
+        }
         crossing_count += 1;
         if crossing_count > triangles.len() {
             return Err(Error::InvalidInput {
@@ -533,6 +582,8 @@ fn recover_constraint_cavity(
         incoming = edge;
         current = next;
     }
+    left_chain.push(constraint.to);
+    right_chain.push(constraint.to);
     if crossing_count == 1 {
         let replacement = EdgeKey::new(first_adjacent[0].opposite, first_adjacent[1].opposite);
         // A proper crossing between the shared edge and the opposite-vertex
@@ -552,37 +603,100 @@ fn recover_constraint_cavity(
         cavity.fill(false);
         mark_cavity_triangles(cavity, first_adjacent);
     }
-    let mut cavity_indices = Vec::new();
-    let mut boundary_edges = Vec::new();
-    collect_constraint_cavity_boundary(
-        topology,
+    incident_triangles.clear();
+    incident_triangles.extend(
+        cavity
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &in_cavity)| in_cavity.then_some(index)),
+    );
+    let cavity_indices = incident_triangles;
+    let target = EdgeKey::new(constraint.from, constraint.to);
+    let mut replacement = match triangulate_cavity_region(
+        kernel,
+        points,
         triangles,
-        constrained_edges,
-        cavity,
-        &mut cavity_indices,
-        &mut boundary_edges,
-    )?;
-    let (cycle, to_position) =
-        match constraint_cavity_cycle(points.len(), constraint, &boundary_edges) {
-            Ok(cycle) => cycle,
-            Err(_) => {
-                // A proper crossed corridor normally has one simple boundary. Only
-                // a weakly simple corridor can enclose an unselected component, so
-                // defer the complete protected-component search until the local
-                // boundary proves it is necessary.
-                close_constraint_cavity_holes(topology, triangles, constrained_edges, cavity)?;
-                collect_constraint_cavity_boundary(
+        cavity_indices.as_slice(),
+        [&left_chain, &right_chain],
+    ) {
+        Ok(replacement) => Some(replacement),
+        Err(Error::NoEarFound) => None,
+        Err(error) => return Err(error),
+    };
+    let direct_is_complete = match &replacement {
+        Some(replacement) if replacement.len() == cavity_indices.len() => {
+            triangulation_has_edge(replacement, target)
+                && replacement_retains_internal_constraints(
                     topology,
                     triangles,
                     constrained_edges,
                     cavity,
-                    &mut cavity_indices,
-                    &mut boundary_edges,
-                )?;
-                constraint_cavity_cycle(points.len(), constraint, &boundary_edges)
-                    .map_err(|feature| Error::UnsupportedFeature { feature })?
-            }
-        };
+                    cavity_indices.as_slice(),
+                    replacement,
+                )?
+        }
+        _ => false,
+    };
+    if !direct_is_complete {
+        // A line corridor can wrap around an unselected, unconstrained face
+        // component and expose a weak half-hole. Absorb exactly those enclosed
+        // components, then erase only the boundary detours that became
+        // internal. Protected detours remain in the ordered half-hole.
+        close_constraint_cavity_holes(topology, triangles, constrained_edges, cavity)?;
+        cavity_indices.clear();
+        cavity_indices.extend(
+            cavity
+                .iter()
+                .enumerate()
+                .filter_map(|(index, &in_cavity)| in_cavity.then_some(index)),
+        );
+        let mut boundary_edges = Vec::new();
+        collect_cavity_boundary(
+            topology,
+            triangles,
+            cavity,
+            cavity_indices.as_slice(),
+            &mut boundary_edges,
+        )?;
+        prune_absorbed_chain_detours(&mut left_chain, constrained_edges, &boundary_edges);
+        prune_absorbed_chain_detours(&mut right_chain, constrained_edges, &boundary_edges);
+        replacement = Some(triangulate_cavity_region(
+            kernel,
+            points,
+            triangles,
+            cavity_indices.as_slice(),
+            [&left_chain, &right_chain],
+        )?);
+    }
+    let Some(replacement) = replacement else {
+        return Err(Error::NoEarFound);
+    };
+    if replacement.len() != cavity_indices.len() {
+        return Err(Error::UnsupportedFeature {
+            feature: "constraint cavity retriangulation changed triangle count",
+        });
+    }
+    if !triangulation_has_edge(&replacement, target) {
+        return Err(Error::UnsupportedFeature {
+            feature: "constraint cavity retriangulation omitted the target edge",
+        });
+    }
+    topology.replace_region(triangles, cavity_indices.as_slice(), &replacement, None)?;
+    Ok(())
+}
+
+fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
+    cavity[adjacent[0].triangle] = true;
+    cavity[adjacent[1].triangle] = true;
+}
+
+fn triangulate_cavity_region(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &[Triangle],
+    cavity_indices: &[usize],
+    sides: [&[usize]; 2],
+) -> Result<Vec<Triangle>> {
     let mut cavity_vertices = cavity_indices
         .iter()
         .flat_map(|&triangle| triangles[triangle])
@@ -590,16 +704,11 @@ fn recover_constraint_cavity(
     cavity_vertices.sort_unstable();
     cavity_vertices.dedup();
 
-    let first = cycle[..=to_position].to_vec();
-    let mut second = Vec::with_capacity(cycle.len() - to_position + 1);
-    second.push(constraint.from);
-    second.extend(cycle[to_position..].iter().rev().copied());
     let mut replacement = Vec::with_capacity(cavity_indices.len());
-    for side in [first, second] {
-        if side.len() < 3 {
-            continue;
+    for side in sides {
+        if side.len() >= 3 {
+            replacement.extend(triangulate_cavity_side(kernel, points, side.to_vec())?);
         }
-        replacement.extend(triangulate_cavity_side(kernel, points, side)?);
     }
     let mut replacement_topology = None;
     for vertex in cavity_vertices {
@@ -617,53 +726,49 @@ fn recover_constraint_cavity(
             &mut replacement_topology,
         )?;
     }
-    if replacement.len() != cavity_indices.len() {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity retriangulation changed triangle count",
-        });
-    }
-    if !replacement.iter().any(|triangle| {
-        triangle_contains_edge(*triangle, EdgeKey::new(constraint.from, constraint.to))
-    }) {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity retriangulation omitted the target edge",
-        });
-    }
-    topology.replace_region(triangles, &cavity_indices, &replacement, None)?;
-    Ok(())
+    Ok(replacement)
 }
 
-fn collect_constraint_cavity_boundary(
+fn replacement_retains_internal_constraints(
     topology: &TriangleTopology,
     triangles: &[Triangle],
     constrained_edges: &[EdgeKey],
     cavity: &[bool],
-    cavity_indices: &mut Vec<usize>,
+    cavity_indices: &[usize],
+    replacement: &[Triangle],
+) -> Result<bool> {
+    for &triangle_index in cavity_indices {
+        for edge in triangle_edges(triangles[triangle_index]) {
+            if constrained_edges.binary_search(&edge).is_err() {
+                continue;
+            }
+            let Some(neighbor) = topology.neighbor_across(triangles, triangle_index, edge)? else {
+                continue;
+            };
+            if triangle_index < neighbor
+                && cavity[neighbor]
+                && !triangulation_has_edge(replacement, edge)
+            {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
+
+fn collect_cavity_boundary(
+    topology: &TriangleTopology,
+    triangles: &[Triangle],
+    cavity: &[bool],
+    cavity_indices: &[usize],
     boundary_edges: &mut Vec<EdgeKey>,
 ) -> Result<()> {
-    cavity_indices.clear();
     boundary_edges.clear();
-    cavity_indices.extend(
-        cavity
-            .iter()
-            .enumerate()
-            .filter_map(|(index, &in_cavity)| in_cavity.then_some(index)),
-    );
-    for &triangle_index in cavity_indices.iter() {
-        let triangle = triangles[triangle_index];
-        for edge in triangle_edges(triangle) {
-            let neighbor = topology.neighbor_across(triangles, triangle_index, edge)?;
-            match neighbor {
+    for &triangle_index in cavity_indices {
+        for edge in triangle_edges(triangles[triangle_index]) {
+            match topology.neighbor_across(triangles, triangle_index, edge)? {
                 None => boundary_edges.push(edge),
                 Some(neighbor) if !cavity[neighbor] => boundary_edges.push(edge),
-                Some(neighbor)
-                    if triangle_index < neighbor
-                        && constrained_edges.binary_search(&edge).is_ok() =>
-                {
-                    return Err(Error::UnsupportedFeature {
-                        feature: "constraint cavity contains an existing constrained edge",
-                    });
-                }
                 Some(_) => {}
             }
         }
@@ -672,69 +777,33 @@ fn collect_constraint_cavity_boundary(
     Ok(())
 }
 
-fn constraint_cavity_cycle(
-    point_count: usize,
-    constraint: Constraint,
+fn prune_absorbed_chain_detours(
+    chain: &mut Vec<usize>,
+    constrained_edges: &[EdgeKey],
     boundary_edges: &[EdgeKey],
-) -> std::result::Result<(Vec<usize>, usize), &'static str> {
-    let missing = usize::MAX;
-    let mut adjacency = vec![[missing; 2]; point_count];
-    for edge in boundary_edges {
-        for (vertex, neighbor) in [(edge.from, edge.to), (edge.to, edge.from)] {
-            if adjacency[vertex][0] == missing {
-                adjacency[vertex][0] = neighbor;
-            } else if adjacency[vertex][1] == missing {
-                adjacency[vertex][1] = neighbor;
-            } else {
-                return Err("constraint cavity boundary is not a simple cycle");
-            }
-        }
-    }
-    if adjacency[constraint.from][1] == missing || adjacency[constraint.to][1] == missing {
-        return Err("constraint cavity endpoints are not on one boundary cycle");
-    }
-    let mut cycle = vec![constraint.from];
-    let mut previous = usize::MAX;
-    let mut current = constraint.from;
-    for _ in 0..=boundary_edges.len() {
-        let neighbors = &adjacency[current];
-        if neighbors[1] == missing {
-            return Err("constraint cavity boundary is not a simple cycle");
-        }
-        let next = if neighbors[0] != previous {
-            neighbors[0]
-        } else {
-            neighbors[1]
+) {
+    let mut first = 0;
+    while first + 1 < chain.len() {
+        let Some(second) = (first + 1..chain.len()).find(|&index| chain[index] == chain[first])
+        else {
+            first += 1;
+            continue;
         };
-        if next == constraint.from {
-            break;
+        let absorbed = chain[first..=second].windows(2).all(|pair| {
+            let edge = EdgeKey::new(pair[0], pair[1]);
+            constrained_edges.binary_search(&edge).is_err()
+                && boundary_edges.binary_search(&edge).is_err()
+        });
+        if absorbed {
+            chain.drain(first + 1..=second);
+            first = first.saturating_sub(1);
+        } else {
+            first += 1;
         }
-        cycle.push(next);
-        previous = current;
-        current = next;
     }
-    if cycle.len() != boundary_edges.len() {
-        return Err("constraint cavity boundary traversal did not close");
-    }
-    let Some(to_position) = cycle.iter().position(|&vertex| vertex == constraint.to) else {
-        return Err("constraint cavity boundary omits one endpoint");
-    };
-    Ok((cycle, to_position))
 }
 
-fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
-    cavity[adjacent[0].triangle] = true;
-    cavity[adjacent[1].triangle] = true;
-}
-
-/// Close only holes created by the crossed-triangle corridor itself.
-///
-/// A valid segment can cross a fan of triangulation edges whose dual corridor
-/// wraps around an unselected interior component. The resulting boundary is
-/// weakly simple even though both the triangulation and PSLG are valid. A
-/// component is safe to absorb exactly when it reaches neither the convex-hull
-/// boundary nor an already protected edge. This turns the recovery cavity into
-/// one disk without crossing a prior constraint or consuming exterior work.
+/// Add only unprotected face components enclosed by the walked corridor.
 fn close_constraint_cavity_holes(
     topology: &TriangleTopology,
     triangles: &[Triangle],
@@ -817,11 +886,7 @@ fn triangulate_cavity_side(
         "constraint_cavity_ring_area_sign",
     )? {
         hyperlimit::Sign::Negative => Sign::Negative,
-        hyperlimit::Sign::Zero => {
-            return Err(Error::InvalidInput {
-                reason: "constraint cavity side is degenerate",
-            });
-        }
+        hyperlimit::Sign::Zero => return Err(Error::NoEarFound),
         hyperlimit::Sign::Positive => Sign::Positive,
     };
 
@@ -862,9 +927,7 @@ fn triangulate_cavity_side(
             }
         }
         let Some((position, triangle)) = ear else {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint cavity side has no exact ear",
-            });
+            return Err(Error::NoEarFound);
         };
         triangles.push(make_oriented(kernel, points, triangle)?);
         ring.remove(position);
@@ -2042,83 +2105,174 @@ mod tests {
     }
 
     #[test]
-    fn cavity_closure_absorbs_only_unprotected_enclosed_components() {
-        const SIDE: usize = 5;
-        let vertex = |x: usize, y: usize| y * (SIDE + 1) + x;
-        let mut triangles = Vec::with_capacity(SIDE * SIDE * 2);
-        for y in 0..SIDE {
-            for x in 0..SIDE {
-                let [a, b, c, d] = [
-                    vertex(x, y),
-                    vertex(x + 1, y),
-                    vertex(x, y + 1),
-                    vertex(x + 1, y + 1),
-                ];
-                triangles.extend([[a, b, d], [a, d, c]]);
-            }
-        }
-        let topology = TriangleTopology::new(&triangles, (SIDE + 1) * (SIDE + 1)).unwrap();
-        let center = |x: usize, y: usize| (y * SIDE + x) * 2;
-        let mut corridor = vec![false; triangles.len()];
-        for y in 1..=3 {
-            for x in 1..=3 {
-                if (x, y) == (2, 2) {
-                    continue;
-                }
-                corridor[center(x, y)] = true;
-                corridor[center(x, y) + 1] = true;
-            }
-        }
+    fn exact_corridor_preserves_a_non_crossed_protected_chord() {
+        // The target walks every face in order, but the same-side boundary
+        // folds back across protected edge 5--6. A union-boundary cavity sees
+        // that chord as internal and used to reject this valid PSLG. Ordered
+        // half-hole chains retain the backtracking edge and both incident
+        // faces while recovering the target without a fallback algorithm.
+        let points = vec![
+            p(5209, 6308),
+            p(-1052, -12323),
+            p(651, 10036),
+            p(5378, 6100),
+            p(5445, 6017),
+            p(7329, 3690),
+            p(5502, 5229),
+            p(2267, 7287),
+            p(5167, 2265),
+            p(304, -3637),
+            p(-502, -7436),
+            p(5228, 676),
+            p(3872, -4221),
+        ];
+        let original = vec![
+            [3, 0, 2],
+            [4, 3, 2],
+            [5, 4, 2],
+            [5, 2, 6],
+            [6, 2, 7],
+            [5, 6, 7],
+            [7, 8, 5],
+            [7, 9, 8],
+            [9, 5, 8],
+            [10, 5, 9],
+            [5, 10, 11],
+            [10, 12, 11],
+            [1, 12, 10],
+        ];
+        let protected = Constraint::new(5, 6);
+        let target = Constraint::new(0, 1);
+        let protected_edges = [EdgeKey::new(protected.from, protected.to)];
+        let approximate = crate::cdt::exact_points_f64(&points);
 
-        let constraint = Constraint::new(vertex(1, 1), vertex(4, 4));
-        let mut cavity_indices = Vec::new();
-        let mut boundary_edges = Vec::new();
-        collect_constraint_cavity_boundary(
-            &topology,
-            &triangles,
-            &[],
-            &corridor,
-            &mut cavity_indices,
-            &mut boundary_edges,
-        )
-        .unwrap();
-        assert!(
-            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_err()
-        );
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let kernel = ExactKernel::new(&context);
+            let mut triangles = original.clone();
+            let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
+            let mut cavity = Vec::new();
+            let mut incident_triangles = Vec::new();
 
-        let mut closed = corridor.clone();
-        close_constraint_cavity_holes(&topology, &triangles, &[], &mut closed).unwrap();
-        assert!(closed[center(2, 2)] && closed[center(2, 2) + 1]);
-        assert!(!closed[center(0, 0)] && !closed[center(4, 4)]);
-        collect_constraint_cavity_boundary(
-            &topology,
-            &triangles,
-            &[],
-            &closed,
-            &mut cavity_indices,
-            &mut boundary_edges,
-        )
-        .unwrap();
-        assert!(
-            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_ok()
-        );
-
-        let central_diagonal = EdgeKey::new(vertex(2, 2), vertex(3, 3));
-        close_constraint_cavity_holes(&topology, &triangles, &[central_diagonal], &mut corridor)
+            recover_constraint(
+                ConstraintRecovery {
+                    kernel: &kernel,
+                    points: &points,
+                    triangles: &mut triangles,
+                    topology: &mut topology,
+                    constrained_edges: &protected_edges,
+                    approximate_points: approximate.as_deref(),
+                    cavity: &mut cavity,
+                    incident_triangles: &mut incident_triangles,
+                },
+                target,
+            )
             .unwrap();
-        assert!(!corridor[center(2, 2)] && !corridor[center(2, 2) + 1]);
-        collect_constraint_cavity_boundary(
-            &topology,
-            &triangles,
-            &[central_diagonal],
-            &corridor,
-            &mut cavity_indices,
-            &mut boundary_edges,
-        )
-        .unwrap();
-        assert!(
-            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_err()
-        );
+
+            assert_eq!(triangles.len(), original.len());
+            assert!(triangulation_has_edge(&triangles, protected_edges[0]));
+            assert!(triangulation_has_edge(
+                &triangles,
+                EdgeKey::new(target.from, target.to)
+            ));
+            TriangleTopology::new(&triangles, points.len()).unwrap();
+            crate::cdt_validate::validate_constrained_topology(
+                &kernel,
+                &points,
+                &[protected, target],
+                &triangles,
+            )
+            .unwrap();
+            assert_eq!(
+                kernel.finish(()).certainty,
+                crate::TriangulationCertainty::Certified
+            );
+        }
+    }
+
+    #[test]
+    fn exact_corridor_absorbs_an_unprotected_enclosed_face() {
+        // The target's dual walk surrounds triangle 6--5--7 without crossing
+        // it. The direct half-hole is therefore weak; the local closure path
+        // absorbs that unconstrained face and reconstructs one simple cavity.
+        let points = vec![
+            p(35, 28),
+            p(36, 28),
+            p(70, 70),
+            p(12, 0),
+            p(42, 35),
+            p(22, 12),
+            p(32, 24),
+            p(34, 26),
+            p(42, 36),
+            p(40, 34),
+            p(50, 46),
+            p(60, 58),
+        ];
+        let original = vec![
+            [2, 3, 5],
+            [0, 3, 9],
+            [2, 5, 6],
+            [5, 4, 7],
+            [4, 6, 7],
+            [1, 4, 5],
+            [2, 6, 8],
+            [6, 4, 8],
+            [2, 11, 3],
+            [10, 9, 3],
+            [11, 10, 3],
+            [6, 5, 7],
+        ];
+        let target = Constraint::new(0, 1);
+        let approximate = crate::cdt::exact_points_f64(&points);
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let kernel = ExactKernel::new(&context);
+            let mut triangles = original.clone();
+            let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
+            let mut cavity = Vec::new();
+            let mut incident_triangles = Vec::new();
+
+            recover_constraint(
+                ConstraintRecovery {
+                    kernel: &kernel,
+                    points: &points,
+                    triangles: &mut triangles,
+                    topology: &mut topology,
+                    constrained_edges: &[],
+                    approximate_points: approximate.as_deref(),
+                    cavity: &mut cavity,
+                    incident_triangles: &mut incident_triangles,
+                },
+                target,
+            )
+            .unwrap();
+
+            assert_eq!(triangles.len(), original.len());
+            assert!(triangulation_has_edge(
+                &triangles,
+                EdgeKey::new(target.from, target.to)
+            ));
+            TriangleTopology::new(&triangles, points.len()).unwrap();
+            crate::cdt_validate::validate_constrained_topology(
+                &kernel,
+                &points,
+                &[target],
+                &triangles,
+            )
+            .unwrap();
+            assert_eq!(
+                kernel.finish(()).certainty,
+                crate::TriangulationCertainty::Certified
+            );
+        }
     }
 
     #[test]
