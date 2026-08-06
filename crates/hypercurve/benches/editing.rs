@@ -1198,6 +1198,82 @@ fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]>
     Ok([chord_region, source_region])
 }
 
+#[cfg(feature = "predicates")]
+fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
+    let policy = CurveContext::STRICT;
+    let endpoint_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
+    let endpoint = RationalBezierIntersectionPointEvidence2::Algebraic(
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?
+            .point_at_algebraic_parameter(&endpoint_parameter, &policy)?,
+    );
+    let chord = expect_decided(
+        BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)),
+            endpoint,
+            &policy,
+        )?,
+        "mixed-field benchmark chord must remain exact",
+    );
+    let closure = QuadraticBezier2::new(p(0, -1), Point2::new(q(1, 2), Real::from(-1_i8)), p(1, 1));
+    let closure_fragment = expect_decided(
+        closure.split_at_parameters(&[BezierParameter2::Algebraic(endpoint_parameter)], &policy)?,
+        "mixed-field benchmark closure split must remain exact",
+    )
+    .fragments()[0]
+        .reversed()?;
+    let materialized_line = |start: Point2, end: Point2| -> CurveResult<_> {
+        Ok(BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(start, end)?,
+            )),
+        })
+    };
+    let chord_loop = CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::AlgebraicChord(chord),
+            closure_fragment,
+            materialized_line(p(0, -1), p(0, 0))?,
+        ],
+        &policy,
+    )?;
+    let chord_region = CurveRegion2::try_new_with_loop_topology(
+        vec![chord_loop],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )?;
+
+    let source_start = Point2::new(q(-5, 27), Real::zero());
+    let source = BezierSubcurve2::Cubic(CubicBezier2::new(
+        source_start.clone(),
+        Point2::new(q(11, 27), Real::zero()),
+        Point2::new(q(-7, 9), Real::zero()),
+        p(1, 0),
+    ));
+    let source_loop = CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: source,
+            },
+            materialized_line(p(1, 0), p(1, 1))?,
+            materialized_line(p(1, 1), Point2::new(q(-5, 27), Real::one()))?,
+            materialized_line(Point2::new(q(-5, 27), Real::one()), source_start)?,
+        ],
+        &policy,
+    )?;
+    let source_region = CurveRegion2::try_new_with_loop_topology(
+        vec![source_loop],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )?;
+    Ok([chord_region, source_region])
+}
+
 fn bench_represented_bezier_region_corner_lanes(
     region: &CurveRegion2,
     two_bezier_region: &CurveRegion2,
@@ -1322,6 +1398,27 @@ fn bench_represented_bezier_region_corner_lanes(
         let elapsed = started.elapsed();
         println!(
             "curve_region_independent_field_algebraic_chord_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), topology fragments={topology_fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_noninjective_collinear_algebraic_chord_intersection") {
+        let [chord_region, source_region] = noninjective_collinear_algebraic_chord_regions()
+            .expect("noninjective collinear intersection fixture must remain exact");
+        let started = Instant::now();
+        let mut evidence_count = 0_usize;
+        for _ in 0..iterations {
+            let evidence = black_box(&chord_region)
+                .intersect_region(black_box(&source_region), &policy)
+                .expect("noninjective collinear chord intersection must remain exact")
+                .into_value();
+            assert!(evidence.is_complete());
+            evidence_count += evidence.contacts().len() + evidence.overlaps().len();
+        }
+        assert_ne!(evidence_count, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_noninjective_collinear_algebraic_chord_intersection: {iterations} iterations in {elapsed:?} ({:?}/iter), evidence={evidence_count}",
             elapsed / iterations
         );
     }
