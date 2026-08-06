@@ -4784,6 +4784,22 @@ impl BezierAlgebraicCuspSemicircle2 {
     }
 
     #[cfg(feature = "predicates")]
+    fn axis_chord_system_contact_minus_support_sign(
+        system: &BezierAlgebraicCuspSemicircleChordSystem2,
+        branch: i8,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        algebraic_cusp_correlated_square_root_sum_sign(
+            &system.incidence,
+            &algebraic_cusp_branched_expression(&system.point_minus_support_axis, branch),
+            &system.discriminant,
+            &system.cusp_parameter,
+            &system.support_parameter,
+            policy,
+        )
+    }
+
+    #[cfg(feature = "predicates")]
     fn axis_chord_contact_minus_point_sign(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -4797,12 +4813,38 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        algebraic_cusp_correlated_square_root_sum_sign(
-            &system.incidence,
-            &algebraic_cusp_branched_expression(&system.point_minus_support_axis, branch),
-            &system.discriminant,
-            &system.cusp_parameter,
-            &system.support_parameter,
+        Self::axis_chord_system_contact_minus_support_sign(&system, branch, policy)
+    }
+
+    #[cfg(feature = "predicates")]
+    fn axis_chord_contact_minus_point_sign_cached(
+        &self,
+        system: &BezierAlgebraicCuspSemicircleChordSystem2,
+        support: &RationalBezierIntersectionPointEvidence2,
+        point: &RationalBezierIntersectionPointEvidence2,
+        cached: &mut Option<BezierAlgebraicCuspSemicircleChordSystem2>,
+        direction: BezierAlgebraicChordAxisDirection2,
+        branch: i8,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if support.shares_storage(point) {
+            return Self::axis_chord_system_contact_minus_support_sign(system, branch, policy);
+        }
+        if cached.is_none() {
+            *cached = Some(
+                match self.axis_chord_system_for_support_point(point, direction, policy)? {
+                    Classification::Decided(system) => system,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            );
+        }
+        Self::axis_chord_system_contact_minus_support_sign(
+            cached
+                .as_ref()
+                .expect("endpoint system was initialized above"),
+            branch,
             policy,
         )
     }
@@ -4862,6 +4904,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             )
         };
         let mut contacts = Vec::with_capacity(branches.len());
+        let mut start_system = None;
+        let mut end_system = None;
         for &branch in branches {
             let selected = match radical_sign(&system.selected_half_plane, branch)? {
                 Classification::Decided(sign) => sign,
@@ -4890,8 +4934,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let start_sign = match self.axis_chord_contact_minus_point_sign(
+            let start_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                &system,
+                support,
                 chord.start(),
+                &mut start_system,
                 direction,
                 branch,
                 policy,
@@ -4901,8 +4948,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let end_sign = match self.axis_chord_contact_minus_point_sign(
+            let end_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                &system,
+                support,
                 chord.end(),
+                &mut end_system,
                 direction,
                 branch,
                 policy,
