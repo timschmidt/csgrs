@@ -131,6 +131,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "intersection_point_f64",
     "from_point3",
     "second_signs",
+    "sign_query",
     "sign_reals",
     "signs_exact_dyadic_f64",
     "sign_point3",

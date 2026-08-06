@@ -36,6 +36,28 @@ pub struct AffineDet2ExactWordFilter {
     line: [i128; 3],
 }
 
+/// Exact word-sized homogeneous representation of a reusable 2D query point.
+///
+/// Retaining the query avoids repeating exact-rational numerator and
+/// denominator conversion when several fixed lines classify the same point.
+/// Construction and evaluation are checked; unsupported values return `None`
+/// to preserve the caller's arbitrary-precision fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct AffineDet2ExactWordQuery {
+    point: [i128; 3],
+}
+
+impl AffineDet2ExactWordQuery {
+    /// Construct a checked homogeneous query from exact-rational coordinates.
+    #[inline]
+    pub fn from_reals(point: [&Real; 2]) -> Option<Self> {
+        Some(Self {
+            point: Real::exact_rational_homogeneous_point2_i128(point)?,
+        })
+    }
+}
+
 impl AffineDet2ExactWordFilter {
     /// Construct a checked word-sized line filter from exact-rational points.
     ///
@@ -56,7 +78,13 @@ impl AffineDet2ExactWordFilter {
     /// Try to decide the exact determinant sign for query point `c`.
     #[inline]
     pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
-        let [cx, cy, cw] = Real::exact_rational_homogeneous_point2_i128(c)?;
+        self.sign_query(&AffineDet2ExactWordQuery::from_reals(c)?)
+    }
+
+    /// Try to decide the exact determinant sign for a retained query point.
+    #[inline]
+    pub fn sign_query(&self, query: &AffineDet2ExactWordQuery) -> Option<RealSign> {
+        let [cx, cy, cw] = query.point;
         let x_term = self.line[0].checked_mul(cx)?;
         let y_term = self.line[1].checked_mul(cy)?;
         let w_term = self.line[2].checked_mul(cw)?;

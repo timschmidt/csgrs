@@ -38,11 +38,11 @@ pub use crate::computable::Computable;
 
 mod real;
 pub use crate::real::{
-    AffineDet2ExactWordFilter, AffineDet2Filter, AffineDet2PairFilter, AffineDet3ExactWordFilter,
-    AffineDet3Filter, Incircle2Filter, Insphere3Filter, LinearForm3Filter, RationalLine2Filter,
-    RationalLinearForm4Filter, RationalLinearForm4Query, RationalPoint3Query, Real,
-    RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
-    RealExactSetSignPattern,
+    AffineDet2ExactWordFilter, AffineDet2ExactWordQuery, AffineDet2Filter, AffineDet2PairFilter,
+    AffineDet3ExactWordFilter, AffineDet3Filter, Incircle2Filter, Insphere3Filter,
+    LinearForm3Filter, RationalLine2Filter, RationalLinearForm4Filter, RationalLinearForm4Query,
+    RationalPoint3Query, Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
+    RealExactSetFacts, RealExactSetSignPattern,
 };
 
 #[cfg(feature = "simple")]

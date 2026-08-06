@@ -1390,17 +1390,22 @@ mod tests {
             b.clone(),
         ] {
             let c_refs = [&c[0], &c[1]];
+            let query = AffineDet2ExactWordQuery::from_reals(c_refs)
+                .expect("small exact-rational query should fit the word carrier");
+            let expected = Some(exact_affine_det2_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                c_refs,
+            ));
+            assert_eq!(filter.sign_query(&query), expected);
             assert_eq!(
                 filter.sign(c_refs),
-                Some(exact_affine_det2_sign(
-                    [&a[0], &a[1]],
-                    [&b[0], &b[1]],
-                    c_refs,
-                )),
+                expected,
             );
         }
 
         assert_eq!(filter.sign([&Real::pi(), &Real::zero()]), None);
+        assert!(AffineDet2ExactWordQuery::from_reals([&Real::pi(), &Real::zero()]).is_none());
     }
 
     #[test]
