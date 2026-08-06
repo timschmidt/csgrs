@@ -15,7 +15,8 @@ use crate::kernel::ExactKernel;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{Constraint, Point2, Triangle};
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
+use std::collections::BinaryHeap;
 
 /// Exact planar straight-line graph produced from caller constraints.
 pub(crate) struct PlanarConstraints {
@@ -29,6 +30,7 @@ pub(crate) struct PlanarConstraints {
 struct RecoveredConstraints {
     triangles: Vec<Triangle>,
     constrained_edges: Vec<EdgeKey>,
+    topology: Option<TriangleTopology>,
 }
 
 /// Insert all constraints into an existing triangulation.
@@ -46,8 +48,9 @@ pub(crate) fn insert_constraints(
     let RecoveredConstraints {
         mut triangles,
         constrained_edges,
+        topology,
     } = recover_constraints(kernel, points, triangles, constraints)?;
-    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
+    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
     Ok(triangles)
 }
 
@@ -66,8 +69,9 @@ pub(crate) fn insert_constraints_topology(
     let RecoveredConstraints {
         mut triangles,
         constrained_edges,
+        topology,
     } = recover_constraints(kernel, points, triangles, constraints)?;
-    canonicalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
+    canonicalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
     Ok(triangles)
 }
 
@@ -86,22 +90,31 @@ fn recover_constraints(
     // leaking scalar internals into topology code.
     let approximate_points = crate::cdt::exact_points_f64(points);
     let mut constrained_edges = Vec::new();
+    let mut topology = None;
     let mut cavity = Vec::new();
+    let mut incident_triangles = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);
-        if triangulation_has_edge(&triangles, edge) {
+        if topology.is_none() && triangulation_has_edge(&triangles, edge) {
             push_unique_edge(&mut constrained_edges, edge);
             continue;
         }
-
-        recover_missing_constraint(
-            kernel,
-            points,
-            &mut triangles,
+        let topology = match &mut topology {
+            Some(topology) => topology,
+            None => topology.insert(TriangleTopology::new(&triangles, points.len())?),
+        };
+        recover_constraint(
+            ConstraintRecovery {
+                kernel,
+                points,
+                triangles: &mut triangles,
+                topology,
+                constrained_edges: &constrained_edges,
+                approximate_points: approximate_points.as_deref(),
+                cavity: &mut cavity,
+                incident_triangles: &mut incident_triangles,
+            },
             constraint,
-            &constrained_edges,
-            approximate_points.as_deref(),
-            &mut cavity,
         )?;
         push_unique_edge(&mut constrained_edges, edge);
     }
@@ -109,6 +122,7 @@ fn recover_constraints(
     Ok(RecoveredConstraints {
         triangles,
         constrained_edges,
+        topology,
     })
 }
 
@@ -311,97 +325,226 @@ fn push_unique_constraint(constraints: &mut Vec<Constraint>, constraint: Constra
     }
 }
 
-fn recover_missing_constraint(
-    kernel: &ExactKernel,
-    points: &[Point2],
-    triangles: &mut [Triangle],
-    constraint: Constraint,
-    constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
-    cavity: &mut Vec<bool>,
-) -> Result<()> {
+#[derive(Clone, Copy)]
+enum ConstraintLocation {
+    ExistingEdge,
+    FirstCrossing(ConstraintCrossing),
+}
+
+#[derive(Clone, Copy)]
+struct ConstraintCrossing {
+    edge: EdgeKey,
+    before: usize,
+    after: usize,
+}
+
+struct ConstraintRecovery<'a> {
+    kernel: &'a ExactKernel,
+    points: &'a [Point2],
+    triangles: &'a mut [Triangle],
+    topology: &'a mut TriangleTopology,
+    constrained_edges: &'a [EdgeKey],
+    approximate_points: Option<&'a [[f64; 2]]>,
+    cavity: &'a mut Vec<bool>,
+    incident_triangles: &'a mut Vec<usize>,
+}
+
+fn recover_constraint(recovery: ConstraintRecovery<'_>, constraint: Constraint) -> Result<()> {
+    let location = locate_constraint_from_endpoint(
+        recovery.kernel,
+        recovery.points,
+        recovery.triangles,
+        recovery.topology,
+        constraint,
+        recovery.approximate_points,
+        recovery.incident_triangles,
+    )?;
+    let ConstraintLocation::FirstCrossing(first) = location else {
+        return Ok(());
+    };
+
     // Recover one complete crossed-triangle corridor. Rebuilding and sorting
     // global edge incidence after each individually legal flip repeats work
     // proportional to the whole triangulation and can become superlinear in
     // the number of crossings. The exact cavity is the standard structural
     // unit of segment insertion; unconstrained Delaunay legality is restored
     // once after all protected segments have been recovered.
-    recover_constraint_cavity(
-        kernel,
-        points,
-        triangles,
-        constraint,
-        constrained_edges,
-        approximate_points,
-        cavity,
-    )
+    recover_constraint_cavity(recovery, constraint, first)
+}
+
+fn locate_constraint_from_endpoint(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &[Triangle],
+    topology: &TriangleTopology,
+    constraint: Constraint,
+    approximate_points: Option<&[[f64; 2]]>,
+    incident_triangles: &mut Vec<usize>,
+) -> Result<ConstraintLocation> {
+    incident_triangles.clear();
+    let Some(start) = topology.vertex_triangle(constraint.from) else {
+        return Err(Error::InvalidInput {
+            reason: "constraint endpoint is absent from triangulation topology",
+        });
+    };
+    incident_triangles.push(start);
+    let mut cursor = 0;
+    let mut crossing = None;
+    while cursor < incident_triangles.len() {
+        let triangle_index = incident_triangles[cursor];
+        cursor += 1;
+        let triangle = triangles[triangle_index];
+        if !triangle.contains(&constraint.from) {
+            return Err(Error::InvalidInput {
+                reason: "vertex topology references a nonincident triangle",
+            });
+        }
+        if triangle.contains(&constraint.to) {
+            return Ok(ConstraintLocation::ExistingEdge);
+        }
+
+        for edge in triangle_edges(triangle) {
+            if edge.contains(constraint.from) {
+                if let Some(neighbor) = topology.neighbor_across(triangles, triangle_index, edge)?
+                    && !incident_triangles.contains(&neighbor)
+                {
+                    incident_triangles.push(neighbor);
+                }
+                continue;
+            }
+            if !edge_properly_crosses_constraint(
+                kernel,
+                points,
+                edge,
+                constraint,
+                approximate_points,
+            )? {
+                continue;
+            }
+            if crossing.is_some() {
+                return Err(Error::InvalidInput {
+                    reason: "constraint leaves its endpoint through multiple triangle edges",
+                });
+            }
+            let Some(after) = topology.neighbor_across(triangles, triangle_index, edge)? else {
+                return Err(Error::UnsupportedFeature {
+                    feature: "constraint cavity crosses a boundary edge",
+                });
+            };
+            crossing = Some(ConstraintLocation::FirstCrossing(ConstraintCrossing {
+                edge,
+                before: triangle_index,
+                after,
+            }));
+        }
+    }
+    crossing.ok_or(Error::UnsupportedFeature {
+        feature: "constraint cavity contains no crossed triangles",
+    })
 }
 
 fn recover_constraint_cavity(
-    kernel: &ExactKernel,
-    points: &[Point2],
-    triangles: &mut [Triangle],
+    recovery: ConstraintRecovery<'_>,
     constraint: Constraint,
-    constrained_edges: &[EdgeKey],
-    approximate_points: Option<&[[f64; 2]]>,
-    cavity: &mut Vec<bool>,
+    first: ConstraintCrossing,
 ) -> Result<()> {
-    let topology = TopologyEdges::new(triangles)?;
-    let mut first_crossing = None;
-    let mut crossing_count = 0usize;
-    for topology in topology.iter() {
-        let (edge, owners) = topology?;
-        if edge.contains(constraint.from) || edge.contains(constraint.to) {
-            continue;
+    let ConstraintRecovery {
+        kernel,
+        points,
+        triangles,
+        topology,
+        constrained_edges,
+        approximate_points,
+        cavity,
+        incident_triangles: _,
+    } = recovery;
+    let ConstraintCrossing {
+        edge: first_edge,
+        before: first_before,
+        after: first_after,
+    } = first;
+    if constrained_edges.binary_search(&first_edge).is_ok() {
+        return Err(Error::InvalidInput {
+            reason: "constraint crosses an existing constrained edge",
+        });
+    }
+    let first_adjacent = adjacent_triangles(triangles, first_edge, [first_before, first_after])?;
+    let mut crossing_count = 1usize;
+    let mut incoming = first_edge;
+    let mut current = first_after;
+    while !triangles[current].contains(&constraint.to) {
+        let mut outgoing = None;
+        for edge in triangle_edges(triangles[current]) {
+            if edge == incoming
+                || !edge_properly_crosses_constraint(
+                    kernel,
+                    points,
+                    edge,
+                    constraint,
+                    approximate_points,
+                )?
+            {
+                continue;
+            }
+            if outgoing.replace(edge).is_some() {
+                return Err(Error::InvalidInput {
+                    reason: "constraint crosses multiple outgoing edges of one triangle",
+                });
+            }
         }
-        if !edge_properly_crosses_constraint(kernel, points, edge, constraint, approximate_points)?
-        {
-            continue;
-        }
+        let Some(edge) = outgoing else {
+            return Err(Error::UnsupportedFeature {
+                feature: "constraint corridor ends before its target endpoint",
+            });
+        };
         if constrained_edges.binary_search(&edge).is_ok() {
             return Err(Error::InvalidInput {
                 reason: "constraint crosses an existing constrained edge",
             });
         }
-        let Some(owners) = owners else {
+        let Some(next) = topology.neighbor_across(triangles, current, edge)? else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint cavity crosses a boundary edge",
             });
         };
-        let adjacent = adjacent_triangles(triangles, edge, owners)?;
         crossing_count += 1;
-        if crossing_count == 1 {
-            first_crossing = Some((edge, adjacent));
-            continue;
+        if crossing_count > triangles.len() {
+            return Err(Error::InvalidInput {
+                reason: "constraint corridor does not terminate",
+            });
         }
         if crossing_count == 2 {
             cavity.resize(triangles.len(), false);
             cavity.fill(false);
-            let first = first_crossing
-                .expect("the second crossing follows a retained first crossing")
-                .1;
-            mark_cavity_triangles(cavity, first);
+            mark_cavity_triangles(cavity, first_adjacent);
         }
-        mark_cavity_triangles(cavity, adjacent);
+        mark_cavity_triangles(
+            cavity,
+            adjacent_triangles(triangles, edge, [current, next])?,
+        );
+        incoming = edge;
+        current = next;
     }
-    let Some((first_edge, first_adjacent)) = first_crossing else {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity contains no crossed triangles",
-        });
-    };
     if crossing_count == 1 {
         let replacement = EdgeKey::new(first_adjacent[0].opposite, first_adjacent[1].opposite);
         // A proper crossing between the shared edge and the opposite-vertex
         // diagonal is already the exact convex-quadrilateral certificate.
         // Reuse it instead of repeating the same four side orientations.
         if replacement == EdgeKey::new(constraint.from, constraint.to) {
-            return replace_adjacent_edge(kernel, points, triangles, first_edge, first_adjacent);
+            return replace_adjacent_edge_in_topology(
+                kernel,
+                points,
+                triangles,
+                topology,
+                first_edge,
+                first_adjacent,
+            );
         }
         cavity.resize(triangles.len(), false);
         cavity.fill(false);
         mark_cavity_triangles(cavity, first_adjacent);
     }
-    close_constraint_cavity_holes(&topology, constrained_edges, cavity)?;
+    close_constraint_cavity_holes(topology, triangles, constrained_edges, cavity)?;
     let cavity_indices = cavity
         .iter()
         .enumerate()
@@ -414,39 +557,27 @@ fn recover_constraint_cavity(
     cavity_vertices.sort_unstable();
     cavity_vertices.dedup();
 
-    let mut edge_uses = Vec::with_capacity(cavity_indices.len().saturating_mul(3));
+    let mut boundary_edges = Vec::new();
     for &triangle_index in &cavity_indices {
         let triangle = triangles[triangle_index];
-        edge_uses.extend([
-            EdgeKey::new(triangle[0], triangle[1]),
-            EdgeKey::new(triangle[1], triangle[2]),
-            EdgeKey::new(triangle[2], triangle[0]),
-        ]);
-    }
-    edge_uses.sort_unstable();
-    let mut boundary_edges = Vec::new();
-    let mut start = 0;
-    while start < edge_uses.len() {
-        let mut end = start + 1;
-        while end < edge_uses.len() && edge_uses[end] == edge_uses[start] {
-            end += 1;
-        }
-        match end - start {
-            1 => boundary_edges.push(edge_uses[start]),
-            2 if constrained_edges.binary_search(&edge_uses[start]).is_ok() => {
-                return Err(Error::UnsupportedFeature {
-                    feature: "constraint cavity contains an existing constrained edge",
-                });
-            }
-            2 => {}
-            _ => {
-                return Err(Error::InvalidInput {
-                    reason: "constraint cavity contains a non-manifold edge",
-                });
+        for edge in triangle_edges(triangle) {
+            let neighbor = topology.neighbor_across(triangles, triangle_index, edge)?;
+            match neighbor {
+                None => boundary_edges.push(edge),
+                Some(neighbor) if !cavity[neighbor] => boundary_edges.push(edge),
+                Some(neighbor)
+                    if triangle_index < neighbor
+                        && constrained_edges.binary_search(&edge).is_ok() =>
+                {
+                    return Err(Error::UnsupportedFeature {
+                        feature: "constraint cavity contains an existing constrained edge",
+                    });
+                }
+                Some(_) => {}
             }
         }
-        start = end;
     }
+    boundary_edges.sort_unstable();
 
     let missing = usize::MAX;
     let mut adjacency = vec![[missing; 2]; points.len()];
@@ -526,14 +657,14 @@ fn recover_constraint_cavity(
             feature: "constraint cavity retriangulation changed triangle count",
         });
     }
-    for (triangle_index, triangle) in cavity_indices.into_iter().zip(replacement) {
-        triangles[triangle_index] = triangle;
-    }
-    if !triangulation_has_edge(triangles, EdgeKey::new(constraint.from, constraint.to)) {
+    if !replacement.iter().any(|triangle| {
+        triangle_contains_edge(*triangle, EdgeKey::new(constraint.from, constraint.to))
+    }) {
         return Err(Error::UnsupportedFeature {
             feature: "constraint cavity retriangulation omitted the target edge",
         });
     }
+    topology.replace_region(triangles, &cavity_indices, &replacement)?;
     Ok(())
 }
 
@@ -551,54 +682,11 @@ fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
 /// boundary nor an already protected edge. This turns the recovery cavity into
 /// one disk without crossing a prior constraint or consuming exterior work.
 fn close_constraint_cavity_holes(
-    topology: &TopologyEdges,
+    topology: &TriangleTopology,
+    triangles: &[Triangle],
     constrained_edges: &[EdgeKey],
     cavity: &mut [bool],
 ) -> Result<()> {
-    let missing = usize::MAX;
-    let mut neighbors = vec![[missing; 3]; cavity.len()];
-    let mut open = vec![false; cavity.len()];
-    let mut start = 0;
-    while start < topology.uses.len() {
-        let edge = topology.uses[start].edge;
-        let mut end = start + 1;
-        while end < topology.uses.len() && topology.uses[end].edge == edge {
-            end += 1;
-        }
-        match end - start {
-            1 => open[topology.uses[start].triangle] = true,
-            2 => {
-                let first = topology.uses[start].triangle;
-                let second = topology.uses[start + 1].triangle;
-                if first == second {
-                    return Err(Error::InvalidInput {
-                        reason: "triangle contains the same edge more than once",
-                    });
-                }
-                if constrained_edges.binary_search(&edge).is_ok() {
-                    open[first] = true;
-                    open[second] = true;
-                } else {
-                    for (owner, neighbor) in [(first, second), (second, first)] {
-                        let slot = neighbors[owner]
-                            .iter_mut()
-                            .find(|candidate| **candidate == missing)
-                            .ok_or(Error::InvalidInput {
-                                reason: "triangulation triangle has too many adjacent edges",
-                            })?;
-                        *slot = neighbor;
-                    }
-                }
-            }
-            _ => {
-                return Err(Error::InvalidInput {
-                    reason: "triangulation edge has more than two adjacent triangles",
-                });
-            }
-        }
-        start = end;
-    }
-
     let mut visited = vec![false; cavity.len()];
     let mut stack = Vec::new();
     let mut component = Vec::new();
@@ -613,9 +701,16 @@ fn close_constraint_cavity_holes(
         let mut enclosed = true;
         while let Some(triangle) = stack.pop() {
             component.push(triangle);
-            enclosed &= !open[triangle];
-            for &neighbor in &neighbors[triangle] {
-                if neighbor != missing && !cavity[neighbor] && !visited[neighbor] {
+            for edge in triangle_edges(triangles[triangle]) {
+                if constrained_edges.binary_search(&edge).is_ok() {
+                    enclosed = false;
+                    continue;
+                }
+                let Some(neighbor) = topology.neighbor_across(triangles, triangle, edge)? else {
+                    enclosed = false;
+                    continue;
+                };
+                if !cavity[neighbor] && !visited[neighbor] {
                     visited[neighbor] = true;
                     stack.push(neighbor);
                 }
@@ -760,31 +855,24 @@ fn legalize_unconstrained_edges(
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
+    topology: Option<TriangleTopology>,
 ) -> Result<()> {
-    loop {
-        let mut flipped = false;
-        for topology in TopologyEdges::new(triangles)?.iter() {
-            let (edge, owners) = topology?;
-            if constrained_edges.binary_search(&edge).is_ok() {
-                continue;
-            }
-
-            let Some(owners) = owners else {
-                continue;
-            };
-            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
-
-            if !edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)? {
-                continue;
-            }
-            replace_adjacent_edge(kernel, points, triangles, edge, [first, second])?;
-            flipped = true;
-            break;
-        }
-
-        if !flipped {
-            return Ok(());
-        }
+    match topology {
+        Some(topology) => restore_unconstrained_edges(
+            kernel,
+            points,
+            triangles,
+            constrained_edges,
+            topology,
+            EdgeSchedule::Delaunay,
+        ),
+        None => restore_unconstrained_edges_by_scan(
+            kernel,
+            points,
+            triangles,
+            constrained_edges,
+            EdgeSchedule::Delaunay,
+        ),
     }
 }
 
@@ -802,9 +890,110 @@ fn canonicalize_unconstrained_edges(
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
+    topology: Option<TriangleTopology>,
+) -> Result<()> {
+    match topology {
+        Some(topology) => restore_unconstrained_edges(
+            kernel,
+            points,
+            triangles,
+            constrained_edges,
+            topology,
+            EdgeSchedule::Lexicographic,
+        ),
+        None => restore_unconstrained_edges_by_scan(
+            kernel,
+            points,
+            triangles,
+            constrained_edges,
+            EdgeSchedule::Lexicographic,
+        ),
+    }
+}
+
+#[derive(Clone, Copy)]
+enum EdgeSchedule {
+    Delaunay,
+    Lexicographic,
+}
+
+fn restore_unconstrained_edges(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &mut [Triangle],
+    constrained_edges: &[EdgeKey],
+    mut topology: TriangleTopology,
+    schedule: EdgeSchedule,
+) -> Result<()> {
+    let mut pending = BinaryHeap::new();
+    for (triangle, indices) in triangles.iter().copied().enumerate() {
+        for (slot, edge) in triangle_edges(indices).into_iter().enumerate() {
+            let neighbor = topology.neighbors[triangle][slot];
+            if neighbor.is_some_and(|neighbor| triangle < neighbor)
+                && constrained_edges.binary_search(&edge).is_err()
+            {
+                pending.push(Reverse((edge, triangle)));
+            }
+        }
+    }
+    while let Some(Reverse((edge, owner))) = pending.pop() {
+        if constrained_edges.binary_search(&edge).is_ok() {
+            continue;
+        }
+        if !triangles
+            .get(owner)
+            .is_some_and(|triangle| triangle_contains_edge(*triangle, edge))
+        {
+            continue;
+        }
+        let Some(neighbor) = topology.neighbor_across(triangles, owner, edge)? else {
+            continue;
+        };
+        let adjacent = adjacent_triangles(triangles, edge, [owner, neighbor])?;
+        let [first, second] = adjacent;
+        let should_flip = match schedule {
+            EdgeSchedule::Delaunay => {
+                edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)?
+            }
+            EdgeSchedule::Lexicographic => {
+                EdgeKey::new(first.opposite, second.opposite) < edge
+                    && edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+            }
+        };
+        if !should_flip {
+            continue;
+        }
+        let changed = [first.triangle, second.triangle];
+        replace_adjacent_edge_in_topology(
+            kernel,
+            points,
+            triangles,
+            &mut topology,
+            edge,
+            adjacent,
+        )?;
+        for triangle in changed {
+            enqueue_triangle_edges(
+                triangles,
+                &topology,
+                constrained_edges,
+                triangle,
+                &mut pending,
+            );
+        }
+    }
+    Ok(())
+}
+
+fn restore_unconstrained_edges_by_scan(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &mut [Triangle],
+    constrained_edges: &[EdgeKey],
+    schedule: EdgeSchedule,
 ) -> Result<()> {
     loop {
-        let mut flipped = false;
+        let mut replacement = None;
         for topology in TopologyEdges::new(triangles)?.iter() {
             let (edge, owners) = topology?;
             if constrained_edges.binary_search(&edge).is_ok() {
@@ -813,19 +1002,43 @@ fn canonicalize_unconstrained_edges(
             let Some(owners) = owners else {
                 continue;
             };
-            let [first, second] = adjacent_triangles(triangles, edge, owners)?;
-            let replacement = EdgeKey::new(first.opposite, second.opposite);
-            if replacement >= edge
-                || !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
-            {
-                continue;
+            let adjacent = adjacent_triangles(triangles, edge, owners)?;
+            let [first, second] = adjacent;
+            let should_flip = match schedule {
+                EdgeSchedule::Delaunay => {
+                    edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)?
+                }
+                EdgeSchedule::Lexicographic => {
+                    EdgeKey::new(first.opposite, second.opposite) < edge
+                        && edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)?
+                }
+            };
+            if should_flip {
+                replacement = Some((edge, adjacent));
+                break;
             }
-            replace_adjacent_edge(kernel, points, triangles, edge, [first, second])?;
-            flipped = true;
-            break;
         }
-        if !flipped {
+        let Some((edge, adjacent)) = replacement else {
             return Ok(());
+        };
+        let replacement = adjacent_edge_replacement(kernel, points, edge, adjacent)?;
+        for (owner, triangle) in adjacent.into_iter().zip(replacement) {
+            triangles[owner.triangle] = triangle;
+        }
+    }
+}
+
+fn enqueue_triangle_edges(
+    triangles: &[Triangle],
+    topology: &TriangleTopology,
+    constrained_edges: &[EdgeKey],
+    triangle: usize,
+    pending: &mut BinaryHeap<Reverse<(EdgeKey, usize)>>,
+) {
+    for (slot, edge) in triangle_edges(triangles[triangle]).into_iter().enumerate() {
+        let neighbor = topology.neighbors[triangle][slot];
+        if neighbor.is_some() && constrained_edges.binary_search(&edge).is_err() {
+            pending.push(Reverse((edge, triangle)));
         }
     }
 }
@@ -868,19 +1081,31 @@ fn edge_is_illegal(
 /// the strict convex-quadrilateral predicate against the current triangles.
 /// Keeping the proof beside the selected edge avoids rediscovering topology or
 /// repeating the four exact side predicates immediately before the write.
-fn replace_adjacent_edge(
+fn replace_adjacent_edge_in_topology(
     kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
+    topology: &mut TriangleTopology,
+    edge: EdgeKey,
+    mut adjacent: [AdjacentTriangle; 2],
+) -> Result<()> {
+    adjacent.sort_unstable_by_key(|owner| owner.triangle);
+    let replacement = adjacent_edge_replacement(kernel, points, edge, adjacent)?;
+    let indices = [adjacent[0].triangle, adjacent[1].triangle];
+    topology.replace_region(triangles, &indices, &replacement)
+}
+
+fn adjacent_edge_replacement(
+    kernel: &ExactKernel,
+    points: &[Point2],
     edge: EdgeKey,
     adjacent: [AdjacentTriangle; 2],
-) -> Result<()> {
+) -> Result<[Triangle; 2]> {
     let [first, second] = adjacent;
-    let first_new = make_oriented(kernel, points, [first.opposite, second.opposite, edge.from])?;
-    let second_new = make_oriented(kernel, points, [second.opposite, first.opposite, edge.to])?;
-    triangles[first.triangle] = first_new;
-    triangles[second.triangle] = second_new;
-    Ok(())
+    Ok([
+        make_oriented(kernel, points, [first.opposite, second.opposite, edge.from])?,
+        make_oriented(kernel, points, [second.opposite, first.opposite, edge.to])?,
+    ])
 }
 
 fn edge_is_flippable(
@@ -940,6 +1165,233 @@ struct AdjacentTriangle {
 struct EdgeUse {
     edge: EdgeKey,
     triangle: usize,
+}
+
+/// Checked triangle adjacency retained while a batch of constraints mutates
+/// fixed triangle slots.
+///
+/// Cavity replacement and edge flips preserve the triangle count. Keeping one
+/// reciprocal neighbor row per slot therefore avoids rebuilding and sorting
+/// the complete edge-use stream after every recovered segment while retaining
+/// the same manifold checks at construction and every local patch boundary.
+struct TriangleTopology {
+    neighbors: Vec<[Option<usize>; 3]>,
+    vertex_triangles: Vec<Option<usize>>,
+}
+
+impl TriangleTopology {
+    fn new(triangles: &[Triangle], point_count: usize) -> Result<Self> {
+        let mut vertex_triangles = vec![None; point_count];
+        for (triangle_index, triangle) in triangles.iter().copied().enumerate() {
+            if triangle[0] == triangle[1]
+                || triangle[1] == triangle[2]
+                || triangle[2] == triangle[0]
+            {
+                return Err(Error::InvalidInput {
+                    reason: "triangle edge has no opposite vertex",
+                });
+            }
+            for vertex in triangle {
+                let representative =
+                    vertex_triangles
+                        .get_mut(vertex)
+                        .ok_or(Error::InvalidInput {
+                            reason: "triangle vertex index is out of bounds",
+                        })?;
+                *representative = Some(triangle_index);
+            }
+        }
+        Ok(Self {
+            neighbors: crate::cdt::triangle_neighbors(triangles)?,
+            vertex_triangles,
+        })
+    }
+
+    fn vertex_triangle(&self, vertex: usize) -> Option<usize> {
+        self.vertex_triangles.get(vertex).copied().flatten()
+    }
+
+    fn neighbor_across(
+        &self,
+        triangles: &[Triangle],
+        triangle: usize,
+        edge: EdgeKey,
+    ) -> Result<Option<usize>> {
+        let indices = *triangles.get(triangle).ok_or(Error::InvalidInput {
+            reason: "triangle topology references an absent triangle",
+        })?;
+        let slot = triangle_edge_slot(indices, edge)?;
+        let Some(neighbor) = self.neighbors[triangle][slot] else {
+            return Ok(None);
+        };
+        let neighbor_indices = *triangles.get(neighbor).ok_or(Error::InvalidInput {
+            reason: "triangle adjacency references an absent triangle",
+        })?;
+        let neighbor_slot = triangle_edge_slot(neighbor_indices, edge)?;
+        if self.neighbors[neighbor][neighbor_slot] != Some(triangle) {
+            return Err(Error::InvalidInput {
+                reason: "triangle adjacency is not reciprocal",
+            });
+        }
+        Ok(Some(neighbor))
+    }
+
+    /// Atomically replace fixed triangle slots after proving that the new
+    /// local triangulation has exactly the old region boundary.
+    fn replace_region(
+        &mut self,
+        triangles: &mut [Triangle],
+        indices: &[usize],
+        replacement: &[Triangle],
+    ) -> Result<()> {
+        if indices.len() != replacement.len() || indices.is_empty() {
+            return Err(Error::InvalidInput {
+                reason: "topology replacement has mismatched triangle slots",
+            });
+        }
+        for pair in indices.windows(2) {
+            if pair[0] >= pair[1] {
+                return Err(Error::InvalidInput {
+                    reason: "topology replacement triangle slots are not unique and sorted",
+                });
+            }
+        }
+        for (&triangle_index, triangle) in indices.iter().zip(replacement) {
+            if triangle_index >= triangles.len() {
+                return Err(Error::InvalidInput {
+                    reason: "topology replacement references an absent triangle",
+                });
+            }
+            if triangle[0] == triangle[1]
+                || triangle[1] == triangle[2]
+                || triangle[2] == triangle[0]
+                || triangle
+                    .iter()
+                    .any(|&vertex| vertex >= self.vertex_triangles.len())
+            {
+                return Err(Error::InvalidInput {
+                    reason: "topology replacement contains an invalid triangle",
+                });
+            }
+        }
+
+        let mut old_boundary = Vec::new();
+        for &triangle_index in indices {
+            for edge in triangle_edges(triangles[triangle_index]) {
+                let neighbor = self.neighbor_across(triangles, triangle_index, edge)?;
+                if neighbor.is_none_or(|neighbor| indices.binary_search(&neighbor).is_err()) {
+                    old_boundary.push((edge, neighbor));
+                }
+            }
+        }
+        old_boundary.sort_unstable_by_key(|&(edge, _)| edge);
+        if old_boundary.windows(2).any(|pair| pair[0].0 == pair[1].0) {
+            return Err(Error::InvalidInput {
+                reason: "topology replacement boundary contains a duplicate edge",
+            });
+        }
+
+        let mut edge_uses = Vec::with_capacity(replacement.len().saturating_mul(3));
+        for (&triangle_index, triangle) in indices.iter().zip(replacement) {
+            for edge in triangle_edges(*triangle) {
+                edge_uses.push(EdgeUse {
+                    edge,
+                    triangle: triangle_index,
+                });
+            }
+        }
+        edge_uses.sort_unstable();
+        let mut new_neighbors = vec![[None; 3]; replacement.len()];
+        let mut outside_updates = Vec::new();
+        let mut boundary_count = 0usize;
+        let mut start = 0;
+        while start < edge_uses.len() {
+            let edge = edge_uses[start].edge;
+            let mut end = start + 1;
+            while end < edge_uses.len() && edge_uses[end].edge == edge {
+                end += 1;
+            }
+            match end - start {
+                1 => {
+                    boundary_count += 1;
+                    let boundary_position = old_boundary
+                        .binary_search_by_key(&edge, |&(candidate, _)| candidate)
+                        .map_err(|_| Error::InvalidInput {
+                            reason: "topology replacement changes the region boundary",
+                        })?;
+                    let triangle = edge_uses[start].triangle;
+                    let local =
+                        indices
+                            .binary_search(&triangle)
+                            .map_err(|_| Error::InvalidInput {
+                                reason: "topology replacement edge has no triangle slot",
+                            })?;
+                    let slot = triangle_edge_slot(replacement[local], edge)?;
+                    let outside = old_boundary[boundary_position].1;
+                    new_neighbors[local][slot] = outside;
+                    if let Some(outside) = outside {
+                        let outside_slot = triangle_edge_slot(triangles[outside], edge)?;
+                        let Some(old_inside) = self.neighbors[outside][outside_slot] else {
+                            return Err(Error::InvalidInput {
+                                reason: "topology replacement boundary is not reciprocal",
+                            });
+                        };
+                        if indices.binary_search(&old_inside).is_err() {
+                            return Err(Error::InvalidInput {
+                                reason: "topology replacement boundary is not reciprocal",
+                            });
+                        }
+                        outside_updates.push((outside, outside_slot, triangle));
+                    }
+                }
+                2 => {
+                    let first = edge_uses[start].triangle;
+                    let second = edge_uses[start + 1].triangle;
+                    let first_local =
+                        indices
+                            .binary_search(&first)
+                            .map_err(|_| Error::InvalidInput {
+                                reason: "topology replacement edge has no first triangle slot",
+                            })?;
+                    let second_local =
+                        indices
+                            .binary_search(&second)
+                            .map_err(|_| Error::InvalidInput {
+                                reason: "topology replacement edge has no second triangle slot",
+                            })?;
+                    let first_slot = triangle_edge_slot(replacement[first_local], edge)?;
+                    let second_slot = triangle_edge_slot(replacement[second_local], edge)?;
+                    new_neighbors[first_local][first_slot] = Some(second);
+                    new_neighbors[second_local][second_slot] = Some(first);
+                }
+                _ => {
+                    return Err(Error::InvalidInput {
+                        reason: "topology replacement contains a non-manifold edge",
+                    });
+                }
+            }
+            start = end;
+        }
+        if boundary_count != old_boundary.len() {
+            return Err(Error::InvalidInput {
+                reason: "topology replacement omits an existing boundary edge",
+            });
+        }
+
+        for ((&triangle_index, triangle), neighbors) in
+            indices.iter().zip(replacement).zip(new_neighbors)
+        {
+            triangles[triangle_index] = *triangle;
+            self.neighbors[triangle_index] = neighbors;
+            for &vertex in triangle {
+                self.vertex_triangles[vertex] = Some(triangle_index);
+            }
+        }
+        for (outside, slot, triangle) in outside_updates {
+            self.neighbors[outside][slot] = Some(triangle);
+        }
+        Ok(())
+    }
 }
 
 struct TopologyEdges {
@@ -1081,6 +1533,23 @@ fn triangle_contains_edge(triangle: Triangle, edge: EdgeKey) -> bool {
     triangle.contains(&edge.from) && triangle.contains(&edge.to)
 }
 
+fn triangle_edges(triangle: Triangle) -> [EdgeKey; 3] {
+    [
+        EdgeKey::new(triangle[0], triangle[1]),
+        EdgeKey::new(triangle[1], triangle[2]),
+        EdgeKey::new(triangle[2], triangle[0]),
+    ]
+}
+
+fn triangle_edge_slot(triangle: Triangle, edge: EdgeKey) -> Result<usize> {
+    triangle_edges(triangle)
+        .iter()
+        .position(|&candidate| candidate == edge)
+        .ok_or(Error::InvalidInput {
+            reason: "triangle topology references an absent edge",
+        })
+}
+
 fn push_unique_edge(edges: &mut Vec<EdgeKey>, edge: EdgeKey) {
     if let Err(position) = edges.binary_search(&edge) {
         edges.insert(position, edge);
@@ -1177,6 +1646,58 @@ mod tests {
     }
 
     #[test]
+    fn retained_topology_updates_reciprocal_neighbors_after_a_flip() {
+        let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
+        let mut triangles = [[0, 1, 2], [0, 2, 3]];
+        let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let kernel = ExactKernel::new(&context);
+        let edge = EdgeKey::new(0, 2);
+        let adjacent = adjacent_triangles(&triangles, edge, [0, 1]).unwrap();
+
+        replace_adjacent_edge_in_topology(
+            &kernel,
+            &points,
+            &mut triangles,
+            &mut topology,
+            edge,
+            adjacent,
+        )
+        .unwrap();
+
+        let replacement = EdgeKey::new(1, 3);
+        assert!(!triangulation_has_edge(&triangles, edge));
+        assert!(triangulation_has_edge(&triangles, replacement));
+        assert_eq!(
+            topology.neighbor_across(&triangles, 0, replacement),
+            Ok(Some(1))
+        );
+        assert_eq!(
+            topology.neighbor_across(&triangles, 1, replacement),
+            Ok(Some(0))
+        );
+    }
+
+    #[test]
+    fn retained_topology_rejects_a_changed_boundary_atomically() {
+        let original = [[0, 1, 2]];
+        let mut triangles = original;
+        let mut topology = TriangleTopology::new(&triangles, 4).unwrap();
+        let neighbors = topology.neighbors.clone();
+        let vertex_triangles = topology.vertex_triangles.clone();
+
+        assert_eq!(
+            topology.replace_region(&mut triangles, &[0], &[[0, 1, 3]]),
+            Err(Error::InvalidInput {
+                reason: "topology replacement changes the region boundary",
+            })
+        );
+        assert_eq!(triangles, original);
+        assert_eq!(topology.neighbors, neighbors);
+        assert_eq!(topology.vertex_triangles, vertex_triangles);
+    }
+
+    #[test]
     fn steiner_point_deduplication_uses_numeric_equality() {
         let left = Real::pi() + Real::e();
         let right = Real::e() + Real::pi();
@@ -1206,16 +1727,22 @@ mod tests {
             let context = TriangulationContext::new(policy);
             let kernel = ExactKernel::new(&context);
             let mut triangles = original.clone();
+            let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
+            let mut incident_triangles = Vec::new();
 
-            recover_constraint_cavity(
-                &kernel,
-                &points,
-                &mut triangles,
+            recover_constraint(
+                ConstraintRecovery {
+                    kernel: &kernel,
+                    points: &points,
+                    triangles: &mut triangles,
+                    topology: &mut topology,
+                    constrained_edges: &[],
+                    approximate_points: approximate.as_deref(),
+                    cavity: &mut cavity,
+                    incident_triangles: &mut incident_triangles,
+                },
                 constraint,
-                &[],
-                approximate.as_deref(),
-                &mut cavity,
             )
             .unwrap();
 
@@ -1307,7 +1834,7 @@ mod tests {
                 triangles.extend([[a, b, d], [a, d, c]]);
             }
         }
-        let topology = TopologyEdges::new(&triangles).unwrap();
+        let topology = TriangleTopology::new(&triangles, (SIDE + 1) * (SIDE + 1)).unwrap();
         let center = |x: usize, y: usize| (y * SIDE + x) * 2;
         let mut corridor = vec![false; triangles.len()];
         for y in 1..=3 {
@@ -1321,12 +1848,13 @@ mod tests {
         }
 
         let mut closed = corridor.clone();
-        close_constraint_cavity_holes(&topology, &[], &mut closed).unwrap();
+        close_constraint_cavity_holes(&topology, &triangles, &[], &mut closed).unwrap();
         assert!(closed[center(2, 2)] && closed[center(2, 2) + 1]);
         assert!(!closed[center(0, 0)] && !closed[center(4, 4)]);
 
         let central_diagonal = EdgeKey::new(vertex(2, 2), vertex(3, 3));
-        close_constraint_cavity_holes(&topology, &[central_diagonal], &mut corridor).unwrap();
+        close_constraint_cavity_holes(&topology, &triangles, &[central_diagonal], &mut corridor)
+            .unwrap();
         assert!(!corridor[center(2, 2)] && !corridor[center(2, 2) + 1]);
     }
 
@@ -1351,9 +1879,29 @@ mod tests {
             };
             let mut first = orient(&first).unwrap();
             let mut second = orient(&second).unwrap();
+            let mut retained_first = first.clone();
+            let mut retained_second = second.clone();
+            let first_topology = TriangleTopology::new(&first, points.len()).unwrap();
+            let second_topology = TriangleTopology::new(&second, points.len()).unwrap();
 
-            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[]).unwrap();
-            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[]).unwrap();
+            canonicalize_unconstrained_edges(&kernel, &points, &mut first, &[], None).unwrap();
+            canonicalize_unconstrained_edges(&kernel, &points, &mut second, &[], None).unwrap();
+            canonicalize_unconstrained_edges(
+                &kernel,
+                &points,
+                &mut retained_first,
+                &[],
+                Some(first_topology),
+            )
+            .unwrap();
+            canonicalize_unconstrained_edges(
+                &kernel,
+                &points,
+                &mut retained_second,
+                &[],
+                Some(second_topology),
+            )
+            .unwrap();
 
             let canonical = |mut triangles: Vec<Triangle>| {
                 for triangle in &mut triangles {
@@ -1362,7 +1910,10 @@ mod tests {
                 triangles.sort_unstable();
                 triangles
             };
-            assert_eq!(canonical(first), canonical(second));
+            let first = canonical(first);
+            assert_eq!(first, canonical(retained_first));
+            assert_eq!(first, canonical(second));
+            assert_eq!(first, canonical(retained_second));
         }
     }
 }

@@ -944,7 +944,7 @@ fn mark_bad_triangles_exhaustive(
     Ok(())
 }
 
-fn triangle_neighbors(triangles: &[Triangle]) -> Result<Vec<[Option<usize>; 3]>> {
+pub(crate) fn triangle_neighbors(triangles: &[Triangle]) -> Result<Vec<[Option<usize>; 3]>> {
     let mut neighbors = vec![[None; 3]; triangles.len()];
     if triangles.is_empty() {
         return Ok(neighbors);
