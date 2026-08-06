@@ -377,10 +377,17 @@ fn transverse_self_pwn_clusters_scale_under_both_policies() {
 
 #[test]
 fn dense_crossing_grid_exhausts_the_public_arrangement_under_both_policies() {
-    for line_count in support::DENSE_CROSSING_GRID_LINE_COUNTS[..2]
-        .iter()
-        .copied()
-    {
+    assert_dense_crossing_grid(&support::DENSE_CROSSING_GRID_LINE_COUNTS[..2]);
+}
+
+#[test]
+#[ignore = "manual 1,572-triangle / 16,900-crossing exact policy-equality gate"]
+fn dense_crossing_grid_large_policy_outputs_are_exactly_equal() {
+    assert_dense_crossing_grid(&support::DENSE_CROSSING_GRID_LINE_COUNTS[2..]);
+}
+
+fn assert_dense_crossing_grid(line_counts: &[usize]) {
+    for &line_count in line_counts {
         let case = support::dense_crossing_grid_case(line_count);
         let inputs = [to_hypermesh(&case.left), to_hypermesh(&case.right)];
         let expected_six_volume = Rational::new(

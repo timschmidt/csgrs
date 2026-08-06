@@ -67,6 +67,7 @@ replacement_tests = [
   "surface_arrangement::tests::opposite_winding_coincident_faces_reuse_one_point_set",
   "surface_arrangement::tests::collinear_overlaps_and_t_junctions_split_into_one_edge_set",
   "tests/competitive.rs::dense_crossing_grid_exhausts_the_public_arrangement_under_both_policies",
+  "tests/competitive.rs::dense_crossing_grid_large_policy_outputs_are_exactly_equal",
 ]
 fixture_ids = [
   "surface_arrangement_negative_cavity",
