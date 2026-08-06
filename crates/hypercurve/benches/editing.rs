@@ -1201,40 +1201,24 @@ fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]>
 #[cfg(feature = "predicates")]
 fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     let policy = CurveContext::STRICT;
-    let endpoint_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
-    let endpoint = RationalBezierIntersectionPointEvidence2::Algebraic(
-        RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?
-            .point_at_algebraic_parameter(&endpoint_parameter, &policy)?,
-    );
-    let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(
-            RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)),
-            endpoint,
-            &policy,
-        )?,
-        "mixed-field benchmark chord must remain exact",
-    );
-    let closure = QuadraticBezier2::new(p(0, -1), Point2::new(q(1, 2), Real::from(-1_i8)), p(1, 1));
-    let closure_fragment = expect_decided(
-        closure.split_at_parameters(&[BezierParameter2::Algebraic(endpoint_parameter)], &policy)?,
-        "mixed-field benchmark closure split must remain exact",
-    )
-    .fragments()[0]
-        .reversed()?;
-    let materialized_line = |start: Point2, end: Point2| -> CurveResult<_> {
-        Ok(BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(start, end)?,
-            )),
-        })
+    let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
+    let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
+    let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
+    let endpoint = |parameter: &BezierAlgebraicParameter2| {
+        horizontal
+            .point_at_algebraic_parameter(parameter, &policy)
+            .map(RationalBezierIntersectionPointEvidence2::Algebraic)
     };
+    let first_endpoint = endpoint(&first_parameter)?;
+    let second_endpoint = endpoint(&second_parameter)?;
+    let chord = expect_decided(
+        BezierAlgebraicChord2::try_new(first_endpoint, second_endpoint, &policy)?,
+        "independent-field benchmark chord must remain exact",
+    );
     let chord_loop = CurveRegionBoundaryLoop2::new(
         vec![
-            BezierSplitFragment2::AlgebraicChord(chord),
-            closure_fragment,
-            materialized_line(p(0, -1), p(0, 0))?,
+            BezierSplitFragment2::AlgebraicChord(chord.clone()),
+            BezierSplitFragment2::AlgebraicChord(chord.reversed()),
         ],
         &policy,
     )?;
@@ -1245,24 +1229,12 @@ fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2
         vec![CurveBoundaryInteriorSide2::Left],
     )?;
 
-    let source_start = Point2::new(q(-5, 27), Real::zero());
-    let source = BezierSubcurve2::Cubic(CubicBezier2::new(
-        source_start.clone(),
-        Point2::new(q(11, 27), Real::zero()),
-        Point2::new(q(-7, 9), Real::zero()),
-        p(1, 0),
-    ));
     let source_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: source,
-            },
-            materialized_line(p(1, 0), p(1, 1))?,
-            materialized_line(p(1, 1), Point2::new(q(-5, 27), Real::one()))?,
-            materialized_line(Point2::new(q(-5, 27), Real::one()), source_start)?,
-        ],
+        vec![BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0))),
+        }],
         &policy,
     )?;
     let source_region = CurveRegion2::try_new_with_loop_topology(
@@ -1412,7 +1384,7 @@ fn bench_represented_bezier_region_corner_lanes(
                 .intersect_region(black_box(&source_region), &policy)
                 .expect("noninjective collinear chord intersection must remain exact")
                 .into_value();
-            assert!(evidence.is_complete());
+            assert!(evidence.is_complete(), "{evidence:?}");
             evidence_count += evidence.contacts().len() + evidence.overlaps().len();
         }
         assert_ne!(evidence_count, 0);
