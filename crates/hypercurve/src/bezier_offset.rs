@@ -330,6 +330,9 @@ struct BezierParallelAlgebraicCuspFrameData2 {
     /// structural tangent certificate for adjacent round-join chords; general
     /// transformed and analytic-cusp frames leave it absent.
     cardinal_normal: Option<(i8, i8)>,
+    /// Original retained center image for a directly framed circle. This is a
+    /// cache/provenance handle only; the polynomial frame remains authoritative.
+    direct_center: Option<RationalBezierAlgebraicPointImage2>,
     parameter: BezierAlgebraicParameter2,
     source_x_numerator: Vec<Real>,
     source_y_numerator: Vec<Real>,
@@ -2377,6 +2380,9 @@ struct BezierAlgebraicChordData2 {
     start: RationalBezierIntersectionPointEvidence2,
     end: RationalBezierIntersectionPointEvidence2,
     parameter_axis: BezierAlgebraicChordParameterAxis2,
+    /// Proof that the other coordinate is constant, so `parameter_axis`
+    /// determines the complete cardinal traversal direction.
+    certified_axis_aligned: bool,
     source: Option<BezierAlgebraicChord2>,
     reversed: bool,
     policy: CurveContext,
@@ -2421,8 +2427,20 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
     start: BezierAlgebraicCuspSemicircleParameter2,
     end: BezierAlgebraicCuspSemicircleParameter2,
+    /// Exact endpoint images are constructed at most once and shared by every
+    /// topology, validation, and adjacency consumer of this fragment.
+    start_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
+    end_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
     reversed: bool,
     policy: CurveContext,
+}
+
+fn cloned_once_lock<T: Clone>(source: &OnceLock<T>) -> OnceLock<T> {
+    let cloned = OnceLock::new();
+    if let Some(value) = source.get() {
+        let _ = cloned.set(value.clone());
+    }
+    cloned
 }
 
 /// Cached local-field geometry for classifying an algebraic ray against one
@@ -2541,6 +2559,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
                     .map(|parallel| parallel.transform_similarity(transform))
                     .transpose()?,
                 cardinal_normal: None,
+                direct_center: None,
                 parameter: self.data.parameter.clone(),
                 source_x_numerator: polynomial_trim_structural_zeros(source_x_numerator),
                 source_y_numerator: polynomial_trim_structural_zeros(source_y_numerator),
@@ -2665,6 +2684,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// axis-aligned round join therefore reuses that authority by supplying a
     /// fixed cardinal normal. `radial_distance` remains signed so the same
     /// rational half-circle parameterization covers expansion and erosion.
+    #[cfg(feature = "predicates")]
     pub(crate) fn from_retained_axis_aligned_center(
         center: &RationalBezierIntersectionPointEvidence2,
         cardinal_normal: (i8, i8),
@@ -2706,6 +2726,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                         parallel: None,
                         cardinal_normal: Some(cardinal_normal),
+                        direct_center: Some(center.clone()),
                         parameter,
                         source_x_numerator,
                         source_y_numerator,
@@ -2891,6 +2912,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+        if let Some(center) = &self.data.frame.data.direct_center {
+            return Ok(center.clone());
+        }
         self.data
             .frame
             .point_image_at_parallel_distance(&self.center_parallel_distance(), policy)
@@ -2934,6 +2958,34 @@ impl BezierAlgebraicCuspSemicircle2 {
             Point2::new(source.min_x() - &expansion, source.min_y() - &expansion),
             Point2::new(source.max_x() + &expansion, source.max_y() + expansion),
         )))
+    }
+
+    /// Proves that the complete supporting circle misses an exact outer box.
+    ///
+    /// A strict coordinate separation against `center +/- |radius|` excludes
+    /// every point of the circle and therefore every retained subarc. The
+    /// selected center stays in its existing field; no resultant or coordinate
+    /// algebraic number is constructed.
+    pub(crate) fn certifiably_disjoint_from_bounds(
+        &self,
+        bounds: &Aabb2,
+        policy: &CurveContext,
+    ) -> CurveResult<bool> {
+        let center = self.center_point_image(policy)?;
+        let radius = self.data.radial_distance.abs();
+        for (use_x, lower, upper) in [
+            (true, bounds.min().x(), bounds.max().x()),
+            (false, bounds.min().y(), bounds.max().y()),
+        ] {
+            if center.coordinate_order_to_real(use_x, &(lower - &radius), policy)?
+                == Classification::Decided(std::cmp::Ordering::Less)
+                || center.coordinate_order_to_real(use_x, &(upper + &radius), policy)?
+                    == Classification::Decided(std::cmp::Ordering::Greater)
+            {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     /// Classifies incidence of a represented affine point on the selected
@@ -10789,6 +10841,7 @@ impl BezierAlgebraicChord2 {
                         start,
                         end,
                         parameter_axis,
+                        certified_axis_aligned: false,
                         source: None,
                         reversed: false,
                         policy: *policy,
@@ -10835,6 +10888,7 @@ impl BezierAlgebraicChord2 {
                 start,
                 end,
                 parameter_axis,
+                certified_axis_aligned: true,
                 source: None,
                 reversed: false,
                 policy: *policy,
@@ -10880,6 +10934,7 @@ impl BezierAlgebraicChord2 {
                     axis: self.data.parameter_axis.axis,
                     coordinate_increases: !self.data.parameter_axis.coordinate_increases,
                 },
+                certified_axis_aligned: self.data.certified_axis_aligned,
                 // Preserve one stable support identity even when the root
                 // chord itself is reversed.  Correlated intersection points
                 // use this identity to replay incidence after later splits
@@ -10947,6 +11002,7 @@ impl BezierAlgebraicChord2 {
                 start: start.point().clone(),
                 end: end.point().clone(),
                 parameter_axis: source.data.parameter_axis,
+                certified_axis_aligned: source.data.certified_axis_aligned,
                 source: Some(source.retained_support().clone()),
                 reversed: false,
                 policy: *policy,
@@ -11173,12 +11229,17 @@ impl BezierAlgebraicChord2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
-        if let Some(source) = &self.data.source
-            && matches!(
+        let source_is_axis_aligned = if self.data.certified_axis_aligned {
+            false
+        } else if let Some(source) = &self.data.source {
+            matches!(
                 source.axis_direction(policy)?,
                 Classification::Decided(Some(_))
             )
-        {
+        } else {
+            false
+        };
+        if self.data.certified_axis_aligned || source_is_axis_aligned {
             return Ok(Classification::Decided(Some(
                 match (
                     self.data.parameter_axis.axis,
@@ -11409,6 +11470,7 @@ impl BezierAlgebraicChord2 {
                 start: lower.point().clone(),
                 end: upper.point().clone(),
                 parameter_axis: self.data.parameter_axis,
+                certified_axis_aligned: self.data.certified_axis_aligned,
                 source: Some(self.retained_support().clone()),
                 reversed: false,
                 policy: *policy,
@@ -14212,38 +14274,41 @@ fn algebraic_chord_endpoint_bounds_refined(
     if let Some(bounds) = image.parametric_source_bounds_refined(refinement_steps, policy) {
         return bounds;
     }
-    if let Some((x, y, denominator)) = image.retained_coordinate_polynomials() {
-        let parameter = match image.retained_parameter() {
-            Some(parameter) => BezierParameter2::Algebraic(parameter.clone()),
-            None => match BezierParameter2::from_algebraic_root_representation(
-                image.parameter(),
+    #[cfg(feature = "predicates")]
+    {
+        if let Some((x, y, denominator)) = image.retained_coordinate_polynomials() {
+            let parameter = match image.retained_parameter() {
+                Some(parameter) => BezierParameter2::Algebraic(parameter.clone()),
+                None => match BezierParameter2::from_algebraic_root_representation(
+                    image.parameter(),
+                    policy,
+                ) {
+                    Ok(Classification::Decided(parameter)) => parameter,
+                    Ok(Classification::Uncertain(_)) | Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                },
+            }
+            .refined_isolating_interval(refinement_steps, policy);
+            let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
+            let denominator = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
+                denominator,
+                &parameter,
                 policy,
-            ) {
-                Ok(Classification::Decided(parameter)) => parameter,
-                Ok(Classification::Uncertain(_)) | Err(_) => {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                }
-            },
-        }
-        .refined_isolating_interval(refinement_steps, policy);
-        let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
-        let denominator = BezierAlgebraicChordRealInterval2::evaluate_power_basis(
-            denominator,
-            &parameter,
-            policy,
-        );
-        let x = BezierAlgebraicChordRealInterval2::evaluate_power_basis(x, &parameter, policy);
-        let y = BezierAlgebraicChordRealInterval2::evaluate_power_basis(y, &parameter, policy);
-        if let (Some(denominator), Some(x), Some(y)) = (denominator, x, y)
-            && let (Some(x), Some(y)) = (
-                x.divide(&denominator, policy),
-                y.divide(&denominator, policy),
-            )
-        {
-            return Classification::Decided(Aabb2::new_unchecked(
-                Point2::new(x.lower, y.lower),
-                Point2::new(x.upper, y.upper),
-            ));
+            );
+            let x = BezierAlgebraicChordRealInterval2::evaluate_power_basis(x, &parameter, policy);
+            let y = BezierAlgebraicChordRealInterval2::evaluate_power_basis(y, &parameter, policy);
+            if let (Some(denominator), Some(x), Some(y)) = (denominator, x, y)
+                && let (Some(x), Some(y)) = (
+                    x.divide(&denominator, policy),
+                    y.divide(&denominator, policy),
+                )
+            {
+                return Classification::Decided(Aabb2::new_unchecked(
+                    Point2::new(x.lower, y.lower),
+                    Point2::new(x.upper, y.upper),
+                ));
+            }
         }
     }
     let Some(image) = image.resolved(policy) else {
@@ -15443,6 +15508,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 semicircle,
                 start: BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
                 end: BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                start_point_image: OnceLock::new(),
+                end_point_image: OnceLock::new(),
                 reversed: false,
                 policy: *policy,
             }),
@@ -15484,6 +15551,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 semicircle,
                 start,
                 end,
+                start_point_image: OnceLock::new(),
+                end_point_image: OnceLock::new(),
                 reversed,
                 policy: *policy,
             }),
@@ -15512,6 +15581,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 semicircle: self.data.semicircle.clone(),
                 start: self.data.start.clone(),
                 end: self.data.end.clone(),
+                start_point_image: cloned_once_lock(&self.data.start_point_image),
+                end_point_image: cloned_once_lock(&self.data.end_point_image),
                 reversed: !self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -15524,6 +15595,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 semicircle: self.data.semicircle.transform_similarity(transform)?,
                 start: self.data.start.clone(),
                 end: self.data.end.clone(),
+                start_point_image: OnceLock::new(),
+                end_point_image: OnceLock::new(),
                 reversed: self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -15668,6 +15741,22 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
         self.validate_policy(policy)?;
         let source_start = start_endpoint != self.data.reversed;
+        self.source_endpoint_point_image(source_start, policy)
+    }
+
+    fn source_endpoint_point_image(
+        &self,
+        source_start: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
+        let cache = if source_start {
+            &self.data.start_point_image
+        } else {
+            &self.data.end_point_image
+        };
+        if let Some(point) = cache.get() {
+            return Ok(point.clone());
+        }
         let parameter = if source_start {
             &self.data.start
         } else {
@@ -15677,10 +15766,56 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             Classification::Decided(Some(parameter)) => parameter,
             Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
         };
-        match self.data.semicircle.point_at(&parameter, policy)? {
-            Classification::Decided(point) => Ok(Some(point)),
-            Classification::Uncertain(_) => Ok(None),
+        let point = match self.data.semicircle.point_at(&parameter, policy)? {
+            Classification::Decided(point) => Some(point),
+            Classification::Uncertain(_) => None,
+        };
+        let _ = cache.set(point.clone());
+        Ok(point)
+    }
+
+    /// Verifies one authored fragment endpoint against the circle equation,
+    /// then retains that exact endpoint image for all later topology replay.
+    pub(crate) fn certify_and_cache_authored_endpoint(
+        &self,
+        start_endpoint: bool,
+        expected: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        let source_start = start_endpoint != self.data.reversed;
+        let parameter = if source_start {
+            &self.data.start
+        } else {
+            &self.data.end
+        };
+        let parameter = match parameter.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let actual = match self.data.semicircle.point_at(&parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let equal = RationalBezierIntersectionPointEvidence2::Algebraic(actual.clone())
+            .same_point(expected, policy);
+        if equal == Classification::Decided(true) {
+            let cached = expected.as_algebraic().cloned().unwrap_or(actual);
+            let cache = if source_start {
+                &self.data.start_point_image
+            } else {
+                &self.data.end_point_image
+            };
+            let _ = cache.set(Some(cached));
         }
+        Ok(equal)
     }
 
     /// Certifies that a directly framed round join and an adjacent retained
@@ -15710,7 +15845,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         let half = (Real::one() / Real::from(2_i8))?;
-        for parameter in [&self.data.start, &self.data.end] {
+        for start_endpoint in [true, false] {
+            let parameter = self.endpoint_parameter(start_endpoint);
             let parameter = match parameter.represented_rational_value(policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
                 Classification::Decided(None) => continue,
@@ -15741,14 +15877,16 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             if tangent_axis != chord_axis {
                 continue;
             }
-            let point = match self.data.semicircle.point_at(&parameter, policy)? {
-                Classification::Decided(point) => {
-                    RationalBezierIntersectionPointEvidence2::Algebraic(point)
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+            let point = match self.endpoint_point_image(start_endpoint, policy)? {
+                Some(point) => RationalBezierIntersectionPointEvidence2::Algebraic(point),
+                None => continue,
             };
+            if [chord.start(), chord.end()]
+                .into_iter()
+                .any(|endpoint| point.shares_storage(endpoint))
+            {
+                return Ok(Classification::Decided(true));
+            }
             let mut shared = false;
             for endpoint in [chord.start(), chord.end()] {
                 match point.same_point(endpoint, policy) {
@@ -19643,6 +19781,7 @@ impl BezierParallel2 {
                 data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                     parallel: Some(self.clone()),
                     cardinal_normal: None,
+                    direct_center: None,
                     parameter: parameter.clone(),
                     source_x_numerator: polynomial_multiply(source.x_numerator, &signed_curvature),
                     source_y_numerator: polynomial_multiply(source.y_numerator, &signed_curvature),
@@ -33910,6 +34049,7 @@ mod conversion_tests {
                     data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                         parallel: Some(source.parallel_left(Real::zero()).unwrap()),
                         cardinal_normal: None,
+                        direct_center: None,
                         parameter,
                         source_x_numerator,
                         source_y_numerator: vec![Real::zero()],
@@ -33973,6 +34113,7 @@ mod conversion_tests {
                     data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                         parallel: Some(parallel),
                         cardinal_normal: None,
+                        direct_center: None,
                         parameter,
                         source_x_numerator: vec![rational(-15, 2), Real::from(10_i8)],
                         source_y_numerator: vec![Real::zero()],

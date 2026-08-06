@@ -181,6 +181,19 @@ impl RationalBezierIntersectionPointEvidence2 {
         }
     }
 
+    /// Returns a constant-time positive identity certificate for retained
+    /// point evidence. Distinct storage may still describe the same point and
+    /// must continue through the exact geometric predicates.
+    pub(crate) fn shares_storage(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Exact(first), Self::Exact(second)) => first.shares_storage(second),
+            (Self::Algebraic(first), Self::Algebraic(second)) => first.shares_storage(second),
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicChordPair(_), Self::AlgebraicChordPair(_)) => false,
+            _ => false,
+        }
+    }
+
     /// Returns the retained algebraic image, when present.
     pub const fn as_algebraic(&self) -> Option<&RationalBezierAlgebraicPointImage2> {
         match self {
@@ -210,11 +223,11 @@ impl RationalBezierIntersectionPointEvidence2 {
     /// endpoint fields. Any predicate that remains unproved stays explicit
     /// under `policy`.
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
+        if self.shares_storage(other) {
+            return Classification::Decided(true);
+        }
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => {
-                if first.shares_storage(second) {
-                    return Classification::Decided(true);
-                }
                 match is_zero(&first.distance_squared(second), policy) {
                     Some(equal) => Classification::Decided(equal),
                     None => Classification::Uncertain(UncertaintyReason::RealSign),

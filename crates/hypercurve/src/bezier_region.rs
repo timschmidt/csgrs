@@ -2497,18 +2497,34 @@ fn append_exact_algebraic_line_join(
     fragments: &mut Vec<BezierSplitFragment2>,
     from: &crate::RationalBezierIntersectionPointEvidence2,
     to: &crate::RationalBezierIntersectionPointEvidence2,
+    certified_direction: Option<BezierAlgebraicChordAxisDirection2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    match from.same_point(to, policy) {
+    let endpoint_equality = match certified_direction {
+        Some(_) => Classification::Decided(false),
+        None => from.same_point(to, policy),
+    };
+    match endpoint_equality {
         Classification::Decided(true) => Ok(Classification::Decided(())),
         Classification::Decided(false) => {
-            let chord =
-                match crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)? {
-                    Classification::Decided(chord) => chord,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+            let chord = match certified_direction {
+                Some(direction) => {
+                    crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                        from.clone(),
+                        to.clone(),
+                        direction,
+                        policy,
+                    )
+                }
+                None => {
+                    match crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)? {
+                        Classification::Decided(chord) => chord,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
-                };
+                }
+            };
             fragments.push(retained_chord_or_exact_line_fragment(chord)?);
             Ok(Classification::Decided(()))
         }
@@ -2602,12 +2618,7 @@ fn append_exact_axis_aligned_algebraic_round_join(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     for (at_start, expected) in [(true, &previous.offset_end), (false, &next.offset_start)] {
-        let Some(point) = fragment.endpoint_point_image(at_start, policy)? else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        match crate::RationalBezierIntersectionPointEvidence2::Algebraic(point)
-            .same_point(expected, policy)
-        {
+        match fragment.certify_and_cache_authored_endpoint(at_start, expected, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Err(CurveError::Topology(
@@ -3854,6 +3865,7 @@ fn exact_axis_aligned_algebraic_offset_loop(
             &mut fragments,
             &spans[span_index].offset_start,
             &spans[span_index].offset_end,
+            Some(spans[span_index].direction),
             policy,
         )? {
             Classification::Decided(()) => {}
@@ -3870,6 +3882,7 @@ fn exact_axis_aligned_algebraic_offset_loop(
                 &mut fragments,
                 &spans[span_index].offset_end,
                 &spans[next_index].offset_start,
+                None,
                 policy,
             )?,
             ExactAxisAlignedAlgebraicJoin2::Round(sweep_kind) => {

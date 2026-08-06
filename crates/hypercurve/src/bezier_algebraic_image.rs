@@ -439,6 +439,15 @@ impl PartialEq for RationalBezierAlgebraicPointImage2 {
 }
 
 impl RationalBezierAlgebraicPointImage2 {
+    /// Returns whether both values share the same immutable exact image.
+    ///
+    /// This is stronger than geometric equality evidence and therefore a
+    /// constant-time positive certificate.  It is particularly useful when a
+    /// topology carrier deliberately reuses an authored endpoint image.
+    pub(crate) fn shares_storage(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+    }
+
     fn new(
         status: BezierAlgebraicImageStatus,
         parameter: AlgebraicRootRepresentation,

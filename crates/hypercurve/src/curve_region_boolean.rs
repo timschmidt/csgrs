@@ -220,7 +220,6 @@ struct RegionPairResult {
 }
 
 impl RegionPairResult {
-    #[cfg(feature = "predicates")]
     fn empty() -> Self {
         Self {
             contacts: Vec::new(),
@@ -1768,6 +1767,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::CuspChord { cusp_is_first } => {
+                #[cfg(not(feature = "predicates"))]
+                let _ = cusp_is_first;
                 #[cfg(feature = "predicates")]
                 {
                     let (cusp, chord, chord_index) = if *cusp_is_first {
@@ -1932,7 +1933,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     if let RegionCarrierGeometry::Bezier(curve) = other {
                         let other_carrier = &self.data.carriers[other_index];
+                        let chord_carrier = &self.data.carriers[chord_index];
                         let authored_adjacent = self.authored_carriers_are_adjacent(pair);
+                        let chord_precedes_other = authored_adjacent.then(|| {
+                            let boundary = match chord_carrier.operand {
+                                CurvePathBooleanOperand2::First => self.data.first,
+                                CurvePathBooleanOperand2::Second => self.data.second,
+                            }
+                            .boundary_loops()
+                            .get(chord_carrier.loop_index)
+                            .expect("an admitted carrier retains its authored loop");
+                            chord_carrier.fragment_index.checked_add(1)
+                                == Some(other_carrier.fragment_index)
+                                || (chord_carrier.fragment_index.checked_add(1)
+                                    == Some(boundary.fragments().len())
+                                    && other_carrier.fragment_index == 0)
+                        });
                         if subcurve_is_strict_line_image(curve)
                             && let (Some(start), Some(end)) = (
                                 exact_carrier_point(
@@ -1995,31 +2011,39 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 Classification::Decided(false) | Classification::Uncertain(_) => {}
                             }
                         }
+                        if let Some(chord_precedes_other) = chord_precedes_other
+                            && adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
+                                chord,
+                                chord_carrier,
+                                curve,
+                                other_carrier,
+                                chord_precedes_other,
+                                &self.data.policy,
+                            )
+                            .map_err(|cause| self.invalid(other_index, cause))?
+                                == Classification::Decided(true)
+                        {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-chord-pair",
+                                "adjacent-circular-endpoint-only",
+                            );
+                            return Ok(RegionPairResult::empty());
+                        }
                         let rational = RationalBezier2::try_from_subcurve(curve)
                             .map_err(|cause| self.invalid(other_index, cause))?;
-                        let shared_source_parameter = if authored_adjacent {
-                            let chord_carrier = &self.data.carriers[chord_index];
-                            let boundary = match chord_carrier.operand {
-                                CurvePathBooleanOperand2::First => self.data.first,
-                                CurvePathBooleanOperand2::Second => self.data.second,
-                            }
-                            .boundary_loops()
-                            .get(chord_carrier.loop_index)
-                            .expect("an admitted carrier retains its authored loop");
-                            let chord_precedes_other = chord_carrier.fragment_index.checked_add(1)
-                                == Some(other_carrier.fragment_index)
-                                || (chord_carrier.fragment_index.checked_add(1)
-                                    == Some(boundary.fragments().len())
-                                    && other_carrier.fragment_index == 0);
-                            let shared_parameter = if chord_precedes_other {
-                                carrier_traversal_start(other_carrier)
+                        let shared_source_parameter =
+                            if let Some(chord_precedes_other) = chord_precedes_other {
+                                let shared_parameter = if chord_precedes_other {
+                                    carrier_traversal_start(other_carrier)
+                                } else {
+                                    carrier_traversal_end(other_carrier)
+                                };
+                                shared_parameter.as_bezier_parameter()
                             } else {
-                                carrier_traversal_end(other_carrier)
+                                None
                             };
-                            shared_parameter.as_bezier_parameter()
-                        } else {
-                            None
-                        };
                         let source_parameter = match shared_source_parameter {
                             Some(BezierParameter2::Algebraic(parameter)) => Some(parameter),
                             Some(BezierParameter2::Exact(_)) | None => None,
@@ -2204,11 +2228,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::CuspRational { cusp_is_first } => {
-                let (cusp, curve) = if *cusp_is_first {
-                    (first.geometry.algebraic_cusp(), second.geometry.bezier())
+                let (cusp, curve, curve_carrier, curve_index) = if *cusp_is_first {
+                    (
+                        first.geometry.algebraic_cusp(),
+                        second.geometry.bezier(),
+                        second,
+                        pair.second_carrier_index,
+                    )
                 } else {
-                    (second.geometry.algebraic_cusp(), first.geometry.bezier())
+                    (
+                        second.geometry.algebraic_cusp(),
+                        first.geometry.bezier(),
+                        first,
+                        pair.first_carrier_index,
+                    )
                 };
+                if let Classification::Decided(bounds) = curve_carrier.bounds.get_or_init(|| {
+                    curve_carrier
+                        .geometry
+                        .certified_outer_bounds(&self.data.policy)
+                }) && cusp
+                    .semicircle()
+                    .certifiably_disjoint_from_bounds(bounds, &self.data.policy)
+                    .map_err(|cause| self.invalid(curve_index, cause))?
+                {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-rational-pair",
+                        "bounds-disjoint",
+                    );
+                    return Ok(RegionPairResult::empty());
+                }
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-rational-pair",
+                    match (
+                        self.authored_carriers_are_adjacent(pair),
+                        subcurve_is_strict_line_image(curve),
+                        retained_circular_support(curve).is_some(),
+                    ) {
+                        (true, true, _) => "adjacent-line",
+                        (true, false, true) => "adjacent-circle",
+                        (true, false, false) => "adjacent-general",
+                        (false, true, _) => "nonadjacent-line",
+                        (false, false, true) => "nonadjacent-circle",
+                        (false, false, false) => "nonadjacent-general",
+                    },
+                );
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
                 let (intersections, parameter_map) = match cusp
@@ -6303,6 +6371,66 @@ fn retained_circular_support(
         BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
     };
     Some((implicit?, circular?))
+}
+
+#[cfg(feature = "predicates")]
+fn adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
+    chord: &crate::BezierAlgebraicChord2,
+    chord_carrier: &RegionCarrier,
+    curve: &BezierSubcurve2,
+    curve_carrier: &RegionCarrier,
+    chord_precedes_curve: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if !curve_carrier.geometry.has_certified_injective_image(policy) {
+        return Ok(Classification::Decided(false));
+    }
+    let Some((_, circle)) = retained_circular_support(curve) else {
+        return Ok(Classification::Decided(false));
+    };
+    if real_sign(&circle.radius_squared, policy) != Some(RealSign::Positive) {
+        return Ok(Classification::Decided(false));
+    }
+    let chord_parameter = if chord_precedes_curve {
+        carrier_traversal_end(chord_carrier)
+    } else {
+        carrier_traversal_start(chord_carrier)
+    };
+    let Some(chord_point) = chord_parameter
+        .as_algebraic_chord()
+        .and_then(|parameter| parameter.point().as_exact())
+    else {
+        return Ok(Classification::Decided(false));
+    };
+    let curve_parameter = if chord_precedes_curve {
+        carrier_traversal_start(curve_carrier)
+    } else {
+        carrier_traversal_end(curve_carrier)
+    };
+    let Some(curve_point) = exact_carrier_point(curve_carrier, curve_parameter, policy) else {
+        return Ok(Classification::Decided(false));
+    };
+    if real_sign(&chord_point.distance_squared(&curve_point), policy) != Some(RealSign::Zero)
+        || real_sign(
+            &(curve_point.distance_squared(&circle.center) - &circle.radius_squared),
+            policy,
+        ) != Some(RealSign::Zero)
+    {
+        return Ok(Classification::Decided(false));
+    }
+    let axis = match chord.axis_direction(policy)? {
+        Classification::Decided(Some(direction)) => direction.axis(),
+        Classification::Decided(None) | Classification::Uncertain(_) => {
+            return Ok(Classification::Decided(false));
+        }
+    };
+    let tangent_residual = match axis {
+        Axis2::X => curve_point.x() - circle.center.x(),
+        Axis2::Y => curve_point.y() - circle.center.y(),
+    };
+    Ok(Classification::Decided(
+        real_sign(&tangent_residual, policy) == Some(RealSign::Zero),
+    ))
 }
 
 fn exact_split_endpoint_point(

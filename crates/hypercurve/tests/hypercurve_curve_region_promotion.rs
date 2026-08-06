@@ -1663,9 +1663,48 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(collapsed.certainty, CurveCertainty::Certified);
         assert!(collapsed.value.is_empty());
 
-        let rounded = source
-            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
-            .expect("selected-field algebraic round joins must remain exact");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let round_offset = || source.offset(distance.clone(), &OffsetCornerStyle2::Round, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(round_offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = round_offset();
+        let rounded = rounded.expect("selected-field algebraic round joins must remain exact");
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "adjacent-circular-endpoint-only",
+                ),
+                2
+            );
+            assert_eq!(
+                trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
+                0
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-rational-pair",
+                    "bounds-disjoint",
+                ),
+                4
+            );
+            for path in [
+                "nonadjacent-line",
+                "nonadjacent-circle",
+                "nonadjacent-general",
+            ] {
+                assert_eq!(
+                    trace.path_count("hypercurve", "algebraic-circle-rational-pair", path),
+                    0
+                );
+            }
+        }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
         assert_eq!(rounded.value.boundary_loops().len(), 1);
         assert!(
