@@ -544,93 +544,43 @@ fn recover_constraint_cavity(
         cavity.fill(false);
         mark_cavity_triangles(cavity, first_adjacent);
     }
-    close_constraint_cavity_holes(topology, triangles, constrained_edges, cavity)?;
-    let cavity_indices = cavity
-        .iter()
-        .enumerate()
-        .filter_map(|(index, &in_cavity)| in_cavity.then_some(index))
-        .collect::<Vec<_>>();
+    let mut cavity_indices = Vec::new();
+    let mut boundary_edges = Vec::new();
+    collect_constraint_cavity_boundary(
+        topology,
+        triangles,
+        constrained_edges,
+        cavity,
+        &mut cavity_indices,
+        &mut boundary_edges,
+    )?;
+    let (cycle, to_position) =
+        match constraint_cavity_cycle(points.len(), constraint, &boundary_edges) {
+            Ok(cycle) => cycle,
+            Err(_) => {
+                // A proper crossed corridor normally has one simple boundary. Only
+                // a weakly simple corridor can enclose an unselected component, so
+                // defer the complete protected-component search until the local
+                // boundary proves it is necessary.
+                close_constraint_cavity_holes(topology, triangles, constrained_edges, cavity)?;
+                collect_constraint_cavity_boundary(
+                    topology,
+                    triangles,
+                    constrained_edges,
+                    cavity,
+                    &mut cavity_indices,
+                    &mut boundary_edges,
+                )?;
+                constraint_cavity_cycle(points.len(), constraint, &boundary_edges)
+                    .map_err(|feature| Error::UnsupportedFeature { feature })?
+            }
+        };
     let mut cavity_vertices = cavity_indices
         .iter()
         .flat_map(|&triangle| triangles[triangle])
         .collect::<Vec<_>>();
     cavity_vertices.sort_unstable();
     cavity_vertices.dedup();
-
-    let mut boundary_edges = Vec::new();
-    for &triangle_index in &cavity_indices {
-        let triangle = triangles[triangle_index];
-        for edge in triangle_edges(triangle) {
-            let neighbor = topology.neighbor_across(triangles, triangle_index, edge)?;
-            match neighbor {
-                None => boundary_edges.push(edge),
-                Some(neighbor) if !cavity[neighbor] => boundary_edges.push(edge),
-                Some(neighbor)
-                    if triangle_index < neighbor
-                        && constrained_edges.binary_search(&edge).is_ok() =>
-                {
-                    return Err(Error::UnsupportedFeature {
-                        feature: "constraint cavity contains an existing constrained edge",
-                    });
-                }
-                Some(_) => {}
-            }
-        }
-    }
-    boundary_edges.sort_unstable();
-
-    let missing = usize::MAX;
-    let mut adjacency = vec![[missing; 2]; points.len()];
-    for edge in &boundary_edges {
-        for (vertex, neighbor) in [(edge.from, edge.to), (edge.to, edge.from)] {
-            if adjacency[vertex][0] == missing {
-                adjacency[vertex][0] = neighbor;
-            } else if adjacency[vertex][1] == missing {
-                adjacency[vertex][1] = neighbor;
-            } else {
-                return Err(Error::UnsupportedFeature {
-                    feature: "constraint cavity boundary is not a simple cycle",
-                });
-            }
-        }
-    }
-    if adjacency[constraint.from][1] == missing || adjacency[constraint.to][1] == missing {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity endpoints are not on one boundary cycle",
-        });
-    }
-    let mut cycle = vec![constraint.from];
-    let mut previous = usize::MAX;
-    let mut current = constraint.from;
-    for _ in 0..=boundary_edges.len() {
-        let neighbors = &adjacency[current];
-        if neighbors[1] == missing {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint cavity boundary is not a simple cycle",
-            });
-        }
-        let next = if neighbors[0] != previous {
-            neighbors[0]
-        } else {
-            neighbors[1]
-        };
-        if next == constraint.from {
-            break;
-        }
-        cycle.push(next);
-        previous = current;
-        current = next;
-    }
-    if cycle.len() != boundary_edges.len() {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity boundary traversal did not close",
-        });
-    }
-    let Some(to_position) = cycle.iter().position(|&vertex| vertex == constraint.to) else {
-        return Err(Error::UnsupportedFeature {
-            feature: "constraint cavity boundary omits one endpoint",
-        });
-    };
 
     let first = cycle[..=to_position].to_vec();
     let mut second = Vec::with_capacity(cycle.len() - to_position + 1);
@@ -666,6 +616,95 @@ fn recover_constraint_cavity(
     }
     topology.replace_region(triangles, &cavity_indices, &replacement)?;
     Ok(())
+}
+
+fn collect_constraint_cavity_boundary(
+    topology: &TriangleTopology,
+    triangles: &[Triangle],
+    constrained_edges: &[EdgeKey],
+    cavity: &[bool],
+    cavity_indices: &mut Vec<usize>,
+    boundary_edges: &mut Vec<EdgeKey>,
+) -> Result<()> {
+    cavity_indices.clear();
+    boundary_edges.clear();
+    cavity_indices.extend(
+        cavity
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &in_cavity)| in_cavity.then_some(index)),
+    );
+    for &triangle_index in cavity_indices.iter() {
+        let triangle = triangles[triangle_index];
+        for edge in triangle_edges(triangle) {
+            let neighbor = topology.neighbor_across(triangles, triangle_index, edge)?;
+            match neighbor {
+                None => boundary_edges.push(edge),
+                Some(neighbor) if !cavity[neighbor] => boundary_edges.push(edge),
+                Some(neighbor)
+                    if triangle_index < neighbor
+                        && constrained_edges.binary_search(&edge).is_ok() =>
+                {
+                    return Err(Error::UnsupportedFeature {
+                        feature: "constraint cavity contains an existing constrained edge",
+                    });
+                }
+                Some(_) => {}
+            }
+        }
+    }
+    boundary_edges.sort_unstable();
+    Ok(())
+}
+
+fn constraint_cavity_cycle(
+    point_count: usize,
+    constraint: Constraint,
+    boundary_edges: &[EdgeKey],
+) -> std::result::Result<(Vec<usize>, usize), &'static str> {
+    let missing = usize::MAX;
+    let mut adjacency = vec![[missing; 2]; point_count];
+    for edge in boundary_edges {
+        for (vertex, neighbor) in [(edge.from, edge.to), (edge.to, edge.from)] {
+            if adjacency[vertex][0] == missing {
+                adjacency[vertex][0] = neighbor;
+            } else if adjacency[vertex][1] == missing {
+                adjacency[vertex][1] = neighbor;
+            } else {
+                return Err("constraint cavity boundary is not a simple cycle");
+            }
+        }
+    }
+    if adjacency[constraint.from][1] == missing || adjacency[constraint.to][1] == missing {
+        return Err("constraint cavity endpoints are not on one boundary cycle");
+    }
+    let mut cycle = vec![constraint.from];
+    let mut previous = usize::MAX;
+    let mut current = constraint.from;
+    for _ in 0..=boundary_edges.len() {
+        let neighbors = &adjacency[current];
+        if neighbors[1] == missing {
+            return Err("constraint cavity boundary is not a simple cycle");
+        }
+        let next = if neighbors[0] != previous {
+            neighbors[0]
+        } else {
+            neighbors[1]
+        };
+        if next == constraint.from {
+            break;
+        }
+        cycle.push(next);
+        previous = current;
+        current = next;
+    }
+    if cycle.len() != boundary_edges.len() {
+        return Err("constraint cavity boundary traversal did not close");
+    }
+    let Some(to_position) = cycle.iter().position(|&vertex| vertex == constraint.to) else {
+        return Err("constraint cavity boundary omits one endpoint");
+    };
+    Ok((cycle, to_position))
 }
 
 fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
@@ -1847,15 +1886,55 @@ mod tests {
             }
         }
 
+        let constraint = Constraint::new(vertex(1, 1), vertex(4, 4));
+        let mut cavity_indices = Vec::new();
+        let mut boundary_edges = Vec::new();
+        collect_constraint_cavity_boundary(
+            &topology,
+            &triangles,
+            &[],
+            &corridor,
+            &mut cavity_indices,
+            &mut boundary_edges,
+        )
+        .unwrap();
+        assert!(
+            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_err()
+        );
+
         let mut closed = corridor.clone();
         close_constraint_cavity_holes(&topology, &triangles, &[], &mut closed).unwrap();
         assert!(closed[center(2, 2)] && closed[center(2, 2) + 1]);
         assert!(!closed[center(0, 0)] && !closed[center(4, 4)]);
+        collect_constraint_cavity_boundary(
+            &topology,
+            &triangles,
+            &[],
+            &closed,
+            &mut cavity_indices,
+            &mut boundary_edges,
+        )
+        .unwrap();
+        assert!(
+            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_ok()
+        );
 
         let central_diagonal = EdgeKey::new(vertex(2, 2), vertex(3, 3));
         close_constraint_cavity_holes(&topology, &triangles, &[central_diagonal], &mut corridor)
             .unwrap();
         assert!(!corridor[center(2, 2)] && !corridor[center(2, 2) + 1]);
+        collect_constraint_cavity_boundary(
+            &topology,
+            &triangles,
+            &[central_diagonal],
+            &corridor,
+            &mut cavity_indices,
+            &mut boundary_edges,
+        )
+        .unwrap();
+        assert!(
+            constraint_cavity_cycle((SIDE + 1) * (SIDE + 1), constraint, &boundary_edges).is_err()
+        );
     }
 
     #[test]
