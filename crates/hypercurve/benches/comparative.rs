@@ -24,7 +24,7 @@ use hypercurve::{
     Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2,
     OffsetCornerStyle2, Point2, RationalBezier2, RationalBezierIntersectionContacts2, Real,
-    Segment2,
+    Segment2, Similarity2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -618,8 +618,9 @@ fn benchmark_contour_offset(runner: &Runner) {
 
 #[cfg(feature = "predicates")]
 fn benchmark_algebraic_round_offset(runner: &Runner) {
-    let name = "algebraic_round_offset/rectangle";
-    if !runner.group_enabled(name) {
+    let offset_name = "algebraic_round_offset/rectangle";
+    let boolean_name = "algebraic_round_boolean/translated_rectangle";
+    if !runner.group_enabled(offset_name) && !runner.group_enabled(boolean_name) {
         return;
     }
     let policy = CurveContext::STRICT;
@@ -719,33 +720,103 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     );
     assert!(!cavalier.parallel_offset(-0.1).is_empty());
 
-    runner.measure(name, "hypercurve_exact_round", || {
-        hypercurve
-            .offset(distance.clone(), &round, &policy)
+    if runner.group_enabled(offset_name) {
+        runner.measure(offset_name, "hypercurve_exact_round", || {
+            hypercurve
+                .offset(distance.clone(), &round, &policy)
+                .expect("exact algebraic round offset completes")
+                .into_value()
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum()
+        });
+        runner.measure(offset_name, "hypercurve_exact_miter", || {
+            hypercurve
+                .offset(distance.clone(), &miter, &policy)
+                .expect("exact algebraic miter offset completes")
+                .into_value()
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum()
+        });
+        runner.measure(offset_name, "cavalier_f64", || {
+            cavalier
+                .parallel_offset(black_box(-0.1))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum()
+        });
+    }
+
+    if runner.group_enabled(boolean_name) {
+        let exact_first = hypercurve
+            .offset(distance, &round, &policy)
             .expect("exact algebraic round offset completes")
-            .into_value()
-            .boundary_loops()
-            .iter()
+            .into_value();
+        let translation = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            (Real::one() / Real::from(20_u8)).expect("exact benchmark translation"),
+            (Real::one() / Real::from(40_u8)).expect("exact benchmark translation"),
+        )
+        .expect("valid benchmark translation");
+        let exact_second = exact_first
+            .transform_similarity(&translation, &policy)
+            .expect("selected round region translation completes")
+            .into_value();
+        assert!(
+            exact_first
+                .intersect_region(&exact_second, &policy)
+                .expect("selected round intersection completes")
+                .into_value()
+                .is_complete()
+        );
+
+        let mut cavalier_offset = cavalier.parallel_offset(-0.1);
+        assert_eq!(cavalier_offset.len(), 1);
+        let cavalier_first = cavalier_offset.pop().unwrap();
+        let mut cavalier_second = cavalier_first.clone();
+        cavalier_second.translate_mut(0.05, 0.025);
+        let operations = [
+            CommonBooleanOp::Union,
+            CommonBooleanOp::Intersection,
+            CommonBooleanOp::Difference,
+            CommonBooleanOp::Xor,
+        ];
+
+        runner.measure(boolean_name, "hypercurve_exact_all_four", || {
+            let result = exact_first
+                .boolean_regions(&exact_second, &policy)
+                .expect("selected round Boolean batch completes")
+                .into_value();
+            [
+                result.union(),
+                result.intersection(),
+                result.difference(),
+                result.xor(),
+            ]
+            .into_iter()
+            .flat_map(CurveRegion2::boundary_loops)
             .map(|boundary| boundary.fragments().len())
             .sum()
-    });
-    runner.measure(name, "hypercurve_exact_miter", || {
-        hypercurve
-            .offset(distance.clone(), &miter, &policy)
-            .expect("exact algebraic miter offset completes")
-            .into_value()
-            .boundary_loops()
-            .iter()
-            .map(|boundary| boundary.fragments().len())
-            .sum()
-    });
-    runner.measure(name, "cavalier_f64", || {
-        cavalier
-            .parallel_offset(black_box(-0.1))
-            .iter()
-            .map(PlineSource::vertex_count)
-            .sum()
-    });
+        });
+        runner.measure(boolean_name, "cavalier_f64_four_calls", || {
+            operations
+                .into_iter()
+                .map(|operation| {
+                    cavalier_boolean_result_size(
+                        black_box(&cavalier_first),
+                        black_box(&cavalier_second),
+                        operation,
+                    )
+                })
+                .sum()
+        });
+    }
 }
 
 fn benchmark_orthogonal_neck_split(runner: &Runner) {
