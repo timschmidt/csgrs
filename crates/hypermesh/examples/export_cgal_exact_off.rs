@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 
 use competitive_support::{
     THIN_DYADIC_DIVISIONS, WIDE_RATIONAL_DIVISIONS, clipped_voxel_torus_case, corpus,
-    dense_coplanar_box_case, exact_mesh_pair, large_boolean_case,
-    sparse_multishell_tetrahedra_case, thin_dyadic_overlapping_box_case, thin_dyadic_shift,
-    wide_rational_overlapping_box_case, wide_rational_shift,
+    dense_coplanar_box_case, exact_mesh_pair, exact_yeahright_full_rotated_case,
+    large_boolean_case, sparse_multishell_tetrahedra_case, thin_dyadic_overlapping_box_case,
+    thin_dyadic_shift, wide_rational_overlapping_box_case, wide_rational_shift,
 };
 use hypermesh::{Real, TriangleMesh};
 
@@ -73,6 +73,8 @@ fn main() {
         wide_rational_overlapping_box_case(WIDE_RATIONAL_DIVISIONS, shift)
     } else if let Some(shift) = thin_dyadic_shift(&fixture) {
         thin_dyadic_overlapping_box_case(THIN_DYADIC_DIVISIONS, shift)
+    } else if fixture == "yeahright_full_resolution_rotated_intersection" {
+        exact_yeahright_full_rotated_case()
     } else {
         exact_mesh_pair(match fixture.as_str() {
             "clipped_voxel_torus_33" => clipped_voxel_torus_case(33),

@@ -603,6 +603,34 @@ pub fn yeahright_control_mesh() -> RawMesh {
     mesh
 }
 
+/// Full-resolution exact-empty competitor case used by correctness, heap, and
+/// CGAL harnesses.
+pub fn yeahright_full_rotated_case() -> MeshPair {
+    let source = yeahright_control_mesh();
+    let rotated = RawMesh {
+        positions: source
+            .positions
+            .iter()
+            .map(|[x, y, z]| [z + 1.0, y + 12.0, 1.0 - x])
+            .collect(),
+        triangles: source.triangles.clone(),
+    };
+    MeshPair {
+        name: "yeahright_full_resolution_rotated_intersection",
+        left: source,
+        right: rotated,
+    }
+}
+
+pub fn exact_yeahright_full_rotated_case() -> ExactMeshPair {
+    let case = yeahright_full_rotated_case();
+    ExactMeshPair {
+        name: case.name,
+        left: to_hypermesh(&case.left),
+        right: to_hypermesh(&case.right),
+    }
+}
+
 pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair {
     assert!(subdivisions.is_power_of_two());
     assert!(subdivisions >= YEAHRIGHT_SUBDIVISIONS);

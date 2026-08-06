@@ -1,10 +1,10 @@
 use crate::competitive_support::{
-    MeshPair, RawMesh, THIN_DYADIC_DIVISIONS, THIN_DYADIC_SHIFTS, WIDE_RATIONAL_DIVISIONS,
+    MeshPair, THIN_DYADIC_DIVISIONS, THIN_DYADIC_SHIFTS, WIDE_RATIONAL_DIVISIONS,
     WIDE_RATIONAL_SHIFTS, box_mesh, clipped_voxel_torus_case, dense_coplanar_box_case,
     dense_crossing_grid_case, large_boolean_case, parse_triangle_obj,
     sparse_multishell_tetrahedra_case, thin_dyadic_overlapping_box_case, to_hypermesh,
     transverse_self_pwn_cluster_case, wide_rational_overlapping_box_case, yeahright_boolean_case,
-    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
+    yeahright_boolean_case_with_subdivisions, yeahright_full_rotated_case,
 };
 use crate::mesh_common;
 use hypermesh::{BooleanOp, MeshContext, TriangleMesh, TriangleMeshRef, polygon_soup};
@@ -193,19 +193,11 @@ pub(crate) fn prepare_large_fixture(selector: &str) -> PreparedLargeFixture {
             )
         }
         "yeahright-full-rotated" => {
-            let source = yeahright_control_mesh();
-            let rotated = RawMesh {
-                positions: source
-                    .positions
-                    .iter()
-                    .map(|[x, y, z]| [z + 1.0, y + 12.0, 1.0 - x])
-                    .collect(),
-                triangles: source.triangles.clone(),
-            };
+            let case = yeahright_full_rotated_case();
             (
-                "yeahright_full_resolution_rotated_intersection",
-                source,
-                rotated,
+                case.name,
+                case.left,
+                case.right,
                 0,
                 InputPath::Native { prime_pwn: false },
                 BooleanOp::Intersection,

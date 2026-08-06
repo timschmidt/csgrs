@@ -16,7 +16,7 @@ use support::{
     corpus, large_boolean_case, lower_dimensional_contact_corpus, prepare, prepare_yeahright,
     raw_from_hypermesh_batch, run_boolmesh, run_hypermesh, run_hypermesh_all, run_hypermesh_batch,
     run_manifold, summarize, to_hypermesh, validate_with_tri_mesh, yeahright_boolean_case,
-    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh,
+    yeahright_boolean_case_with_subdivisions, yeahright_control_mesh, yeahright_full_rotated_case,
 };
 
 const HYPERMESH_OPERATIONS: [(&str, BooleanOp); 4] = [
@@ -991,17 +991,9 @@ fn full_resolution_yeahright_reaches_and_validates_in_hypermesh() {
 #[test]
 #[ignore = "manual 11,894-by-11,894 certified-empty memory-ceiling test"]
 fn full_resolution_yeahright_rotated_intersection_certifies_empty() {
-    let source = yeahright_control_mesh();
-    let rotated = support::RawMesh {
-        positions: source
-            .positions
-            .iter()
-            .map(|[x, y, z]| [z + 1.0, y + 12.0, 1.0 - x])
-            .collect(),
-        triangles: source.triangles.clone(),
-    };
-    let left = to_hypermesh(&source);
-    let right = to_hypermesh(&rotated);
+    let case = yeahright_full_rotated_case();
+    let left = to_hypermesh(&case.left);
+    let right = to_hypermesh(&case.right);
     let outcome = boolean(
         &APPROXIMATE_CONTEXT,
         &[left.as_ref(), right.as_ref()],
