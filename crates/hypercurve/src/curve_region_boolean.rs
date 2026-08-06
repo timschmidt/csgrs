@@ -4041,23 +4041,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn build_boolean_regions(&self) -> ExactCurveResult<CurveRegionBooleanResults2> {
-        let operations = [
-            BooleanOp::Union,
-            BooleanOp::Intersection,
-            BooleanOp::Difference,
-            BooleanOp::Xor,
-        ];
         let topology = self.build_boolean_topology()?;
-        let regions = [
-            self.build_boolean_region_from_topology(operations[0], &topology)?,
-            self.build_boolean_region_from_topology(operations[1], &topology)?,
-            self.build_boolean_region_from_topology(operations[2], &topology)?,
-            match self.build_boolean_region_from_topology(operations[3], &topology) {
-                Ok(region) => region,
-                Err(ExactCurveError::Blocked(_)) => self.build_xor_from_exact_set_identity()?,
-                Err(error) => return Err(error),
-            },
-        ];
+        let union = self.build_boolean_region_from_topology(BooleanOp::Union, &topology)?;
+        let intersection =
+            self.build_boolean_region_from_topology(BooleanOp::Intersection, &topology)?;
+        let difference =
+            self.build_boolean_region_from_topology(BooleanOp::Difference, &topology)?;
+        let xor = match self.build_boolean_region_from_topology(BooleanOp::Xor, &topology) {
+            Ok(region) => region,
+            Err(ExactCurveError::Blocked(_)) => {
+                self.compose_xor_from_exact_regions(&union, &intersection)?
+            }
+            Err(error) => return Err(error),
+        };
+        let regions = [union, intersection, difference, xor];
         let topology_fragment_count = topology.split_fragments.iter().map(Vec::len).sum();
         let topology_point_classification_count = topology.point_classification_count;
         Ok(CurveRegionBooleanResults2 {
@@ -4998,6 +4995,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         {
             return Ok(xor);
         }
+        self.compose_xor_from_exact_regions(&union, &intersection)
+    }
+
+    fn compose_xor_from_exact_regions(
+        &self,
+        union: &CurveRegion2,
+        intersection: &CurveRegion2,
+    ) -> ExactCurveResult<CurveRegion2> {
         let mut filled_sides = match union.filled_side_is_left_raw(&self.data.policy) {
             Ok(Classification::Decided(sides)) => sides.to_vec(),
             Ok(Classification::Uncertain(reason)) => return Err(self.blocked(0, reason)),
@@ -5014,16 +5019,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // two exact boundary sets directly when a second Boolean traversal
         // cannot materialize that difference.
         let mut union_loops = union
-            .into_boundary_loops()
-            .into_iter()
+            .boundary_loops()
+            .iter()
+            .cloned()
             // Both derived regions reuse the operands' source records. Strip
             // those records before combining them into one independent region.
             .map(crate::CurveRegionBoundaryLoop2::without_arrangement_sources)
             .collect::<Vec<_>>();
         union_loops.extend(
             intersection
-                .into_boundary_loops()
-                .into_iter()
+                .boundary_loops()
+                .iter()
+                .cloned()
                 .map(crate::CurveRegionBoundaryLoop2::without_arrangement_sources),
         );
         CurveRegion2::new(union_loops)
