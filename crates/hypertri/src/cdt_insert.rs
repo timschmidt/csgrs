@@ -101,6 +101,8 @@ fn recover_constraints(
     let mut topology = initial_topology;
     let mut cavity = Vec::new();
     let mut incident_triangles = Vec::new();
+    let mut left_chain = Vec::new();
+    let mut right_chain = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);
         if topology.is_none() && triangulation_has_edge(&triangles, edge) {
@@ -121,6 +123,8 @@ fn recover_constraints(
                 approximate_points: approximate_points.as_deref(),
                 cavity: &mut cavity,
                 incident_triangles: &mut incident_triangles,
+                left_chain: &mut left_chain,
+                right_chain: &mut right_chain,
             },
             constraint,
         )?;
@@ -356,6 +360,8 @@ struct ConstraintRecovery<'a> {
     approximate_points: Option<&'a [[f64; 2]]>,
     cavity: &'a mut Vec<bool>,
     incident_triangles: &'a mut Vec<usize>,
+    left_chain: &'a mut Vec<usize>,
+    right_chain: &'a mut Vec<usize>,
 }
 
 fn recover_constraint(recovery: ConstraintRecovery<'_>, constraint: Constraint) -> Result<()> {
@@ -463,6 +469,8 @@ fn recover_constraint_cavity(
         approximate_points,
         cavity,
         incident_triangles,
+        left_chain,
+        right_chain,
     } = recovery;
     let ConstraintCrossing {
         edge: first_edge,
@@ -481,8 +489,10 @@ fn recover_constraint_cavity(
     // in each direction in its side chain. Retaining that weakly-simple spike
     // preserves prior constrained chords without absorbing the component that
     // they protect or searching the global cavity boundary afterward.
-    let mut left_chain = vec![constraint.from];
-    let mut right_chain = vec![constraint.from];
+    left_chain.clear();
+    right_chain.clear();
+    left_chain.push(constraint.from);
+    right_chain.push(constraint.from);
     for (vertex, side) in [first_edge.from, first_edge.to]
         .into_iter()
         .zip(first_edge_sides)
@@ -615,7 +625,7 @@ fn recover_constraint_cavity(
         points,
         triangles,
         cavity_indices.as_slice(),
-        [&left_chain, &right_chain],
+        [left_chain, right_chain],
     ) {
         Ok(replacement) => Some(replacement),
         Err(Error::NoEarFound) => None,
@@ -625,7 +635,7 @@ fn recover_constraint_cavity(
         Some(replacement) if replacement.len() == cavity_indices.len() => {
             triangulation_has_edge(replacement, target)
                 && replacement_retains_chain_constraints(
-                    [&left_chain, &right_chain],
+                    [left_chain, right_chain],
                     constrained_edges,
                     replacement,
                 )
@@ -653,14 +663,14 @@ fn recover_constraint_cavity(
             cavity_indices.as_slice(),
             &mut boundary_edges,
         )?;
-        prune_absorbed_chain_detours(&mut left_chain, constrained_edges, &boundary_edges);
-        prune_absorbed_chain_detours(&mut right_chain, constrained_edges, &boundary_edges);
+        prune_absorbed_chain_detours(left_chain, constrained_edges, &boundary_edges);
+        prune_absorbed_chain_detours(right_chain, constrained_edges, &boundary_edges);
         replacement = Some(triangulate_cavity_region(
             kernel,
             points,
             triangles,
             cavity_indices.as_slice(),
-            [&left_chain, &right_chain],
+            [left_chain, right_chain],
         )?);
     }
     let Some(replacement) = replacement else {
@@ -2020,6 +2030,8 @@ mod tests {
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
             let mut incident_triangles = Vec::new();
+            let mut left_chain = Vec::new();
+            let mut right_chain = Vec::new();
 
             recover_constraint(
                 ConstraintRecovery {
@@ -2031,6 +2043,8 @@ mod tests {
                     approximate_points: approximate.as_deref(),
                     cavity: &mut cavity,
                     incident_triangles: &mut incident_triangles,
+                    left_chain: &mut left_chain,
+                    right_chain: &mut right_chain,
                 },
                 constraint,
             )
@@ -2166,6 +2180,8 @@ mod tests {
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
             let mut incident_triangles = Vec::new();
+            let mut left_chain = Vec::new();
+            let mut right_chain = Vec::new();
 
             recover_constraint(
                 ConstraintRecovery {
@@ -2177,6 +2193,8 @@ mod tests {
                     approximate_points: approximate.as_deref(),
                     cavity: &mut cavity,
                     incident_triangles: &mut incident_triangles,
+                    left_chain: &mut left_chain,
+                    right_chain: &mut right_chain,
                 },
                 target,
             )
@@ -2249,6 +2267,8 @@ mod tests {
             let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
             let mut cavity = Vec::new();
             let mut incident_triangles = Vec::new();
+            let mut left_chain = Vec::new();
+            let mut right_chain = Vec::new();
 
             recover_constraint(
                 ConstraintRecovery {
@@ -2260,6 +2280,8 @@ mod tests {
                     approximate_points: approximate.as_deref(),
                     cavity: &mut cavity,
                     incident_triangles: &mut incident_triangles,
+                    left_chain: &mut left_chain,
+                    right_chain: &mut right_chain,
                 },
                 target,
             )
