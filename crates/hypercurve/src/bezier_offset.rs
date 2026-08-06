@@ -13411,13 +13411,14 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Replays every finite contact between this retained chord and an
-    /// arbitrary rational Bezier without adjoining its endpoint fields.
+    /// arbitrary rational Bezier without adjoining its finite-boundary fields.
     ///
-    /// The first endpoint field is eliminated into a bivariate polynomial by
-    /// Hypersolve, the second endpoint field is eliminated into source-
-    /// parameter candidates, and every candidate is replayed against the
-    /// selected root triple before it becomes topology evidence. One optional
-    /// source parameter may be omitted when authored adjacency already owns it.
+    /// The stable support's first endpoint field is eliminated into a
+    /// bivariate polynomial by Hypersolve, its second endpoint field is
+    /// eliminated into source-parameter candidates, and every candidate is
+    /// replayed against the selected root triple before the current finite
+    /// boundary admits it as topology evidence. One optional source parameter
+    /// may be omitted when authored adjacency already owns it.
     #[cfg(feature = "predicates")]
     pub(crate) fn rational_intersections(
         &self,
@@ -14684,13 +14685,25 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordIndependentIncidence2>> {
         self.validate_policy(policy)?;
-        let [start, end] = match algebraic_chord_endpoint_images(self.start(), self.end(), policy)?
-        {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        // Splitting changes only the finite interval on one retained support.
+        // Build the supporting-line equation from that stable root chord so
+        // correlated split endpoints remain compact boundary evidence rather
+        // than becoming artificial incidence fields.  Preserve local
+        // traversal orientation because the tangent-cross sign belongs to the
+        // split chord, not merely to its unoriented support.
+        let support = self.retained_support();
+        let [support_start, support_end] = if self.retained_support_orientation_is_reversed() {
+            [support.end(), support.start()]
+        } else {
+            [support.start(), support.end()]
         };
+        let [start, end] =
+            match algebraic_chord_endpoint_images(support_start, support_end, policy)? {
+                Classification::Decided(endpoints) => endpoints,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let start = match start.predicate_evaluator(policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -32832,6 +32845,69 @@ mod conversion_tests {
                 left.cmp_by_refinement(&right, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
             );
+
+            // A later Boolean may retain only the chord interval between
+            // these two correlated circle contacts.  Its supporting line is
+            // still the original one-field chord: intersect that stable
+            // support with a new exact carrier, then restrict the candidate
+            // against the correlated finite endpoints.
+            let retained = BezierAlgebraicChord2::from_ordered_parameter_range(
+                &horizontal,
+                &left,
+                &right,
+                &policy,
+            )
+            .unwrap();
+            let crossing = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(Point2::from_values(0, -1), Point2::from_values(0, 2))
+                        .unwrap(),
+                ),
+            ))
+            .unwrap();
+            for (carrier, tangent_cross_sign) in [
+                (retained.clone(), RealSign::Positive),
+                (retained.reversed(), RealSign::Negative),
+            ] {
+                let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                    contacts,
+                )) = carrier
+                    .rational_intersections(&crossing, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("the retained correlated chord must meet the exact line");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one retained-chord contact, got {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign(), tangent_cross_sign);
+                assert_eq!(
+                    contact
+                        .other_parameter()
+                        .cmp_by_refinement(
+                            &BezierParameter2::Exact(
+                                (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+                            ),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter()
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter()
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+            }
 
             let tangent = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
                 point(vec![Real::from(-1_i8), Real::one()], vec![Real::from(2_i8)]),

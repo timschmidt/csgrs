@@ -1970,6 +1970,63 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
         assert!(!batch.value.intersection().is_empty());
         assert!(!batch.value.difference().is_empty());
         assert!(!batch.value.xor().is_empty());
+        let retained_correlated_chord_endpoints = batch
+            .value
+            .intersection()
+            .boundary_loops()
+            .iter()
+            .flat_map(|boundary| boundary.fragments())
+            .filter_map(|fragment| match fragment {
+                BezierSplitFragment2::AlgebraicChord(chord) => Some(
+                    usize::from(matches!(
+                        chord.start(),
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                    )) + usize::from(matches!(
+                        chord.end(),
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                    )),
+                ),
+                _ => None,
+            })
+            .sum::<usize>();
+        assert!(retained_correlated_chord_endpoints >= 2);
+        let replay_clip =
+            CurveRegion2::try_from_native_material_contours(vec![square(-1, 0, 2, 2)], &policy)
+                .unwrap()
+                .into_value();
+        let replay_evidence = batch
+            .value
+            .intersection()
+            .intersect_region(&replay_clip, &policy)
+            .expect("the retained strict-interior contacts must enter a later intersection");
+        let replay_certainty = if policy == CurveContext::STRICT {
+            CurveCertainty::Certified
+        } else {
+            CurveCertainty::Approximate512Consumed
+        };
+        assert_eq!(replay_evidence.certainty, replay_certainty);
+        let replay_blockers = replay_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(replay_evidence.value.is_complete(), "{replay_blockers:?}");
+        let replay = batch
+            .value
+            .intersection()
+            .boolean_regions(&replay_clip, &policy)
+            .expect("the retained strict-interior contacts must enter a later Boolean");
+        assert_eq!(replay.certainty, replay_certainty);
+        assert!(!replay.value.intersection().is_empty());
         if policy == CurveContext::STRICT {
             assert_eq!(
                 certified(
