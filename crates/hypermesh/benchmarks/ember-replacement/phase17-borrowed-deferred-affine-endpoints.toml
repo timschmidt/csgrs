@@ -1,0 +1,281 @@
+schema = 1
+date = "2026-08-05"
+status = "exact ownership/lifetime, performance, heap, and size checkpoint; phases 17 and 18 open"
+checkpoint = "borrowed-deferred-affine-endpoints"
+implementation_parent = "fe7f143cdf9ec6d9f65a5fd5ccf0dfe0a2764e9e"
+hypermesh_commit = "ba524a4fedca2c007f66ad02eee3e38ea5d1d210"
+hyperreal_commit = "f09c147b0352884f8efe88e875c37d8f0f439ba5"
+hyperlattice_commit = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit_commit = "b0418bddff50183fa782e5caa6da6974a2b969a1"
+hypertri_commit = "210a66c01f1f53f7ffb035a9643d57f81ee19171"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+one_boolean_engine = true
+compatibility_shim = false
+dual_engine = false
+fixture_dispatch = false
+coordinate_dispatch = false
+triangle_count_dispatch = false
+operation_dispatch = false
+result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+hypercurve_hypersolve_excluded = true
+
+[ownership]
+arena_owner = "PolygonVertexArena"
+deferred_affine_storage = "borrowed Point3"
+deferred_segment_storage = "borrowed endpoints and plane"
+clone_boundary = "surviving materialized pairwise endpoint"
+discarded_endpoint_clones = 0
+new_heap_owner = false
+topology_changed = false
+predicate_changed = false
+construction_identity_changed = false
+discovery_order_changed = false
+
+[exactness]
+strict_approximate_terminal = false
+approximate_512_terminal_owner = "Hyperlimit"
+aggregate_certainty_preserved = true
+enclosure_source_changed = false
+exact_affine_comparison_source_changed = false
+surviving_point_value_changed = false
+
+[performance_protocol]
+control_workload = "one retained arrangement materializing union, intersection, difference, reverse difference"
+control_iterations = 1_000
+control_repetitions = 3
+dense_repetitions = 3
+full_repetitions = 5
+policy = "STRICT"
+events = ["instructions:u", "branches:u"]
+counter_authority = true
+wall_clock_claim = false
+wall_clock_reason = "concurrent desktop load distorted cycles and clocks"
+saved_parent_binary = "target/phase17-point-plane-local"
+
+[[performance]]
+fixture = "crossing_octahedra"
+parent_instructions = 2_850_595_931
+current_instructions = 2_838_290_683
+instruction_change_percent = -0.431673
+parent_branches = 482_833_653
+current_branches = 480_712_628
+branch_change_percent = -0.439287
+
+[[performance]]
+fixture = "overlapping_boxes"
+parent_instructions = 3_605_333_188
+current_instructions = 3_551_701_944
+instruction_change_percent = -1.487553
+parent_branches = 613_261_134
+current_branches = 603_522_801
+branch_change_percent = -1.587959
+
+[[performance]]
+fixture = "affine_boxes"
+parent_instructions = 6_940_133_815
+current_instructions = 6_838_453_847
+instruction_change_percent = -1.465101
+parent_branches = 1_181_946_816
+current_branches = 1_163_743_107
+branch_change_percent = -1.540146
+
+[[performance]]
+fixture = "identical_boxes"
+parent_instructions = 3_720_753_198
+current_instructions = 3_572_883_941
+instruction_change_percent = -3.974175
+parent_branches = 632_935_727
+current_branches = 604_551_119
+branch_change_percent = -4.484596
+
+[[performance]]
+fixture = "dense_crossing_grid_17"
+iterations = 1
+parent_instructions = 13_249_299_882
+current_instructions = 13_242_321_048
+instruction_change_percent = -0.052673
+parent_branches = 1_843_590_244
+current_branches = 1_841_987_544
+branch_change_percent = -0.086934
+
+[[performance]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+iterations = 1
+parent_instructions = 9_844_090_158
+current_instructions = 9_763_075_952
+instruction_change_percent = -0.822973
+parent_branches = 1_662_998_078
+current_branches = 1_647_310_473
+branch_change_percent = -0.943333
+output_vertices = 14_626
+output_triangles = [33_512, 0, 16_756, 16_756]
+certainty = "Certified"
+
+[competitive_boundary]
+historical_ember_seconds = 3_312.66
+historical_ember_maximum_rss_kib = 329_352
+pinned_cgal_epeck_seconds = 0.09
+pinned_cgal_epeck_maximum_rss_kib = 15_516
+inherited_full_runtime_ratio_to_cgal = 10.1
+inherited_full_rss_ratio_to_cgal = 4.55
+inherited_crossing_runtime_ratio_to_cgal = 2.39
+inherited_overlapping_runtime_ratio_to_cgal = 2.73
+inherited_affine_runtime_ratio_to_cgal = 1.93
+cgal_gaps_open = true
+
+[[heap]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+policy = "STRICT"
+input_triangles = 23_788
+output_triangles = 0
+incremental_peak_bytes = 53_217_804
+allocation_calls = 9_571_455
+reallocation_calls = 1_466_413
+added_bytes = 556_743_274
+parent_identical = true
+certainty = "Certified"
+
+[[heap]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+policy = "APPROXIMATE_512"
+input_triangles = 23_788
+output_triangles = 0
+incremental_peak_bytes = 53_217_804
+allocation_calls = 9_571_455
+reallocation_calls = 1_466_413
+added_bytes = 556_743_274
+parent_identical = true
+certainty = "Certified"
+
+[[heap]]
+fixture = "dense_crossing_grid_65"
+policy = "STRICT"
+input_triangles = 1_572
+output_vertices = 73_844
+output_triangles = 164_068
+incremental_peak_bytes = 197_318_844
+allocation_calls = 33_193_334
+reallocation_calls = 345_512
+added_bytes = 6_852_763_150
+parent_identical = true
+certainty = "Certified"
+
+[[heap]]
+fixture = "dense_crossing_grid_65"
+policy = "APPROXIMATE_512"
+input_triangles = 1_572
+output_vertices = 73_844
+output_triangles = 164_068
+incremental_peak_bytes = 197_318_844
+allocation_calls = 33_193_334
+reallocation_calls = 345_512
+added_bytes = 6_852_763_150
+parent_identical = true
+certainty = "Certified"
+
+[source_size]
+current_tokei_code_lines = 20_756
+implementation_added_lines = 31
+implementation_removed_lines = 27
+
+[[linked_size]]
+features = "default"
+profile = "release"
+parent_native_text_bytes = 2_038_666
+current_native_text_bytes = 2_037_234
+native_change_percent = -0.070242
+parent_optimized_wasm_bytes = 1_455_415
+current_optimized_wasm_bytes = 1_455_385
+wasm_change_percent = -0.002061
+
+[[linked_size]]
+features = "all"
+profile = "release"
+parent_native_text_bytes = 2_175_867
+current_native_text_bytes = 2_174_507
+native_change_percent = -0.062504
+parent_optimized_wasm_bytes = 1_531_580
+current_optimized_wasm_bytes = 1_531_562
+wasm_change_percent = -0.001175
+
+[[linked_size]]
+features = "default"
+profile = "size"
+parent_native_text_bytes = 1_123_807
+current_native_text_bytes = 1_123_703
+native_change_percent = -0.009254
+parent_optimized_wasm_bytes = 706_837
+current_optimized_wasm_bytes = 706_637
+wasm_change_percent = -0.028295
+
+[[linked_size]]
+features = "all"
+profile = "size"
+parent_native_text_bytes = 1_125_999
+current_native_text_bytes = 1_125_895
+native_change_percent = -0.009236
+parent_optimized_wasm_bytes = 706_120
+current_optimized_wasm_bytes = 705_911
+wasm_change_percent = -0.029598
+
+[validation]
+all_feature_library_tests = 163
+all_feature_total_executed_tests = 217
+documented_ignored_tests = 7
+failures = 0
+default_library_tests = 162
+corpus_manifest_records = 59
+no_default_features_check = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_all_features_no_deps = true
+fmt_check = true
+diff_check = true
+bench_all_features_no_run = true
+fuzz_workspace_check = true
+
+[sanitizer]
+target = "boolean_pipeline"
+asan = true
+lsan = false
+lsan_reason = "managed environment prevents final ptrace scan"
+source_seed_files = 2_182
+temporary_corpus_copy = true
+executions = 4_855
+seconds = 39
+maximum_rss_mib = 480
+failure = false
+temporary_corpus_removed = true
+source_corpus_unchanged = true
+
+[callgraph]
+crate_count = 5
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+production_nodes = 15_547
+production_edges = 25_997
+all_evidence_nodes = 21_950
+all_evidence_edges = 35_512
+direct_hypermesh_hypertri_to_hyperlimit_edges = 49
+surface_arrangement_to_cell_edges = 1
+removed_namespace_nodes = 0
+
+[open]
+phases_17_18_complete = false
+cgal_parity = false
+external_real_world_corpus_complete = false
+generated_pathology_corpus_complete = false
+fuzz_mutation_source_audit_complete = false
+stage_lifetime_recovery_complete = false
+source_size_recovery_complete = false
+native_size_recovery_complete = false
+wasm_size_recovery_complete = false
+deferred_callers_complete = false
+final_path_removal_audit_complete = false
