@@ -7,7 +7,8 @@ use std::sync::{Arc, OnceLock};
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::{
-    BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
+    BezierAlgebraicChordPairIntersections2, BezierAlgebraicChordRationalIntersections2,
+    BezierAlgebraicChordRationalOverlap2,
 };
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
@@ -1776,6 +1777,94 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ),
                             _ => unreachable!("an algebraic-chord pair retains one chord"),
                         };
+                    if let RegionCarrierGeometry::AlgebraicChord(other_chord) = other {
+                        let intersections = match chord
+                            .chord_intersections(other_chord, &self.data.policy)
+                            .map_err(|cause| self.invalid(chord_index, cause))?
+                        {
+                            Classification::Decided(intersections) => intersections,
+                            Classification::Uncertain(reason) => {
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps: Vec::new(),
+                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                                });
+                            }
+                        };
+                        let (mut contacts, overlaps) = match intersections {
+                            BezierAlgebraicChordPairIntersections2::Contacts(contacts) => (
+                                contacts
+                                    .into_iter()
+                                    .map(|contact| {
+                                        RegionPairContactEvidence::direct(
+                                            CurveRegionParameter2::from_algebraic_chord(
+                                                contact.first_parameter().clone(),
+                                            ),
+                                            CurveRegionParameter2::from_algebraic_chord(
+                                                contact.second_parameter().clone(),
+                                            ),
+                                            Some(contact.point().clone()),
+                                            contact.tangent_cross_sign() != RealSign::Zero,
+                                            Some(contact.tangent_cross_sign()),
+                                        )
+                                    })
+                                    .collect(),
+                                Vec::new(),
+                            ),
+                            BezierAlgebraicChordPairIntersections2::Overlaps(overlaps) => (
+                                Vec::new(),
+                                overlaps
+                                    .into_iter()
+                                    .map(|overlap| {
+                                        let [first_start, first_end] = overlap.first_range();
+                                        let [second_start, second_end] = overlap.second_range();
+                                        RegionPairOverlap {
+                                            source: None,
+                                            first_range: CurveRegionParameterRange2::new_validated(
+                                                CurveRegionParameter2::from_algebraic_chord(
+                                                    first_start.clone(),
+                                                ),
+                                                CurveRegionParameter2::from_algebraic_chord(
+                                                    first_end.clone(),
+                                                ),
+                                            ),
+                                            second_range: CurveRegionParameterRange2::new_validated(
+                                                CurveRegionParameter2::from_algebraic_chord(
+                                                    second_start.clone(),
+                                                ),
+                                                CurveRegionParameter2::from_algebraic_chord(
+                                                    second_end.clone(),
+                                                ),
+                                            ),
+                                            orientation: overlap.orientation(),
+                                        }
+                                    })
+                                    .collect(),
+                            ),
+                        };
+                        if self.authored_carriers_are_adjacent(pair) && overlaps.is_empty() {
+                            // Adjacent straight chords have only their already
+                            // seeded authored endpoint in common unless they
+                            // overlap positively, which remains arrangement
+                            // evidence.
+                            contacts.clear();
+                        }
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-pair",
+                            if overlaps.is_empty() {
+                                "chord-contact-complete"
+                            } else {
+                                "chord-overlap-complete"
+                            },
+                        );
+                        return Ok(RegionPairResult {
+                            contacts,
+                            overlaps,
+                            blockers: Vec::new(),
+                        });
+                    }
                     if let RegionCarrierGeometry::Bezier(curve) = other {
                         let other_carrier = &self.data.carriers[other_index];
                         let authored_adjacent = self.authored_carriers_are_adjacent(pair);
@@ -8907,6 +8996,89 @@ mod certified_successor_tests {
             assert!(!booleans.union().is_empty());
             assert!(!booleans.difference().is_empty());
             assert!(!booleans.xor().is_empty());
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let horizontal = rational_line(0, 1);
+            let first_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+            let first_point = exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
+                .expect("exact first endpoint")
+                .expect("first endpoint evidence");
+            let second_point =
+                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
+                    .expect("exact second endpoint")
+                    .expect("second endpoint evidence");
+            let first = decided(
+                crate::BezierAlgebraicChord2::try_new(first_point, second_point, &policy)
+                    .expect("valid independent-field chord"),
+            );
+            let second = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, 0)),
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                    &policy,
+                )
+                .expect("valid represented containing chord"),
+            );
+            let carrier = |operand, chord: crate::BezierAlgebraicChord2| RegionCarrier {
+                operand,
+                loop_index: 0,
+                fragment_index: 0,
+                family: CurveFamily2::Line,
+                start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
+                end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+                geometry: RegionCarrierGeometry::AlgebraicChord(chord),
+                reversed: false,
+                filled_side_is_left: true,
+                image_is_injective: OnceLock::new(),
+                bounds: OnceLock::new(),
+            };
+            let empty_first = CurveRegion2::empty();
+            let empty_second = CurveRegion2::empty();
+            let context = CurveRegionBooleanContext {
+                data: CurveRegionBooleanContextData {
+                    first: &empty_first,
+                    second: &empty_second,
+                    policy,
+                    carriers: vec![
+                        carrier(CurvePathBooleanOperand2::First, first),
+                        carrier(CurvePathBooleanOperand2::Second, second),
+                    ],
+                    first_carrier_count: 1,
+                    authored_carrier_pair_count: 1,
+                    pairs: vec![RegionCarrierPair {
+                        first_carrier_index: 0,
+                        second_carrier_index: 1,
+                        context: RegionCarrierPairContext::AlgebraicChordPair,
+                    }],
+                    bezier_self_intersections: Vec::new(),
+                    parallel_self_intersections: Vec::new(),
+                    strict_line_image_only: OnceLock::new(),
+                },
+            };
+            let pair_result = context
+                .pair_result(&context.data.pairs[0])
+                .expect("algebraic chord pair overlap must complete");
+            assert!(pair_result.blockers.is_empty(), "{pair_result:?}");
+            assert!(pair_result.contacts.is_empty(), "{pair_result:?}");
+            let [overlap] = pair_result.overlaps.as_slice() else {
+                panic!("expected one algebraic chord overlap: {pair_result:?}");
+            };
+            assert_eq!(overlap.orientation, RationalBezierOverlapOrientation2::Same);
+            assert!(overlap.first_range.start().is_algebraic_chord());
+            assert!(overlap.second_range.start().is_algebraic_chord());
+
+            let evidence = context
+                .build_intersection_evidence()
+                .expect("algebraic chord overlap must enter region evidence");
+            assert!(evidence.is_complete(), "{evidence:?}");
+            assert!(evidence.contacts().is_empty(), "{evidence:?}");
+            assert_eq!(evidence.overlaps().len(), 1, "{evidence:?}");
         }
     }
 
