@@ -16,8 +16,9 @@ use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2,
-    RationalBezier2, RationalBezierIntersectionContacts2, Real, Segment2,
+    CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2,
+    OffsetCornerStyle2, Point2, RationalBezier2, RationalBezierIntersectionContacts2, Real,
+    Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -609,6 +610,64 @@ fn benchmark_contour_offset(runner: &Runner) {
     });
 }
 
+fn benchmark_orthogonal_neck_split(runner: &Runner) {
+    let name = "orthogonal_offset/neck_split";
+    if !runner.group_enabled(name) {
+        return;
+    }
+    let points = vec![
+        [0.0, 0.0],
+        [4.0, 0.0],
+        [4.0, 1.0],
+        [8.0, 1.0],
+        [8.0, 0.0],
+        [12.0, 0.0],
+        [12.0, 4.0],
+        [8.0, 4.0],
+        [8.0, 3.0],
+        [4.0, 3.0],
+        [4.0, 4.0],
+        [0.0, 4.0],
+    ];
+    let policy = CurveContext::STRICT;
+    let hypercurve =
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour(&points)], &policy)
+            .expect("hypercurve dumbbell fixture must remain exact")
+            .into_value();
+    let style = OffsetCornerStyle2::Miter {
+        limit: Real::from(2_u8),
+    };
+    let cavalier = cavalier_polyline(&points, None);
+    assert_eq!(
+        hypercurve
+            .offset(real(-1.5), &style, &policy)
+            .expect("hypercurve dumbbell erosion must split")
+            .into_value()
+            .boundary_loops()
+            .len(),
+        2,
+    );
+    assert_eq!(cavalier.parallel_offset(1.5).len(), 2);
+
+    runner.measure(name, "hypercurve_curve_region", || {
+        hypercurve
+            .offset(real(-1.5), black_box(&style), &policy)
+            .expect("hypercurve dumbbell erosion must split")
+            .into_value()
+            .boundary_loops()
+            .iter()
+            .map(|boundary| boundary.fragments().len())
+            .sum()
+    });
+    runner.measure(name, "cavalier_contours", || {
+        cavalier
+            .parallel_offset(black_box(1.5))
+            .iter()
+            .map(PlineSource::vertex_count)
+            .sum()
+    });
+}
+
 fn benchmark_bezier_offset(runner: &Runner) {
     if !runner.group_enabled("bezier_offset/open_cubic") {
         return;
@@ -1183,6 +1242,7 @@ fn main() {
     benchmark_polygon_booleans(&runner);
     benchmark_line_arc_boolean(&runner);
     benchmark_contour_offset(&runner);
+    benchmark_orthogonal_neck_split(&runner);
     benchmark_bezier_offset(&runner);
     benchmark_rational_bezier_self_contacts(&runner);
     benchmark_nurbs_evaluation(&runner);

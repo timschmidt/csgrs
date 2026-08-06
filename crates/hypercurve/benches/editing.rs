@@ -1363,6 +1363,83 @@ fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
     )
 }
 
+#[cfg(feature = "predicates")]
+fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> {
+    let policy = CurveContext::STRICT;
+    let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
+    let selected = |height: Real| {
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::from(12_u8), height.clone()),
+                Point2::new(Real::from(13_u8), height),
+            ],
+            vec![Real::one(); 2],
+        )
+        .map(|curve| {
+            RationalBezierIntersectionPointEvidence2::Algebraic(
+                curve
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .expect("algebraic dumbbell endpoint must remain selected"),
+            )
+        })
+    };
+    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(p(x, y));
+    let points = [
+        exact(0, 0),
+        exact(4, 0),
+        exact(4, 1),
+        exact(8, 1),
+        exact(8, 0),
+        selected(Real::zero())?,
+        selected(Real::from(4_u8))?,
+        exact(8, 4),
+        exact(8, 3),
+        exact(4, 3),
+        exact(4, 4),
+        exact(0, 4),
+    ];
+    let mut fragments = Vec::with_capacity(points.len());
+    for index in 0..points.len() {
+        fragments.push(BezierSplitFragment2::AlgebraicChord(expect_decided(
+            BezierAlgebraicChord2::try_new(
+                points[index].clone(),
+                points[(index + 1) % points.len()].clone(),
+                &policy,
+            )?,
+            "axis-aligned dumbbell chord must remain exact",
+        )));
+    }
+    CurveRegion2::try_new_with_loop_topology(
+        vec![CurveRegionBoundaryLoop2::new(fragments, &policy)?],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+}
+
+fn orthogonal_dumbbell_offset_region() -> CurveRegion2 {
+    let vertices = [
+        (0, 0),
+        (4, 0),
+        (4, 1),
+        (8, 1),
+        (8, 0),
+        (12, 0),
+        (12, 4),
+        (8, 4),
+        (8, 3),
+        (4, 3),
+        (4, 4),
+        (0, 4),
+    ]
+    .map(|(x, y)| vertex(x, y, 0));
+    let contour = Contour2::from_bulge_vertices(&vertices)
+        .expect("native dumbbell benchmark contour must remain exact");
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+        .expect("native dumbbell benchmark region must remain exact")
+        .into_value()
+}
+
 fn bench_represented_bezier_region_corner_lanes(
     region: &CurveRegion2,
     two_bezier_region: &CurveRegion2,
@@ -1578,6 +1655,76 @@ fn bench_represented_bezier_region_corner_lanes(
         let elapsed = started.elapsed();
         println!(
             "curve_region_axis_algebraic_repeated_miter_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_axis_algebraic_neck_split") {
+        let source = axis_aligned_algebraic_dumbbell_offset_region()
+            .expect("algebraic dumbbell benchmark fixture must remain exact");
+        let style = OffsetCornerStyle2::Miter {
+            limit: Real::from(2_u8),
+        };
+        assert_eq!(
+            source
+                .offset(-q(3, 2), &style, &policy)
+                .expect("algebraic dumbbell erosion must split exactly")
+                .into_value()
+                .boundary_loops()
+                .len(),
+            2,
+        );
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let offset = black_box(&source)
+                .offset(-q(3, 2), black_box(&style), &policy)
+                .expect("algebraic dumbbell erosion must split exactly")
+                .into_value();
+            fragments += black_box(&offset)
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_axis_algebraic_neck_split: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            elapsed / iterations
+        );
+    }
+    if corner_lane_enabled("curve_region_native_orthogonal_neck_split") {
+        let source = orthogonal_dumbbell_offset_region();
+        let style = OffsetCornerStyle2::Miter {
+            limit: Real::from(2_u8),
+        };
+        assert_eq!(
+            source
+                .offset(-q(3, 2), &style, &policy)
+                .expect("native dumbbell erosion must split exactly")
+                .into_value()
+                .boundary_loops()
+                .len(),
+            2,
+        );
+        let started = Instant::now();
+        let mut fragments = 0_usize;
+        for _ in 0..iterations {
+            let offset = black_box(&source)
+                .offset(-q(3, 2), black_box(&style), &policy)
+                .expect("native dumbbell erosion must split exactly")
+                .into_value();
+            fragments += black_box(&offset)
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>();
+        }
+        assert_ne!(fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_native_orthogonal_neck_split: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
             elapsed / iterations
         );
     }

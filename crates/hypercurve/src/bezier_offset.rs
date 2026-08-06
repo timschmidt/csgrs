@@ -11077,6 +11077,17 @@ impl BezierAlgebraicChord2 {
         algebraic_chord_point_coordinate_order(self.start(), other.start(), axis, policy)
     }
 
+    /// Compares one coordinate of two retained affine point carriers.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn point_axis_order(
+        first: &RationalBezierIntersectionPointEvidence2,
+        second: &RationalBezierIntersectionPointEvidence2,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        algebraic_chord_point_coordinate_order(first, second, axis, policy)
+    }
+
     /// Compares one retained point coordinate with a represented scalar.
     #[cfg(feature = "predicates")]
     pub(crate) fn point_axis_order_to_real(
@@ -11092,25 +11103,99 @@ impl BezierAlgebraicChord2 {
         algebraic_chord_point_coordinate_order(point, &represented, axis, policy)
     }
 
-    /// Returns the unique finite transverse contact of two retained chords.
+    /// Constructs the exact crossing of two perpendicular coordinate fibers.
+    ///
+    /// The caller must have certified that `self_direction` and
+    /// `other_direction` are the chords' axis directions and that both finite
+    /// endpoint intervals strictly bracket their unique support intersection.
+    /// Those construction facts determine all four endpoint sides, so replaying
+    /// the general algebraic side predicates here would add work without adding
+    /// evidence. The retained pair remains the authoritative exact point carrier.
     #[cfg(feature = "predicates")]
-    pub(crate) fn unique_transverse_intersection_point(
+    pub(crate) fn certified_axis_aligned_crossing_point(
         &self,
         other: &Self,
+        self_direction: BezierAlgebraicChordAxisDirection2,
+        other_direction: BezierAlgebraicChordAxisDirection2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
-        match self.chord_intersections(other, policy)? {
-            Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(contacts))
-                if contacts.len() == 1 && contacts[0].tangent_cross_sign() != RealSign::Zero =>
-            {
-                Ok(Classification::Decided(contacts[0].point().clone()))
-            }
-            Classification::Decided(
-                BezierAlgebraicChordPairIntersections2::Contacts(_)
-                | BezierAlgebraicChordPairIntersections2::Overlaps(_),
-            ) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    ) -> CurveResult<RationalBezierIntersectionPointEvidence2> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        let expected_direction = |chord: &Self| match (
+            chord.data.parameter_axis.axis,
+            chord.data.parameter_axis.coordinate_increases,
+        ) {
+            (Axis2::X, true) => BezierAlgebraicChordAxisDirection2::PositiveX,
+            (Axis2::X, false) => BezierAlgebraicChordAxisDirection2::NegativeX,
+            (Axis2::Y, true) => BezierAlgebraicChordAxisDirection2::PositiveY,
+            (Axis2::Y, false) => BezierAlgebraicChordAxisDirection2::NegativeY,
+        };
+        if expected_direction(self) != self_direction
+            || expected_direction(other) != other_direction
+        {
+            return Err(CurveError::Topology(
+                "coordinate-fiber direction certificate did not match its retained chord".into(),
+            ));
         }
+        let cross_is_positive = match (self_direction, other_direction) {
+            (
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+                BezierAlgebraicChordAxisDirection2::PositiveY,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::PositiveY,
+                BezierAlgebraicChordAxisDirection2::NegativeX,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::NegativeX,
+                BezierAlgebraicChordAxisDirection2::NegativeY,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::NegativeY,
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+            ) => true,
+            (
+                BezierAlgebraicChordAxisDirection2::PositiveY,
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::NegativeX,
+                BezierAlgebraicChordAxisDirection2::PositiveY,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::NegativeY,
+                BezierAlgebraicChordAxisDirection2::NegativeX,
+            )
+            | (
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+                BezierAlgebraicChordAxisDirection2::NegativeY,
+            ) => false,
+            _ => {
+                return Err(CurveError::Topology(
+                    "coordinate-fiber crossing certificate was not perpendicular".into(),
+                ));
+            }
+        };
+        let (left, right) = (
+            crate::classify::LineSide::Left,
+            crate::classify::LineSide::Right,
+        );
+        let (first_sides, second_sides) = if cross_is_positive {
+            ([left, right], [right, left])
+        } else {
+            ([right, left], [left, right])
+        };
+        Ok(
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(
+                BezierAlgebraicChordPairPoint2::new(
+                    self.clone(),
+                    other.clone(),
+                    first_sides,
+                    second_sides,
+                    policy,
+                ),
+            ),
+        )
     }
 
     /// Trims this retained support between two already-certified incident

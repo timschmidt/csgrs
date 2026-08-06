@@ -2407,6 +2407,12 @@ struct ExactAxisAlignedAlgebraicOffsetSpan2 {
 }
 
 #[cfg(feature = "predicates")]
+struct ExactAxisAlignedAlgebraicFiber2 {
+    chord: crate::BezierAlgebraicChord2,
+    direction: BezierAlgebraicChordAxisDirection2,
+}
+
+#[cfg(feature = "predicates")]
 fn retained_chord_or_exact_line_fragment(
     chord: crate::BezierAlgebraicChord2,
 ) -> CurveResult<BezierSplitFragment2> {
@@ -2831,18 +2837,21 @@ fn extend_axis_aligned_algebraic_chord(
 
 #[cfg(feature = "predicates")]
 fn sort_dedup_axis_aligned_algebraic_fibers(
-    fibers: Vec<crate::BezierAlgebraicChord2>,
+    fibers: Vec<ExactAxisAlignedAlgebraicFiber2>,
     axis: Axis2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<crate::BezierAlgebraicChord2>>> {
-    let mut sorted = Vec::with_capacity(fibers.len());
+) -> CurveResult<Classification<Vec<ExactAxisAlignedAlgebraicFiber2>>> {
+    let mut sorted: Vec<ExactAxisAlignedAlgebraicFiber2> = Vec::with_capacity(fibers.len());
     for fiber in fibers {
         let mut lower = 0;
         let mut upper = sorted.len();
         let mut duplicate = false;
         while lower < upper {
             let middle = lower + (upper - lower) / 2;
-            match fiber.axis_coordinate_order(&sorted[middle], axis, policy)? {
+            match fiber
+                .chord
+                .axis_coordinate_order(&sorted[middle].chord, axis, policy)?
+            {
                 Classification::Decided(std::cmp::Ordering::Less) => {
                     upper = middle;
                 }
@@ -2867,12 +2876,12 @@ fn sort_dedup_axis_aligned_algebraic_fibers(
 
 #[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_erosion_coordinates(
-    sources: &[crate::BezierAlgebraicChord2],
+    sources: &[ExactAxisAlignedAlgebraicFiber2],
     axis: Axis2,
     radius: &Real,
     extent: &Real,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<crate::BezierAlgebraicChord2>>> {
+) -> CurveResult<Classification<Vec<ExactAxisAlignedAlgebraicFiber2>>> {
     if sources.is_empty() {
         return Ok(Classification::Decided(Vec::new()));
     }
@@ -2884,20 +2893,19 @@ fn exact_axis_aligned_algebraic_erosion_coordinates(
             Axis2::X => [(&negative_radius, &zero), (&zero, &zero), (radius, &zero)],
             Axis2::Y => [(&zero, &negative_radius), (&zero, &zero), (&zero, radius)],
         };
-        let direction = match source.axis_direction(policy)? {
-            Classification::Decided(Some(direction)) => direction,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let direction = source.direction;
         for (delta_x, delta_y) in translated {
             match extend_axis_aligned_algebraic_chord(
-                source, direction, delta_x, delta_y, extent, policy,
+                &source.chord,
+                direction,
+                delta_x,
+                delta_y,
+                extent,
+                policy,
             )? {
-                Classification::Decided(chord) => candidates.push(chord),
+                Classification::Decided(chord) => {
+                    candidates.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -2910,12 +2918,14 @@ fn exact_axis_aligned_algebraic_erosion_coordinates(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let minimum = &sources[0];
-    let maximum = &sources[sources.len() - 1];
+    let minimum = &sources[0].chord;
+    let maximum = &sources[sources.len() - 1].chord;
     let mut retained = Vec::with_capacity(candidates.len());
     for candidate in candidates {
-        let above_minimum = minimum.axis_coordinate_order(&candidate, axis, policy)?;
-        let below_maximum = candidate.axis_coordinate_order(maximum, axis, policy)?;
+        let above_minimum = minimum.axis_coordinate_order(&candidate.chord, axis, policy)?;
+        let below_maximum = candidate
+            .chord
+            .axis_coordinate_order(maximum, axis, policy)?;
         match (above_minimum, below_maximum) {
             (
                 Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -2931,91 +2941,89 @@ fn exact_axis_aligned_algebraic_erosion_coordinates(
 }
 
 #[cfg(feature = "predicates")]
-fn retained_point_axis_order_to_real(
+fn exact_axis_aligned_grid_coordinate_position(
     point: &crate::RationalBezierIntersectionPointEvidence2,
     axis: Axis2,
-    value: &Real,
+    fibers: &[ExactAxisAlignedAlgebraicFiber2],
     policy: &CurveContext,
-) -> CurveResult<Classification<std::cmp::Ordering>> {
-    crate::BezierAlgebraicChord2::point_axis_order_to_real(point, axis, value, policy)
-}
-
-#[cfg(feature = "predicates")]
-fn exact_axis_aligned_algebraic_sample_is_inside(
-    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
-    sample: &Point2,
-    fill_rule: FillRule,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let mut winding = 0_i32;
-    for span in spans {
-        let delta = match span.direction {
-            BezierAlgebraicChordAxisDirection2::PositiveY => 1,
-            BezierAlgebraicChordAxisDirection2::NegativeY => -1,
-            BezierAlgebraicChordAxisDirection2::PositiveX
-            | BezierAlgebraicChordAxisDirection2::NegativeX => continue,
-        };
-        let (lower, upper) = if delta > 0 {
-            (span.source.start(), span.source.end())
-        } else {
-            (span.source.end(), span.source.start())
-        };
-        let lower_order = retained_point_axis_order_to_real(lower, Axis2::Y, sample.y(), policy)?;
-        let upper_order = retained_point_axis_order_to_real(upper, Axis2::Y, sample.y(), policy)?;
-        match (lower_order, upper_order) {
-            (
-                Classification::Decided(std::cmp::Ordering::Less),
-                Classification::Decided(std::cmp::Ordering::Greater),
-            ) => {}
-            (Classification::Decided(_), Classification::Decided(_)) => continue,
-            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        match retained_point_axis_order_to_real(span.source.start(), Axis2::X, sample.x(), policy)?
-        {
-            Classification::Decided(std::cmp::Ordering::Greater) => winding += delta,
-            Classification::Decided(std::cmp::Ordering::Less) => {}
+) -> CurveResult<Classification<(usize, bool)>> {
+    let mut lower = 0;
+    let mut upper = fibers.len();
+    while lower < upper {
+        let middle = lower + (upper - lower) / 2;
+        match crate::BezierAlgebraicChord2::point_axis_order(
+            point,
+            fibers[middle].chord.start(),
+            axis,
+            policy,
+        )? {
+            Classification::Decided(std::cmp::Ordering::Less) => upper = middle,
             Classification::Decided(std::cmp::Ordering::Equal) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                return Ok(Classification::Decided((middle, true)));
             }
+            Classification::Decided(std::cmp::Ordering::Greater) => lower = middle + 1,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
     }
-    Ok(Classification::Decided(match fill_rule {
-        FillRule::EvenOdd => winding.rem_euclid(2) != 0,
-        FillRule::NonZero => winding != 0,
-    }))
+    Ok(Classification::Decided((lower, false)))
 }
 
 #[cfg(feature = "predicates")]
-fn exact_axis_aligned_sample_is_strictly_inside_box(
-    sample: &Point2,
-    bounds: &ExactAxisAlignedAlgebraicExpandedBox2,
+fn exact_axis_aligned_grid_coordinate_index(
+    point: &crate::RationalBezierIntersectionPointEvidence2,
+    axis: Axis2,
+    fibers: &[ExactAxisAlignedAlgebraicFiber2],
     policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    for (minimum, maximum, axis, value) in [
-        (&bounds.minimum_x, &bounds.maximum_x, Axis2::X, sample.x()),
-        (&bounds.minimum_y, &bounds.maximum_y, Axis2::Y, sample.y()),
-    ] {
-        let minimum_order = retained_point_axis_order_to_real(minimum, axis, value, policy)?;
-        let maximum_order = retained_point_axis_order_to_real(maximum, axis, value, policy)?;
-        match (minimum_order, maximum_order) {
-            (
-                Classification::Decided(std::cmp::Ordering::Less),
-                Classification::Decided(std::cmp::Ordering::Greater),
-            ) => {}
-            (Classification::Decided(_), Classification::Decided(_)) => {
-                return Ok(Classification::Decided(false));
-            }
-            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+) -> CurveResult<Classification<usize>> {
+    match exact_axis_aligned_grid_coordinate_position(point, axis, fibers, policy)? {
+        Classification::Decided((index, true)) => Ok(Classification::Decided(index)),
+        Classification::Decided((_, false)) => Err(CurveError::Topology(
+            "orthogonal source coordinate was absent from its exact arrangement".into(),
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_grid_cell_interval(
+    minimum: &crate::RationalBezierIntersectionPointEvidence2,
+    maximum: &crate::RationalBezierIntersectionPointEvidence2,
+    axis: Axis2,
+    fibers: &[ExactAxisAlignedAlgebraicFiber2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<std::ops::Range<usize>>> {
+    let (minimum, minimum_is_grid_coordinate) =
+        match exact_axis_aligned_grid_coordinate_position(minimum, axis, fibers, policy)? {
+            Classification::Decided(position) => position,
+            Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
-        }
+        };
+    let (maximum, maximum_is_grid_coordinate) =
+        match exact_axis_aligned_grid_coordinate_position(maximum, axis, fibers, policy)? {
+            Classification::Decided(position) => position,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if (!minimum_is_grid_coordinate && minimum != 0)
+        || (!maximum_is_grid_coordinate && maximum != fibers.len())
+    {
+        return Err(CurveError::Topology(
+            "orthogonal erosion bound fell inside an unpartitioned grid cell".into(),
+        ));
     }
-    Ok(Classification::Decided(true))
+    let cell_count = fibers.len().saturating_sub(1);
+    let minimum = minimum.min(cell_count);
+    let maximum = maximum.min(cell_count);
+    if minimum > maximum {
+        return Err(CurveError::Topology(
+            "orthogonal erosion bounds were reversed".into(),
+        ));
+    }
+    Ok(Classification::Decided(minimum..maximum))
 }
 
 #[cfg(feature = "predicates")]
@@ -3023,8 +3031,8 @@ fn exact_axis_aligned_grid_point(
     cache: &mut [Option<crate::RationalBezierIntersectionPointEvidence2>],
     vertex: usize,
     x_count: usize,
-    x_fibers: &[crate::BezierAlgebraicChord2],
-    y_fibers: &[crate::BezierAlgebraicChord2],
+    x_fibers: &[ExactAxisAlignedAlgebraicFiber2],
+    y_fibers: &[ExactAxisAlignedAlgebraicFiber2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<crate::RationalBezierIntersectionPointEvidence2>> {
     if let Some(point) = &cache[vertex] {
@@ -3032,12 +3040,12 @@ fn exact_axis_aligned_grid_point(
     }
     let x = vertex % x_count;
     let y = vertex / x_count;
-    let point = match x_fibers[x].unique_transverse_intersection_point(&y_fibers[y], policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = x_fibers[x].chord.certified_axis_aligned_crossing_point(
+        &y_fibers[y].chord,
+        x_fibers[x].direction,
+        y_fibers[y].direction,
+        policy,
+    )?;
     cache[vertex] = Some(point.clone());
     Ok(Classification::Decided(point))
 }
@@ -3063,63 +3071,6 @@ fn push_exact_axis_aligned_grid_edge(
     });
     outgoing[start][direction] = Some(index);
     Ok(())
-}
-
-#[cfg(feature = "predicates")]
-fn exact_axis_aligned_rational_sample_between(
-    first: &crate::BezierAlgebraicChord2,
-    second: &crate::BezierAlgebraicChord2,
-    axis: Axis2,
-    mut lower: Real,
-    mut upper: Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Real>> {
-    match first.axis_coordinate_order(second, axis, policy)? {
-        Classification::Decided(std::cmp::Ordering::Less) => {}
-        Classification::Decided(std::cmp::Ordering::Equal) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-        }
-        Classification::Decided(std::cmp::Ordering::Greater) => {
-            return Err(CurveError::Topology(
-                "orthogonal erosion coordinates were not ordered".into(),
-            ));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    }
-    loop {
-        let midpoint = ((&lower + &upper) / Real::from(2_u8))?;
-        let first_order = crate::BezierAlgebraicChord2::point_axis_order_to_real(
-            first.start(),
-            axis,
-            &midpoint,
-            policy,
-        )?;
-        let second_order = crate::BezierAlgebraicChord2::point_axis_order_to_real(
-            second.start(),
-            axis,
-            &midpoint,
-            policy,
-        )?;
-        match (first_order, second_order) {
-            (
-                Classification::Decided(std::cmp::Ordering::Less),
-                Classification::Decided(std::cmp::Ordering::Greater),
-            ) => return Ok(Classification::Decided(midpoint)),
-            (
-                Classification::Decided(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal),
-                Classification::Decided(_),
-            ) => lower = midpoint,
-            (
-                Classification::Decided(std::cmp::Ordering::Less),
-                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
-            ) => upper = midpoint,
-            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
 }
 
 #[cfg(feature = "predicates")]
@@ -3183,11 +3134,11 @@ fn exact_axis_aligned_algebraic_erosion(
         match direction {
             BezierAlgebraicChordAxisDirection2::PositiveY
             | BezierAlgebraicChordAxisDirection2::NegativeY => {
-                source_x_fibers.push(chord);
+                source_x_fibers.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
             }
             BezierAlgebraicChordAxisDirection2::PositiveX
             | BezierAlgebraicChordAxisDirection2::NegativeX => {
-                source_y_fibers.push(chord);
+                source_y_fibers.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
             }
         }
     }
@@ -3235,69 +3186,91 @@ fn exact_axis_aligned_algebraic_erosion(
 
     let cell_width = x_fibers.len() - 1;
     let cell_height = y_fibers.len() - 1;
-    let sample_minimum_x = source_bounds.min().x().clone();
-    let sample_maximum_x = source_bounds.max().x().clone();
-    let sample_minimum_y = source_bounds.min().y().clone();
-    let sample_maximum_y = source_bounds.max().y().clone();
-    let mut sample_x = Vec::with_capacity(cell_width);
-    for x in 0..cell_width {
-        match exact_axis_aligned_rational_sample_between(
-            &x_fibers[x],
-            &x_fibers[x + 1],
+    let cell_count = cell_width.saturating_mul(cell_height);
+    let mut winding = vec![0_i32; cell_count];
+    for span in spans {
+        let delta = match span.direction {
+            BezierAlgebraicChordAxisDirection2::PositiveY => 1,
+            BezierAlgebraicChordAxisDirection2::NegativeY => -1,
+            BezierAlgebraicChordAxisDirection2::PositiveX
+            | BezierAlgebraicChordAxisDirection2::NegativeX => continue,
+        };
+        let x_limit = match exact_axis_aligned_grid_coordinate_index(
+            span.source.start(),
             Axis2::X,
-            sample_minimum_x.clone(),
-            sample_maximum_x.clone(),
+            &x_fibers,
             policy,
         )? {
-            Classification::Decided(value) => sample_x.push(value),
+            Classification::Decided(index) => index,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
-        }
-    }
-    let mut sample_y = Vec::with_capacity(cell_height);
-    for y in 0..cell_height {
-        match exact_axis_aligned_rational_sample_between(
-            &y_fibers[y],
-            &y_fibers[y + 1],
-            Axis2::Y,
-            sample_minimum_y.clone(),
-            sample_maximum_y.clone(),
-            policy,
-        )? {
-            Classification::Decided(value) => sample_y.push(value),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    let mut occupied = vec![false; cell_width.saturating_mul(cell_height)];
-    for (y, sample_y) in sample_y.iter().enumerate() {
-        for (x, sample_x) in sample_x.iter().enumerate() {
-            let sample = Point2::new(sample_x.clone(), sample_y.clone());
-            match exact_axis_aligned_algebraic_sample_is_inside(spans, &sample, fill_rule, policy)?
-            {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => continue,
+        };
+        let (lower, upper) = if delta > 0 {
+            (span.source.start(), span.source.end())
+        } else {
+            (span.source.end(), span.source.start())
+        };
+        let lower =
+            match exact_axis_aligned_grid_coordinate_index(lower, Axis2::Y, &y_fibers, policy)? {
+                Classification::Decided(index) => index,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            }
-            let mut too_close = false;
-            for bounds in &expanded_boxes {
-                match exact_axis_aligned_sample_is_strictly_inside_box(&sample, bounds, policy)? {
-                    Classification::Decided(true) => {
-                        too_close = true;
-                        break;
-                    }
-                    Classification::Decided(false) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+            };
+        let upper =
+            match exact_axis_aligned_grid_coordinate_index(upper, Axis2::Y, &y_fibers, policy)? {
+                Classification::Decided(index) => index,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
+            };
+        if lower >= upper || x_limit > cell_width {
+            return Err(CurveError::Topology(
+                "orthogonal winding span did not map to an ordered grid interval".into(),
+            ));
+        }
+        for y in lower..upper {
+            for x in 0..x_limit {
+                winding[y * cell_width + x] += delta;
             }
-            if !too_close {
-                occupied[y * cell_width + x] = true;
+        }
+    }
+    let mut occupied = winding
+        .into_iter()
+        .map(|winding| match fill_rule {
+            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+            FillRule::NonZero => winding != 0,
+        })
+        .collect::<Vec<_>>();
+    for bounds in &expanded_boxes {
+        let x = match exact_axis_aligned_grid_cell_interval(
+            &bounds.minimum_x,
+            &bounds.maximum_x,
+            Axis2::X,
+            &x_fibers,
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let y = match exact_axis_aligned_grid_cell_interval(
+            &bounds.minimum_y,
+            &bounds.maximum_y,
+            Axis2::Y,
+            &y_fibers,
+            policy,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for y in y {
+            for x in x.clone() {
+                occupied[y * cell_width + x] = false;
             }
         }
     }
@@ -3462,15 +3435,7 @@ fn exact_axis_aligned_algebraic_erosion(
                 1 | 3 => &x_fibers[run.start % x_count],
                 _ => unreachable!(),
             };
-            let support_direction = match support.axis_direction(policy)? {
-                Classification::Decided(Some(direction)) => direction,
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let support_direction = support.direction;
             let forward_on_support = matches!(
                 (support_direction, run.direction),
                 (BezierAlgebraicChordAxisDirection2::PositiveX, 0)
@@ -3478,7 +3443,7 @@ fn exact_axis_aligned_algebraic_erosion(
                     | (BezierAlgebraicChordAxisDirection2::NegativeX, 2)
                     | (BezierAlgebraicChordAxisDirection2::NegativeY, 3)
             );
-            let chord = match support.subchord_between_certified_points(
+            let chord = match support.chord.subchord_between_certified_points(
                 start,
                 end,
                 forward_on_support,
