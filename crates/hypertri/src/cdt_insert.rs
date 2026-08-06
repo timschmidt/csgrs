@@ -710,9 +710,21 @@ fn triangulate_cavity_region(
     cavity_vertices.dedup();
 
     let mut replacement = Vec::with_capacity(cavity_indices.len());
-    for side in sides {
+    // The corridor walk orders both half-hole chains from the constraint's
+    // start to its end and classifies every interior vertex against that
+    // directed line. Closing the positive-side (left) chain along the
+    // constraint is therefore clockwise; closing the negative-side (right)
+    // chain is counterclockwise. Weakly-simple protected-edge spikes add zero
+    // signed area and do not change either winding. Carry that exact topology
+    // fact into ear selection instead of rebuilding the whole-ring area.
+    for (side, winding) in sides.into_iter().zip([Sign::Negative, Sign::Positive]) {
         if side.len() >= 3 {
-            replacement.extend(triangulate_cavity_side(kernel, points, side.to_vec())?);
+            replacement.extend(triangulate_cavity_side(
+                kernel,
+                points,
+                side.to_vec(),
+                winding,
+            )?);
         }
     }
     let mut replacement_topology = None;
@@ -848,6 +860,7 @@ fn triangulate_cavity_side(
     kernel: &ExactKernel,
     points: &[Point2],
     mut ring: Vec<usize>,
+    winding: Sign,
 ) -> Result<Vec<Triangle>> {
     // Remove straight-chain vertices before emitting any ears. If a vertex is
     // discarded after an adjacent ear has already been committed, it remains
@@ -872,19 +885,9 @@ fn triangulate_cavity_side(
         };
         ring.remove(position);
     }
-
-    let predicate_ring = ring
-        .iter()
-        .map(|&vertex| hyperlimit::Point2::new(points[vertex].x.clone(), points[vertex].y.clone()))
-        .collect::<Vec<_>>();
-    let winding = match kernel.decide(
-        hyperlimit::ring_area_sign(&predicate_ring, kernel.policy()),
-        "constraint_cavity_ring_area_sign",
-    )? {
-        hyperlimit::Sign::Negative => Sign::Negative,
-        hyperlimit::Sign::Zero => return Err(Error::NoEarFound),
-        hyperlimit::Sign::Positive => Sign::Positive,
-    };
+    if ring.len() < 3 || winding == Sign::Zero {
+        return Err(Error::NoEarFound);
+    }
 
     let mut triangles = Vec::with_capacity(ring.len().saturating_sub(2));
     while ring.len() > 3 {
@@ -2098,8 +2101,13 @@ mod tests {
         ] {
             let context = TriangulationContext::new(policy);
             let kernel = ExactKernel::new(&context);
-            let mut triangles =
-                triangulate_cavity_side(&kernel, &points, (0..points.len()).collect()).unwrap();
+            let mut triangles = triangulate_cavity_side(
+                &kernel,
+                &points,
+                (0..points.len()).collect(),
+                Sign::Negative,
+            )
+            .unwrap();
             for vertex in 0..points.len() {
                 if !triangles.iter().any(|triangle| triangle.contains(&vertex)) {
                     crate::cdt::insert_topology_point(
