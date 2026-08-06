@@ -1900,6 +1900,93 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn one_chord_orders_contacts_from_two_selected_round_corners() {
+    let radius = q(1, 20);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = source
+            .offset(radius.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the selected-field round source must complete")
+            .into_value();
+        let tall = source
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::zero(),
+                &Real::from(-1),
+                &policy,
+            )
+            .expect("the tall selected-field cutter source must remain exact")
+            .into_value();
+        let cutter = tall
+            .offset(
+                q(1, 40),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(2),
+                },
+                &policy,
+            )
+            .expect("the cutter offset must retain certified axis chords")
+            .into_value();
+
+        let evidence = rounded
+            .intersect_region(&cutter, &policy)
+            .expect("both selected round corners must meet one chord exactly");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        let evidence = evidence.into_value();
+        let blockers = evidence
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(evidence.is_complete(), "{blockers:?}");
+        let correlated_contacts = evidence
+            .contacts()
+            .iter()
+            .filter(|contact| {
+                matches!(
+                    contact.point(),
+                    Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
+                )
+            })
+            .count();
+        assert_eq!(correlated_contacts, 2);
+
+        let batch = rounded
+            .boolean_regions(&cutter, &policy)
+            .expect("the shared chord contacts must enter all four Booleans");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert!(!batch.value.xor().is_empty());
+        if policy == CurveContext::STRICT {
+            assert_eq!(
+                certified(
+                    batch
+                        .value
+                        .intersection()
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                        .unwrap(),
+                ),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
     let distance = q(1, 20);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
