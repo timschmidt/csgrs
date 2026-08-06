@@ -8912,6 +8912,106 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn noninjective_endpoint_preimages_complete_public_region_intersection() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+            let horizontal = rational_line(0, 1);
+            let first_endpoint =
+                exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
+                    .expect("exact first endpoint")
+                    .expect("first endpoint evidence");
+            let second_endpoint =
+                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
+                    .expect("exact second endpoint")
+                    .expect("second endpoint evidence");
+            let bottom =
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, -1));
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    first_endpoint.clone(),
+                    second_endpoint.clone(),
+                    &policy,
+                )
+                .expect("valid independent-field chord"),
+            );
+            let second_closure = decided(
+                crate::BezierAlgebraicChord2::try_new(second_endpoint, bottom.clone(), &policy)
+                    .expect("valid second closure"),
+            );
+            let first_closure = decided(
+                crate::BezierAlgebraicChord2::try_new(bottom, first_endpoint, &policy)
+                    .expect("valid first closure"),
+            );
+            let chord_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                    BezierSplitFragment2::AlgebraicChord(second_closure),
+                    BezierSplitFragment2::AlgebraicChord(first_closure),
+                ],
+                &policy,
+            )
+            .expect("independent-field chord triangle must close");
+            let chord_region = CurveRegion2::try_new_with_loop_topology(
+                vec![chord_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid independent-field chord triangle");
+
+            let materialized_line =
+                |start: Point2, end: Point2| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(start, end).expect("valid source closure edge"),
+                    )),
+                };
+            let source_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                            Point2::from_values(0, 0),
+                            Point2::from_values(2, 0),
+                            Point2::from_values(0, 0),
+                        )),
+                    },
+                    materialized_line(Point2::from_values(0, 0), Point2::from_values(-1, 0)),
+                    materialized_line(Point2::from_values(-1, 0), Point2::from_values(-1, 1)),
+                    materialized_line(Point2::from_values(-1, 1), Point2::from_values(0, 1)),
+                    materialized_line(Point2::from_values(0, 1), Point2::from_values(0, 0)),
+                ],
+                &policy,
+            )
+            .expect("retraced source loop must close");
+            let source_region = CurveRegion2::try_new_with_loop_topology(
+                vec![source_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid retraced source region");
+
+            let intersections = chord_region
+                .intersect_region(&source_region, &policy)
+                .expect("noninjective endpoint contacts must complete");
+            assert_eq!(
+                intersections.certainty,
+                crate::CurveCertainty::Certified,
+                "the correlated exact proof must precede the approximate terminal"
+            );
+            let intersections = intersections.into_value();
+            assert!(intersections.is_complete(), "{intersections:?}");
+            assert_eq!(intersections.overlaps().len(), 2, "{intersections:?}");
+            assert_eq!(intersections.contacts().len(), 4, "{intersections:?}");
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let endpoint_parameter = sqrt_half_parameter(&policy);
