@@ -7929,6 +7929,49 @@ formatting, and both feature build matrices pass. Hypermesh was not modified.
 Complete evidence is in
 [`2026-08-02-algebraic-parameter-policy-ordering.json`](benchmarks/checkpoints/2026-08-02-algebraic-parameter-policy-ordering.json).
 
+## Exact orthogonal retained-algebraic erosion checkpoint (2026-08-05)
+
+The authoritative `CurveRegion2::offset` route now contracts a single-material
+nonconvex axis-aligned retained-algebraic region through local wavefront events.
+One exact finite coordinate-fiber arrangement handles ordinary contraction,
+arm disappearance, equality at a collapsed neck, separation past that neck,
+and complete disappearance. Exact coordinate ordering produces integer grid
+indices and a compact occupancy bitmap; no rational/dyadic sample coordinate,
+epsilon, or binary64 geometry enters the result. Both authored orientations,
+`NonZero` and `EvenOdd`, and STRICT/APPROXIMATE_512 pass. The approximate policy
+uses the same exact geometry and can terminate only through the shared 512-bit
+decision authority.
+
+The optimized route retains certified source directions, lazily shares sorted
+x/y fibers and bounds, constructs perpendicular crossings from already-proved
+bracketing, and translates certified chords without replaying their endpoint
+equality. Against the first complete scheduler at `0c42d45`, five matched
+CPU-11 process medians fall from 893.011 to 339.949 us per operation (-61.93%).
+Retired instructions fall 63.04%, cycles 61.84%, branches 63.25%, and branch
+misses 62.12%. The retained-algebraic lane is now 2.19x the same operation on
+native exact represented coordinates and 1.52x its retired instructions.
+
+Matched Heaptrack traces over 100 operations reduce allocation calls from
+2,329,058 to 800,409 (-65.63%), temporary allocations from 273,797 to 56,661
+(-79.31%), and peak heap from 259.19 to 234.46 KiB (-9.54%). `CurveRegion2`
+remains a one-word clone-shared handle. The production-like all-feature image
+adds 2,504 text bytes (0.036%) and 2,544 stripped bytes (0.036%); the
+no-default artifact has identical allocated sections. The 35,255-node,
+68,054-edge Hypercurve/Hypersolve graph confirms one public offset route through
+the private scheduler and back into `regularized_region_raw` and the existing
+Boolean context.
+
+The refreshed competitive control measures 150.387 us for Hypercurve's native
+canonical-`Real` exact region result and 11.092 us for Cavalier Contours' `f64`
+contour result (13.56x). This is throughput context, not semantic parity:
+Cavalier does not retain selected algebraic fields or implement Hyper's
+STRICT/APPROXIMATE_512 topology contract. Coupled material/hole wavefront
+events, retained algebraic circular arcs for round joins/fillets, diagonal
+selected-field parallels, and general non-orthogonal post-collapse scheduling
+remain explicit boundaries. Hypermesh was not modified. Complete evidence is
+in
+[`2026-08-05-exact-orthogonal-algebraic-erosion.json`](benchmarks/checkpoints/2026-08-05-exact-orthogonal-algebraic-erosion.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
