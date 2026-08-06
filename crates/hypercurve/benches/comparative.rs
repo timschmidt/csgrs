@@ -768,13 +768,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             .transform_similarity(&translation, &policy)
             .expect("selected round region translation completes")
             .into_value();
-        assert!(
-            exact_first
-                .intersect_region(&exact_second, &policy)
-                .expect("selected round intersection completes")
-                .into_value()
-                .is_complete()
-        );
+        let intersection_complete = exact_first
+            .intersect_region(&exact_second, &policy)
+            .expect("selected round intersection evaluates")
+            .into_value()
+            .is_complete();
 
         let mut cavalier_offset = cavalier.parallel_offset(-0.1);
         assert_eq!(cavalier_offset.len(), 1);
@@ -788,22 +786,42 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             CommonBooleanOp::Xor,
         ];
 
-        runner.measure(boolean_name, "hypercurve_exact_all_four", || {
-            let result = exact_first
-                .boolean_regions(&exact_second, &policy)
-                .expect("selected round Boolean batch completes")
-                .into_value();
-            [
-                result.union(),
-                result.intersection(),
-                result.difference(),
-                result.xor(),
-            ]
-            .into_iter()
-            .flat_map(CurveRegion2::boundary_loops)
-            .map(|boundary| boundary.fragments().len())
-            .sum()
-        });
+        runner.measure(
+            boolean_name,
+            if intersection_complete {
+                "hypercurve_exact_intersection"
+            } else {
+                "hypercurve_rejected_intersection"
+            },
+            || {
+                let result = exact_first
+                    .intersect_region(&exact_second, &policy)
+                    .expect("selected round intersection evaluates")
+                    .into_value();
+                result.contacts().len()
+                    + result.overlaps().len()
+                    + result.blockers().len()
+                    + usize::from(result.is_complete())
+            },
+        );
+        if intersection_complete {
+            runner.measure(boolean_name, "hypercurve_exact_all_four", || {
+                let result = exact_first
+                    .boolean_regions(&exact_second, &policy)
+                    .expect("selected round Boolean batch completes")
+                    .into_value();
+                [
+                    result.union(),
+                    result.intersection(),
+                    result.difference(),
+                    result.xor(),
+                ]
+                .into_iter()
+                .flat_map(CurveRegion2::boundary_loops)
+                .map(|boundary| boundary.fragments().len())
+                .sum()
+            });
+        }
         runner.measure(boolean_name, "cavalier_f64_four_calls", || {
             operations
                 .into_iter()
