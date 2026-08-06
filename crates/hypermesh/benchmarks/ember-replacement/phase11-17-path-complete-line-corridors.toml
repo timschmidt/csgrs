@@ -433,6 +433,27 @@ retired_namespace_nodes = 0
 retired_source_identifiers = 0
 boolean_engine_namespaces = ["hypermesh::surface_arrangement"]
 
+[api_coverage]
+artifact = "target/phase17-complete-corridor-callgraph-all/api-coverage.json"
+sha256 = "047e60fb2cb7367407f940faf2a090958292dc38eec7ebb8b3a05e6d4f2a75d1"
+markdown_artifact = "target/phase17-complete-corridor-callgraph-all/api-coverage.md"
+markdown_sha256 = "de781787bf6f0f9beac1fda374a83fcf7bfec9f5500afae169f4e495edd81e19"
+hyperreal_public_items = 572
+hyperreal_callables = 330
+hyperlimit_public_items = 894
+hyperlimit_callables = 347
+hyperlattice_public_items = 643
+hyperlattice_callables = 452
+hypertri_public_items = 266
+hypertri_callables = 161
+hypermesh_public_items = 282
+hypermesh_callables = 124
+retained_query_compiler_visible_items = 5
+retained_query_direct_unit_matrix = true
+retained_query_production_callgraph = true
+reexport_static_correlation_is_heuristic = true
+runtime_and_unit_evidence_required = true
+
 [validation]
 hypertri_all_features = true
 hypertri_no_default_features = true
@@ -456,6 +477,8 @@ canonical_size_all = true
 current_cgal_small_trials = true
 current_cgal_full_trials = true
 callgraph_scopes = 3
+nightly_rustdoc_json_all_five_crates = true
+public_api_evidence_matrix = true
 
 [sanitizer_fuzz]
 sanitizer = "address"

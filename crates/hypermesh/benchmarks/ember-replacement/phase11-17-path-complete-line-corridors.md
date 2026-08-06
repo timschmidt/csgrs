@@ -330,6 +330,23 @@ Graph artifacts are:
 - `target/phase17-complete-corridor-callgraph-tests/callgraph.json`
 - `target/phase17-complete-corridor-callgraph-all/callgraph.json`
 
+Nightly rustdoc JSON and the same all-evidence source scope regenerate the
+compiler-visible public API matrix. Current public-item/callable counts are
+572/330 Hyperreal, 894/347 Hyperlimit, 643/452 Hyperlattice, 266/161 Hypertri,
+and 282/124 Hypermesh. The five compiler-visible Hyperlimit retained-query
+items are exercised by the direct-versus-retained unit matrix and by the
+production `corefine_face` route. Static correlation labels some re-exported
+calls heuristic, so the matrix is not treated as runtime proof; the direct
+tests, all-feature suite, sanitizer campaigns, and production call graph supply
+that proof.
+
+API artifacts are
+`target/phase17-complete-corridor-callgraph-all/api-coverage.{json,md}` with
+SHA-256
+`047e60fb2cb7367407f940faf2a090958292dc38eec7ebb8b3a05e6d4f2a75d1`
+and
+`de781787bf6f0f9beac1fda374a83fcf7bfec9f5500afae169f4e495edd81e19`.
+
 ## Validation and open exits
 
 Final validation passes:
@@ -352,7 +369,8 @@ Final validation passes:
 - the release full-YeahRight exact oracle;
 - current small and full CGAL EPECK trials;
 - both canonical size matrices; and
-- all three call-graph scopes and exact removed-name searches.
+- all three call-graph scopes, compiler-derived public API coverage, and exact
+  removed-name searches.
 
 Phases 11, 17, and 18 remain open. The corpus still needs more legally
 distributable external real-world and generated pathological meshes plus a
