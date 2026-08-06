@@ -1,0 +1,333 @@
+schema = 1
+date = "2026-08-05"
+status = "clean retained-topology performance, heap, and size checkpoint; phases 17 and 18 open"
+checkpoint = "retained-constraint-corridor-winding"
+hypertri_parent = "66d449d5731fe4111db0b4116f3d8808e426c281"
+hypertri_commit = "86189ff6e87f056a3686d81b57952d799945663a"
+hypermesh_implementation = "fe13ddeec36f0a75c7c6eeb775db5aa2561bc3da"
+hypermesh_evidence_parent = "df541ce9d002a2e9225a8a64ae833732fc1a1046"
+hyperreal_commit = "f09c147b0352884f8efe88e875c37d8f0f439ba5"
+hyperlattice_commit = "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0"
+hyperlimit_commit = "b0418bddff50183fa782e5caa6da6974a2b969a1"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+host_cpu = "AMD Ryzen 7 5800X3D"
+pinned_cpu = 11
+
+[scope]
+canonical_scalar = "hyperreal::Real"
+policies = ["STRICT", "APPROXIMATE_512"]
+terminal_owner = "hyperlimit"
+one_boolean_engine = true
+compatibility_shim = false
+dual_engine = false
+threshold = false
+fixture_dispatch = false
+coordinate_dispatch = false
+triangle_count_dispatch = false
+operation_dispatch = false
+result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+public_api_added = false
+cache_added = false
+allocation_added = false
+hypercurve_hypersolve_excluded = true
+
+[algorithm]
+directed_corridor_chain_order = "constraint start to constraint end"
+left_chain_vertex_side = "strictly positive"
+left_chain_winding = "negative"
+right_chain_vertex_side = "strictly negative"
+right_chain_winding = "positive"
+weak_spike_area = "zero"
+hole_pruning_preserves_side_and_order = true
+local_ear_turns_remain_exact = true
+retained_triangle_containment_remains_exact = true
+final_triangle_uses_make_oriented = true
+sub_three_vertex_side_is_typed_failure = true
+whole_ring_area_query_removed = true
+aggregate_certainty_preserved = true
+strict_exact_only = true
+approximate_512_terminal_only = true
+
+[profile]
+protocol = "CPU-11, 999 Hz, frame pointers, five full all-output STRICT iterations"
+parent_corefine_percent = 43.54
+parent_cdt_percent = 21.10
+parent_cavity_ring_area_percent = 5.52
+parent_pairwise_intersection_percent = 38.23
+current_corefine_percent = 40.54
+current_cdt_percent = 16.33
+current_cavity_retriangulation_percent = 2.18
+current_pairwise_intersection_percent = 40.52
+current_face_line_intersection_percent = 9.20
+current_cavity_ring_area_samples = 0
+
+[performance_protocol]
+parent_binary = "target/phase17-retained-triangle-orientations"
+current_binary = "target/phase17-retained-constraint-corridor-winding"
+policy = "STRICT"
+small_iterations = 1_000
+dense_coplanar_iterations = 10
+dense_crossing_and_full_iterations = 1
+repetitions = 3
+events = ["instructions:u", "branches:u"]
+counter_authority = true
+
+[[performance]]
+fixture = "overlapping_boxes"
+parent_instructions = 3_517_455_078
+current_instructions = 3_519_281_450
+instruction_change_percent = 0.051923
+parent_branches = 596_708_457
+current_branches = 597_153_903
+branch_change_percent = 0.074651
+
+[[performance]]
+fixture = "identical_boxes"
+parent_instructions = 3_532_434_079
+current_instructions = 3_534_005_748
+instruction_change_percent = 0.044493
+parent_branches = 598_275_232
+current_branches = 598_652_861
+branch_change_percent = 0.063120
+
+[[performance]]
+fixture = "face_touching_boxes"
+parent_instructions = 2_148_040_901
+current_instructions = 2_146_455_277
+instruction_change_percent = -0.073817
+parent_branches = 354_228_276
+current_branches = 353_835_664
+branch_change_percent = -0.110836
+
+[[performance]]
+fixture = "crossing_octahedra"
+parent_instructions = 2_806_339_945
+current_instructions = 2_798_458_156
+instruction_change_percent = -0.280857
+parent_branches = 474_394_192
+current_branches = 472_996_985
+branch_change_percent = -0.294524
+
+[[performance]]
+fixture = "affine_boxes"
+parent_instructions = 6_784_178_235
+current_instructions = 6_785_564_627
+instruction_change_percent = 0.020436
+parent_branches = 1_153_323_218
+current_branches = 1_153_674_327
+branch_change_percent = 0.030443
+
+[[performance]]
+fixture = "dense_coplanar_boxes_16"
+parent_instructions = 22_199_013_599
+current_instructions = 22_187_066_532
+instruction_change_percent = -0.053818
+parent_branches = 3_690_935_287
+current_branches = 3_687_946_631
+branch_change_percent = -0.080973
+
+[[performance]]
+fixture = "dense_crossing_grid_17"
+parent_instructions = 12_802_297_753
+current_instructions = 12_719_800_223
+instruction_change_percent = -0.644396
+parent_branches = 1_777_398_393
+current_branches = 1_763_085_912
+branch_change_percent = -0.805249
+
+[[performance]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+parent_instructions = 9_690_120_638
+current_instructions = 9_038_830_121
+instruction_change_percent = -6.721181
+parent_branches = 1_634_645_555
+current_branches = 1_533_971_657
+branch_change_percent = -6.158760
+parent_median_ns = 913_422_061
+current_median_ns = 847_786_995
+wall_change_percent = -7.185623
+
+[historical]
+ember_seconds = 3_312.66
+current_full_median_seconds = 0.848827568
+speedup = 3_902.630080
+
+[[competitive]]
+fixture = "overlapping_boxes"
+cgal_ns = [118_802, 118_022, 118_812]
+hypermesh_ns = [354_885, 364_915, 357_442]
+hypermesh_to_cgal_ratios = [2.987197, 3.091924, 3.008467]
+median_hypermesh_to_cgal_ratio = 3.008467
+result = "loss"
+
+[[competitive]]
+fixture = "crossing_octahedra"
+cgal_ns = [116_352, 117_702, 120_621]
+hypermesh_ns = [279_959, 283_343, 290_512]
+hypermesh_to_cgal_ratios = [2.406138, 2.407291, 2.408470]
+median_hypermesh_to_cgal_ratio = 2.407291
+result = "loss"
+
+[[competitive]]
+fixture = "affine_boxes"
+cgal_ns = [348_816, 351_866, 353_966]
+hypermesh_ns = [682_698, 694_438, 682_268]
+hypermesh_to_cgal_ratios = [1.957187, 1.973587, 1.927496]
+median_hypermesh_to_cgal_ratio = 1.957187
+result = "loss"
+
+[[competitive]]
+fixture = "dense_coplanar_boxes_16"
+cgal_ns = [291_135_308, 293_478_797, 291_841_350]
+hypermesh_ns = [187_814_829, 192_975_465, 195_354_602]
+hypermesh_to_cgal_ratios = [0.645112, 0.657545, 0.669386]
+median_hypermesh_to_cgal_ratio = 0.657545
+median_cgal_to_hypermesh_speedup = 1.520808
+result = "win"
+
+[[competitive]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+cgal_ns = [42_238_475, 40_906_227, 41_951_565]
+hypermesh_ns = [848_827_568, 846_619_659, 854_735_832]
+hypermesh_to_cgal_ratios = [20.096075, 20.696596, 20.374349]
+median_hypermesh_to_cgal_ratio = 20.374349
+hypermesh_output_triangles = [33_512, 0, 16_756, 16_756]
+cgal_output_triangles = [23_788, 0, 11_894, 11_894]
+result = "loss"
+
+[[heap]]
+fixture = "yeahright_full_resolution_rotated_intersection"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 53_217_804
+parent_allocations = 9_571_455
+current_allocations = 8_681_722
+parent_reallocations = 1_466_413
+current_reallocations = 1_296_791
+parent_added_bytes = 556_743_274
+current_added_bytes = 500_833_490
+
+[[heap]]
+fixture = "dense_crossing_grid_65"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 197_318_844
+parent_allocations = 33_193_335
+current_allocations = 31_166_606
+parent_reallocations = 345_512
+current_reallocations = 344_218
+parent_added_bytes = 6_852_763_630
+current_added_bytes = 6_631_418_894
+
+[[heap]]
+fixture = "dense_coplanar_boxes_32"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 55_758_866
+parent_allocations = 926_777
+current_allocations = 926_777
+parent_reallocations = 123_014
+current_reallocations = 123_014
+parent_added_bytes = 220_619_383
+current_added_bytes = 220_619_383
+
+[[heap]]
+fixture = "clipped_voxel_torus_65"
+policies_equal = true
+certainty = "Certified"
+peak_bytes = 47_367_618
+parent_allocations = 98_761
+current_allocations = 98_161
+parent_reallocations = 1_800
+current_reallocations = 1_800
+parent_added_bytes = 64_530_652
+current_added_bytes = 64_455_376
+
+[[linked_size]]
+profile = "release"
+features = "default"
+parent_native_text = 2_035_546
+current_native_text = 2_024_754
+parent_wasm_opt_oz = 1_456_241
+current_wasm_opt_oz = 1_447_132
+
+[[linked_size]]
+profile = "release"
+features = "all"
+parent_native_text = 2_172_515
+current_native_text = 2_159_827
+parent_wasm_opt_oz = 1_532_516
+current_wasm_opt_oz = 1_522_220
+
+[[linked_size]]
+profile = "size"
+features = "default"
+parent_native_text = 1_121_511
+current_native_text = 1_113_951
+parent_wasm_opt_oz = 705_597
+current_wasm_opt_oz = 698_695
+
+[[linked_size]]
+profile = "size"
+features = "all"
+parent_native_text = 1_124_095
+current_native_text = 1_116_527
+parent_wasm_opt_oz = 705_001
+current_wasm_opt_oz = 698_089
+
+[source]
+files_changed = 1
+insertions = 25
+deletions = 17
+hypertri_tokei_code_lines = 9_888
+
+[validation]
+hypertri_executed_tests = 139
+hypermesh_executed_tests = 217
+hypermesh_ignored_tests = 7
+hypermesh_default_lib_tests = 162
+manifest_records = 59
+no_default = true
+clippy_all_targets_all_features_deny_warnings = true
+rustdoc_deny_warnings = true
+fuzz_workspace_all_targets = true
+bench_all_features_no_run = true
+
+[sanitizer]
+target = "boolean_pipeline"
+source_seeds = 2_182
+executions = 3_641
+seconds = 31
+fuzzer_rss_mib = 497
+process_max_rss_kib = 714_644
+failures = 0
+artifacts = 0
+source_corpus_unchanged = true
+leak_detection = false
+leak_detection_reason = "managed environment prevents LeakSanitizer ptrace finalization"
+
+[callgraph]
+crates = ["hyperreal", "hyperlattice", "hyperlimit", "hypertri", "hypermesh"]
+production_nodes = 15_565
+production_edges = 26_017
+all_nodes = 21_968
+all_edges = 35_532
+direct_hypermesh_hypertri_to_hyperlimit_edges = 47
+arrangement_to_cells_edges = 1
+cavity_to_ring_area_edges = 0
+removed_engine_namespace_nodes = 0
+hypercurve_hypersolve_excluded = true
+
+[open]
+items = [
+  "every losing CGAL shared-contract row",
+  "full corefined output-work reduction",
+  "pairwise intersection scheduling and lifetime",
+  "exact face line-intersection construction",
+  "external real-world and generated pathology corpus expansion",
+  "fuzz mutation-source audit",
+  "deferred caller audit after concurrent dependencies stabilize",
+  "Phase 18 final requirement and removal audit",
+]
