@@ -622,10 +622,12 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
     let shared_chord_name = "algebraic_round_boolean/shared_chord_circle_order";
+    let shared_chord_reentry_name = "algebraic_round_boolean/shared_chord_line_reentry";
     if !runner.group_enabled(offset_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
         && !runner.group_enabled(shared_chord_name)
+        && !runner.group_enabled(shared_chord_reentry_name)
     {
         return;
     }
@@ -756,7 +758,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         });
     }
 
-    if runner.group_enabled(shared_chord_name) {
+    if runner.group_enabled(shared_chord_name) || runner.group_enabled(shared_chord_reentry_name) {
         let rounded = hypercurve
             .offset(
                 (Real::one() / Real::from(20_u8)).expect("exact shared-chord radius"),
@@ -862,6 +864,91 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 })
                 .sum()
         });
+
+        if runner.group_enabled(shared_chord_reentry_name) {
+            let exact_intersection = rounded
+                .boolean_regions(&cutter, &policy)
+                .expect("shared-chord Boolean batch completes before re-entry")
+                .into_value()
+                .intersection()
+                .clone();
+            let replay_clip = CurveRegion2::try_from_native_material_contours(
+                vec![hypercurve_contour(&[
+                    [-1.0, 0.0],
+                    [2.0, 0.0],
+                    [2.0, 2.0],
+                    [-1.0, 2.0],
+                ])],
+                &policy,
+            )
+            .expect("valid exact shared-chord replay clip")
+            .into_value();
+            let evidence_complete = exact_intersection
+                .intersect_region(&replay_clip, &policy)
+                .is_ok_and(|result| result.value.is_complete());
+            let all_four_complete = exact_intersection
+                .boolean_regions(&replay_clip, &policy)
+                .is_ok();
+
+            let cavalier_intersection_result =
+                cavalier_rounded.boolean(&cavalier_cutter, CavalierBooleanOp::And);
+            assert_eq!(cavalier_intersection_result.pos_plines.len(), 1);
+            assert!(cavalier_intersection_result.neg_plines.is_empty());
+            let cavalier_intersection = cavalier_intersection_result.pos_plines[0].pline.clone();
+            let cavalier_replay_clip =
+                cavalier_polyline(&[[-1.0, 0.0], [2.0, 0.0], [2.0, 2.0], [-1.0, 2.0]], None);
+
+            runner.measure(
+                shared_chord_reentry_name,
+                if evidence_complete {
+                    "hypercurve_exact_evidence"
+                } else {
+                    "hypercurve_rejected_evidence"
+                },
+                || match exact_intersection.intersect_region(&replay_clip, &policy) {
+                    Ok(result) => {
+                        result.value.contacts().len()
+                            + result.value.overlaps().len()
+                            + result.value.blockers().len()
+                            + usize::from(result.value.is_complete())
+                    }
+                    Err(_) => 0,
+                },
+            );
+            runner.measure(
+                shared_chord_reentry_name,
+                if all_four_complete {
+                    "hypercurve_exact_all_four"
+                } else {
+                    "hypercurve_rejected_all_four"
+                },
+                || match exact_intersection.boolean_regions(&replay_clip, &policy) {
+                    Ok(result) => [
+                        result.value.union(),
+                        result.value.intersection(),
+                        result.value.difference(),
+                        result.value.xor(),
+                    ]
+                    .into_iter()
+                    .flat_map(CurveRegion2::boundary_loops)
+                    .map(|boundary| boundary.fragments().len())
+                    .sum(),
+                    Err(_) => 0,
+                },
+            );
+            runner.measure(shared_chord_reentry_name, "cavalier_f64_four_calls", || {
+                operations
+                    .into_iter()
+                    .map(|operation| {
+                        cavalier_boolean_result_size(
+                            black_box(&cavalier_intersection),
+                            black_box(&cavalier_replay_clip),
+                            operation,
+                        )
+                    })
+                    .sum()
+            });
+        }
     }
 
     if runner.group_enabled(boolean_name) || runner.group_enabled(reentry_name) {
