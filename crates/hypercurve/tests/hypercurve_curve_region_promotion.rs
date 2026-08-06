@@ -2027,6 +2027,68 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .expect("the retained strict-interior contacts must enter a later Boolean");
         assert_eq!(replay.certainty, replay_certainty);
         assert!(!replay.value.intersection().is_empty());
+
+        let collinear_min_x = -q(1, 40);
+        let collinear_corners = [
+            Point2::new(collinear_min_x.clone(), Real::zero()),
+            Point2::new(Real::from(2), Real::zero()),
+            Point2::new(Real::from(2), Real::one()),
+            Point2::new(collinear_min_x, Real::one()),
+        ];
+        let collinear_clip = CurveRegion2::try_from_native_material_contours(
+            vec![
+                Contour2::try_new(
+                    (0..4)
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    collinear_corners[index].clone(),
+                                    collinear_corners[(index + 1) % 4].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let collinear_evidence = batch
+            .value
+            .intersection()
+            .intersect_region(&collinear_clip, &policy)
+            .expect("the retained correlated chord must overlap a later exact line");
+        assert_eq!(collinear_evidence.certainty, replay_certainty);
+        let collinear_blockers = collinear_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            collinear_evidence.value.is_complete(),
+            "{collinear_blockers:?}"
+        );
+        assert!(!collinear_evidence.value.overlaps().is_empty());
+        let collinear_replay = batch
+            .value
+            .intersection()
+            .boolean_regions(&collinear_clip, &policy)
+            .expect("the retained correlated overlap must enter all four later Booleans");
+        assert_eq!(collinear_replay.certainty, replay_certainty);
+        assert!(!collinear_replay.value.union().is_empty());
+        assert!(!collinear_replay.value.intersection().is_empty());
         if policy == CurveContext::STRICT {
             assert_eq!(
                 certified(
