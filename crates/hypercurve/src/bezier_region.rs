@@ -160,6 +160,12 @@ struct CurveRegionData2 {
     line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
     retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
     signed_area_cache: PolicyEvaluationCache<Option<Real>>,
+    #[cfg(feature = "predicates")]
+    axis_aligned_algebraic_source_loops: OnceLock<(
+        CurveContext,
+        CurveCertainty,
+        Arc<[Option<Arc<ExactAxisAlignedAlgebraicSourceLoop2>>]>,
+    )>,
 }
 
 impl CurveRegionData2 {
@@ -179,6 +185,8 @@ impl CurveRegionData2 {
             line_image_region: PolicyClassificationCache::new(),
             retained_rational_evaluators: OnceLock::new(),
             signed_area_cache: PolicyEvaluationCache::new(),
+            #[cfg(feature = "predicates")]
+            axis_aligned_algebraic_source_loops: OnceLock::new(),
         }
     }
 }
@@ -2407,9 +2415,27 @@ struct ExactAxisAlignedAlgebraicOffsetSpan2 {
 }
 
 #[cfg(feature = "predicates")]
+#[derive(Clone)]
 struct ExactAxisAlignedAlgebraicFiber2 {
     chord: crate::BezierAlgebraicChord2,
     direction: BezierAlgebraicChordAxisDirection2,
+}
+
+#[cfg(feature = "predicates")]
+struct ExactAxisAlignedAlgebraicSourceLoop2 {
+    spans: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
+    erosion_source: OnceLock<(
+        CurveContext,
+        CurveCertainty,
+        Arc<ExactAxisAlignedAlgebraicErosionSource2>,
+    )>,
+}
+
+#[cfg(feature = "predicates")]
+struct ExactAxisAlignedAlgebraicErosionSource2 {
+    source_x_fibers: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
+    source_y_fibers: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
+    source_bounds: Aabb2,
 }
 
 #[cfg(feature = "predicates")]
@@ -2427,14 +2453,10 @@ fn retained_chord_or_exact_line_fragment(
 #[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_offset_span(
     chord: &crate::BezierAlgebraicChord2,
+    direction: BezierAlgebraicChordAxisDirection2,
     distance: &Real,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<ExactAxisAlignedAlgebraicOffsetSpan2>>> {
-    let direction = match chord.axis_direction(policy)? {
-        Classification::Decided(Some(direction)) => direction,
-        Classification::Decided(None) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetSpan2>> {
     let normal_offset = direction.signed_left_offset(distance);
     let offset_start = match crate::BezierAlgebraicChord2::translated_endpoint(
         chord.start(),
@@ -2454,7 +2476,7 @@ fn exact_axis_aligned_algebraic_offset_span(
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Ok(Classification::Decided(Some(
+    Ok(Classification::Decided(
         ExactAxisAlignedAlgebraicOffsetSpan2 {
             source: chord.clone(),
             offset_start,
@@ -2462,7 +2484,7 @@ fn exact_axis_aligned_algebraic_offset_span(
             direction,
             normal_offset,
         },
-    )))
+    ))
 }
 
 #[cfg(feature = "predicates")]
@@ -2614,7 +2636,7 @@ enum ExactAxisAlignedAlgebraicOffsetLoop2 {
 
 #[cfg(feature = "predicates")]
 fn axis_aligned_loop_is_convex_inward(
-    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    spans: &[ExactAxisAlignedAlgebraicFiber2],
     distance: &Real,
     policy: &CurveContext,
 ) -> Classification<bool> {
@@ -2716,12 +2738,12 @@ fn translated_algebraic_offset_endpoint(
 
 #[cfg(feature = "predicates")]
 fn exact_axis_aligned_expanded_source_box(
-    span: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    span: &ExactAxisAlignedAlgebraicFiber2,
     radius: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactAxisAlignedAlgebraicExpandedBox2>> {
-    let source_start = span.source.start();
-    let source_end = span.source.end();
+    let source_start = span.chord.start();
+    let source_end = span.chord.end();
     let (minimum_x, maximum_x, minimum_y, maximum_y) = match span.direction {
         BezierAlgebraicChordAxisDirection2::PositiveX => {
             (source_start, source_end, source_start, source_start)
@@ -2832,7 +2854,11 @@ fn extend_axis_aligned_algebraic_chord(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    crate::BezierAlgebraicChord2::try_new(start, end, policy)
+    Ok(Classification::Decided(
+        crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+            start, end, direction, policy,
+        ),
+    ))
 }
 
 #[cfg(feature = "predicates")]
@@ -3082,7 +3108,8 @@ fn push_exact_axis_aligned_grid_edge(
 /// runs are traced with material on the left and emitted as subchords of the
 /// shared coordinate fibers, preserving selected algebraic endpoint fields.
 fn exact_axis_aligned_algebraic_erosion(
-    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    source_loop: &ExactAxisAlignedAlgebraicErosionSource2,
+    spans: &[ExactAxisAlignedAlgebraicFiber2],
     distance: &Real,
     fill_rule: FillRule,
     policy: &CurveContext,
@@ -3093,26 +3120,8 @@ fn exact_axis_aligned_algebraic_erosion(
         Some(RealSign::Zero) => return Ok(Classification::Decided(Vec::new())),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
-    let mut sources = Vec::with_capacity(spans.len());
-    let mut source_bounds: Option<Aabb2> = None;
     let mut expanded_boxes = Vec::with_capacity(spans.len());
     for span in spans {
-        let chord = span.source.clone();
-        let bounds = match chord.conservative_bounds_refined(0, policy)? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        source_bounds = Some(match source_bounds {
-            Some(existing) => match existing.union(&bounds, policy) {
-                Classification::Decided(bounds) => bounds,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-            None => bounds,
-        });
         let expanded = match exact_axis_aligned_expanded_source_box(span, &radius, policy)? {
             Classification::Decided(expanded) => expanded,
             Classification::Uncertain(reason) => {
@@ -3120,44 +3129,13 @@ fn exact_axis_aligned_algebraic_erosion(
             }
         };
         expanded_boxes.push(expanded);
-        sources.push((span.direction, chord));
     }
-    let Some(source_bounds) = source_bounds else {
-        return Ok(Classification::Decided(Vec::new()));
-    };
+    let source_bounds = &source_loop.source_bounds;
     let width = source_bounds.max().x() - source_bounds.min().x();
     let height = source_bounds.max().y() - source_bounds.min().y();
     let extent = width + height + Real::from(4_u8) * &radius + Real::one();
-    let mut source_x_fibers = Vec::new();
-    let mut source_y_fibers = Vec::new();
-    for (direction, chord) in sources {
-        match direction {
-            BezierAlgebraicChordAxisDirection2::PositiveY
-            | BezierAlgebraicChordAxisDirection2::NegativeY => {
-                source_x_fibers.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
-            }
-            BezierAlgebraicChordAxisDirection2::PositiveX
-            | BezierAlgebraicChordAxisDirection2::NegativeX => {
-                source_y_fibers.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
-            }
-        }
-    }
-    let source_x_fibers =
-        match sort_dedup_axis_aligned_algebraic_fibers(source_x_fibers, Axis2::X, policy)? {
-            Classification::Decided(fibers) => fibers,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let source_y_fibers =
-        match sort_dedup_axis_aligned_algebraic_fibers(source_y_fibers, Axis2::Y, policy)? {
-            Classification::Decided(fibers) => fibers,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
     let x_fibers = match exact_axis_aligned_algebraic_erosion_coordinates(
-        &source_x_fibers,
+        &source_loop.source_x_fibers,
         Axis2::X,
         &radius,
         &extent,
@@ -3169,7 +3147,7 @@ fn exact_axis_aligned_algebraic_erosion(
         }
     };
     let y_fibers = match exact_axis_aligned_algebraic_erosion_coordinates(
-        &source_y_fibers,
+        &source_loop.source_y_fibers,
         Axis2::Y,
         &radius,
         &extent,
@@ -3196,7 +3174,7 @@ fn exact_axis_aligned_algebraic_erosion(
             | BezierAlgebraicChordAxisDirection2::NegativeX => continue,
         };
         let x_limit = match exact_axis_aligned_grid_coordinate_index(
-            span.source.start(),
+            span.chord.start(),
             Axis2::X,
             &x_fibers,
             policy,
@@ -3207,9 +3185,9 @@ fn exact_axis_aligned_algebraic_erosion(
             }
         };
         let (lower, upper) = if delta > 0 {
-            (span.source.start(), span.source.end())
+            (span.chord.start(), span.chord.end())
         } else {
-            (span.source.end(), span.source.start())
+            (span.chord.end(), span.chord.start())
         };
         let lower =
             match exact_axis_aligned_grid_coordinate_index(lower, Axis2::Y, &y_fibers, policy)? {
@@ -3561,47 +3539,33 @@ fn exact_axis_aligned_algebraic_join(
 }
 
 #[cfg(feature = "predicates")]
-fn exact_axis_aligned_algebraic_offset_loop(
+fn exact_axis_aligned_algebraic_source_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
-    distance: &Real,
-    corner_style: &OffsetCornerStyle2,
-    component_contracts: bool,
-    schedule_nonconvex_erosion: bool,
-    fill_rule: FillRule,
     policy: &CurveContext,
-) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetLoop2>> {
+) -> CurveResult<Classification<Option<Arc<ExactAxisAlignedAlgebraicSourceLoop2>>>> {
     if !boundary_loop
         .fragments()
         .iter()
         .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
     {
-        return Ok(Classification::Decided(
-            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-        ));
+        return Ok(Classification::Decided(None));
     }
     let mut spans = Vec::with_capacity(boundary_loop.len());
     for fragment in boundary_loop.fragments() {
-        let represented_chord;
         let chord = match fragment {
-            BezierSplitFragment2::AlgebraicChord(chord) => chord,
+            BezierSplitFragment2::AlgebraicChord(chord) => chord.clone(),
             BezierSplitFragment2::Materialized { curve, .. } => {
                 let line = match materialized_native_subcurve_segment(curve, policy)? {
                     Classification::Decided(Segment2::Line(line)) => line,
-                    Classification::Decided(Segment2::Arc(_)) => {
-                        return Ok(Classification::Decided(
-                            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-                        ));
-                    }
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                        return Ok(Classification::Decided(
-                            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-                        ));
+                    Classification::Decided(Segment2::Arc(_))
+                    | Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                        return Ok(Classification::Decided(None));
                     }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                represented_chord = match crate::BezierAlgebraicChord2::try_new(
+                match crate::BezierAlgebraicChord2::try_new(
                     crate::RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
                     crate::RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
                     policy,
@@ -3610,34 +3574,188 @@ fn exact_axis_aligned_algebraic_offset_loop(
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
-                };
-                &represented_chord
+                }
             }
             BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => {
-                return Ok(Classification::Decided(
-                    ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-                ));
+                return Ok(Classification::Decided(None));
             }
         };
-        match exact_axis_aligned_algebraic_offset_span(chord, distance, policy)? {
-            Classification::Decided(Some(span)) => spans.push(span),
-            Classification::Decided(None) => {
-                return Ok(Classification::Decided(
-                    ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-                ));
+        let direction = match chord.axis_direction(policy)? {
+            Classification::Decided(Some(direction)) => direction,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
+        };
+        spans.push(ExactAxisAlignedAlgebraicFiber2 { chord, direction });
+    }
+    if spans.is_empty() {
+        return Ok(Classification::Decided(None));
+    }
+    Ok(Classification::Decided(Some(Arc::new(
+        ExactAxisAlignedAlgebraicSourceLoop2 {
+            spans: Arc::from(spans),
+            erosion_source: OnceLock::new(),
+        },
+    ))))
+}
+
+#[cfg(feature = "predicates")]
+impl ExactAxisAlignedAlgebraicSourceLoop2 {
+    fn erosion_source(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<ExactAxisAlignedAlgebraicErosionSource2>>> {
+        if let Some((cached_policy, certainty, source)) = self.erosion_source.get()
+            && cached_policy == policy
+        {
+            if *certainty == CurveCertainty::Approximate512Consumed {
+                policy.observe_approximate_512();
+            }
+            return Ok(Classification::Decided(Arc::clone(source)));
+        }
+        let outcome = resolve_certified_value(
+            policy,
+            |attempt| -> CurveResult<Classification<Arc<ExactAxisAlignedAlgebraicErosionSource2>>> {
+                let mut source_bounds: Option<Aabb2> = None;
+                let mut source_x_fibers = Vec::new();
+                let mut source_y_fibers = Vec::new();
+                for source in self.spans.iter() {
+                    let bounds = match source.chord.conservative_bounds_refined(0, attempt)? {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    source_bounds = Some(match source_bounds {
+                        Some(existing) => match existing.union(&bounds, attempt) {
+                            Classification::Decided(bounds) => bounds,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        },
+                        None => bounds,
+                    });
+                    match source.direction {
+                        BezierAlgebraicChordAxisDirection2::PositiveY
+                        | BezierAlgebraicChordAxisDirection2::NegativeY => {
+                            source_x_fibers.push(source.clone());
+                        }
+                        BezierAlgebraicChordAxisDirection2::PositiveX
+                        | BezierAlgebraicChordAxisDirection2::NegativeX => {
+                            source_y_fibers.push(source.clone());
+                        }
+                    }
+                }
+                let source_x_fibers = match sort_dedup_axis_aligned_algebraic_fibers(
+                    source_x_fibers,
+                    Axis2::X,
+                    attempt,
+                )? {
+                    Classification::Decided(fibers) => fibers,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let source_y_fibers = match sort_dedup_axis_aligned_algebraic_fibers(
+                    source_y_fibers,
+                    Axis2::Y,
+                    attempt,
+                )? {
+                    Classification::Decided(fibers) => fibers,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let Some(source_bounds) = source_bounds else {
+                    return Err(CurveError::Topology(
+                        "orthogonal erosion source did not contain a boundary span".into(),
+                    ));
+                };
+                Ok(Classification::Decided(Arc::new(
+                    ExactAxisAlignedAlgebraicErosionSource2 {
+                        source_x_fibers: Arc::from(source_x_fibers),
+                        source_y_fibers: Arc::from(source_y_fibers),
+                        source_bounds,
+                    },
+                )))
+            },
+        );
+        let source = match outcome.value? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let _ = self
+            .erosion_source
+            .set((*policy, outcome.certainty, Arc::clone(&source)));
+        Ok(Classification::Decided(source))
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_offset_loop(
+    source_loop: Option<&ExactAxisAlignedAlgebraicSourceLoop2>,
+    distance: &Real,
+    corner_style: &OffsetCornerStyle2,
+    component_contracts: bool,
+    schedule_nonconvex_erosion: bool,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetLoop2>> {
+    let Some(source_loop) = source_loop else {
+        return Ok(Classification::Decided(
+            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+        ));
+    };
+    let convex_inward =
+        match axis_aligned_loop_is_convex_inward(&source_loop.spans, distance, policy) {
+            Classification::Decided(convex_inward) => convex_inward,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if component_contracts && schedule_nonconvex_erosion && !convex_inward {
+        let erosion_source = match source_loop.erosion_source(policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let erosion = exact_axis_aligned_algebraic_erosion(
+            &erosion_source,
+            &source_loop.spans,
+            distance,
+            fill_rule,
+            policy,
+        )?;
+        return Ok(match erosion {
+            Classification::Decided(boundaries) if boundaries.is_empty() => {
+                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Removed)
+            }
+            Classification::Decided(boundaries) => Classification::Decided(
+                ExactAxisAlignedAlgebraicOffsetLoop2::ErodedBoundaries(boundaries),
+            ),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        });
+    }
+    let mut spans = Vec::with_capacity(source_loop.spans.len());
+    for source in source_loop.spans.iter() {
+        match exact_axis_aligned_algebraic_offset_span(
+            &source.chord,
+            source.direction,
+            distance,
+            policy,
+        )? {
+            Classification::Decided(span) => spans.push(span),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-    }
-    if spans.is_empty() {
-        return Ok(Classification::Decided(
-            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
-        ));
     }
     let mut joins = Vec::with_capacity(spans.len());
     for span_index in 0..spans.len() {
@@ -3663,12 +3781,6 @@ fn exact_axis_aligned_algebraic_offset_loop(
         spans[span_index].offset_end = miter.clone();
         spans[next_index].offset_start = miter.clone();
     }
-    let convex_inward = match axis_aligned_loop_is_convex_inward(&spans, distance, policy) {
-        Classification::Decided(convex_inward) => convex_inward,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
     let has_reversed_span = match axis_aligned_offset_has_reversed_span(&spans, policy)? {
         Classification::Decided(has_reversed_span) => has_reversed_span,
         Classification::Uncertain(reason) => {
@@ -3679,18 +3791,6 @@ fn exact_axis_aligned_algebraic_offset_loop(
         return Ok(Classification::Decided(
             ExactAxisAlignedAlgebraicOffsetLoop2::Removed,
         ));
-    }
-    if component_contracts && schedule_nonconvex_erosion && !convex_inward {
-        let erosion = exact_axis_aligned_algebraic_erosion(&spans, distance, fill_rule, policy)?;
-        return Ok(match erosion {
-            Classification::Decided(boundaries) if boundaries.is_empty() => {
-                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Removed)
-            }
-            Classification::Decided(boundaries) => Classification::Decided(
-                ExactAxisAlignedAlgebraicOffsetLoop2::ErodedBoundaries(boundaries),
-            ),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        });
     }
     if has_reversed_span {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -7496,6 +7596,53 @@ impl CurveRegion2 {
         Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
     }
 
+    #[cfg(feature = "predicates")]
+    fn exact_axis_aligned_algebraic_source_loops(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Arc<[Option<Arc<ExactAxisAlignedAlgebraicSourceLoop2>>]>>> {
+        if let Some((cached_policy, certainty, source_loops)) =
+            self.data.axis_aligned_algebraic_source_loops.get()
+            && cached_policy == policy
+        {
+            if *certainty == CurveCertainty::Approximate512Consumed {
+                policy.observe_approximate_512();
+            }
+            return Ok(Classification::Decided(Arc::clone(source_loops)));
+        }
+        let outcome = resolve_certified_value(
+            policy,
+            |attempt| -> CurveResult<
+                Classification<Arc<[Option<Arc<ExactAxisAlignedAlgebraicSourceLoop2>>]>>,
+            > {
+                let mut source_loops = Vec::with_capacity(self.data.boundary_loops.len());
+                for boundary_loop in &self.data.boundary_loops {
+                    match exact_axis_aligned_algebraic_source_loop(boundary_loop, attempt)? {
+                        Classification::Decided(source_loop) => {
+                            source_loops.push(source_loop);
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Ok(Classification::Decided(Arc::from(source_loops)))
+            },
+        );
+        let source_loops = match outcome.value? {
+            Classification::Decided(source_loops) => source_loops,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let _ = self.data.axis_aligned_algebraic_source_loops.set((
+            *policy,
+            outcome.certainty,
+            Arc::clone(&source_loops),
+        ));
+        Ok(Classification::Decided(source_loops))
+    }
+
     fn offset_exact_general_raw(
         &self,
         distance: Real,
@@ -7534,6 +7681,25 @@ impl CurveRegion2 {
             || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
             <[_]>::to_vec,
         );
+        #[cfg(feature = "predicates")]
+        let axis_aligned_algebraic_source_loops = match self
+            .exact_axis_aligned_algebraic_source_loops(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(source_loops) => source_loops,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        #[cfg(feature = "predicates")]
+        if axis_aligned_algebraic_source_loops.len() != self.data.boundary_loops.len() {
+            return Err(curve_region_edit_error(
+                CurveOperation2::Offset,
+                CurveError::Topology(
+                    "cached algebraic offset sources are inconsistent with boundary loops".into(),
+                ),
+            ));
+        }
         if roles.len() != self.data.boundary_loops.len()
             || filled_sides.len() != self.data.boundary_loops.len()
             || fill_rules.len() != self.data.boundary_loops.len()
@@ -7563,7 +7729,7 @@ impl CurveRegion2 {
                 (roles[loop_index] == CurveRegionLoopRole::Material) != distance_positive;
             #[cfg(feature = "predicates")]
             match exact_axis_aligned_algebraic_offset_loop(
-                boundary_loop,
+                axis_aligned_algebraic_source_loops[loop_index].as_deref(),
                 &signed_left_distance,
                 corner_style,
                 component_contracts,

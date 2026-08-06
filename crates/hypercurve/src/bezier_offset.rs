@@ -10676,6 +10676,49 @@ impl BezierAlgebraicChord2 {
         }
     }
 
+    /// Builds an axis-aligned chord from a construction certificate.
+    ///
+    /// The caller must have proved that the endpoints are distinct, have the
+    /// supplied direction, and belong to `policy`. This is reserved for exact
+    /// translations of an already-certified axis-aligned chord, where replaying
+    /// selected-field equality and direction predicates would duplicate proof.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn from_certified_axis_aligned_endpoints(
+        start: RationalBezierIntersectionPointEvidence2,
+        end: RationalBezierIntersectionPointEvidence2,
+        direction: BezierAlgebraicChordAxisDirection2,
+        policy: &CurveContext,
+    ) -> Self {
+        let parameter_axis = match direction {
+            BezierAlgebraicChordAxisDirection2::PositiveX => BezierAlgebraicChordParameterAxis2 {
+                axis: Axis2::X,
+                coordinate_increases: true,
+            },
+            BezierAlgebraicChordAxisDirection2::NegativeX => BezierAlgebraicChordParameterAxis2 {
+                axis: Axis2::X,
+                coordinate_increases: false,
+            },
+            BezierAlgebraicChordAxisDirection2::PositiveY => BezierAlgebraicChordParameterAxis2 {
+                axis: Axis2::Y,
+                coordinate_increases: true,
+            },
+            BezierAlgebraicChordAxisDirection2::NegativeY => BezierAlgebraicChordParameterAxis2 {
+                axis: Axis2::Y,
+                coordinate_increases: false,
+            },
+        };
+        Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start,
+                end,
+                parameter_axis,
+                source: None,
+                reversed: false,
+                policy: *policy,
+            }),
+        }
+    }
+
     /// Returns the endpoint at the start of boundary traversal.
     pub fn start(&self) -> &RationalBezierIntersectionPointEvidence2 {
         if self.data.reversed {
