@@ -57,6 +57,11 @@ struct RetainedProjectedLine {
     orientation: hyperlimit::Line2Orientation,
 }
 
+struct RetainedProjectedSchedule {
+    lines: Vec<RetainedProjectedLine>,
+    point_queries: Vec<hyperlimit::Line2OrientationQuery>,
+}
+
 fn canonicalize_constraint_lines(constraints: &mut Vec<RawConstraint>) {
     // Derived order is endpoints then line, so deduplication retains the
     // canonical minimum construction identity for each exact segment.
@@ -2706,31 +2711,35 @@ fn corefine_face(
     // dyadic/exact-word schedules once and keep the same Hyperlimit-owned
     // policy fallback for every query.
     let retained_line_query_floor = projected.len().saturating_sub(2);
-    let retained_lines = if retained_line_query_floor >= RETAINED_LINE_ORIENTATION_QUERY_THRESHOLD {
-        let mut lines = Vec::new();
-        lines
-            .try_reserve_exact(authored.len())
-            .map_err(|_| HypermeshError::CapacityOverflow {
-                operation: "face retained line orientation schedule",
+    let mut retained_schedule =
+        if retained_line_query_floor >= RETAINED_LINE_ORIENTATION_QUERY_THRESHOLD {
+            let mut lines = Vec::new();
+            lines.try_reserve_exact(authored.len()).map_err(|_| {
+                HypermeshError::CapacityOverflow {
+                    operation: "face retained line orientation schedule",
+                }
             })?;
-        for constraint in &authored {
-            let endpoint_indices = projected_segment_indices(&projected, constraint.endpoints)?;
-            let segment = projected_segment_at(&projected, endpoint_indices)?;
-            lines.push(RetainedProjectedLine {
-                endpoint_indices,
-                orientation: hyperlimit::line2_orientation(segment[0], segment[1]),
-            });
-        }
-        Some(lines)
-    } else {
-        None
-    };
+            for constraint in &authored {
+                let endpoint_indices = projected_segment_indices(&projected, constraint.endpoints)?;
+                let segment = projected_segment_at(&projected, endpoint_indices)?;
+                lines.push(RetainedProjectedLine {
+                    endpoint_indices,
+                    orientation: hyperlimit::line2_orientation(segment[0], segment[1]),
+                });
+            }
+            let mut point_queries = Vec::new();
+            refresh_line_orientation_queries(&projected, &mut point_queries)?;
+            Some(RetainedProjectedSchedule {
+                lines,
+                point_queries,
+            })
+        } else {
+            None
+        };
 
     let mut crossing_points = Vec::new();
-    for left_index in 0..authored.len() {
-        let left = &authored[left_index];
-        for right_index in (left_index + 1)..authored.len() {
-            let right = &authored[right_index];
+    for (left_index, left) in authored.iter().enumerate() {
+        for (right_index, right) in authored.iter().enumerate().skip(left_index + 1) {
             if left
                 .endpoints
                 .iter()
@@ -2738,8 +2747,12 @@ fn corefine_face(
             {
                 continue;
             }
-            let left_schedule = retained_lines.as_ref().map(|lines| &lines[left_index]);
-            let right_schedule = retained_lines.as_ref().map(|lines| &lines[right_index]);
+            let left_schedule = retained_schedule
+                .as_ref()
+                .map(|schedule| &schedule.lines[left_index]);
+            let right_schedule = retained_schedule
+                .as_ref()
+                .map(|schedule| &schedule.lines[right_index]);
             let left_points = match left_schedule {
                 Some(line) => projected_segment_at(&projected, line.endpoint_indices)?,
                 None => projected_segment(&projected, left.endpoints)?,
@@ -2748,12 +2761,28 @@ fn corefine_face(
                 Some(line) => projected_segment_at(&projected, line.endpoint_indices)?,
                 None => projected_segment(&projected, right.endpoints)?,
             };
+            let left_queries = match (retained_schedule.as_ref(), left_schedule) {
+                (Some(schedule), Some(line)) => Some(projected_line_queries_at(
+                    &schedule.point_queries,
+                    line.endpoint_indices,
+                )?),
+                _ => None,
+            };
+            let right_queries = match (retained_schedule.as_ref(), right_schedule) {
+                (Some(schedule), Some(line)) => Some(projected_line_queries_at(
+                    &schedule.point_queries,
+                    line.endpoint_indices,
+                )?),
+                _ => None,
+            };
             if !segments_properly_cross(
                 decisions,
                 left_points,
                 left_schedule.map(|line| &line.orientation),
+                left_queries,
                 right_points,
                 right_schedule.map(|line| &line.orientation),
+                right_queries,
             )? {
                 continue;
             }
@@ -2808,6 +2837,9 @@ fn corefine_face(
     projected.extend(crossing_points);
     projected.sort_unstable_by_key(|projected| projected.id);
     projected.dedup_by_key(|projected| projected.id);
+    if let Some(schedule) = &mut retained_schedule {
+        refresh_line_orientation_queries(&projected, &mut schedule.point_queries)?;
+    }
 
     // Line identities have served crossing construction by this point. CDT
     // consumes only the unique canonical endpoint pairs, kept sorted here.
@@ -2830,7 +2862,7 @@ fn corefine_face(
         // that may split it through crossings, contacts, or overlaps.
         on_segment.extend_from_slice(&constraint.endpoints);
         let segment = projected_segment(&projected, constraint.endpoints)?;
-        for projected_point in &projected {
+        for (projected_index, projected_point) in projected.iter().enumerate() {
             if constraint.endpoints.contains(&projected_point.id) {
                 continue;
             }
@@ -2838,9 +2870,12 @@ fn corefine_face(
                 decisions,
                 segment,
                 &projected_point.point,
-                retained_lines
+                retained_schedule
                     .as_ref()
-                    .map(|lines| &lines[constraint_index].orientation),
+                    .map(|schedule| &schedule.lines[constraint_index].orientation),
+                retained_schedule
+                    .as_ref()
+                    .map(|schedule| &schedule.point_queries[projected_index]),
             )? {
                 on_segment.push(projected_point.id);
             }
@@ -2853,6 +2888,7 @@ fn corefine_face(
             }
         }
     }
+    drop(retained_schedule);
 
     let mut boundary_edges = [
         sorted_edge([boundary[0], boundary[1]]),
@@ -3048,12 +3084,44 @@ fn projected_segment_at(
     Ok([point(indices[0])?, point(indices[1])?])
 }
 
+fn refresh_line_orientation_queries(
+    points: &[ProjectedFacePoint],
+    queries: &mut Vec<hyperlimit::Line2OrientationQuery>,
+) -> HypermeshResult<()> {
+    queries.clear();
+    queries
+        .try_reserve_exact(points.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "face retained point orientation schedule",
+        })?;
+    for point in points {
+        queries.push(hyperlimit::line2_orientation_query(&point.point));
+    }
+    Ok(())
+}
+
+fn projected_line_queries_at(
+    queries: &[hyperlimit::Line2OrientationQuery],
+    indices: [usize; 2],
+) -> HypermeshResult<[&hyperlimit::Line2OrientationQuery; 2]> {
+    let query = |index: usize| {
+        queries
+            .get(index)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "face line query index is outside projected points",
+            })
+    };
+    Ok([query(indices[0])?, query(indices[1])?])
+}
+
 fn segments_properly_cross(
     decisions: &DecisionContext,
     left: [&hypertri::ExactPoint; 2],
     left_orientation: Option<&hyperlimit::Line2Orientation>,
+    left_queries: Option<[&hyperlimit::Line2OrientationQuery; 2]>,
     right: [&hypertri::ExactPoint; 2],
     right_orientation: Option<&hyperlimit::Line2Orientation>,
+    right_queries: Option<[&hyperlimit::Line2OrientationQuery; 2]>,
 ) -> HypermeshResult<bool> {
     let opposite = |first, second| {
         matches!(
@@ -3063,15 +3131,39 @@ fn segments_properly_cross(
         )
     };
     let right_sides = [
-        planar_orientation_with_line(decisions, left, right[0], left_orientation)?,
-        planar_orientation_with_line(decisions, left, right[1], left_orientation)?,
+        planar_orientation_with_line(
+            decisions,
+            left,
+            right[0],
+            left_orientation,
+            right_queries.map(|queries| queries[0]),
+        )?,
+        planar_orientation_with_line(
+            decisions,
+            left,
+            right[1],
+            left_orientation,
+            right_queries.map(|queries| queries[1]),
+        )?,
     ];
     if !opposite(right_sides[0], right_sides[1]) {
         return Ok(false);
     }
     let left_sides = [
-        planar_orientation_with_line(decisions, right, left[0], right_orientation)?,
-        planar_orientation_with_line(decisions, right, left[1], right_orientation)?,
+        planar_orientation_with_line(
+            decisions,
+            right,
+            left[0],
+            right_orientation,
+            left_queries.map(|queries| queries[0]),
+        )?,
+        planar_orientation_with_line(
+            decisions,
+            right,
+            left[1],
+            right_orientation,
+            left_queries.map(|queries| queries[1]),
+        )?,
     ];
     Ok(opposite(left_sides[0], left_sides[1]))
 }
@@ -3081,16 +3173,27 @@ fn planar_point_on_segment(
     edge: [&hypertri::ExactPoint; 2],
     point: &hypertri::ExactPoint,
     orientation: Option<&hyperlimit::Line2Orientation>,
+    query: Option<&hyperlimit::Line2OrientationQuery>,
 ) -> HypermeshResult<bool> {
-    let outcome = match orientation {
-        Some(orientation) => hyperlimit::point_on_segment_with_orientation(
+    let outcome = match (orientation, query) {
+        (Some(orientation), Some(query)) => {
+            hyperlimit::point_on_segment_with_orientation_and_query(
+                edge[0],
+                edge[1],
+                point,
+                orientation,
+                query,
+                decisions.policy(),
+            )
+        }
+        (Some(orientation), None) => hyperlimit::point_on_segment_with_orientation(
             edge[0],
             edge[1],
             point,
             orientation,
             decisions.policy(),
         ),
-        None => hyperlimit::point_on_segment(edge[0], edge[1], point, decisions.policy()),
+        (None, _) => hyperlimit::point_on_segment(edge[0], edge[1], point, decisions.policy()),
     };
     decisions.decide(outcome, "surface arrangement point on segment")
 }
@@ -3100,27 +3203,34 @@ fn planar_orientation_with_line(
     edge: [&hypertri::ExactPoint; 2],
     point: &hypertri::ExactPoint,
     orientation: Option<&hyperlimit::Line2Orientation>,
+    query: Option<&hyperlimit::Line2OrientationQuery>,
 ) -> HypermeshResult<Classification> {
-    match orientation {
-        Some(orientation) => {
-            let side = decisions.decide(
-                hyperlimit::classify_point_line_with_orientation(
-                    edge[0],
-                    edge[1],
-                    point,
-                    orientation,
-                    decisions.policy(),
-                ),
-                "surface arrangement retained line orientation",
-            )?;
-            Ok(match side {
-                hyperlimit::LineSide::Right => Classification::Negative,
-                hyperlimit::LineSide::On => Classification::On,
-                hyperlimit::LineSide::Left => Classification::Positive,
-            })
+    let outcome = match (orientation, query) {
+        (Some(orientation), Some(query)) => {
+            hyperlimit::classify_point_line_with_orientation_and_query(
+                edge[0],
+                edge[1],
+                point,
+                orientation,
+                query,
+                decisions.policy(),
+            )
         }
-        None => planar_orientation(decisions, edge[0], edge[1], point),
-    }
+        (Some(orientation), None) => hyperlimit::classify_point_line_with_orientation(
+            edge[0],
+            edge[1],
+            point,
+            orientation,
+            decisions.policy(),
+        ),
+        (None, _) => return planar_orientation(decisions, edge[0], edge[1], point),
+    };
+    let side = decisions.decide(outcome, "surface arrangement retained line orientation")?;
+    Ok(match side {
+        hyperlimit::LineSide::Right => Classification::Negative,
+        hyperlimit::LineSide::On => Classification::On,
+        hyperlimit::LineSide::Left => Classification::Positive,
+    })
 }
 
 fn sort_point_ids_on_segment(
