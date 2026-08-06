@@ -526,6 +526,19 @@ pub fn classify_point_line_with_orientation_and_policy(
     orientation: &Line2Orientation,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<LineSide> {
+    map_outcome(
+        orient2d_with_orientation_and_policy(from, to, point, orientation, policy),
+        LineSide::from,
+    )
+}
+
+pub(crate) fn orient2d_with_orientation_and_policy(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
     if let Some(sign) = orientation
         .filter
         .and_then(|filter| filter.sign([&point.x, &point.y]))
@@ -536,7 +549,7 @@ pub fn classify_point_line_with_orientation_and_policy(
             "certified-real-det2-filter"
         );
         return PredicateOutcome::decided(
-            LineSide::from(crate::real::map_real_sign(sign)),
+            crate::real::map_real_sign(sign),
             Certainty::Exact,
             Escalation::Exact,
         );
@@ -550,7 +563,7 @@ pub fn classify_point_line_with_orientation_and_policy(
             "exact-word-homogeneous-det2"
         );
         return PredicateOutcome::decided(
-            LineSide::from(crate::real::map_real_sign(sign)),
+            crate::real::map_real_sign(sign),
             Certainty::Exact,
             Escalation::Exact,
         );
@@ -566,7 +579,7 @@ pub fn classify_point_line_with_orientation_and_policy(
             "certified-rational-det2-filter"
         );
         return PredicateOutcome::decided(
-            LineSide::from(crate::real::map_real_sign(sign)),
+            crate::real::map_real_sign(sign),
             Certainty::Exact,
             Escalation::Exact,
         );
@@ -574,9 +587,9 @@ pub fn classify_point_line_with_orientation_and_policy(
     if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2RationalDet2, || {
         super::exact::orient2d(from, to, point)
     }) {
-        return map_outcome(outcome, LineSide::from);
+        return outcome;
     }
-    map_outcome(orient2d_real_expr(from, to, point, policy), LineSide::from)
+    orient2d_real_expr(from, to, point, policy)
 }
 
 /// In-circle predicate for four 2D points with an explicit escalation policy.
