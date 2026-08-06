@@ -86,6 +86,7 @@ fn recover_constraints(
     // leaking scalar internals into topology code.
     let approximate_points = crate::cdt::exact_points_f64(points);
     let mut constrained_edges = Vec::new();
+    let mut cavity = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);
         if triangulation_has_edge(&triangles, edge) {
@@ -100,6 +101,7 @@ fn recover_constraints(
             constraint,
             &constrained_edges,
             approximate_points.as_deref(),
+            &mut cavity,
         )?;
         push_unique_edge(&mut constrained_edges, edge);
     }
@@ -316,6 +318,7 @@ fn recover_missing_constraint(
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
     approximate_points: Option<&[[f64; 2]]>,
+    cavity: &mut Vec<bool>,
 ) -> Result<()> {
     // Recover one complete crossed-triangle corridor. Rebuilding and sorting
     // global edge incidence after each individually legal flip repeats work
@@ -330,6 +333,7 @@ fn recover_missing_constraint(
         constraint,
         constrained_edges,
         approximate_points,
+        cavity,
     )
 }
 
@@ -340,15 +344,11 @@ fn recover_constraint_cavity(
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
     approximate_points: Option<&[[f64; 2]]>,
+    cavity: &mut Vec<bool>,
 ) -> Result<()> {
-    enum CrossedCorridor {
-        Empty,
-        One(EdgeKey, [AdjacentTriangle; 2]),
-        Many(Vec<bool>),
-    }
-
     let topology = TopologyEdges::new(triangles)?;
-    let mut crossed = CrossedCorridor::Empty;
+    let mut first_crossing = None;
+    let mut crossing_count = 0usize;
     for topology in topology.iter() {
         let (edge, owners) = topology?;
         if edge.contains(constraint.from) || edge.contains(constraint.to) {
@@ -369,46 +369,39 @@ fn recover_constraint_cavity(
             });
         };
         let adjacent = adjacent_triangles(triangles, edge, owners)?;
-        crossed = match crossed {
-            CrossedCorridor::Empty => CrossedCorridor::One(edge, adjacent),
-            CrossedCorridor::One(_, first) => {
-                let mut cavity = vec![false; triangles.len()];
-                cavity[first[0].triangle] = true;
-                cavity[first[1].triangle] = true;
-                cavity[adjacent[0].triangle] = true;
-                cavity[adjacent[1].triangle] = true;
-                CrossedCorridor::Many(cavity)
-            }
-            CrossedCorridor::Many(mut cavity) => {
-                cavity[adjacent[0].triangle] = true;
-                cavity[adjacent[1].triangle] = true;
-                CrossedCorridor::Many(cavity)
-            }
-        };
+        crossing_count += 1;
+        if crossing_count == 1 {
+            first_crossing = Some((edge, adjacent));
+            continue;
+        }
+        if crossing_count == 2 {
+            cavity.resize(triangles.len(), false);
+            cavity.fill(false);
+            let first = first_crossing
+                .expect("the second crossing follows a retained first crossing")
+                .1;
+            mark_cavity_triangles(cavity, first);
+        }
+        mark_cavity_triangles(cavity, adjacent);
     }
-    let mut cavity = match crossed {
-        CrossedCorridor::Empty => {
-            return Err(Error::UnsupportedFeature {
-                feature: "constraint cavity contains no crossed triangles",
-            });
-        }
-        CrossedCorridor::One(edge, adjacent) => {
-            let replacement = EdgeKey::new(adjacent[0].opposite, adjacent[1].opposite);
-            // A proper crossing between the shared edge and the
-            // opposite-vertex diagonal is already the exact
-            // convex-quadrilateral certificate. Reuse it instead of repeating
-            // the same four side orientations.
-            if replacement == EdgeKey::new(constraint.from, constraint.to) {
-                return replace_adjacent_edge(kernel, points, triangles, edge, adjacent);
-            }
-            let mut cavity = vec![false; triangles.len()];
-            cavity[adjacent[0].triangle] = true;
-            cavity[adjacent[1].triangle] = true;
-            cavity
-        }
-        CrossedCorridor::Many(cavity) => cavity,
+    let Some((first_edge, first_adjacent)) = first_crossing else {
+        return Err(Error::UnsupportedFeature {
+            feature: "constraint cavity contains no crossed triangles",
+        });
     };
-    close_constraint_cavity_holes(&topology, constrained_edges, &mut cavity)?;
+    if crossing_count == 1 {
+        let replacement = EdgeKey::new(first_adjacent[0].opposite, first_adjacent[1].opposite);
+        // A proper crossing between the shared edge and the opposite-vertex
+        // diagonal is already the exact convex-quadrilateral certificate.
+        // Reuse it instead of repeating the same four side orientations.
+        if replacement == EdgeKey::new(constraint.from, constraint.to) {
+            return replace_adjacent_edge(kernel, points, triangles, first_edge, first_adjacent);
+        }
+        cavity.resize(triangles.len(), false);
+        cavity.fill(false);
+        mark_cavity_triangles(cavity, first_adjacent);
+    }
+    close_constraint_cavity_holes(&topology, constrained_edges, cavity)?;
     let cavity_indices = cavity
         .iter()
         .enumerate()
@@ -542,6 +535,11 @@ fn recover_constraint_cavity(
         });
     }
     Ok(())
+}
+
+fn mark_cavity_triangles(cavity: &mut [bool], adjacent: [AdjacentTriangle; 2]) {
+    cavity[adjacent[0].triangle] = true;
+    cavity[adjacent[1].triangle] = true;
 }
 
 /// Close only holes created by the crossed-triangle corridor itself.
@@ -1208,6 +1206,7 @@ mod tests {
             let context = TriangulationContext::new(policy);
             let kernel = ExactKernel::new(&context);
             let mut triangles = original.clone();
+            let mut cavity = Vec::new();
 
             recover_constraint_cavity(
                 &kernel,
@@ -1216,6 +1215,7 @@ mod tests {
                 constraint,
                 &[],
                 approximate.as_deref(),
+                &mut cavity,
             )
             .unwrap();
 
