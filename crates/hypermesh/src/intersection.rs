@@ -12,8 +12,8 @@ use crate::geometry::{Classification, Plane, compare_real_decision};
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
-    Point3PredicateQuery, classify_point_decision, classify_point_with_rational_query_decision,
-    classify_real, exact_rational_points_contradict, rational_linear_form4_filter_for_plane,
+    Point3PredicateQuery, PointPlanePredicate, classify_point_decision,
+    classify_point_with_rational_query_decision, classify_real, exact_rational_points_contradict,
     rational_plane_exact_crossing_is_expensive,
 };
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
@@ -1211,6 +1211,26 @@ fn classify_polygon_vertex_decision(
     }
 }
 
+/// Classifies through one point/plane schedule already shared by the current
+/// polygon-pair walk.
+#[inline]
+fn classify_polygon_vertex_with_plane_predicate_decision(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    vertices: &[Point3],
+    vertex: usize,
+    plane_predicate: &PointPlanePredicate<'_>,
+) -> HypermeshResult<Classification> {
+    let point = vertices
+        .get(vertex)
+        .ok_or(HypermeshError::UnknownClassification)?;
+    plane_predicate.classify(
+        decisions,
+        point,
+        polygon.known_vertex_predicate_query(vertex),
+    )
+}
+
 fn intersect_polygons_with_vertices_constructed(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
@@ -1281,20 +1301,21 @@ fn intersect_nonparallel_polygons_constructed<'point>(
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
     let polygon_support = polygon.support_plane();
     let other_support = other.support_plane();
+    let other_support_predicate = PointPlanePredicate::new(decisions, other_support);
     // A closed triangle reaches a plane only through an on-plane vertex or a
     // pair of vertices on opposite sides. Certifying this symmetric support
     // separator before constructing crossings avoids exact points that the
     // other direction would later reject. A successful triangle pair always
     // needs all six classifications, so retaining them changes no successful
     // policy-decision set.
-    let triangle_classes = if polygon_vertices.len() == 3 && other_vertices.len() == 3 {
+    let polygon_classes = if polygon_vertices.len() == 3 && other_vertices.len() == 3 {
         let classify_polygon = |vertex| {
-            classify_polygon_vertex_decision(
+            classify_polygon_vertex_with_plane_predicate_decision(
                 decisions,
                 polygon,
                 polygon_vertices,
                 vertex,
-                other_support,
+                &other_support_predicate,
             )
         };
         let polygon_classes = [
@@ -1306,13 +1327,22 @@ fn intersect_nonparallel_polygons_constructed<'point>(
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
         }
+        Some(polygon_classes)
+    } else {
+        None
+    };
+
+    // Do not look up the reverse plane filter until the forward separator has
+    // passed. A rejected triangle pair has no reverse predicates to schedule.
+    let polygon_support_predicate = PointPlanePredicate::new(decisions, polygon_support);
+    let triangle_classes = if let Some(polygon_classes) = polygon_classes {
         let classify_other = |vertex| {
-            classify_polygon_vertex_decision(
+            classify_polygon_vertex_with_plane_predicate_decision(
                 decisions,
                 other,
                 other_vertices,
                 vertex,
-                polygon_support,
+                &polygon_support_predicate,
             )
         };
         let other_classes = [classify_other(0)?, classify_other(1)?, classify_other(2)?];
@@ -1332,6 +1362,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         polygon_vertices,
         triangle_classes.as_ref().map(|classes| &classes[0]),
         other_support,
+        &other_support_predicate,
         other,
         other_support_identity,
         support_line_axis,
@@ -1345,6 +1376,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         other_vertices,
         triangle_classes.as_ref().map(|classes| &classes[1]),
         polygon_support,
+        &polygon_support_predicate,
         polygon,
         polygon_support_identity,
         support_line_axis,
@@ -2715,6 +2747,7 @@ fn collect_polygon_plane_slice<'point>(
     vertices: &'point [Point3],
     retained_classifications: Option<&[Classification; 3]>,
     plane: &'point Plane,
+    plane_predicate: &PointPlanePredicate<'point>,
     plane_owner: &ConvexPolygon,
     plane_identity: Option<ConstructionPlaneIdentity>,
     axis: SupportLineAxis,
@@ -2726,12 +2759,12 @@ fn collect_polygon_plane_slice<'point>(
             Some(classifications) => *classifications,
             None => {
                 let classify = |vertex| {
-                    classify_polygon_vertex_decision(
+                    classify_polygon_vertex_with_plane_predicate_decision(
                         decisions,
                         edge_polygon,
                         vertices,
                         vertex,
-                        plane,
+                        plane_predicate,
                     )
                 };
                 [classify(0)?, classify(1)?, classify(2)?]
@@ -2744,12 +2777,9 @@ fn collect_polygon_plane_slice<'point>(
         {
             let [q0, q1, q2] =
                 [0, 1, 2].map(|vertex| edge_polygon.known_vertex_predicate_query(vertex));
-            if let (Some(filter), Some(q0), Some(q1), Some(q2)) = (
-                rational_linear_form4_filter_for_plane(decisions, plane),
-                q0,
-                q1,
-                q2,
-            ) {
+            if let (Some(filter), Some(q0), Some(q1), Some(q2)) =
+                (plane_predicate.rational_filter(), q0, q1, q2)
+            {
                 Some(PolygonPlaneCrossingSchedule::Lazy {
                     filter,
                     queries: [q0, q1, q2],
@@ -2831,17 +2861,22 @@ fn collect_polygon_plane_slice<'point>(
     if vertices.is_empty() {
         return Ok(span);
     }
-    let first_class =
-        classify_polygon_vertex_decision(decisions, edge_polygon, vertices, 0, plane)?;
+    let first_class = classify_polygon_vertex_with_plane_predicate_decision(
+        decisions,
+        edge_polygon,
+        vertices,
+        0,
+        plane_predicate,
+    )?;
     let last_class = if vertices.len() == 1 {
         first_class
     } else {
-        classify_polygon_vertex_decision(
+        classify_polygon_vertex_with_plane_predicate_decision(
             decisions,
             edge_polygon,
             vertices,
             vertices.len() - 1,
-            plane,
+            plane_predicate,
         )?
     };
     let mut previous_class = last_class;
@@ -2855,7 +2890,13 @@ fn collect_polygon_plane_slice<'point>(
         } else if index + 2 == vertices.len() {
             last_class
         } else {
-            classify_polygon_vertex_decision(decisions, edge_polygon, vertices, index + 1, plane)?
+            classify_polygon_vertex_with_plane_predicate_decision(
+                decisions,
+                edge_polygon,
+                vertices,
+                index + 1,
+                plane_predicate,
+            )?
         };
         let vertex_discovery_edge = if index == 0 || previous_class == Classification::On {
             index

@@ -183,20 +183,95 @@ pub(crate) fn rational_plane_exact_crossing_is_expensive(plane: &Plane) -> bool 
     exact_crossing_is_expensive([a, b, c, d])
 }
 
-pub(crate) fn rational_linear_form4_filter_for_plane(
-    decisions: &DecisionContext,
-    plane: &Plane,
-) -> Option<RationalLinearForm4Filter> {
-    let [Some(a), Some(b), Some(c), Some(d)] = [
-        &plane.normal.x,
-        &plane.normal.y,
-        &plane.normal.z,
-        &plane.offset,
-    ]
-    .map(Real::exact_rational_ref) else {
-        return None;
-    };
-    rational_linear_form4_filter(decisions, plane, [a, b, c, d])
+/// One borrowed point/plane predicate schedule.
+///
+/// A polygon-pair intersection classifies several vertices against the same
+/// support plane. Retaining the plane's exact coefficient references and its
+/// cached certified filter for that short schedule avoids repeating the
+/// operation-local cache lookup. An unavailable or inconclusive filter still
+/// reaches the identical exact-rational or general `Real` fallback.
+#[derive(Clone, Copy)]
+pub(crate) struct PointPlanePredicate<'plane> {
+    plane: &'plane Plane,
+    exact_rational: Option<ExactRationalPlanePredicate<'plane>>,
+}
+
+#[derive(Clone, Copy)]
+struct ExactRationalPlanePredicate<'plane> {
+    coefficients: [&'plane Rational; 4],
+    filter: Option<RationalLinearForm4Filter>,
+}
+
+impl<'plane> PointPlanePredicate<'plane> {
+    #[inline]
+    pub(crate) fn new(decisions: &DecisionContext, plane: &'plane Plane) -> Self {
+        let coefficients = [
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ]
+        .map(Real::exact_rational_ref);
+        let exact_rational = match coefficients {
+            [Some(a), Some(b), Some(c), Some(d)] => {
+                let coefficients = [a, b, c, d];
+                Some(ExactRationalPlanePredicate {
+                    coefficients,
+                    filter: rational_linear_form4_filter(decisions, plane, coefficients),
+                })
+            }
+            _ => None,
+        };
+        Self {
+            plane,
+            exact_rational,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn classify(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+        rational_query: Option<&RationalLinearForm4Query>,
+    ) -> HypermeshResult<Classification> {
+        if let [Some(x), Some(y), Some(z)] =
+            [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+            && let Some(classification) = self.classify_exact_rational_coordinates(
+                [x, y, z],
+                Rational::one_ref(),
+                rational_query,
+            )
+        {
+            crate::trace_dispatch!("classify-point", "affine-exact-rational");
+            return Ok(classification);
+        }
+
+        crate::trace_dispatch!("classify-point", "affine-real-fallback");
+        classify_real(decisions, &self.plane.expression_at_point(point))
+    }
+
+    #[inline]
+    pub(crate) fn rational_filter(&self) -> Option<RationalLinearForm4Filter> {
+        self.exact_rational.and_then(|exact| exact.filter)
+    }
+
+    #[inline]
+    fn classify_exact_rational_coordinates(
+        &self,
+        coordinates: [&Rational; 3],
+        homogeneous_weight: &Rational,
+        rational_query: Option<&RationalLinearForm4Query>,
+    ) -> Option<Classification> {
+        let exact = self.exact_rational?;
+        Some(classify_exact_rational_coordinates_with_filter(
+            exact.coefficients,
+            coordinates,
+            homogeneous_weight,
+            rational_query,
+            exact.filter,
+        ))
+    }
 }
 
 /// Certified point-vs-plane classification.
@@ -332,22 +407,7 @@ fn classify_point_with_optional_rational_query_decision(
     plane: &Plane,
     rational_filter_query: Option<&RationalLinearForm4Query>,
 ) -> HypermeshResult<Classification> {
-    if let [Some(x), Some(y), Some(z)] =
-        [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
-        && let Some(classification) = classify_exact_rational_coordinates(
-            decisions,
-            plane,
-            [x, y, z],
-            Rational::one_ref(),
-            rational_filter_query,
-        )
-    {
-        crate::trace_dispatch!("classify-point", "affine-exact-rational");
-        return Ok(classification);
-    }
-
-    crate::trace_dispatch!("classify-point", "affine-real-fallback");
-    classify_real(decisions, &plane.expression_at_point(point))
+    PointPlanePredicate::new(decisions, plane).classify(decisions, point, rational_filter_query)
 }
 
 /// Classifies a homogeneous point against a plane.
@@ -392,26 +452,15 @@ fn classify_exact_rational_terms(
 fn classify_exact_rational_coordinates(
     decisions: &DecisionContext,
     plane: &Plane,
-    [x, y, z]: [&Rational; 3],
+    coordinates: [&Rational; 3],
     homogeneous_weight: &Rational,
     rational_query: Option<&RationalLinearForm4Query>,
 ) -> Option<Classification> {
-    let [Some(a), Some(b), Some(c), Some(d)] = [
-        &plane.normal.x,
-        &plane.normal.y,
-        &plane.normal.z,
-        &plane.offset,
-    ]
-    .map(Real::exact_rational_ref) else {
-        return None;
-    };
-    Some(classify_exact_rational_coordinates_with_filter(
-        [a, b, c, d],
-        [x, y, z],
+    PointPlanePredicate::new(decisions, plane).classify_exact_rational_coordinates(
+        coordinates,
         homogeneous_weight,
         rational_query,
-        rational_linear_form4_filter(decisions, plane, [a, b, c, d]),
-    ))
+    )
 }
 
 fn classify_exact_rational_coordinates_with_filter(
@@ -718,6 +767,49 @@ mod tests {
                     &point,
                     plane,
                 )
+            );
+        }
+    }
+
+    #[test]
+    fn point_plane_predicate_reuses_one_complete_plane_schedule() {
+        let plane =
+            Plane::from_coefficients(Real::from(3), Real::from(-2), Real::one(), Real::from(-7));
+        let points = [
+            point(Real::zero(), Real::zero(), Real::zero()),
+            point(Real::from(3), Real::one(), Real::zero()),
+            point(Real::from(4), Real::zero(), Real::zero()),
+        ];
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let predicate = PointPlanePredicate::new(&decisions, &plane);
+            assert!(predicate.rational_filter().is_some());
+            assert_eq!(
+                points
+                    .each_ref()
+                    .map(|point| predicate.classify(&decisions, point, None).unwrap()),
+                [
+                    Classification::Negative,
+                    Classification::On,
+                    Classification::Positive,
+                ]
+            );
+            assert_eq!(
+                decisions
+                    .rational_linear_form4_filters
+                    .borrow()
+                    .entries
+                    .len(),
+                1
+            );
+            assert_eq!(
+                decisions.certainty(),
+                crate::context::MeshCertainty::Certified
             );
         }
     }
