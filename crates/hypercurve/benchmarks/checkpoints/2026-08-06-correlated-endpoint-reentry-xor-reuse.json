@@ -1,0 +1,168 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-06",
+  "checkpoint": "correlated selected-circle/chord endpoint re-entry and exact XOR batch reuse",
+  "implementation_revision": "7d1a26c288fe0089cc76210d3da0d6ff5e7392fe",
+  "correctness_revision": "d31b0de",
+  "benchmark_revisions": ["70b5845", "68f2cd6", "8212cdb"],
+  "optimization_revision": "7d1a26c",
+  "correctness_equivalent_control_revision": "8212cdb",
+  "historical_rejection_revision": "cf47e57",
+  "preceding_checkpoint": "2026-08-05-selected-algebraic-circle-chord-boolean.json",
+  "dependency_revisions": {
+    "hyperreal": "492882c16ec6f649051285a5e215371750b3c967",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "210a66c01f1f53f7ffb035a9643d57f81ee19171",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "later CurveRegion2 Boolean re-entry when a translated selected algebraic circle meets an inherited algebraic chord at its retained correlated endpoint",
+      "boundary-aware algebraic-chord fragment classification that never promotes one isolated boundary endpoint to a positive-length Boundary fragment",
+      "exact Inside or Outside endpoint witnesses for exact, independent-field, AlgebraicChordPair, and AlgebraicCuspChord endpoints, with a strict interior representative fallback",
+      "Certified nonempty later intersection and complete all-four Boolean batch under STRICT and APPROXIMATE_512",
+      "one shared Boolean topology for union, intersection, difference, and direct xor extraction",
+      "exact xor set-identity fallback composed from the union and intersection regions already built by the batch",
+      "standalone xor retains its existing independent fallback and representation semantics",
+      "matched correctness-equivalent, historical rejection, competitive floating, deterministic perf, allocation, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "exact order between contacts from independent selected circle systems on one finite chord",
+      "non-endpoint correlated selected-circle/chord contact re-entry",
+      "general oblique selected-circle/chord supports",
+      "non-cardinal correlated point transforms and offset re-entry",
+      "retained selected-circle fragment re-offsetting",
+      "general retained-algebraic fillet centers and arcs",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::boolean_regions -> CurveRegionBooleanContext::build_boolean_topology -> build_boolean_region_from_topology for all four operations -> direct xor extraction or compose_xor_from_exact_regions",
+    "classification_fix": "An algebraic chord endpoint is a fragment witness only after full classification against the other region proves Inside or Outside. Boundary endpoints are skipped, and correlated endpoints are classified only after refined exact bounds separate them from every other boundary.",
+    "batch_reuse": "When direct xor extraction is blocked, the all-four batch composes xor from its retained exact union and intersection instead of creating new Boolean contexts and rebuilding both regions.",
+    "standalone_xor_change": false,
+    "approximate_geometry_added": false,
+    "persistent_cache_added": false,
+    "primitive_element_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false
+  },
+  "policy_evidence": {
+    "strict": "The replay is Certified using exact endpoint incidence, refined selected-field bounds, boundary-aware classification, and the existing exact topology graph.",
+    "approximate_512": "The same replay is Certified through the same operation graph. Approximation remains available only at the shared terminal predicate and is never stored as construction evidence.",
+    "fixture_certainty": "The second-stage public intersection is nonempty and the all-four batch completes under both policies.",
+    "optimization_policy_change": false
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "fixture": "A unit-height selected-width rectangle is offset outward by exactly 1/20 with selected-field round corners. Its exact translation by (1/20, 1/40) is intersected with the original; that exact result is then Booleaned against one further identical translation.",
+    "timing_scope": "The authored region, offsets, translations, and first Boolean are outside each timed loop. The timed operation is the later evidence query, one exact intersection region, or one exact all-four batch.",
+    "wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/correlated_endpoint_reentry <comparative-executable>",
+    "perf_command": "taskset -c 11 perf stat -e instructions,cycles,task-clock,page-faults env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=5 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/correlated_endpoint_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_exact_all_four <comparative-executable>",
+    "perf_normalization": "Subtract the matched disabled process, whose fixture includes one untimed all-four batch, then divide by five timed batches.",
+    "heap_method": "Heaptrack records one timed all-four batch. Subtract the matched disabled process to remove fixture construction and its one untimed batch.",
+    "control_executable_revision": "8212cdb",
+    "candidate_executable_revision": "7d1a26c"
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "correctness_equivalent_8212cdb": {
+      "exact_evidence_median_ns": 200186024.0,
+      "exact_intersection_median_ns": 204008722.0,
+      "exact_all_four_median_ns": 614286301.0
+    },
+    "optimized_7d1a26c_interleaved_after_control": {
+      "exact_evidence_median_ns": 203725112.0,
+      "exact_intersection_median_ns": 206978308.0,
+      "exact_all_four_median_ns": 208222833.0,
+      "cavalier_f64_four_calls_median_ns": 6224.1
+    },
+    "optimization_delta_percent": {
+      "exact_all_four_time": -66.103292,
+      "exact_all_four_speedup": 2.950139,
+      "single_intersection_observed_layout_drift": 1.455621
+    },
+    "competitive_context": {
+      "exact_over_cavalier_f64_ratio": 33454.287849,
+      "interpretation": "Cavalier is a binary64/bulge-topology throughput sentinel, not an exactness-equivalent implementation. It cannot retain independent selected fields, correlated radical endpoint evidence, or Hyper's terminal-policy trail."
+    },
+    "historical_rejection_cf47e57": {
+      "rejected_all_four_median_ns": 210703933.0,
+      "interpretation": "This is deliberately non-equivalent: the historical revision performs most arrangement work and rejects the later correlated endpoint path. Revision 7d1a26c returns complete exact geometry at essentially the same wall time."
+    }
+  },
+  "deterministic_perf": {
+    "fixed_timed_batches": 5,
+    "correctness_equivalent_8212cdb": {
+      "raw_operation_process": {"instructions": 47891565712, "cycles": 19946372096, "page_faults": 4091},
+      "raw_disabled_process": {"instructions": 10420473576, "cycles": 4320408504, "page_faults": 1730},
+      "normalized_per_batch": {"instructions": 7494218427.2, "cycles": 3125192718.4, "page_faults": 472.2}
+    },
+    "optimized_7d1a26c": {
+      "raw_operation_process": {"instructions": 18743965664, "cycles": 7846022805, "page_faults": 2035},
+      "raw_disabled_process": {"instructions": 6254559753, "cycles": 2681842478, "page_faults": 1544},
+      "normalized_per_batch": {"instructions": 2497881182.2, "cycles": 1032836065.4, "page_faults": 98.2}
+    },
+    "optimization_delta_percent": {
+      "instructions": -66.669224,
+      "cycles": -66.951284,
+      "page_faults": -79.203727
+    }
+  },
+  "allocation_evidence": {
+    "correctness_equivalent_8212cdb": {
+      "raw_operation_process": {"allocation_calls": 43583515, "temporary_allocations": 6067029},
+      "raw_disabled_process": {"allocation_calls": 19829859, "temporary_allocations": 2761898},
+      "normalized_per_batch": {"allocation_calls": 23753656, "temporary_allocations": 3305131}
+    },
+    "optimized_7d1a26c": {
+      "raw_operation_process": {"allocation_calls": 19827167, "temporary_allocations": 2761698},
+      "raw_disabled_process": {"allocation_calls": 11910982, "temporary_allocations": 1660121},
+      "normalized_per_batch": {"allocation_calls": 7916185, "temporary_allocations": 1101577}
+    },
+    "optimization_delta_percent": {
+      "allocation_calls": -66.673825,
+      "temporary_allocations": -66.670701
+    },
+    "peak_heap_note": "The recorder completed its allocation counters, but the compressed trace exceeded the active file quota before a reliable peak report could be retained. No peak-heap claim is made for this checkpoint."
+  },
+  "linked_size": {
+    "artifact": "all-feature comparative release executable",
+    "correctness_equivalent_8212cdb": {"file_bytes": 12525536, "text_bytes": 7509175},
+    "optimized_7d1a26c": {"file_bytes": 12523152, "text_bytes": 7507559},
+    "delta": {"file_bytes": -2384, "file_percent": -0.019033, "text_bytes": -1616, "text_percent": -0.021520}
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir /tmp/hypercurve-correlated-reentry-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-correlated-reentry-callgraph/callgraph.json",
+    "libraries_discovered": 1,
+    "nodes": 29012,
+    "edges": 55010,
+    "batch_calls_shared_topology_builder": true,
+    "batch_calls_exact_region_composer_directly": true,
+    "standalone_xor_calls_the_same_exact_region_composer_after_its_existing_fallback": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "472 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "60 passed",
+    "cargo_test_no_default_features_lib": "323 passed",
+    "cargo_clippy_all_features_lib_tests_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "known_external_warning": "Hypertri ExactKernel::sub remains pre-existing dead code; Hypertri and Hypermesh were not modified."
+  },
+  "next_priority": {
+    "correctness": "Order contacts produced by two independent selected circle systems on the same finite chord, then make a non-endpoint correlated contact survive output and later Boolean re-entry.",
+    "offset_and_fillet": "Retain the same selected-circle fragment through re-offsetting and use it for general retained-algebraic fillet centers and arcs, without a second corner or arrangement engine.",
+    "performance_and_memory": "Profile the exact contact-order proof before retaining any additional field relation. Prefer operation-local shared systems and one-word correlated handles.",
+    "size": "Keep support-specific paths private and cold, delete superseded historical paths as callers move, and measure production and minimal artifacts at each new family boundary."
+  }
+}
