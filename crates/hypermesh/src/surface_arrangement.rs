@@ -50,6 +50,13 @@ struct RawConstraint {
 // further reuse.
 const RETAINED_LINE_ORIENTATION_QUERY_THRESHOLD: usize = 16;
 
+struct RetainedProjectedLine {
+    // Valid through crossing discovery; merging newly constructed points may
+    // reorder `projected`, while the owned orientation remains reusable.
+    endpoint_indices: [usize; 2],
+    orientation: hyperlimit::Line2Orientation,
+}
+
 fn canonicalize_constraint_lines(constraints: &mut Vec<RawConstraint>) {
     // Derived order is endpoints then line, so deduplication retains the
     // canonical minimum construction identity for each exact segment.
@@ -2699,22 +2706,25 @@ fn corefine_face(
     // dyadic/exact-word schedules once and keep the same Hyperlimit-owned
     // policy fallback for every query.
     let retained_line_query_floor = projected.len().saturating_sub(2);
-    let line_orientations =
-        if retained_line_query_floor >= RETAINED_LINE_ORIENTATION_QUERY_THRESHOLD {
-            let mut orientations = Vec::new();
-            orientations
-                .try_reserve_exact(authored.len())
-                .map_err(|_| HypermeshError::CapacityOverflow {
-                    operation: "face retained line orientation schedule",
-                })?;
-            for constraint in &authored {
-                let segment = projected_segment(&projected, constraint.endpoints)?;
-                orientations.push(hyperlimit::line2_orientation(segment[0], segment[1]));
-            }
-            Some(orientations)
-        } else {
-            None
-        };
+    let retained_lines = if retained_line_query_floor >= RETAINED_LINE_ORIENTATION_QUERY_THRESHOLD {
+        let mut lines = Vec::new();
+        lines
+            .try_reserve_exact(authored.len())
+            .map_err(|_| HypermeshError::CapacityOverflow {
+                operation: "face retained line orientation schedule",
+            })?;
+        for constraint in &authored {
+            let endpoint_indices = projected_segment_indices(&projected, constraint.endpoints)?;
+            let segment = projected_segment_at(&projected, endpoint_indices)?;
+            lines.push(RetainedProjectedLine {
+                endpoint_indices,
+                orientation: hyperlimit::line2_orientation(segment[0], segment[1]),
+            });
+        }
+        Some(lines)
+    } else {
+        None
+    };
 
     let mut crossing_points = Vec::new();
     for left_index in 0..authored.len() {
@@ -2728,18 +2738,22 @@ fn corefine_face(
             {
                 continue;
             }
-            let left_points = projected_segment(&projected, left.endpoints)?;
-            let right_points = projected_segment(&projected, right.endpoints)?;
+            let left_schedule = retained_lines.as_ref().map(|lines| &lines[left_index]);
+            let right_schedule = retained_lines.as_ref().map(|lines| &lines[right_index]);
+            let left_points = match left_schedule {
+                Some(line) => projected_segment_at(&projected, line.endpoint_indices)?,
+                None => projected_segment(&projected, left.endpoints)?,
+            };
+            let right_points = match right_schedule {
+                Some(line) => projected_segment_at(&projected, line.endpoint_indices)?,
+                None => projected_segment(&projected, right.endpoints)?,
+            };
             if !segments_properly_cross(
                 decisions,
                 left_points,
-                line_orientations
-                    .as_ref()
-                    .map(|orientations| &orientations[left_index]),
+                left_schedule.map(|line| &line.orientation),
                 right_points,
-                line_orientations
-                    .as_ref()
-                    .map(|orientations| &orientations[right_index]),
+                right_schedule.map(|line| &line.orientation),
             )? {
                 continue;
             }
@@ -2824,9 +2838,9 @@ fn corefine_face(
                 decisions,
                 segment,
                 &projected_point.point,
-                line_orientations
+                retained_lines
                     .as_ref()
-                    .map(|orientations| &orientations[constraint_index]),
+                    .map(|lines| &lines[constraint_index].orientation),
             )? {
                 on_segment.push(projected_point.id);
             }
@@ -3003,10 +3017,35 @@ fn projected_segment(
     points: &[ProjectedFacePoint],
     endpoints: [u32; 2],
 ) -> HypermeshResult<[&hypertri::ExactPoint; 2]> {
-    Ok([
-        projected_face_point(points, endpoints[0])?,
-        projected_face_point(points, endpoints[1])?,
-    ])
+    projected_segment_at(points, projected_segment_indices(points, endpoints)?)
+}
+
+fn projected_segment_indices(
+    points: &[ProjectedFacePoint],
+    endpoints: [u32; 2],
+) -> HypermeshResult<[usize; 2]> {
+    let point = |id| {
+        points
+            .binary_search_by_key(&id, |point| point.id)
+            .map_err(|_| HypermeshError::SurfaceArrangementFailed {
+                reason: "face constraint endpoint is absent from projected points",
+            })
+    };
+    Ok([point(endpoints[0])?, point(endpoints[1])?])
+}
+
+fn projected_segment_at(
+    points: &[ProjectedFacePoint],
+    indices: [usize; 2],
+) -> HypermeshResult<[&hypertri::ExactPoint; 2]> {
+    let point = |index: usize| {
+        points.get(index).map(|point| &point.point).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "face constraint endpoint index is outside projected points",
+            },
+        )
+    };
+    Ok([point(indices[0])?, point(indices[1])?])
 }
 
 fn segments_properly_cross(
