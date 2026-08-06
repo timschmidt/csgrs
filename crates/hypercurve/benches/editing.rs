@@ -1042,25 +1042,38 @@ fn bench_represented_bezier_fillet_lane(
 }
 
 #[cfg(feature = "predicates")]
-fn positive_reciprocal_sqrt_parameter(
+fn positive_sqrt_ratio_parameter(
+    numerator: i32,
     denominator: i32,
     policy: &CurveContext,
 ) -> CurveResult<BezierAlgebraicParameter2> {
     let polynomial = expect_decided(
         BezierParameterPolynomial::try_new_power_basis(
-            vec![Real::from(-1_i8), Real::zero(), Real::from(denominator)],
+            vec![
+                Real::from(-numerator),
+                Real::zero(),
+                Real::from(denominator),
+            ],
             policy,
         )?,
         "quadratic benchmark parameter must remain exact",
     );
     let interval = expect_decided(
-        BezierParameterInterval::try_new(q(1, 2), Real::one(), policy)?,
+        BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)?,
         "quadratic benchmark interval must remain exact",
     );
     Ok(expect_decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
         "positive quadratic benchmark root must remain isolated",
     ))
+}
+
+#[cfg(feature = "predicates")]
+fn positive_reciprocal_sqrt_parameter(
+    denominator: i32,
+    policy: &CurveContext,
+) -> CurveResult<BezierAlgebraicParameter2> {
+    positive_sqrt_ratio_parameter(1, denominator, policy)
 }
 
 #[cfg(feature = "predicates")]
@@ -1246,6 +1259,64 @@ fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2
     Ok([chord_region, source_region])
 }
 
+#[cfg(feature = "predicates")]
+fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
+    let policy = CurveContext::STRICT;
+    let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
+    let vertical = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(5, 8), Real::from(-1_i8)),
+            Point2::new(q(5, 8), Real::one()),
+        ],
+        vec![Real::one(); 2],
+    )?;
+    let endpoint = |source: &RationalBezier2, numerator, denominator| {
+        let parameter = positive_sqrt_ratio_parameter(numerator, denominator, &policy)?;
+        source
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .map(RationalBezierIntersectionPointEvidence2::Algebraic)
+    };
+    let first_start = endpoint(&horizontal, 1, 2)?;
+    let first_end = endpoint(&horizontal, 1, 3)?;
+    let second_start = endpoint(&vertical, 2, 5)?;
+    let second_end = endpoint(&vertical, 1, 5)?;
+    let chord = |start, end| {
+        BezierAlgebraicChord2::try_new(start, end, &policy)
+            .map(|chord| expect_decided(chord, "benchmark chord must remain exact"))
+    };
+    let first = chord(first_start.clone(), first_end.clone())?;
+    let second = chord(second_start.clone(), second_end.clone())?;
+    let first_apex =
+        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(q(16, 25), Real::from(-1_i8)));
+    let second_apex =
+        RationalBezierIntersectionPointEvidence2::Exact(Point2::new(Real::one(), q(1, 20)));
+    let first_loop = CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::AlgebraicChord(first),
+            BezierSplitFragment2::AlgebraicChord(chord(first_end, first_apex.clone())?),
+            BezierSplitFragment2::AlgebraicChord(chord(first_apex, first_start)?),
+        ],
+        &policy,
+    )?;
+    let second_loop = CurveRegionBoundaryLoop2::new(
+        vec![
+            BezierSplitFragment2::AlgebraicChord(second),
+            BezierSplitFragment2::AlgebraicChord(chord(second_end, second_apex.clone())?),
+            BezierSplitFragment2::AlgebraicChord(chord(second_apex, second_start)?),
+        ],
+        &policy,
+    )?;
+    let region = |boundary| {
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+    };
+    Ok([region(first_loop)?, region(second_loop)?])
+}
+
 fn bench_represented_bezier_region_corner_lanes(
     region: &CurveRegion2,
     two_bezier_region: &CurveRegion2,
@@ -1391,6 +1462,26 @@ fn bench_represented_bezier_region_corner_lanes(
         let elapsed = started.elapsed();
         println!(
             "curve_region_noninjective_collinear_algebraic_chord_intersection: {iterations} iterations in {elapsed:?} ({:?}/iter), evidence={evidence_count}",
+            elapsed / iterations
+        );
+    }
+    #[cfg(feature = "predicates")]
+    if corner_lane_enabled("curve_region_strict_interior_algebraic_chord_boolean") {
+        let [first, second] = strict_interior_algebraic_chord_regions()
+            .expect("strict-interior algebraic chord benchmark fixture must remain exact");
+        let started = Instant::now();
+        let mut topology_fragments = 0_usize;
+        for _ in 0..iterations {
+            let results = black_box(&first)
+                .boolean_regions(black_box(&second), &policy)
+                .expect("strict-interior algebraic chord Boolean must remain exact")
+                .into_value();
+            topology_fragments += black_box(&results).topology_fragment_count();
+        }
+        assert_ne!(topology_fragments, 0);
+        let elapsed = started.elapsed();
+        println!(
+            "curve_region_strict_interior_algebraic_chord_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), topology fragments={topology_fragments}",
             elapsed / iterations
         );
     }

@@ -9815,6 +9815,83 @@ fn trivariate_unit_cube_strict_bernstein_sign(
 }
 
 #[cfg(feature = "predicates")]
+fn trivariate_multi_affine_parameter_box_strict_sign(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    policy: &CurveContext,
+) -> Option<RealSign> {
+    debug_assert!({
+        let dimensions = polynomial.dimensions();
+        dimensions.0 <= 2 && dimensions.1 <= 2 && dimensions.2 <= 2
+    });
+    let (first_start, first_end) = parameter_bounds(first);
+    let (second_start, second_end) = parameter_bounds(second);
+    let (third_start, third_end) = parameter_bounds(third);
+    let bounds = [
+        [first_start, first_end],
+        [second_start, second_end],
+        [third_start, third_end],
+    ];
+    let coefficients: [[[Real; 2]; 2]; 2] = std::array::from_fn(|first| {
+        std::array::from_fn(|second| {
+            std::array::from_fn(|third| {
+                polynomial
+                    .coefficients
+                    .get(first)
+                    .and_then(|rows| rows.get(second))
+                    .and_then(|row| row.get(third))
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+            })
+        })
+    });
+    let affine = |constant: &Real, linear: &Real, parameter: &Real| constant + linear * parameter;
+    let third_values: [[[Real; 2]; 2]; 2] = std::array::from_fn(|first| {
+        std::array::from_fn(|second| {
+            std::array::from_fn(|third| {
+                affine(
+                    &coefficients[first][second][0],
+                    &coefficients[first][second][1],
+                    bounds[2][third],
+                )
+            })
+        })
+    });
+    let second_values: [[[Real; 2]; 2]; 2] = std::array::from_fn(|first| {
+        std::array::from_fn(|second| {
+            std::array::from_fn(|third| {
+                affine(
+                    &third_values[first][0][third],
+                    &third_values[first][1][third],
+                    bounds[1][second],
+                )
+            })
+        })
+    });
+    let mut strict_sign = None;
+    for first_parameter in &bounds[0] {
+        for (constant_row, linear_row) in second_values[0].iter().zip(&second_values[1]) {
+            for (constant, linear) in constant_row.iter().zip(linear_row) {
+                let control = affine(constant, linear, first_parameter);
+                let Some(sign @ (RealSign::Negative | RealSign::Positive)) =
+                    real_sign(&control, policy)
+                else {
+                    return None;
+                };
+                match strict_sign {
+                    Some(previous) if previous != sign => return None,
+                    Some(_) => {}
+                    None => strict_sign = Some(sign),
+                }
+            }
+        }
+    }
+    strict_sign
+}
+
+#[cfg(feature = "predicates")]
 fn trivariate_existing_symbolic_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -10015,14 +10092,32 @@ fn trivariate_parameter_triple_sign_by_refinement(
     let mut first_refinement = BezierParameterRefinement2::new(first, policy);
     let mut second_refinement = BezierParameterRefinement2::new(second, policy);
     let mut third_refinement = BezierParameterRefinement2::new(third, policy);
+    let dimensions = polynomial.dimensions();
+    let is_multi_affine = dimensions.0 <= 2 && dimensions.1 <= 2 && dimensions.2 <= 2;
     for target_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let restricted = trivariate_restrict_to_parameter_box(
-            polynomial,
-            first_refinement.refine_to(target_steps),
-            second_refinement.refine_to(target_steps),
-            third_refinement.refine_to(target_steps),
-        );
-        if let Some(sign) = trivariate_unit_cube_strict_bernstein_sign(restricted, policy)? {
+        let first_refined = first_refinement.refine_to(target_steps);
+        let second_refined = second_refinement.refine_to(target_steps);
+        let third_refined = third_refinement.refine_to(target_steps);
+        let strict_sign = if is_multi_affine {
+            trivariate_multi_affine_parameter_box_strict_sign(
+                polynomial,
+                first_refined,
+                second_refined,
+                third_refined,
+                policy,
+            )
+        } else {
+            trivariate_unit_cube_strict_bernstein_sign(
+                trivariate_restrict_to_parameter_box(
+                    polynomial,
+                    first_refined,
+                    second_refined,
+                    third_refined,
+                ),
+                policy,
+            )?
+        };
+        if let Some(sign) = strict_sign {
             return Ok(Classification::Decided(sign));
         }
         // Let common nonzero boxes separate before constructing a field
@@ -33802,6 +33897,78 @@ mod conversion_tests {
                 &left_value,
             );
             assert_eq!(reduced_value, evaluate_trivariate(&values));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
+        let parameters = [
+            algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]),
+            algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]),
+            algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(5_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]),
+        ];
+        let tensor = |values: [[[i8; 2]; 2]; 2]| TrivariatePolynomial2 {
+            coefficients: values
+                .into_iter()
+                .map(|rows| {
+                    rows.into_iter()
+                        .map(|row| row.into_iter().map(Real::from).collect())
+                        .collect()
+                })
+                .collect(),
+        };
+        let polynomials = [
+            tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+            tensor([[[-1, -2], [-3, -4]], [[-5, -6], [-7, -8]]]),
+            tensor([[[-1, 0], [0, 0]], [[2, 0], [0, 0]]]),
+            TrivariatePolynomial2 {
+                coefficients: vec![
+                    vec![vec![Real::one()], vec![Real::from(2_i8)]],
+                    vec![vec![Real::from(3_i8)], vec![Real::from(4_i8)]],
+                ],
+            },
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for refinement_steps in [0, 2, 8] {
+                let refined = parameters.clone().map(|parameter| {
+                    parameter.refined_isolating_interval(refinement_steps, &policy)
+                });
+                for polynomial in &polynomials {
+                    let expected = trivariate_unit_cube_strict_bernstein_sign(
+                        trivariate_restrict_to_parameter_box(
+                            polynomial,
+                            &refined[0],
+                            &refined[1],
+                            &refined[2],
+                        ),
+                        &policy,
+                    )
+                    .unwrap();
+                    assert_eq!(
+                        trivariate_multi_affine_parameter_box_strict_sign(
+                            polynomial,
+                            &refined[0],
+                            &refined[1],
+                            &refined[2],
+                            &policy,
+                        ),
+                        expected
+                    );
+                }
+            }
         }
     }
 

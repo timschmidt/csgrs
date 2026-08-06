@@ -3878,6 +3878,27 @@ pub(crate) fn power_to_bernstein_coefficients(
     if coefficients.len() > degree + 1 {
         return Err(CurveError::InvalidDegreeElevation);
     }
+    // Selected-root predicates overwhelmingly transform affine and quadratic
+    // axes.  Keep those conversions out of the arbitrary-degree BigUint
+    // machinery: the closed forms are the same exact basis change and retain
+    // the general path for every larger (including beyond-u64) binomial.
+    let coefficient = |power| coefficients.get(power).cloned().unwrap_or_else(Real::zero);
+    if degree == 0 {
+        return Ok(vec![coefficient(0)]);
+    }
+    if degree == 1 {
+        let constant = coefficient(0);
+        let linear = coefficient(1);
+        return Ok(vec![constant.clone(), &constant + linear]);
+    }
+    if degree == 2 {
+        let constant = coefficient(0);
+        let linear = coefficient(1);
+        let quadratic = coefficient(2);
+        let middle = &constant + (linear.clone() / Real::from(2_i8))?;
+        let end = &constant + &linear + quadratic;
+        return Ok(vec![constant, middle, end]);
+    }
     let mut degree_binomials = Vec::with_capacity(degree + 1);
     let mut binomial = BigUint::one();
     for index in 0..=degree {
