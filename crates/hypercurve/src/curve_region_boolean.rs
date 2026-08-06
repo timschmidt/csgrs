@@ -172,6 +172,7 @@ enum RegionCarrierPairContext {
     ParallelSelf,
     BezierSelf,
     AlgebraicChordPair,
+    CuspChord { cusp_is_first: bool },
     CuspRational { cusp_is_first: bool },
     CuspParallel { cusp_is_first: bool },
     CuspPair,
@@ -1683,6 +1684,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     RegionCarrierPairContext::Bezier(_)
                     | RegionCarrierPairContext::BezierSelf
                     | RegionCarrierPairContext::AlgebraicChordPair
+                    | RegionCarrierPairContext::CuspChord { .. }
                     | RegionCarrierPairContext::ParallelRational { .. }
                     | RegionCarrierPairContext::CuspRational { .. }
                     | RegionCarrierPairContext::CuspParallel { .. }
@@ -1763,6 +1765,62 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     contacts,
                     overlaps,
                     blockers,
+                })
+            }
+            RegionCarrierPairContext::CuspChord { cusp_is_first } => {
+                #[cfg(feature = "predicates")]
+                {
+                    let (cusp, chord, chord_index) = if *cusp_is_first {
+                        (
+                            first.geometry.algebraic_cusp(),
+                            match &second.geometry {
+                                RegionCarrierGeometry::AlgebraicChord(chord) => chord,
+                                _ => unreachable!("cusp/chord dispatch retained its chord"),
+                            },
+                            pair.second_carrier_index,
+                        )
+                    } else {
+                        (
+                            second.geometry.algebraic_cusp(),
+                            match &first.geometry {
+                                RegionCarrierGeometry::AlgebraicChord(chord) => chord,
+                                _ => unreachable!("chord/cusp dispatch retained its chord"),
+                            },
+                            pair.first_carrier_index,
+                        )
+                    };
+                    if self.authored_carriers_are_adjacent(pair) {
+                        let certificate = cusp
+                            .certified_adjacent_axis_chord_is_endpoint_only(
+                                chord,
+                                &self.data.policy,
+                            )
+                            .map_err(|cause| self.invalid(chord_index, cause))?;
+                        match certificate {
+                            Classification::Decided(true) => {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-circle-chord-pair",
+                                    "adjacent-tangent-endpoint-only",
+                                );
+                                return Ok(RegionPairResult::empty());
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps: Vec::new(),
+                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                                });
+                            }
+                        }
+                    }
+                }
+                Ok(RegionPairResult {
+                    contacts: Vec::new(),
+                    overlaps: Vec::new(),
+                    blockers: vec![RegionPairBlocker::Uncertain(UncertaintyReason::Unsupported)],
                 })
             }
             RegionCarrierPairContext::AlgebraicChordPair => {
@@ -5316,6 +5374,18 @@ fn build_candidate_carrier_pair(
         return Ok(None);
     }
     let context = match (&first_carrier.geometry, &second_carrier.geometry) {
+        (
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+            RegionCarrierGeometry::AlgebraicChord(_),
+        ) => RegionCarrierPairContext::CuspChord {
+            cusp_is_first: true,
+        },
+        (
+            RegionCarrierGeometry::AlgebraicChord(_),
+            RegionCarrierGeometry::AlgebraicCuspSemicircle(_),
+        ) => RegionCarrierPairContext::CuspChord {
+            cusp_is_first: false,
+        },
         (RegionCarrierGeometry::AlgebraicChord(_), _)
         | (_, RegionCarrierGeometry::AlgebraicChord(_)) => {
             RegionCarrierPairContext::AlgebraicChordPair
@@ -10203,8 +10273,12 @@ mod certified_successor_tests {
                     }
                 }
             };
-            let start_parallel = semicircle.start_parallel();
-            let end_parallel = semicircle.end_parallel();
+            let start_parallel = semicircle
+                .start_parallel()
+                .expect("an analytic cusp retains its starting parallel");
+            let end_parallel = semicircle
+                .end_parallel()
+                .expect("an analytic cusp retains its ending parallel");
             let start_fragment = regular_span(&start_parallel);
             let end_fragment = regular_span(&end_parallel);
             let local_point = |parallel: &BezierParallel2| {

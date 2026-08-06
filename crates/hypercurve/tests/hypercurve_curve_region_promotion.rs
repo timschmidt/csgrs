@@ -1663,11 +1663,39 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(collapsed.certainty, CurveCertainty::Certified);
         assert!(collapsed.value.is_empty());
 
-        assert!(matches!(
-            source.offset(distance.clone(), &OffsetCornerStyle2::Round, &policy),
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
-        ));
+        let rounded = source
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("selected-field algebraic round joins must remain exact");
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert_eq!(rounded.value.boundary_loops().len(), 1);
+        assert!(
+            rounded.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        for (point, expected) in [
+            (
+                Point2::new(-q(1, 20), -q(1, 20)),
+                RegionPointLocation::Inside,
+            ),
+            (
+                Point2::new(-q(9, 100), -q(9, 100)),
+                RegionPointLocation::Outside,
+            ),
+            (
+                Point2::new(Real::zero(), -distance.clone()),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(rounded.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected)
+            );
+        }
     }
 }
 

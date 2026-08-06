@@ -2049,14 +2049,19 @@ fn retained_fragment_endpoint_evidence(
                 algebraic_cusp_source: None,
             })
         }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => Ok(RetainedEndpointEvidence {
-            point: fragment.endpoint_exact_point(start_endpoint, policy)?,
-            retained_point: None,
-            algebraic: None,
-            source: None,
-            analytic_source: fragment.endpoint_analytic_source(start_endpoint),
-            algebraic_cusp_source: Some((fragment.clone(), start_endpoint)),
-        }),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            let retained_point = fragment
+                .endpoint_point_image(start_endpoint, policy)?
+                .map(crate::RationalBezierIntersectionPointEvidence2::Algebraic);
+            Ok(RetainedEndpointEvidence {
+                point: fragment.endpoint_exact_point(start_endpoint, policy)?,
+                retained_point,
+                algebraic: None,
+                source: None,
+                analytic_source: fragment.endpoint_analytic_source(start_endpoint),
+                algebraic_cusp_source: Some((fragment.clone(), start_endpoint)),
+            })
+        }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
             "retained Bezier region boundary loops must not contain unresolved carriers".into(),
         )),
@@ -2520,53 +2525,101 @@ fn append_exact_axis_aligned_algebraic_round_join(
     sweep_kind: crate::arc_bezier::ArcSweepKind,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let (Some(start), Some(end), Some(center)) = (
-        previous.offset_end.as_exact(),
-        next.offset_start.as_exact(),
-        previous.source.end().as_exact(),
-    ) else {
-        // A round join centered in a selected endpoint field requires a
-        // retained algebraic circular-arc carrier. Do not demote it to a
-        // represented approximation or a chord.
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
     let clockwise = match real_sign(distance, policy) {
         Some(RealSign::Positive) => true,
         Some(RealSign::Negative) => false,
         Some(RealSign::Zero) => return Ok(Classification::Decided(())),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
-    let radius_squared = distance * distance;
-    let arc = CircularArc2::new_with_certified_radius_and_sweep(
-        start.clone(),
-        end.clone(),
-        center.clone(),
-        radius_squared.clone(),
+
+    if let (Some(start), Some(end), Some(center)) = (
+        previous.offset_end.as_exact(),
+        next.offset_start.as_exact(),
+        previous.source.end().as_exact(),
+    ) {
+        let radius_squared = distance * distance;
+        let arc = CircularArc2::new_with_certified_radius_and_sweep(
+            start.clone(),
+            end.clone(),
+            center.clone(),
+            radius_squared.clone(),
+            clockwise,
+            sweep_kind,
+        );
+        let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+            Ok(Classification::Decided(decomposition)) => decomposition,
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+        };
+        let circular_conic = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+            center: center.clone(),
+            radius_squared,
+            tangent_contacts: None,
+        });
+        fragments.extend(decomposition.spans().iter().map(|span| {
+            let curve = span.curve().clone().with_retained_conic_provenance(
+                span.curve().retained_implicit_quadratic_conic().cloned(),
+                Some(Arc::clone(&circular_conic)),
+            );
+            materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(curve))
+        }));
+        return Ok(Classification::Decided(()));
+    }
+
+    let semicircle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+        previous.source.end(),
+        previous.direction.left_cardinal_normal(),
+        distance.clone(),
         clockwise,
-        sweep_kind,
-    );
-    let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
-        Ok(Classification::Decided(decomposition)) => decomposition,
-        Ok(Classification::Uncertain(reason)) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
-        Err(ExactCurveError::Blocked(blocker)) => {
-            return Ok(Classification::Uncertain(blocker.reason()));
+        policy,
+    )? {
+        Classification::Decided(Some(semicircle)) => semicircle,
+        Classification::Decided(None) => return Ok(Classification::Decided(())),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_parameter = match sweep_kind {
+        crate::arc_bezier::ArcSweepKind::Minor => (Real::one() / Real::from(2_i8))?,
+        crate::arc_bezier::ArcSweepKind::Semicircle => Real::one(),
+        crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle => {
+            return Err(CurveError::Topology(
+                "axis-aligned round join requested more than one semicircle".into(),
+            ));
         }
     };
-    let circular_conic = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-        center: center.clone(),
-        radius_squared,
-        tangent_contacts: None,
-    });
-    fragments.extend(decomposition.spans().iter().map(|span| {
-        let curve = span.curve().clone().with_retained_conic_provenance(
-            span.curve().retained_implicit_quadratic_conic().cloned(),
-            Some(Arc::clone(&circular_conic)),
-        );
-        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(curve))
-    }));
+    let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+        semicircle,
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(end_parameter),
+        false,
+        policy,
+    )? {
+        Classification::Decided(fragment) => fragment,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    for (at_start, expected) in [(true, &previous.offset_end), (false, &next.offset_start)] {
+        let Some(point) = fragment.endpoint_point_image(at_start, policy)? else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        match crate::RationalBezierIntersectionPointEvidence2::Algebraic(point)
+            .same_point(expected, policy)
+        {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Err(CurveError::Topology(
+                    "selected algebraic round join missed its certified endpoint".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment));
     Ok(Classification::Decided(()))
 }
 

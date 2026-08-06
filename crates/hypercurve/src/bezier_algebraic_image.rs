@@ -626,15 +626,28 @@ impl RationalBezierAlgebraicPointImage2 {
     }
 
     /// Returns the exact x numerator, y numerator, and shared denominator for
-    /// a retained Real-coefficient rational expression.
+    /// this selected-parameter rational expression.
+    ///
+    /// Successfully transformed coordinate images already retain these power
+    /// basis coefficients individually. Reusing them here avoids duplicating
+    /// three polynomial vectors merely to preserve the cheaper same-field
+    /// equality path.
     pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
-        self.data.retained_expression.as_ref().map(|expression| {
-            (
+        if let Some(expression) = self.data.retained_expression.as_ref() {
+            return Some((
                 expression.x_numerator.as_slice(),
                 expression.y_numerator.as_slice(),
                 expression.denominator.as_slice(),
-            )
-        })
+            ));
+        }
+        let (Some(x), Some(y)) = (self.data.x.as_ref(), self.data.y.as_ref()) else {
+            return None;
+        };
+        (x.denominator_coefficients() == y.denominator_coefficients()).then_some((
+            x.numerator_coefficients(),
+            y.numerator_coefficients(),
+            x.denominator_coefficients(),
+        ))
     }
 
     /// Compares two rational point expressions in one selected parameter
@@ -649,21 +662,48 @@ impl RationalBezierAlgebraicPointImage2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<bool>>> {
-        let (Some(first_parameter), Some(second_parameter)) =
-            (self.retained_parameter(), other.retained_parameter())
-        else {
-            return Ok(None);
-        };
-        if first_parameter != second_parameter {
-            match BezierParameter2::Algebraic(first_parameter.clone()).same_value(
-                &BezierParameter2::Algebraic(second_parameter.clone()),
-                policy,
-            )? {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => return Ok(None),
-                Classification::Uncertain(_) => return Ok(None),
+        let first_parameter = self.retained_parameter();
+        let second_parameter = other.retained_parameter();
+        let parameter = match (first_parameter, second_parameter) {
+            (Some(first), Some(second)) => {
+                if first != second {
+                    match BezierParameter2::Algebraic(first.clone())
+                        .same_value(&BezierParameter2::Algebraic(second.clone()), policy)?
+                    {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) | Classification::Uncertain(_) => {
+                            return Ok(None);
+                        }
+                    }
+                }
+                first
             }
-        }
+            (Some(first), None) => {
+                let representation = parameter_representation(first, policy);
+                if crate::bezier_arrangement::represented_roots_equal(
+                    &representation,
+                    &other.data.parameter,
+                    policy,
+                ) != Some(true)
+                {
+                    return Ok(None);
+                }
+                first
+            }
+            (None, Some(second)) => {
+                let representation = parameter_representation(second, policy);
+                if crate::bezier_arrangement::represented_roots_equal(
+                    &self.data.parameter,
+                    &representation,
+                    policy,
+                ) != Some(true)
+                {
+                    return Ok(None);
+                }
+                second
+            }
+            (None, None) => return Ok(None),
+        };
         let (
             Some((first_x, first_y, first_denominator)),
             Some((second_x, second_y, second_denominator)),
@@ -674,7 +714,7 @@ impl RationalBezierAlgebraicPointImage2 {
         else {
             return Ok(None);
         };
-        let parameter = BezierParameter2::Algebraic(first_parameter.clone());
+        let parameter = BezierParameter2::Algebraic(parameter.clone());
         for (first, second) in [(first_x, second_x), (first_y, second_y)] {
             let first_length = first
                 .len()
