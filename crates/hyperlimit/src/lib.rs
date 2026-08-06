@@ -86,10 +86,11 @@ pub use geometry::{
 };
 pub use orient::{
     Circle2Polynomial, Incircle2Evidence, Insphere3Evidence, LiftedPolynomialFacts,
-    Line2Orientation, Point2, Point3, PredicateFacts, Sphere3Polynomial, classify_point_line,
-    classify_point_line_with_orientation, incircle2, incircle2_evidence, incircle2_with_evidence,
-    insphere3, insphere3_evidence, insphere3_with_evidence, line2_orientation,
-    line2_orientation_with_facts, orient2, orient3,
+    Line2Orientation, Line2OrientationQuery, Point2, Point3, PredicateFacts, Sphere3Polynomial,
+    classify_point_line, classify_point_line_with_orientation,
+    classify_point_line_with_orientation_and_query, incircle2, incircle2_evidence,
+    incircle2_with_evidence, insphere3, insphere3_evidence, insphere3_with_evidence,
+    line2_orientation, line2_orientation_query, line2_orientation_with_facts, orient2, orient3,
 };
 pub use plane::{
     OrientedPlane3Evidence, Plane3, Plane3Evidence, PlaneAabbReport,
@@ -209,6 +210,7 @@ pub use predicates::ring::{
 };
 pub use predicates::segment::{
     classify_point_segment_with_orientation_and_policy as classify_point_segment_with_orientation,
+    classify_point_segment_with_orientation_and_query_and_policy as classify_point_segment_with_orientation_and_query,
     classify_point_segment_with_policy as classify_point_segment,
     classify_point_segment_with_policy_and_facts as classify_point_segment_with_facts,
     classify_point_segment3_with_policy as classify_point_segment3,
@@ -217,6 +219,7 @@ pub use predicates::segment::{
     classify_segment3_intersection_with_policy as classify_segment3_intersection,
     construct_line_intersection_point,
     point_on_segment_with_orientation_and_policy as point_on_segment_with_orientation,
+    point_on_segment_with_orientation_and_query_and_policy as point_on_segment_with_orientation_and_query,
     point_on_segment_with_policy as point_on_segment,
     point_on_segment_with_policy_and_facts as point_on_segment_with_facts,
     point_on_segment3_with_policy as point_on_segment3,

@@ -11,7 +11,8 @@ use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{
-    Line2Orientation, orient2d_with_orientation_and_policy, orient2d_with_policy,
+    Line2Orientation, Line2OrientationQuery, orient2d_with_orientation_and_policy,
+    orient2d_with_orientation_and_query_and_policy, orient2d_with_policy,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign_direct};
@@ -69,7 +70,7 @@ pub fn classify_point_segment_with_policy(
     point: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_impl(a, b, point, policy, None, None)
+    classify_point_segment_impl(a, b, point, policy, None, None, None)
 }
 
 /// Classify `point` relative to closed segment `ab` while reusing exact
@@ -86,7 +87,20 @@ pub fn classify_point_segment_with_orientation_and_policy(
     orientation: &Line2Orientation,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_impl(a, b, point, policy, None, Some(orientation))
+    classify_point_segment_impl(a, b, point, policy, None, Some(orientation), None)
+}
+
+/// Classify `point` relative to closed segment `ab` while reusing exact
+/// evidence for both the ordered line and query point.
+pub fn classify_point_segment_with_orientation_and_query_and_policy(
+    a: &Point2,
+    b: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    query: &Line2OrientationQuery,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PointSegmentLocation> {
+    classify_point_segment_impl(a, b, point, policy, None, Some(orientation), Some(query))
 }
 
 /// Classify a point already certified collinear with the segment endpoints.
@@ -121,7 +135,7 @@ pub fn classify_point_segment_with_policy_and_facts(
     segment_facts: Segment2Facts,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_impl(a, b, point, policy, Some(segment_facts), None)
+    classify_point_segment_impl(a, b, point, policy, Some(segment_facts), None, None)
 }
 
 fn classify_point_segment_impl(
@@ -131,6 +145,7 @@ fn classify_point_segment_impl(
     policy: PredicatePolicy,
     segment_facts: Option<Segment2Facts>,
     orientation: Option<&Line2Orientation>,
+    query: Option<&Line2OrientationQuery>,
 ) -> PredicateOutcome<PointSegmentLocation> {
     let mut trace = DecisionTrace::default();
 
@@ -141,9 +156,14 @@ fn classify_point_segment_impl(
         };
     }
 
-    let orientation_outcome = match orientation {
-        Some(orientation) => orient2d_with_orientation_and_policy(a, b, point, orientation, policy),
-        None => orient2d_with_policy(a, b, point, policy),
+    let orientation_outcome = match (orientation, query) {
+        (Some(orientation), Some(query)) => {
+            orient2d_with_orientation_and_query_and_policy(a, b, point, orientation, query, policy)
+        }
+        (Some(orientation), None) => {
+            orient2d_with_orientation_and_policy(a, b, point, orientation, policy)
+        }
+        (None, _) => orient2d_with_policy(a, b, point, policy),
     };
     let orientation = match decided(orientation_outcome, &mut trace) {
         Ok(sign) => sign,
@@ -210,6 +230,33 @@ pub fn point_on_segment_with_orientation_and_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
     match classify_point_segment_with_orientation_and_policy(a, b, point, orientation, policy) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.is_on_segment(), certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+/// Return whether `point` lies on closed segment `ab` while reusing exact
+/// evidence for both the ordered line and query point.
+pub fn point_on_segment_with_orientation_and_query_and_policy(
+    a: &Point2,
+    b: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    query: &Line2OrientationQuery,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    match classify_point_segment_with_orientation_and_query_and_policy(
+        a,
+        b,
+        point,
+        orientation,
+        query,
+        policy,
+    ) {
         PredicateOutcome::Decided {
             value,
             certainty,
@@ -600,10 +647,10 @@ fn classify_known_degenerate_segment_intersection(
             })
         }
         (Some(true), _) => Some(point_segment_intersection_from_classifier(
-            classify_point_segment_impl(c, d, a, policy, second_facts, None),
+            classify_point_segment_impl(c, d, a, policy, second_facts, None, None),
         )),
         (_, Some(true)) => Some(point_segment_intersection_from_classifier(
-            classify_point_segment_impl(a, b, c, policy, first_facts, None),
+            classify_point_segment_impl(a, b, c, policy, first_facts, None, None),
         )),
         _ => None,
     }
@@ -1165,6 +1212,7 @@ mod tests {
 
         for policy in [PredicatePolicy::STRICT, APPROX] {
             for query in &queries {
+                let query_evidence = crate::line2_orientation_query(query);
                 let direct = crate::classify_point_segment(&a, &b, query, policy);
                 let retained = crate::classify_point_segment_with_orientation(
                     &a,
@@ -1175,7 +1223,29 @@ mod tests {
                 );
                 assert_eq!(retained, direct);
                 assert_eq!(
+                    classify_point_segment_with_orientation_and_query_and_policy(
+                        &a,
+                        &b,
+                        query,
+                        &orientation,
+                        &query_evidence,
+                        policy,
+                    ),
+                    direct,
+                );
+                assert_eq!(
                     crate::point_on_segment_with_orientation(&a, &b, query, &orientation, policy,),
+                    crate::point_on_segment(&a, &b, query, policy),
+                );
+                assert_eq!(
+                    point_on_segment_with_orientation_and_query_and_policy(
+                        &a,
+                        &b,
+                        query,
+                        &orientation,
+                        &query_evidence,
+                        policy,
+                    ),
                     crate::point_on_segment(&a, &b, query, policy),
                 );
             }

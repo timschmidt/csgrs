@@ -12,8 +12,9 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 use core::cmp::Ordering;
 use hyperreal::{
-    AffineDet2ExactWordFilter, AffineDet2Filter, Incircle2Filter, Insphere3Filter, Rational,
-    RationalLinearForm4Filter, RationalLinearForm4Query, Real, RealExactSetFacts, ZeroKnowledge,
+    AffineDet2ExactWordFilter, AffineDet2ExactWordQuery, AffineDet2Filter, Incircle2Filter,
+    Insphere3Filter, Rational, RationalLinearForm4Filter, RationalLinearForm4Query, Real,
+    RealExactSetFacts, ZeroKnowledge,
 };
 
 /// Orientation of three 2D points with an explicit escalation policy.
@@ -487,6 +488,16 @@ pub struct Line2Orientation {
     exact_word_filter: Option<AffineDet2ExactWordFilter>,
 }
 
+/// Reusable exact-word representation of one 2D line-orientation query.
+///
+/// The carrier only schedules a checked exact filter. Unsupported points keep
+/// an empty schedule and enter the same arbitrary-precision/refinement cascade
+/// when queried.
+#[derive(Clone, Copy, Debug)]
+pub struct Line2OrientationQuery {
+    exact_word: Option<AffineDet2ExactWordQuery>,
+}
+
 impl Line2Orientation {
     /// Return fixed-coordinate scheduling facts for this line.
     pub const fn facts(&self) -> PredicateFacts {
@@ -497,6 +508,13 @@ impl Line2Orientation {
 /// Derive reusable exact-predicate evidence for oriented line `from -> to`.
 pub fn line2_orientation(from: &Point2, to: &Point2) -> Line2Orientation {
     line2_orientation_with_facts(from, to, PredicateFacts::line2(from, to))
+}
+
+/// Derive reusable exact-word query evidence for one point.
+pub fn line2_orientation_query(point: &Point2) -> Line2OrientationQuery {
+    Line2OrientationQuery {
+        exact_word: AffineDet2ExactWordQuery::from_reals([&point.x, &point.y]),
+    }
 }
 
 /// Derive line-orientation evidence from already-collected fixed-input facts.
@@ -532,11 +550,53 @@ pub fn classify_point_line_with_orientation_and_policy(
     )
 }
 
+/// Classify a point using retained evidence for both the fixed line and query.
+///
+/// `orientation` and `query` must have been derived from the same ordered line
+/// endpoints and query point passed here. An unavailable or inconclusive query
+/// filter enters the same complete exact/refinement cascade as
+/// [`classify_point_line_with_orientation_and_policy`].
+pub fn classify_point_line_with_orientation_and_query_and_policy(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    query: &Line2OrientationQuery,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<LineSide> {
+    map_outcome(
+        orient2d_with_orientation_and_query_and_policy(from, to, point, orientation, query, policy),
+        LineSide::from,
+    )
+}
+
 pub(crate) fn orient2d_with_orientation_and_policy(
     from: &Point2,
     to: &Point2,
     point: &Point2,
     orientation: &Line2Orientation,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    orient2d_with_retained_evidence(from, to, point, orientation, None, policy)
+}
+
+pub(crate) fn orient2d_with_orientation_and_query_and_policy(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    query: &Line2OrientationQuery,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    orient2d_with_retained_evidence(from, to, point, orientation, Some(query), policy)
+}
+
+fn orient2d_with_retained_evidence(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    query: Option<&Line2OrientationQuery>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
     if let Some(sign) = orientation
@@ -555,7 +615,13 @@ pub(crate) fn orient2d_with_orientation_and_policy(
         );
     }
     if let Some(filter) = orientation.exact_word_filter
-        && let Some(sign) = filter.sign([&point.x, &point.y])
+        && let Some(sign) = match query {
+            Some(query) => query
+                .exact_word
+                .as_ref()
+                .and_then(|query| filter.sign_query(query)),
+            None => filter.sign([&point.x, &point.y]),
+        }
     {
         crate::trace_dispatch!(
             "hyperlimit",
