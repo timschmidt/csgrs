@@ -842,25 +842,40 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         }
 
         if runner.group_enabled(reentry_name) {
-            let exact_intersection = exact_first
-                .boolean_regions(&exact_second, &policy)
+            let reentry_distance =
+                (Real::one() / Real::from(20_u8)).expect("exact re-entry distance");
+            let reentry_first = hypercurve
+                .offset(reentry_distance, &round, &policy)
+                .expect("first re-entry round offset completes")
+                .into_value();
+            let reentry_second = reentry_first
+                .transform_similarity(&translation, &policy)
+                .expect("second re-entry round region translation completes")
+                .into_value();
+            let exact_intersection = reentry_first
+                .boolean_regions(&reentry_second, &policy)
                 .expect("first selected round Boolean batch completes")
                 .into_value()
                 .intersection()
                 .clone();
-            let exact_third = exact_second
+            let exact_third = reentry_second
                 .transform_similarity(&translation, &policy)
                 .expect("third selected round region translation completes")
                 .into_value();
             let reentry_complete = exact_intersection
                 .boolean_regions(&exact_third, &policy)
                 .is_ok();
+            let mut cavalier_reentry_offset = cavalier.parallel_offset(-0.05);
+            assert_eq!(cavalier_reentry_offset.len(), 1);
+            let cavalier_reentry_first = cavalier_reentry_offset.pop().unwrap();
+            let mut cavalier_reentry_second = cavalier_reentry_first.clone();
+            cavalier_reentry_second.translate_mut(0.05, 0.025);
             let cavalier_intersection_result =
-                cavalier_first.boolean(&cavalier_second, CavalierBooleanOp::And);
+                cavalier_reentry_first.boolean(&cavalier_reentry_second, CavalierBooleanOp::And);
             assert_eq!(cavalier_intersection_result.pos_plines.len(), 1);
             assert!(cavalier_intersection_result.neg_plines.is_empty());
             let cavalier_intersection = cavalier_intersection_result.pos_plines[0].pline.clone();
-            let mut cavalier_third = cavalier_second.clone();
+            let mut cavalier_third = cavalier_reentry_second.clone();
             cavalier_third.translate_mut(0.05, 0.025);
 
             runner.measure(
