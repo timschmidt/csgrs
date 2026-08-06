@@ -422,6 +422,10 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalParameterMap2 {
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+    /// Stable exact carrier identity for comparisons against contacts replayed
+    /// through a correlated retained chord.
+    #[cfg(feature = "predicates")]
+    semicircle: BezierAlgebraicCuspSemicircle2,
     curve: RationalBezier2,
     cusp_parameter: BezierParameter2,
     incidence: BivariatePolynomial,
@@ -5856,6 +5860,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             Some(BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                    #[cfg(feature = "predicates")]
+                    semicircle: self.clone(),
                     curve: other.clone(),
                     cusp_parameter,
                     incidence,
@@ -6017,6 +6023,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
         let parameter_map = BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
+                #[cfg(feature = "predicates")]
+                semicircle: self.clone(),
                 curve: other.clone(),
                 cusp_parameter: cusp_parameter.clone(),
                 incidence: selected_half_plane.clone(),
@@ -8212,6 +8220,68 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
     }
 
+    #[cfg(feature = "predicates")]
+    fn correlated_chord_rational_same_value(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        let (
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(first),
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(second),
+        ) = (self, other)
+        else {
+            return Ok(None);
+        };
+        let (rational_map, rational_contact, chord_map, chord_contact) =
+            match (first.as_ref(), second.as_ref()) {
+                (
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact },
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                        map: chord_map,
+                        contact: chord_contact,
+                    },
+                ) => (map, contact, chord_map, chord_contact),
+                (
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                        map: chord_map,
+                        contact: chord_contact,
+                    },
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact },
+                ) => (map, contact, chord_map, chord_contact),
+                _ => return Ok(None),
+            };
+        // These contacts were produced by different pair maps, so pointer
+        // equality of their mapped parameters cannot prove equality. Replay
+        // the chord's original exact branch predicate against the rational
+        // contact point instead of trying to separate equal root intervals.
+        if rational_map.data.semicircle != chord_map.data.semicircle {
+            return Ok(None);
+        }
+        let point = match rational_point_evidence_at_parameter(
+            &rational_map.data.curve,
+            &rational_contact.other_parameter,
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        Ok(Some(
+            chord_map
+                .data
+                .semicircle
+                .axis_chord_contact_minus_point_sign(
+                    &point,
+                    chord_map.data.direction,
+                    chord_contact.branch,
+                    policy,
+                )?
+                .map(|sign| sign == RealSign::Zero),
+        ))
+    }
+
     pub(crate) fn order_to_real(
         &self,
         parameter: &Real,
@@ -8312,6 +8382,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         self.validate_policy(policy)?;
         other.validate_policy(policy)?;
         if self.shares_exact_evidence(other) {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        #[cfg(feature = "predicates")]
+        if let Some(Classification::Decided(true)) =
+            self.correlated_chord_rational_same_value(other, policy)?
+        {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         if let Self::Exact(parameter) = other {
@@ -17171,6 +17247,27 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     pub(crate) fn is_reversed(&self) -> bool {
         self.data.reversed
+    }
+
+    /// Returns whether this traversal endpoint and one retained circle/chord
+    /// point are the two carriers created from the same mapped contact.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn shares_endpoint_point_evidence(
+        &self,
+        start_endpoint: bool,
+        point: &BezierAlgebraicCuspChordPoint2,
+    ) -> bool {
+        let source_start = start_endpoint != self.data.reversed;
+        let parameter = if source_start {
+            &self.data.start
+        } else {
+            &self.data.end
+        };
+        matches!(
+            parameter,
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                if Arc::ptr_eq(data, &point.data)
+        )
     }
 
     pub(crate) fn reversed(&self) -> Self {

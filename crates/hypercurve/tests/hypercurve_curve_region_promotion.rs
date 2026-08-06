@@ -2106,6 +2106,166 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn exact_support_cutter_reenters_correlated_chord_collinearly() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = source
+            .offset(q(1, 20), &OffsetCornerStyle2::Round, &policy)
+            .unwrap()
+            .into_value();
+        let wide = source
+            .transform_affine(
+                &Real::from(4),
+                &Real::zero(),
+                &Real::zero(),
+                &q(7, 10),
+                &q(1, 10),
+                &q(3, 10),
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        let cutter = wide
+            .offset(
+                q(1, 40),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(2),
+                },
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        let first = rounded.boolean_regions(&cutter, &policy).unwrap();
+        assert_eq!(first.certainty, CurveCertainty::Certified);
+        let first = first.into_value().intersection().clone();
+        let fragments = first.boundary_loops()[0].fragments();
+        let retained_index = fragments
+            .iter()
+            .position(|fragment| {
+                matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicChord(chord)
+                        if matches!(
+                            chord.start(),
+                            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                        )
+                )
+            })
+            .expect("the exact support must retain its selected-circle contact");
+        let BezierSplitFragment2::AlgebraicChord(retained) = &fragments[retained_index] else {
+            unreachable!("the retained fragment was selected as a chord")
+        };
+        let cusp_index = (retained_index + fragments.len() - 1) % fragments.len();
+        let cusp = match &fragments[cusp_index] {
+            fragment @ BezierSplitFragment2::AlgebraicCuspSemicircle(_) => fragment.clone(),
+            _ => panic!("the correlated chord must retain its adjacent selected circle"),
+        };
+        let before_cusp_index = (cusp_index + fragments.len() - 1) % fragments.len();
+        let (preceding, closure_end) = match &fragments[before_cusp_index] {
+            BezierSplitFragment2::AlgebraicChord(chord) => (chord.clone(), chord.start().clone()),
+            _ => panic!("the selected circle must retain its preceding endpoint evidence"),
+        };
+        let after_retained_index = (retained_index + 1) % fragments.len();
+        let (after_retained, closure_start) = match &fragments[after_retained_index] {
+            fragment @ BezierSplitFragment2::Materialized { curve, .. } => (
+                fragment.clone(),
+                RationalBezierIntersectionPointEvidence2::Exact(decided(
+                    curve.point_at(&Real::one(), &policy),
+                )),
+            ),
+            _ => panic!("the exact-support chord must retain its exact vertical neighbor"),
+        };
+        let closure = |start, end| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
+            ))
+        };
+        let retained_boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::AlgebraicChord(retained.clone()),
+                after_retained,
+                closure(closure_start, closure_end),
+                BezierSplitFragment2::AlgebraicChord(preceding),
+                cusp,
+            ],
+            &policy,
+        )
+        .unwrap();
+        let retained_region = CurveRegion2::try_new_with_loop_topology(
+            vec![retained_boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap();
+
+        let replay_points = [
+            Point2::new(-Real::one(), Real::zero()),
+            Point2::new(Real::one(), Real::zero()),
+            Point2::new(Real::one(), q(41, 40)),
+            Point2::new(-Real::one(), q(41, 40)),
+        ];
+        let replay_clip = CurveRegion2::try_from_native_material_contours(
+            vec![
+                Contour2::try_new(
+                    (0..replay_points.len())
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    replay_points[index].clone(),
+                                    replay_points[(index + 1) % replay_points.len()].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let full_replay_evidence = first
+            .intersect_region(&replay_clip, &policy)
+            .expect("the complete retained intersection must replay the exact support");
+        assert_eq!(full_replay_evidence.certainty, CurveCertainty::Certified);
+        assert!(full_replay_evidence.value.is_complete());
+        assert_eq!(full_replay_evidence.value.overlaps().len(), 1);
+        let replay_evidence = retained_region
+            .intersect_region(&replay_clip, &policy)
+            .expect("the retained correlated chord must overlap its exact support line");
+        assert_eq!(replay_evidence.certainty, CurveCertainty::Certified);
+        let replay_blockers = replay_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().fragment_index(),
+                    blocker.first().family(),
+                    blocker.second().fragment_index(),
+                    blocker.second().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(replay_evidence.value.is_complete(), "{replay_blockers:?}");
+        assert_eq!(replay_evidence.value.overlaps().len(), 1);
+
+        let replay = retained_region
+            .boolean_regions(&replay_clip, &policy)
+            .expect("the retained correlated overlap must enter all four later Booleans");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert!(!replay.value.union().is_empty());
+        assert!(!replay.value.intersection().is_empty());
+        assert!(replay.value.difference().is_empty());
+        assert!(!replay.value.xor().is_empty());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
     let distance = q(1, 20);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

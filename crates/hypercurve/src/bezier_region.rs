@@ -2127,6 +2127,29 @@ fn retained_endpoint_equality(
         }
     }
 
+    #[cfg(feature = "predicates")]
+    {
+        let cusp_chord_matches =
+            |cusp: &Option<(crate::BezierAlgebraicCuspSemicircleFragment2, bool)>,
+             point: &Option<crate::RationalBezierIntersectionPointEvidence2>| {
+                let (
+                    Some((cusp, start_endpoint)),
+                    Some(crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(
+                        point,
+                    )),
+                ) = (cusp, point)
+                else {
+                    return false;
+                };
+                cusp.shares_endpoint_point_evidence(*start_endpoint, point)
+            };
+        if cusp_chord_matches(&left.algebraic_cusp_source, &right.retained_point)
+            || cusp_chord_matches(&right.algebraic_cusp_source, &left.retained_point)
+        {
+            return RetainedEndpointEquality::Equal;
+        }
+    }
+
     if let (Some(left), Some(right)) = (&left.point, &right.point) {
         return match is_zero(&left.distance_squared(right), policy) {
             Some(true) => RetainedEndpointEquality::Equal,
