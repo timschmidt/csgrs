@@ -342,6 +342,7 @@ enum ConstraintLocation {
 #[derive(Clone, Copy)]
 struct ConstraintCrossing {
     edge: EdgeKey,
+    edge_sides: [Sign; 2],
     before: usize,
     after: usize,
 }
@@ -420,15 +421,11 @@ fn locate_constraint_from_endpoint(
                 }
                 continue;
             }
-            if !edge_properly_crosses_constraint(
-                kernel,
-                points,
-                edge,
-                constraint,
-                approximate_points,
-            )? {
+            let Some(edge_sides) =
+                edge_proper_crossing_sides(kernel, points, edge, constraint, approximate_points)?
+            else {
                 continue;
-            }
+            };
             if crossing.is_some() {
                 return Err(Error::InvalidInput {
                     reason: "constraint leaves its endpoint through multiple triangle edges",
@@ -441,6 +438,7 @@ fn locate_constraint_from_endpoint(
             };
             crossing = Some(ConstraintLocation::FirstCrossing(ConstraintCrossing {
                 edge,
+                edge_sides,
                 before: triangle_index,
                 after,
             }));
@@ -468,6 +466,7 @@ fn recover_constraint_cavity(
     } = recovery;
     let ConstraintCrossing {
         edge: first_edge,
+        edge_sides: first_edge_sides,
         before: first_before,
         after: first_after,
     } = first;
@@ -484,13 +483,11 @@ fn recover_constraint_cavity(
     // they protect or searching the global cavity boundary afterward.
     let mut left_chain = vec![constraint.from];
     let mut right_chain = vec![constraint.from];
-    for vertex in [first_edge.from, first_edge.to] {
-        match predicates::orient2(
-            kernel,
-            &points[constraint.from],
-            &points[constraint.to],
-            &points[vertex],
-        )? {
+    for (vertex, side) in [first_edge.from, first_edge.to]
+        .into_iter()
+        .zip(first_edge_sides)
+    {
+        match side {
             Sign::Positive => left_chain.push(vertex),
             Sign::Negative => right_chain.push(vertex),
             Sign::Zero => {
@@ -511,24 +508,21 @@ fn recover_constraint_cavity(
     while !triangles[current].contains(&constraint.to) {
         let mut outgoing = None;
         for edge in triangle_edges(triangles[current]) {
-            if edge == incoming
-                || !edge_properly_crosses_constraint(
-                    kernel,
-                    points,
-                    edge,
-                    constraint,
-                    approximate_points,
-                )?
-            {
+            if edge == incoming {
                 continue;
             }
-            if outgoing.replace(edge).is_some() {
+            let Some(edge_sides) =
+                edge_proper_crossing_sides(kernel, points, edge, constraint, approximate_points)?
+            else {
+                continue;
+            };
+            if outgoing.replace((edge, edge_sides)).is_some() {
                 return Err(Error::InvalidInput {
                     reason: "constraint crosses multiple outgoing edges of one triangle",
                 });
             }
         }
-        let Some(edge) = outgoing else {
+        let Some((edge, edge_sides)) = outgoing else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint corridor ends before its target endpoint",
             });
@@ -550,12 +544,16 @@ fn recover_constraint_cavity(
             .ok_or(Error::InvalidInput {
                 reason: "constraint corridor triangle has no advancing vertex",
             })?;
-        match predicates::orient2(
-            kernel,
-            &points[constraint.from],
-            &points[constraint.to],
-            &points[next_vertex],
-        )? {
+        let next_side = if next_vertex == edge.from {
+            edge_sides[0]
+        } else if next_vertex == edge.to {
+            edge_sides[1]
+        } else {
+            return Err(Error::InvalidInput {
+                reason: "constraint corridor advancing vertex is absent from its outgoing edge",
+            });
+        };
+        match next_side {
             Sign::Positive => left_chain.push(next_vertex),
             Sign::Negative => right_chain.push(next_vertex),
             Sign::Zero => {
@@ -626,14 +624,11 @@ fn recover_constraint_cavity(
     let direct_is_complete = match &replacement {
         Some(replacement) if replacement.len() == cavity_indices.len() => {
             triangulation_has_edge(replacement, target)
-                && replacement_retains_internal_constraints(
-                    topology,
-                    triangles,
+                && replacement_retains_chain_constraints(
+                    [&left_chain, &right_chain],
                     constrained_edges,
-                    cavity,
-                    cavity_indices.as_slice(),
                     replacement,
-                )?
+                )
         }
         _ => false,
     };
@@ -729,31 +724,22 @@ fn triangulate_cavity_region(
     Ok(replacement)
 }
 
-fn replacement_retains_internal_constraints(
-    topology: &TriangleTopology,
-    triangles: &[Triangle],
+fn replacement_retains_chain_constraints(
+    sides: [&[usize]; 2],
     constrained_edges: &[EdgeKey],
-    cavity: &[bool],
-    cavity_indices: &[usize],
     replacement: &[Triangle],
-) -> Result<bool> {
-    for &triangle_index in cavity_indices {
-        for edge in triangle_edges(triangles[triangle_index]) {
-            if constrained_edges.binary_search(&edge).is_err() {
-                continue;
-            }
-            let Some(neighbor) = topology.neighbor_across(triangles, triangle_index, edge)? else {
-                continue;
-            };
-            if triangle_index < neighbor
-                && cavity[neighbor]
+) -> bool {
+    for side in sides {
+        for pair in side.windows(2) {
+            let edge = EdgeKey::new(pair[0], pair[1]);
+            if constrained_edges.binary_search(&edge).is_ok()
                 && !triangulation_has_edge(replacement, edge)
             {
-                return Ok(false);
+                return false;
             }
         }
     }
-    Ok(true)
+    true
 }
 
 fn collect_cavity_boundary(
@@ -938,15 +924,15 @@ fn triangulate_cavity_side(
     Ok(triangles)
 }
 
-fn edge_properly_crosses_constraint(
+fn edge_proper_crossing_sides(
     kernel: &ExactKernel,
     points: &[Point2],
     edge: EdgeKey,
     constraint: Constraint,
     approximate_points: Option<&[[f64; 2]]>,
-) -> Result<bool> {
+) -> Result<Option<[Sign; 2]>> {
     if edge.contains(constraint.from) || edge.contains(constraint.to) {
-        return Ok(false);
+        return Ok(None);
     }
     if approximate_points.is_some_and(|points| {
         !crate::cdt::approximate_constraint_bounds_overlap(
@@ -955,16 +941,40 @@ fn edge_properly_crosses_constraint(
             Constraint::new(edge.from, edge.to),
         )
     }) {
-        return Ok(false);
+        return Ok(None);
     }
-    Ok(predicates::segment_intersection(
-        kernel,
-        &points[constraint.from],
-        &points[constraint.to],
-        &points[edge.from],
-        &points[edge.to],
-    )?
-    .is_proper_crossing())
+    let edge_sides = [
+        predicates::orient2(
+            kernel,
+            &points[constraint.from],
+            &points[constraint.to],
+            &points[edge.from],
+        )?,
+        predicates::orient2(
+            kernel,
+            &points[constraint.from],
+            &points[constraint.to],
+            &points[edge.to],
+        )?,
+    ];
+    if !signs_strictly_differ(edge_sides[0], edge_sides[1]) {
+        return Ok(None);
+    }
+    let constraint_sides = [
+        predicates::orient2(
+            kernel,
+            &points[edge.from],
+            &points[edge.to],
+            &points[constraint.from],
+        )?,
+        predicates::orient2(
+            kernel,
+            &points[edge.from],
+            &points[edge.to],
+            &points[constraint.to],
+        )?,
+    ];
+    Ok(signs_strictly_differ(constraint_sides[0], constraint_sides[1]).then_some(edge_sides))
 }
 
 fn legalize_unconstrained_edges(
