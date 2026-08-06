@@ -1,0 +1,171 @@
+schema_version = 1
+date = "2026-08-05"
+status = "measured boundary; every competitive gap remains open"
+hypertri_implementation_commit = "72ddcdc"
+hypermesh_implementation_commit = "4aa51efc"
+cgal_version = "6.0.3"
+cpu = 11
+production_code_changed = false
+hypercurve_hypersolve_excluded = true
+
+[algorithm_guard]
+one_boolean_engine = true
+fixture_dispatch = false
+size_or_count_dispatch = false
+operation_dispatch = false
+result_dispatch = false
+policy_name_dispatch = false
+competitor_dispatch = false
+compatibility_shim = false
+weakened_validation = false
+
+[policy]
+strict_exact_only = true
+approximate_512_terminal_owned_by_hyperlimit = true
+aggregate_certainty_preserved = true
+all_refresh_rows_certainty = "Certified"
+topology_path_identical = true
+approximate_terminal_consumed = false
+
+[[input]]
+name = "crossing_octahedra-left.off"
+sha256 = "eb772e8f3db1a80a8f8a5981434ae6047b3222d58c9a8a42651ae640eb4ad876"
+
+[[input]]
+name = "crossing_octahedra-right.off"
+sha256 = "351fe5898ac5836dc2dcc96a25f0ec6a968ec246f68e81d749e03875741636d0"
+
+[[input]]
+name = "affine_boxes-left.off"
+sha256 = "58af4f44315585af2b3d2828c83bd15e9800a08e7a3d47b6b0c5089cb8827ca6"
+
+[[input]]
+name = "affine_boxes-right.off"
+sha256 = "60b5235146a8f993a0a07dcf77d6238a94dafae247746aae6b56ef54df393707"
+
+[[output]]
+fixture = "crossing_octahedra"
+hypermesh_shared_vertices = 24
+triangles = [44, 20, 32, 32]
+exact_six_volumes = [351, 81, 135, 135]
+cgal_volumes = [58.5, 13.5, 22.5, 22.5]
+cgal_outputs_valid = true
+cgal_outputs_closed = true
+cgal_outputs_structurally_valid = true
+
+[[output]]
+fixture = "affine_boxes"
+hypermesh_shared_vertices = 24
+triangles = [44, 28, 20, 20]
+exact_six_volumes = [576, 192, 192, 192]
+cgal_volumes = [96.0, 32.0, 32.0, 32.0]
+cgal_outputs_valid = true
+cgal_outputs_closed = true
+cgal_outputs_structurally_valid = true
+
+[fresh_protocol]
+hypermesh_processes_per_policy = 63
+hypermesh_timed_iterations_per_process = 1
+cgal_internal_repetitions_per_copy_mode = 63
+cgal_copy_modes = ["outside", "inside"]
+cpu_pinned = true
+frequency_sensitive = true
+algorithmic_regression_claimed = false
+
+[[fresh]]
+fixture = "crossing_octahedra"
+cgal_outside_median_ns = 120282
+cgal_outside_min_ns = 113282
+cgal_outside_max_ns = 251792
+cgal_inside_median_ns = 128711
+cgal_inside_min_ns = 113042
+cgal_inside_max_ns = 350826
+hypermesh_strict_median_ns = 558352
+hypermesh_strict_min_ns = 439740
+hypermesh_strict_max_ns = 840663
+hypermesh_strict_ratio_to_cgal_outside = 4.642024576
+hypermesh_approximate_512_median_ns = 491436
+hypermesh_approximate_512_min_ns = 443219
+hypermesh_approximate_512_max_ns = 687693
+hypermesh_approximate_512_ratio_to_cgal_outside = 4.085698608
+gap_open = true
+
+[[fresh]]
+fixture = "affine_boxes"
+cgal_outside_median_ns = 390933
+cgal_outside_min_ns = 372315
+cgal_outside_max_ns = 727200
+cgal_inside_median_ns = 385234
+cgal_inside_min_ns = 370755
+cgal_inside_max_ns = 543283
+hypermesh_strict_median_ns = 1040088
+hypermesh_strict_min_ns = 795886
+hypermesh_strict_max_ns = 1525095
+hypermesh_strict_ratio_to_cgal_outside = 2.660527507
+hypermesh_approximate_512_median_ns = 1039839
+hypermesh_approximate_512_min_ns = 802445
+hypermesh_approximate_512_max_ns = 1533075
+hypermesh_approximate_512_ratio_to_cgal_outside = 2.659890569
+gap_open = true
+
+[reused_protocol]
+paired_trials = 5
+iterations_per_trial = 1000
+cpu_pinned = true
+hypermesh_retained_mesh_context = true
+hypermesh_retained_exact_inputs = true
+cgal_copy_timing = "outside"
+cgal_statistic = "median internal iteration"
+hypermesh_statistic = "aggregate elapsed divided by iterations"
+
+[[reused]]
+fixture = "crossing_octahedra"
+cgal_ns = [119212, 122111, 119832, 119962, 120842]
+hypermesh_strict_ns = [303324, 301388, 298229, 301634, 298973]
+paired_ratios = [2.54441, 2.46815, 2.48873, 2.51441, 2.47408]
+median_paired_ratio = 2.48873
+gap_open = true
+
+[[reused]]
+fixture = "affine_boxes"
+cgal_ns = [375044, 374884, 375954, 375034, 377194]
+hypermesh_strict_ns = [674597, 677483, 677668, 674369, 671085]
+paired_ratios = [1.79871, 1.80718, 1.80253, 1.79815, 1.77915]
+median_paired_ratio = 1.79871
+gap_open = true
+
+[[hypermesh_counter]]
+fixture = "crossing_octahedra"
+iterations = 1000
+instructions = 2916553799
+branches = 495482144
+
+[[hypermesh_counter]]
+fixture = "affine_boxes"
+iterations = 1000
+instructions = 6864519901
+branches = 1175516130
+
+[[advisory_rss]]
+fixture = "crossing_octahedra"
+iterations = 1000
+hypermesh_max_rss_kib = 4476
+cgal_max_rss_kib = 6136
+hypermesh_reduction_percent = 27.053455
+scope_equivalent = false
+competitive_heap_claim = false
+
+[[advisory_rss]]
+fixture = "affine_boxes"
+iterations = 1000
+hypermesh_max_rss_kib = 4528
+cgal_max_rss_kib = 6092
+hypermesh_reduction_percent = 25.673014
+scope_equivalent = false
+competitive_heap_claim = false
+
+[conclusion]
+all_exact_outputs_match = true
+retained_input_reuse_narrows_gap = true
+all_competitive_runtime_gaps_open = true
+next_general_target = "retain and locally update exact topology already proved by point insertion"
