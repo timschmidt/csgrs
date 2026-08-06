@@ -957,22 +957,43 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         }
 
         if runner.group_enabled(shared_chord_collinear_reentry_name) {
+            let wide = hypercurve
+                .transform_affine(
+                    &Real::from(4_u8),
+                    &Real::zero(),
+                    &Real::zero(),
+                    &(Real::from(7_u8) / Real::from(10_u8)).expect("exact wide-cutter y scale"),
+                    &(Real::one() / Real::from(10_u8)).expect("exact wide-cutter x translation"),
+                    &(Real::from(3_u8) / Real::from(10_u8))
+                        .expect("exact wide-cutter y translation"),
+                    &policy,
+                )
+                .expect("exact wide-cutter transform completes")
+                .into_value();
+            let wide_cutter = wide
+                .offset(
+                    (Real::one() / Real::from(40_u8)).expect("exact wide-cutter offset distance"),
+                    &miter,
+                    &policy,
+                )
+                .expect("exact wide-cutter offset completes")
+                .into_value();
             let exact_intersection = rounded
-                .boolean_regions(&cutter, &policy)
-                .expect("shared-chord Boolean batch completes before collinear re-entry")
+                .boolean_regions(&wide_cutter, &policy)
+                .expect("exact-support cutter Boolean completes before collinear re-entry")
                 .into_value()
                 .intersection()
                 .clone();
-            let min_x = -(Real::one() / Real::from(40_u8))
-                .expect("exact shared-chord collinear coordinate");
             let zero = Real::zero();
             let one = Real::one();
-            let two = Real::from(2_u8);
+            let minus_one = -one.clone();
+            let top =
+                (Real::from(41_u8) / Real::from(40_u8)).expect("exact shared-chord top support");
             let collinear_clip_contour = Contour2::from_bulge_vertices(&[
-                BulgeVertex2::new(Point2::new(min_x.clone(), zero.clone()), zero.clone()),
-                BulgeVertex2::new(Point2::new(two.clone(), zero.clone()), zero.clone()),
-                BulgeVertex2::new(Point2::new(two, one.clone()), zero.clone()),
-                BulgeVertex2::new(Point2::new(min_x, one), zero),
+                BulgeVertex2::new(Point2::new(minus_one.clone(), zero.clone()), zero.clone()),
+                BulgeVertex2::new(Point2::new(one.clone(), zero.clone()), zero.clone()),
+                BulgeVertex2::new(Point2::new(one, top.clone()), zero.clone()),
+                BulgeVertex2::new(Point2::new(minus_one, top), zero),
             ])
             .expect("valid exact shared-chord collinear contour");
             let replay_clip = CurveRegion2::try_from_native_material_contours(
@@ -988,13 +1009,25 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .boolean_regions(&replay_clip, &policy)
                 .is_ok();
 
+            let cavalier_wide = cavalier_polyline(
+                &[
+                    [0.1, 0.3],
+                    [4.0 * std::f64::consts::FRAC_1_SQRT_2 + 0.1, 0.3],
+                    [4.0 * std::f64::consts::FRAC_1_SQRT_2 + 0.1, 1.0],
+                    [0.1, 1.0],
+                ],
+                None,
+            );
+            let mut cavalier_wide_cutters = cavalier_wide.parallel_offset(-0.025);
+            assert_eq!(cavalier_wide_cutters.len(), 1);
+            let cavalier_wide_cutter = cavalier_wide_cutters.pop().unwrap();
             let cavalier_intersection_result =
-                cavalier_rounded.boolean(&cavalier_cutter, CavalierBooleanOp::And);
+                cavalier_rounded.boolean(&cavalier_wide_cutter, CavalierBooleanOp::And);
             assert_eq!(cavalier_intersection_result.pos_plines.len(), 1);
             assert!(cavalier_intersection_result.neg_plines.is_empty());
             let cavalier_intersection = cavalier_intersection_result.pos_plines[0].pline.clone();
             let cavalier_replay_clip = cavalier_polyline(
-                &[[-0.025, 0.0], [2.0, 0.0], [2.0, 1.0], [-0.025, 1.0]],
+                &[[-1.0, 0.0], [1.0, 0.0], [1.0, 1.025], [-1.0, 1.025]],
                 None,
             );
 
