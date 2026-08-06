@@ -865,6 +865,12 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             let reentry_complete = exact_intersection
                 .boolean_regions(&exact_third, &policy)
                 .is_ok();
+            let evidence_complete = exact_intersection
+                .intersect_region(&exact_third, &policy)
+                .is_ok_and(|result| result.value.is_complete());
+            let single_intersection_complete = exact_intersection
+                .boolean_region(&exact_third, BooleanOp::Intersection, &policy)
+                .is_ok();
             let mut cavalier_reentry_offset = cavalier.parallel_offset(-0.05);
             assert_eq!(cavalier_reentry_offset.len(), 1);
             let cavalier_reentry_first = cavalier_reentry_offset.pop().unwrap();
@@ -878,6 +884,43 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             let mut cavalier_third = cavalier_reentry_second.clone();
             cavalier_third.translate_mut(0.05, 0.025);
 
+            runner.measure(
+                reentry_name,
+                if evidence_complete {
+                    "hypercurve_exact_evidence"
+                } else {
+                    "hypercurve_rejected_evidence"
+                },
+                || match exact_intersection.intersect_region(&exact_third, &policy) {
+                    Ok(result) => {
+                        result.value.contacts().len()
+                            + result.value.overlaps().len()
+                            + result.value.blockers().len()
+                            + usize::from(result.value.is_complete())
+                    }
+                    Err(_) => 0,
+                },
+            );
+            runner.measure(
+                reentry_name,
+                if single_intersection_complete {
+                    "hypercurve_exact_intersection"
+                } else {
+                    "hypercurve_rejected_intersection"
+                },
+                || {
+                    exact_intersection
+                        .boolean_region(&exact_third, BooleanOp::Intersection, &policy)
+                        .map_or(0, |result| {
+                            result
+                                .value
+                                .boundary_loops()
+                                .iter()
+                                .map(|boundary| boundary.fragments().len())
+                                .sum()
+                        })
+                },
+            );
             runner.measure(
                 reentry_name,
                 if reentry_complete {
