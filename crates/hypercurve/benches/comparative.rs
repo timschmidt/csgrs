@@ -620,7 +620,11 @@ fn benchmark_contour_offset(runner: &Runner) {
 fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
-    if !runner.group_enabled(offset_name) && !runner.group_enabled(boolean_name) {
+    let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
+    if !runner.group_enabled(offset_name)
+        && !runner.group_enabled(boolean_name)
+        && !runner.group_enabled(reentry_name)
+    {
         return;
     }
     let policy = CurveContext::STRICT;
@@ -750,7 +754,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         });
     }
 
-    if runner.group_enabled(boolean_name) {
+    if runner.group_enabled(boolean_name) || runner.group_enabled(reentry_name) {
         let exact_first = hypercurve
             .offset(distance, &round, &policy)
             .expect("exact algebraic round offset completes")
@@ -768,11 +772,6 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             .transform_similarity(&translation, &policy)
             .expect("selected round region translation completes")
             .into_value();
-        let intersection_complete = exact_first
-            .intersect_region(&exact_second, &policy)
-            .expect("selected round intersection evaluates")
-            .into_value()
-            .is_complete();
 
         let mut cavalier_offset = cavalier.parallel_offset(-0.1);
         assert_eq!(cavalier_offset.len(), 1);
@@ -786,54 +785,118 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             CommonBooleanOp::Xor,
         ];
 
-        runner.measure(
-            boolean_name,
+        if runner.group_enabled(boolean_name) {
+            let intersection_complete = exact_first
+                .intersect_region(&exact_second, &policy)
+                .expect("selected round intersection evaluates")
+                .into_value()
+                .is_complete();
+            runner.measure(
+                boolean_name,
+                if intersection_complete {
+                    "hypercurve_exact_intersection"
+                } else {
+                    "hypercurve_rejected_intersection"
+                },
+                || {
+                    let result = exact_first
+                        .intersect_region(&exact_second, &policy)
+                        .expect("selected round intersection evaluates")
+                        .into_value();
+                    result.contacts().len()
+                        + result.overlaps().len()
+                        + result.blockers().len()
+                        + usize::from(result.is_complete())
+                },
+            );
             if intersection_complete {
-                "hypercurve_exact_intersection"
-            } else {
-                "hypercurve_rejected_intersection"
-            },
-            || {
-                let result = exact_first
-                    .intersect_region(&exact_second, &policy)
-                    .expect("selected round intersection evaluates")
-                    .into_value();
-                result.contacts().len()
-                    + result.overlaps().len()
-                    + result.blockers().len()
-                    + usize::from(result.is_complete())
-            },
-        );
-        if intersection_complete {
-            runner.measure(boolean_name, "hypercurve_exact_all_four", || {
-                let result = exact_first
-                    .boolean_regions(&exact_second, &policy)
-                    .expect("selected round Boolean batch completes")
-                    .into_value();
-                [
-                    result.union(),
-                    result.intersection(),
-                    result.difference(),
-                    result.xor(),
-                ]
-                .into_iter()
-                .flat_map(CurveRegion2::boundary_loops)
-                .map(|boundary| boundary.fragments().len())
-                .sum()
+                runner.measure(boolean_name, "hypercurve_exact_all_four", || {
+                    let result = exact_first
+                        .boolean_regions(&exact_second, &policy)
+                        .expect("selected round Boolean batch completes")
+                        .into_value();
+                    [
+                        result.union(),
+                        result.intersection(),
+                        result.difference(),
+                        result.xor(),
+                    ]
+                    .into_iter()
+                    .flat_map(CurveRegion2::boundary_loops)
+                    .map(|boundary| boundary.fragments().len())
+                    .sum()
+                });
+            }
+            runner.measure(boolean_name, "cavalier_f64_four_calls", || {
+                operations
+                    .into_iter()
+                    .map(|operation| {
+                        cavalier_boolean_result_size(
+                            black_box(&cavalier_first),
+                            black_box(&cavalier_second),
+                            operation,
+                        )
+                    })
+                    .sum()
             });
         }
-        runner.measure(boolean_name, "cavalier_f64_four_calls", || {
-            operations
-                .into_iter()
-                .map(|operation| {
-                    cavalier_boolean_result_size(
-                        black_box(&cavalier_first),
-                        black_box(&cavalier_second),
-                        operation,
-                    )
-                })
-                .sum()
-        });
+
+        if runner.group_enabled(reentry_name) {
+            let exact_intersection = exact_first
+                .boolean_regions(&exact_second, &policy)
+                .expect("first selected round Boolean batch completes")
+                .into_value()
+                .intersection()
+                .clone();
+            let exact_third = exact_second
+                .transform_similarity(&translation, &policy)
+                .expect("third selected round region translation completes")
+                .into_value();
+            let reentry_complete = exact_intersection
+                .boolean_regions(&exact_third, &policy)
+                .is_ok();
+            let cavalier_intersection_result =
+                cavalier_first.boolean(&cavalier_second, CavalierBooleanOp::And);
+            assert_eq!(cavalier_intersection_result.pos_plines.len(), 1);
+            assert!(cavalier_intersection_result.neg_plines.is_empty());
+            let cavalier_intersection = cavalier_intersection_result.pos_plines[0].pline.clone();
+            let mut cavalier_third = cavalier_second.clone();
+            cavalier_third.translate_mut(0.05, 0.025);
+
+            runner.measure(
+                reentry_name,
+                if reentry_complete {
+                    "hypercurve_exact_all_four"
+                } else {
+                    "hypercurve_rejected_all_four"
+                },
+                || match exact_intersection.boolean_regions(&exact_third, &policy) {
+                    Ok(result) => [
+                        result.value.union(),
+                        result.value.intersection(),
+                        result.value.difference(),
+                        result.value.xor(),
+                    ]
+                    .into_iter()
+                    .flat_map(CurveRegion2::boundary_loops)
+                    .map(|boundary| boundary.fragments().len())
+                    .sum(),
+                    Err(_) => 0,
+                },
+            );
+            runner.measure(reentry_name, "cavalier_f64_four_calls", || {
+                operations
+                    .into_iter()
+                    .map(|operation| {
+                        cavalier_boolean_result_size(
+                            black_box(&cavalier_intersection),
+                            black_box(&cavalier_third),
+                            operation,
+                        )
+                    })
+                    .sum()
+            });
+        }
     }
 }
 
