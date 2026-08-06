@@ -621,9 +621,11 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
+    let shared_chord_name = "algebraic_round_boolean/shared_chord_circle_order";
     if !runner.group_enabled(offset_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
+        && !runner.group_enabled(shared_chord_name)
     {
         return;
     }
@@ -750,6 +752,114 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .parallel_offset(black_box(-0.1))
                 .iter()
                 .map(PlineSource::vertex_count)
+                .sum()
+        });
+    }
+
+    if runner.group_enabled(shared_chord_name) {
+        let rounded = hypercurve
+            .offset(
+                (Real::one() / Real::from(20_u8)).expect("exact shared-chord radius"),
+                &round,
+                &policy,
+            )
+            .expect("shared-chord round offset completes")
+            .into_value();
+        let tall = hypercurve
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::from(3_u8),
+                &Real::zero(),
+                &Real::from(-1_i8),
+                &policy,
+            )
+            .expect("shared-chord cutter transform completes")
+            .into_value();
+        let cutter = tall
+            .offset(
+                (Real::one() / Real::from(40_u8)).expect("exact shared-chord distance"),
+                &miter,
+                &policy,
+            )
+            .expect("shared-chord cutter offset completes")
+            .into_value();
+        let evidence_complete = rounded
+            .intersect_region(&cutter, &policy)
+            .is_ok_and(|result| result.value.is_complete());
+        let all_four_complete = rounded.boolean_regions(&cutter, &policy).is_ok();
+
+        let mut cavalier_rounded = cavalier.parallel_offset(-0.05);
+        assert_eq!(cavalier_rounded.len(), 1);
+        let cavalier_rounded = cavalier_rounded.pop().unwrap();
+        let cavalier_tall = cavalier_polyline(
+            &[
+                [0.0, -1.0],
+                [std::f64::consts::FRAC_1_SQRT_2, -1.0],
+                [std::f64::consts::FRAC_1_SQRT_2, 2.0],
+                [0.0, 2.0],
+            ],
+            None,
+        );
+        let mut cavalier_cutters = cavalier_tall.parallel_offset(-0.025);
+        assert_eq!(cavalier_cutters.len(), 1);
+        let cavalier_cutter = cavalier_cutters.pop().unwrap();
+        let operations = [
+            CommonBooleanOp::Union,
+            CommonBooleanOp::Intersection,
+            CommonBooleanOp::Difference,
+            CommonBooleanOp::Xor,
+        ];
+
+        runner.measure(
+            shared_chord_name,
+            if evidence_complete {
+                "hypercurve_exact_evidence"
+            } else {
+                "hypercurve_rejected_evidence"
+            },
+            || match rounded.intersect_region(&cutter, &policy) {
+                Ok(result) => {
+                    result.value.contacts().len()
+                        + result.value.overlaps().len()
+                        + result.value.blockers().len()
+                        + usize::from(result.value.is_complete())
+                }
+                Err(_) => 0,
+            },
+        );
+        runner.measure(
+            shared_chord_name,
+            if all_four_complete {
+                "hypercurve_exact_all_four"
+            } else {
+                "hypercurve_rejected_all_four"
+            },
+            || match rounded.boolean_regions(&cutter, &policy) {
+                Ok(result) => [
+                    result.value.union(),
+                    result.value.intersection(),
+                    result.value.difference(),
+                    result.value.xor(),
+                ]
+                .into_iter()
+                .flat_map(CurveRegion2::boundary_loops)
+                .map(|boundary| boundary.fragments().len())
+                .sum(),
+                Err(_) => 0,
+            },
+        );
+        runner.measure(shared_chord_name, "cavalier_f64_four_calls", || {
+            operations
+                .into_iter()
+                .map(|operation| {
+                    cavalier_boolean_result_size(
+                        black_box(&cavalier_rounded),
+                        black_box(&cavalier_cutter),
+                        operation,
+                    )
+                })
                 .sum()
         });
     }
