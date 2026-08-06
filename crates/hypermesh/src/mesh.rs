@@ -1195,10 +1195,6 @@ pub(crate) fn build_polygon_soup_internal(
     let mut polygons: Vec<ConvexPolygon> = Vec::with_capacity(polygon_capacity);
     let mut source_vertex_count = 0_usize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
-        let source_positions = RetainedSourcePositions::shared(mesh.native.map_or_else(
-            || Arc::<[Point3]>::from(mesh.positions),
-            |native| Arc::clone(&native.positions),
-        ));
         let signed_mesh_index =
             isize::try_from(mesh_index).map_err(|_| HypermeshError::CapacityOverflow {
                 operation: "source polygon mesh index",
@@ -1210,16 +1206,21 @@ pub(crate) fn build_polygon_soup_internal(
             || points_require_wide_dyadic_plane_normalization(mesh.positions),
             |native| native.facts.normalizes_wide_dyadic_planes(mesh.positions),
         );
+        let source_usage =
+            validate_source_triangles(decisions, *mesh, mesh_index, !edge_balance_is_certified)?;
         source_vertex_count = source_vertex_count
-            .checked_add(validate_source_triangles(
-                decisions,
-                *mesh,
-                mesh_index,
-                !edge_balance_is_certified,
-            )?)
+            .checked_add(source_usage.referenced_count)
             .ok_or(HypermeshError::CapacityOverflow {
                 operation: "source vertex identity count",
             })?;
+        let source_positions = RetainedSourcePositions::shared_with_predicate_queries(
+            mesh.native.map_or_else(
+                || Arc::<[Point3]>::from(mesh.positions),
+                |native| Arc::clone(&native.positions),
+            ),
+            &source_usage.referenced,
+        )?;
+        drop(source_usage);
         let retained_compact = mesh
             .native
             .and_then(|native| native.facts.source_polygon_planes.get())
@@ -1297,12 +1298,17 @@ pub(crate) fn build_polygon_soup_internal(
     })
 }
 
+struct SourceVertexUsage {
+    referenced: Vec<bool>,
+    referenced_count: usize,
+}
+
 fn validate_source_triangles(
     decisions: &DecisionContext,
     mesh: TriangleMeshRef<'_>,
     mesh_index: usize,
     validate_nondegenerate: bool,
-) -> HypermeshResult<usize> {
+) -> HypermeshResult<SourceVertexUsage> {
     // Source IDs index one dense position owner. Count their referenced subset
     // while validation already has every checked index, so corefinement can
     // size its final identity table without cloning and hashing all IDs first.
@@ -1348,7 +1354,10 @@ fn validate_source_triangles(
             }
         }
     }
-    Ok(referenced_count)
+    Ok(SourceVertexUsage {
+        referenced,
+        referenced_count,
+    })
 }
 
 fn compact_source_polygons(

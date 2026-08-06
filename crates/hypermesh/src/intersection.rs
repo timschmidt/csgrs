@@ -11,7 +11,8 @@ use crate::geometry::{Classification, Plane, compare_real_decision};
 use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
-    Point3PredicateQuery, classify_point_decision, classify_real, exact_rational_points_contradict,
+    Point3PredicateQuery, classify_point_decision, classify_point_with_rational_query_decision,
+    classify_real, exact_rational_points_contradict,
 };
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
@@ -1116,6 +1117,25 @@ pub(crate) fn intersect_polygons_with_vertices(
     .map(|intersection| intersection.into_public(other_polygon_idx))
 }
 
+/// The supplied row must be the materialized vertex cycle of `polygon`, as
+/// required by every retained-vertex intersection entry point.
+#[inline]
+fn classify_polygon_vertex_decision(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    vertices: &[Point3],
+    vertex: usize,
+    plane: &Plane,
+) -> HypermeshResult<Classification> {
+    let point = vertices
+        .get(vertex)
+        .ok_or(HypermeshError::UnknownClassification)?;
+    match polygon.known_vertex_predicate_query(vertex) {
+        Some(query) => classify_point_with_rational_query_decision(decisions, point, plane, query),
+        None => classify_point_decision(decisions, point, plane),
+    }
+}
+
 fn intersect_polygons_with_vertices_constructed(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
@@ -1140,11 +1160,13 @@ fn intersect_polygons_with_vertices_constructed(
         let retain_construction =
             polygon_support_identity.is_some() && other_support_identity.is_some();
         crate::trace_dispatch!("intersect-polygons", "parallel-supports");
-        let other_vertex = other_vertices
-            .first()
-            .ok_or(HypermeshError::UnknownClassification)?;
-        return if classify_point_decision(decisions, other_vertex, polygon_support)?
-            == Classification::On
+        return if classify_polygon_vertex_decision(
+            decisions,
+            other,
+            other_vertices,
+            0,
+            polygon_support,
+        )? == Classification::On
         {
             intersect_coplanar_constructed(
                 decisions,
@@ -1190,22 +1212,35 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     // other direction would later reject. A successful triangle pair always
     // needs all six classifications, so retaining them changes no successful
     // policy-decision set.
-    let triangle_classes = if let ([p0, p1, p2], [q0, q1, q2]) = (polygon_vertices, other_vertices)
-    {
+    let triangle_classes = if polygon_vertices.len() == 3 && other_vertices.len() == 3 {
+        let classify_polygon = |vertex| {
+            classify_polygon_vertex_decision(
+                decisions,
+                polygon,
+                polygon_vertices,
+                vertex,
+                other_support,
+            )
+        };
         let polygon_classes = [
-            classify_point_decision(decisions, p0, other_support)?,
-            classify_point_decision(decisions, p1, other_support)?,
-            classify_point_decision(decisions, p2, other_support)?,
+            classify_polygon(0)?,
+            classify_polygon(1)?,
+            classify_polygon(2)?,
         ];
         if !triangle_reaches_plane(polygon_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
         }
-        let other_classes = [
-            classify_point_decision(decisions, q0, polygon_support)?,
-            classify_point_decision(decisions, q1, polygon_support)?,
-            classify_point_decision(decisions, q2, polygon_support)?,
-        ];
+        let classify_other = |vertex| {
+            classify_polygon_vertex_decision(
+                decisions,
+                other,
+                other_vertices,
+                vertex,
+                polygon_support,
+            )
+        };
+        let other_classes = [classify_other(0)?, classify_other(1)?, classify_other(2)?];
         if !triangle_reaches_plane(other_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
@@ -1698,12 +1733,22 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             if left_start != right_end || left_end != right_start {
                 continue;
             }
-            let left_opposite = &left[(left_index + 2) % 3];
-            let right_opposite = &right[(right_index + 2) % 3];
-            if classify_point_decision(decisions, right_opposite, left_polygon.support_plane())?
-                != Classification::On
-                || classify_point_decision(decisions, left_opposite, right_polygon.support_plane())?
-                    != Classification::On
+            let left_opposite = (left_index + 2) % 3;
+            let right_opposite = (right_index + 2) % 3;
+            if classify_polygon_vertex_decision(
+                decisions,
+                right_polygon,
+                right,
+                right_opposite,
+                left_polygon.support_plane(),
+            )? != Classification::On
+                || classify_polygon_vertex_decision(
+                    decisions,
+                    left_polygon,
+                    left,
+                    left_opposite,
+                    right_polygon.support_plane(),
+                )? != Classification::On
             {
                 return Ok(true);
             }
@@ -1711,13 +1756,17 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
             // each opposite vertex lies strictly outside the other's edge
             // half-space. Same-side or collinear folds still reach the full
             // coplanar-overlap path.
-            return Ok(classify_point_decision(
+            return Ok(classify_polygon_vertex_decision(
                 decisions,
+                right_polygon,
+                right,
                 right_opposite,
                 &left_polygon.edge_planes()[left_index],
             )? == Classification::Positive
-                && classify_point_decision(
+                && classify_polygon_vertex_decision(
                     decisions,
+                    left_polygon,
+                    left,
                     left_opposite,
                     &right_polygon.edge_planes()[right_index],
                 )? == Classification::Positive);
@@ -1818,6 +1867,7 @@ struct CoplanarClassificationCache<'geometry, 'scratch> {
 struct CoplanarClassificationMatrix<'geometry, 'scratch> {
     decisions: &'geometry DecisionContext,
     container: &'geometry ConvexPolygon,
+    vertex_owner: &'geometry ConvexPolygon,
     edges: &'geometry [Plane],
     vertices: &'geometry [Point3],
     values: &'scratch mut [Option<Classification>],
@@ -1877,6 +1927,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
             right_vertices_against_left: CoplanarClassificationMatrix {
                 decisions,
                 container: left,
+                vertex_owner: right,
                 edges: left_edges,
                 vertices: right_vertices,
                 values: left_values,
@@ -1885,6 +1936,7 @@ impl<'geometry, 'scratch> CoplanarClassificationCache<'geometry, 'scratch> {
             left_vertices_against_right: CoplanarClassificationMatrix {
                 decisions,
                 container: right,
+                vertex_owner: left,
                 edges: right_edges,
                 vertices: left_vertices,
                 values: right_values,
@@ -2012,12 +2064,19 @@ impl CoplanarClassificationMatrix<'_, '_> {
             .edges
             .get(edge)
             .ok_or(HypermeshError::UnknownClassification)?;
-        let query = self
-            .queries
-            .get_mut(vertex)
-            .ok_or(HypermeshError::UnknownClassification)?
-            .get_or_insert_with(|| Point3PredicateQuery::new(point));
-        let classification = query.classify(self.decisions, point, plane)?;
+        let classification = match self.vertex_owner.known_vertex_predicate_query(vertex) {
+            Some(query) => {
+                classify_point_with_rational_query_decision(self.decisions, point, plane, query)?
+            }
+            None => {
+                let query = self
+                    .queries
+                    .get_mut(vertex)
+                    .ok_or(HypermeshError::UnknownClassification)?
+                    .get_or_insert_with(|| Point3PredicateQuery::new(point));
+                query.classify(self.decisions, point, plane)?
+            }
+        };
         *self
             .values
             .get_mut(index)
@@ -2548,11 +2607,18 @@ fn collect_polygon_plane_slice<'point>(
     if let [v0, v1, v2] = vertices {
         let [c0, c1, c2] = match retained_classifications {
             Some(classifications) => *classifications,
-            None => [
-                classify_point_decision(decisions, v0, plane)?,
-                classify_point_decision(decisions, v1, plane)?,
-                classify_point_decision(decisions, v2, plane)?,
-            ],
+            None => {
+                let classify = |vertex| {
+                    classify_polygon_vertex_decision(
+                        decisions,
+                        edge_polygon,
+                        vertices,
+                        vertex,
+                        plane,
+                    )
+                };
+                [classify(0)?, classify(1)?, classify(2)?]
+            }
         };
         let support_values = triangle_has_two_proper_plane_crossings([c0, c1, c2]).then(|| {
             [
@@ -2618,18 +2684,19 @@ fn collect_polygon_plane_slice<'point>(
         return Ok(span);
     }
 
-    let Some(first) = vertices.first() else {
+    if vertices.is_empty() {
         return Ok(span);
-    };
-    let first_class = classify_point_decision(decisions, first, plane)?;
+    }
+    let first_class =
+        classify_polygon_vertex_decision(decisions, edge_polygon, vertices, 0, plane)?;
     let last_class = if vertices.len() == 1 {
         first_class
     } else {
-        classify_point_decision(
+        classify_polygon_vertex_decision(
             decisions,
-            vertices
-                .last()
-                .expect("the nonempty polygon slice has a final vertex"),
+            edge_polygon,
+            vertices,
+            vertices.len() - 1,
             plane,
         )?
     };
@@ -2643,7 +2710,7 @@ fn collect_polygon_plane_slice<'point>(
         } else if index + 2 == vertices.len() {
             last_class
         } else {
-            classify_point_decision(decisions, end, plane)?
+            classify_polygon_vertex_decision(decisions, edge_polygon, vertices, index + 1, plane)?
         };
         let vertex_discovery_edge = if index == 0 || previous_class == Classification::On {
             index
@@ -3581,6 +3648,7 @@ mod tests {
         let mut matrix = CoplanarClassificationMatrix {
             decisions: &decisions,
             container: &triangle,
+            vertex_owner: &triangle,
             edges,
             vertices: &vertices,
             values: &mut values,

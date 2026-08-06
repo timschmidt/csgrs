@@ -210,6 +210,24 @@ pub(crate) fn classify_point_decision(
     Point3PredicateQuery::new(point).classify(decisions, point, plane)
 }
 
+/// Classifies a point with certified query facts retained by its source owner.
+///
+/// The query is only a floating filter input. An inconclusive filter reaches
+/// the same exact-rational fallback as [`classify_point_decision`].
+pub(crate) fn classify_point_with_rational_query_decision(
+    decisions: &DecisionContext,
+    point: &Point3,
+    plane: &Plane,
+    rational_query: &RationalLinearForm4Query,
+) -> HypermeshResult<Classification> {
+    classify_point_with_optional_rational_query_decision(
+        decisions,
+        point,
+        plane,
+        Some(rational_query),
+    )
+}
+
 /// Compact scalar-owned query facts cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Point3PredicateQuery {
@@ -245,6 +263,12 @@ impl Point3PredicateQuery {
         }
     }
 
+    /// Returns the compact certified filter query, when this representation
+    /// supplies one.
+    pub(crate) const fn rational_filter_query(self) -> Option<RationalLinearForm4Query> {
+        self.rational_filter_query
+    }
+
     /// Classifies the immutable point that supplied these retained query facts.
     pub(crate) fn classify(
         &self,
@@ -252,23 +276,37 @@ impl Point3PredicateQuery {
         point: &Point3,
         plane: &Plane,
     ) -> HypermeshResult<Classification> {
-        if let [Some(x), Some(y), Some(z)] =
-            [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
-            && let Some(classification) = classify_exact_rational_coordinates(
-                decisions,
-                plane,
-                [x, y, z],
-                Rational::one_ref(),
-                self.rational_filter_query.as_ref(),
-            )
-        {
-            crate::trace_dispatch!("classify-point", "affine-exact-rational");
-            return Ok(classification);
-        }
-
-        crate::trace_dispatch!("classify-point", "affine-real-fallback");
-        classify_real(decisions, &plane.expression_at_point(point))
+        classify_point_with_optional_rational_query_decision(
+            decisions,
+            point,
+            plane,
+            self.rational_filter_query.as_ref(),
+        )
     }
+}
+
+fn classify_point_with_optional_rational_query_decision(
+    decisions: &DecisionContext,
+    point: &Point3,
+    plane: &Plane,
+    rational_filter_query: Option<&RationalLinearForm4Query>,
+) -> HypermeshResult<Classification> {
+    if let [Some(x), Some(y), Some(z)] =
+        [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+        && let Some(classification) = classify_exact_rational_coordinates(
+            decisions,
+            plane,
+            [x, y, z],
+            Rational::one_ref(),
+            rational_filter_query,
+        )
+    {
+        crate::trace_dispatch!("classify-point", "affine-exact-rational");
+        return Ok(classification);
+    }
+
+    crate::trace_dispatch!("classify-point", "affine-real-fallback");
+    classify_real(decisions, &plane.expression_at_point(point))
 }
 
 /// Classifies a homogeneous point against a plane.

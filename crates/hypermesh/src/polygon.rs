@@ -1,14 +1,17 @@
 //! Convex polygon representation backed by hyperreal planes.
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
+use hyperreal::RationalLinearForm4Query;
 use std::sync::{Arc, OnceLock};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
-use crate::error::HypermeshResult;
+use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Classification, Plane, affine_projective_point_decision, axis_ref, cross_arrays, sub_points,
 };
-use crate::predicate::{classify_projective_point_decision, compare_real_decision};
+use crate::predicate::{
+    Point3PredicateQuery, classify_projective_point_decision, compare_real_decision,
+};
 use crate::winding::WindingNumberTransitionVector;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -101,29 +104,133 @@ impl ApproxBoundsRef<'_> {
     }
 }
 
-#[derive(Clone, Debug)]
+const NO_RETAINED_SOURCE_PREDICATE_QUERY: u32 = u32::MAX;
+
+#[derive(Debug)]
+enum RetainedSourcePredicateQueries {
+    /// Every source position is referenced, so its source index is the query
+    /// index and no indirection table is needed.
+    Dense(Box<[RationalLinearForm4Query]>),
+    /// Unused source positions retain no query. The compact index preserves
+    /// direct source-ID lookup without storing a 32-byte query for each one.
+    Indexed {
+        indices: Box<[u32]>,
+        queries: Box<[RationalLinearForm4Query]>,
+    },
+}
+
+#[derive(Debug)]
 /// One exact position owner shared by every retained face of a source mesh.
 ///
 /// The sized wrapper keeps the `Arc` stored in each indexed face thin while
 /// the inner slice remains the canonical native or copied borrowed owner.
-pub(crate) struct RetainedSourcePositions(Arc<[Point3]>);
+pub(crate) struct RetainedSourcePositions {
+    positions: Arc<[Point3]>,
+    predicate_queries: Option<RetainedSourcePredicateQueries>,
+}
 
 impl RetainedSourcePositions {
+    #[cfg(test)]
     pub(crate) fn shared(positions: Arc<[Point3]>) -> Arc<Self> {
-        Arc::new(Self(positions))
+        Arc::new(Self {
+            positions,
+            predicate_queries: None,
+        })
+    }
+
+    /// Builds one compact certified query per referenced source position.
+    ///
+    /// This schedule is representation-driven: if any referenced point cannot
+    /// supply Hyperreal's certified rational filter query, it retains no
+    /// partial schedule and every predicate uses the ordinary exact cascade.
+    pub(crate) fn shared_with_predicate_queries(
+        positions: Arc<[Point3]>,
+        referenced: &[bool],
+    ) -> HypermeshResult<Arc<Self>> {
+        if positions.len() != referenced.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "source position and usage schedules differ",
+            });
+        }
+        let referenced_count = referenced.iter().filter(|&&used| used).count();
+        let mut queries = Vec::new();
+        queries.try_reserve_exact(referenced_count).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "retained source point predicate queries",
+            }
+        })?;
+        for (point, &used) in positions.iter().zip(referenced) {
+            if !used {
+                continue;
+            }
+            let Some(query) = Point3PredicateQuery::new(point).rational_filter_query() else {
+                return Ok(Arc::new(Self {
+                    positions,
+                    predicate_queries: None,
+                }));
+            };
+            queries.push(query);
+        }
+        let predicate_queries = if queries.is_empty() {
+            None
+        } else if queries.len() == positions.len() {
+            Some(RetainedSourcePredicateQueries::Dense(
+                queries.into_boxed_slice(),
+            ))
+        } else {
+            let mut indices = Vec::new();
+            indices.try_reserve_exact(positions.len()).map_err(|_| {
+                HypermeshError::CapacityOverflow {
+                    operation: "retained source point predicate query indices",
+                }
+            })?;
+            indices.resize(positions.len(), NO_RETAINED_SOURCE_PREDICATE_QUERY);
+            let mut query = 0_usize;
+            for (position, &used) in referenced.iter().enumerate() {
+                if !used {
+                    continue;
+                }
+                indices[position] =
+                    u32::try_from(query).map_err(|_| HypermeshError::CapacityOverflow {
+                        operation: "retained source point predicate query index",
+                    })?;
+                query += 1;
+            }
+            debug_assert_eq!(query, queries.len());
+            Some(RetainedSourcePredicateQueries::Indexed {
+                indices: indices.into_boxed_slice(),
+                queries: queries.into_boxed_slice(),
+            })
+        };
+        Ok(Arc::new(Self {
+            positions,
+            predicate_queries,
+        }))
     }
 
     pub(crate) fn get(&self, index: usize) -> Option<&Point3> {
-        self.0.get(index)
+        self.positions.get(index)
     }
 
     pub(crate) fn len(&self) -> usize {
-        self.0.len()
+        self.positions.len()
+    }
+
+    fn predicate_query(&self, index: usize) -> Option<&RationalLinearForm4Query> {
+        match self.predicate_queries.as_ref()? {
+            RetainedSourcePredicateQueries::Dense(queries) => queries.get(index),
+            RetainedSourcePredicateQueries::Indexed { indices, queries } => {
+                let query = *indices.get(index)?;
+                (query != NO_RETAINED_SOURCE_PREDICATE_QUERY)
+                    .then(|| queries.get(query as usize))
+                    .flatten()
+            }
+        }
     }
 
     #[cfg(test)]
     pub(crate) fn owner(&self) -> &Arc<[Point3]> {
-        &self.0
+        &self.positions
     }
 }
 
@@ -855,6 +962,25 @@ impl ConvexPolygon {
             .map(RetainedIdentityCycles::vertices)
     }
 
+    /// Returns the certified rational filter query retained by an authored
+    /// source vertex. Owned/constructed cycles keep using local predicate
+    /// scheduling because they have no shared dense source-ID domain.
+    pub(crate) fn known_vertex_predicate_query(
+        &self,
+        index: usize,
+    ) -> Option<&RationalLinearForm4Query> {
+        let RetainedVertexCycle::SourceTriangle {
+            positions,
+            vertices,
+            ..
+        } = self.known_vertices.as_ref()?
+        else {
+            return None;
+        };
+        let source = *vertices.get(index)? as usize;
+        positions.predicate_query(source)
+    }
+
     pub(crate) fn known_edge_identities(&self) -> Option<KnownEdgeIdentityCycle<'_>> {
         self.known_identities
             .as_ref()
@@ -1449,6 +1575,57 @@ mod tests {
             [[2, 9], [2, 5], [5, 9]]
                 .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 3, endpoints } })
         );
+    }
+
+    #[test]
+    fn retained_source_predicate_queries_follow_referenced_vertex_ids() {
+        let positions: Arc<[Point3]> = Arc::from([point(0, 0, 0), point(1, 0, 0), point(0, 1, 0)]);
+        let dense = RetainedSourcePositions::shared_with_predicate_queries(
+            Arc::clone(&positions),
+            &[true, true, true],
+        )
+        .unwrap();
+        assert!(matches!(
+            dense.predicate_queries,
+            Some(RetainedSourcePredicateQueries::Dense(ref queries)) if queries.len() == 3
+        ));
+        assert!((0..3).all(|vertex| dense.predicate_query(vertex).is_some()));
+
+        let indexed = RetainedSourcePositions::shared_with_predicate_queries(
+            Arc::clone(&positions),
+            &[true, false, true],
+        )
+        .unwrap();
+        assert!(matches!(
+            indexed.predicate_queries,
+            Some(RetainedSourcePredicateQueries::Indexed {
+                ref indices,
+                ref queries,
+            }) if **indices == [0, NO_RETAINED_SOURCE_PREDICATE_QUERY, 1]
+                && queries.len() == 2
+        ));
+        assert!(indexed.predicate_query(0).is_some());
+        assert!(indexed.predicate_query(1).is_none());
+        assert!(indexed.predicate_query(2).is_some());
+        assert!(indexed.predicate_query(3).is_none());
+
+        let unavailable = RetainedSourcePositions::shared_with_predicate_queries(
+            Arc::from([
+                point(0, 0, 0),
+                Point3::new(Real::pi(), Real::zero(), Real::zero()),
+            ]),
+            &[true, true],
+        )
+        .unwrap();
+        assert!(unavailable.predicate_queries.is_none());
+        assert!(unavailable.predicate_query(0).is_none());
+
+        assert!(matches!(
+            RetainedSourcePositions::shared_with_predicate_queries(positions, &[true, false]),
+            Err(crate::HypermeshError::SurfaceArrangementFailed {
+                reason: "source position and usage schedules differ"
+            })
+        ));
     }
 
     #[test]
