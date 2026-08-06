@@ -2767,15 +2767,20 @@ fn exact_axis_aligned_algebraic_offset_loop(
     corner_style: &OffsetCornerStyle2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetLoop2>> {
+    if !boundary_loop
+        .fragments()
+        .iter()
+        .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+    {
+        return Ok(Classification::Decided(
+            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+        ));
+    }
     let mut spans = Vec::with_capacity(boundary_loop.len());
-    let mut saw_algebraic_chord = false;
     for fragment in boundary_loop.fragments() {
         let represented_chord;
         let chord = match fragment {
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                saw_algebraic_chord = true;
-                chord
-            }
+            BezierSplitFragment2::AlgebraicChord(chord) => chord,
             BezierSplitFragment2::Materialized { curve, .. } => {
                 let line = match materialized_native_subcurve_segment(curve, policy)? {
                     Classification::Decided(Segment2::Line(line)) => line,
@@ -2826,7 +2831,7 @@ fn exact_axis_aligned_algebraic_offset_loop(
             }
         }
     }
-    if spans.is_empty() || !saw_algebraic_chord {
+    if spans.is_empty() {
         return Ok(Classification::Decided(
             ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
         ));
