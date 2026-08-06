@@ -6,7 +6,9 @@ use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 #[cfg(feature = "predicates")]
-use crate::bezier_offset::BezierAlgebraicChordRationalIntersections2;
+use crate::bezier_offset::{
+    BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
+};
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
     BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicirclePairOverlap2,
@@ -194,6 +196,8 @@ struct RegionPairOverlap {
 #[derive(Clone, Debug)]
 enum RegionPairOverlapSource {
     Bezier(CurveIntersectionOverlap2),
+    #[cfg(feature = "predicates")]
+    AlgebraicChordRational(BezierAlgebraicChordRationalOverlap2),
     AlgebraicCusp(BezierAlgebraicCuspSemicirclePairOverlap2),
     AlgebraicCuspMapped(BezierAlgebraicCuspSemicircleMappedOverlap2),
 }
@@ -926,6 +930,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second: second.clone(),
                     source: overlap.source.and_then(|source| match source {
                         RegionPairOverlapSource::Bezier(source) => Some(source),
+                        #[cfg(feature = "predicates")]
+                        RegionPairOverlapSource::AlgebraicChordRational(_) => None,
                         RegionPairOverlapSource::AlgebraicCusp(_)
                         | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
                     }),
@@ -1862,7 +1868,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 .map_err(|cause| self.invalid(other_index, cause))?
                             {
                                 Classification::Decided(
-                                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+                                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated
+                                    | BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
                                 )
                                 | Classification::Uncertain(UncertaintyReason::Unsupported) => {
                                     general_intersections()?
@@ -1929,6 +1936,56 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 return Ok(RegionPairResult {
                                     contacts,
                                     overlaps: Vec::new(),
+                                    blockers: Vec::new(),
+                                });
+                            }
+                            Classification::Decided(
+                                BezierAlgebraicChordRationalIntersections2::Overlaps(overlaps),
+                            ) => {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-pair",
+                                    "collinear-overlap-complete",
+                                );
+                                let chord_is_first = chord_index == pair.first_carrier_index;
+                                let overlaps = overlaps
+                                    .into_iter()
+                                    .map(|overlap| {
+                                        let [chord_start, chord_end] = overlap.chord_range();
+                                        let chord_range = CurveRegionParameterRange2::new_validated(
+                                            CurveRegionParameter2::from_algebraic_chord(
+                                                chord_start.clone(),
+                                            ),
+                                            CurveRegionParameter2::from_algebraic_chord(
+                                                chord_end.clone(),
+                                            ),
+                                        );
+                                        let source_range =
+                                            CurveRegionParameterRange2::from_bezier_range(
+                                                overlap.source_range().clone(),
+                                            );
+                                        let orientation = overlap.orientation();
+                                        let (first_range, second_range) = if chord_is_first {
+                                            (chord_range, source_range)
+                                        } else {
+                                            (source_range, chord_range)
+                                        };
+                                        RegionPairOverlap {
+                                            source: Some(
+                                                RegionPairOverlapSource::AlgebraicChordRational(
+                                                    overlap,
+                                                ),
+                                            ),
+                                            first_range,
+                                            second_range,
+                                            orientation,
+                                        }
+                                    })
+                                    .collect();
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps,
                                     blockers: Vec::new(),
                                 });
                             }
@@ -2535,6 +2592,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
             debug_assert_eq!(source.orientation(), overlap.orientation);
             return self.clip_cusp_mapped_overlap(pair, overlap, source);
         }
+        #[cfg(feature = "predicates")]
+        if let Some(RegionPairOverlapSource::AlgebraicChordRational(source)) =
+            overlap.source.as_ref()
+        {
+            debug_assert_eq!(source.orientation(), overlap.orientation);
+            return self.clip_algebraic_chord_rational_overlap(pair, overlap, source);
+        }
         let Some((first_start, first_end)) = overlap.first_range.as_bezier_parameters() else {
             return Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported));
         };
@@ -2547,6 +2611,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierParameterRange2::new_validated(second_start.clone(), second_end.clone());
         let correspondence = overlap.source.as_ref().and_then(|source| match source {
             RegionPairOverlapSource::Bezier(source) => source.parameter_correspondence(),
+            #[cfg(feature = "predicates")]
+            RegionPairOverlapSource::AlgebraicChordRational(_) => None,
             RegionPairOverlapSource::AlgebraicCusp(_)
             | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
         });
@@ -2642,6 +2708,125 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn clip_algebraic_chord_rational_overlap(
+        &self,
+        pair: &RegionCarrierPair,
+        overlap: &RegionPairOverlap,
+        source: &BezierAlgebraicChordRationalOverlap2,
+    ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+        let chord_is_first = overlap.first_range.start().is_algebraic_chord();
+        if chord_is_first == overlap.second_range.start().is_algebraic_chord() {
+            return Err(self.invalid(
+                pair.first_carrier_index,
+                CurveError::Topology(
+                    "algebraic-chord overlap did not retain exactly one chord range".into(),
+                ),
+            ));
+        }
+        let (chord_carrier_index, source_carrier_index, source_overlap_range) = if chord_is_first {
+            (
+                pair.first_carrier_index,
+                pair.second_carrier_index,
+                &overlap.second_range,
+            )
+        } else {
+            (
+                pair.second_carrier_index,
+                pair.first_carrier_index,
+                &overlap.first_range,
+            )
+        };
+        let source_carrier = &self.data.carriers[source_carrier_index];
+        let (overlap_low, overlap_high) = ascending_range(source_overlap_range, &self.data.policy)?;
+        let source_low = if decided_parameter_cmp(
+            overlap_low,
+            &source_carrier.start,
+            &self.data.policy,
+        )?
+        .is_lt()
+        {
+            source_carrier.start.clone()
+        } else {
+            overlap_low.clone()
+        };
+        let source_high =
+            if decided_parameter_cmp(overlap_high, &source_carrier.end, &self.data.policy)?.is_gt()
+            {
+                source_carrier.end.clone()
+            } else {
+                overlap_high.clone()
+            };
+        match decided_parameter_cmp(&source_low, &source_high, &self.data.policy)? {
+            Ordering::Less => {}
+            Ordering::Equal | Ordering::Greater => return Ok(None),
+        }
+
+        let map_source_parameter = |parameter: &CurveRegionParameter2| {
+            let Some(parameter) = parameter.as_bezier_parameter() else {
+                return Err(self.invalid(
+                    source_carrier_index,
+                    CurveError::Topology(
+                        "non-Bezier cut reached an algebraic-chord/rational overlap".into(),
+                    ),
+                ));
+            };
+            match source
+                .chord_parameter_at_source_parameter(parameter, &self.data.policy)
+                .map_err(|cause| self.invalid(chord_carrier_index, cause))?
+            {
+                Classification::Decided(Some(parameter)) => {
+                    Ok(CurveRegionParameter2::from_algebraic_chord(parameter))
+                }
+                Classification::Decided(None) => {
+                    Err(self.blocked(chord_carrier_index, UncertaintyReason::Boundary))
+                }
+                Classification::Uncertain(reason) => Err(self.blocked(chord_carrier_index, reason)),
+            }
+        };
+        let chord_at_source_low = map_source_parameter(&source_low)?;
+        let chord_at_source_high = map_source_parameter(&source_high)?;
+        let chord_order = decided_parameter_cmp(
+            &chord_at_source_low,
+            &chord_at_source_high,
+            &self.data.policy,
+        )?;
+        let (chord_range, source_range, orientation) = match chord_order {
+            Ordering::Less => (
+                CurveRegionParameterRange2::new_validated(
+                    chord_at_source_low,
+                    chord_at_source_high,
+                ),
+                CurveRegionParameterRange2::new_validated(source_low, source_high),
+                RationalBezierOverlapOrientation2::Same,
+            ),
+            Ordering::Greater => (
+                CurveRegionParameterRange2::new_validated(
+                    chord_at_source_high,
+                    chord_at_source_low,
+                ),
+                CurveRegionParameterRange2::new_validated(source_high, source_low),
+                RationalBezierOverlapOrientation2::Reversed,
+            ),
+            Ordering::Equal => {
+                return Err(self.blocked(chord_carrier_index, UncertaintyReason::Boundary));
+            }
+        };
+        if orientation != overlap.orientation {
+            return Err(self.invalid(
+                chord_carrier_index,
+                CurveError::Topology(
+                    "clipped algebraic-chord overlap changed parameter orientation".into(),
+                ),
+            ));
+        }
+        Ok(Some(if chord_is_first {
+            (chord_range, source_range)
+        } else {
+            (source_range, chord_range)
+        }))
     }
 
     fn clip_cusp_mapped_overlap(
@@ -8505,6 +8690,226 @@ mod certified_successor_tests {
                 booleans.is_ok(),
                 "independent-field contact must traverse all Booleans: {booleans:?}"
             );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+            let third_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+            let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+            let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");
+            let apex = Point2::new(Real::zero(), -third.clone());
+            let half_source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                apex.clone(),
+                Point2::new(half.clone(), -third.clone()),
+                Point2::new(Real::one(), third.clone()),
+            ));
+            let third_source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                apex,
+                Point2::new(half, -third.clone()),
+                Point2::new(Real::one(), Real::from(2_i8) * &third),
+            ));
+            let half_rational =
+                RationalBezier2::try_from_subcurve(&half_source).expect("valid half source");
+            let third_rational =
+                RationalBezier2::try_from_subcurve(&third_source).expect("valid third source");
+            let half_point = exact_contact_point_evidence(&half_rational, &half_parameter, &policy)
+                .expect("exact half endpoint")
+                .expect("half endpoint evidence");
+            let third_point =
+                exact_contact_point_evidence(&third_rational, &third_parameter, &policy)
+                    .expect("exact third endpoint")
+                    .expect("third endpoint evidence");
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    half_point.clone(),
+                    third_point.clone(),
+                    &policy,
+                )
+                .expect("valid independent-field horizontal chord"),
+            );
+            let horizontal_source = rational_line(0, 1);
+            let chord_geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
+            let source_geometry =
+                RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(horizontal_source.clone()));
+            let source_low =
+                (Real::from(3_i8) / Real::from(5_i8)).expect("nonzero source-range denominator");
+            let source_high =
+                (Real::from(2_i8) / Real::from(3_i8)).expect("nonzero source-range denominator");
+            let carriers = vec![
+                RegionCarrier {
+                    operand: CurvePathBooleanOperand2::First,
+                    loop_index: 0,
+                    fragment_index: 0,
+                    family: chord_geometry.family(),
+                    geometry: chord_geometry,
+                    start: CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
+                    end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+                    reversed: false,
+                    filled_side_is_left: true,
+                    image_is_injective: OnceLock::new(),
+                    bounds: OnceLock::new(),
+                },
+                RegionCarrier {
+                    operand: CurvePathBooleanOperand2::Second,
+                    loop_index: 0,
+                    fragment_index: 0,
+                    family: source_geometry.family(),
+                    geometry: source_geometry,
+                    start: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                        source_low.clone(),
+                    )),
+                    end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                        source_high.clone(),
+                    )),
+                    reversed: false,
+                    filled_side_is_left: true,
+                    image_is_injective: OnceLock::new(),
+                    bounds: OnceLock::new(),
+                },
+            ];
+            let empty_first = CurveRegion2::empty();
+            let empty_second = CurveRegion2::empty();
+            let clipping_context = CurveRegionBooleanContext {
+                data: CurveRegionBooleanContextData {
+                    first: &empty_first,
+                    second: &empty_second,
+                    policy,
+                    carriers,
+                    first_carrier_count: 1,
+                    authored_carrier_pair_count: 1,
+                    pairs: Vec::new(),
+                    bezier_self_intersections: Vec::new(),
+                    parallel_self_intersections: Vec::new(),
+                    strict_line_image_only: OnceLock::new(),
+                },
+            };
+            let clipping_pair = RegionCarrierPair {
+                first_carrier_index: 0,
+                second_carrier_index: 1,
+                context: RegionCarrierPairContext::AlgebraicChordPair,
+            };
+            let clipping_result = clipping_context
+                .pair_result(&clipping_pair)
+                .expect("full collinear overlap must complete before clipping");
+            let [raw_overlap] = clipping_result.overlaps.as_slice() else {
+                panic!("expected one raw overlap, got {clipping_result:?}");
+            };
+            let (clipped_chord_range, clipped_source_range) = clipping_context
+                .clipped_overlap_ranges(&clipping_pair, raw_overlap)
+                .expect("authored source subrange must clip exactly")
+                .expect("the authored source subrange lies inside the chord");
+            assert!(clipped_chord_range.start().is_algebraic_chord());
+            assert_eq!(
+                clipped_source_range
+                    .start()
+                    .as_bezier_parameter()
+                    .expect("Bezier source range")
+                    .cmp_by_refinement(&BezierParameter2::Exact(source_high.clone()), &policy,)
+                    .expect("exact source-range order"),
+                Classification::Decided(Ordering::Equal)
+            );
+            assert_eq!(
+                clipped_source_range
+                    .end()
+                    .as_bezier_parameter()
+                    .expect("Bezier source range")
+                    .cmp_by_refinement(&BezierParameter2::Exact(source_low.clone()), &policy)
+                    .expect("exact source-range order"),
+                Classification::Decided(Ordering::Equal)
+            );
+            let half_fragment = decided(
+                half_source
+                    .split_at_parameters(std::slice::from_ref(&half_parameter), &policy)
+                    .expect("exact half-source split"),
+            )
+            .fragments()[0]
+                .clone();
+            let third_fragment = decided(
+                third_source
+                    .split_at_parameters(std::slice::from_ref(&third_parameter), &policy)
+                    .expect("exact third-source split"),
+            )
+            .fragments()[0]
+                .reversed()
+                .expect("exact third-source reversal");
+            let chord_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                    third_fragment,
+                    half_fragment,
+                ],
+                &policy,
+            )
+            .expect("independent-field chord loop must close");
+            let chord_region = CurveRegion2::try_new_with_loop_topology(
+                vec![chord_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid independent-field chord region");
+
+            let materialized_line =
+                |start_x, start_y, end_x, end_y| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(
+                            Point2::from_values(start_x, start_y),
+                            Point2::from_values(end_x, end_y),
+                        )
+                        .expect("valid rectangle edge"),
+                    )),
+                };
+            let source_loop = CurveRegionBoundaryLoop2::new(
+                vec![
+                    materialized_line(0, 0, 1, 0),
+                    materialized_line(1, 0, 1, 1),
+                    materialized_line(1, 1, 0, 1),
+                    materialized_line(0, 1, 0, 0),
+                ],
+                &policy,
+            )
+            .expect("source rectangle must close");
+            let source_region = CurveRegion2::try_new_with_loop_topology(
+                vec![source_loop],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid source rectangle");
+
+            let intersections = chord_region
+                .intersect_region(&source_region, &policy)
+                .expect("collinear chord/source intersection must complete")
+                .into_value();
+            assert!(intersections.is_complete(), "{intersections:?}");
+            assert_eq!(intersections.overlaps().len(), 1, "{intersections:?}");
+            assert_eq!(
+                intersections.overlaps()[0].orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert!(
+                intersections.overlaps()[0]
+                    .first_range()
+                    .start()
+                    .is_algebraic_chord()
+            );
+
+            let booleans = chord_region.boolean_regions(&source_region, &policy);
+            assert!(
+                booleans.is_ok(),
+                "collinear chord overlap must enter all four Booleans: {booleans:?}"
+            );
+            let booleans = booleans.expect("complete collinear Booleans").into_value();
+            assert!(booleans.intersection().is_empty());
+            assert!(!booleans.union().is_empty());
+            assert!(!booleans.difference().is_empty());
+            assert!(!booleans.xor().is_empty());
         }
     }
 

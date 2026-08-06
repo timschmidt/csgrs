@@ -31,7 +31,7 @@ use hypersolve::{
 #[cfg(feature = "predicates")]
 use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
 use crate::bezier_parameter::{evaluate_coefficients, signed_coefficients_at_parameter};
-use crate::classify::compare_reals;
+use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
     CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
@@ -218,6 +218,24 @@ fn compare_algebraic_representation_to_real(
     value: &Real,
     policy: &CurveContext,
 ) -> crate::Classification<Ordering> {
+    // A canonical Real may itself be an exact radical/expression rather than
+    // a rational witness.  Replay it against the selected root's defining
+    // polynomial before constructing a second synthetic root.  A zero is
+    // sufficient only inside the validated isolating interval, which rejects
+    // every foreign conjugate without adjoining the two representations.
+    let residual = evaluate_coefficients(&representation.polynomial_coefficients, value);
+    if real_sign(&residual, policy) == Some(RealSign::Zero)
+        && matches!(
+            compare_reals(value, &representation.interval.lower, policy),
+            Some(Ordering::Equal | Ordering::Greater)
+        )
+        && matches!(
+            compare_reals(value, &representation.interval.upper, policy),
+            Some(Ordering::Equal | Ordering::Less)
+        )
+    {
+        return crate::Classification::Decided(Ordering::Equal);
+    }
     let exact = exact_real_algebraic_representation(value);
     compare_algebraic_representations_with_policy(representation, &exact, policy)
         .map(crate::Classification::Decided)

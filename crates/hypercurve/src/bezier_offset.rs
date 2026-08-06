@@ -2109,12 +2109,39 @@ pub(crate) struct BezierAlgebraicChordRationalContact2 {
     tangent_cross_sign: RealSign,
 }
 
+/// Exact positive-length overlap between one retained algebraic chord and an
+/// injective rational line image.
+///
+/// The chord range follows the chord's local parameter order.  The source
+/// range is oriented to the same image traversal and can therefore be
+/// descending when the source runs in the opposite direction.  Retaining the
+/// source and chord once also supplies exact endpoint transport when a
+/// CurveRegion carrier clips the overlap to an authored subrange.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+pub(crate) struct BezierAlgebraicChordRationalOverlap2 {
+    chord: BezierAlgebraicChord2,
+    source: RationalBezier2,
+    chord_range: [BezierAlgebraicChordParameter2; 2],
+    source_range: BezierParameterRange2,
+    orientation: RationalBezierOverlapOrientation2,
+}
+
 #[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
     Contacts(Vec<BezierAlgebraicChordRationalContact2>),
+    Overlaps(Vec<BezierAlgebraicChordRationalOverlap2>),
     DegenerateProjection,
     NotSourceRelated,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+struct BezierAlgebraicChordRationalBoundary2 {
+    chord_parameter: BezierAlgebraicChordParameter2,
+    source_parameter: BezierParameter2,
+    point: RationalBezierIntersectionPointEvidence2,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -7222,6 +7249,57 @@ impl TrivariatePolynomial2 {
 }
 
 #[cfg(feature = "predicates")]
+fn selected_trivariate_third_axis_is_identically_zero(
+    polynomial: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if trivariate_structurally_zero(polynomial, policy) {
+        return Ok(Classification::Decided(true));
+    }
+    let (_, _, third_count) = polynomial.dimensions();
+    for third in 0..third_count {
+        let coefficient = BivariatePolynomial::new(
+            polynomial
+                .coefficients
+                .iter()
+                .map(|rows| {
+                    rows.iter()
+                        .map(|row| row.get(third).cloned().unwrap_or_else(Real::zero))
+                        .collect()
+                })
+                .collect(),
+        );
+        let sign = if let Some(sign) = bivariate_parameter_pair_strict_sign_by_refinement(
+            &coefficient,
+            first_parameter,
+            second_parameter,
+            policy,
+        )? {
+            Classification::Decided(sign)
+        } else {
+            signed_bivariate_at_parameter_pair(
+                &coefficient,
+                first_parameter,
+                second_parameter,
+                policy,
+            )?
+        };
+        match sign {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
+#[cfg(feature = "predicates")]
 #[inline]
 fn trivariate_structurally_zero(polynomial: &TrivariatePolynomial2, policy: &CurveContext) -> bool {
     for rows in &polynomial.coefficients {
@@ -10841,22 +10919,11 @@ impl BezierAlgebraicChord2 {
         );
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let point = match exact_contact_point_evidence(source, &candidate, policy)? {
-                Some(point) => point,
-                None => match &candidate {
-                    BezierParameter2::Algebraic(parameter) => {
-                        RationalBezierIntersectionPointEvidence2::Algebraic(
-                            RationalBezierAlgebraicPointImage2::from_parametric_source(
-                                source.clone(),
-                                parameter.clone(),
-                                policy,
-                            ),
-                        )
-                    }
-                    BezierParameter2::Exact(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
+            let point = match rational_point_evidence_at_parameter(source, &candidate, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
@@ -10910,6 +10977,13 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        if trivariate_structurally_zero(&system.incidence, policy) {
+            return self.collinear_rational_intersections(
+                source,
+                excluded_source_parameter,
+                policy,
+            );
+        }
         let defining = |parameter: &BezierParameter2| match parameter {
             BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
             BezierParameter2::Algebraic(parameter) => {
@@ -10969,9 +11043,22 @@ impl BezierAlgebraicChord2 {
         };
         match polynomial_coefficients_are_identically_zero(&coefficients, policy) {
             Classification::Decided(true) => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-                ));
+                return match selected_trivariate_third_axis_is_identically_zero(
+                    &system.incidence,
+                    &system.first_parameter,
+                    &system.second_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(true) => self.collinear_rational_intersections(
+                        source,
+                        excluded_source_parameter,
+                        policy,
+                    ),
+                    Classification::Decided(false) => Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                    )),
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
             }
             Classification::Decided(false) => {}
             Classification::Uncertain(reason) => {
@@ -11030,22 +11117,11 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let point = match exact_contact_point_evidence(source, &candidate, policy)? {
-                Some(point) => point,
-                None => match &candidate {
-                    BezierParameter2::Algebraic(parameter) => {
-                        RationalBezierIntersectionPointEvidence2::Algebraic(
-                            RationalBezierAlgebraicPointImage2::from_parametric_source(
-                                source.clone(),
-                                parameter.clone(),
-                                policy,
-                            ),
-                        )
-                    }
-                    BezierParameter2::Exact(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
+            let point = match rational_point_evidence_at_parameter(source, &candidate, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
@@ -11075,6 +11151,419 @@ impl BezierAlgebraicChord2 {
         }
         Ok(Classification::Decided(
             BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+        ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn collinear_rational_intersections(
+        &self,
+        source: &RationalBezier2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        self.validate_policy(policy)?;
+        let axis = self.data.parameter_axis.axis;
+        match source.common_weight_sign(policy) {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        if !source.has_certified_injective_axis_on(axis, policy) {
+            return Ok(Classification::Decided(
+                BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+            ));
+        }
+
+        let source_start_parameter = BezierParameter2::Exact(Real::zero());
+        let source_end_parameter = BezierParameter2::Exact(Real::one());
+        let source_start_point =
+            RationalBezierIntersectionPointEvidence2::Exact(source.start().clone());
+        let source_end_point =
+            RationalBezierIntersectionPointEvidence2::Exact(source.end().clone());
+        let source_order =
+            match self.point_parameter_order(&source_start_point, &source_end_point, policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+                Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let (
+            source_lower_parameter,
+            source_lower_point,
+            source_upper_parameter,
+            source_upper_point,
+        ) = if source_order == std::cmp::Ordering::Less {
+            (
+                &source_start_parameter,
+                &source_start_point,
+                &source_end_parameter,
+                &source_end_point,
+            )
+        } else {
+            (
+                &source_end_parameter,
+                &source_end_point,
+                &source_start_parameter,
+                &source_start_point,
+            )
+        };
+        match self.point_parameter_order(self.start(), source_upper_point, policy)? {
+            Classification::Decided(std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+                ));
+            }
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return self.collinear_point_contact(
+                    self.start_parameter(),
+                    source_upper_parameter.clone(),
+                    self.start().clone(),
+                    excluded_source_parameter,
+                    policy,
+                );
+            }
+            Classification::Decided(std::cmp::Ordering::Less) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match self.point_parameter_order(source_lower_point, self.end(), policy)? {
+            Classification::Decided(std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+                ));
+            }
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return self.collinear_point_contact(
+                    self.end_parameter(),
+                    source_lower_parameter.clone(),
+                    self.end().clone(),
+                    excluded_source_parameter,
+                    policy,
+                );
+            }
+            Classification::Decided(std::cmp::Ordering::Less) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let [start_image, end_image] =
+            match algebraic_chord_endpoint_images(self.start(), self.end(), policy)? {
+                Classification::Decided(images) => images,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+
+        let lower = match self.point_parameter_order(self.start(), source_lower_point, policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => self
+                .collinear_boundary_from_source_endpoint(
+                    source_lower_parameter.clone(),
+                    source_lower_point.clone(),
+                    policy,
+                )?,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                Classification::Decided(BezierAlgebraicChordRationalBoundary2 {
+                    chord_parameter: self.start_parameter(),
+                    source_parameter: source_lower_parameter.clone(),
+                    point: self.start().clone(),
+                })
+            }
+            Classification::Decided(std::cmp::Ordering::Greater) => self
+                .collinear_boundary_from_chord_endpoint(
+                    source,
+                    self.start_parameter(),
+                    self.start().clone(),
+                    &start_image,
+                    policy,
+                )?,
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        };
+        let lower = match lower {
+            Classification::Decided(boundary) => boundary,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let upper = match self.point_parameter_order(self.end(), source_upper_point, policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => self
+                .collinear_boundary_from_chord_endpoint(
+                    source,
+                    self.end_parameter(),
+                    self.end().clone(),
+                    &end_image,
+                    policy,
+                )?,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                Classification::Decided(BezierAlgebraicChordRationalBoundary2 {
+                    chord_parameter: self.end_parameter(),
+                    source_parameter: source_upper_parameter.clone(),
+                    point: self.end().clone(),
+                })
+            }
+            Classification::Decided(std::cmp::Ordering::Greater) => self
+                .collinear_boundary_from_source_endpoint(
+                    source_upper_parameter.clone(),
+                    source_upper_point.clone(),
+                    policy,
+                )?,
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        };
+        let upper = match upper {
+            Classification::Decided(boundary) => boundary,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+
+        let overlap_order = match lower
+            .chord_parameter
+            .cmp_by_refinement(&upper.chord_parameter, policy)?
+        {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match overlap_order {
+            std::cmp::Ordering::Greater => Ok(Classification::Decided(
+                BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+            )),
+            std::cmp::Ordering::Equal => {
+                if let Some(excluded) = excluded_source_parameter {
+                    match lower.source_parameter.cmp_by_refinement(excluded, policy)? {
+                        Classification::Decided(std::cmp::Ordering::Equal) => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+                            ));
+                        }
+                        Classification::Decided(_) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(vec![
+                        BezierAlgebraicChordRationalContact2 {
+                            chord_parameter: lower.chord_parameter,
+                            other_parameter: lower.source_parameter,
+                            point: lower.point,
+                            tangent_cross_sign: RealSign::Zero,
+                        },
+                    ]),
+                ))
+            }
+            std::cmp::Ordering::Less => {
+                let source_order = match lower
+                    .source_parameter
+                    .cmp_by_refinement(&upper.source_parameter, policy)?
+                {
+                    Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+                    Classification::Decided(std::cmp::Ordering::Greater) => {
+                        std::cmp::Ordering::Greater
+                    }
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        return Ok(Classification::Decided(
+                            BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Overlaps(vec![
+                        BezierAlgebraicChordRationalOverlap2 {
+                            chord: self.clone(),
+                            source: source.clone(),
+                            chord_range: [lower.chord_parameter, upper.chord_parameter],
+                            source_range: BezierParameterRange2::new_validated(
+                                lower.source_parameter,
+                                upper.source_parameter,
+                            ),
+                            orientation: if source_order == std::cmp::Ordering::Less {
+                                RationalBezierOverlapOrientation2::Same
+                            } else {
+                                RationalBezierOverlapOrientation2::Reversed
+                            },
+                        },
+                    ]),
+                ))
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn collinear_point_contact(
+        &self,
+        chord_parameter: BezierAlgebraicChordParameter2,
+        source_parameter: BezierParameter2,
+        point: RationalBezierIntersectionPointEvidence2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        if let Some(excluded) = excluded_source_parameter {
+            match source_parameter.cmp_by_refinement(excluded, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+                    ));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicChordRationalIntersections2::Contacts(vec![
+                BezierAlgebraicChordRationalContact2 {
+                    chord_parameter,
+                    other_parameter: source_parameter,
+                    point,
+                    tangent_cross_sign: RealSign::Zero,
+                },
+            ]),
+        ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn point_parameter_order(
+        &self,
+        first: &RationalBezierIntersectionPointEvidence2,
+        second: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let order = algebraic_chord_point_coordinate_order(
+            first,
+            second,
+            self.data.parameter_axis.axis,
+            policy,
+        )?;
+        Ok(if self.data.parameter_axis.coordinate_increases {
+            order
+        } else {
+            order.map(std::cmp::Ordering::reverse)
+        })
+    }
+
+    #[cfg(feature = "predicates")]
+    fn collinear_boundary_from_source_endpoint(
+        &self,
+        source_parameter: BezierParameter2,
+        point: RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalBoundary2>> {
+        let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicChordRationalBoundary2 {
+                chord_parameter,
+                source_parameter,
+                point,
+            },
+        ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn collinear_boundary_from_chord_endpoint(
+        &self,
+        source: &RationalBezier2,
+        chord_parameter: BezierAlgebraicChordParameter2,
+        point: RationalBezierIntersectionPointEvidence2,
+        point_image: &RationalBezierAlgebraicPointImage2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalBoundary2>> {
+        let point_predicate = match point_image.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (point_x, point_y, point_weight) = point_predicate.coordinate_polynomials();
+        let point_axis = match self.data.parameter_axis.axis {
+            Axis2::X => point_x,
+            Axis2::Y => point_y,
+        };
+        let source_power = source.homogeneous_power_basis()?;
+        let source_axis = match self.data.parameter_axis.axis {
+            Axis2::X => &source_power.x_numerator,
+            Axis2::Y => &source_power.y_numerator,
+        };
+        let equation = bivariate_subtract(
+            &bivariate_outer_product(point_weight, source_axis),
+            &bivariate_outer_product(point_axis, &source_power.weight),
+        );
+        let selected_parameter = match algebraic_chord_image_parameter(point_image, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let candidates =
+            match algebraic_selected_fiber_parameters(&equation, &selected_parameter, policy)? {
+                Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
+                    candidates,
+                )) => candidates,
+                Classification::Decided(
+                    BezierAlgebraicFiberProjection2::IdenticallyZero
+                    | BezierAlgebraicFiberProjection2::Degenerate,
+                ) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let mut retained = None;
+        for candidate in candidates {
+            let candidate_point =
+                match rational_point_evidence_at_parameter(source, &candidate, policy)? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            match candidate_point.same_point(&point, policy) {
+                Classification::Decided(true) if retained.is_none() => retained = Some(candidate),
+                Classification::Decided(true) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let Some(source_parameter) = retained else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicChordRationalBoundary2 {
+                chord_parameter,
+                source_parameter,
+                point,
+            },
         ))
     }
 
@@ -11375,6 +11864,29 @@ impl BezierAlgebraicChordParameter2 {
 }
 
 #[cfg(feature = "predicates")]
+fn rational_point_evidence_at_parameter(
+    source: &RationalBezier2,
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+    if let Some(point) = exact_contact_point_evidence(source, parameter, policy)? {
+        return Ok(Classification::Decided(point));
+    }
+    match parameter {
+        BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(
+            RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_parametric_source(
+                    source.clone(),
+                    parameter.clone(),
+                    policy,
+                ),
+            ),
+        )),
+        BezierParameter2::Exact(_) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+    }
+}
+
+#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordRationalContact2 {
     pub(crate) fn chord_parameter(&self) -> &BezierAlgebraicChordParameter2 {
         &self.chord_parameter
@@ -11390,6 +11902,35 @@ impl BezierAlgebraicChordRationalContact2 {
 
     pub(crate) const fn tangent_cross_sign(&self) -> RealSign {
         self.tangent_cross_sign
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicChordRationalOverlap2 {
+    pub(crate) fn chord_range(&self) -> [&BezierAlgebraicChordParameter2; 2] {
+        [&self.chord_range[0], &self.chord_range[1]]
+    }
+
+    pub(crate) const fn source_range(&self) -> &BezierParameterRange2 {
+        &self.source_range
+    }
+
+    pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+        self.orientation
+    }
+
+    pub(crate) fn chord_parameter_at_source_parameter(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChordParameter2>>> {
+        let point = match rational_point_evidence_at_parameter(&self.source, parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.chord.parameter_at_certified_point(point, policy)
     }
 }
 
@@ -25868,6 +26409,159 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
+
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                overlaps,
+            )) = chord
+                .rational_intersections(&horizontal, None, &policy)
+                .unwrap()
+            else {
+                panic!("independent-field collinear overlap must complete");
+            };
+            let [overlap] = overlaps.as_slice() else {
+                panic!("expected one independent-field overlap, got {overlaps:?}");
+            };
+            let [overlap_start, overlap_end] = overlap.chord_range();
+            assert_eq!(
+                overlap_start
+                    .cmp_by_refinement(&chord.start_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(
+                overlap_end
+                    .cmp_by_refinement(&chord.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            assert_eq!(
+                overlap
+                    .source_range()
+                    .start()
+                    .cmp_by_refinement(
+                        &BezierParameter2::Algebraic(first_parameter.clone()),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(
+                overlap
+                    .source_range()
+                    .end()
+                    .cmp_by_refinement(
+                        &BezierParameter2::Algebraic(second_parameter.clone()),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+
+            let contained = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(
+                        Point2::new((Real::from(3_i8) / Real::from(5_i8)).unwrap(), Real::zero()),
+                        Point2::new(two_thirds.clone(), Real::zero()),
+                    )
+                    .unwrap(),
+                ),
+            ))
+            .unwrap();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                contained_overlaps,
+            )) = chord
+                .rational_intersections(&contained, None, &policy)
+                .unwrap()
+            else {
+                panic!("contained exact line-image overlap must complete");
+            };
+            let [contained_overlap] = contained_overlaps.as_slice() else {
+                panic!("expected one contained overlap, got {contained_overlaps:?}");
+            };
+            let [contained_start, contained_end] = contained_overlap.chord_range();
+            assert!(matches!(
+                contained_start
+                    .cmp_by_refinement(&chord.start_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater)
+            ));
+            assert!(matches!(
+                contained_end
+                    .cmp_by_refinement(&chord.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less)
+            ));
+            assert_eq!(
+                contained_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+
+            let collinear_disjoint = RationalBezier2::try_from_subcurve(
+                &BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(
+                        Point2::from_values(0, 0),
+                        Point2::new(half.clone(), Real::zero()),
+                    )
+                    .unwrap(),
+                )),
+            )
+            .unwrap();
+            assert!(matches!(
+                chord
+                    .rational_intersections(&collinear_disjoint, None, &policy)
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(contacts)
+                ) if contacts.is_empty()
+            ));
+
+            let radical_third = third.clone().sqrt().unwrap();
+            let collinear_touch = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(
+                        Point2::from_values(0, 0),
+                        Point2::new(radical_third, Real::zero()),
+                    )
+                    .unwrap(),
+                ),
+            ))
+            .unwrap();
+            let touch_result = chord
+                .rational_intersections(&collinear_touch, None, &policy)
+                .unwrap();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                touch_contacts,
+            )) = touch_result
+            else {
+                panic!("collinear endpoint touch must complete: {touch_result:?}");
+            };
+            let [touch] = touch_contacts.as_slice() else {
+                panic!("expected one collinear endpoint touch, got {touch_contacts:?}");
+            };
+            assert_eq!(touch.tangent_cross_sign(), RealSign::Zero);
+            assert_eq!(
+                touch
+                    .other_parameter()
+                    .cmp_by_refinement(&BezierParameter2::Exact(Real::one()), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert!(matches!(
+                chord
+                    .rational_intersections(
+                        &collinear_touch,
+                        Some(&BezierParameter2::Exact(Real::one())),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(contacts)
+                ) if contacts.is_empty()
+            ));
         }
     }
 
