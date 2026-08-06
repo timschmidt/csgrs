@@ -77,6 +77,21 @@ struct ConstructedIntersectionSegment {
     v1: ConstructedIntersectionPoint,
 }
 
+#[derive(Clone, Debug)]
+struct DeferredCoplanarPoint<'point> {
+    point: &'point Point3,
+    identity: Option<ConstructionVertexIdentity>,
+}
+
+impl DeferredCoplanarPoint<'_> {
+    fn materialize(&self) -> ConstructedIntersectionPoint {
+        ConstructedIntersectionPoint {
+            point: self.point.clone(),
+            identity: self.identity.clone(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 enum SupportLineAxis {
     X,
@@ -216,8 +231,8 @@ enum ConstructedPairwiseIntersection {
 }
 
 #[derive(Default)]
-struct PairwiseIntersectionScratch {
-    points: Vec<ConstructedIntersectionPoint>,
+struct PairwiseIntersectionScratch<'point> {
+    coplanar_points: Vec<DeferredCoplanarPoint<'point>>,
     coplanar_classifications: Vec<Option<Classification>>,
     coplanar_queries: Vec<Option<Point3PredicateQuery>>,
 }
@@ -1233,17 +1248,17 @@ fn classify_polygon_vertex_with_plane_predicate_decision(
     )
 }
 
-fn intersect_polygons_with_vertices_constructed(
+fn intersect_polygons_with_vertices_constructed<'point>(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
-    polygon_vertices: &[Point3],
+    polygon_vertices: &'point [Point3],
     polygon_support_identity: Option<ConstructionPlaneIdentity>,
     other: &ConvexPolygon,
-    other_vertices: &[Point3],
+    other_vertices: &'point [Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
-    scratch: &mut PairwiseIntersectionScratch,
+    scratch: &mut PairwiseIntersectionScratch<'point>,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
-    scratch.points.clear();
+    scratch.coplanar_points.clear();
     scratch.coplanar_classifications.clear();
     scratch.coplanar_queries.clear();
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
@@ -1523,13 +1538,13 @@ pub(crate) fn pairwise_intersections_by_polygon(
     pairwise_intersections_by_polygon_from_bvh(decisions, polygons, &[], &bvh)
 }
 
-fn append_pairwise_intersection(
+fn append_pairwise_intersection<'point>(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
-    vertices: &PolygonVertexArena,
+    vertices: &'point PolygonVertexArena,
     certified_embedded_inputs: &[bool],
     graph: &mut PairwiseIntersectionGraphBuilder,
-    scratch: &mut PairwiseIntersectionScratch,
+    scratch: &mut PairwiseIntersectionScratch<'point>,
     global_i: usize,
     global_j: usize,
 ) -> HypermeshResult<()> {
@@ -1886,17 +1901,17 @@ fn polygon_cycles_share_reversed_manifold_triangle_edge(
     Ok(false)
 }
 
-fn intersect_coplanar_constructed(
+fn intersect_coplanar_constructed<'point>(
     decisions: &DecisionContext,
     polygon: &ConvexPolygon,
-    polygon_vertices: &[Point3],
+    polygon_vertices: &'point [Point3],
     other: &ConvexPolygon,
-    other_vertices: &[Point3],
+    other_vertices: &'point [Point3],
     retain_construction: bool,
-    scratch: &mut PairwiseIntersectionScratch,
+    scratch: &mut PairwiseIntersectionScratch<'point>,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
     let PairwiseIntersectionScratch {
-        points,
+        coplanar_points,
         coplanar_classifications,
         coplanar_queries,
     } = scratch;
@@ -1925,15 +1940,15 @@ fn intersect_coplanar_constructed(
         .ok_or(HypermeshError::CapacityOverflow {
             operation: "coplanar polygon contact candidates",
         })?;
-    points
+    coplanar_points
         .try_reserve_exact(capacity)
         .map_err(|_| HypermeshError::CapacityOverflow {
             operation: "coplanar polygon contact candidates",
         })?;
     for (index, point) in polygon_vertices.iter().enumerate() {
         if relation.left_vertex_is_contained(index)? {
-            points.push(ConstructedIntersectionPoint {
-                point: point.clone(),
+            coplanar_points.push(DeferredCoplanarPoint {
+                point,
                 identity: retain_construction
                     .then(|| polygon_vertex_identity(polygon, index))
                     .flatten(),
@@ -1942,27 +1957,17 @@ fn intersect_coplanar_constructed(
     }
     for (index, point) in other_vertices.iter().enumerate() {
         if relation.right_vertex_is_contained(index)? {
-            points.push(ConstructedIntersectionPoint {
-                point: point.clone(),
+            coplanar_points.push(DeferredCoplanarPoint {
+                point,
                 identity: retain_construction
                     .then(|| polygon_vertex_identity(other, index))
                     .flatten(),
             });
         }
     }
-    dedup_constructed_points(decisions, points)?;
+    dedup_deferred_coplanar_points(decisions, coplanar_points)?;
 
-    match exact_constructed_intersection_span(decisions, polygon.support_plane(), points)? {
-        ConstructedIntersectionSpan::Empty => Ok(ConstructedPairwiseIntersection::Disjoint),
-        ConstructedIntersectionSpan::Point(point) => {
-            Ok(ConstructedPairwiseIntersection::CoplanarPoint(point))
-        }
-        ConstructedIntersectionSpan::Segment { v0, v1 } => {
-            Ok(ConstructedPairwiseIntersection::CoplanarSegment(
-                ConstructedIntersectionSegment { v0, v1 },
-            ))
-        }
-    }
+    materialize_coplanar_intersection(decisions, polygon.support_plane(), coplanar_points)
 }
 
 /// Lazily retains the exact point/edge classifications shared by the
@@ -2207,36 +2212,33 @@ impl CoplanarClassificationMatrix<'_, '_> {
     }
 }
 
-enum ConstructedIntersectionSpan {
-    Empty,
-    Point(ConstructedIntersectionPoint),
-    Segment {
-        v0: ConstructedIntersectionPoint,
-        v1: ConstructedIntersectionPoint,
-    },
-}
-
 /// Canonicalizes any nonempty zero- or one-dimensional convex intersection.
 ///
-/// Narrow-phase edge walks can encounter more than two distinct points when
-/// an otherwise valid polygon retains collinear boundary vertices. Selecting
-/// exact lexicographic extrema preserves the whole interval instead of
-/// silently truncating it to the first two discovery-order points.
-fn exact_constructed_intersection_span(
+/// Coplanar contact can retain more than two distinct candidates when an
+/// otherwise valid polygon has collinear boundary vertices. Selecting exact
+/// lexicographic extrema preserves the whole interval while borrowing every
+/// rejected source point and materializing only the surviving endpoint(s).
+fn materialize_coplanar_intersection(
     decisions: &DecisionContext,
     support: &Plane,
-    points: &[ConstructedIntersectionPoint],
-) -> HypermeshResult<ConstructedIntersectionSpan> {
+    points: &[DeferredCoplanarPoint<'_>],
+) -> HypermeshResult<ConstructedPairwiseIntersection> {
     let Some(first) = points.first() else {
-        return Ok(ConstructedIntersectionSpan::Empty);
+        return Ok(ConstructedPairwiseIntersection::Disjoint);
     };
     match points {
-        [_] => return Ok(ConstructedIntersectionSpan::Point(first.clone())),
+        [_] => {
+            return Ok(ConstructedPairwiseIntersection::CoplanarPoint(
+                first.materialize(),
+            ));
+        }
         [v0, v1] => {
-            return Ok(ConstructedIntersectionSpan::Segment {
-                v0: v0.clone(),
-                v1: v1.clone(),
-            });
+            return Ok(ConstructedPairwiseIntersection::CoplanarSegment(
+                ConstructedIntersectionSegment {
+                    v0: v0.materialize(),
+                    v1: v1.materialize(),
+                },
+            ));
         }
         _ => {}
     }
@@ -2244,27 +2246,29 @@ fn exact_constructed_intersection_span(
     let mut minimum = first;
     let mut maximum = first;
     for point in &points[1..] {
-        if compare_points_lexicographically(decisions, &point.point, &minimum.point)?.is_lt() {
+        if compare_points_lexicographically(decisions, point.point, minimum.point)?.is_lt() {
             minimum = point;
         }
-        if compare_points_lexicographically(decisions, &point.point, &maximum.point)?.is_gt() {
+        if compare_points_lexicographically(decisions, point.point, maximum.point)?.is_gt() {
             maximum = point;
         }
     }
     for point in points {
         if !support.points_are_collinear_on_support(
             decisions,
-            &minimum.point,
-            &maximum.point,
-            &point.point,
+            minimum.point,
+            maximum.point,
+            point.point,
         )? {
             return Err(HypermeshError::UnknownClassification);
         }
     }
-    Ok(ConstructedIntersectionSpan::Segment {
-        v0: minimum.clone(),
-        v1: maximum.clone(),
-    })
+    Ok(ConstructedPairwiseIntersection::CoplanarSegment(
+        ConstructedIntersectionSegment {
+            v0: minimum.materialize(),
+            v1: maximum.materialize(),
+        },
+    ))
 }
 
 /// Intersects two closed convex slices on the line shared by nonparallel
@@ -3225,20 +3229,18 @@ fn construction_identity_fingerprint(identity: &ConstructionVertexIdentity) -> u
     hasher.finish()
 }
 
-fn dedup_constructed_points(
+fn dedup_deferred_coplanar_points(
     decisions: &DecisionContext,
-    points: &mut Vec<ConstructedIntersectionPoint>,
+    points: &mut Vec<DeferredCoplanarPoint<'_>>,
 ) -> HypermeshResult<()> {
     let mut candidate = 0;
     while candidate < points.len() {
         let mut duplicate = None;
         for existing in 0..candidate {
-            if points[existing].point == points[candidate].point
-                || crate::predicate::points_equal(
-                    decisions,
-                    &points[existing].point,
-                    &points[candidate].point,
-                )?
+            let existing_point = points[existing].point;
+            let candidate_point = points[candidate].point;
+            if existing_point == candidate_point
+                || crate::predicate::points_equal(decisions, existing_point, candidate_point)?
             {
                 duplicate = Some(existing);
                 break;
@@ -3267,13 +3269,13 @@ mod tests {
 
     use super::{
         ConstructedIntersectionPoint, ConstructedIntersectionSegment,
-        ConstructedPairwiseIntersection, CoplanarClassificationMatrix,
+        ConstructedPairwiseIntersection, CoplanarClassificationMatrix, DeferredCoplanarPoint,
         DeferredIntersectionGeometry, DeferredIntersectionPoint, DeferredIntersectionSpan,
         DeferredSegmentPlaneRatio, PairwiseIntersection, PairwiseIntersectionEvent,
         PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
         PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
         affine_deferred_geometry, certified_enclosure_ordering, certified_ratio_enclosure,
-        classify_two_product_difference, compare_deferred_points, dedup_constructed_points,
+        classify_two_product_difference, compare_deferred_points, dedup_deferred_coplanar_points,
         intersect_deferred_spans, intersect_polygons_with_vertices_constructed,
         pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
@@ -3868,9 +3870,10 @@ mod tests {
         );
         let triangle_vertices = triangle.vertices_decision(&decisions).unwrap();
         let disjoint_vertices = disjoint.vertices_decision(&decisions).unwrap();
+        let poison = Point3::new(Real::pi(), Real::e(), Real::one());
         let mut scratch = PairwiseIntersectionScratch::default();
-        scratch.points.push(ConstructedIntersectionPoint {
-            point: Point3::new(Real::pi(), Real::e(), Real::one()),
+        scratch.coplanar_points.push(DeferredCoplanarPoint {
+            point: &poison,
             identity: None,
         });
 
@@ -3888,7 +3891,7 @@ mod tests {
             .unwrap(),
             ConstructedPairwiseIntersection::CoplanarOverlap
         ));
-        assert!(scratch.points.is_empty());
+        assert!(scratch.coplanar_points.is_empty());
         assert!(scratch.coplanar_classifications.iter().any(Option::is_some));
         assert!(scratch.coplanar_queries.iter().any(Option::is_some));
 
@@ -3906,7 +3909,7 @@ mod tests {
             .unwrap(),
             ConstructedPairwiseIntersection::Disjoint
         ));
-        assert!(scratch.points.is_empty());
+        assert!(scratch.coplanar_points.is_empty());
         assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
     }
 
@@ -3945,23 +3948,37 @@ mod tests {
     }
 
     #[test]
-    fn constructed_point_deduplication_retains_capacity_and_canonical_recipe() {
+    fn deferred_coplanar_point_deduplication_retains_capacity_and_canonical_recipe() {
         let decisions = crate::test_support::approximate_decisions();
         let identity = |vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex };
-        let point = |x, vertex| ConstructedIntersectionPoint {
-            point: Point3::new(Real::from(x), Real::zero(), Real::zero()),
-            identity: Some(identity(vertex)),
+        let point = |point, identity_vertex| DeferredCoplanarPoint {
+            point,
+            identity: Some(identity(identity_vertex)),
         };
+        let left_vertices = [
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::one(), Real::zero(), Real::zero()),
+        ];
+        let right_vertices = [Point3::new(Real::zero(), Real::zero(), Real::zero())];
         let mut points = Vec::with_capacity(8);
-        points.extend([point(0, 9), point(1, 4), point(0, 2)]);
+        points.extend([
+            point(&left_vertices[0], 9),
+            point(&left_vertices[1], 4),
+            point(&right_vertices[0], 2),
+        ]);
         let capacity = points.capacity();
 
-        dedup_constructed_points(&decisions, &mut points).unwrap();
+        dedup_deferred_coplanar_points(&decisions, &mut points).unwrap();
 
         assert_eq!(points.len(), 2);
         assert_eq!(points.capacity(), capacity);
+        assert!(core::ptr::eq(points[0].point, &left_vertices[0]));
         assert_eq!(points[0].identity, Some(identity(2)));
         assert_eq!(points[1].identity, Some(identity(4)));
+        assert!(
+            core::mem::size_of::<DeferredCoplanarPoint>()
+                < core::mem::size_of::<ConstructedIntersectionPoint>()
+        );
         assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
     }
 
