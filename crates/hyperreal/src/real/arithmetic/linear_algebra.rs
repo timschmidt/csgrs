@@ -362,6 +362,117 @@ pub struct RationalPoint3Query {
     errors: [f64; 3],
 }
 
+#[derive(Clone, Copy)]
+struct CertifiedF64Interval {
+    lower: f64,
+    upper: f64,
+}
+
+impl CertifiedF64Interval {
+    #[inline]
+    fn from_value_and_error(value: f64, error: f64) -> Option<Self> {
+        if !value.is_finite() || !error.is_finite() || error < 0.0 {
+            return None;
+        }
+        if error == 0.0 {
+            return Some(Self {
+                lower: value,
+                upper: value,
+            });
+        }
+        let lower = (value - error).next_down();
+        let upper = (value + error).next_up();
+        (lower.is_finite() && upper.is_finite()).then_some(Self { lower, upper })
+    }
+
+    #[inline]
+    fn from_normalized_rational_approximation(value: f64) -> Option<Self> {
+        if value == 0.0 {
+            return Some(Self {
+                lower: 0.0,
+                upper: 0.0,
+            });
+        }
+        let error = value.abs() * (32.0 * f64::EPSILON);
+        if !error.is_normal() {
+            return None;
+        }
+        Self::from_value_and_error(value, error)
+    }
+
+    #[inline]
+    fn negated(self) -> Self {
+        Self {
+            lower: -self.upper,
+            upper: -self.lower,
+        }
+    }
+
+    #[inline]
+    fn add(self, other: Self) -> Option<Self> {
+        let lower = (self.lower + other.lower).next_down();
+        let upper = (self.upper + other.upper).next_up();
+        (lower.is_finite() && upper.is_finite()).then_some(Self { lower, upper })
+    }
+
+    #[inline]
+    fn multiply(self, other: Self) -> Option<Self> {
+        let values = [
+            self.lower * other.lower,
+            self.lower * other.upper,
+            self.upper * other.lower,
+            self.upper * other.upper,
+        ];
+        if values.iter().any(|value| !value.is_finite()) {
+            return None;
+        }
+        let lower = values.into_iter().fold(f64::INFINITY, f64::min).next_down();
+        let upper = values
+            .into_iter()
+            .fold(f64::NEG_INFINITY, f64::max)
+            .next_up();
+        Some(Self { lower, upper })
+    }
+
+    #[inline]
+    fn reciprocal(self) -> Option<Self> {
+        if self.lower <= 0.0 && self.upper >= 0.0 {
+            return None;
+        }
+        let values = [1.0 / self.lower, 1.0 / self.upper];
+        if values.iter().any(|value| !value.is_finite()) {
+            return None;
+        }
+        Some(Self {
+            lower: values.into_iter().fold(f64::INFINITY, f64::min).next_down(),
+            upper: values
+                .into_iter()
+                .fold(f64::NEG_INFINITY, f64::max)
+                .next_up(),
+        })
+    }
+
+    #[inline]
+    fn divide(self, other: Self) -> Option<Self> {
+        self.multiply(other.reciprocal()?)
+    }
+
+    #[inline]
+    const fn is_strictly_positive(self) -> bool {
+        self.lower > 0.0
+    }
+
+    #[inline]
+    const fn is_strictly_negative(self) -> bool {
+        self.upper < 0.0
+    }
+
+    #[inline]
+    const fn into_bounds(self) -> [f64; 2] {
+        [self.lower, self.upper]
+    }
+}
+
 impl RationalPoint3Query {
     /// Construct a reusable query from exact-rational coordinates.
     #[inline]
@@ -643,6 +754,61 @@ impl RationalLinearForm4Filter {
             self.coefficients,
             query.values,
         )
+    }
+
+    /// Certify one coordinate of the proper intersection between an affine
+    /// segment and this exact-rational linear form.
+    ///
+    /// The endpoint query scales are removed before the two support values
+    /// are combined, while the coefficient normalization remains common and
+    /// cancels from the ratio. If the floating intervals cannot prove that
+    /// the endpoints lie on opposite sides, or any intermediate range is not
+    /// representable, this returns `None` for the caller's exact fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn segment_intersection_coordinate_enclosure(
+        &self,
+        first: &RationalLinearForm4Query,
+        second: &RationalLinearForm4Query,
+        axis: usize,
+    ) -> Option<[f64; 2]> {
+        if axis >= 3 {
+            return None;
+        }
+        let affine_value = |query: &RationalLinearForm4Query| {
+            let (value, error) = Real::rational_linear_form4_value_with_error_f64(
+                self.coefficients,
+                query.values,
+            )?;
+            CertifiedF64Interval::from_value_and_error(value, error)?.divide(
+                CertifiedF64Interval::from_normalized_rational_approximation(query.values[3])?,
+            )
+        };
+        let coordinate = |query: &RationalLinearForm4Query| {
+            CertifiedF64Interval::from_normalized_rational_approximation(query.values[axis])?
+                .divide(CertifiedF64Interval::from_normalized_rational_approximation(
+                    query.values[3],
+                )?)
+        };
+        let first_support = affine_value(first)?;
+        let second_support = affine_value(second)?;
+        let (positive_support, positive_coordinate, negative_support, negative_coordinate) =
+            if first_support.is_strictly_positive() && second_support.is_strictly_negative() {
+                (first_support, coordinate(first)?, second_support, coordinate(second)?)
+            } else if second_support.is_strictly_positive()
+                && first_support.is_strictly_negative()
+            {
+                (second_support, coordinate(second)?, first_support, coordinate(first)?)
+            } else {
+                return None;
+            };
+        let negative_magnitude = negative_support.negated();
+        let numerator = positive_support
+            .multiply(negative_coordinate)?
+            .add(negative_magnitude.multiply(positive_coordinate)?)?;
+        numerator
+            .divide(positive_support.add(negative_magnitude)?)
+            .map(CertifiedF64Interval::into_bounds)
     }
 }
 
@@ -1048,11 +1214,11 @@ impl Real {
         }
     }
 
-    #[inline]
-    fn certified_rational_linear_form4_sign_f64(
+    #[inline(always)]
+    fn rational_linear_form4_value_with_error_f64(
         coefficients: [f64; 4],
         point: [f64; 4],
-    ) -> Option<RealSign> {
+    ) -> Option<(f64, f64)> {
         let products = [
             coefficients[0] * point[0],
             coefficients[1] * point[1],
@@ -1097,6 +1263,16 @@ impl Real {
         {
             return None;
         }
+        Some((value, error_bound))
+    }
+
+    #[inline]
+    fn certified_rational_linear_form4_sign_f64(
+        coefficients: [f64; 4],
+        point: [f64; 4],
+    ) -> Option<RealSign> {
+        let (value, error_bound) =
+            Self::rational_linear_form4_value_with_error_f64(coefficients, point)?;
         if value > error_bound {
             Some(RealSign::Positive)
         } else if -value > error_bound {

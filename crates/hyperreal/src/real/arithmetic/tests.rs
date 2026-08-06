@@ -164,6 +164,23 @@ mod tests {
     }
 
     #[test]
+    fn rational_storage_class_is_a_conservative_exact_cost_fact() {
+        let multi_limb = Rational::new(2)
+            .powi(128_i64.into())
+            .expect("positive integer powers remain rational");
+        let very_large = Rational::new(2)
+            .powi(5_000_i64.into())
+            .expect("positive integer powers remain rational");
+        assert_eq!(Rational::zero().storage_class(), RationalStorageClass::Zero);
+        assert_eq!(
+            Rational::fraction(7, 11).unwrap().storage_class(),
+            RationalStorageClass::WordSized
+        );
+        assert_eq!(multi_limb.storage_class(), RationalStorageClass::MultiLimb);
+        assert_eq!(very_large.storage_class(), RationalStorageClass::VeryLarge);
+    }
+
+    #[test]
     fn aggregate_helpers_keep_values_in_real_space() {
         let values = [Real::from(1_i32), Real::from(3_i32), Real::from(5_i32)];
 
@@ -902,6 +919,149 @@ mod tests {
                 [1.0; 4],
             ),
             None,
+        );
+    }
+
+    #[test]
+    fn rational_linear_form4_segment_intersection_enclosure_contains_exact_coordinates() {
+        fn support(coefficients: &[Rational; 4], point: &[Rational; 3]) -> Rational {
+            Rational::signed_product_sum(
+                [true; 4],
+                [
+                    [&coefficients[0], &point[0]],
+                    [&coefficients[1], &point[1]],
+                    [&coefficients[2], &point[2]],
+                    [&coefficients[3], Rational::one_ref()],
+                ],
+            )
+        }
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut certified = 0_usize;
+        for _ in 0..20_000 {
+            let mut next_rational = || {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 2_000_001).unwrap() - 1_000_000;
+                let denominator = state.rotate_left(29) % 1_000_003 + 1;
+                Rational::fraction(numerator, denominator).unwrap()
+            };
+            let coefficients: [Rational; 4] = core::array::from_fn(|_| next_rational());
+            if coefficients[..3].iter().all(Rational::is_zero) {
+                continue;
+            }
+            let first: [Rational; 3] = core::array::from_fn(|_| next_rational());
+            let second: [Rational; 3] = core::array::from_fn(|_| next_rational());
+            let first_support = support(&coefficients, &first);
+            let second_support = support(&coefficients, &second);
+            if !((first_support.is_positive() && second_support.is_negative())
+                || (first_support.is_negative() && second_support.is_positive()))
+            {
+                continue;
+            }
+
+            let coefficient_reals = coefficients.clone().map(Real::new);
+            let Some(filter) = RationalLinearForm4Filter::from_reals([
+                &coefficient_reals[0],
+                &coefficient_reals[1],
+                &coefficient_reals[2],
+                &coefficient_reals[3],
+            ]) else {
+                continue;
+            };
+            let Some(first_query) = RationalLinearForm4Query::from_affine_point3([
+                &first[0], &first[1], &first[2],
+            ]) else {
+                continue;
+            };
+            let Some(second_query) = RationalLinearForm4Query::from_affine_point3([
+                &second[0],
+                &second[1],
+                &second[2],
+            ]) else {
+                continue;
+            };
+            let axis = (state as usize) % 3;
+            let Some(enclosure) = filter.segment_intersection_coordinate_enclosure(
+                &first_query,
+                &second_query,
+                axis,
+            ) else {
+                continue;
+            };
+            let numerator = Rational::signed_product_sum(
+                [true, false],
+                [
+                    [&first_support, &second[axis]],
+                    [&second_support, &first[axis]],
+                ],
+            );
+            let denominator = &first_support - &second_support;
+            let exact = &numerator / &denominator;
+            let exact_enclosure = exact.to_f64_enclosure().unwrap();
+            assert!(
+                enclosure[0] <= exact_enclosure[0] && enclosure[1] >= exact_enclosure[1],
+                "{enclosure:?} does not contain {exact_enclosure:?}"
+            );
+            certified += 1;
+        }
+        assert!(certified > 4_000, "only {certified} crossings certified");
+    }
+
+    #[test]
+    fn rational_linear_form4_segment_intersection_enclosure_declines_every_unsafe_boundary() {
+        let coefficients = [Real::zero(), Real::one(), Real::zero(), Real::zero()];
+        let filter = RationalLinearForm4Filter::from_reals([
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .unwrap();
+        let point = |x: i64, y: i64| {
+            let [x, y, zero] = [Rational::new(x), Rational::new(y), Rational::zero()];
+            RationalLinearForm4Query::from_affine_point3([&x, &y, &zero]).unwrap()
+        };
+        let positive = point(3, 1);
+        let negative = point(-5, -1);
+        let on_plane = point(7, 0);
+        let same_side = point(11, 2);
+
+        let enclosure = filter
+            .segment_intersection_coordinate_enclosure(&positive, &negative, 0)
+            .expect("a finite proper crossing is certifiable");
+        assert!(enclosure[0] <= -1.0 && enclosure[1] >= -1.0);
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &negative, 3)
+                .is_none()
+        );
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &same_side, 0)
+                .is_none()
+        );
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(&positive, &on_plane, 0)
+                .is_none()
+        );
+
+        let positive_overflow = RationalLinearForm4Query {
+            values: [f64::MAX, 1.0, 0.0, 1.0],
+        };
+        let negative_overflow = RationalLinearForm4Query {
+            values: [f64::MAX, -1.0, 0.0, 1.0],
+        };
+        assert!(
+            filter
+                .segment_intersection_coordinate_enclosure(
+                    &positive_overflow,
+                    &negative_overflow,
+                    0,
+                )
+                .is_none()
         );
     }
 

@@ -16,6 +16,29 @@ impl Rational {
         Arc::as_ptr(&self.0) as usize
     }
 
+    /// Returns a coarse immutable-storage cost class for exact scheduling.
+    ///
+    /// This inspects only stored numerator and denominator bit lengths. It is
+    /// not a numeric predicate and reveals no value, so higher-level kernels
+    /// can defer expensive constructions without crossing the scalar
+    /// abstraction boundary.
+    #[inline]
+    pub fn storage_class(&self) -> RationalStorageClass {
+        if self.sign == NoSign {
+            RationalStorageClass::Zero
+        } else {
+            let numerator_bits = self.numerator.bits();
+            let denominator_bits = self.denominator.bits();
+            if numerator_bits <= 64 && denominator_bits <= 64 {
+                RationalStorageClass::WordSized
+            } else if numerator_bits.saturating_add(denominator_bits) <= 4096 {
+                RationalStorageClass::MultiLimb
+            } else {
+                RationalStorageClass::VeryLarge
+            }
+        }
+    }
+
     ///
     /// This is a stored-sign structural predicate. It deliberately avoids
     /// constructing a comparison value so downstream numeric kernels can ask

@@ -16,6 +16,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     // Rational storage and display-policy introspection.
     "one_ref",
     "prefer_fraction",
+    "storage_class",
     "storage_identity",
     // Hidden magnitude probes exist only for internal algorithm crossover
     // benchmarks; they are not part of the rational numeric API.
@@ -131,6 +132,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "intersection_point_f64",
     "from_point3",
     "second_signs",
+    "segment_intersection_coordinate_enclosure",
     "sign_query",
     "sign_reals",
     "signs_exact_dyadic_f64",
