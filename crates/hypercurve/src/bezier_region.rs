@@ -2399,8 +2399,7 @@ struct ExactOffsetSpan2 {
 
 #[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicOffsetSpan2 {
-    source_start: crate::RationalBezierIntersectionPointEvidence2,
-    source_end: crate::RationalBezierIntersectionPointEvidence2,
+    source: crate::BezierAlgebraicChord2,
     offset_start: crate::RationalBezierIntersectionPointEvidence2,
     offset_end: crate::RationalBezierIntersectionPointEvidence2,
     direction: BezierAlgebraicChordAxisDirection2,
@@ -2451,8 +2450,7 @@ fn exact_axis_aligned_algebraic_offset_span(
     };
     Ok(Classification::Decided(Some(
         ExactAxisAlignedAlgebraicOffsetSpan2 {
-            source_start: chord.start().clone(),
-            source_end: chord.end().clone(),
+            source: chord.clone(),
             offset_start,
             offset_end,
             direction,
@@ -2497,7 +2495,7 @@ fn append_exact_axis_aligned_algebraic_round_join(
     let (Some(start), Some(end), Some(center)) = (
         previous.offset_end.as_exact(),
         next.offset_start.as_exact(),
-        previous.source_end.as_exact(),
+        previous.source.end().as_exact(),
     ) else {
         // A round join centered in a selected endpoint field requires a
         // retained algebraic circular-arc carrier. Do not demote it to a
@@ -2579,7 +2577,7 @@ fn exact_axis_aligned_algebraic_miter_point(
         }
     }
     let miter = match crate::BezierAlgebraicChord2::translated_endpoint(
-        &previous.source_end,
+        previous.source.end(),
         &miter_delta.0,
         &miter_delta.1,
         policy,
@@ -2605,6 +2603,7 @@ enum ExactAxisAlignedAlgebraicOffsetLoop2 {
     Inapplicable,
     Removed,
     Boundary(CurveRegionBoundaryLoop2),
+    ErodedBoundaries(Vec<(CurveRegionBoundaryLoop2, bool)>),
 }
 
 #[cfg(feature = "predicates")]
@@ -2684,6 +2683,838 @@ fn axis_aligned_offset_has_reversed_span(
 }
 
 #[cfg(feature = "predicates")]
+struct ExactAxisAlignedAlgebraicExpandedBox2 {
+    minimum_x: crate::RationalBezierIntersectionPointEvidence2,
+    maximum_x: crate::RationalBezierIntersectionPointEvidence2,
+    minimum_y: crate::RationalBezierIntersectionPointEvidence2,
+    maximum_y: crate::RationalBezierIntersectionPointEvidence2,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Clone, Copy)]
+struct ExactAxisAlignedAlgebraicGridEdge2 {
+    start: usize,
+    end: usize,
+    direction: usize,
+}
+
+#[cfg(feature = "predicates")]
+fn translated_algebraic_offset_endpoint(
+    endpoint: &crate::RationalBezierIntersectionPointEvidence2,
+    delta_x: &Real,
+    delta_y: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::RationalBezierIntersectionPointEvidence2>> {
+    crate::BezierAlgebraicChord2::translated_endpoint(endpoint, delta_x, delta_y, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_expanded_source_box(
+    span: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    radius: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactAxisAlignedAlgebraicExpandedBox2>> {
+    let source_start = span.source.start();
+    let source_end = span.source.end();
+    let (minimum_x, maximum_x, minimum_y, maximum_y) = match span.direction {
+        BezierAlgebraicChordAxisDirection2::PositiveX => {
+            (source_start, source_end, source_start, source_start)
+        }
+        BezierAlgebraicChordAxisDirection2::NegativeX => {
+            (source_end, source_start, source_start, source_start)
+        }
+        BezierAlgebraicChordAxisDirection2::PositiveY => {
+            (source_start, source_start, source_start, source_end)
+        }
+        BezierAlgebraicChordAxisDirection2::NegativeY => {
+            (source_start, source_start, source_end, source_start)
+        }
+    };
+    let zero = Real::zero();
+    let negative_radius = -radius;
+    let translated = |endpoint, delta_x: &Real, delta_y: &Real| {
+        translated_algebraic_offset_endpoint(endpoint, delta_x, delta_y, policy)
+    };
+    let minimum_x = match translated(minimum_x, &negative_radius, &zero)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let maximum_x = match translated(maximum_x, radius, &zero)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let minimum_y = match translated(minimum_y, &zero, &negative_radius)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let maximum_y = match translated(maximum_y, &zero, radius)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(
+        ExactAxisAlignedAlgebraicExpandedBox2 {
+            minimum_x,
+            maximum_x,
+            minimum_y,
+            maximum_y,
+        },
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn extend_axis_aligned_algebraic_chord(
+    chord: &crate::BezierAlgebraicChord2,
+    direction: BezierAlgebraicChordAxisDirection2,
+    delta_x: &Real,
+    delta_y: &Real,
+    extent: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::BezierAlgebraicChord2>> {
+    let (start_delta_x, start_delta_y, end_delta_x, end_delta_y) = match direction {
+        BezierAlgebraicChordAxisDirection2::PositiveX => (
+            delta_x - extent,
+            delta_y.clone(),
+            delta_x + extent,
+            delta_y.clone(),
+        ),
+        BezierAlgebraicChordAxisDirection2::NegativeX => (
+            delta_x + extent,
+            delta_y.clone(),
+            delta_x - extent,
+            delta_y.clone(),
+        ),
+        BezierAlgebraicChordAxisDirection2::PositiveY => (
+            delta_x.clone(),
+            delta_y - extent,
+            delta_x.clone(),
+            delta_y + extent,
+        ),
+        BezierAlgebraicChordAxisDirection2::NegativeY => (
+            delta_x.clone(),
+            delta_y + extent,
+            delta_x.clone(),
+            delta_y - extent,
+        ),
+    };
+    let start = match translated_algebraic_offset_endpoint(
+        chord.start(),
+        &start_delta_x,
+        &start_delta_y,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let end = match translated_algebraic_offset_endpoint(
+        chord.end(),
+        &end_delta_x,
+        &end_delta_y,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    crate::BezierAlgebraicChord2::try_new(start, end, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn sort_dedup_axis_aligned_algebraic_fibers(
+    fibers: Vec<crate::BezierAlgebraicChord2>,
+    axis: Axis2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<crate::BezierAlgebraicChord2>>> {
+    let mut sorted = Vec::with_capacity(fibers.len());
+    for fiber in fibers {
+        let mut lower = 0;
+        let mut upper = sorted.len();
+        let mut duplicate = false;
+        while lower < upper {
+            let middle = lower + (upper - lower) / 2;
+            match fiber.axis_coordinate_order(&sorted[middle], axis, policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    upper = middle;
+                }
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    duplicate = true;
+                    break;
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    lower = middle + 1;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if !duplicate {
+            sorted.insert(lower, fiber);
+        }
+    }
+    Ok(Classification::Decided(sorted))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_erosion_coordinates(
+    sources: &[crate::BezierAlgebraicChord2],
+    axis: Axis2,
+    radius: &Real,
+    extent: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<crate::BezierAlgebraicChord2>>> {
+    if sources.is_empty() {
+        return Ok(Classification::Decided(Vec::new()));
+    }
+    let zero = Real::zero();
+    let negative_radius = -radius;
+    let mut candidates = Vec::with_capacity(sources.len().saturating_mul(3));
+    for source in sources {
+        let translated = match axis {
+            Axis2::X => [(&negative_radius, &zero), (&zero, &zero), (radius, &zero)],
+            Axis2::Y => [(&zero, &negative_radius), (&zero, &zero), (&zero, radius)],
+        };
+        let direction = match source.axis_direction(policy)? {
+            Classification::Decided(Some(direction)) => direction,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for (delta_x, delta_y) in translated {
+            match extend_axis_aligned_algebraic_chord(
+                source, direction, delta_x, delta_y, extent, policy,
+            )? {
+                Classification::Decided(chord) => candidates.push(chord),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+    }
+    let candidates = match sort_dedup_axis_aligned_algebraic_fibers(candidates, axis, policy)? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let minimum = &sources[0];
+    let maximum = &sources[sources.len() - 1];
+    let mut retained = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        let above_minimum = minimum.axis_coordinate_order(&candidate, axis, policy)?;
+        let below_maximum = candidate.axis_coordinate_order(maximum, axis, policy)?;
+        match (above_minimum, below_maximum) {
+            (
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
+            ) => retained.push(candidate),
+            (Classification::Decided(_), Classification::Decided(_)) => {}
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(retained))
+}
+
+#[cfg(feature = "predicates")]
+fn retained_point_axis_order_to_real(
+    point: &crate::RationalBezierIntersectionPointEvidence2,
+    axis: Axis2,
+    value: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<std::cmp::Ordering>> {
+    crate::BezierAlgebraicChord2::point_axis_order_to_real(point, axis, value, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_sample_is_inside(
+    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    sample: &Point2,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut winding = 0_i32;
+    for span in spans {
+        let delta = match span.direction {
+            BezierAlgebraicChordAxisDirection2::PositiveY => 1,
+            BezierAlgebraicChordAxisDirection2::NegativeY => -1,
+            BezierAlgebraicChordAxisDirection2::PositiveX
+            | BezierAlgebraicChordAxisDirection2::NegativeX => continue,
+        };
+        let (lower, upper) = if delta > 0 {
+            (span.source.start(), span.source.end())
+        } else {
+            (span.source.end(), span.source.start())
+        };
+        let lower_order = retained_point_axis_order_to_real(lower, Axis2::Y, sample.y(), policy)?;
+        let upper_order = retained_point_axis_order_to_real(upper, Axis2::Y, sample.y(), policy)?;
+        match (lower_order, upper_order) {
+            (
+                Classification::Decided(std::cmp::Ordering::Less),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            ) => {}
+            (Classification::Decided(_), Classification::Decided(_)) => continue,
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match retained_point_axis_order_to_real(span.source.start(), Axis2::X, sample.x(), policy)?
+        {
+            Classification::Decided(std::cmp::Ordering::Greater) => winding += delta,
+            Classification::Decided(std::cmp::Ordering::Less) => {}
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(match fill_rule {
+        FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+        FillRule::NonZero => winding != 0,
+    }))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_sample_is_strictly_inside_box(
+    sample: &Point2,
+    bounds: &ExactAxisAlignedAlgebraicExpandedBox2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    for (minimum, maximum, axis, value) in [
+        (&bounds.minimum_x, &bounds.maximum_x, Axis2::X, sample.x()),
+        (&bounds.minimum_y, &bounds.maximum_y, Axis2::Y, sample.y()),
+    ] {
+        let minimum_order = retained_point_axis_order_to_real(minimum, axis, value, policy)?;
+        let maximum_order = retained_point_axis_order_to_real(maximum, axis, value, policy)?;
+        match (minimum_order, maximum_order) {
+            (
+                Classification::Decided(std::cmp::Ordering::Less),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            ) => {}
+            (Classification::Decided(_), Classification::Decided(_)) => {
+                return Ok(Classification::Decided(false));
+            }
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_grid_point(
+    cache: &mut [Option<crate::RationalBezierIntersectionPointEvidence2>],
+    vertex: usize,
+    x_count: usize,
+    x_fibers: &[crate::BezierAlgebraicChord2],
+    y_fibers: &[crate::BezierAlgebraicChord2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::RationalBezierIntersectionPointEvidence2>> {
+    if let Some(point) = &cache[vertex] {
+        return Ok(Classification::Decided(point.clone()));
+    }
+    let x = vertex % x_count;
+    let y = vertex / x_count;
+    let point = match x_fibers[x].unique_transverse_intersection_point(&y_fibers[y], policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    cache[vertex] = Some(point.clone());
+    Ok(Classification::Decided(point))
+}
+
+#[cfg(feature = "predicates")]
+fn push_exact_axis_aligned_grid_edge(
+    edges: &mut Vec<ExactAxisAlignedAlgebraicGridEdge2>,
+    outgoing: &mut [[Option<usize>; 4]],
+    start: usize,
+    end: usize,
+    direction: usize,
+) -> CurveResult<()> {
+    if outgoing[start][direction].is_some() {
+        return Err(CurveError::Topology(
+            "orthogonal erosion emitted a duplicate directed grid edge".into(),
+        ));
+    }
+    let index = edges.len();
+    edges.push(ExactAxisAlignedAlgebraicGridEdge2 {
+        start,
+        end,
+        direction,
+    });
+    outgoing[start][direction] = Some(index);
+    Ok(())
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_rational_sample_between(
+    first: &crate::BezierAlgebraicChord2,
+    second: &crate::BezierAlgebraicChord2,
+    axis: Axis2,
+    mut lower: Real,
+    mut upper: Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Real>> {
+    match first.axis_coordinate_order(second, axis, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => {}
+        Classification::Decided(std::cmp::Ordering::Equal) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Decided(std::cmp::Ordering::Greater) => {
+            return Err(CurveError::Topology(
+                "orthogonal erosion coordinates were not ordered".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    loop {
+        let midpoint = ((&lower + &upper) / Real::from(2_u8))?;
+        let first_order = crate::BezierAlgebraicChord2::point_axis_order_to_real(
+            first.start(),
+            axis,
+            &midpoint,
+            policy,
+        )?;
+        let second_order = crate::BezierAlgebraicChord2::point_axis_order_to_real(
+            second.start(),
+            axis,
+            &midpoint,
+            policy,
+        )?;
+        match (first_order, second_order) {
+            (
+                Classification::Decided(std::cmp::Ordering::Less),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            ) => return Ok(Classification::Decided(midpoint)),
+            (
+                Classification::Decided(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal),
+                Classification::Decided(_),
+            ) => lower = midpoint,
+            (
+                Classification::Decided(std::cmp::Ordering::Less),
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
+            ) => upper = midpoint,
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+/// Erodes one orthogonal retained loop through its exact finite cell arrangement.
+///
+/// Source coordinates and their `radius` translations partition the plane into
+/// cells on which winding and L-infinity boundary distance are constant. The
+/// compact occupancy bitmap therefore proves every retained face. Exposed grid
+/// runs are traced with material on the left and emitted as subchords of the
+/// shared coordinate fibers, preserving selected algebraic endpoint fields.
+fn exact_axis_aligned_algebraic_erosion(
+    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    distance: &Real,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<(CurveRegionBoundaryLoop2, bool)>>> {
+    let radius = match real_sign(distance, policy) {
+        Some(RealSign::Positive) => distance.clone(),
+        Some(RealSign::Negative) => -distance,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(Vec::new())),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    let mut sources = Vec::with_capacity(spans.len());
+    let mut source_bounds: Option<Aabb2> = None;
+    let mut expanded_boxes = Vec::with_capacity(spans.len());
+    for span in spans {
+        let chord = span.source.clone();
+        let bounds = match chord.conservative_bounds_refined(0, policy)? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        source_bounds = Some(match source_bounds {
+            Some(existing) => match existing.union(&bounds, policy) {
+                Classification::Decided(bounds) => bounds,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+            None => bounds,
+        });
+        let expanded = match exact_axis_aligned_expanded_source_box(span, &radius, policy)? {
+            Classification::Decided(expanded) => expanded,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        expanded_boxes.push(expanded);
+        sources.push((span.direction, chord));
+    }
+    let Some(source_bounds) = source_bounds else {
+        return Ok(Classification::Decided(Vec::new()));
+    };
+    let width = source_bounds.max().x() - source_bounds.min().x();
+    let height = source_bounds.max().y() - source_bounds.min().y();
+    let extent = width + height + Real::from(4_u8) * &radius + Real::one();
+    let mut source_x_fibers = Vec::new();
+    let mut source_y_fibers = Vec::new();
+    for (direction, chord) in sources {
+        match direction {
+            BezierAlgebraicChordAxisDirection2::PositiveY
+            | BezierAlgebraicChordAxisDirection2::NegativeY => {
+                source_x_fibers.push(chord);
+            }
+            BezierAlgebraicChordAxisDirection2::PositiveX
+            | BezierAlgebraicChordAxisDirection2::NegativeX => {
+                source_y_fibers.push(chord);
+            }
+        }
+    }
+    let source_x_fibers =
+        match sort_dedup_axis_aligned_algebraic_fibers(source_x_fibers, Axis2::X, policy)? {
+            Classification::Decided(fibers) => fibers,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let source_y_fibers =
+        match sort_dedup_axis_aligned_algebraic_fibers(source_y_fibers, Axis2::Y, policy)? {
+            Classification::Decided(fibers) => fibers,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let x_fibers = match exact_axis_aligned_algebraic_erosion_coordinates(
+        &source_x_fibers,
+        Axis2::X,
+        &radius,
+        &extent,
+        policy,
+    )? {
+        Classification::Decided(fibers) => fibers,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let y_fibers = match exact_axis_aligned_algebraic_erosion_coordinates(
+        &source_y_fibers,
+        Axis2::Y,
+        &radius,
+        &extent,
+        policy,
+    )? {
+        Classification::Decided(fibers) => fibers,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if x_fibers.len() < 2 || y_fibers.len() < 2 {
+        return Ok(Classification::Decided(Vec::new()));
+    }
+
+    let cell_width = x_fibers.len() - 1;
+    let cell_height = y_fibers.len() - 1;
+    let sample_minimum_x = source_bounds.min().x().clone();
+    let sample_maximum_x = source_bounds.max().x().clone();
+    let sample_minimum_y = source_bounds.min().y().clone();
+    let sample_maximum_y = source_bounds.max().y().clone();
+    let mut sample_x = Vec::with_capacity(cell_width);
+    for x in 0..cell_width {
+        match exact_axis_aligned_rational_sample_between(
+            &x_fibers[x],
+            &x_fibers[x + 1],
+            Axis2::X,
+            sample_minimum_x.clone(),
+            sample_maximum_x.clone(),
+            policy,
+        )? {
+            Classification::Decided(value) => sample_x.push(value),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    let mut sample_y = Vec::with_capacity(cell_height);
+    for y in 0..cell_height {
+        match exact_axis_aligned_rational_sample_between(
+            &y_fibers[y],
+            &y_fibers[y + 1],
+            Axis2::Y,
+            sample_minimum_y.clone(),
+            sample_maximum_y.clone(),
+            policy,
+        )? {
+            Classification::Decided(value) => sample_y.push(value),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    let mut occupied = vec![false; cell_width.saturating_mul(cell_height)];
+    for (y, sample_y) in sample_y.iter().enumerate() {
+        for (x, sample_x) in sample_x.iter().enumerate() {
+            let sample = Point2::new(sample_x.clone(), sample_y.clone());
+            match exact_axis_aligned_algebraic_sample_is_inside(spans, &sample, fill_rule, policy)?
+            {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let mut too_close = false;
+            for bounds in &expanded_boxes {
+                match exact_axis_aligned_sample_is_strictly_inside_box(&sample, bounds, policy)? {
+                    Classification::Decided(true) => {
+                        too_close = true;
+                        break;
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if !too_close {
+                occupied[y * cell_width + x] = true;
+            }
+        }
+    }
+    if !occupied.iter().any(|cell| *cell) {
+        return Ok(Classification::Decided(Vec::new()));
+    }
+    let x_count = x_fibers.len();
+    let vertex = |x: usize, y: usize| y * x_count + x;
+    let mut edges = Vec::new();
+    let mut outgoing = vec![[None; 4]; x_count.saturating_mul(y_fibers.len())];
+    let is_occupied = |x: usize, y: usize| occupied[y * cell_width + x];
+    for y in 0..cell_height {
+        for x in 0..cell_width {
+            if !is_occupied(x, y) {
+                continue;
+            }
+            if y == 0 || !is_occupied(x, y - 1) {
+                push_exact_axis_aligned_grid_edge(
+                    &mut edges,
+                    &mut outgoing,
+                    vertex(x, y),
+                    vertex(x + 1, y),
+                    0,
+                )?;
+            }
+            if x + 1 == cell_width || !is_occupied(x + 1, y) {
+                push_exact_axis_aligned_grid_edge(
+                    &mut edges,
+                    &mut outgoing,
+                    vertex(x + 1, y),
+                    vertex(x + 1, y + 1),
+                    1,
+                )?;
+            }
+            if y + 1 == cell_height || !is_occupied(x, y + 1) {
+                push_exact_axis_aligned_grid_edge(
+                    &mut edges,
+                    &mut outgoing,
+                    vertex(x + 1, y + 1),
+                    vertex(x, y + 1),
+                    2,
+                )?;
+            }
+            if x == 0 || !is_occupied(x - 1, y) {
+                push_exact_axis_aligned_grid_edge(
+                    &mut edges,
+                    &mut outgoing,
+                    vertex(x, y + 1),
+                    vertex(x, y),
+                    3,
+                )?;
+            }
+        }
+    }
+
+    let mut used = vec![false; edges.len()];
+    let mut point_cache = vec![None; x_count.saturating_mul(y_fibers.len())];
+    let mut boundaries = Vec::new();
+    let mut arrangement_fragment_index = 0;
+    let mut cycle = Vec::new();
+    let mut corners = Vec::new();
+    for first_edge in 0..edges.len() {
+        if used[first_edge] {
+            continue;
+        }
+        let cycle_start = edges[first_edge].start;
+        cycle.clear();
+        let mut current = first_edge;
+        loop {
+            if used[current] {
+                return Err(CurveError::Topology(
+                    "orthogonal erosion boundary revisited an edge before closure".into(),
+                ));
+            }
+            used[current] = true;
+            cycle.push(current);
+            let edge = edges[current];
+            if edge.end == cycle_start {
+                break;
+            }
+            let priorities = [
+                (edge.direction + 1) % 4,
+                edge.direction,
+                (edge.direction + 3) % 4,
+                (edge.direction + 2) % 4,
+            ];
+            let Some(next) = priorities
+                .into_iter()
+                .find_map(|direction| outgoing[edge.end][direction].filter(|next| !used[*next]))
+            else {
+                return Err(CurveError::Topology(
+                    "orthogonal erosion boundary did not close".into(),
+                ));
+            };
+            current = next;
+            if cycle.len() > edges.len() {
+                return Err(CurveError::Topology(
+                    "orthogonal erosion boundary exceeded its edge inventory".into(),
+                ));
+            }
+        }
+
+        let mut turn_sum = 0_i32;
+        corners.clear();
+        for index in 0..cycle.len() {
+            let previous = edges[cycle[(index + cycle.len() - 1) % cycle.len()]];
+            let current = edges[cycle[index]];
+            let turn = (current.direction + 4 - previous.direction) % 4;
+            match turn {
+                0 => {}
+                1 => turn_sum += 1,
+                3 => turn_sum -= 1,
+                2 => {
+                    return Err(CurveError::Topology(
+                        "orthogonal erosion boundary made a reversing turn".into(),
+                    ));
+                }
+                _ => unreachable!(),
+            }
+            if previous.direction != current.direction {
+                corners.push(cycle[index]);
+            }
+        }
+        if corners.len() < 4 || turn_sum == 0 {
+            return Err(CurveError::Topology(
+                "orthogonal erosion boundary did not form an oriented area cycle".into(),
+            ));
+        }
+
+        let mut fragments = Vec::with_capacity(corners.len());
+        for index in 0..corners.len() {
+            let run = edges[corners[index]];
+            let next = edges[corners[(index + 1) % corners.len()]];
+            let start = match exact_axis_aligned_grid_point(
+                &mut point_cache,
+                run.start,
+                x_count,
+                &x_fibers,
+                &y_fibers,
+                policy,
+            )? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end = match exact_axis_aligned_grid_point(
+                &mut point_cache,
+                next.start,
+                x_count,
+                &x_fibers,
+                &y_fibers,
+                policy,
+            )? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let support = match run.direction {
+                0 | 2 => &y_fibers[run.start / x_count],
+                1 | 3 => &x_fibers[run.start % x_count],
+                _ => unreachable!(),
+            };
+            let support_direction = match support.axis_direction(policy)? {
+                Classification::Decided(Some(direction)) => direction,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let forward_on_support = matches!(
+                (support_direction, run.direction),
+                (BezierAlgebraicChordAxisDirection2::PositiveX, 0)
+                    | (BezierAlgebraicChordAxisDirection2::PositiveY, 1)
+                    | (BezierAlgebraicChordAxisDirection2::NegativeX, 2)
+                    | (BezierAlgebraicChordAxisDirection2::NegativeY, 3)
+            );
+            let chord = match support.subchord_between_certified_points(
+                start,
+                end,
+                forward_on_support,
+                policy,
+            )? {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            fragments.push(retained_chord_or_exact_line_fragment(chord)?);
+        }
+        let arrangement_sources = (0..fragments.len())
+            .map(|source_fragment_index| {
+                let source = CurveRegionFragmentSource2::new(
+                    arrangement_fragment_index,
+                    arrangement_fragment_index,
+                    source_fragment_index,
+                );
+                arrangement_fragment_index += 1;
+                source
+            })
+            .collect();
+        boundaries.push((
+            CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+                fragments,
+                arrangement_sources,
+                policy,
+            )?,
+            turn_sum > 0,
+        ));
+    }
+    Ok(Classification::Decided(boundaries))
+}
+
+#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_join(
     previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
     next: &ExactAxisAlignedAlgebraicOffsetSpan2,
@@ -2702,7 +3533,11 @@ fn exact_axis_aligned_algebraic_join(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    match previous.source_end.same_point(&next.source_start, policy) {
+    match previous
+        .source
+        .end()
+        .same_point(next.source.start(), policy)
+    {
         Classification::Decided(true) => {}
         Classification::Decided(false) => return Err(CurveError::DisconnectedCurvePath),
         Classification::Uncertain(reason) => {
@@ -2765,6 +3600,9 @@ fn exact_axis_aligned_algebraic_offset_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     distance: &Real,
     corner_style: &OffsetCornerStyle2,
+    component_contracts: bool,
+    schedule_nonconvex_erosion: bool,
+    fill_rule: FillRule,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetLoop2>> {
     if !boundary_loop
@@ -2866,19 +3704,31 @@ fn exact_axis_aligned_algebraic_offset_loop(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    match axis_aligned_offset_has_reversed_span(&spans, policy)? {
-        Classification::Decided(true) if convex_inward => {
-            return Ok(Classification::Decided(
-                ExactAxisAlignedAlgebraicOffsetLoop2::Removed,
-            ));
-        }
-        Classification::Decided(true) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        Classification::Decided(false) => {}
+    let has_reversed_span = match axis_aligned_offset_has_reversed_span(&spans, policy)? {
+        Classification::Decided(has_reversed_span) => has_reversed_span,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
+    };
+    if has_reversed_span && convex_inward {
+        return Ok(Classification::Decided(
+            ExactAxisAlignedAlgebraicOffsetLoop2::Removed,
+        ));
+    }
+    if component_contracts && schedule_nonconvex_erosion && !convex_inward {
+        let erosion = exact_axis_aligned_algebraic_erosion(&spans, distance, fill_rule, policy)?;
+        return Ok(match erosion {
+            Classification::Decided(boundaries) if boundaries.is_empty() => {
+                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Removed)
+            }
+            Classification::Decided(boundaries) => Classification::Decided(
+                ExactAxisAlignedAlgebraicOffsetLoop2::ErodedBoundaries(boundaries),
+            ),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        });
+    }
+    if has_reversed_span {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
     let mut fragments = Vec::with_capacity(spans.len().saturating_mul(3));
     for span_index in 0..spans.len() {
@@ -6690,6 +7540,13 @@ impl CurveRegion2 {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
         }
+        #[cfg(feature = "predicates")]
+        let distance_positive = match real_sign(&distance, policy) {
+            Some(RealSign::Positive) => true,
+            Some(RealSign::Negative) => false,
+            Some(RealSign::Zero) => return Ok(Classification::Decided(self.clone())),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
         let roles = match self
             .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -6728,6 +7585,8 @@ impl CurveRegion2 {
         let mut offset_roles = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_fill_rules = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_filled_sides = Vec::with_capacity(self.data.boundary_loops.len());
+        #[cfg(feature = "predicates")]
+        let mut certified_regularized_filled_left_topology = false;
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let signed_left_distance = if filled_sides[loop_index] {
                 Real::zero() - &distance
@@ -6735,10 +7594,17 @@ impl CurveRegion2 {
                 distance.clone()
             };
             #[cfg(feature = "predicates")]
+            let component_contracts =
+                (roles[loop_index] == CurveRegionLoopRole::Material) != distance_positive;
+            #[cfg(feature = "predicates")]
             match exact_axis_aligned_algebraic_offset_loop(
                 boundary_loop,
                 &signed_left_distance,
                 corner_style,
+                component_contracts,
+                self.data.boundary_loops.len() == 1
+                    && roles[loop_index] == CurveRegionLoopRole::Material,
+                fill_rules[loop_index],
                 policy,
             )
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -6750,6 +7616,28 @@ impl CurveRegion2 {
                     offset_roles.push(roles[loop_index]);
                     offset_fill_rules.push(fill_rules[loop_index]);
                     offset_filled_sides.push(filled_sides[loop_index]);
+                    continue;
+                }
+                Classification::Decided(
+                    ExactAxisAlignedAlgebraicOffsetLoop2::ErodedBoundaries(boundaries),
+                ) => {
+                    let source_role = roles[loop_index];
+                    certified_regularized_filled_left_topology = self.data.boundary_loops.len()
+                        == 1
+                        && source_role == CurveRegionLoopRole::Material;
+                    for (boundary, outer) in boundaries {
+                        offset_loops.push(boundary);
+                        offset_roles.push(if outer {
+                            source_role
+                        } else {
+                            match source_role {
+                                CurveRegionLoopRole::Material => CurveRegionLoopRole::Hole,
+                                CurveRegionLoopRole::Hole => CurveRegionLoopRole::Material,
+                            }
+                        });
+                        offset_fill_rules.push(fill_rules[loop_index]);
+                        offset_filled_sides.push(source_role == CurveRegionLoopRole::Material);
+                    }
                     continue;
                 }
                 Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Removed) => {
@@ -6889,6 +7777,12 @@ impl CurveRegion2 {
         raw = raw
             .with_certified_filled_side_is_left(offset_filled_sides)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        #[cfg(feature = "predicates")]
+        if certified_regularized_filled_left_topology {
+            raw = raw
+                .with_certified_regularized_filled_left_topology()
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+        }
         raw.regularized_region_raw(policy)
             .map(Classification::Decided)
             .map_err(|error| error.with_operation(CurveOperation2::Offset))

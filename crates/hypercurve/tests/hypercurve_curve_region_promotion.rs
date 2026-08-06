@@ -395,6 +395,87 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
+#[cfg(feature = "predicates")]
+fn axis_aligned_algebraic_dumbbell_region(
+    policy: &CurveContext,
+    fill_rule: FillRule,
+    reverse: bool,
+) -> CurveRegion2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(
+            vec![-q(1, 2), Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+    let parameter =
+        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let selected = |height: Real| {
+        RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::from(12), height.clone()),
+                    Point2::new(Real::from(13), height),
+                ],
+                vec![Real::one(); 2],
+            )
+            .unwrap()
+            .point_at_algebraic_parameter(&parameter, policy)
+            .unwrap(),
+        )
+    };
+    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(p(x, y));
+    let points = [
+        exact(0, 0),
+        exact(4, 0),
+        exact(4, 1),
+        exact(8, 1),
+        exact(8, 0),
+        selected(Real::zero()),
+        selected(Real::from(4)),
+        exact(8, 4),
+        exact(8, 3),
+        exact(4, 3),
+        exact(4, 4),
+        exact(0, 4),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                    policy,
+                )
+                .unwrap(),
+            ))
+        })
+        .collect::<Vec<_>>();
+    let fragments = if reverse {
+        fragments
+            .iter()
+            .rev()
+            .map(|fragment| fragment.reversed().unwrap())
+            .collect()
+    } else {
+        fragments
+    };
+    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![fill_rule],
+        vec![if reverse {
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        }],
+    )
+    .unwrap()
+}
+
 #[test]
 fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics() {
     let policy = CurveContext::STRICT;
@@ -1640,11 +1721,77 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             Classification::Decided(RegionPointLocation::Outside)
         );
 
-        assert!(matches!(
-            source.offset(-q(3, 20), &miter, &policy),
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
-        ));
+        let post_collapse = source.offset(-q(3, 20), &miter, &policy).unwrap();
+        assert_eq!(post_collapse.certainty, CurveCertainty::Certified);
+        assert_eq!(post_collapse.value.boundary_loops().len(), 1);
+        assert_eq!(post_collapse.value.boundary_loops()[0].fragments().len(), 4);
+        for (point, expected) in [
+            (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
+            (Point2::new(q(11, 20), q(1, 4)), RegionPointLocation::Inside),
+            (
+                Point2::new(q(14, 25), q(1, 4)),
+                RegionPointLocation::Outside,
+            ),
+            (Point2::new(q(3, 5), q(3, 4)), RegionPointLocation::Outside),
+            (
+                Point2::new(q(3, 20), q(1, 4)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(
+                certified(post_collapse.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected)
+            );
+        }
+
+        let fully_collapsed = source.offset(-q(1, 4), &miter, &policy).unwrap();
+        assert_eq!(fully_collapsed.certainty, CurveCertainty::Certified);
+        assert!(fully_collapsed.value.is_empty());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for (policy, fill_rule, reverse) in [
+        (CurveContext::STRICT, FillRule::NonZero, false),
+        (CurveContext::STRICT, FillRule::EvenOdd, true),
+        (CurveContext::APPROXIMATE_512, FillRule::NonZero, false),
+        (CurveContext::APPROXIMATE_512, FillRule::EvenOdd, true),
+    ] {
+        let source = axis_aligned_algebraic_dumbbell_region(&policy, fill_rule, reverse);
+        for radius in [Real::one(), q(11, 10)] {
+            let split = source.offset(-radius, &miter, &policy).unwrap();
+            assert_eq!(split.certainty, CurveCertainty::Certified);
+            assert_eq!(split.value.boundary_loops().len(), 2);
+            assert_eq!(
+                certified(split.value.loop_roles(&policy).unwrap()),
+                Classification::Decided(vec![
+                    CurveRegionLoopRole::Material,
+                    CurveRegionLoopRole::Material,
+                ])
+            );
+            assert!(
+                split
+                    .value
+                    .boundary_loops()
+                    .iter()
+                    .all(|boundary| boundary.fragments().len() == 4)
+            );
+            for (point, expected) in [
+                (p(2, 2), RegionPointLocation::Inside),
+                (p(10, 2), RegionPointLocation::Inside),
+                (p(6, 2), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    certified(split.value.classify_point(&point, &policy).unwrap()),
+                    Classification::Decided(expected)
+                );
+            }
+        }
     }
 }
 

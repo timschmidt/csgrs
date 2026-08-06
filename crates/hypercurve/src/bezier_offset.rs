@@ -11007,6 +11007,24 @@ impl BezierAlgebraicChord2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
+        if let Some(source) = &self.data.source
+            && matches!(
+                source.axis_direction(policy)?,
+                Classification::Decided(Some(_))
+            )
+        {
+            return Ok(Classification::Decided(Some(
+                match (
+                    self.data.parameter_axis.axis,
+                    self.data.parameter_axis.coordinate_increases,
+                ) {
+                    (Axis2::X, true) => BezierAlgebraicChordAxisDirection2::PositiveX,
+                    (Axis2::X, false) => BezierAlgebraicChordAxisDirection2::NegativeX,
+                    (Axis2::Y, true) => BezierAlgebraicChordAxisDirection2::PositiveY,
+                    (Axis2::Y, false) => BezierAlgebraicChordAxisDirection2::NegativeY,
+                },
+            )));
+        }
         let [x, y] = self.tangent_coordinate_signs(policy)?;
         let x = match x {
             Classification::Decided(sign) => sign,
@@ -11043,6 +11061,113 @@ impl BezierAlgebraicChord2 {
             }
         };
         Ok(Classification::Decided(direction))
+    }
+
+    /// Compares the constant `axis` coordinates of two certified axis-aligned
+    /// supports without materializing either selected endpoint field.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn axis_coordinate_order(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        algebraic_chord_point_coordinate_order(self.start(), other.start(), axis, policy)
+    }
+
+    /// Compares one retained point coordinate with a represented scalar.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn point_axis_order_to_real(
+        point: &RationalBezierIntersectionPointEvidence2,
+        axis: Axis2,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let represented = RationalBezierIntersectionPointEvidence2::Exact(match axis {
+            Axis2::X => Point2::new(value.clone(), Real::zero()),
+            Axis2::Y => Point2::new(Real::zero(), value.clone()),
+        });
+        algebraic_chord_point_coordinate_order(point, &represented, axis, policy)
+    }
+
+    /// Returns the unique finite transverse contact of two retained chords.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn unique_transverse_intersection_point(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+        match self.chord_intersections(other, policy)? {
+            Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(contacts))
+                if contacts.len() == 1 && contacts[0].tangent_cross_sign() != RealSign::Zero =>
+            {
+                Ok(Classification::Decided(contacts[0].point().clone()))
+            }
+            Classification::Decided(
+                BezierAlgebraicChordPairIntersections2::Contacts(_)
+                | BezierAlgebraicChordPairIntersections2::Overlaps(_),
+            ) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Trims this retained support between two already-certified incident
+    /// points and orients the result from `start` to `end`.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn subchord_between_certified_points(
+        &self,
+        start: RationalBezierIntersectionPointEvidence2,
+        end: RationalBezierIntersectionPointEvidence2,
+        forward_on_support: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let start_parameter = match self.parameter_at_certified_point(start, policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_parameter = match self.parameter_at_certified_point(end, policy)? {
+            Classification::Decided(Some(parameter)) => parameter,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (lower, upper) = if forward_on_support {
+            (&start_parameter, &end_parameter)
+        } else {
+            (&end_parameter, &start_parameter)
+        };
+        if !lower.chord().shares_retained_support(self)
+            || !upper.chord().shares_retained_support(self)
+        {
+            return Err(CurveError::Topology(
+                "certified algebraic grid cut did not retain its coordinate support".into(),
+            ));
+        }
+        let chord = Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start: lower.point().clone(),
+                end: upper.point().clone(),
+                parameter_axis: self.data.parameter_axis,
+                source: Some(self.retained_support().clone()),
+                reversed: false,
+                policy: *policy,
+            }),
+        };
+        Ok(Classification::Decided(if forward_on_support {
+            chord
+        } else {
+            chord.reversed()
+        }))
     }
 
     /// Translates retained endpoint evidence by a represented exact vector.
@@ -11187,6 +11312,163 @@ impl BezierAlgebraicChord2 {
     /// Returns this chord's half-open winding contribution to a forward ray.
     #[cfg(feature = "predicates")]
     pub(crate) fn forward_ray_winding_delta(
+        &self,
+        origin: &Point2,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        if real_sign(direction_y, policy) == Some(RealSign::Zero) {
+            let direction_x_sign = match real_sign(direction_x, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "algebraic-chord winding ray has zero direction".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            let axis_direction = match self.axis_direction(policy)? {
+                Classification::Decided(Some(direction)) => direction,
+                Classification::Decided(None) => {
+                    return self.forward_ray_winding_delta_general(
+                        origin,
+                        direction_x,
+                        direction_y,
+                        policy,
+                    );
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let coordinate_order =
+                |point, axis, value| Self::point_axis_order_to_real(point, axis, value, policy);
+            match axis_direction {
+                BezierAlgebraicChordAxisDirection2::PositiveX
+                | BezierAlgebraicChordAxisDirection2::NegativeX => {
+                    let support_order = match coordinate_order(
+                        self.retained_support().start(),
+                        Axis2::Y,
+                        origin.y(),
+                    )? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    if support_order != std::cmp::Ordering::Equal {
+                        return Ok(Classification::Decided(0));
+                    }
+                    let start_order = match coordinate_order(self.start(), Axis2::X, origin.x())? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let end_order = match coordinate_order(self.end(), Axis2::X, origin.x())? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    return Ok(
+                        if matches!(
+                            (start_order, end_order),
+                            (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                                | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+                        ) {
+                            Classification::Decided(0)
+                        } else {
+                            Classification::Uncertain(UncertaintyReason::Boundary)
+                        },
+                    );
+                }
+                BezierAlgebraicChordAxisDirection2::PositiveY
+                | BezierAlgebraicChordAxisDirection2::NegativeY => {
+                    let start_order = match coordinate_order(self.start(), Axis2::Y, origin.y())? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let end_order = match coordinate_order(self.end(), Axis2::Y, origin.y())? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let ray_side_order = |order: std::cmp::Ordering| {
+                        if direction_x_sign == RealSign::Negative {
+                            order.reverse()
+                        } else {
+                            order
+                        }
+                    };
+                    let start_side = ray_side_order(start_order);
+                    let end_side = ray_side_order(end_order);
+                    if matches!(
+                        (start_side, end_side),
+                        (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
+                            | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
+                    ) {
+                        return Ok(Classification::Decided(0));
+                    }
+                    let support_order = match coordinate_order(
+                        self.retained_support().start(),
+                        Axis2::X,
+                        origin.x(),
+                    )? {
+                        Classification::Decided(order) => order,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    if support_order == std::cmp::Ordering::Equal {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    let origin_side = match (axis_direction, support_order) {
+                        (
+                            BezierAlgebraicChordAxisDirection2::PositiveY,
+                            std::cmp::Ordering::Greater,
+                        )
+                        | (
+                            BezierAlgebraicChordAxisDirection2::NegativeY,
+                            std::cmp::Ordering::Less,
+                        ) => crate::classify::LineSide::Left,
+                        (
+                            BezierAlgebraicChordAxisDirection2::PositiveY,
+                            std::cmp::Ordering::Less,
+                        )
+                        | (
+                            BezierAlgebraicChordAxisDirection2::NegativeY,
+                            std::cmp::Ordering::Greater,
+                        ) => crate::classify::LineSide::Right,
+                        _ => unreachable!(),
+                    };
+                    return Ok(Classification::Decided(
+                        if start_side != std::cmp::Ordering::Greater
+                            && end_side == std::cmp::Ordering::Greater
+                            && origin_side == crate::classify::LineSide::Left
+                        {
+                            1
+                        } else if start_side == std::cmp::Ordering::Greater
+                            && end_side != std::cmp::Ordering::Greater
+                            && origin_side == crate::classify::LineSide::Right
+                        {
+                            -1
+                        } else {
+                            0
+                        },
+                    ));
+                }
+            }
+        }
+        self.forward_ray_winding_delta_general(origin, direction_x, direction_y, policy)
+    }
+
+    #[cfg(feature = "predicates")]
+    fn forward_ray_winding_delta_general(
         &self,
         origin: &Point2,
         direction_x: &Real,
@@ -13526,6 +13808,22 @@ fn algebraic_chord_point_coordinate_order(
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
         #[cfg(feature = "predicates")]
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(first),
+            RationalBezierIntersectionPointEvidence2::Exact(second),
+        ) => first.axis_coordinate_order_to_real(
+            axis,
+            if use_x { second.x() } else { second.y() },
+            policy,
+        ),
+        #[cfg(feature = "predicates")]
+        (
+            RationalBezierIntersectionPointEvidence2::Exact(first),
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
+        ) => Ok(second
+            .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)?
+            .map(std::cmp::Ordering::reverse)),
+        #[cfg(feature = "predicates")]
         (RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_), _)
         | (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)) => {
             Ok(Classification::Uncertain(UncertaintyReason::Ordering))
@@ -14289,6 +14587,57 @@ impl BezierAlgebraicChordPairPoint2 {
                 policy: *policy,
             }),
         }
+    }
+
+    fn axis_coordinate_order_to_real(
+        &self,
+        axis: Axis2,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "correlated chord point was replayed under a different predicate policy".into(),
+            ));
+        }
+        let mut uncertainty = None;
+        for chord in [&self.data.first, &self.data.second] {
+            let constant_coordinate = match chord.axis_direction(policy)? {
+                Classification::Decided(Some(
+                    BezierAlgebraicChordAxisDirection2::PositiveX
+                    | BezierAlgebraicChordAxisDirection2::NegativeX,
+                )) => axis == Axis2::Y,
+                Classification::Decided(Some(
+                    BezierAlgebraicChordAxisDirection2::PositiveY
+                    | BezierAlgebraicChordAxisDirection2::NegativeY,
+                )) => axis == Axis2::X,
+                Classification::Decided(None) => false,
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                    false
+                }
+            };
+            if !constant_coordinate {
+                continue;
+            }
+            let support_point = chord.retained_support().start();
+            if matches!(
+                support_point,
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            ) {
+                uncertainty.get_or_insert(UncertaintyReason::Ordering);
+                continue;
+            }
+            return BezierAlgebraicChord2::point_axis_order_to_real(
+                support_point,
+                axis,
+                value,
+                policy,
+            );
+        }
+        Ok(Classification::Uncertain(
+            uncertainty.unwrap_or(UncertaintyReason::Ordering),
+        ))
     }
 
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
