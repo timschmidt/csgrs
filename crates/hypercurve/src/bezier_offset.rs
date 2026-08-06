@@ -2083,6 +2083,42 @@ pub struct BezierAlgebraicChord2 {
     data: Arc<BezierAlgebraicChordData2>,
 }
 
+/// Certified traversal direction of an axis-aligned retained algebraic chord.
+///
+/// The unit directions contain no normalized algebraic scalar, so an exact
+/// signed parallel can translate each retained endpoint in its existing
+/// selected field. General directions deliberately remain on the algebraic
+/// parallel-carrier boundary.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum BezierAlgebraicChordAxisDirection2 {
+    PositiveX,
+    NegativeX,
+    PositiveY,
+    NegativeY,
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicChordAxisDirection2 {
+    pub(crate) fn unit_tangent(self) -> (Real, Real) {
+        match self {
+            Self::PositiveX => (Real::one(), Real::zero()),
+            Self::NegativeX => (-Real::one(), Real::zero()),
+            Self::PositiveY => (Real::zero(), Real::one()),
+            Self::NegativeY => (Real::zero(), -Real::one()),
+        }
+    }
+
+    pub(crate) fn signed_left_offset(self, distance: &Real) -> (Real, Real) {
+        match self {
+            Self::PositiveX => (Real::zero(), distance.clone()),
+            Self::NegativeX => (Real::zero(), -distance.clone()),
+            Self::PositiveY => (-distance.clone(), Real::zero()),
+            Self::NegativeY => (distance.clone(), Real::zero()),
+        }
+    }
+}
+
 /// Compact exact local parameter on one retained algebraic chord.
 ///
 /// The parameter retains the affine point itself and orders it on a certified
@@ -10822,7 +10858,13 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
         self.validate_policy(policy)?;
-        if let Some(line) = self.exact_line() {
+        if let Some(line) = self.exact_line()
+            && self
+                .data
+                .source
+                .as_ref()
+                .is_none_or(|source| source.exact_line().is_some())
+        {
             let half = (Real::one() / Real::from(2_i8))?;
             return Ok(Classification::Decided(
                 RationalBezierIntersectionPointEvidence2::Exact(line.point_at(half)),
@@ -10951,6 +10993,107 @@ impl BezierAlgebraicChord2 {
             )
         };
         Ok([sign(Axis2::X)?, sign(Axis2::Y)?])
+    }
+
+    /// Returns the exact unit traversal direction when this retained chord is
+    /// axis aligned.
+    ///
+    /// A diagonal chord returns `None`; uncertainty in either selected-field
+    /// comparison remains explicit. The zero/zero case is impossible for a
+    /// validated chord and is treated as a topology failure rather than an
+    /// offset direction.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn axis_direction(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
+        let [x, y] = self.tangent_coordinate_signs(policy)?;
+        let x = match x {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let y = match y {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let direction = match (x, y) {
+            (RealSign::Positive, RealSign::Zero) => {
+                Some(BezierAlgebraicChordAxisDirection2::PositiveX)
+            }
+            (RealSign::Negative, RealSign::Zero) => {
+                Some(BezierAlgebraicChordAxisDirection2::NegativeX)
+            }
+            (RealSign::Zero, RealSign::Positive) => {
+                Some(BezierAlgebraicChordAxisDirection2::PositiveY)
+            }
+            (RealSign::Zero, RealSign::Negative) => {
+                Some(BezierAlgebraicChordAxisDirection2::NegativeY)
+            }
+            (RealSign::Zero, RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "validated algebraic chord has zero direction".into(),
+                ));
+            }
+            (RealSign::Positive | RealSign::Negative, RealSign::Positive | RealSign::Negative) => {
+                None
+            }
+        };
+        Ok(Classification::Decided(direction))
+    }
+
+    /// Translates retained endpoint evidence by a represented exact vector.
+    ///
+    /// A one-field algebraic image remains a rational expression in the same
+    /// selected root: `N + delta*D` over its original denominator. Correlated
+    /// chord-pair intersections need a distinct translated-support carrier and
+    /// therefore stay explicit instead of being flattened.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn translated_endpoint(
+        endpoint: &RationalBezierIntersectionPointEvidence2,
+        delta_x: &Real,
+        delta_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+        match endpoint {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Ok(Classification::Decided(
+                RationalBezierIntersectionPointEvidence2::Exact(
+                    point.translated(delta_x.clone(), delta_y.clone()),
+                ),
+            )),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                let parameter = match algebraic_chord_image_parameter(point, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let [x, y, denominator] =
+                    match algebraic_chord_owned_coordinate_polynomials(point, policy)? {
+                        Classification::Decided(coordinates) => coordinates,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                let translated = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, policy),
+                    polynomial_add(&x, &polynomial_scale(&denominator, delta_x)),
+                    polynomial_add(&y, &polynomial_scale(&denominator, delta_y)),
+                    denominator,
+                    "retained an exact translated algebraic chord endpoint",
+                );
+                Ok(Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::Algebraic(translated),
+                ))
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
     }
 
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {

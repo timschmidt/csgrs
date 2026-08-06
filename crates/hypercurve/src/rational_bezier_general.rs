@@ -243,6 +243,10 @@ impl RationalBezierIntersectionPointEvidence2 {
                     );
                     return Classification::Decided(false);
                 }
+                if let Ok(Some(classification)) = first.same_retained_rational_point(second, policy)
+                {
+                    return classification;
+                }
                 let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
                 else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -269,6 +273,30 @@ impl RationalBezierIntersectionPointEvidence2 {
             }
             (Self::Exact(exact), Self::Algebraic(algebraic))
             | (Self::Algebraic(algebraic), Self::Exact(exact)) => {
+                if let (Ok(x), Ok(y)) = (
+                    algebraic.coordinate_order_to_real(true, exact.x(), policy),
+                    algebraic.coordinate_order_to_real(false, exact.y(), policy),
+                ) {
+                    match (x, y) {
+                        (
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        ) => return Classification::Decided(true),
+                        (
+                            Classification::Decided(
+                                std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
+                            ),
+                            _,
+                        )
+                        | (
+                            _,
+                            Classification::Decided(
+                                std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
+                            ),
+                        ) => return Classification::Decided(false),
+                        _ => {}
+                    }
+                }
                 let Some(algebraic) = algebraic.resolved(policy) else {
                     return Classification::Uncertain(UncertaintyReason::Unsupported);
                 };

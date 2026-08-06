@@ -1,3 +1,9 @@
+#[cfg(feature = "predicates")]
+use hypercurve::{
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2,
+    RationalBezierIntersectionPointEvidence2,
+};
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
     CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerNoSolution2,
@@ -270,6 +276,123 @@ fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
 fn certified<T>(outcome: CurveOutcome<T>) -> T {
     assert_eq!(outcome.certainty, CurveCertainty::Certified);
     outcome.value
+}
+
+#[cfg(feature = "predicates")]
+fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(
+            vec![-q(1, 2), Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+    let parameter =
+        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let horizontal = |height: Real| {
+        RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), height.clone()),
+                Point2::new(Real::one(), height),
+            ],
+            vec![Real::one(); 2],
+        )
+        .unwrap()
+    };
+    let bottom_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::zero())
+            .point_at_algebraic_parameter(&parameter, policy)
+            .unwrap(),
+    );
+    let top_right = RationalBezierIntersectionPointEvidence2::Algebraic(
+        horizontal(Real::one())
+            .point_at_algebraic_parameter(&parameter, policy)
+            .unwrap(),
+    );
+    let bottom_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+    let top_left = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+    let chord = |start, end| {
+        BezierSplitFragment2::AlgebraicChord(decided(
+            BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
+        ))
+    };
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            chord(bottom_left.clone(), bottom_right.clone()),
+            chord(bottom_right, top_right.clone()),
+            chord(top_right, top_left.clone()),
+            chord(top_left, bottom_left),
+        ],
+        policy,
+    )
+    .unwrap();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "predicates")]
+fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(
+            vec![-q(1, 2), Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap(),
+    );
+    let interval =
+        decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+    let parameter =
+        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+    let selected = |height: Real| {
+        RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::zero(), height.clone()),
+                    Point2::new(Real::one(), height),
+                ],
+                vec![Real::one(); 2],
+            )
+            .unwrap()
+            .point_at_algebraic_parameter(&parameter, policy)
+            .unwrap(),
+        )
+    };
+    let exact = |x, y| RationalBezierIntersectionPointEvidence2::Exact(Point2::new(x, y));
+    let points = [
+        exact(Real::zero(), Real::zero()),
+        selected(Real::zero()),
+        selected(Real::one()),
+        exact(q(1, 2), Real::one()),
+        exact(q(1, 2), q(1, 2)),
+        exact(Real::zero(), q(1, 2)),
+    ];
+    let fragments = (0..points.len())
+        .map(|index| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                    policy,
+                )
+                .unwrap(),
+            ))
+        })
+        .collect();
+    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .unwrap()
 }
 
 #[test]
@@ -1344,6 +1467,185 @@ fn unified_region_offset_corner_options_obey_the_terminal_policy() {
         ),
         Some(Real::from(34))
     );
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
+    let distance = q(1, 10);
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let expanded = source
+            .offset(distance.clone(), &miter, &policy)
+            .expect("axis-aligned algebraic expansion must remain exact");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        let expanded = expanded.value;
+        assert_eq!(expanded.boundary_loops().len(), 1);
+        assert!(
+            expanded.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+        );
+        assert_eq!(
+            certified(
+                expanded
+                    .classify_point(&Point2::new(-q(1, 20), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            certified(
+                expanded
+                    .classify_point(&Point2::new(-q(1, 5), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            certified(
+                expanded
+                    .classify_point(&Point2::new(Real::zero(), -distance.clone()), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Boundary)
+        );
+
+        let repeated = expanded
+            .offset(distance.clone(), &miter, &policy)
+            .expect("translated algebraic endpoint expressions must compose exactly");
+        assert_eq!(repeated.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                repeated
+                    .value
+                    .classify_point(&Point2::new(-q(3, 20), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+
+        let contracted = source
+            .offset(-distance.clone(), &miter, &policy)
+            .expect("axis-aligned algebraic contraction must remain exact");
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                contracted
+                    .value
+                    .classify_point(&Point2::new(q(1, 20), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+        assert_eq!(
+            certified(
+                contracted
+                    .value
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+
+        let beveled = source
+            .offset(distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
+            .expect("algebraic bevel joins must remain exact");
+        assert_eq!(beveled.certainty, CurveCertainty::Certified);
+        assert!(beveled.value.boundary_loops()[0].fragments().len() >= 8);
+
+        let limited_miter = source
+            .offset(
+                distance.clone(),
+                &OffsetCornerStyle2::Miter { limit: Real::one() },
+                &policy,
+            )
+            .expect("an exceeded algebraic miter limit must fall back to exact bevels");
+        assert_eq!(limited_miter.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                limited_miter
+                    .value
+                    .classify_point(&Point2::new(-q(9, 100), -q(9, 100)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+
+        let collapsed = source
+            .offset(-q(2, 5), &miter, &policy)
+            .expect("an algebraic offset past the first collapse must regularize exactly");
+        assert_eq!(collapsed.certainty, CurveCertainty::Certified);
+        assert!(collapsed.value.is_empty());
+
+        assert!(matches!(
+            source.offset(distance.clone(), &OffsetCornerStyle2::Round, &policy),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
+        ));
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit() {
+    let miter = OffsetCornerStyle2::Miter {
+        limit: Real::from(2),
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_l_region(&policy);
+        let expanded = source.offset(q(1, 20), &miter, &policy).unwrap();
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                expanded
+                    .value
+                    .classify_point(&Point2::new(q(47, 100), q(3, 4)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            certified(
+                expanded
+                    .value
+                    .classify_point(&Point2::new(q(2, 5), q(4, 5)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+
+        let contracted = source.offset(-q(1, 20), &miter, &policy).unwrap();
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                contracted
+                    .value
+                    .classify_point(&Point2::new(q(3, 5), q(3, 4)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        assert_eq!(
+            certified(
+                contracted
+                    .value
+                    .classify_point(&Point2::new(q(13, 25), q(3, 4)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+
+        assert!(matches!(
+            source.offset(-q(3, 20), &miter, &policy),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
+        ));
+    }
 }
 
 #[test]

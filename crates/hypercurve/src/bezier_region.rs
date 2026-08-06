@@ -36,9 +36,9 @@ use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::{
-    BezierAlgebraicFiberProjection2, algebraic_selected_correlated_predicate_sign,
-    algebraic_selected_fiber_parameters, bivariate_fiber_strict_sign_on_parameter_range,
-    signed_bivariate_at_parameter_pair,
+    BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
+    algebraic_selected_correlated_predicate_sign, algebraic_selected_fiber_parameters,
+    bivariate_fiber_strict_sign_on_parameter_range, signed_bivariate_at_parameter_pair,
 };
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 #[cfg(feature = "predicates")]
@@ -2395,6 +2395,531 @@ struct ExactOffsetSpan2 {
     offset_end: Point2,
     start_tangent: (Real, Real),
     end_tangent: (Real, Real),
+}
+
+#[cfg(feature = "predicates")]
+struct ExactAxisAlignedAlgebraicOffsetSpan2 {
+    source_start: crate::RationalBezierIntersectionPointEvidence2,
+    source_end: crate::RationalBezierIntersectionPointEvidence2,
+    offset_start: crate::RationalBezierIntersectionPointEvidence2,
+    offset_end: crate::RationalBezierIntersectionPointEvidence2,
+    direction: BezierAlgebraicChordAxisDirection2,
+    normal_offset: (Real, Real),
+}
+
+#[cfg(feature = "predicates")]
+fn retained_chord_or_exact_line_fragment(
+    chord: crate::BezierAlgebraicChord2,
+) -> CurveResult<BezierSplitFragment2> {
+    let (Some(start), Some(end)) = (chord.start().as_exact(), chord.end().as_exact()) else {
+        return Ok(BezierSplitFragment2::AlgebraicChord(chord));
+    };
+    Ok(materialized_offset_fragment(BezierSubcurve2::Quadratic(
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(start.clone(), end.clone())?),
+    )))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_offset_span(
+    chord: &crate::BezierAlgebraicChord2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<ExactAxisAlignedAlgebraicOffsetSpan2>>> {
+    let direction = match chord.axis_direction(policy)? {
+        Classification::Decided(Some(direction)) => direction,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let normal_offset = direction.signed_left_offset(distance);
+    let offset_start = match crate::BezierAlgebraicChord2::translated_endpoint(
+        chord.start(),
+        &normal_offset.0,
+        &normal_offset.1,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let offset_end = match crate::BezierAlgebraicChord2::translated_endpoint(
+        chord.end(),
+        &normal_offset.0,
+        &normal_offset.1,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(Some(
+        ExactAxisAlignedAlgebraicOffsetSpan2 {
+            source_start: chord.start().clone(),
+            source_end: chord.end().clone(),
+            offset_start,
+            offset_end,
+            direction,
+            normal_offset,
+        },
+    )))
+}
+
+#[cfg(feature = "predicates")]
+fn append_exact_algebraic_line_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    from: &crate::RationalBezierIntersectionPointEvidence2,
+    to: &crate::RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    match from.same_point(to, policy) {
+        Classification::Decided(true) => Ok(Classification::Decided(())),
+        Classification::Decided(false) => {
+            let chord =
+                match crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)? {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            fragments.push(retained_chord_or_exact_line_fragment(chord)?);
+            Ok(Classification::Decided(()))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn append_exact_axis_aligned_algebraic_round_join(
+    fragments: &mut Vec<BezierSplitFragment2>,
+    previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    next: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    distance: &Real,
+    sweep_kind: crate::arc_bezier::ArcSweepKind,
+    policy: &CurveContext,
+) -> CurveResult<Classification<()>> {
+    let (Some(start), Some(end), Some(center)) = (
+        previous.offset_end.as_exact(),
+        next.offset_start.as_exact(),
+        previous.source_end.as_exact(),
+    ) else {
+        // A round join centered in a selected endpoint field requires a
+        // retained algebraic circular-arc carrier. Do not demote it to a
+        // represented approximation or a chord.
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let clockwise = match real_sign(distance, policy) {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative) => false,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(())),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    let radius_squared = distance * distance;
+    let arc = CircularArc2::new_with_certified_radius_and_sweep(
+        start.clone(),
+        end.clone(),
+        center.clone(),
+        radius_squared.clone(),
+        clockwise,
+        sweep_kind,
+    );
+    let decomposition = match arc.rational_bezier_decomposition_with_policy(policy) {
+        Ok(Classification::Decided(decomposition)) => decomposition,
+        Ok(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+        Err(ExactCurveError::Blocked(blocker)) => {
+            return Ok(Classification::Uncertain(blocker.reason()));
+        }
+    };
+    let circular_conic = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+        center: center.clone(),
+        radius_squared,
+        tangent_contacts: None,
+    });
+    fragments.extend(decomposition.spans().iter().map(|span| {
+        let curve = span.curve().clone().with_retained_conic_provenance(
+            span.curve().retained_implicit_quadratic_conic().cloned(),
+            Some(Arc::clone(&circular_conic)),
+        );
+        materialized_offset_fragment(BezierSubcurve2::RationalQuadratic(curve))
+    }));
+    Ok(Classification::Decided(()))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_miter_point(
+    previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    next: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    distance: &Real,
+    limit: Option<&Real>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<crate::RationalBezierIntersectionPointEvidence2>>> {
+    let previous_tangent = previous.direction.unit_tangent();
+    let next_tangent = next.direction.unit_tangent();
+    let denominator = offset_vector_cross(&previous_tangent, &next_tangent);
+    match real_sign(&denominator, policy) {
+        Some(RealSign::Positive | RealSign::Negative) => {}
+        Some(RealSign::Zero) => {
+            return Ok(Classification::Decided(None));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let miter_delta = (
+        &previous.normal_offset.0 + &next.normal_offset.0,
+        &previous.normal_offset.1 + &next.normal_offset.1,
+    );
+    if let Some(limit) = limit {
+        let miter_distance_squared =
+            &miter_delta.0 * &miter_delta.0 + &miter_delta.1 * &miter_delta.1;
+        let maximum_squared = distance * distance * limit * limit;
+        match compare_reals(&miter_distance_squared, &maximum_squared, policy) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
+            Some(std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(None));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+    }
+    let miter = match crate::BezierAlgebraicChord2::translated_endpoint(
+        &previous.source_end,
+        &miter_delta.0,
+        &miter_delta.1,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(Some(miter)))
+}
+
+#[cfg(feature = "predicates")]
+enum ExactAxisAlignedAlgebraicJoin2 {
+    Shared,
+    Miter(crate::RationalBezierIntersectionPointEvidence2),
+    Line,
+    Round(crate::arc_bezier::ArcSweepKind),
+}
+
+#[cfg(feature = "predicates")]
+enum ExactAxisAlignedAlgebraicOffsetLoop2 {
+    Inapplicable,
+    Removed,
+    Boundary(CurveRegionBoundaryLoop2),
+}
+
+#[cfg(feature = "predicates")]
+fn axis_aligned_loop_is_convex_inward(
+    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    distance: &Real,
+    policy: &CurveContext,
+) -> Classification<bool> {
+    let mut orientation = None;
+    for span_index in 0..spans.len() {
+        let previous = spans[span_index].direction.unit_tangent();
+        let next = spans[(span_index + 1) % spans.len()]
+            .direction
+            .unit_tangent();
+        if offset_vectors_are_structurally_opposite(&previous, &next) {
+            return Classification::Decided(false);
+        }
+        let turn = match real_sign(&offset_vector_cross(&previous, &next), policy) {
+            Some(RealSign::Zero) => continue,
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+        match orientation {
+            Some(existing) if existing != turn => return Classification::Decided(false),
+            Some(_) => {}
+            None => orientation = Some(turn),
+        }
+    }
+    let Some(orientation) = orientation else {
+        return Classification::Decided(false);
+    };
+    match real_sign(distance, policy) {
+        Some(RealSign::Positive) => Classification::Decided(orientation == RealSign::Positive),
+        Some(RealSign::Negative) => Classification::Decided(orientation == RealSign::Negative),
+        Some(RealSign::Zero) => Classification::Decided(false),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn axis_aligned_offset_has_reversed_span(
+    spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    for span in spans {
+        match span.offset_start.same_point(&span.offset_end, policy) {
+            Classification::Decided(true) => return Ok(Classification::Decided(true)),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let chord = match crate::BezierAlgebraicChord2::try_new(
+            span.offset_start.clone(),
+            span.offset_end.clone(),
+            policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match chord.axis_direction(policy)? {
+            Classification::Decided(Some(direction)) if direction == span.direction => {}
+            Classification::Decided(Some(_)) => return Ok(Classification::Decided(true)),
+            Classification::Decided(None) => {
+                return Err(CurveError::Topology(
+                    "axis-aligned miter adjustment produced a diagonal span".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(false))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_join(
+    previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    next: &ExactAxisAlignedAlgebraicOffsetSpan2,
+    distance: &Real,
+    style: &OffsetCornerStyle2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactAxisAlignedAlgebraicJoin2>> {
+    match previous.offset_end.same_point(&next.offset_start, policy) {
+        Classification::Decided(true) => {
+            return Ok(Classification::Decided(
+                ExactAxisAlignedAlgebraicJoin2::Shared,
+            ));
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    match previous.source_end.same_point(&next.source_start, policy) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Err(CurveError::DisconnectedCurvePath),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let previous_tangent = previous.direction.unit_tangent();
+    let next_tangent = next.direction.unit_tangent();
+    let opposite_tangents =
+        offset_vectors_are_structurally_opposite(&previous_tangent, &next_tangent);
+    let turn = if opposite_tangents {
+        Real::zero()
+    } else {
+        offset_vector_cross(&previous_tangent, &next_tangent)
+    };
+    let inward = match real_sign(&(turn * distance), policy) {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative | RealSign::Zero) => false,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    if !inward {
+        match style {
+            OffsetCornerStyle2::Round => {
+                return Ok(Classification::Decided(
+                    ExactAxisAlignedAlgebraicJoin2::Round(if opposite_tangents {
+                        crate::arc_bezier::ArcSweepKind::Semicircle
+                    } else {
+                        crate::arc_bezier::ArcSweepKind::Minor
+                    }),
+                ));
+            }
+            OffsetCornerStyle2::Bevel => {
+                return Ok(Classification::Decided(
+                    ExactAxisAlignedAlgebraicJoin2::Line,
+                ));
+            }
+            OffsetCornerStyle2::Miter { .. } => {}
+        }
+    }
+    let limit = match style {
+        OffsetCornerStyle2::Miter { limit } if !inward => Some(limit),
+        OffsetCornerStyle2::Round
+        | OffsetCornerStyle2::Bevel
+        | OffsetCornerStyle2::Miter { .. } => None,
+    };
+    exact_axis_aligned_algebraic_miter_point(previous, next, distance, limit, policy).map(
+        |classification| {
+            classification.map(|miter| {
+                miter.map_or(
+                    ExactAxisAlignedAlgebraicJoin2::Line,
+                    ExactAxisAlignedAlgebraicJoin2::Miter,
+                )
+            })
+        },
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn exact_axis_aligned_algebraic_offset_loop(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    distance: &Real,
+    corner_style: &OffsetCornerStyle2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactAxisAlignedAlgebraicOffsetLoop2>> {
+    let mut spans = Vec::with_capacity(boundary_loop.len());
+    let mut saw_algebraic_chord = false;
+    for fragment in boundary_loop.fragments() {
+        let represented_chord;
+        let chord = match fragment {
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                saw_algebraic_chord = true;
+                chord
+            }
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                let line = match materialized_native_subcurve_segment(curve, policy)? {
+                    Classification::Decided(Segment2::Line(line)) => line,
+                    Classification::Decided(Segment2::Arc(_)) => {
+                        return Ok(Classification::Decided(
+                            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+                        ));
+                    }
+                    Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                        return Ok(Classification::Decided(
+                            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                represented_chord = match crate::BezierAlgebraicChord2::try_new(
+                    crate::RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+                    crate::RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+                    policy,
+                )? {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                &represented_chord
+            }
+            BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::Unresolved { .. } => {
+                return Ok(Classification::Decided(
+                    ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+                ));
+            }
+        };
+        match exact_axis_aligned_algebraic_offset_span(chord, distance, policy)? {
+            Classification::Decided(Some(span)) => spans.push(span),
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(
+                    ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    if spans.is_empty() || !saw_algebraic_chord {
+        return Ok(Classification::Decided(
+            ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable,
+        ));
+    }
+    let mut joins = Vec::with_capacity(spans.len());
+    for span_index in 0..spans.len() {
+        let next_index = (span_index + 1) % spans.len();
+        match exact_axis_aligned_algebraic_join(
+            &spans[span_index],
+            &spans[next_index],
+            distance,
+            corner_style,
+            policy,
+        )? {
+            Classification::Decided(join) => joins.push(join),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    for (span_index, join) in joins.iter().enumerate() {
+        let ExactAxisAlignedAlgebraicJoin2::Miter(miter) = join else {
+            continue;
+        };
+        let next_index = (span_index + 1) % spans.len();
+        spans[span_index].offset_end = miter.clone();
+        spans[next_index].offset_start = miter.clone();
+    }
+    let convex_inward = match axis_aligned_loop_is_convex_inward(&spans, distance, policy) {
+        Classification::Decided(convex_inward) => convex_inward,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    match axis_aligned_offset_has_reversed_span(&spans, policy)? {
+        Classification::Decided(true) if convex_inward => {
+            return Ok(Classification::Decided(
+                ExactAxisAlignedAlgebraicOffsetLoop2::Removed,
+            ));
+        }
+        Classification::Decided(true) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let mut fragments = Vec::with_capacity(spans.len().saturating_mul(3));
+    for span_index in 0..spans.len() {
+        match append_exact_algebraic_line_join(
+            &mut fragments,
+            &spans[span_index].offset_start,
+            &spans[span_index].offset_end,
+            policy,
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let next_index = (span_index + 1) % spans.len();
+        let join = match &joins[span_index] {
+            ExactAxisAlignedAlgebraicJoin2::Shared | ExactAxisAlignedAlgebraicJoin2::Miter(_) => {
+                Classification::Decided(())
+            }
+            ExactAxisAlignedAlgebraicJoin2::Line => append_exact_algebraic_line_join(
+                &mut fragments,
+                &spans[span_index].offset_end,
+                &spans[next_index].offset_start,
+                policy,
+            )?,
+            ExactAxisAlignedAlgebraicJoin2::Round(sweep_kind) => {
+                append_exact_axis_aligned_algebraic_round_join(
+                    &mut fragments,
+                    &spans[span_index],
+                    &spans[next_index],
+                    distance,
+                    *sweep_kind,
+                    policy,
+                )?
+            }
+        };
+        match join {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    CurveRegionBoundaryLoop2::new(fragments, policy)
+        .map(ExactAxisAlignedAlgebraicOffsetLoop2::Boundary)
+        .map(Classification::Decided)
 }
 
 fn exact_offset_span_from_materialized_curve(
@@ -6195,12 +6720,41 @@ impl CurveRegion2 {
         }
 
         let mut offset_loops = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut offset_roles = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut offset_fill_rules = Vec::with_capacity(self.data.boundary_loops.len());
+        let mut offset_filled_sides = Vec::with_capacity(self.data.boundary_loops.len());
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let signed_left_distance = if filled_sides[loop_index] {
                 Real::zero() - &distance
             } else {
                 distance.clone()
             };
+            #[cfg(feature = "predicates")]
+            match exact_axis_aligned_algebraic_offset_loop(
+                boundary_loop,
+                &signed_left_distance,
+                corner_style,
+                policy,
+            )
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Boundary(
+                    offset_loop,
+                )) => {
+                    offset_loops.push(offset_loop);
+                    offset_roles.push(roles[loop_index]);
+                    offset_fill_rules.push(fill_rules[loop_index]);
+                    offset_filled_sides.push(filled_sides[loop_index]);
+                    continue;
+                }
+                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Removed) => {
+                    continue;
+                }
+                Classification::Decided(ExactAxisAlignedAlgebraicOffsetLoop2::Inapplicable) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
             let source_fragments = boundary_loop.fragments();
             let mut spans = Vec::with_capacity(boundary_loop.len());
             let processing_start = match source_fragments.first() {
@@ -6314,18 +6868,21 @@ impl CurveRegion2 {
                 CurveRegionBoundaryLoop2::new(fragments, policy)
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
             );
+            offset_roles.push(roles[loop_index]);
+            offset_fill_rules.push(fill_rules[loop_index]);
+            offset_filled_sides.push(filled_sides[loop_index]);
         }
 
         let mut raw = Self::new(offset_loops)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         {
             let data = raw.data_mut_for_construction();
-            data.certified_loop_roles = Some(Arc::from(roles.clone()));
-            data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
+            data.certified_loop_roles = Some(Arc::from(offset_roles));
+            data.certified_loop_fill_rules = Some(Arc::from(offset_fill_rules));
             data.signed_loop_composition = true;
         }
         raw = raw
-            .with_certified_filled_side_is_left(filled_sides.to_vec())
+            .with_certified_filled_side_is_left(offset_filled_sides)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         raw.regularized_region_raw(policy)
             .map(Classification::Decided)

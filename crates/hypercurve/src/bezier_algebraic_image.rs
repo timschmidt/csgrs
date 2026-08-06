@@ -637,6 +637,79 @@ impl RationalBezierAlgebraicPointImage2 {
         })
     }
 
+    /// Compares two rational point expressions in one selected parameter
+    /// field without constructing independent coordinate roots.
+    ///
+    /// Equality of `N1/D1` and `N2/D2` is the selected-root sign of
+    /// `N1*D2-N2*D1`. The method applies only after the retained parameters are
+    /// certified equal; unrelated fields continue to the general represented-
+    /// root or multi-field predicate graph.
+    pub(crate) fn same_retained_rational_point(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        let (Some(first_parameter), Some(second_parameter)) =
+            (self.retained_parameter(), other.retained_parameter())
+        else {
+            return Ok(None);
+        };
+        if first_parameter != second_parameter {
+            match BezierParameter2::Algebraic(first_parameter.clone()).same_value(
+                &BezierParameter2::Algebraic(second_parameter.clone()),
+                policy,
+            )? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => return Ok(None),
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        }
+        let (
+            Some((first_x, first_y, first_denominator)),
+            Some((second_x, second_y, second_denominator)),
+        ) = (
+            self.retained_coordinate_polynomials(),
+            other.retained_coordinate_polynomials(),
+        )
+        else {
+            return Ok(None);
+        };
+        let parameter = BezierParameter2::Algebraic(first_parameter.clone());
+        for (first, second) in [(first_x, second_x), (first_y, second_y)] {
+            let first_length = first
+                .len()
+                .checked_add(second_denominator.len())
+                .and_then(|length| length.checked_sub(1))
+                .unwrap_or(0);
+            let second_length = second
+                .len()
+                .checked_add(first_denominator.len())
+                .and_then(|length| length.checked_sub(1))
+                .unwrap_or(0);
+            let mut cross_difference = vec![Real::zero(); first_length.max(second_length)];
+            for (power, coefficient) in first.iter().enumerate() {
+                for (denominator_power, denominator) in second_denominator.iter().enumerate() {
+                    let index = power + denominator_power;
+                    cross_difference[index] = &cross_difference[index] + coefficient * denominator;
+                }
+            }
+            for (power, coefficient) in second.iter().enumerate() {
+                for (denominator_power, denominator) in first_denominator.iter().enumerate() {
+                    let index = power + denominator_power;
+                    cross_difference[index] = &cross_difference[index] - coefficient * denominator;
+                }
+            }
+            match signed_coefficients_at_parameter(cross_difference, &parameter, policy)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Some(Classification::Decided(false)));
+                }
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        }
+        Ok(Some(Classification::Decided(true)))
+    }
+
     /// Compares one affine coordinate with a represented Real without forcing
     /// a retained rational expression into an independent algebraic-number
     /// representation.

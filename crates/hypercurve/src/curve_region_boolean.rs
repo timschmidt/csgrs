@@ -8497,6 +8497,89 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn exact_subfragment_of_algebraic_chord_retains_selected_field_witness() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = sqrt_half_parameter(&policy);
+            let point = |positive: bool, height: i32| {
+                let endpoint_x = if positive { 1 } else { -1 };
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    RationalBezier2::try_new(
+                        vec![
+                            Point2::from_values(0, height),
+                            Point2::from_values(endpoint_x, height),
+                        ],
+                        vec![Real::one(); 2],
+                    )
+                    .expect("valid selected-field line")
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .expect("selected-field endpoint"),
+                )
+            };
+            let bottom_left = point(false, 0);
+            let bottom_right = point(true, 0);
+            let top_right = point(true, 1);
+            let top_left = point(false, 1);
+            let chord = |start, end| {
+                BezierSplitFragment2::AlgebraicChord(decided(
+                    crate::BezierAlgebraicChord2::try_new(start, end, &policy)
+                        .expect("valid retained chord"),
+                ))
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    chord(bottom_left.clone(), bottom_right.clone()),
+                    chord(bottom_right, top_right.clone()),
+                    chord(top_right, top_left.clone()),
+                    chord(top_left, bottom_left),
+                ],
+                &policy,
+            )
+            .expect("valid selected-field rectangle");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid selected-field region");
+            let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
+                .expect("valid unary algebraic-chord context");
+            let RegionCarrierGeometry::AlgebraicChord(source) = &context.data.carriers[0].geometry
+            else {
+                panic!("the selected-field bottom edge must stay algebraic");
+            };
+            let cut = |x: Real| {
+                decided(
+                    source
+                        .parameter_at_certified_point(
+                            RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                                x,
+                                Real::zero(),
+                            )),
+                            &policy,
+                        )
+                        .expect("exact point on retained support"),
+                )
+                .expect("the exact point lies strictly on the source chord")
+            };
+            let exact_subfragment = crate::BezierAlgebraicChord2::from_ordered_parameter_range(
+                source,
+                &cut(Real::zero()),
+                &cut((Real::one() / Real::from(2_u8)).expect("nonzero denominator")),
+                &policy,
+            )
+            .expect("ordered exact subfragment");
+            assert!(exact_subfragment.exact_line().is_some());
+            let action = context.regularized_algebraic_chord_fragment_action(0, &exact_subfragment);
+            assert!(
+                action.is_ok(),
+                "an exact subfragment of an algebraic carrier must retain a selected-field side witness: {action:?}"
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn source_related_algebraic_chord_contact_enters_split_topology() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");
