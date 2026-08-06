@@ -104,8 +104,10 @@ impl SupportLineAxis {
 
 #[derive(Clone, Debug)]
 enum DeferredIntersectionGeometry<'a> {
+    /// An authored on-plane vertex remains borrowed until interval clipping
+    /// proves that it survives into the constructed intersection.
     Affine {
-        point: Point3,
+        point: &'a Point3,
         axis: SupportLineAxis,
         enclosure: Option<[f64; 2]>,
     },
@@ -2554,10 +2556,10 @@ fn certified_real_enclosure(value: &Real) -> Option<[f64; 2]> {
 }
 
 fn affine_deferred_geometry(
-    point: Point3,
+    point: &Point3,
     axis: SupportLineAxis,
-) -> DeferredIntersectionGeometry<'static> {
-    let enclosure = certified_real_enclosure(axis.coordinate(&point));
+) -> DeferredIntersectionGeometry<'_> {
+    let enclosure = certified_real_enclosure(axis.coordinate(point));
     DeferredIntersectionGeometry::Affine {
         point,
         axis,
@@ -2684,7 +2686,7 @@ fn materialize_deferred_point(
     point: DeferredIntersectionEndpoint<'_, '_>,
 ) -> HypermeshResult<ConstructedIntersectionPoint> {
     let affine = match &point.source.geometry {
-        DeferredIntersectionGeometry::Affine { point, .. } => point.clone(),
+        DeferredIntersectionGeometry::Affine { point, .. } => (*point).clone(),
         DeferredIntersectionGeometry::SegmentPlane {
             ratio, start, end, ..
         } => match ratio {
@@ -2949,7 +2951,7 @@ fn extend_polygon_plane_slice_edge<'point>(
             decisions,
             span,
             DeferredIntersectionPoint {
-                geometry: affine_deferred_geometry(start.clone(), axis),
+                geometry: affine_deferred_geometry(start, axis),
                 identity: plane_identity
                     .and_then(|_| polygon_vertex_identity(edge_polygon, edge_index)),
                 discovery_order: (reverse_slice, vertex_discovery_edge),
@@ -3526,7 +3528,7 @@ mod tests {
                         end: point,
                     }
                 } else {
-                    affine_deferred_geometry(point.clone(), super::SupportLineAxis::X)
+                    affine_deferred_geometry(point, super::SupportLineAxis::X)
                 },
                 identity: None,
                 discovery_order: (false, x as usize),
@@ -3626,11 +3628,9 @@ mod tests {
             identity: None,
             discovery_order: (false, 0),
         };
+        let affine_point = Point3::new(Real::from(5), Real::zero(), Real::zero());
         let affine = DeferredIntersectionPoint {
-            geometry: affine_deferred_geometry(
-                Point3::new(Real::from(5), Real::zero(), Real::zero()),
-                super::SupportLineAxis::X,
-            ),
+            geometry: affine_deferred_geometry(&affine_point, super::SupportLineAxis::X),
             identity: None,
             discovery_order: (true, 0),
         };
@@ -3678,7 +3678,7 @@ mod tests {
                 discovery_order: (false, 0),
             };
             let affine = DeferredIntersectionPoint {
-                geometry: affine_deferred_geometry(affine_point.clone(), super::SupportLineAxis::X),
+                geometry: affine_deferred_geometry(&affine_point, super::SupportLineAxis::X),
                 identity: None,
                 discovery_order: (true, 0),
             };
@@ -3701,8 +3701,9 @@ mod tests {
     #[test]
     fn equal_slice_endpoints_choose_the_canonical_construction_identity() {
         let identity = |vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex };
+        let origin = Point3::origin();
         let point = |vertex| DeferredIntersectionPoint {
-            geometry: affine_deferred_geometry(Point3::origin(), super::SupportLineAxis::X),
+            geometry: affine_deferred_geometry(&origin, super::SupportLineAxis::X),
             identity: Some(identity(vertex)),
             discovery_order: (false, 0),
         };
@@ -3725,41 +3726,44 @@ mod tests {
 
     #[test]
     fn symbolic_slice_endpoint_equality_obeys_terminal_policy() {
-        let origin = Point3::origin();
-        let point = |x: Real, ratio: bool| {
+        fn point<'point>(
+            origin: &'point Point3,
+            affine: &'point Point3,
+            ratio: bool,
+        ) -> DeferredIntersectionSpan<'point> {
             deferred_point_span(DeferredIntersectionPoint {
                 geometry: if ratio {
                     DeferredIntersectionGeometry::SegmentPlane {
                         ratio: DeferredSegmentPlaneRatio::Exact {
-                            coordinate_numerator: x.clone(),
+                            coordinate_numerator: affine.x.clone(),
                             denominator: Real::one(),
                             parameter_numerator: Real::zero(),
                         },
                         enclosure: None,
-                        start: &origin,
-                        end: &origin,
+                        start: origin,
+                        end: origin,
                     }
                 } else {
-                    affine_deferred_geometry(
-                        Point3::new(x, Real::zero(), Real::zero()),
-                        super::SupportLineAxis::X,
-                    )
+                    affine_deferred_geometry(affine, super::SupportLineAxis::X)
                 },
                 identity: None,
                 discovery_order: (false, 0),
             })
-        };
+        }
 
+        let origin = Point3::origin();
         for (left_ratio, right_ratio) in
             [(false, false), (false, true), (true, false), (true, true)]
         {
+            let left = Point3::new(Real::pi() + Real::e(), Real::zero(), Real::zero());
+            let right = Point3::new(Real::e() + Real::pi(), Real::zero(), Real::zero());
             let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
             let strict = DecisionContext::new(&strict_context);
             assert!(matches!(
                 intersect_deferred_spans(
                     &strict,
-                    point(Real::pi() + Real::e(), left_ratio),
-                    point(Real::e() + Real::pi(), right_ratio),
+                    point(&origin, &left, left_ratio),
+                    point(&origin, &right, right_ratio),
                 ),
                 Err(HypermeshError::PredicateUndecided { .. })
             ));
@@ -3771,8 +3775,8 @@ mod tests {
             assert!(matches!(
                 intersect_deferred_spans(
                     &approximate,
-                    point(Real::pi() + Real::e(), left_ratio),
-                    point(Real::e() + Real::pi(), right_ratio),
+                    point(&origin, &left, left_ratio),
+                    point(&origin, &right, right_ratio),
                 )
                 .unwrap(),
                 ConstructedPairwiseIntersection::NonCoplanarPoint(_)
