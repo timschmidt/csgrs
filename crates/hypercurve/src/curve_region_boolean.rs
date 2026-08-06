@@ -8529,6 +8529,7 @@ mod certified_successor_tests {
         )
     }
 
+    #[cfg(feature = "predicates")]
     fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let polynomial = decided(
             crate::BezierParameterPolynomial::try_new_power_basis(
