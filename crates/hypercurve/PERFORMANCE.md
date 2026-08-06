@@ -7972,6 +7972,63 @@ remain explicit boundaries. Hypermesh was not modified. Complete evidence is
 in
 [`2026-08-05-exact-orthogonal-algebraic-erosion.json`](benchmarks/checkpoints/2026-08-05-exact-orthogonal-algebraic-erosion.json).
 
+## Selected-algebraic round-offset checkpoint (2026-08-05)
+
+Axis-aligned retained-algebraic regions now keep round joins exact when a
+corner center exists only in a selected field. Direct circles reuse the
+existing algebraic-cusp circle frame, fragment, winding, split, and pair
+machinery; exact-rational centers still lower to the smaller rational-conic
+carrier. Authored endpoint images are proved once and shared thereafter,
+translated chords retain their certified axis, adjacent circle tangencies are
+discharged structurally, and a complete selected supporting circle is rejected
+against an exact carrier box only after strict separation. Raw fragments still
+rejoin `regularized_region_raw` and `CurveRegionBooleanContext`; there is no
+second offset or Boolean engine.
+
+Matched CPU-11 measurements against the first complete exact implementation
+at `1545874` are:
+
+| Workload | First complete | Optimized `78ee137` | Change |
+| --- | ---: | ---: | ---: |
+| Selected-algebraic exact round | 969.788 us | 254.910 us | -73.71% |
+| Same-fixture exact miter | 215.579 us | 175.499 us | -18.59% |
+| Cavalier Contours `f64` round | 1.115 us | 1.141 us | contextual |
+
+The optimized exact round is 1.45x its exact-miter control and 223.43x the
+finite Cavalier sentinel. The latter ratio is not semantic parity: Cavalier
+does not retain selected algebraic fields, exact topology witnesses, or
+STRICT/APPROXIMATE_512 evidence. The historical semantic control at
+`dc98de0` rejected the selected-center operation and therefore has no valid
+target latency. Five fixed-work perf repetitions confirm the wall result:
+instructions fall 73.72%, cycles 73.72%, branches 73.99%, and branch misses
+80.23%.
+
+Heaptrack over 100-operation processes records round allocation calls falling
+from 1,197,865 to 368,924 (-69.20%), temporary allocations from 124,656 to
+42,664 (-65.77%), and peak heap from 293.77 to 163.23 KiB (-44.44%). The
+incremental round-minus-miter allocation count falls 97.41%; the optimized
+round now costs 5.45% more calls and 0.67% more peak heap than exact miter.
+
+Against the matched rejecting semantic control, the representative
+all-feature image adds 15,704 text bytes (0.228%) and the no-default image adds
+6,084 text bytes (0.100%). The optimization itself adds 4,812 text bytes
+(0.050%) to the all-feature comparative image while removing 73.72% of exact
+round instructions. A regenerated 29,162-node/56,262-edge graph confirms the
+single public route through the existing offset scheduler and Boolean context.
+
+All 469 all-feature library tests, 57 promotion tests, and 29 focused
+CurveRegion Boolean tests pass. The no-default check, formatting, diff check,
+both warning-denied no-dependency Clippy matrices, and representative release
+builds pass. The policy regression runs both
+STRICT and APPROXIMATE_512, remains Certified in both, and asserts that the
+new structural pair paths eliminate every general solver survivor in the
+fixture. The multi-hour all-target fuzz matrix is not claimed at this
+checkpoint. General circle/chord pairs, transformed direct-circle tangent
+evidence, diagonal selected centers, correlated centers, circle re-offsetting,
+and general retained-algebraic fillets remain explicit boundaries. Complete
+evidence is in
+[`2026-08-05-selected-algebraic-round-offset.json`](benchmarks/checkpoints/2026-08-05-selected-algebraic-round-offset.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
