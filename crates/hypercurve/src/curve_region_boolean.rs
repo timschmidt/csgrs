@@ -8682,6 +8682,7 @@ mod certified_successor_tests {
     #[cfg(feature = "predicates")]
     use crate::bezier_offset::{
         BezierAlgebraicChordAxisDirection2, BezierAlgebraicCuspSemicircle2,
+        BezierAlgebraicCuspSemicircleChordIntersections2,
         BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     };
     #[cfg(feature = "predicates")]
@@ -8899,6 +8900,106 @@ mod certified_successor_tests {
                 .expect("axis cusp/chord contact must enter region evidence");
             assert!(evidence.is_complete(), "{evidence:?}");
             assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn shared_chord_splits_contacts_from_independent_selected_circles_in_order() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first_parameter = sqrt_half_parameter(&policy);
+            let second_parameter = sqrt_third_parameter(&policy);
+            let center = |parameter: &BezierAlgebraicParameter2, label| {
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        parameter.clone(),
+                        crate::bezier_algebraic_image::parameter_representation(parameter, &policy),
+                        vec![Real::zero(), Real::one()],
+                        vec![Real::zero()],
+                        vec![Real::one()],
+                        label,
+                    ),
+                )
+            };
+            let circle = |parameter: &BezierAlgebraicParameter2, label| {
+                decided(
+                    BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                        &center(parameter, label),
+                        (1, 0),
+                        Real::from(2_i8),
+                        false,
+                        &policy,
+                    )
+                    .expect("valid independent selected circle"),
+                )
+                .expect("nonzero independent selected circle")
+            };
+            let chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-3, 1)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(3, 1)),
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+                &policy,
+            );
+            let contacts = |circle: &BezierAlgebraicCuspSemicircle2| -> [CurveRegionParameter2; 2] {
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    },
+                ) = circle.axis_chord_intersections(&chord, &policy).unwrap()
+                else {
+                    panic!("both independent circle contacts must be retained");
+                };
+                assert_eq!(contacts.len(), 2);
+                std::array::from_fn(|index| {
+                    let (_, point) = parameter_map.contact_evidence(&contacts[index]);
+                    CurveRegionParameter2::from_algebraic_chord(
+                        decided(
+                            chord
+                                .parameter_at_certified_point(point, &policy)
+                                .expect("certified shared-chord point"),
+                        )
+                        .expect("the circle contact lies on the shared chord"),
+                    )
+                })
+            };
+            let first = contacts(&circle(
+                &first_parameter,
+                "first shared-chord selected circle center",
+            ));
+            let second = contacts(&circle(
+                &second_parameter,
+                "second shared-chord selected circle center",
+            ));
+            let carrier = algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone());
+            let event = |parameter, topology_vertex| CarrierEvent {
+                parameter,
+                topology_vertex: Some(topology_vertex),
+            };
+            let events = [
+                event(carrier.end.clone(), 6),
+                event(first[1].clone(), 5),
+                event(second[0].clone(), 1),
+                event(carrier.start.clone(), 0),
+                event(second[1].clone(), 4),
+                event(first[0].clone(), 2),
+            ];
+            let fragments = split_algebraic_chord_carrier(&carrier, &chord, &events, &policy)
+                .expect("independent selected-circle contacts must split the shared chord");
+            assert_eq!(fragments.len(), 5);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .map(|fragment| (fragment.start_topology_vertex, fragment.end_topology_vertex,))
+                    .collect::<Vec<_>>(),
+                vec![
+                    (Some(0), Some(1)),
+                    (Some(1), Some(2)),
+                    (Some(2), Some(4)),
+                    (Some(4), Some(5)),
+                    (Some(5), Some(6)),
+                ],
+            );
         }
     }
 
