@@ -49,7 +49,7 @@ pub(crate) fn insert_constraints(
         mut triangles,
         constrained_edges,
         topology,
-    } = recover_constraints(kernel, points, triangles, constraints)?;
+    } = recover_constraints(kernel, points, triangles, constraints, None)?;
     legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
     Ok(triangles)
 }
@@ -65,12 +65,19 @@ pub(crate) fn insert_constraints_topology(
     points: &[Point2],
     triangles: Vec<Triangle>,
     constraints: &[Constraint],
+    initial_topology: Option<Box<TriangleTopology>>,
 ) -> Result<Vec<Triangle>> {
     let RecoveredConstraints {
         mut triangles,
         constrained_edges,
         topology,
-    } = recover_constraints(kernel, points, triangles, constraints)?;
+    } = recover_constraints(
+        kernel,
+        points,
+        triangles,
+        constraints,
+        initial_topology.map(|topology| *topology),
+    )?;
     canonicalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges, topology)?;
     Ok(triangles)
 }
@@ -80,6 +87,7 @@ fn recover_constraints(
     points: &[Point2],
     mut triangles: Vec<Triangle>,
     constraints: &[Constraint],
+    initial_topology: Option<TriangleTopology>,
 ) -> Result<RecoveredConstraints> {
     // Structural-dispatch note: constraint recovery processes the planarized
     // subsegments in caller-derived order. The retained PSLG facts already
@@ -90,7 +98,7 @@ fn recover_constraints(
     // leaking scalar internals into topology code.
     let approximate_points = crate::cdt::exact_points_f64(points);
     let mut constrained_edges = Vec::new();
-    let mut topology = None;
+    let mut topology = initial_topology;
     let mut cavity = Vec::new();
     let mut incident_triangles = Vec::new();
     for &constraint in constraints {
@@ -341,7 +349,7 @@ struct ConstraintCrossing {
 struct ConstraintRecovery<'a> {
     kernel: &'a ExactKernel,
     points: &'a [Point2],
-    triangles: &'a mut [Triangle],
+    triangles: &'a mut Vec<Triangle>,
     topology: &'a mut TriangleTopology,
     constrained_edges: &'a [EdgeKey],
     approximate_points: Option<&'a [[f64; 2]]>,
@@ -593,6 +601,7 @@ fn recover_constraint_cavity(
         }
         replacement.extend(triangulate_cavity_side(kernel, points, side)?);
     }
+    let mut replacement_topology = None;
     for vertex in cavity_vertices {
         if replacement
             .iter()
@@ -600,7 +609,13 @@ fn recover_constraint_cavity(
         {
             continue;
         }
-        crate::cdt::insert_topology_point(kernel, points, &mut replacement, vertex)?;
+        crate::cdt::insert_topology_point(
+            kernel,
+            points,
+            &mut replacement,
+            vertex,
+            &mut replacement_topology,
+        )?;
     }
     if replacement.len() != cavity_indices.len() {
         return Err(Error::UnsupportedFeature {
@@ -614,7 +629,7 @@ fn recover_constraint_cavity(
             feature: "constraint cavity retriangulation omitted the target edge",
         });
     }
-    topology.replace_region(triangles, &cavity_indices, &replacement)?;
+    topology.replace_region(triangles, &cavity_indices, &replacement, None)?;
     Ok(())
 }
 
@@ -892,7 +907,7 @@ fn edge_properly_crosses_constraint(
 fn legalize_unconstrained_edges(
     kernel: &ExactKernel,
     points: &[Point2],
-    triangles: &mut [Triangle],
+    triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
     topology: Option<TriangleTopology>,
 ) -> Result<()> {
@@ -927,7 +942,7 @@ fn legalize_unconstrained_edges(
 fn canonicalize_unconstrained_edges(
     kernel: &ExactKernel,
     points: &[Point2],
-    triangles: &mut [Triangle],
+    triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
     topology: Option<TriangleTopology>,
 ) -> Result<()> {
@@ -959,7 +974,7 @@ enum EdgeSchedule {
 fn restore_unconstrained_edges(
     kernel: &ExactKernel,
     points: &[Point2],
-    triangles: &mut [Triangle],
+    triangles: &mut Vec<Triangle>,
     constrained_edges: &[EdgeKey],
     mut topology: TriangleTopology,
     schedule: EdgeSchedule,
@@ -1123,7 +1138,7 @@ fn edge_is_illegal(
 fn replace_adjacent_edge_in_topology(
     kernel: &ExactKernel,
     points: &[Point2],
-    triangles: &mut [Triangle],
+    triangles: &mut Vec<Triangle>,
     topology: &mut TriangleTopology,
     edge: EdgeKey,
     mut adjacent: [AdjacentTriangle; 2],
@@ -1131,7 +1146,7 @@ fn replace_adjacent_edge_in_topology(
     adjacent.sort_unstable_by_key(|owner| owner.triangle);
     let replacement = adjacent_edge_replacement(kernel, points, edge, adjacent)?;
     let indices = [adjacent[0].triangle, adjacent[1].triangle];
-    topology.replace_region(triangles, &indices, &replacement)
+    topology.replace_region(triangles, &indices, &replacement, None)
 }
 
 fn adjacent_edge_replacement(
@@ -1206,20 +1221,30 @@ struct EdgeUse {
     triangle: usize,
 }
 
-/// Checked triangle adjacency retained while a batch of constraints mutates
-/// fixed triangle slots.
+/// Checked triangle adjacency retained from nontrivial point insertion through
+/// a batch of constraint mutations.
 ///
-/// Cavity replacement and edge flips preserve the triangle count. Keeping one
-/// reciprocal neighbor row per slot therefore avoids rebuilding and sorting
-/// the complete edge-use stream after every recovered segment while retaining
+/// Point insertion appends local slots; cavity replacement and edge flips
+/// preserve the triangle count. Keeping one reciprocal neighbor row per slot
+/// avoids rebuilding and sorting the complete edge-use stream while retaining
 /// the same manifold checks at construction and every local patch boundary.
-struct TriangleTopology {
+pub(crate) struct TriangleTopology {
     neighbors: Vec<[Option<usize>; 3]>,
     vertex_triangles: Vec<Option<usize>>,
+    patch: TopologyPatchScratch,
+}
+
+#[derive(Default)]
+struct TopologyPatchScratch {
+    replacement_indices: Vec<usize>,
+    old_boundary: Vec<(EdgeKey, Option<usize>)>,
+    edge_uses: Vec<EdgeUse>,
+    new_neighbors: Vec<[Option<usize>; 3]>,
+    outside_updates: Vec<(usize, usize, usize)>,
 }
 
 impl TriangleTopology {
-    fn new(triangles: &[Triangle], point_count: usize) -> Result<Self> {
+    pub(crate) fn new(triangles: &[Triangle], point_count: usize) -> Result<Self> {
         let mut vertex_triangles = vec![None; point_count];
         for (triangle_index, triangle) in triangles.iter().copied().enumerate() {
             if triangle[0] == triangle[1]
@@ -1243,11 +1268,26 @@ impl TriangleTopology {
         Ok(Self {
             neighbors: crate::cdt::triangle_neighbors(triangles)?,
             vertex_triangles,
+            patch: TopologyPatchScratch::default(),
         })
+    }
+
+    pub(crate) fn neighbors(&self) -> &[[Option<usize>; 3]] {
+        &self.neighbors
     }
 
     fn vertex_triangle(&self, vertex: usize) -> Option<usize> {
         self.vertex_triangles.get(vertex).copied().flatten()
+    }
+
+    pub(crate) fn neighbor_across_vertices(
+        &self,
+        triangles: &[Triangle],
+        triangle: usize,
+        first: usize,
+        second: usize,
+    ) -> Result<Option<usize>> {
+        self.neighbor_across(triangles, triangle, EdgeKey::new(first, second))
     }
 
     fn neighbor_across(
@@ -1275,15 +1315,65 @@ impl TriangleTopology {
         Ok(Some(neighbor))
     }
 
-    /// Atomically replace fixed triangle slots after proving that the new
-    /// local triangulation has exactly the old region boundary.
-    fn replace_region(
+    pub(crate) fn replace_point_region(
         &mut self,
-        triangles: &mut [Triangle],
+        triangles: &mut Vec<Triangle>,
         indices: &[usize],
         replacement: &[Triangle],
+        boundary_split: Option<(usize, usize, usize)>,
     ) -> Result<()> {
-        if indices.len() != replacement.len() || indices.is_empty() {
+        if indices.len() > 2 || replacement.len() > 4 {
+            return Err(Error::InvalidInput {
+                reason: "point insertion exceeds its local topology bound",
+            });
+        }
+        self.replace_region(
+            triangles,
+            indices,
+            replacement,
+            boundary_split.map(|(first, second, point)| (EdgeKey::new(first, second), point)),
+        )
+    }
+
+    /// Atomically replace triangle slots after proving that the new local
+    /// triangulation has exactly the old region boundary. Point insertion may
+    /// append slots and may refine one hull edge through its inserted vertex;
+    /// constraint recovery and flips preserve both boundary and slot count.
+    fn replace_region(
+        &mut self,
+        triangles: &mut Vec<Triangle>,
+        indices: &[usize],
+        replacement: &[Triangle],
+        boundary_split: Option<(EdgeKey, usize)>,
+    ) -> Result<()> {
+        let mut patch = std::mem::take(&mut self.patch);
+        let result = self.replace_region_with_scratch(
+            triangles,
+            indices,
+            replacement,
+            boundary_split,
+            &mut patch,
+        );
+        self.patch = patch;
+        result
+    }
+
+    fn replace_region_with_scratch(
+        &mut self,
+        triangles: &mut Vec<Triangle>,
+        indices: &[usize],
+        replacement: &[Triangle],
+        boundary_split: Option<(EdgeKey, usize)>,
+        patch: &mut TopologyPatchScratch,
+    ) -> Result<()> {
+        let TopologyPatchScratch {
+            replacement_indices,
+            old_boundary,
+            edge_uses,
+            new_neighbors,
+            outside_updates,
+        } = patch;
+        if indices.is_empty() || replacement.len() < indices.len() {
             return Err(Error::InvalidInput {
                 reason: "topology replacement has mismatched triangle slots",
             });
@@ -1295,12 +1385,14 @@ impl TriangleTopology {
                 });
             }
         }
-        for (&triangle_index, triangle) in indices.iter().zip(replacement) {
+        for &triangle_index in indices {
             if triangle_index >= triangles.len() {
                 return Err(Error::InvalidInput {
                     reason: "topology replacement references an absent triangle",
                 });
             }
+        }
+        for triangle in replacement {
             if triangle[0] == triangle[1]
                 || triangle[1] == triangle[2]
                 || triangle[2] == triangle[0]
@@ -1314,12 +1406,67 @@ impl TriangleTopology {
             }
         }
 
-        let mut old_boundary = Vec::new();
+        let appended = replacement.len() - indices.len();
+        let final_len = triangles
+            .len()
+            .checked_add(appended)
+            .ok_or(Error::InvalidInput {
+                reason: "topology replacement triangle count overflow",
+            })?;
+        replacement_indices.clear();
+        replacement_indices.reserve(replacement.len());
+        replacement_indices.extend_from_slice(indices);
+        replacement_indices.extend(triangles.len()..final_len);
+
+        old_boundary.clear();
         for &triangle_index in indices {
             for edge in triangle_edges(triangles[triangle_index]) {
                 let neighbor = self.neighbor_across(triangles, triangle_index, edge)?;
                 if neighbor.is_none_or(|neighbor| indices.binary_search(&neighbor).is_err()) {
                     old_boundary.push((edge, neighbor));
+                }
+            }
+        }
+        if let Some((split, point)) = boundary_split {
+            if split.contains(point) {
+                return Err(Error::InvalidInput {
+                    reason: "topology replacement does not split an edge interior",
+                });
+            }
+            let old_uses = indices
+                .iter()
+                .filter(|&&index| triangle_contains_edge(triangles[index], split))
+                .count();
+            match old_uses {
+                1 => {
+                    let position = old_boundary
+                        .iter()
+                        .position(|&(edge, _)| edge == split)
+                        .ok_or(Error::InvalidInput {
+                            reason: "split edge is absent from the topology boundary",
+                        })?;
+                    if old_boundary[position].1.is_some() {
+                        return Err(Error::InvalidInput {
+                            reason: "split edge omitted an adjacent triangle",
+                        });
+                    }
+                    old_boundary.swap_remove(position);
+                    old_boundary.extend([
+                        (EdgeKey::new(split.from, point), None),
+                        (EdgeKey::new(point, split.to), None),
+                    ]);
+                }
+                2 => {
+                    if old_boundary.iter().any(|&(edge, _)| edge == split) {
+                        return Err(Error::InvalidInput {
+                            reason: "interior split edge remained on the topology boundary",
+                        });
+                    }
+                }
+                _ => {
+                    return Err(Error::InvalidInput {
+                        reason: "split edge has invalid topology incidence",
+                    });
                 }
             }
         }
@@ -1330,8 +1477,9 @@ impl TriangleTopology {
             });
         }
 
-        let mut edge_uses = Vec::with_capacity(replacement.len().saturating_mul(3));
-        for (&triangle_index, triangle) in indices.iter().zip(replacement) {
+        edge_uses.clear();
+        edge_uses.reserve(replacement.len().saturating_mul(3));
+        for (&triangle_index, triangle) in replacement_indices.iter().zip(replacement) {
             for edge in triangle_edges(*triangle) {
                 edge_uses.push(EdgeUse {
                     edge,
@@ -1340,8 +1488,9 @@ impl TriangleTopology {
             }
         }
         edge_uses.sort_unstable();
-        let mut new_neighbors = vec![[None; 3]; replacement.len()];
-        let mut outside_updates = Vec::new();
+        new_neighbors.clear();
+        new_neighbors.resize(replacement.len(), [None; 3]);
+        outside_updates.clear();
         let mut boundary_count = 0usize;
         let mut start = 0;
         while start < edge_uses.len() {
@@ -1359,12 +1508,11 @@ impl TriangleTopology {
                             reason: "topology replacement changes the region boundary",
                         })?;
                     let triangle = edge_uses[start].triangle;
-                    let local =
-                        indices
-                            .binary_search(&triangle)
-                            .map_err(|_| Error::InvalidInput {
-                                reason: "topology replacement edge has no triangle slot",
-                            })?;
+                    let local = replacement_indices.binary_search(&triangle).map_err(|_| {
+                        Error::InvalidInput {
+                            reason: "topology replacement edge has no triangle slot",
+                        }
+                    })?;
                     let slot = triangle_edge_slot(replacement[local], edge)?;
                     let outside = old_boundary[boundary_position].1;
                     new_neighbors[local][slot] = outside;
@@ -1386,18 +1534,17 @@ impl TriangleTopology {
                 2 => {
                     let first = edge_uses[start].triangle;
                     let second = edge_uses[start + 1].triangle;
-                    let first_local =
-                        indices
-                            .binary_search(&first)
-                            .map_err(|_| Error::InvalidInput {
-                                reason: "topology replacement edge has no first triangle slot",
-                            })?;
+                    let first_local = replacement_indices.binary_search(&first).map_err(|_| {
+                        Error::InvalidInput {
+                            reason: "topology replacement edge has no first triangle slot",
+                        }
+                    })?;
                     let second_local =
-                        indices
-                            .binary_search(&second)
-                            .map_err(|_| Error::InvalidInput {
+                        replacement_indices.binary_search(&second).map_err(|_| {
+                            Error::InvalidInput {
                                 reason: "topology replacement edge has no second triangle slot",
-                            })?;
+                            }
+                        })?;
                     let first_slot = triangle_edge_slot(replacement[first_local], edge)?;
                     let second_slot = triangle_edge_slot(replacement[second_local], edge)?;
                     new_neighbors[first_local][first_slot] = Some(second);
@@ -1417,16 +1564,27 @@ impl TriangleTopology {
             });
         }
 
-        for ((&triangle_index, triangle), neighbors) in
-            indices.iter().zip(replacement).zip(new_neighbors)
+        triangles.reserve(appended);
+        self.neighbors.reserve(appended);
+        for (local, ((&triangle_index, triangle), neighbors)) in replacement_indices
+            .iter()
+            .zip(replacement)
+            .zip(new_neighbors.iter().copied())
+            .enumerate()
         {
-            triangles[triangle_index] = *triangle;
-            self.neighbors[triangle_index] = neighbors;
+            if local < indices.len() {
+                triangles[triangle_index] = *triangle;
+                self.neighbors[triangle_index] = neighbors;
+            } else {
+                debug_assert_eq!(triangle_index, triangles.len());
+                triangles.push(*triangle);
+                self.neighbors.push(neighbors);
+            }
             for &vertex in triangle {
                 self.vertex_triangles[vertex] = Some(triangle_index);
             }
         }
-        for (outside, slot, triangle) in outside_updates {
+        for (outside, slot, triangle) in outside_updates.iter().copied() {
             self.neighbors[outside][slot] = Some(triangle);
         }
         Ok(())
@@ -1687,7 +1845,7 @@ mod tests {
     #[test]
     fn retained_topology_updates_reciprocal_neighbors_after_a_flip() {
         let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
-        let mut triangles = [[0, 1, 2], [0, 2, 3]];
+        let mut triangles = vec![[0, 1, 2], [0, 2, 3]];
         let mut topology = TriangleTopology::new(&triangles, points.len()).unwrap();
         let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
         let kernel = ExactKernel::new(&context);
@@ -1719,14 +1877,14 @@ mod tests {
 
     #[test]
     fn retained_topology_rejects_a_changed_boundary_atomically() {
-        let original = [[0, 1, 2]];
-        let mut triangles = original;
+        let original = vec![[0, 1, 2]];
+        let mut triangles = original.clone();
         let mut topology = TriangleTopology::new(&triangles, 4).unwrap();
         let neighbors = topology.neighbors.clone();
         let vertex_triangles = topology.vertex_triangles.clone();
 
         assert_eq!(
-            topology.replace_region(&mut triangles, &[0], &[[0, 1, 3]]),
+            topology.replace_region(&mut triangles, &[0], &[[0, 1, 3]], None),
             Err(Error::InvalidInput {
                 reason: "topology replacement changes the region boundary",
             })
@@ -1836,8 +1994,14 @@ mod tests {
                 triangulate_cavity_side(&kernel, &points, (0..points.len()).collect()).unwrap();
             for vertex in 0..points.len() {
                 if !triangles.iter().any(|triangle| triangle.contains(&vertex)) {
-                    crate::cdt::insert_topology_point(&kernel, &points, &mut triangles, vertex)
-                        .unwrap();
+                    crate::cdt::insert_topology_point(
+                        &kernel,
+                        &points,
+                        &mut triangles,
+                        vertex,
+                        &mut None,
+                    )
+                    .unwrap();
                 }
             }
 

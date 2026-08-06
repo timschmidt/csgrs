@@ -22,6 +22,12 @@ pub(crate) use topology::insert_point as insert_topology_point;
 // exact test, so retain the simple path until a nontrivial mesh exists.
 const LOCATED_CAVITY_THRESHOLD: usize = 4;
 
+// Below this size, rebuilding the compact sparse edge table costs less than
+// proving and patching reciprocal local topology. Once the triangulation is
+// nontrivial, retain the first checked adjacency and update only the one- or
+// two-triangle point split.
+const RETAINED_ADJACENCY_THRESHOLD: usize = 16;
+
 /// Triangulation result for an unconstrained 2D point set.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
@@ -359,9 +365,17 @@ pub fn constrained_triangulation_convex_hull(
     validate_unique_points(&kernel, points)?;
     validate_constraint_geometry(&kernel, points, constraints, true)?;
 
-    let triangles = topology::triangulate_point_set(&kernel, points)?;
-    let triangles =
-        crate::cdt_insert::insert_constraints_topology(&kernel, points, triangles, constraints)?;
+    let topology::PointTriangulation {
+        triangles,
+        topology,
+    } = topology::triangulate_point_set(&kernel, points)?;
+    let triangles = crate::cdt_insert::insert_constraints_topology(
+        &kernel,
+        points,
+        triangles,
+        constraints,
+        topology,
+    )?;
     crate::cdt_validate::validate_constrained_convex_hull_topology(
         &kernel,
         points,
