@@ -168,6 +168,11 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// coordinate comparison or enclosure is requested.
     #[cfg(feature = "predicates")]
     AlgebraicChordPair(crate::BezierAlgebraicChordPairPoint2),
+    /// A selected algebraic-circle contact with a certified axis-aligned
+    /// retained chord.  Both selected fields and the square-root branch remain
+    /// exact until a terminal predicate policy permits approximation.
+    #[cfg(feature = "predicates")]
+    AlgebraicCuspChord(crate::BezierAlgebraicCuspChordPoint2),
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
@@ -178,6 +183,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::Algebraic(_) => None,
             #[cfg(feature = "predicates")]
             Self::AlgebraicChordPair(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicCuspChord(_) => None,
         }
     }
 
@@ -190,6 +197,10 @@ impl RationalBezierIntersectionPointEvidence2 {
             (Self::Algebraic(first), Self::Algebraic(second)) => first.shares_storage(second),
             #[cfg(feature = "predicates")]
             (Self::AlgebraicChordPair(_), Self::AlgebraicChordPair(_)) => false,
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
+                first.shares_storage(second)
+            }
             _ => false,
         }
     }
@@ -201,6 +212,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::Algebraic(point) => Some(point),
             #[cfg(feature = "predicates")]
             Self::AlgebraicChordPair(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicCuspChord(_) => None,
         }
     }
 
@@ -209,7 +222,16 @@ impl RationalBezierIntersectionPointEvidence2 {
     pub const fn as_algebraic_chord_pair(&self) -> Option<&crate::BezierAlgebraicChordPairPoint2> {
         match self {
             Self::AlgebraicChordPair(point) => Some(point),
-            Self::Exact(_) | Self::Algebraic(_) => None,
+            Self::Exact(_) | Self::Algebraic(_) | Self::AlgebraicCuspChord(_) => None,
+        }
+    }
+
+    /// Returns retained correlated cusp/chord point evidence, when present.
+    #[cfg(feature = "predicates")]
+    pub const fn as_algebraic_cusp_chord(&self) -> Option<&crate::BezierAlgebraicCuspChordPoint2> {
+        match self {
+            Self::AlgebraicCuspChord(point) => Some(point),
+            Self::Exact(_) | Self::Algebraic(_) | Self::AlgebraicChordPair(_) => None,
         }
     }
 
@@ -335,6 +357,14 @@ impl RationalBezierIntersectionPointEvidence2 {
             }
             #[cfg(feature = "predicates")]
             (Self::AlgebraicChordPair(point), other) | (other, Self::AlgebraicChordPair(point)) => {
+                point.same_point_evidence(other, policy)
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
+                first.same_point_evidence(&Self::AlgebraicCuspChord(second.clone()), policy)
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicCuspChord(point), other) | (other, Self::AlgebraicCuspChord(point)) => {
                 point.same_point_evidence(other, policy)
             }
         }

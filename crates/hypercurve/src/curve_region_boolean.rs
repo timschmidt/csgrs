@@ -8,7 +8,7 @@ use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::{
     BezierAlgebraicChordPairIntersections2, BezierAlgebraicChordRationalIntersections2,
-    BezierAlgebraicChordRationalOverlap2,
+    BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleChordIntersections2,
 };
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
@@ -1817,12 +1817,133 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             }
                         }
                     }
+                    let intersections = match cusp
+                        .semicircle()
+                        .axis_chord_intersections(chord, &self.data.policy)
+                        .map_err(|cause| self.invalid(chord_index, cause))?
+                    {
+                        Classification::Decided(intersections) => intersections,
+                        Classification::Uncertain(reason) => {
+                            return Ok(RegionPairResult {
+                                contacts: Vec::new(),
+                                overlaps: Vec::new(),
+                                blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                            });
+                        }
+                    };
+                    let BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    } = intersections
+                    else {
+                        return Ok(RegionPairResult::empty());
+                    };
+                    let mut retained = Vec::with_capacity(contacts.len());
+                    for contact in contacts {
+                        let (cusp_parameter, correlated_point) =
+                            parameter_map.contact_evidence(&contact);
+                        let point = match contact.chord_location {
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                                chord.start().clone()
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                                chord.end().clone()
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                                match contact.cusp_location {
+                                    BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                                        RationalBezierIntersectionPointEvidence2::Algebraic(
+                                            cusp.semicircle()
+                                                .start_point_image(&self.data.policy)
+                                                .map_err(|cause| {
+                                                    self.invalid(chord_index, cause)
+                                                })?,
+                                        )
+                                    }
+                                    BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                                        RationalBezierIntersectionPointEvidence2::Algebraic(
+                                            cusp.semicircle()
+                                                .end_point_image(&self.data.policy)
+                                                .map_err(|cause| {
+                                                    self.invalid(chord_index, cause)
+                                                })?,
+                                        )
+                                    }
+                                    BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                                        correlated_point
+                                    }
+                                }
+                            }
+                        };
+                        let chord_parameter = match contact.chord_location {
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                                chord.start_parameter()
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                                chord.end_parameter()
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                                match chord
+                                    .parameter_at_certified_point(point.clone(), &self.data.policy)
+                                    .map_err(|cause| self.invalid(chord_index, cause))?
+                                {
+                                    Classification::Decided(Some(parameter)) => parameter,
+                                    Classification::Decided(None) => {
+                                        return Err(self.invalid(
+                                            chord_index,
+                                            CurveError::Topology(
+                                                "certified cusp/chord contact was outside its chord"
+                                                    .into(),
+                                            ),
+                                        ));
+                                    }
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(RegionPairResult {
+                                            contacts: Vec::new(),
+                                            overlaps: Vec::new(),
+                                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                                        });
+                                    }
+                                }
+                            }
+                        };
+                        let tangent_cross_sign =
+                            oriented_cusp_cross_sign(contact.tangent_cross_sign, *cusp_is_first);
+                        let (first_parameter, second_parameter) = if *cusp_is_first {
+                            (
+                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                                CurveRegionParameter2::from_algebraic_chord(chord_parameter),
+                            )
+                        } else {
+                            (
+                                CurveRegionParameter2::from_algebraic_chord(chord_parameter),
+                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                            )
+                        };
+                        retained.push(RegionPairContactEvidence::direct(
+                            first_parameter,
+                            second_parameter,
+                            Some(point),
+                            tangent_cross_sign != RealSign::Zero,
+                            Some(tangent_cross_sign),
+                        ));
+                    }
+                    Ok(RegionPairResult {
+                        contacts: retained,
+                        overlaps: Vec::new(),
+                        blockers: Vec::new(),
+                    })
                 }
-                Ok(RegionPairResult {
-                    contacts: Vec::new(),
-                    overlaps: Vec::new(),
-                    blockers: vec![RegionPairBlocker::Uncertain(UncertaintyReason::Unsupported)],
-                })
+                #[cfg(not(feature = "predicates"))]
+                {
+                    Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new(),
+                        blockers: vec![RegionPairBlocker::Uncertain(
+                            UncertaintyReason::Unsupported,
+                        )],
+                    })
+                }
             }
             RegionCarrierPairContext::AlgebraicChordPair => {
                 #[cfg(feature = "predicates")]
@@ -8478,8 +8599,8 @@ mod certified_successor_tests {
     use super::*;
     #[cfg(feature = "predicates")]
     use crate::bezier_offset::{
-        BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicirclePairIntersections2,
-        BezierAlgebraicCuspSemicircleParameter2,
+        BezierAlgebraicChordAxisDirection2, BezierAlgebraicCuspSemicircle2,
+        BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     };
     #[cfg(feature = "predicates")]
     use crate::{BezierAlgebraicCuspSemicircleFragment2, CubicBezier2};
@@ -8580,6 +8701,122 @@ mod certified_successor_tests {
             filled_side_is_left: true,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn cusp_chord_pair_retains_an_interior_axis_contact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = sqrt_half_parameter(&policy);
+            let point = |x: Vec<Real>, y: Vec<Real>| {
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        parameter.clone(),
+                        crate::bezier_algebraic_image::parameter_representation(
+                            &parameter, &policy,
+                        ),
+                        x,
+                        y,
+                        vec![Real::one()],
+                        "test region cusp/chord point",
+                    ),
+                )
+            };
+            let center = point(vec![Real::zero(), Real::one()], vec![Real::zero()]);
+            let semicircle = decided(
+                BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::from(2_i8),
+                    false,
+                    &policy,
+                )
+                .expect("valid selected circle"),
+            )
+            .expect("nonzero circle radius");
+            let chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                point(vec![Real::zero(), Real::one()], vec![Real::from(-3_i8)]),
+                point(vec![Real::zero(), Real::one()], vec![Real::from(3_i8)]),
+                BezierAlgebraicChordAxisDirection2::PositiveY,
+                &policy,
+            );
+            let cusp = cusp_test_carrier(
+                semicircle,
+                Real::zero(),
+                Real::one(),
+                CurvePathBooleanOperand2::First,
+                &policy,
+            );
+            let empty_first = CurveRegion2::empty();
+            let empty_second = CurveRegion2::empty();
+            let pair = RegionCarrierPair {
+                first_carrier_index: 0,
+                second_carrier_index: 1,
+                context: RegionCarrierPairContext::CuspChord {
+                    cusp_is_first: true,
+                },
+            };
+            let context = CurveRegionBooleanContext {
+                data: CurveRegionBooleanContextData {
+                    first: &empty_first,
+                    second: &empty_second,
+                    policy,
+                    carriers: vec![
+                        cusp,
+                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone()),
+                    ],
+                    first_carrier_count: 1,
+                    authored_carrier_pair_count: 1,
+                    pairs: vec![pair],
+                    bezier_self_intersections: Vec::new(),
+                    parallel_self_intersections: Vec::new(),
+                    strict_line_image_only: OnceLock::new(),
+                },
+            };
+            let result = context
+                .pair_result(&context.data.pairs[0])
+                .expect("axis cusp/chord pair must complete");
+            assert!(result.blockers.is_empty(), "{result:?}");
+            let [contact] = result.contacts.as_slice() else {
+                panic!("expected one retained cusp/chord contact: {result:?}");
+            };
+            assert!(contact.is_certified_transverse());
+            assert_eq!(contact.tangent_cross_sign, Some(RealSign::Negative));
+            assert!(matches!(
+                contact.point(),
+                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
+            ));
+            let cusp_parameter = contact
+                .first_parameter()
+                .as_algebraic_cusp()
+                .expect("first carrier must retain the cusp parameter");
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            assert_eq!(
+                cusp_parameter.order_to_real(&half, &policy).unwrap(),
+                Classification::Decided(Ordering::Equal),
+            );
+            let chord_parameter = contact
+                .second_parameter()
+                .as_algebraic_chord()
+                .expect("second carrier must retain the chord parameter");
+            assert_eq!(
+                chord_parameter
+                    .cmp_by_refinement(&chord.start_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(Ordering::Greater),
+            );
+            assert_eq!(
+                chord_parameter
+                    .cmp_by_refinement(&chord.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(Ordering::Less),
+            );
+            let evidence = context
+                .build_intersection_evidence()
+                .expect("axis cusp/chord contact must enter region evidence");
+            assert!(evidence.is_complete(), "{evidence:?}");
+            assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
         }
     }
 

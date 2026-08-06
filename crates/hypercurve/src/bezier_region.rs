@@ -2036,7 +2036,8 @@ fn retained_fragment_endpoint_evidence(
                     }),
                 ),
                 #[cfg(feature = "predicates")]
-                crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => {
+                crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_) => {
                     (None, None)
                 }
             };

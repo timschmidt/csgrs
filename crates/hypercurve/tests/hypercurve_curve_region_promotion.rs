@@ -1831,6 +1831,63 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
+    let radius = q(1, 20);
+    let translation = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        radius.clone(),
+        q(1, 40),
+    )
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let first = source
+            .offset(radius.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("first selected round region must remain exact")
+            .into_value();
+        let second = first
+            .transform_similarity(&translation, &policy)
+            .expect("translated selected round region must remain exact")
+            .into_value();
+        let evidence = first
+            .intersect_region(&second, &policy)
+            .expect("translated round boundaries must intersect exactly")
+            .into_value();
+        assert!(evidence.is_complete(), "{evidence:?}");
+        assert!(!evidence.contacts().is_empty(), "{evidence:?}");
+        assert!(
+            evidence.contacts().iter().any(|contact| matches!(
+                contact.point(),
+                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
+            )),
+            "the translated round regions must exercise retained cusp/chord contacts: {evidence:?}",
+        );
+
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("translated selected round regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert_eq!(
+            certified(
+                batch
+                    .value
+                    .union()
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    .unwrap()
+            ),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
     let distance = q(1, 20);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
