@@ -2261,6 +2261,77 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         assert!(!replay.value.intersection().is_empty());
         assert!(replay.value.difference().is_empty());
         assert!(!replay.value.xor().is_empty());
+
+        let touch_points = [
+            Point2::new(-Real::one(), q(41, 40)),
+            Point2::new(Real::from(2), q(41, 40)),
+            Point2::new(Real::from(2), Real::from(2)),
+            Point2::new(-Real::one(), Real::from(2)),
+        ];
+        let touch_box = CurveRegion2::try_from_native_material_contours(
+            vec![
+                Contour2::try_new(
+                    (0..touch_points.len())
+                        .map(|index| {
+                            Segment2::Line(
+                                LineSeg2::try_new(
+                                    touch_points[index].clone(),
+                                    touch_points[(index + 1) % touch_points.len()].clone(),
+                                )
+                                .unwrap(),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            ],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let touch_cut = touch_box
+            .boolean_regions(&rounded, &policy)
+            .expect("the exact upper box must subtract the rounded operand");
+        assert_eq!(touch_cut.certainty, CurveCertainty::Certified);
+        let touch_region = touch_cut.into_value().difference().clone();
+        assert!(!touch_region.is_empty());
+        let touch_evidence = first
+            .intersect_region(&touch_region, &policy)
+            .expect("the retained selected-circle/chord endpoint must support a point touch");
+        let touch_certainty = if policy == CurveContext::STRICT {
+            CurveCertainty::Certified
+        } else {
+            CurveCertainty::Approximate512Consumed
+        };
+        assert_eq!(touch_evidence.certainty, touch_certainty);
+        let touch_blockers = touch_evidence
+            .value
+            .blockers()
+            .iter()
+            .map(|blocker| {
+                (
+                    blocker.first().loop_index(),
+                    blocker.first().fragment_index(),
+                    blocker.first().family(),
+                    blocker.second().loop_index(),
+                    blocker.second().fragment_index(),
+                    blocker.second().family(),
+                    blocker.uncertainty_reason(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(touch_evidence.value.is_complete(), "{touch_blockers:?}");
+        assert!(!touch_evidence.value.contacts().is_empty());
+        assert!(touch_evidence.value.overlaps().is_empty());
+
+        let touch = first
+            .boolean_regions(&touch_region, &policy)
+            .expect("the correlated point touch must enter all four later Booleans");
+        assert_eq!(touch.certainty, touch_certainty);
+        assert!(!touch.value.union().is_empty());
+        assert!(touch.value.intersection().is_empty());
+        assert!(!touch.value.difference().is_empty());
+        assert!(!touch.value.xor().is_empty());
     }
 }
 

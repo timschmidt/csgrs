@@ -3053,6 +3053,98 @@ impl BezierAlgebraicCuspSemicircle2 {
             .point_image_at_parallel_distance(&self.center_parallel_distance(), policy)
     }
 
+    /// Certifies whether retained rational-circle metadata describes this
+    /// complete supporting circle.  Coordinate comparisons stay in the cusp
+    /// root's local field, so a structurally retained circle does not need to
+    /// pass through the more expensive identically-zero resultant path.
+    fn has_same_supporting_circle(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let center_image = self.center_point_image(policy)?;
+        let mut uncertainty = None;
+        for (use_x, coordinate) in [(true, center.x()), (false, center.y())] {
+            let order = center_image.coordinate_order_to_real(use_x, coordinate, policy)?;
+            match order {
+                Classification::Decided(std::cmp::Ordering::Equal) => {}
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                    return Ok(Classification::Decided(false));
+                }
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                }
+            }
+        }
+        let radius_difference = self.radial_distance() * self.radial_distance() - radius_squared;
+        let radius_sign = real_sign(&radius_difference, policy);
+        match radius_sign {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(false));
+            }
+            None => {
+                uncertainty.get_or_insert(UncertaintyReason::RealSign);
+            }
+        }
+        Ok(uncertainty.map_or(Classification::Decided(true), Classification::Uncertain))
+    }
+
+    /// Proves that this supporting circle cannot meet one retained exact
+    /// circle.  The ordinary circle-circle discriminant is signed directly in
+    /// the cusp parameter's local field; a negative value excludes both
+    /// transverse and tangent contacts without materializing either center.
+    fn is_disjoint_from_supporting_circle(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let frame = &self.data.frame.data;
+        let (center_x, center_y) = self
+            .data
+            .frame
+            .point_numerators_at_parallel_distance(&self.center_parallel_distance());
+        let delta_x =
+            polynomial_subtract(&polynomial_scale(&frame.denominator, center.x()), &center_x);
+        let delta_y =
+            polynomial_subtract(&polynomial_scale(&frame.denominator, center.y()), &center_y);
+        let center_distance_squared = polynomial_add(
+            &polynomial_multiply(&delta_x, &delta_x),
+            &polynomial_multiply(&delta_y, &delta_y),
+        );
+        let denominator_squared = polynomial_multiply(&frame.denominator, &frame.denominator);
+        let first_radius_squared = self.radial_distance() * self.radial_distance();
+        let center_line = polynomial_add(
+            &center_distance_squared,
+            &polynomial_scale(
+                &denominator_squared,
+                &(&first_radius_squared - radius_squared),
+            ),
+        );
+        let discriminant = polynomial_subtract(
+            &polynomial_scale(
+                &polynomial_multiply(&center_distance_squared, &denominator_squared),
+                &(Real::from(4_i8) * first_radius_squared),
+            ),
+            &polynomial_multiply(&center_line, &center_line),
+        );
+        Ok(
+            match signed_coefficients_at_parameter(
+                discriminant,
+                &BezierParameter2::Algebraic(self.cusp_parameter().clone()),
+                policy,
+            )? {
+                Classification::Decided(RealSign::Negative) => Classification::Decided(true),
+                Classification::Decided(RealSign::Zero | RealSign::Positive) => {
+                    Classification::Decided(false)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     /// Returns a conservative exact box for the complete selected half circle.
     ///
     /// The cusp center lies on the retained source parallel. Expanding the
@@ -4823,6 +4915,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     #[cfg(feature = "predicates")]
     fn axis_chord_contact_minus_point_sign_cached(
         &self,
+        chord: &BezierAlgebraicChord2,
         system: &BezierAlgebraicCuspSemicircleChordSystem2,
         support: &RationalBezierIntersectionPointEvidence2,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -4833,6 +4926,75 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> CurveResult<Classification<RealSign>> {
         if support.shares_storage(point) {
             return Self::axis_chord_system_contact_minus_support_sign(system, branch, policy);
+        }
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point {
+            if point.data.policy != *policy {
+                return Err(CurveError::Topology(
+                    "correlated chord point was replayed under a different predicate policy".into(),
+                ));
+            }
+            let opposite = if chord.shares_retained_support(&point.data.first) {
+                Some(&point.data.second)
+            } else if chord.shares_retained_support(&point.data.second) {
+                Some(&point.data.first)
+            } else {
+                None
+            };
+            if let Some(opposite) = opposite
+                && opposite
+                    .certified_axis_direction()
+                    .is_some_and(|opposite| opposite.axis() != direction.axis())
+            {
+                opposite.validate_policy(policy)?;
+                if cached.is_none() {
+                    let retained_support = opposite.retained_support();
+                    let mut uncertainty = UncertaintyReason::Unsupported;
+                    for endpoint in [retained_support.start(), retained_support.end()] {
+                        match self
+                            .axis_chord_system_for_support_point(endpoint, direction, policy)?
+                        {
+                            Classification::Decided(endpoint_system) => {
+                                *cached = Some(endpoint_system);
+                                break;
+                            }
+                            Classification::Uncertain(reason) => {
+                                if uncertainty == UncertaintyReason::Unsupported {
+                                    uncertainty = reason;
+                                }
+                            }
+                        }
+                    }
+                    if cached.is_none() {
+                        return Ok(Classification::Uncertain(uncertainty));
+                    }
+                }
+                return Self::axis_chord_system_contact_minus_support_sign(
+                    cached
+                        .as_ref()
+                        .expect("perpendicular endpoint system was initialized above"),
+                    branch,
+                    policy,
+                );
+            }
+        }
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point {
+            let (map, contact) = point.map_contact();
+            map.validate_policy(policy)?;
+            if map.data.semicircle == *self
+                && map.data.chord.shares_retained_support(chord)
+                && map.data.direction.axis() == direction.axis()
+            {
+                let point_branch = if map.data.direction == direction {
+                    contact.branch
+                } else {
+                    -contact.branch
+                };
+                return Ok(Classification::Decided(match branch.cmp(&point_branch) {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                }));
+            }
         }
         if cached.is_none() {
             *cached = Some(
@@ -4939,6 +5101,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let start_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                chord,
                 &system,
                 support,
                 chord.start(),
@@ -4953,6 +5116,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let end_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                chord,
                 &system,
                 support,
                 chord.end(),
@@ -5674,6 +5838,18 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
+        if let Some(circle) = other.retained_circular_conic()
+            && self.is_disjoint_from_supporting_circle(
+                &circle.center,
+                &circle.radius_squared,
+                policy,
+            )? == Classification::Decided(true)
+        {
+            return Ok(Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                None,
+            )));
+        }
         let system = self.rational_system(other)?;
         let reduce = |polynomial: &BivariatePolynomial| {
             bivariate_reduce_axis(
@@ -5683,6 +5859,45 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             )
         };
+        if let Some(circle) = other.retained_circular_conic()
+            && self.has_same_supporting_circle(&circle.center, &circle.radius_squared, policy)?
+                == Classification::Decided(true)
+        {
+            let selected_half_plane = match reduce(&system.selected_half_plane)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let diameter_side = match reduce(&system.diameter_side)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let angular_tangent = match reduce(&system.angular_tangent)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            return Ok(self
+                .replay_rational_circle_component(
+                    other,
+                    selected_half_plane,
+                    diameter_side,
+                    radius_squared_denominator,
+                    angular_tangent,
+                    policy,
+                )?
+                .map(|intersections| (intersections, None)));
+        }
         let incidence = match reduce(&system.incidence)? {
             Classification::Decided(polynomial) => polynomial,
             Classification::Uncertain(reason) => {
@@ -7349,9 +7564,57 @@ impl BezierAlgebraicCuspChordPoint2 {
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let (map, contact) = self.map_contact();
         map.validate_policy(policy)?;
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(other_point) =
+            other.point()
+        {
+            let (other_map, other_contact) = other_point.map_contact();
+            other_map.validate_policy(policy)?;
+            if chord.shares_retained_support(other.chord())
+                && map.data.semicircle == other_map.data.semicircle
+                && map.data.direction.axis() == other_map.data.direction.axis()
+                && map
+                    .data
+                    .chord
+                    .support_collinearity(&other_map.data.chord, policy)?
+                    == Classification::Decided(true)
+            {
+                let other_branch = if map.data.direction == other_map.data.direction {
+                    other_contact.branch
+                } else {
+                    -other_contact.branch
+                };
+                let mut order = contact.branch.cmp(&other_branch);
+                if map.data.direction
+                    != chord.certified_axis_direction().ok_or_else(|| {
+                        CurveError::Topology(
+                            "cusp/chord point lost its certified axis orientation".into(),
+                        )
+                    })?
+                {
+                    order = order.reverse();
+                }
+                return Ok(Classification::Decided(order));
+            }
+        }
         if !map.data.chord.shares_retained_support(chord)
             || !map.data.chord.shares_retained_support(other.chord())
         {
+            if chord.shares_retained_support(other.chord()) {
+                let axis = chord.data.parameter_axis;
+                let point =
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(self.clone());
+                let order = algebraic_chord_point_coordinate_order(
+                    &point,
+                    other.point(),
+                    axis.axis,
+                    policy,
+                )?;
+                return Ok(if axis.coordinate_increases {
+                    order
+                } else {
+                    order.map(std::cmp::Ordering::reverse)
+                });
+            }
             return Err(CurveError::Topology(
                 "cusp/chord point was compared on an unrelated chord".into(),
             ));
@@ -7369,7 +7632,12 @@ impl BezierAlgebraicCuspChordPoint2 {
                     .chord
                     .shares_retained_support(&other_map.data.chord)
             {
-                let mut order = contact.branch.cmp(&other_contact.branch);
+                let other_branch = if map.data.direction == other_map.data.direction {
+                    other_contact.branch
+                } else {
+                    -other_contact.branch
+                };
+                let mut order = contact.branch.cmp(&other_branch);
                 if map.data.direction
                     != chord.certified_axis_direction().ok_or_else(|| {
                         CurveError::Topology(
@@ -8221,6 +8489,58 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     }
 
     #[cfg(feature = "predicates")]
+    fn correlated_chord_same_value(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
+            return Ok(None);
+        };
+        let (
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                map: first_map,
+                contact: first_contact,
+            },
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                map: second_map,
+                contact: second_contact,
+            },
+        ) = (first.as_ref(), second.as_ref())
+        else {
+            return Ok(None);
+        };
+        first_map.validate_policy(policy)?;
+        second_map.validate_policy(policy)?;
+        if first_map.data.semicircle != second_map.data.semicircle
+            || first_map.data.direction.axis() != second_map.data.direction.axis()
+        {
+            return Ok(None);
+        }
+        match first_map
+            .data
+            .chord
+            .support_collinearity(&second_map.data.chord, policy)?
+        {
+            Classification::Decided(true) => {}
+            // Distinct circle chords can still share one circle point.  A
+            // non-collinear support therefore cannot certify inequality.
+            Classification::Decided(false) => return Ok(None),
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        }
+        let second_branch = if first_map.data.direction == second_map.data.direction {
+            second_contact.branch
+        } else {
+            -second_contact.branch
+        };
+        Ok(Some(Classification::Decided(
+            first_contact.branch == second_branch,
+        )))
+    }
+
+    #[cfg(feature = "predicates")]
     fn correlated_chord_rational_same_value(
         &self,
         other: &Self,
@@ -8386,6 +8706,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
         #[cfg(feature = "predicates")]
         if let Some(Classification::Decided(true)) =
+            self.correlated_chord_same_value(other, policy)?
+        {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        #[cfg(feature = "predicates")]
+        if let Some(Classification::Decided(true)) =
             self.correlated_chord_rational_same_value(other, policy)?
         {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
@@ -8398,7 +8724,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 .order_to_real(parameter, policy)?
                 .map(|order| order.reverse()));
         }
-
         const MAX_REFINEMENT_STEPS: usize =
             (-hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION) as usize;
 
@@ -12116,6 +12441,30 @@ impl BezierAlgebraicChord2 {
     }
 
     #[cfg(feature = "predicates")]
+    fn support_collinearity(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        if self.shares_retained_support(other) {
+            return Ok(Classification::Decided(true));
+        }
+        if let Some(line) = self.exact_line() {
+            return Ok(other
+                .has_non_collinear_support_with_exact_line(&line, policy)?
+                .map(|non_collinear| !non_collinear));
+        }
+        if let Some(line) = other.exact_line() {
+            return Ok(self
+                .has_non_collinear_support_with_exact_line(&line, policy)?
+                .map(|non_collinear| !non_collinear));
+        }
+        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+    }
+
+    #[cfg(feature = "predicates")]
     fn retained_support_orientation_is_reversed(&self) -> bool {
         self.data.parameter_axis.coordinate_increases
             != self
@@ -12253,7 +12602,7 @@ impl BezierAlgebraicChord2 {
         let coordinate = match algebraic_chord_strict_rational_coordinate_between(
             self.start(),
             self.end(),
-            self.data.parameter_axis.axis,
+            self.data.parameter_axis,
             policy,
         )? {
             Classification::Decided(coordinate) => coordinate,
@@ -12512,6 +12861,72 @@ impl BezierAlgebraicChord2 {
             Axis2::Y => Point2::new(Real::zero(), value.clone()),
         });
         algebraic_chord_point_coordinate_order(point, &represented, axis, policy)
+    }
+
+    /// Proves finite-chord separation from the exact axis-aligned bounds of a
+    /// retained circle.  This remains useful when correlated endpoint evidence
+    /// makes construction of a conventional chord AABB unnecessarily hard.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn certifiably_disjoint_from_circle_bounds(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        match real_sign(radius_squared, policy) {
+            Some(RealSign::Positive | RealSign::Zero) => {}
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "retained circle had negative radius squared".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radius = radius_squared.clone().sqrt()?;
+        let mut uncertainty = None;
+        for (axis, center_coordinate) in [(Axis2::X, center.x()), (Axis2::Y, center.y())] {
+            let lower = center_coordinate - &radius;
+            let upper = center_coordinate + &radius;
+            let orders = |value: &Real| {
+                let start = Self::point_axis_order_to_real(self.start(), axis, value, policy)?;
+                let end = Self::point_axis_order_to_real(self.end(), axis, value, policy)?;
+                Ok::<_, CurveError>((start, end))
+            };
+            let (start_lower, end_lower) = orders(&lower)?;
+            if matches!(
+                (start_lower, end_lower),
+                (
+                    Classification::Decided(std::cmp::Ordering::Less),
+                    Classification::Decided(std::cmp::Ordering::Less)
+                )
+            ) {
+                return Ok(Classification::Decided(true));
+            }
+            if let Classification::Uncertain(reason) = start_lower {
+                uncertainty.get_or_insert(reason);
+            }
+            if let Classification::Uncertain(reason) = end_lower {
+                uncertainty.get_or_insert(reason);
+            }
+            let (start_upper, end_upper) = orders(&upper)?;
+            if matches!(
+                (start_upper, end_upper),
+                (
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                )
+            ) {
+                return Ok(Classification::Decided(true));
+            }
+            if let Classification::Uncertain(reason) = start_upper {
+                uncertainty.get_or_insert(reason);
+            }
+            if let Classification::Uncertain(reason) = end_upper {
+                uncertainty.get_or_insert(reason);
+            }
+        }
+        Ok(uncertainty.map_or(Classification::Decided(false), Classification::Uncertain))
     }
 
     /// Constructs the exact crossing of two perpendicular coordinate fibers.
@@ -15821,19 +16236,53 @@ fn algebraic_chord_point_coordinate_representation(
 fn algebraic_chord_strict_rational_coordinate_between(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
-    axis: Axis2,
+    parameter_axis: BezierAlgebraicChordParameterAxis2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Real>> {
-    let Some(first) = algebraic_chord_point_coordinate_representation(first, axis, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(second) = algebraic_chord_point_coordinate_representation(second, axis, policy) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    let (Some(first_representation), Some(second_representation)) = (
+        algebraic_chord_point_coordinate_representation(first, parameter_axis.axis, policy),
+        algebraic_chord_point_coordinate_representation(second, parameter_axis.axis, policy),
+    ) else {
+        // Correlated multi-carrier endpoints intentionally have no independent
+        // algebraic-root representation.  Their chord already certifies a
+        // strict coordinate order, so disjoint conservative coordinate
+        // intervals are an exact constructive witness of a rational interior
+        // coordinate.  A finite refinement budget may decline to construct a
+        // witness, but it never turns unresolved equality into inequality.
+        let (lower, upper) = if parameter_axis.coordinate_increases {
+            (first, second)
+        } else {
+            (second, first)
+        };
+        for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+            let (Classification::Decided(lower_bounds), Classification::Decided(upper_bounds)) = (
+                algebraic_chord_endpoint_bounds_refined(lower, refinement_steps, policy),
+                algebraic_chord_endpoint_bounds_refined(upper, refinement_steps, policy),
+            ) else {
+                continue;
+            };
+            let lower_upper = match parameter_axis.axis {
+                Axis2::X => lower_bounds.max().x(),
+                Axis2::Y => lower_bounds.max().y(),
+            };
+            let upper_lower = match parameter_axis.axis {
+                Axis2::X => upper_bounds.min().x(),
+                Axis2::Y => upper_bounds.min().y(),
+            };
+            if compare_reals(lower_upper, upper_lower, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Less)
+            {
+                return Ok(Classification::Decided(
+                    ((lower_upper + upper_lower) / Real::from(2_i8))?,
+                ));
+            }
+        }
+        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
     };
     let compare = |predicate_policy| {
         compare_algebraic_root_representations_with_refinement(
-            &first,
-            &second,
+            &first_representation,
+            &second_representation,
             AlgebraicRootRefinementComparisonConfig {
                 policy: predicate_policy,
                 ..AlgebraicRootRefinementComparisonConfig::default()
@@ -32703,6 +33152,51 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn algebraic_cusp_semicircle_certifies_exact_circle_support_relations() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let center = Point2::from_values(0, 0);
+            assert_eq!(
+                semicircle
+                    .has_same_supporting_circle(&center, &Real::one(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                semicircle
+                    .has_same_supporting_circle(&center, &Real::from(4_i8), &policy)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                semicircle
+                    .has_same_supporting_circle(&Point2::from_values(1, 0), &Real::one(), &policy,)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                semicircle
+                    .is_disjoint_from_supporting_circle(
+                        &Point2::from_values(3, 0),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            for other_center in [Point2::from_values(0, 0), Point2::from_values(2, 0)] {
+                assert_eq!(
+                    semicircle
+                        .is_disjoint_from_supporting_circle(&other_center, &Real::one(), &policy,)
+                        .unwrap(),
+                    Classification::Decided(false),
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let preserving = Similarity2::try_from_real_affine(
@@ -33252,6 +33746,51 @@ mod conversion_tests {
                 &policy,
             )
             .unwrap();
+            for carrier in [point_touch_carrier.clone(), point_touch_carrier.reversed()] {
+                assert!(matches!(
+                    carrier.representative_point(&policy).unwrap(),
+                    Classification::Decided(RationalBezierIntersectionPointEvidence2::Algebraic(_))
+                ));
+                assert_eq!(
+                    carrier
+                        .certifiably_disjoint_from_circle_bounds(
+                            &Point2::from_values(-10, 0),
+                            &Real::one(),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(true),
+                );
+                assert_eq!(
+                    carrier
+                        .certifiably_disjoint_from_circle_bounds(
+                            &Point2::from_values(0, 0),
+                            &Real::from(4_i8),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(false),
+                );
+            }
+            for carrier in [point_touch_carrier.clone(), point_touch_carrier.reversed()] {
+                let result = rational_contact_circle
+                    .axis_chord_intersections(&carrier, &policy)
+                    .unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleChordIntersections2::Contacts { contacts, .. },
+                ) = result
+                else {
+                    panic!(
+                        "the selected circle must replay its correlated finite chord: {result:?}"
+                    );
+                };
+                assert_eq!(contacts.len(), 2, "{contacts:?}");
+                assert!(contacts.iter().all(|contact| matches!(
+                    contact.chord_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start
+                        | BezierAlgebraicCuspSemicircleContactLocation2::End
+                )));
+            }
             let touching = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
                 QuadraticBezier2::from_line_segment(
                     LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(0, 0))
@@ -33323,6 +33862,56 @@ mod conversion_tests {
             assert_eq!(contacts.len(), 1);
             assert_eq!(contacts[0].branch, 0);
             assert_eq!(contacts[0].tangent_cross_sign, RealSign::Zero);
+
+            let tangent_crossing = tangent.chord_intersections(&vertical, &policy).unwrap();
+            let Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(
+                tangent_crossing,
+            )) = tangent_crossing
+            else {
+                panic!("the two algebraic axis chords must intersect exactly");
+            };
+            let [tangent_crossing] = tangent_crossing.as_slice() else {
+                panic!("expected one algebraic tangent-support crossing");
+            };
+            assert!(matches!(
+                tangent_crossing.point(),
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            ));
+            let tangent_to_crossing = BezierAlgebraicChord2::from_ordered_parameter_range(
+                &tangent,
+                &tangent.start_parameter(),
+                tangent_crossing.first_parameter(),
+                &policy,
+            )
+            .unwrap();
+            for (carrier, location) in [
+                (
+                    tangent_to_crossing.clone(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::End,
+                ),
+                (
+                    tangent_to_crossing.reversed(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                ),
+            ] {
+                let result = semicircle
+                    .axis_chord_intersections(&carrier, &policy)
+                    .unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleChordIntersections2::Contacts { contacts, .. },
+                ) = result
+                else {
+                    panic!(
+                        "the tangent circle must replay its perpendicular chord-pair endpoint: {result:?}"
+                    );
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one clipped tangent contact, got {contacts:?}");
+                };
+                assert_eq!(contact.branch, 0);
+                assert_eq!(contact.chord_location, location);
+                assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+            }
 
             let clipped = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
                 point(vec![Real::zero(), Real::one()], vec![Real::from(-3_i8)]),

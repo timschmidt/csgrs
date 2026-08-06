@@ -1635,7 +1635,7 @@ impl RationalBezier2 {
         self.data.exact_line_image.as_ref()
     }
 
-    fn exact_linear_parameterization_line(&self) -> Option<LineSeg2> {
+    pub(crate) fn exact_linear_parameterization_line(&self) -> Option<LineSeg2> {
         if let Some(line) = self.retained_exact_line_image() {
             return Some(line.clone());
         }
