@@ -143,8 +143,19 @@ fn main() {
 
     let start = Instant::now();
     let mut last = None;
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::reset();
     for _ in 0..repetitions {
-        last = Some(run_operation(&context, black_box(&inputs), workload));
+        #[cfg(feature = "dispatch-trace")]
+        {
+            last = Some(hyperreal::dispatch_trace::with_recording(|| {
+                run_operation(&context, black_box(&inputs), workload)
+            }));
+        }
+        #[cfg(not(feature = "dispatch-trace"))]
+        {
+            last = Some(run_operation(&context, black_box(&inputs), workload));
+        }
     }
     let elapsed = start.elapsed();
     let output = last.expect("positive repetitions produce an output");
@@ -162,4 +173,11 @@ fn main() {
         elapsed.as_nanos() / repetitions as u128,
         output.value.vertices.len(),
     );
+    #[cfg(feature = "dispatch-trace")]
+    for summary in hyperreal::dispatch_trace::take_trace().dispatch {
+        println!(
+            "trace={}/{}/{}/{}",
+            summary.layer, summary.operation, summary.path, summary.count
+        );
+    }
 }

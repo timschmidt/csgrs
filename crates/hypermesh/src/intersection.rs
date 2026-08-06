@@ -3,6 +3,7 @@
 use std::hash::{Hash, Hasher};
 
 use hyperlattice::{Point3, Real};
+use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query};
 
 use crate::bvh::ExactBvh;
 use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
@@ -12,7 +13,8 @@ use crate::point_interner::PointInterner;
 use crate::polygon::{ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::predicate::{
     Point3PredicateQuery, classify_point_decision, classify_point_with_rational_query_decision,
-    classify_real, exact_rational_points_contradict,
+    classify_real, exact_rational_points_contradict, rational_linear_form4_filter_for_plane,
+    rational_plane_exact_crossing_is_expensive,
 };
 use crate::storage_hash::{StorageHashMap, StorageIdentityHasher};
 
@@ -83,6 +85,14 @@ enum SupportLineAxis {
 }
 
 impl SupportLineAxis {
+    const fn index(self) -> usize {
+        match self {
+            Self::X => 0,
+            Self::Y => 1,
+            Self::Z => 2,
+        }
+    }
+
     fn coordinate(self, point: &Point3) -> &Real {
         match self {
             Self::X => &point.x,
@@ -99,15 +109,80 @@ enum DeferredIntersectionGeometry<'a> {
         axis: SupportLineAxis,
         enclosure: Option<[f64; 2]>,
     },
-    /// An exact line coordinate with a strictly positive denominator.
+    /// A proper segment/plane crossing whose exact coordinate is constructed
+    /// only when its certified enclosure cannot answer a comparison.
     SegmentPlane {
-        coordinate_numerator: Real,
-        denominator: Real,
+        ratio: DeferredSegmentPlaneRatio<'a>,
         enclosure: Option<[f64; 2]>,
         start: &'a Point3,
         end: &'a Point3,
+    },
+}
+
+#[derive(Clone, Debug)]
+enum DeferredSegmentPlaneRatio<'a> {
+    Exact {
+        coordinate_numerator: Real,
+        denominator: Real,
         parameter_numerator: Real,
     },
+    Lazy {
+        plane: &'a Plane,
+        axis: SupportLineAxis,
+    },
+}
+
+enum PolygonPlaneCrossingSchedule<'a> {
+    Eager,
+    Lazy {
+        filter: RationalLinearForm4Filter,
+        queries: [&'a RationalLinearForm4Query; 3],
+    },
+}
+
+impl DeferredSegmentPlaneRatio<'_> {
+    fn exact_coordinate_ratio(&self, start: &Point3, end: &Point3) -> (Real, Real) {
+        match self {
+            Self::Exact {
+                coordinate_numerator,
+                denominator,
+                ..
+            } => (coordinate_numerator.clone(), denominator.clone()),
+            Self::Lazy { plane, axis } => {
+                exact_segment_plane_coordinate_ratio(plane, start, end, *axis)
+            }
+        }
+    }
+}
+
+fn exact_segment_plane_parameter_ratio(
+    plane: &Plane,
+    positive_endpoint: &Point3,
+    negative_endpoint: &Point3,
+) -> (Real, Real) {
+    let positive_support = plane.expression_at_point(positive_endpoint);
+    let negative_support = plane.expression_at_point(negative_endpoint);
+    let denominator = &positive_support - negative_support;
+    (positive_support, denominator)
+}
+
+fn exact_segment_plane_coordinate_ratio(
+    plane: &Plane,
+    positive_endpoint: &Point3,
+    negative_endpoint: &Point3,
+    axis: SupportLineAxis,
+) -> (Real, Real) {
+    let positive_support = plane.expression_at_point(positive_endpoint);
+    let negative_support = plane.expression_at_point(negative_endpoint);
+    let denominator = &positive_support - &negative_support;
+    let numerator = Real::signed_product_sum(
+        [true, false],
+        [
+            [&positive_support, axis.coordinate(negative_endpoint)],
+            [&negative_support, axis.coordinate(positive_endpoint)],
+        ],
+    );
+    (numerator, denominator)
 }
 
 #[derive(Clone, Debug)]
@@ -1196,10 +1271,10 @@ fn intersect_polygons_with_vertices_constructed(
 
 fn intersect_nonparallel_polygons_constructed<'point>(
     decisions: &DecisionContext,
-    polygon: &ConvexPolygon,
+    polygon: &'point ConvexPolygon,
     polygon_vertices: &'point [Point3],
     polygon_support_identity: Option<ConstructionPlaneIdentity>,
-    other: &ConvexPolygon,
+    other: &'point ConvexPolygon,
     other_vertices: &'point [Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
     support_line_axis: SupportLineAxis,
@@ -1257,6 +1332,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         polygon_vertices,
         triangle_classes.as_ref().map(|classes| &classes[0]),
         other_support,
+        other,
         other_support_identity,
         support_line_axis,
         false,
@@ -1269,6 +1345,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
         other_vertices,
         triangle_classes.as_ref().map(|classes| &classes[1]),
         polygon_support,
+        polygon,
         polygon_support_identity,
         support_line_axis,
         true,
@@ -2284,68 +2361,87 @@ fn extend_deferred_span<'point>(
     Ok(())
 }
 
+#[inline]
 fn compare_deferred_points(
+    decisions: &DecisionContext,
+    left: &DeferredIntersectionPoint<'_>,
+    right: &DeferredIntersectionPoint<'_>,
+) -> HypermeshResult<std::cmp::Ordering> {
+    if let (
+        DeferredIntersectionGeometry::Affine {
+            point: left,
+            axis: left_axis,
+            enclosure: left_enclosure,
+        },
+        DeferredIntersectionGeometry::Affine {
+            point: right,
+            axis: right_axis,
+            enclosure: right_enclosure,
+        },
+    ) = (&left.geometry, &right.geometry)
+    {
+        if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
+            && let Some(ordering) = certified_enclosure_ordering(*left, *right)
+        {
+            crate::trace_dispatch!("deferred-point-compare", "affine-enclosure");
+            return Ok(ordering);
+        }
+        crate::trace_dispatch!("deferred-point-compare", "affine-exact");
+        return compare_real_decision(
+            decisions,
+            left_axis.coordinate(left),
+            right_axis.coordinate(right),
+        );
+    }
+    compare_deferred_points_with_segment(decisions, left, right)
+}
+
+#[inline(never)]
+fn compare_deferred_points_with_segment(
     decisions: &DecisionContext,
     left: &DeferredIntersectionPoint<'_>,
     right: &DeferredIntersectionPoint<'_>,
 ) -> HypermeshResult<std::cmp::Ordering> {
     match (&left.geometry, &right.geometry) {
         (
-            DeferredIntersectionGeometry::Affine {
-                point: left,
-                axis: left_axis,
+            DeferredIntersectionGeometry::SegmentPlane {
+                ratio: left_ratio,
                 enclosure: left_enclosure,
+                start: left_start,
+                end: left_end,
             },
-            DeferredIntersectionGeometry::Affine {
-                point: right,
-                axis: right_axis,
+            DeferredIntersectionGeometry::SegmentPlane {
+                ratio: right_ratio,
                 enclosure: right_enclosure,
+                start: right_start,
+                end: right_end,
             },
         ) => {
             if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
                 && let Some(ordering) = certified_enclosure_ordering(*left, *right)
             {
+                crate::trace_dispatch!("deferred-point-compare", "segment-enclosure");
                 return Ok(ordering);
             }
-            compare_real_decision(
-                decisions,
-                left_axis.coordinate(left),
-                right_axis.coordinate(right),
-            )
-        }
-        (
-            DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator: left_numerator,
-                denominator: left_denominator,
-                enclosure: left_enclosure,
-                ..
-            },
-            DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator: right_numerator,
-                denominator: right_denominator,
-                enclosure: right_enclosure,
-                ..
-            },
-        ) => {
-            if let (Some(left), Some(right)) = (left_enclosure, right_enclosure)
-                && let Some(ordering) = certified_enclosure_ordering(*left, *right)
-            {
-                return Ok(ordering);
-            }
+            crate::trace_dispatch!("deferred-point-compare", "segment-exact");
+            let (left_numerator, left_denominator) =
+                left_ratio.exact_coordinate_ratio(left_start, left_end);
+            let (right_numerator, right_denominator) =
+                right_ratio.exact_coordinate_ratio(right_start, right_end);
             Ok(classification_ordering(classify_two_product_difference(
                 decisions,
-                left_numerator,
-                right_denominator,
-                right_numerator,
-                left_denominator,
+                &left_numerator,
+                &right_denominator,
+                &right_numerator,
+                &left_denominator,
             )?))
         }
         (
             DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator,
-                denominator,
+                ratio,
                 enclosure,
-                ..
+                start,
+                end,
             },
             DeferredIntersectionGeometry::Affine {
                 point: affine,
@@ -2356,12 +2452,15 @@ fn compare_deferred_points(
             if let (Some(left), Some(right)) = (*enclosure, *affine_enclosure)
                 && let Some(ordering) = certified_enclosure_ordering(left, right)
             {
+                crate::trace_dispatch!("deferred-point-compare", "mixed-enclosure");
                 return Ok(ordering);
             }
+            crate::trace_dispatch!("deferred-point-compare", "mixed-exact");
+            let (coordinate_numerator, denominator) = ratio.exact_coordinate_ratio(start, end);
             compare_ratio_to_affine(
                 decisions,
-                coordinate_numerator,
-                denominator,
+                &coordinate_numerator,
+                &denominator,
                 axis.coordinate(affine),
             )
         }
@@ -2372,24 +2471,33 @@ fn compare_deferred_points(
                 enclosure: affine_enclosure,
             },
             DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator,
-                denominator,
+                ratio,
                 enclosure,
-                ..
+                start,
+                end,
             },
         ) => {
             if let (Some(left), Some(right)) = (*affine_enclosure, *enclosure)
                 && let Some(ordering) = certified_enclosure_ordering(left, right)
             {
+                crate::trace_dispatch!("deferred-point-compare", "mixed-enclosure");
                 return Ok(ordering);
             }
+            crate::trace_dispatch!("deferred-point-compare", "mixed-exact");
+            let (coordinate_numerator, denominator) = ratio.exact_coordinate_ratio(start, end);
             compare_ratio_to_affine(
                 decisions,
-                coordinate_numerator,
-                denominator,
+                &coordinate_numerator,
+                &denominator,
                 axis.coordinate(affine),
             )
             .map(std::cmp::Ordering::reverse)
+        }
+        (
+            DeferredIntersectionGeometry::Affine { .. },
+            DeferredIntersectionGeometry::Affine { .. },
+        ) => {
+            unreachable!("affine pairs are handled before segment dispatch")
         }
     }
 }
@@ -2546,12 +2654,20 @@ fn materialize_deferred_point(
     let affine = match &point.source.geometry {
         DeferredIntersectionGeometry::Affine { point, .. } => point.clone(),
         DeferredIntersectionGeometry::SegmentPlane {
-            start,
-            end,
-            parameter_numerator,
-            denominator,
-            ..
-        } => intersect_segment_plane_from_ratio(start, end, parameter_numerator, denominator)?,
+            ratio, start, end, ..
+        } => match ratio {
+            DeferredSegmentPlaneRatio::Lazy { plane, .. } => {
+                crate::trace_dispatch!("deferred-segment-plane", "materialized");
+                let (parameter_numerator, denominator) =
+                    exact_segment_plane_parameter_ratio(plane, start, end);
+                intersect_segment_plane_from_ratio(start, end, &parameter_numerator, &denominator)?
+            }
+            DeferredSegmentPlaneRatio::Exact {
+                parameter_numerator,
+                denominator,
+                ..
+            } => intersect_segment_plane_from_ratio(start, end, parameter_numerator, denominator)?,
+        },
     };
     Ok(ConstructedIntersectionPoint {
         point: affine,
@@ -2595,10 +2711,11 @@ fn triangle_has_two_proper_plane_crossings([c0, c1, c2]: [Classification; 3]) ->
 /// polygon; the caller intersects the two convex slice intervals afterward.
 fn collect_polygon_plane_slice<'point>(
     decisions: &DecisionContext,
-    edge_polygon: &ConvexPolygon,
+    edge_polygon: &'point ConvexPolygon,
     vertices: &'point [Point3],
     retained_classifications: Option<&[Classification; 3]>,
-    plane: &Plane,
+    plane: &'point Plane,
+    plane_owner: &ConvexPolygon,
     plane_identity: Option<ConstructionPlaneIdentity>,
     axis: SupportLineAxis,
     reverse_slice: bool,
@@ -2620,13 +2737,37 @@ fn collect_polygon_plane_slice<'point>(
                 [classify(0)?, classify(1)?, classify(2)?]
             }
         };
-        let support_values = triangle_has_two_proper_plane_crossings([c0, c1, c2]).then(|| {
+        let two_proper_crossings = triangle_has_two_proper_plane_crossings([c0, c1, c2]);
+        let lazy_schedule = if two_proper_crossings
+            && !plane_owner.support_plane_has_lossless_primitive_storage()
+            && rational_plane_exact_crossing_is_expensive(plane)
+        {
+            let [q0, q1, q2] =
+                [0, 1, 2].map(|vertex| edge_polygon.known_vertex_predicate_query(vertex));
+            if let (Some(filter), Some(q0), Some(q1), Some(q2)) = (
+                rational_linear_form4_filter_for_plane(decisions, plane),
+                q0,
+                q1,
+                q2,
+            ) {
+                Some(PolygonPlaneCrossingSchedule::Lazy {
+                    filter,
+                    queries: [q0, q1, q2],
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let support_values = (lazy_schedule.is_none() && two_proper_crossings).then(|| {
             [
                 plane.expression_at_point(v0),
                 plane.expression_at_point(v1),
                 plane.expression_at_point(v2),
             ]
         });
+        let crossing_schedule = lazy_schedule.unwrap_or(PolygonPlaneCrossingSchedule::Eager);
         extend_polygon_plane_slice_edge(
             decisions,
             &mut span,
@@ -2640,6 +2781,7 @@ fn collect_polygon_plane_slice<'point>(
             support_values
                 .as_ref()
                 .map(|values| (&values[0], &values[1])),
+            &crossing_schedule,
             plane,
             plane_identity,
             axis,
@@ -2658,6 +2800,7 @@ fn collect_polygon_plane_slice<'point>(
             support_values
                 .as_ref()
                 .map(|values| (&values[1], &values[2])),
+            &crossing_schedule,
             plane,
             plane_identity,
             axis,
@@ -2676,6 +2819,7 @@ fn collect_polygon_plane_slice<'point>(
             support_values
                 .as_ref()
                 .map(|values| (&values[2], &values[0])),
+            &crossing_schedule,
             plane,
             plane_identity,
             axis,
@@ -2702,6 +2846,7 @@ fn collect_polygon_plane_slice<'point>(
     };
     let mut previous_class = last_class;
     let mut start_class = first_class;
+    let crossing_schedule = PolygonPlaneCrossingSchedule::Eager;
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
@@ -2728,6 +2873,7 @@ fn collect_polygon_plane_slice<'point>(
             start_class,
             end_class,
             None,
+            &crossing_schedule,
             plane,
             plane_identity,
             axis,
@@ -2751,7 +2897,8 @@ fn extend_polygon_plane_slice_edge<'point>(
     start_class: Classification,
     end_class: Classification,
     support_values: Option<(&Real, &Real)>,
-    plane: &Plane,
+    crossing_schedule: &PolygonPlaneCrossingSchedule<'_>,
+    plane: &'point Plane,
     plane_identity: Option<ConstructionPlaneIdentity>,
     axis: SupportLineAxis,
     reverse_slice: bool,
@@ -2776,45 +2923,80 @@ fn extend_polygon_plane_slice_edge<'point>(
     ) {
         return Ok(());
     }
+    crate::trace_dispatch!("deferred-segment-plane", "proper-crossing");
 
-    let owned_support_values;
-    let (start_support, end_support) = match support_values {
-        Some(values) => values,
-        None => {
-            owned_support_values = (
-                plane.expression_at_point(start),
-                plane.expression_at_point(end),
+    let (positive_endpoint, negative_endpoint) = if start_class == Classification::Positive {
+        (start, end)
+    } else {
+        (end, start)
+    };
+    let geometry = match crossing_schedule {
+        PolygonPlaneCrossingSchedule::Lazy { filter, queries } => {
+            crate::trace_dispatch!("deferred-segment-plane", "lazy-certified-schedule");
+            let enclosure = filter.segment_intersection_coordinate_enclosure(
+                queries[edge_index],
+                queries[(edge_index + 1) % 3],
+                axis.index(),
             );
-            (&owned_support_values.0, &owned_support_values.1)
+            crate::trace_dispatch!(
+                "deferred-segment-plane",
+                if enclosure.is_some() {
+                    "ratio-enclosure"
+                } else {
+                    "ratio-enclosure-unavailable"
+                }
+            );
+            DeferredIntersectionGeometry::SegmentPlane {
+                ratio: DeferredSegmentPlaneRatio::Lazy { plane, axis },
+                enclosure,
+                start: positive_endpoint,
+                end: negative_endpoint,
+            }
+        }
+        PolygonPlaneCrossingSchedule::Eager => {
+            crate::trace_dispatch!("deferred-segment-plane", "eager-exact-schedule");
+            let owned_support_values;
+            let (start_support, end_support) = match support_values {
+                Some(values) => values,
+                None => {
+                    owned_support_values = (
+                        plane.expression_at_point(start),
+                        plane.expression_at_point(end),
+                    );
+                    (&owned_support_values.0, &owned_support_values.1)
+                }
+            };
+            let (positive_support, negative_support) = if start_class == Classification::Positive {
+                (start_support, end_support)
+            } else {
+                (end_support, start_support)
+            };
+            let denominator = positive_support - negative_support;
+            let coordinate_numerator = Real::signed_product_sum(
+                [true, false],
+                [
+                    [positive_support, axis.coordinate(negative_endpoint)],
+                    [negative_support, axis.coordinate(positive_endpoint)],
+                ],
+            );
+            let enclosure = certified_ratio_enclosure(&coordinate_numerator, &denominator);
+            DeferredIntersectionGeometry::SegmentPlane {
+                ratio: DeferredSegmentPlaneRatio::Exact {
+                    coordinate_numerator,
+                    denominator,
+                    parameter_numerator: positive_support.clone(),
+                },
+                enclosure,
+                start: positive_endpoint,
+                end: negative_endpoint,
+            }
         }
     };
-    let (positive_endpoint, negative_endpoint, positive_support, negative_support) =
-        if start_class == Classification::Positive {
-            (start, end, start_support, end_support)
-        } else {
-            (end, start, end_support, start_support)
-        };
-    let parameter_denominator = positive_support - negative_support;
-    let coordinate_numerator = Real::signed_product_sum(
-        [true, false],
-        [
-            [positive_support, axis.coordinate(negative_endpoint)],
-            [negative_support, axis.coordinate(positive_endpoint)],
-        ],
-    );
-    let enclosure = certified_ratio_enclosure(&coordinate_numerator, &parameter_denominator);
     extend_deferred_span(
         decisions,
         span,
         DeferredIntersectionPoint {
-            geometry: DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator,
-                denominator: parameter_denominator,
-                enclosure,
-                start: positive_endpoint,
-                end: negative_endpoint,
-                parameter_numerator: positive_support.clone(),
-            },
+            geometry,
             identity: edge_plane_intersection_identity(edge_polygon, edge_index, plane_identity),
             discovery_order: (reverse_slice, edge_index),
         },
@@ -3044,12 +3226,13 @@ mod tests {
         ConstructedIntersectionPoint, ConstructedIntersectionSegment,
         ConstructedPairwiseIntersection, CoplanarClassificationMatrix,
         DeferredIntersectionGeometry, DeferredIntersectionPoint, DeferredIntersectionSpan,
-        PairwiseIntersection, PairwiseIntersectionEvent, PairwiseIntersectionEventIds,
-        PairwiseIntersectionGraphBuilder, PairwiseIntersectionScratch, PolygonVertexArena,
-        StoredIntersectionKind, affine_deferred_geometry, certified_enclosure_ordering,
-        certified_ratio_enclosure, classify_two_product_difference, compare_deferred_points,
-        dedup_constructed_points, intersect_deferred_spans,
-        intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
+        DeferredSegmentPlaneRatio, PairwiseIntersection, PairwiseIntersectionEvent,
+        PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
+        PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
+        affine_deferred_geometry, certified_enclosure_ordering, certified_ratio_enclosure,
+        classify_two_product_difference, compare_deferred_points, dedup_constructed_points,
+        intersect_deferred_spans, intersect_polygons_with_vertices_constructed,
+        pairwise_intersections_by_polygon_from_bvh,
         polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
         support_line_order_axis, triangle_has_two_proper_plane_crossings, triangle_reaches_plane,
     };
@@ -3175,12 +3358,14 @@ mod tests {
             let enclosure = certified_ratio_enclosure(&numerator, &denominator);
             DeferredIntersectionPoint {
                 geometry: DeferredIntersectionGeometry::SegmentPlane {
-                    coordinate_numerator: numerator,
-                    denominator,
+                    ratio: DeferredSegmentPlaneRatio::Exact {
+                        coordinate_numerator: numerator,
+                        denominator,
+                        parameter_numerator: Real::zero(),
+                    },
                     enclosure,
                     start: &origin,
                     end: &origin,
-                    parameter_numerator: Real::zero(),
                 },
                 identity: None,
                 discovery_order: (false, 0),
@@ -3290,12 +3475,14 @@ mod tests {
             DeferredIntersectionPoint {
                 geometry: if ratio {
                     DeferredIntersectionGeometry::SegmentPlane {
-                        coordinate_numerator: Real::from(x),
-                        denominator: Real::one(),
+                        ratio: DeferredSegmentPlaneRatio::Exact {
+                            coordinate_numerator: Real::from(x),
+                            denominator: Real::one(),
+                            parameter_numerator: Real::zero(),
+                        },
                         enclosure: None,
                         start: point,
                         end: point,
-                        parameter_numerator: Real::zero(),
                     }
                 } else {
                     affine_deferred_geometry(point.clone(), super::SupportLineAxis::X)
@@ -3386,12 +3573,14 @@ mod tests {
         let end = Point3::new(Real::from(10), Real::zero(), Real::zero());
         let crossing = DeferredIntersectionPoint {
             geometry: DeferredIntersectionGeometry::SegmentPlane {
-                coordinate_numerator: Real::from(50),
-                denominator: Real::from(10),
+                ratio: DeferredSegmentPlaneRatio::Exact {
+                    coordinate_numerator: Real::from(50),
+                    denominator: Real::from(10),
+                    parameter_numerator: Real::from(5),
+                },
                 enclosure: None,
                 start: &start,
                 end: &end,
-                parameter_numerator: Real::from(5),
             },
             identity: None,
             discovery_order: (false, 0),
@@ -3420,6 +3609,52 @@ mod tests {
             Point3::new(Real::from(5), Real::zero(), Real::zero())
         );
         assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn surviving_lazy_crossing_constructs_the_exact_ratio_on_demand() {
+        let positive = Point3::new(Real::from(10), Real::zero(), Real::zero());
+        let negative = Point3::origin();
+        let plane =
+            Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::from(-5));
+        let affine_point = Point3::new(Real::from(5), Real::zero(), Real::zero());
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let crossing = DeferredIntersectionPoint {
+                geometry: DeferredIntersectionGeometry::SegmentPlane {
+                    ratio: DeferredSegmentPlaneRatio::Lazy {
+                        plane: &plane,
+                        axis: super::SupportLineAxis::X,
+                    },
+                    enclosure: None,
+                    start: &positive,
+                    end: &negative,
+                },
+                identity: None,
+                discovery_order: (false, 0),
+            };
+            let affine = DeferredIntersectionPoint {
+                geometry: affine_deferred_geometry(affine_point.clone(), super::SupportLineAxis::X),
+                identity: None,
+                discovery_order: (true, 0),
+            };
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let result = intersect_deferred_spans(
+                &decisions,
+                deferred_point_span(crossing),
+                deferred_point_span(affine),
+            )
+            .unwrap();
+            let ConstructedPairwiseIntersection::NonCoplanarPoint(point) = result else {
+                panic!("equal lazy and affine endpoints must produce one exact point");
+            };
+            assert_eq!(point.point, affine_point);
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        }
     }
 
     #[test]
@@ -3454,12 +3689,14 @@ mod tests {
             deferred_point_span(DeferredIntersectionPoint {
                 geometry: if ratio {
                     DeferredIntersectionGeometry::SegmentPlane {
-                        coordinate_numerator: x.clone(),
-                        denominator: Real::one(),
+                        ratio: DeferredSegmentPlaneRatio::Exact {
+                            coordinate_numerator: x.clone(),
+                            denominator: Real::one(),
+                            parameter_numerator: Real::zero(),
+                        },
                         enclosure: None,
                         start: &origin,
                         end: &origin,
-                        parameter_numerator: Real::zero(),
                     }
                 } else {
                     affine_deferred_geometry(

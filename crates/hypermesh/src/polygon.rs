@@ -412,6 +412,10 @@ impl RetainedSourcePlanes {
         }
     }
 
+    fn has_lossless_primitive_storage(&self) -> bool {
+        matches!(&self.storage, SourcePlaneStorage::Eager(_))
+    }
+
     #[inline]
     fn support<'point>(&self, face: usize, points: impl FnOnce() -> [&'point Point3; 3]) -> &Plane {
         match &self.storage {
@@ -853,6 +857,13 @@ impl ConvexPolygon {
                 self.retained_source_triangle_points()
                     .expect("an unmaterialized source plane retains its checked source vertices")
             }),
+        }
+    }
+
+    pub(crate) fn support_plane_has_lossless_primitive_storage(&self) -> bool {
+        match &self.planes {
+            PolygonPlanes::SourceTriangle { owner, .. } => owner.has_lossless_primitive_storage(),
+            PolygonPlanes::Owned(_) => false,
         }
     }
 

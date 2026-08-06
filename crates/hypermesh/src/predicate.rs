@@ -4,7 +4,9 @@ use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperlimit::{Sign, classify_real_sign};
-use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query, RealSign};
+use hyperreal::{
+    RationalLinearForm4Filter, RationalLinearForm4Query, RationalStorageClass, RealSign,
+};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
@@ -132,6 +134,7 @@ impl RationalLinearForm4FilterCache {
     }
 }
 
+#[inline(always)]
 fn rational_linear_form4_filter(
     decisions: &DecisionContext,
     plane: &Plane,
@@ -156,6 +159,44 @@ fn rational_linear_form4_filter(
         filter,
     });
     filter
+}
+
+fn exact_crossing_is_expensive(coefficients: [&Rational; 4]) -> bool {
+    coefficients.into_iter().any(|coefficient| {
+        matches!(
+            coefficient.storage_class(),
+            RationalStorageClass::MultiLimb | RationalStorageClass::VeryLarge
+        )
+    })
+}
+
+pub(crate) fn rational_plane_exact_crossing_is_expensive(plane: &Plane) -> bool {
+    let [Some(a), Some(b), Some(c), Some(d)] = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+    .map(Real::exact_rational_ref) else {
+        return false;
+    };
+    exact_crossing_is_expensive([a, b, c, d])
+}
+
+pub(crate) fn rational_linear_form4_filter_for_plane(
+    decisions: &DecisionContext,
+    plane: &Plane,
+) -> Option<RationalLinearForm4Filter> {
+    let [Some(a), Some(b), Some(c), Some(d)] = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+    .map(Real::exact_rational_ref) else {
+        return None;
+    };
+    rational_linear_form4_filter(decisions, plane, [a, b, c, d])
 }
 
 /// Certified point-vs-plane classification.
@@ -621,6 +662,23 @@ mod tests {
             cache.slots.len(),
             RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY
         );
+    }
+
+    #[test]
+    fn exact_crossing_schedule_uses_scalar_storage_cost_not_geometry_identity() {
+        let word_plane =
+            Plane::from_coefficients(Real::one(), Real::from(2), Real::zero(), Real::from(-3));
+        let wide = Rational::new(2)
+            .powi(128_i64.into())
+            .expect("positive integer powers remain exact");
+        let wide_plane = Plane::from_coefficients(
+            Real::from(wide),
+            Real::from(2),
+            Real::zero(),
+            Real::from(-3),
+        );
+        assert!(!rational_plane_exact_crossing_is_expensive(&word_plane));
+        assert!(rational_plane_exact_crossing_is_expensive(&wide_plane));
     }
 
     #[test]
