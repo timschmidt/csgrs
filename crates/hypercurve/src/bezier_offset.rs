@@ -2149,6 +2149,13 @@ impl BezierAlgebraicChordAxisDirection2 {
             Self::NegativeY => (1, 0),
         }
     }
+
+    const fn parameter_axis(self) -> BezierAlgebraicChordParameterAxis2 {
+        BezierAlgebraicChordParameterAxis2 {
+            axis: self.axis(),
+            coordinate_increases: matches!(self, Self::PositiveX | Self::PositiveY),
+        }
+    }
 }
 
 /// Compact exact local parameter on one retained algebraic chord.
@@ -2510,6 +2517,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
     }
 
     fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        debug_assert!(self.data.direct_center.is_none() || self.data.parallel.is_none());
         let zero = Real::zero();
         let source_length = self
             .data
@@ -2550,6 +2558,36 @@ impl BezierParallelAlgebraicCuspFrame2 {
             normal_y_numerator.push(&orientation * y);
         }
 
+        let cardinal_normal = self.data.cardinal_normal.and_then(|(x, y)| {
+            let (x, y) = transform.transform_vector_coordinates(&Real::from(x), &Real::from(y));
+            let x = &orientation * x;
+            let y = &orientation * y;
+            match (
+                real_sign(&x, &CurveContext::STRICT),
+                real_sign(&y, &CurveContext::STRICT),
+            ) {
+                (Some(RealSign::Positive), Some(RealSign::Zero)) => Some((1, 0)),
+                (Some(RealSign::Negative), Some(RealSign::Zero)) => Some((-1, 0)),
+                (Some(RealSign::Zero), Some(RealSign::Positive)) => Some((0, 1)),
+                (Some(RealSign::Zero), Some(RealSign::Negative)) => Some((0, -1)),
+                _ => None,
+            }
+        });
+        let source_x_numerator = polynomial_trim_structural_zeros(source_x_numerator);
+        let source_y_numerator = polynomial_trim_structural_zeros(source_y_numerator);
+        let normal_x_numerator = polynomial_trim_structural_zeros(normal_x_numerator);
+        let normal_y_numerator = polynomial_trim_structural_zeros(normal_y_numerator);
+        let denominator = polynomial_scale(&self.data.denominator, transform.scale());
+        let direct_center = self.data.direct_center.as_ref().map(|center| {
+            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                self.data.parameter.clone(),
+                center.parameter().clone(),
+                source_x_numerator.clone(),
+                source_y_numerator.clone(),
+                denominator.clone(),
+                "retained an exact transformed algebraic circle center",
+            )
+        });
         Ok(Self {
             data: Arc::new(BezierParallelAlgebraicCuspFrameData2 {
                 parallel: self
@@ -2558,14 +2596,14 @@ impl BezierParallelAlgebraicCuspFrame2 {
                     .as_ref()
                     .map(|parallel| parallel.transform_similarity(transform))
                     .transpose()?,
-                cardinal_normal: None,
-                direct_center: None,
+                cardinal_normal,
+                direct_center,
                 parameter: self.data.parameter.clone(),
-                source_x_numerator: polynomial_trim_structural_zeros(source_x_numerator),
-                source_y_numerator: polynomial_trim_structural_zeros(source_y_numerator),
-                normal_x_numerator: polynomial_trim_structural_zeros(normal_x_numerator),
-                normal_y_numerator: polynomial_trim_structural_zeros(normal_y_numerator),
-                denominator: polynomial_scale(&self.data.denominator, transform.scale()),
+                source_x_numerator,
+                source_y_numerator,
+                normal_x_numerator,
+                normal_y_numerator,
+                denominator,
             }),
         })
     }
@@ -10865,29 +10903,11 @@ impl BezierAlgebraicChord2 {
         direction: BezierAlgebraicChordAxisDirection2,
         policy: &CurveContext,
     ) -> Self {
-        let parameter_axis = match direction {
-            BezierAlgebraicChordAxisDirection2::PositiveX => BezierAlgebraicChordParameterAxis2 {
-                axis: Axis2::X,
-                coordinate_increases: true,
-            },
-            BezierAlgebraicChordAxisDirection2::NegativeX => BezierAlgebraicChordParameterAxis2 {
-                axis: Axis2::X,
-                coordinate_increases: false,
-            },
-            BezierAlgebraicChordAxisDirection2::PositiveY => BezierAlgebraicChordParameterAxis2 {
-                axis: Axis2::Y,
-                coordinate_increases: true,
-            },
-            BezierAlgebraicChordAxisDirection2::NegativeY => BezierAlgebraicChordParameterAxis2 {
-                axis: Axis2::Y,
-                coordinate_increases: false,
-            },
-        };
         Self {
             data: Arc::new(BezierAlgebraicChordData2 {
                 start,
                 end,
-                parameter_axis,
+                parameter_axis: direction.parameter_axis(),
                 certified_axis_aligned: true,
                 source: None,
                 reversed: false,
@@ -11532,6 +11552,252 @@ impl BezierAlgebraicChord2 {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn affine_transformed_endpoint(
+        endpoint: &RationalBezierIntersectionPointEvidence2,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+        match endpoint {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Ok(Classification::Decided(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                    m00 * point.x() + m01 * point.y() + tx,
+                    m10 * point.x() + m11 * point.y() + ty,
+                )),
+            )),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                let parameter = match algebraic_chord_image_parameter(point, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let [x, y, denominator] =
+                    match algebraic_chord_owned_coordinate_polynomials(point, policy)? {
+                        Classification::Decided(coordinates) => coordinates,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                let coordinate = |first: &Real, second: &Real, offset: &Real| {
+                    polynomial_add(
+                        &polynomial_add(
+                            &polynomial_scale(&x, first),
+                            &polynomial_scale(&y, second),
+                        ),
+                        &polynomial_scale(&denominator, offset),
+                    )
+                };
+                Ok(Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::Algebraic(
+                        RationalBezierAlgebraicPointImage2::from_retained_expression(
+                            parameter.clone(),
+                            parameter_representation(&parameter, policy),
+                            coordinate(m00, m01, tx),
+                            coordinate(m10, m11, ty),
+                            denominator,
+                            "retained an exact affine-transformed algebraic chord endpoint",
+                        ),
+                    ),
+                ))
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn affine_transformed_axis_direction(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+    ) -> Option<BezierAlgebraicChordAxisDirection2> {
+        if !self.data.certified_axis_aligned {
+            return None;
+        }
+        let sign = Real::from(if self.data.parameter_axis.coordinate_increases {
+            1_i8
+        } else {
+            -1_i8
+        });
+        let (x, y) = match self.data.parameter_axis.axis {
+            Axis2::X => (m00 * &sign, m10 * sign),
+            Axis2::Y => (m01 * &sign, m11 * sign),
+        };
+        // A cardinal direction is reusable construction evidence, not a
+        // terminal query result. Never promote an APPROXIMATE_512 zero to a
+        // structural axis certificate.
+        match (
+            real_sign(&x, &CurveContext::STRICT),
+            real_sign(&y, &CurveContext::STRICT),
+        ) {
+            (Some(RealSign::Positive), Some(RealSign::Zero)) => {
+                Some(BezierAlgebraicChordAxisDirection2::PositiveX)
+            }
+            (Some(RealSign::Negative), Some(RealSign::Zero)) => {
+                Some(BezierAlgebraicChordAxisDirection2::NegativeX)
+            }
+            (Some(RealSign::Zero), Some(RealSign::Positive)) => {
+                Some(BezierAlgebraicChordAxisDirection2::PositiveY)
+            }
+            (Some(RealSign::Zero), Some(RealSign::Negative)) => {
+                Some(BezierAlgebraicChordAxisDirection2::NegativeY)
+            }
+            _ => None,
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn transform_affine_root(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        debug_assert!(self.data.source.is_none());
+        let start = match Self::affine_transformed_endpoint(
+            &self.data.start,
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match Self::affine_transformed_endpoint(
+            &self.data.end,
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let certified_direction = self.affine_transformed_axis_direction(m00, m01, m10, m11);
+        let parameter_axis = match certified_direction {
+            Some(direction) => direction.parameter_axis(),
+            None => match algebraic_chord_parameter_axis(&start, &end, policy)? {
+                Classification::Decided(axis) => axis,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
+        Ok(Classification::Decided(Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start,
+                end,
+                parameter_axis,
+                certified_axis_aligned: certified_direction.is_some(),
+                source: None,
+                reversed: self.data.reversed,
+                policy: *policy,
+            }),
+        }))
+    }
+
+    /// Applies a certified nonsingular affine transform while retaining every
+    /// independently selected endpoint field and any root support identity.
+    #[cfg(feature = "predicates")]
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn transform_affine(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        if self.data.source.is_none() {
+            return self.transform_affine_root(m00, m01, m10, m11, tx, ty, policy);
+        }
+        let transformed_support = match self
+            .retained_support()
+            .transform_affine_root(m00, m01, m10, m11, tx, ty, policy)?
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match Self::affine_transformed_endpoint(
+            &self.data.start,
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match Self::affine_transformed_endpoint(
+            &self.data.end,
+            m00,
+            m01,
+            m10,
+            m11,
+            tx,
+            ty,
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let orientation_reversed = self.data.parameter_axis.coordinate_increases
+            != self
+                .retained_support()
+                .data
+                .parameter_axis
+                .coordinate_increases;
+        let mut parameter_axis = transformed_support.data.parameter_axis;
+        parameter_axis.coordinate_increases ^= orientation_reversed;
+        Ok(Classification::Decided(Self {
+            data: Arc::new(BezierAlgebraicChordData2 {
+                start,
+                end,
+                parameter_axis,
+                certified_axis_aligned: transformed_support.data.certified_axis_aligned,
+                source: Some(transformed_support),
+                reversed: self.data.reversed,
+                policy: *policy,
+            }),
+        }))
     }
 
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
@@ -31059,6 +31325,82 @@ mod conversion_tests {
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn direct_algebraic_circle_similarities_retain_center_and_cardinal_evidence() {
+        let preserving = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        let reversing = Similarity2::try_from_real_affine(
+            Real::from(-2_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(2_i8),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
+            else {
+                panic!("the selected center coordinate must remain algebraic");
+            };
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::from(2_i8)],
+                    vec![Real::one()],
+                    "test direct selected algebraic circle center",
+                ),
+            );
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the direct selected circle must construct");
+            };
+
+            for (transform, normal, radius, clockwise, use_x, coordinate) in [
+                (preserving.clone(), (0, 1), 2_i8, false, true, 1_i8),
+                (reversing.clone(), (1, 0), -2_i8, true, false, -3_i8),
+            ] {
+                let transformed = circle.transform_similarity(&transform).unwrap();
+                assert_eq!(transformed.data.frame.data.cardinal_normal, Some(normal));
+                assert!(transformed.data.frame.data.parallel.is_none());
+                let direct_center = transformed
+                    .data
+                    .frame
+                    .data
+                    .direct_center
+                    .as_ref()
+                    .expect("direct selected center metadata must survive");
+                assert_eq!(
+                    direct_center
+                        .coordinate_order_to_real(use_x, &Real::from(coordinate), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_eq!(transformed.radial_distance(), &Real::from(radius));
+                assert_eq!(transformed.is_clockwise(), clockwise);
             }
         }
     }

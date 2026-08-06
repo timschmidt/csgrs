@@ -9558,11 +9558,33 @@ fn transform_retained_region_fragment(
                 ),
             ))
         }
-        BezierSplitFragment2::AlgebraicChord(_) => Err(ExactCurveError::blocked(
-            CurveOperation2::Transformation,
-            CurveFamily2::RationalBezier,
-            UncertaintyReason::Unsupported,
-        )),
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            #[cfg(feature = "predicates")]
+            {
+                match chord
+                    .transform_affine(m00, m01, m10, m11, tx, ty, policy)
+                    .map_err(affine_region_error)?
+                {
+                    Classification::Decided(chord) => {
+                        Ok(BezierSplitFragment2::AlgebraicChord(chord))
+                    }
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        CurveOperation2::Transformation,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    )),
+                }
+            }
+            #[cfg(not(feature = "predicates"))]
+            {
+                let _ = chord;
+                Err(ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                ))
+            }
+        }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             let similarity = crate::Similarity2::try_from_real_affine(
                 m00.clone(),

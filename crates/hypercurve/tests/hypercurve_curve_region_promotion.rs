@@ -1740,6 +1740,143 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn algebraic_chords_and_round_centers_survive_exact_similarities() {
+    let quarter_turn = Similarity2::try_from_real_affine(
+        Real::zero(),
+        Real::from(-1),
+        Real::one(),
+        Real::zero(),
+        Real::from(2),
+        Real::from(3),
+    )
+    .unwrap();
+    let distance = q(1, 20);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let transformed = source
+            .transform_similarity(&quarter_turn, &policy)
+            .expect("a nonsingular exact affine map must retain selected chord fields");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            transformed.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .count(),
+            4
+        );
+        for (point, expected) in [
+            (Point2::new(q(3, 2), q(13, 4)), RegionPointLocation::Inside),
+            (Point2::new(q(3, 2), q(15, 4)), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(transformed.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
+
+        let transformed_round = transformed
+            .value
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("axis certificates must survive a cardinal similarity");
+        assert_eq!(transformed_round.certainty, CurveCertainty::Certified);
+        assert!(
+            transformed_round.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        let transformed_boundary = Point2::new(Real::from(2) + &distance, q(13, 4));
+        assert_eq!(
+            certified(
+                transformed_round
+                    .value
+                    .classify_point(&transformed_boundary, &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+
+        let rounded = source
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the selected-field round source must complete");
+        let rotated_round = rounded
+            .value
+            .transform_similarity(&quarter_turn, &policy)
+            .expect("direct selected circle centers must transform in their retained field");
+        assert_eq!(rotated_round.certainty, CurveCertainty::Certified);
+        assert!(
+            rotated_round.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        assert_eq!(
+            certified(
+                rotated_round
+                    .value
+                    .classify_point(&transformed_boundary, &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
+    let distance = q(1, 20);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let transformed = axis_aligned_algebraic_rectangle(&policy)
+            .transform_affine(
+                &Real::from(2),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::from(5),
+                &Real::from(-1),
+                &policy,
+            )
+            .expect("an anisotropic nonsingular affine map preserves straight chords");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        for (point, expected) in [
+            (p(6, 0), RegionPointLocation::Inside),
+            (p(7, 0), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                certified(transformed.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
+        let rounded = transformed
+            .value
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the transformed cardinal proof must remain usable by exact offsets");
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                rounded
+                    .value
+                    .classify_point(
+                        &Point2::new(Real::from(6), Real::from(-1) - &distance),
+                        &policy,
+                    )
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit() {
     let miter = OffsetCornerStyle2::Miter {
         limit: Real::from(2),
