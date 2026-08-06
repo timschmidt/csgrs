@@ -262,6 +262,13 @@ struct SurfaceFacet {
     cells: [u32; 2],
 }
 
+#[derive(Clone, Copy, Debug)]
+struct SurfaceSheet {
+    vertices: [u32; 3],
+    cells: [u32; 2],
+    bundle: u32,
+}
+
 #[derive(Debug)]
 struct SurfaceCellComplex {
     facets: Vec<SurfaceFacet>,
@@ -483,14 +490,28 @@ struct PendingContribution {
 struct EdgeUse {
     edge: [u32; 2],
     facet: u32,
+    sheet: u32,
     opposite: u32,
 }
 
 #[derive(Clone, Copy)]
 struct RadialUse {
     facet: u32,
+    sheet: u32,
     opposite: u32,
     half: u8,
+    coincident_with_previous: bool,
+    positive_crossing: bool,
+    layer: [u32; 3],
+}
+
+#[derive(Clone, Copy)]
+struct SheetLayerBoundary {
+    components: [u32; 2],
+    faces: [u32; 2],
+    node: u32,
+    ray_group: u32,
+    radial_index: u32,
 }
 
 struct CellDisjointSets {
@@ -597,7 +618,7 @@ fn assemble_surface_cells(
         });
     }
 
-    let (pending, contribution_offsets, contributions, transitions) =
+    let (pending, contribution_offsets, contributions, _transitions, sheet_transitions) =
         bundle_surface_facets(polygons, surface, operand_count)?;
     if pending.is_empty() {
         return Err(HypermeshError::SurfaceArrangementFailed {
@@ -605,15 +626,26 @@ fn assemble_surface_cells(
         });
     }
 
-    let side_count = pending
-        .len()
-        .checked_mul(2)
-        .ok_or(HypermeshError::CapacityOverflow {
-            operation: "surface cell side nodes",
-        })?;
+    let has_coincident_sheets = contributions.len() != pending.len();
+    let side_count =
+        contributions
+            .len()
+            .checked_mul(2)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface cell side nodes",
+            })?;
     let mut sets = CellDisjointSets::new(side_count)?;
+    let face_components = if has_coincident_sheets {
+        let mut components = CellDisjointSets::new(polygons.len())?;
+        for &pair in radially_separated_face_pair_keys {
+            components.union((pair >> u32::BITS) as usize, pair as u32 as usize);
+        }
+        components.into_cells()?.0
+    } else {
+        Vec::new()
+    };
     let edge_use_capacity =
-        pending
+        contributions
             .len()
             .checked_mul(3)
             .ok_or(HypermeshError::CapacityOverflow {
@@ -626,14 +658,25 @@ fn assemble_surface_cells(
             operation: "surface radial edge uses",
         })?;
     for (facet, pending_facet) in pending.iter().enumerate() {
-        let facet = compact_len(facet, "surface radial facet IDs")?;
-        let [a, b, c] = pending_facet.vertices;
-        for (start, end, opposite) in [(a, b, c), (b, c, a), (c, a, b)] {
-            edge_uses.push(EdgeUse {
-                edge: sorted_edge([start, end]),
-                facet,
-                opposite,
+        let compact_facet = compact_len(facet, "surface radial facet IDs")?;
+        let start = contribution_offsets[facet] as usize;
+        let end = contribution_offsets[facet + 1] as usize;
+        if start == end || end > contributions.len() {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface facet contribution storage is malformed",
             });
+        }
+        let [a, b, c] = pending_facet.vertices;
+        for sheet in start..end {
+            let sheet = compact_len(sheet, "surface radial sheet IDs")?;
+            for (start, end, opposite) in [(a, b, c), (b, c, a), (c, a, b)] {
+                edge_uses.push(EdgeUse {
+                    edge: sorted_edge([start, end]),
+                    facet: compact_facet,
+                    sheet,
+                    opposite,
+                });
+            }
         }
     }
     edge_uses.sort_unstable_by_key(|edge_use| {
@@ -641,13 +684,14 @@ fn assemble_surface_cells(
             edge_use.edge[0],
             edge_use.edge[1],
             edge_use.facet,
+            edge_use.sheet,
             edge_use.opposite,
         ]
     });
 
     let mut edges = Vec::new();
     let mut radial = Vec::<RadialUse>::new();
-    let mut ray_starts = Vec::<usize>::new();
+    let mut layer_boundaries = Vec::<SheetLayerBoundary>::new();
     let mut edge_start = 0;
     #[cfg(test)]
     let mut max_radial_degree = 0_u32;
@@ -665,39 +709,23 @@ fn assemble_surface_cells(
         }
         let uses = &edge_uses[edge_start..edge_end];
         if let [first, second] = uses {
-            let retained_separation = facets_have_retained_radial_separation(
-                first.facet,
-                second.facet,
-                &contribution_offsets,
+            assemble_two_sheet_edge(
+                decisions,
+                &surface.points,
+                &pending,
+                edge,
+                first,
+                second,
                 &contributions,
                 radially_separated_face_pair_keys,
+                &mut sets,
             )?;
-            if !retained_separation
-                && same_radial_ray(
-                    decisions,
-                    &surface.points,
-                    edge,
-                    first.opposite,
-                    second.opposite,
-                )?
-            {
-                return Err(HypermeshError::SurfaceArrangementFailed {
-                    reason: "two-facet radial edge has one geometric ray",
-                });
-            }
-            let first_after = facet_side_node(&pending, first.facet, edge, true)?;
-            let first_before = facet_side_node(&pending, first.facet, edge, false)?;
-            let second_after = facet_side_node(&pending, second.facet, edge, true)?;
-            let second_before = facet_side_node(&pending, second.facet, edge, false)?;
-            sets.union(first_after, second_before);
-            sets.union(second_after, first_before);
         } else if !try_assemble_two_face_transverse_ring(
             decisions,
             &surface.points,
             &pending,
             edge,
             uses,
-            &contribution_offsets,
             &contributions,
             &mut sets,
         )? {
@@ -708,7 +736,10 @@ fn assemble_surface_cells(
                 edge,
                 uses,
                 &mut radial,
-                &mut ray_starts,
+                &mut layer_boundaries,
+                &contributions,
+                &face_components,
+                radially_separated_face_pair_keys,
                 &mut sets,
             )?;
         }
@@ -716,14 +747,24 @@ fn assemble_surface_cells(
     }
 
     let (side_cells, cell_count) = sets.into_cells()?;
-    let facets = pending
-        .into_iter()
-        .enumerate()
-        .map(|(facet, pending)| SurfaceFacet {
-            vertices: pending.vertices,
-            cells: [side_cells[facet * 2], side_cells[facet * 2 + 1]],
-        })
-        .collect::<Vec<_>>();
+    let mut sheets = Vec::new();
+    sheets.try_reserve_exact(contributions.len()).map_err(|_| {
+        HypermeshError::CapacityOverflow {
+            operation: "surface topology sheets",
+        }
+    })?;
+    for (bundle, pending_facet) in pending.iter().enumerate() {
+        let bundle = compact_len(bundle, "surface topology bundle IDs")?;
+        let start = contribution_offsets[bundle as usize] as usize;
+        let end = contribution_offsets[bundle as usize + 1] as usize;
+        for sheet in start..end {
+            sheets.push(SurfaceSheet {
+                vertices: pending_facet.vertices,
+                cells: [side_cells[sheet * 2], side_cells[sheet * 2 + 1]],
+                bundle,
+            });
+        }
+    }
     let bounds = surface_bounds(decisions, &surface.points)?;
     let (cell_windings, _component_count) = classify_surface_cells(
         decisions,
@@ -732,8 +773,8 @@ fn assemble_surface_cells(
         source_bvh,
         &bounds,
         &surface.points,
-        &facets,
-        &transitions,
+        &sheets,
+        &sheet_transitions,
         &contribution_offsets,
         &contributions,
         operand_count,
@@ -741,12 +782,42 @@ fn assemble_surface_cells(
         &edges,
     )?;
 
+    let mut facets = Vec::new();
+    facets
+        .try_reserve_exact(pending.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface geometric facets",
+        })?;
+    let mut bundle_side_scratch = Vec::<u64>::new();
+    for (bundle, pending_facet) in pending.into_iter().enumerate() {
+        let start = contribution_offsets[bundle] as usize;
+        let end = contribution_offsets[bundle + 1] as usize;
+        let bundle_sheets =
+            sheets
+                .get(start..end)
+                .ok_or(HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface geometric facet has no topology sheet",
+                })?;
+        let transition_start = bundle * operand_count;
+        let cells = geometric_facet_outer_cells(
+            bundle_sheets,
+            &cell_windings,
+            operand_count,
+            &_transitions[transition_start..transition_start + operand_count],
+            &mut bundle_side_scratch,
+        )?;
+        facets.push(SurfaceFacet {
+            vertices: pending_facet.vertices,
+            cells,
+        });
+    }
+
     Ok(SurfaceCellComplex {
         facets,
         contribution_offsets,
         contributions,
         #[cfg(test)]
-        transitions: transitions.into_boxed_slice(),
+        transitions: _transitions.into_boxed_slice(),
         cell_windings: cell_windings.into_boxed_slice(),
         operand_count,
         cell_count,
@@ -759,6 +830,204 @@ fn assemble_surface_cells(
     })
 }
 
+fn geometric_facet_outer_cells(
+    sheets: &[SurfaceSheet],
+    cell_windings: &[i32],
+    operand_count: usize,
+    transition: &[i32],
+    scratch: &mut Vec<u64>,
+) -> HypermeshResult<[u32; 2]> {
+    if sheets.is_empty() || transition.len() != operand_count {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface geometric facet has incomplete sheet topology",
+        });
+    }
+    let Some(cells) = geometric_facet_side_cells(sheets, scratch)? else {
+        if transition.iter().any(|&delta| delta != 0) {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet sheet stack has no outer sides",
+            });
+        }
+        return Ok([sheets[0].cells[FRONT]; 2]);
+    };
+    let front_start = (cells[FRONT] as usize).checked_mul(operand_count).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface geometric facet winding rows",
+        },
+    )?;
+    let back_start = (cells[BACK] as usize).checked_mul(operand_count).ok_or(
+        HypermeshError::CapacityOverflow {
+            operation: "surface geometric facet winding rows",
+        },
+    )?;
+    let front = cell_windings
+        .get(front_start..front_start + operand_count)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface geometric facet references an absent winding cell",
+        })?;
+    let back = cell_windings
+        .get(back_start..back_start + operand_count)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface geometric facet references an absent winding cell",
+        })?;
+    for component in 0..operand_count {
+        if front[component]
+            .checked_add(transition[component])
+            .ok_or(HypermeshError::WindingOverflow)?
+            != back[component]
+        {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet outer winding transition is inconsistent",
+            });
+        }
+    }
+    Ok(cells)
+}
+
+fn geometric_facet_side_cells(
+    sheets: &[SurfaceSheet],
+    scratch: &mut Vec<u64>,
+) -> HypermeshResult<Option<[u32; 2]>> {
+    if sheets.is_empty() {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface geometric facet has incomplete sheet topology",
+        });
+    }
+    scratch.clear();
+    let side_count = sheets
+        .len()
+        .checked_mul(2)
+        .ok_or(HypermeshError::CapacityOverflow {
+            operation: "surface geometric facet sheet sides",
+        })?;
+    scratch
+        .try_reserve(side_count)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface geometric facet sheet sides",
+        })?;
+    scratch.extend(sheets.iter().flat_map(|sheet| {
+        [
+            u64::from(sheet.cells[FRONT]) << 1,
+            (u64::from(sheet.cells[BACK]) << 1) | 1,
+        ]
+    }));
+    scratch.sort_unstable();
+    let mut outer = [None; 2];
+    let mut start = 0;
+    while start < scratch.len() {
+        let cell = (scratch[start] >> 1) as u32;
+        let mut counts = [0_usize; 2];
+        let mut end = start + 1;
+        counts[(scratch[start] & 1) as usize] = 1;
+        while end < scratch.len() && (scratch[end] >> 1) as u32 == cell {
+            counts[(scratch[end] & 1) as usize] += 1;
+            end += 1;
+        }
+        let side = if counts[FRONT] == counts[BACK] {
+            None
+        } else if counts[FRONT].checked_sub(counts[BACK]) == Some(1) {
+            Some(FRONT)
+        } else if counts[BACK].checked_sub(counts[FRONT]) == Some(1) {
+            Some(BACK)
+        } else {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet sheet stack branches",
+            });
+        };
+        if let Some(side) = side
+            && outer[side].replace(cell).is_some()
+        {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet sheet stack branches",
+            });
+        }
+        start = end;
+    }
+    match outer {
+        [None, None] => Ok(None),
+        [Some(front), Some(back)] => Ok(Some([front, back])),
+        _ => Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface geometric facet sheet stack has incomplete outer sides",
+        }),
+    }
+}
+
+fn surface_sheet_bundle_side_cells(
+    sheets: &[SurfaceSheet],
+    contribution_offsets: &[u32],
+    sheet: usize,
+    scratch: &mut Vec<u64>,
+) -> HypermeshResult<Option<[u32; 2]>> {
+    let bundle = sheets
+        .get(sheet)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent facet",
+        })?
+        .bundle as usize;
+    let start = contribution_offsets.get(bundle).copied().ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent geometric facet",
+        },
+    )? as usize;
+    let end = contribution_offsets.get(bundle + 1).copied().ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed references an absent geometric facet",
+        },
+    )? as usize;
+    let bundle_sheets = sheets
+        .get(start..end)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed geometric facet storage is malformed",
+        })?;
+    if bundle_sheets.is_empty()
+        || bundle_sheets
+            .iter()
+            .any(|candidate| candidate.bundle as usize != bundle)
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell seed geometric facet storage is malformed",
+        });
+    }
+    if let [sheet] = bundle_sheets {
+        return Ok(Some(sheet.cells));
+    }
+    geometric_facet_side_cells(bundle_sheets, scratch)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn assemble_two_sheet_edge(
+    decisions: &DecisionContext,
+    points: &[Point3],
+    facets: &[PendingFacet],
+    edge: [u32; 2],
+    first: &EdgeUse,
+    second: &EdgeUse,
+    contributions: &[FacetContribution],
+    radially_separated_face_pair_keys: &[u64],
+    sets: &mut CellDisjointSets,
+) -> HypermeshResult<()> {
+    let retained_separation = sheets_have_retained_radial_separation(
+        first.sheet,
+        second.sheet,
+        contributions,
+        radially_separated_face_pair_keys,
+    )?;
+    if !retained_separation
+        && same_radial_ray(decisions, points, edge, first.opposite, second.opposite)?
+    {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "two-facet radial edge has one geometric ray",
+        });
+    }
+    let first_after = facet_side_node(facets, first.facet, first.sheet, edge, true)?;
+    let first_before = facet_side_node(facets, first.facet, first.sheet, edge, false)?;
+    let second_after = facet_side_node(facets, second.facet, second.sheet, edge, true)?;
+    let second_before = facet_side_node(facets, second.facet, second.sheet, edge, false)?;
+    sets.union(first_after, second_before);
+    sets.union(second_after, first_before);
+    Ok(())
+}
+
 fn bundle_surface_facets(
     polygons: &[ConvexPolygon],
     surface: &SurfaceCorefinement,
@@ -767,6 +1036,7 @@ fn bundle_surface_facets(
     Vec<PendingFacet>,
     Box<[u32]>,
     Vec<FacetContribution>,
+    Vec<i32>,
     Vec<i32>,
 )> {
     let transition_capacity = surface.triangles.len().checked_mul(operand_count).ok_or(
@@ -882,11 +1152,39 @@ fn bundle_surface_facets(
             reason: "surface facet contributions are incomplete",
         });
     }
+    let sheet_transition_capacity =
+        contributions
+            .len()
+            .checked_mul(operand_count)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface sheet winding transitions",
+            })?;
+    let mut sheet_transitions = Vec::new();
+    sheet_transitions
+        .try_reserve_exact(sheet_transition_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface sheet winding transitions",
+        })?;
+    for contribution in &contributions {
+        let polygon = polygons.get(contribution.face as usize).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface contribution references an absent source face",
+            },
+        )?;
+        for &delta in &polygon.delta_w {
+            sheet_transitions.push(
+                i32::from(contribution.orientation)
+                    .checked_mul(delta)
+                    .ok_or(HypermeshError::WindingOverflow)?,
+            );
+        }
+    }
     Ok((
         facets,
         contribution_offsets.into_boxed_slice(),
         contributions,
         transitions,
+        sheet_transitions,
     ))
 }
 
@@ -908,6 +1206,71 @@ fn triangle_orientation(source: [u32; 3], canonical: [u32; 3]) -> HypermeshResul
     }
 }
 
+fn radial_source_layer(
+    radial: &RadialUse,
+    contributions: &[FacetContribution],
+    face_components: &[u32],
+) -> HypermeshResult<(u32, u32)> {
+    let contribution = contributions.get(radial.sheet as usize).ok_or(
+        HypermeshError::SurfaceArrangementFailed {
+            reason: "surface radial ring references an absent sheet contribution",
+        },
+    )?;
+    Ok((
+        face_components
+            .get(contribution.face as usize)
+            .copied()
+            .unwrap_or(contribution.face),
+        contribution.face,
+    ))
+}
+
+fn radial_layer_boundaries_share_stratum(
+    from: u32,
+    to: u32,
+    radial: &[RadialUse],
+    contributions: &[FacetContribution],
+    face_components: &[u32],
+) -> HypermeshResult<bool> {
+    let from = from as usize;
+    let to = to as usize;
+    if from >= radial.len() || to >= radial.len() || from == to {
+        return Err(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface coincident layer boundary has an invalid radial position",
+        });
+    }
+    let crossing_count = if from < to {
+        to - from
+    } else {
+        radial.len() - from + to
+    };
+
+    // A zero-angle layer can continue through the open sector between two
+    // adjacent geometric rays only when that route returns to the same side
+    // of every authored surface component. Checking retained source-component
+    // balances prevents an unrelated coincident sheet from being bypassed.
+    // Radial degrees are normally tiny, so the allocation-free quadratic scan
+    // is cheaper than constructing a per-edge sparse map.
+    for offset in 1..=crossing_count {
+        let index = (from + offset) % radial.len();
+        let (component, _) = radial_source_layer(&radial[index], contributions, face_components)?;
+        let mut balance = 0_i64;
+        for candidate_offset in 1..=crossing_count {
+            let candidate = &radial[(from + candidate_offset) % radial.len()];
+            let (candidate_component, _) =
+                radial_source_layer(candidate, contributions, face_components)?;
+            if candidate_component == component {
+                balance += if candidate.positive_crossing { 1 } else { -1 };
+            }
+        }
+        if balance != 0 {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+#[allow(clippy::too_many_arguments)]
 fn assemble_radial_ring(
     decisions: &DecisionContext,
     points: &[Point3],
@@ -915,7 +1278,10 @@ fn assemble_radial_ring(
     edge: [u32; 2],
     uses: &[EdgeUse],
     radial: &mut Vec<RadialUse>,
-    ray_starts: &mut Vec<usize>,
+    layer_boundaries: &mut Vec<SheetLayerBoundary>,
+    contributions: &[FacetContribution],
+    face_components: &[u32],
+    radially_separated_face_pair_keys: &[u64],
     sets: &mut CellDisjointSets,
 ) -> HypermeshResult<()> {
     radial.clear();
@@ -925,15 +1291,43 @@ fn assemble_radial_ring(
             operation: "surface radial ring scratch",
         })?;
     for edge_use in uses {
+        let after_side = facet_side(facets, edge_use.facet, edge, true)?;
+        let contribution = contributions.get(edge_use.sheet as usize).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface radial ring references an absent sheet contribution",
+            },
+        )?;
+        let component = face_components
+            .get(contribution.face as usize)
+            .copied()
+            .unwrap_or(contribution.face);
+        let ascending = [component, contribution.face, edge_use.sheet];
+        let positive_crossing = (after_side == BACK) == (contribution.orientation > 0);
         radial.push(RadialUse {
             facet: edge_use.facet,
+            sheet: edge_use.sheet,
             opposite: edge_use.opposite,
             half: 0,
+            coincident_with_previous: false,
+            positive_crossing,
+            // Positive angular crossings enter retained source components in
+            // canonical component order; antipodal negative crossings leave
+            // them in reverse order. This gives coincident sheets one
+            // untwisted zero-angle stack across every corefined facet.
+            layer: if positive_crossing {
+                ascending
+            } else {
+                ascending.map(|key| u32::MAX - key)
+            },
         });
     }
     let reference = radial[0].opposite;
-    for radial_use in radial.iter_mut().skip(1) {
-        radial_use.half = radial_half(decisions, points, edge, reference, radial_use.opposite)?;
+    for index in 1..radial.len() {
+        radial[index].half = if radial[index].opposite == radial[index - 1].opposite {
+            radial[index - 1].half
+        } else {
+            radial_half(decisions, points, edge, reference, radial[index].opposite)?
+        };
     }
     let mut failure = None;
     radial.sort_unstable_by(|left, right| {
@@ -944,6 +1338,11 @@ fn assemble_radial_ring(
             return Ordering::Equal;
         }
         match compare_radial_rays(decisions, points, edge, left.opposite, right.opposite) {
+            Ok(Ordering::Equal) => left
+                .layer
+                .cmp(&right.layer)
+                .then_with(|| left.facet.cmp(&right.facet))
+                .then_with(|| left.sheet.cmp(&right.sheet)),
             Ok(ordering) => ordering,
             Err(error) => {
                 failure = Some(error);
@@ -955,46 +1354,166 @@ fn assemble_radial_ring(
         return Err(error);
     }
 
-    ray_starts.clear();
-    ray_starts.push(0);
+    let mut distinct_rays = 1_usize;
     for index in 1..radial.len() {
-        if !same_radial_ray(
+        let coincident = same_radial_ray(
             decisions,
             points,
             edge,
             radial[index - 1].opposite,
             radial[index].opposite,
-        )? {
-            ray_starts.push(index);
+        )?;
+        radial[index].coincident_with_previous = coincident;
+        if !coincident {
+            distinct_rays += 1;
         }
     }
-    if ray_starts.len() < 2 {
+    if distinct_rays < 2 {
         return Err(HypermeshError::SurfaceArrangementFailed {
             reason: "surface radial edge has fewer than two geometric rays",
         });
     }
 
-    for ray in 0..ray_starts.len() {
-        let start = ray_starts[ray];
-        let end = ray_starts.get(ray + 1).copied().unwrap_or(radial.len());
-        let base_after = facet_side_node(facets, radial[start].facet, edge, true)?;
-        let base_before = facet_side_node(facets, radial[start].facet, edge, false)?;
-        for radial_use in &radial[start + 1..end] {
-            sets.union(
-                base_after,
-                facet_side_node(facets, radial_use.facet, edge, true)?,
-            );
-            sets.union(
-                base_before,
-                facet_side_node(facets, radial_use.facet, edge, false)?,
-            );
-        }
-    }
-    for ray in 0..ray_starts.len() {
-        let next = (ray + 1) % ray_starts.len();
-        let after = facet_side_node(facets, radial[ray_starts[ray]].facet, edge, true)?;
-        let before = facet_side_node(facets, radial[ray_starts[next]].facet, edge, false)?;
+    // Every contribution is one authored sheet. Equal geometric rays are a
+    // zero-angle stack rather than one collapsed interface, so the ordinary
+    // cyclic successor relation creates the intermediate winding strata.
+    for index in 0..radial.len() {
+        let next = (index + 1) % radial.len();
+        let after = facet_side_node(facets, radial[index].facet, radial[index].sheet, edge, true)?;
+        let before = facet_side_node(facets, radial[next].facet, radial[next].sheet, edge, false)?;
         sets.union(after, before);
+    }
+
+    // Equal rays describe a zero-angle stack. When the same layer boundary
+    // appears on another ray, it is the same symbolic stratum only if every
+    // participating authored surface proves that its source faces continue
+    // across this edge. This retained adjacency joins coincident layers across
+    // triangulation and manifold edges, while a sheet that diverges simply has
+    // no compatible boundary and remains distinct.
+    layer_boundaries.clear();
+    layer_boundaries
+        .try_reserve(radial.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "surface coincident layer boundaries",
+        })?;
+    let mut group_start = 0;
+    let mut ray_group = 0_u32;
+    while group_start < radial.len() {
+        let mut group_end = group_start + 1;
+        while group_end < radial.len() && radial[group_end].coincident_with_previous {
+            group_end += 1;
+        }
+        if group_end - group_start > 1 {
+            let mut unique_components = true;
+            for left in group_start..group_end {
+                let (left_component, _) =
+                    radial_source_layer(&radial[left], contributions, face_components)?;
+                for right in &radial[group_start..left] {
+                    let (right_component, _) =
+                        radial_source_layer(right, contributions, face_components)?;
+                    if left_component == right_component {
+                        unique_components = false;
+                        break;
+                    }
+                }
+                if !unique_components {
+                    break;
+                }
+            }
+            if unique_components {
+                for index in group_start..group_end - 1 {
+                    let (left_component, left_face) =
+                        radial_source_layer(&radial[index], contributions, face_components)?;
+                    let (right_component, right_face) =
+                        radial_source_layer(&radial[index + 1], contributions, face_components)?;
+                    let (components, faces) = if left_component < right_component {
+                        ([left_component, right_component], [left_face, right_face])
+                    } else {
+                        ([right_component, left_component], [right_face, left_face])
+                    };
+                    let node = facet_side_node(
+                        facets,
+                        radial[index].facet,
+                        radial[index].sheet,
+                        edge,
+                        true,
+                    )?;
+                    layer_boundaries.push(SheetLayerBoundary {
+                        components,
+                        faces,
+                        node: u32::try_from(node).map_err(|_| {
+                            HypermeshError::CapacityOverflow {
+                                operation: "surface coincident layer boundary nodes",
+                            }
+                        })?,
+                        ray_group,
+                        radial_index: compact_len(
+                            index,
+                            "surface coincident layer boundary radial indices",
+                        )?,
+                    });
+                }
+            }
+        }
+        group_start = group_end;
+        ray_group = ray_group
+            .checked_add(1)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "surface radial ray groups",
+            })?;
+    }
+    layer_boundaries.sort_unstable_by_key(|boundary| {
+        [
+            boundary.components[0],
+            boundary.components[1],
+            boundary.faces[0],
+            boundary.faces[1],
+            boundary.ray_group,
+            boundary.radial_index,
+            boundary.node,
+        ]
+    });
+    let mut boundary_start = 0;
+    while boundary_start < layer_boundaries.len() {
+        let components = layer_boundaries[boundary_start].components;
+        let mut boundary_end = boundary_start + 1;
+        while boundary_end < layer_boundaries.len()
+            && layer_boundaries[boundary_end].components == components
+        {
+            boundary_end += 1;
+        }
+        for current in boundary_start..boundary_end {
+            for previous in boundary_start..current {
+                let current_group = layer_boundaries[current].ray_group;
+                let previous_group = layer_boundaries[previous].ray_group;
+                let groups_are_adjacent = current_group + 1 == previous_group
+                    || previous_group + 1 == current_group
+                    || (current_group == 0 && previous_group + 1 == ray_group)
+                    || (previous_group == 0 && current_group + 1 == ray_group);
+                if groups_are_adjacent
+                    && (0..2).all(|component| {
+                        source_faces_have_retained_radial_separation(
+                            layer_boundaries[current].faces[component],
+                            layer_boundaries[previous].faces[component],
+                            radially_separated_face_pair_keys,
+                        )
+                    })
+                    && radial_layer_boundaries_share_stratum(
+                        layer_boundaries[current].radial_index,
+                        layer_boundaries[previous].radial_index,
+                        radial,
+                        contributions,
+                        face_components,
+                    )?
+                {
+                    sets.union(
+                        layer_boundaries[current].node as usize,
+                        layer_boundaries[previous].node as usize,
+                    );
+                }
+            }
+        }
+        boundary_start = boundary_end;
     }
     Ok(())
 }
@@ -1005,7 +1524,6 @@ fn try_assemble_two_face_transverse_ring(
     facets: &[PendingFacet],
     edge: [u32; 2],
     uses: &[EdgeUse],
-    contribution_offsets: &[u32],
     contributions: &[FacetContribution],
     sets: &mut CellDisjointSets,
 ) -> HypermeshResult<bool> {
@@ -1023,11 +1541,11 @@ fn try_assemble_two_face_transverse_ring(
     let mut face_uses = [[None; 2]; 2];
     let mut face_counts = [0_usize; 2];
     for &edge_use in uses {
-        let [contribution] =
-            checked_contribution_row(contribution_offsets, contributions, edge_use.facet as usize)?
-        else {
-            return Ok(false);
-        };
+        let contribution = contributions.get(edge_use.sheet as usize).ok_or(
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface radial ring references an absent sheet contribution",
+            },
+        )?;
         let face_slot = if face_ids[0] == contribution.face {
             0
         } else if face_ids[0] == u32::MAX {
@@ -1074,8 +1592,8 @@ fn try_assemble_two_face_transverse_ring(
     let ring = [first, second_half[0], first_opposite, second_half[1]];
     for index in 0..ring.len() {
         let next = (index + 1) % ring.len();
-        let after = facet_side_node(facets, ring[index].facet, edge, true)?;
-        let before = facet_side_node(facets, ring[next].facet, edge, false)?;
+        let after = facet_side_node(facets, ring[index].facet, ring[index].sheet, edge, true)?;
+        let before = facet_side_node(facets, ring[next].facet, ring[next].sheet, edge, false)?;
         sets.union(after, before);
     }
     Ok(true)
@@ -1101,44 +1619,48 @@ fn checked_contribution_row<'a>(
     contributions.get(start..end).ok_or(MALFORMED)
 }
 
-fn facets_have_retained_radial_separation(
+fn sheets_have_retained_radial_separation(
     left: u32,
     right: u32,
-    contribution_offsets: &[u32],
     contributions: &[FacetContribution],
     radially_separated_face_pair_keys: &[u64],
 ) -> HypermeshResult<bool> {
-    // A bundled arrangement facet may carry several coincident source-face
-    // contributions. A shared validated face or retained adjacent source pair
-    // proves separation only for the degree-two edge currently being
-    // assembled; higher-degree radial rings use their dedicated transverse
-    // proof above or continue through the complete exact ordering path.
-    let left = checked_contribution_row(contribution_offsets, contributions, left as usize)?;
-    let right = checked_contribution_row(contribution_offsets, contributions, right as usize)?;
-    for left in left {
-        for right in right {
-            // Two distinct facets emitted by one validated planar
-            // triangulation lie on opposite sides of their shared edge. That
-            // source-face incidence is already a stronger radial-separation
-            // proof than recomputing equality from materialized coordinates.
-            if left.face == right.face {
-                return Ok(true);
-            }
-            let Some(pair) = source_face_pair_key(left.face, right.face) else {
-                continue;
-            };
-            if radially_separated_face_pair_keys
-                .binary_search(&pair)
-                .is_ok()
-            {
-                return Ok(true);
-            }
-        }
-    }
-    Ok(false)
+    let left =
+        contributions
+            .get(left as usize)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface radial ring references an absent sheet contribution",
+            })?;
+    let right =
+        contributions
+            .get(right as usize)
+            .ok_or(HypermeshError::SurfaceArrangementFailed {
+                reason: "surface radial ring references an absent sheet contribution",
+            })?;
+    // Two subdivisions of one source face, or two authored manifold
+    // neighbors, are known to occupy opposite radial sides without repeating
+    // a coordinate equality decision.
+    Ok(source_faces_have_retained_radial_separation(
+        left.face,
+        right.face,
+        radially_separated_face_pair_keys,
+    ))
 }
 
-fn facet_side_node(
+fn source_faces_have_retained_radial_separation(
+    left: u32,
+    right: u32,
+    radially_separated_face_pair_keys: &[u64],
+) -> bool {
+    left == right
+        || source_face_pair_key(left, right).is_some_and(|pair| {
+            radially_separated_face_pair_keys
+                .binary_search(&pair)
+                .is_ok()
+        })
+}
+
+fn facet_side(
     facets: &[PendingFacet],
     facet: u32,
     edge: [u32; 2],
@@ -1163,8 +1685,18 @@ fn facet_side_node(
         reason: "surface radial facet does not contain its indexed edge",
     })?;
     let after_side = if directed_forward { FRONT } else { BACK };
-    let side = if after { after_side } else { 1 - after_side };
-    (facet as usize)
+    Ok(if after { after_side } else { 1 - after_side })
+}
+
+fn facet_side_node(
+    facets: &[PendingFacet],
+    facet: u32,
+    sheet: u32,
+    edge: [u32; 2],
+    after: bool,
+) -> HypermeshResult<usize> {
+    let side = facet_side(facets, facet, edge, after)?;
+    (sheet as usize)
         .checked_mul(2)
         .and_then(|node| node.checked_add(side))
         .ok_or(HypermeshError::CapacityOverflow {
@@ -1179,6 +1711,9 @@ fn radial_half(
     reference: u32,
     candidate: u32,
 ) -> HypermeshResult<u8> {
+    if reference == candidate {
+        return Ok(0);
+    }
     match radial_triple_classification(decisions, points, edge, reference, candidate)? {
         Classification::Positive => Ok(0),
         Classification::Negative => Ok(1),
@@ -1201,6 +1736,9 @@ fn compare_radial_rays(
     left: u32,
     right: u32,
 ) -> HypermeshResult<Ordering> {
+    if left == right {
+        return Ok(Ordering::Equal);
+    }
     match radial_triple_classification(decisions, points, edge, left, right)? {
         Classification::Positive => Ok(Ordering::Less),
         Classification::Negative => Ok(Ordering::Greater),
@@ -1225,6 +1763,9 @@ fn same_radial_ray(
     left: u32,
     right: u32,
 ) -> HypermeshResult<bool> {
+    if left == right {
+        return Ok(true);
+    }
     if radial_triple_classification(decisions, points, edge, left, right)? != Classification::On {
         return Ok(false);
     }
@@ -1366,6 +1907,69 @@ fn surface_bounds(decisions: &DecisionContext, points: &[Point3]) -> HypermeshRe
     Ok(ApproxBounds::new(minimum, maximum))
 }
 
+#[allow(clippy::too_many_arguments)]
+fn choose_surface_component_seed_facet(
+    start_cell: u32,
+    heads: &[u32],
+    next: &[u32],
+    facets: &[SurfaceSheet],
+    contribution_offsets: &[u32],
+    visited: &mut [bool],
+    queue: &mut Vec<u32>,
+    side_scratch: &mut Vec<u64>,
+) -> HypermeshResult<usize> {
+    let first_incidence = heads
+        .get(start_cell as usize)
+        .copied()
+        .filter(|incidence| *incidence != u32::MAX)
+        .ok_or(HypermeshError::SurfaceArrangementFailed {
+            reason: "surface cell has no incident facet",
+        })?;
+    let first_facet = first_incidence as usize / 2;
+    if surface_sheet_bundle_side_cells(facets, contribution_offsets, first_facet, side_scratch)?
+        .is_some()
+    {
+        return Ok(first_facet);
+    }
+
+    // A net-zero coincident bundle can be a closed zero-angle sheet cycle.
+    // Such a cycle has no geometric side from which to anchor absolute PWN
+    // winding. Walk only its already assembled cell component and prefer any
+    // incident bundle with real front/back sides. Reuse `visited` and undo the
+    // temporary marks, so this uncommon path needs no cell-sized allocation.
+    queue.clear();
+    queue.push(start_cell);
+    visited[start_cell as usize] = true;
+    let mut head = 0;
+    let mut selected = None;
+    'search: while head < queue.len() {
+        let cell = queue[head];
+        head += 1;
+        let mut incidence = heads[cell as usize];
+        while incidence != u32::MAX {
+            let facet = incidence as usize / 2;
+            if surface_sheet_bundle_side_cells(facets, contribution_offsets, facet, side_scratch)?
+                .is_some()
+            {
+                selected = Some(facet);
+                break 'search;
+            }
+            let side = incidence as usize & 1;
+            let neighbor = facets[facet].cells[1 - side];
+            if !visited[neighbor as usize] {
+                visited[neighbor as usize] = true;
+                queue.push(neighbor);
+            }
+            incidence = next[incidence as usize];
+        }
+    }
+    for &cell in queue.iter() {
+        visited[cell as usize] = false;
+    }
+    queue.clear();
+    Ok(selected.unwrap_or(first_facet))
+}
+
 fn classify_surface_cells(
     decisions: &DecisionContext,
     polygons: &[ConvexPolygon],
@@ -1373,7 +1977,7 @@ fn classify_surface_cells(
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
-    facets: &[SurfaceFacet],
+    facets: &[SurfaceSheet],
     transitions: &[i32],
     contribution_offsets: &[u32],
     contributions: &[FacetContribution],
@@ -1421,6 +2025,7 @@ fn classify_surface_cells(
     let mut windings = vec![0_i32; winding_len];
     let mut visited = vec![false; cell_count as usize];
     let mut queue = Vec::<u32>::new();
+    let mut seed_side_scratch = Vec::<u64>::new();
     let mut component_count = 0_u32;
     for cell in 0..cell_count {
         if visited[cell as usize] {
@@ -1432,7 +2037,16 @@ fn classify_surface_cells(
                 reason: "surface cell has no incident facet",
             });
         }
-        let seed_facet = incidence as usize / 2;
+        let seed_facet = choose_surface_component_seed_facet(
+            cell,
+            &heads,
+            &next,
+            facets,
+            contribution_offsets,
+            &mut visited,
+            &mut queue,
+            &mut seed_side_scratch,
+        )?;
         let (seed_cell, seed_winding) = seed_surface_cell_winding(
             decisions,
             polygons,
@@ -1517,19 +2131,21 @@ fn seed_surface_cell_winding(
     source_bvh: &ExactBvhQueryHierarchy,
     bounds: &ApproxBounds,
     points: &[Point3],
-    facets: &[SurfaceFacet],
+    facets: &[SurfaceSheet],
     contribution_offsets: &[u32],
     contributions: &[FacetContribution],
     operand_count: usize,
     edges: &[[u32; 2]],
     seed_facet: usize,
 ) -> HypermeshResult<(u32, Vec<i32>)> {
-    let triangle = facets
+    let seed = facets
         .get(seed_facet)
         .ok_or(HypermeshError::SurfaceArrangementFailed {
             reason: "surface cell seed references an absent facet",
-        })?
-        .vertices;
+        })?;
+    let triangle = seed.vertices;
+    let seed_outer_cells =
+        surface_sheet_bundle_side_cells(facets, contribution_offsets, seed_facet, &mut Vec::new())?;
     let point = surface_facet_centroid(points, triangle)?;
     let constraint_count = surface.triangles.len().checked_add(edges.len()).ok_or(
         HypermeshError::CapacityOverflow {
@@ -1558,6 +2174,7 @@ fn seed_surface_cell_winding(
                 contributions,
                 operand_count,
                 seed_facet,
+                seed_outer_cells,
                 &point,
                 direction,
             ) {
@@ -1659,11 +2276,12 @@ fn try_seed_surface_cell_winding(
     bounds: &ApproxBounds,
     primary_axis: usize,
     points: &[Point3],
-    facets: &[SurfaceFacet],
+    facets: &[SurfaceSheet],
     contribution_offsets: &[u32],
     contributions: &[FacetContribution],
     operand_count: usize,
     seed_facet: usize,
+    seed_outer_cells: Option<[u32; 2]>,
     point: &Point3,
     direction: &Vector3,
 ) -> HypermeshResult<Option<(u32, Vec<i32>)>> {
@@ -1694,7 +2312,7 @@ fn try_seed_surface_cell_winding(
     let mut winding = vec![0_i32; operand_count];
     let mut saw_origin = false;
     let seed_contributions =
-        checked_contribution_row(contribution_offsets, contributions, seed_facet)?;
+        checked_contribution_row(contribution_offsets, contributions, seed.bundle as usize)?;
     for face in candidate_faces {
         let polygon = polygons
             .get(face)
@@ -1734,8 +2352,9 @@ fn try_seed_surface_cell_winding(
             reason: "surface seed broad phase omitted its source facet",
         });
     }
+    let side = if frontward { FRONT } else { BACK };
     Ok(Some((
-        seed.cells[if frontward { FRONT } else { BACK }],
+        seed_outer_cells.map_or(seed.cells[side], |cells| cells[side]),
         winding,
     )))
 }
@@ -3882,6 +4501,65 @@ mod tests {
     }
 
     #[test]
+    fn retained_component_balance_prevents_coincident_layer_bypass() {
+        let make_radial = |components: [u32; 6], positive: [bool; 6]| {
+            components
+                .into_iter()
+                .zip(positive)
+                .enumerate()
+                .map(|(sheet, (component, positive_crossing))| RadialUse {
+                    facet: 0,
+                    sheet: sheet as u32,
+                    opposite: 0,
+                    half: 0,
+                    coincident_with_previous: false,
+                    positive_crossing,
+                    layer: [component, 0, 0],
+                })
+                .collect::<Vec<_>>()
+        };
+        let contributions = |components: [u32; 6]| {
+            components
+                .map(|face| FacetContribution {
+                    face,
+                    orientation: 1,
+                })
+                .to_vec()
+        };
+        let face_components = [0, 1, 2];
+
+        // C- and C+ are the only crossings between these two C/B layer
+        // boundaries, so they describe one retained stratum.
+        let components = [0, 2, 1, 1, 2, 0];
+        let radial = make_radial(components, [true, false, false, true, true, false]);
+        assert!(
+            radial_layer_boundaries_share_stratum(
+                1,
+                3,
+                &radial,
+                &contributions(components),
+                &face_components,
+            )
+            .unwrap()
+        );
+
+        // A+ lies between these otherwise matching C/B boundaries. Joining
+        // them would bypass A and assign two operand-A windings to one cell.
+        let components = [0, 1, 2, 0, 2, 1];
+        let radial = make_radial(components, [false, true, true, true, false, false]);
+        assert!(
+            !radial_layer_boundaries_share_stratum(
+                1,
+                4,
+                &radial,
+                &contributions(components),
+                &face_components,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
     fn directed_graph_events_reuse_one_arrangement_point_transfer() {
         let polygons = [
             triangle([p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)], 0, 0, [0, 1, 2]),
@@ -4565,6 +5243,59 @@ mod tests {
     }
 
     #[test]
+    fn directed_sheet_balance_recovers_only_one_geometric_outer_pair() {
+        let sheet = |cells| SurfaceSheet {
+            vertices: [0, 1, 2],
+            cells,
+            bundle: 0,
+        };
+        let chain = [sheet([0, 1]), sheet([1, 2])];
+        let mut scratch = Vec::new();
+        assert_eq!(
+            geometric_facet_side_cells(&chain, &mut scratch).unwrap(),
+            Some([0, 2])
+        );
+        assert_eq!(
+            geometric_facet_outer_cells(&chain, &[0, 0, 1, 0, 1, 1], 2, &[1, 1], &mut scratch,)
+                .unwrap(),
+            [0, 2]
+        );
+
+        let reversed = [sheet([1, 0]), sheet([2, 1])];
+        assert_eq!(
+            geometric_facet_side_cells(&reversed, &mut scratch).unwrap(),
+            Some([2, 0])
+        );
+        let canceling_cycle = [sheet([0, 1]), sheet([1, 0])];
+        assert_eq!(
+            geometric_facet_side_cells(&canceling_cycle, &mut scratch).unwrap(),
+            None
+        );
+        assert_eq!(
+            geometric_facet_outer_cells(&canceling_cycle, &[0, 1], 1, &[0], &mut scratch,).unwrap(),
+            [0, 0]
+        );
+
+        for malformed in [
+            vec![sheet([0, 1]), sheet([0, 2])],
+            vec![sheet([0, 1]), sheet([2, 3])],
+        ] {
+            assert_eq!(
+                geometric_facet_side_cells(&malformed, &mut scratch).unwrap_err(),
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "surface geometric facet sheet stack branches",
+                }
+            );
+        }
+        assert_eq!(
+            geometric_facet_outer_cells(&chain, &[0, 1, 2], 1, &[1], &mut scratch).unwrap_err(),
+            HypermeshError::SurfaceArrangementFailed {
+                reason: "surface geometric facet outer winding transition is inconsistent",
+            }
+        );
+    }
+
+    #[test]
     fn exact_radial_tetrahedron_builds_two_reciprocal_cells() {
         let polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
         for policy in [
@@ -4650,9 +5381,9 @@ mod tests {
             assert_eq!(surface.points.len(), 4);
             assert_eq!(cells.facets.len(), 4);
             assert_eq!(cells.contributions.len(), 8);
-            assert_eq!(cells.cell_count, 2);
+            assert_eq!(cells.cell_count, 3);
             assert_eq!(cells.component_count, 1);
-            assert_eq!(cells.max_radial_degree, 2);
+            assert_eq!(cells.max_radial_degree, 4);
             assert!(
                 (0..cells.facets.len()).all(|facet| cells.facet_contributions(facet).len() == 2)
             );
@@ -4660,7 +5391,7 @@ mod tests {
                 .map(|cell| cells.cell_winding(cell).to_vec())
                 .collect::<Vec<_>>();
             windings.sort_unstable();
-            assert_eq!(windings, [vec![0, 0], vec![1, 1]]);
+            assert_eq!(windings, [vec![0, 0], vec![1, 0], vec![1, 1]]);
 
             let selected = |operation| {
                 (0..cells.facets.len())
@@ -4890,7 +5621,12 @@ mod tests {
             assert_eq!(cells.facets.len(), 7);
             assert_eq!(cells.contributions.len(), 8);
             assert_eq!(cells.component_count, 1);
-            assert_eq!(cells.cell_count, 3);
+            assert_eq!(cells.cell_count, 4);
+            let mut windings = (0..cells.cell_count)
+                .map(|cell| cells.cell_winding(cell).to_vec())
+                .collect::<Vec<_>>();
+            windings.sort_unstable();
+            assert_eq!(windings, [vec![0, 0], vec![0, 1], vec![1, 0], vec![1, 1]]);
             let selected = |operation| {
                 (0..cells.facets.len())
                     .filter(|&facet| cells.facet_classification(facet, operation) != 0)
@@ -4927,6 +5663,66 @@ mod tests {
                 cells,
                 crate::winding::BooleanOp::Difference
             ));
+            assert_eq!(decisions.certainty(), MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn same_operand_opposite_side_coincidence_removes_the_internal_sheet_cycle() {
+        let a = p(4, 0, 0);
+        let b = p(0, 4, 0);
+        let c = p(0, 0, 4);
+        let mut polygons = tetrahedron([0, 0, 0], 4, 0, 0, 0, 0, 1);
+        polygons.extend(tetrahedron_from_vertices(
+            [a, b, c, p(4, 4, 4)],
+            1,
+            4,
+            4,
+            0,
+            1,
+        ));
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let arrangement = arrange_surface(&decisions, &polygons).unwrap();
+            let cells = &arrangement.cells;
+            assert_eq!(cells.facets.len(), 7);
+            assert_eq!(cells.contributions.len(), 8);
+            assert_eq!(cells.component_count, 1);
+
+            let shared = (0..cells.facets.len())
+                .filter(|&facet| cells.facet_contributions(facet).len() == 2)
+                .collect::<Vec<_>>();
+            assert_eq!(shared.len(), 1);
+            assert_eq!(cells.facet_transition(shared[0]), [0]);
+            assert_eq!(
+                cells.cell_winding(cells.facets[shared[0]].cells[FRONT]),
+                cells.cell_winding(cells.facets[shared[0]].cells[BACK])
+            );
+            assert_eq!(
+                cells.facet_classification(shared[0], crate::winding::BooleanOp::Union),
+                0
+            );
+            assert_eq!(
+                (0..cells.facets.len())
+                    .filter(|&facet| {
+                        cells.facet_classification(facet, crate::winding::BooleanOp::Union) != 0
+                    })
+                    .count(),
+                6
+            );
+            assert!(selected_facets_are_closed(
+                cells,
+                crate::winding::BooleanOp::Union
+            ));
+            let output = arrangement
+                .materialize_operation(&decisions, &polygons, crate::winding::BooleanOp::Union)
+                .unwrap();
+            assert_materialized_output(&decisions, &polygons, &output, 6);
             assert_eq!(decisions.certainty(), MeshCertainty::Certified);
         }
     }
@@ -5859,25 +6655,28 @@ mod tests {
             EdgeUse {
                 edge: [0, 1],
                 facet: 0,
+                sheet: 0,
                 opposite: 2,
             },
             EdgeUse {
                 edge: [0, 1],
                 facet: 1,
+                sheet: 1,
                 opposite: 3,
             },
             EdgeUse {
                 edge: [0, 1],
                 facet: 2,
+                sheet: 2,
                 opposite: 4,
             },
             EdgeUse {
                 edge: [0, 1],
                 facet: 3,
+                sheet: 3,
                 opposite: 5,
             },
         ];
-        let contribution_offsets = [0, 1, 2, 3, 4];
         let contributions = [
             FacetContribution {
                 face: 7,
@@ -5896,7 +6695,6 @@ mod tests {
                 orientation: 1,
             },
         ];
-
         for policy in [
             hyperlimit::PredicatePolicy::STRICT,
             hyperlimit::PredicatePolicy::APPROXIMATE_512,
@@ -5931,7 +6729,6 @@ mod tests {
                                         &facets,
                                         [0, 1],
                                         &uses,
-                                        &contribution_offsets,
                                         &contributions,
                                         &mut retained,
                                     )
@@ -5946,6 +6743,9 @@ mod tests {
                                     &uses,
                                     &mut Vec::new(),
                                     &mut Vec::new(),
+                                    &contributions,
+                                    &[],
+                                    &[],
                                     &mut complete,
                                 )
                                 .unwrap();
@@ -5978,7 +6778,6 @@ mod tests {
                 &facets,
                 [0, 1],
                 &base_uses,
-                &contribution_offsets,
                 &contributions,
                 &mut declined,
             )
@@ -6024,7 +6823,6 @@ mod tests {
 
     #[test]
     fn retained_radial_separation_requires_shared_face_or_proved_pair() {
-        let contribution_offsets = [0, 1, 3, 4, 5];
         let contributions = [
             FacetContribution {
                 face: 7,
@@ -6052,40 +6850,15 @@ mod tests {
             source_face_pair_key(3, 9).unwrap(),
         ];
 
+        assert!(sheets_have_retained_radial_separation(0, 2, &contributions, &separated,).unwrap());
         assert!(
-            facets_have_retained_radial_separation(
-                0,
-                1,
-                &contribution_offsets,
-                &contributions,
-                &separated,
-            )
-            .unwrap()
+            !sheets_have_retained_radial_separation(0, 3, &contributions, &separated,).unwrap()
         );
-        assert!(
-            !facets_have_retained_radial_separation(
-                0,
-                2,
-                &contribution_offsets,
-                &contributions,
-                &separated,
-            )
-            .unwrap()
-        );
-        assert!(
-            facets_have_retained_radial_separation(
-                0,
-                3,
-                &contribution_offsets,
-                &contributions,
-                &[],
-            )
-            .unwrap()
-        );
+        assert!(sheets_have_retained_radial_separation(0, 4, &contributions, &[],).unwrap());
         assert!(matches!(
-            facets_have_retained_radial_separation(0, 1, &[1, 0], &contributions, &separated,),
+            sheets_have_retained_radial_separation(0, u32::MAX, &contributions, &separated,),
             Err(HypermeshError::SurfaceArrangementFailed {
-                reason: "surface output facet contribution storage is malformed"
+                reason: "surface radial ring references an absent sheet contribution"
             })
         ));
     }

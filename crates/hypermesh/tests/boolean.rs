@@ -72,11 +72,39 @@ fn integer_octahedron(center: [i32; 3], radius: [i32; 3]) -> TriangleMesh {
     )
 }
 
+fn integer_tetrahedron(origin: [i32; 3], extent: [i32; 3]) -> TriangleMesh {
+    let [x, y, z] = origin;
+    TriangleMesh::new(
+        vec![
+            Point3::new(r(x), r(y), r(z)),
+            Point3::new(r(x + extent[0]), r(y), r(z)),
+            Point3::new(r(x), r(y + extent[1]), r(z)),
+            Point3::new(r(x), r(y), r(z + extent[2])),
+        ],
+        vec![
+            Triangle::new(0, 2, 1),
+            Triangle::new(0, 1, 3),
+            Triangle::new(0, 3, 2),
+            Triangle::new(1, 2, 3),
+        ],
+    )
+}
+
 fn with_rotated_triangle_order(mesh: TriangleMesh, amount: usize) -> TriangleMesh {
     let mut triangles = mesh.triangles.to_vec();
     let count = triangles.len();
     triangles.rotate_left(amount % count);
     TriangleMesh::new(mesh.positions.to_vec(), triangles)
+}
+
+fn with_cycled_triangle_vertices(mesh: TriangleMesh) -> TriangleMesh {
+    TriangleMesh::new(
+        mesh.positions.to_vec(),
+        mesh.triangles
+            .iter()
+            .map(|triangle| Triangle::new(triangle.v1, triangle.v2, triangle.v0))
+            .collect(),
+    )
 }
 
 fn combine_meshes(meshes: &[TriangleMesh]) -> TriangleMesh {
@@ -506,6 +534,111 @@ fn subdivided_same_operand_overlap_has_empty_disjoint_intersection() {
                 signed_six_volume(&outcome.value.vertices, &outcome.value.results[0]),
                 Real::zero(),
             );
+        }
+    }
+}
+
+#[test]
+fn corner_coincident_same_operand_shells_have_consistent_surface_cells() {
+    let box_shell = integer_box([3, 4, 5], [7, 6, 6]);
+    let tetrahedron = integer_tetrahedron([3, 4, 5], [3, 2, 3]);
+    let overlapping_shell_orders = [
+        combine_meshes(&[
+            box_shell.clone(),
+            with_rotated_triangle_order(tetrahedron.clone(), 3),
+        ]),
+        combine_meshes(&[
+            with_rotated_triangle_order(tetrahedron.clone(), 1),
+            with_rotated_triangle_order(box_shell.clone(), 7),
+        ]),
+        combine_meshes(&[
+            with_cycled_triangle_vertices(with_rotated_triangle_order(box_shell, 5)),
+            with_cycled_triangle_vertices(with_rotated_triangle_order(tetrahedron, 2)),
+        ]),
+    ];
+    let cutter = with_rotated_triangle_order(integer_box([2, 3, 4], [4, 6, 8]), 4);
+    let exact_fraction = |numerator, denominator| {
+        (r(numerator) / r(denominator)).expect("the exact volume denominator is nonzero")
+    };
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = MeshContext::new(policy);
+        for (shell_order, overlapping_shells) in overlapping_shell_orders.iter().enumerate() {
+            for (reverse, operands) in [
+                (false, [overlapping_shells, &cutter]),
+                (true, [&cutter, overlapping_shells]),
+            ] {
+                for (operation, expected_signed_six_volume) in [
+                    (BooleanOp::Union, exact_fraction(542, 3)),
+                    (BooleanOp::Intersection, exact_fraction(50, 3)),
+                    (
+                        BooleanOp::Difference,
+                        exact_fraction(if reverse { 382 } else { 110 }, 3),
+                    ),
+                    (BooleanOp::SymmetricDifference, r(164)),
+                ] {
+                    let outcome = run(&context, &operands, BooleanProgram::Operation(operation))
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "{policy:?} shell_order={shell_order} reverse={reverse} \
+                                 operation={operation:?} failed: {error:?}"
+                            )
+                        });
+                    assert_eq!(outcome.certainty, MeshCertainty::Certified);
+                    assert_certified_boundary(&outcome.value, &outcome.value.results[0]);
+                    assert_eq!(
+                        signed_six_volume(&outcome.value.vertices, &outcome.value.results[0]),
+                        expected_signed_six_volume,
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn subdivided_face_coincident_shell_stack_has_consistent_surface_cells() {
+    let wide = integer_box([-4, -5, -5], [0, -1, -4])
+        .subdivide_triangles(NonZeroU32::MIN)
+        .unwrap();
+    let adjoining = with_rotated_triangle_order(integer_box([-5, -5, -5], [-4, -2, -4]), 4);
+    let stacked_shell_orders = [
+        combine_meshes(&[wide.clone(), adjoining.clone()]),
+        combine_meshes(&[
+            with_cycled_triangle_vertices(adjoining),
+            with_cycled_triangle_vertices(with_rotated_triangle_order(wide, 17)),
+        ]),
+    ];
+    let coincident_subset = with_rotated_triangle_order(integer_box([-5, -5, -5], [-4, -4, -4]), 7);
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let context = MeshContext::new(policy);
+        for (shell_order, stacked_shells) in stacked_shell_orders.iter().enumerate() {
+            for (reverse, operands) in [
+                (false, [stacked_shells, &coincident_subset]),
+                (true, [&coincident_subset, stacked_shells]),
+            ] {
+                for (operation, expected_signed_six_volume) in [
+                    (BooleanOp::Union, r(114)),
+                    (BooleanOp::Intersection, r(6)),
+                    (BooleanOp::Difference, r(if reverse { 0 } else { 108 })),
+                    (BooleanOp::SymmetricDifference, r(108)),
+                ] {
+                    let outcome = run(&context, &operands, BooleanProgram::Operation(operation))
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "{policy:?} shell_order={shell_order} reverse={reverse} \
+                             operation={operation:?} failed: {error:?}"
+                            )
+                        });
+                    assert_eq!(outcome.certainty, MeshCertainty::Certified);
+                    assert_certified_boundary(&outcome.value, &outcome.value.results[0]);
+                    assert_eq!(
+                        signed_six_volume(&outcome.value.vertices, &outcome.value.results[0]),
+                        expected_signed_six_volume,
+                    );
+                }
+            }
         }
     }
 }

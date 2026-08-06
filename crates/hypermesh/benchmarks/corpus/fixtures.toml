@@ -89,6 +89,40 @@ expected_certainty = "Certified"
 expected_volumes = [16.0, 0.0, 8.0, 8.0, 16.0]
 
 [[fixture]]
+id = "corner_coincident_same_operand_box_tetra"
+status = "permanent"
+provenance = "tests/boolean.rs::corner_coincident_same_operand_shells_have_consistent_surface_cells"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "tests::boolean::integer_box + integer_tetrahedron"
+coordinate_class = "integer"
+topology = ["closed-pwn", "multi-component", "self-intersecting-pwn", "winding-multiplicity-two", "corner-coincidence", "coincident-face-stack", "source-order-permutation", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volumes = ["542/3", "50/3", "110/3", "382/3", "164"]
+
+[[fixture]]
+id = "subdivided_face_coincident_shell_stack"
+status = "permanent"
+provenance = "tests/boolean.rs::subdivided_face_coincident_shell_stack_has_consistent_surface_cells"
+license = "MIT"
+source_kind = "deterministic-generator"
+generator = "tests::boolean::integer_box + TriangleMesh::subdivide_triangles"
+coordinate_class = "integer-dyadic"
+topology = ["closed-pwn", "multi-component", "full-face-contact", "partial-face-contact", "coplanar-overlay", "coincident-face-stack", "subdivided-source", "retained-component-balance", "operand-permutation"]
+operations = ["union", "intersection", "difference", "reverse-difference", "xor"]
+policies = ["STRICT", "APPROXIMATE_512"]
+tiers = ["micro", "regression", "fuzz-reduction"]
+size = "small"
+cgal_eligible = false
+expected_certainty = "Certified"
+expected_signed_six_volumes = [114, 6, 108, 0, 108]
+
+[[fixture]]
 id = "partial_face_touching_boxes"
 status = "permanent"
 provenance = "Hypermesh exact competitive corpus"
