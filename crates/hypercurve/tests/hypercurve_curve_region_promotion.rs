@@ -338,6 +338,105 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
 }
 
 #[cfg(feature = "predicates")]
+#[test]
+fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let first = axis_aligned_algebraic_rectangle(&policy);
+        let second = first
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &q(1, 4),
+                &q(1, 4),
+                &policy,
+            )
+            .expect("the translated selected-field rectangle must remain exact")
+            .into_value();
+        let evidence = first
+            .intersect_region(&second, &policy)
+            .expect("the two retained chord regions must intersect exactly");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        assert!(
+            evidence.value.is_complete(),
+            "{:?}",
+            evidence.value.blockers()
+        );
+        assert!(
+            evidence
+                .value
+                .contacts()
+                .iter()
+                .filter(|contact| matches!(
+                    contact.point(),
+                    Some(RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_))
+                ))
+                .count()
+                >= 1,
+            "the strict-interior line crossings must retain their two-support point evidence: {evidence:?}",
+        );
+
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("the two retained chord regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        let intersection = batch.value.intersection().clone();
+        let retained_pair_endpoints = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.fragments())
+                .filter_map(|fragment| match fragment {
+                    BezierSplitFragment2::AlgebraicChord(chord) => Some(
+                        usize::from(matches!(
+                            chord.start(),
+                            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                        )) + usize::from(matches!(
+                            chord.end(),
+                            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                        )),
+                    ),
+                    _ => None,
+                })
+                .sum::<usize>()
+        };
+        assert!(retained_pair_endpoints(&intersection) >= 2);
+
+        let transformed = intersection
+            .transform_affine(
+                &Real::zero(),
+                &Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::from(2),
+                &Real::from(-3),
+                &policy,
+            )
+            .expect("correlated chord-pair endpoints must survive an exact affine transform");
+        assert_eq!(transformed.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                transformed
+                    .value
+                    .classify_point(&Point2::new(q(5, 2), q(-5, 2)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+        assert!(retained_pair_endpoints(&transformed.value) >= 2);
+
+        let expanded = transformed
+            .value
+            .offset(q(1, 20), &sharp_offset(), &policy)
+            .expect("transformed chord-pair endpoints must survive an exact offset");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert!(!expanded.value.is_empty());
+        assert!(retained_pair_endpoints(&expanded.value) >= 2);
+    }
+}
+
+#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(

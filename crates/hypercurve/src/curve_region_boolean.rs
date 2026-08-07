@@ -2282,6 +2282,35 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             _ => unreachable!("an algebraic-chord pair retains one chord"),
                         };
                     if let RegionCarrierGeometry::AlgebraicChord(other_chord) = other {
+                        if self.authored_carriers_are_adjacent(pair)
+                            && let (
+                                Classification::Decided(Some(first_direction)),
+                                Classification::Decided(Some(second_direction)),
+                            ) = (
+                                chord
+                                    .axis_direction(&self.data.policy)
+                                    .map_err(|cause| self.invalid(chord_index, cause))?,
+                                other_chord
+                                    .axis_direction(&self.data.policy)
+                                    .map_err(|cause| self.invalid(other_index, cause))?,
+                            )
+                            && first_direction.axis() != second_direction.axis()
+                        {
+                            // Two nonparallel line supports have one contact.
+                            // Authored adjacency already owns their common
+                            // endpoint, so no pair predicate or point carrier
+                            // is needed. This is especially important after an
+                            // offset transports a correlated chord-pair point:
+                            // normalizing that endpoint would discard the two
+                            // support certificate that proves the same fact.
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-chord-pair",
+                                "adjacent-perpendicular-complete",
+                            );
+                            return Ok(RegionPairResult::empty());
+                        }
                         let strictly_one_sided = if let Some(line) = other_chord.exact_line() {
                             chord
                                 .is_strictly_one_sided_of_exact_line(&line, &self.data.policy)
@@ -2453,6 +2482,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             )
                             && let Ok(line) = LineSeg2::try_new(start, end)
                         {
+                            if let (
+                                Classification::Decided(Some(chord_direction)),
+                                Some(line_direction),
+                            ) = (
+                                chord
+                                    .axis_direction(&self.data.policy)
+                                    .map_err(|cause| self.invalid(chord_index, cause))?,
+                                exact_axis_aligned_line_direction(&line),
+                            ) && chord_direction.axis() != line_direction.axis()
+                            {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-pair",
+                                    "adjacent-perpendicular-line-complete",
+                                );
+                                return Ok(RegionPairResult::empty());
+                            }
                             match chord
                                 .has_non_collinear_support_with_exact_line(&line, &self.data.policy)
                                 .map_err(|cause| self.invalid(other_index, cause))?
@@ -6195,6 +6242,22 @@ fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
 }
 
 #[cfg(feature = "predicates")]
+fn exact_axis_aligned_line_direction(
+    line: &LineSeg2,
+) -> Option<BezierAlgebraicChordAxisDirection2> {
+    let strict = CurveContext::STRICT;
+    let x_order = compare_reals(line.start().x(), line.end().x(), &strict)?;
+    let y_order = compare_reals(line.start().y(), line.end().y(), &strict)?;
+    match (x_order, y_order) {
+        (Ordering::Less, Ordering::Equal) => Some(BezierAlgebraicChordAxisDirection2::PositiveX),
+        (Ordering::Greater, Ordering::Equal) => Some(BezierAlgebraicChordAxisDirection2::NegativeX),
+        (Ordering::Equal, Ordering::Less) => Some(BezierAlgebraicChordAxisDirection2::PositiveY),
+        (Ordering::Equal, Ordering::Greater) => Some(BezierAlgebraicChordAxisDirection2::NegativeY),
+        (Ordering::Less | Ordering::Equal | Ordering::Greater, _) => None,
+    }
+}
+
+#[cfg(feature = "predicates")]
 fn retained_axis_aligned_line_chord(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
@@ -6217,16 +6280,7 @@ fn retained_axis_aligned_line_chord(
         // resultant coefficients cannot be normalized as rationals.
         return None;
     }
-    let strict = CurveContext::STRICT;
-    let x_order = compare_reals(line.start().x(), line.end().x(), &strict)?;
-    let y_order = compare_reals(line.start().y(), line.end().y(), &strict)?;
-    let direction = match (x_order, y_order) {
-        (Ordering::Less, Ordering::Equal) => BezierAlgebraicChordAxisDirection2::PositiveX,
-        (Ordering::Greater, Ordering::Equal) => BezierAlgebraicChordAxisDirection2::NegativeX,
-        (Ordering::Equal, Ordering::Less) => BezierAlgebraicChordAxisDirection2::PositiveY,
-        (Ordering::Equal, Ordering::Greater) => BezierAlgebraicChordAxisDirection2::NegativeY,
-        (Ordering::Less | Ordering::Equal | Ordering::Greater, _) => return None,
-    };
+    let direction = exact_axis_aligned_line_direction(line)?;
     Some(
         crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
             RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),

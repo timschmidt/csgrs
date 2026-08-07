@@ -2765,30 +2765,28 @@ fn axis_aligned_offset_has_reversed_span(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     for span in spans {
-        match span.offset_start.same_point(&span.offset_end, policy) {
-            Classification::Decided(true) => return Ok(Classification::Decided(true)),
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let chord = match crate::BezierAlgebraicChord2::try_new(
-            span.offset_start.clone(),
-            span.offset_end.clone(),
+        // Offset construction preserves the certified constant coordinate.
+        // Compare only the original traversal axis: rebuilding a general
+        // chord would repeat both endpoint-field predicates, allocate a
+        // carrier, and discard the direction certificate already in `span`.
+        match crate::BezierAlgebraicChord2::point_axis_order(
+            &span.offset_start,
+            &span.offset_end,
+            span.direction.axis(),
             policy,
         )? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return Ok(Classification::Decided(true));
             }
-        };
-        match chord.axis_direction(policy)? {
-            Classification::Decided(Some(direction)) if direction == span.direction => {}
-            Classification::Decided(Some(_)) => return Ok(Classification::Decided(true)),
-            Classification::Decided(None) => {
-                return Err(CurveError::Topology(
-                    "axis-aligned miter adjustment produced a diagonal span".into(),
-                ));
+            Classification::Decided(order)
+                if (order == std::cmp::Ordering::Less)
+                    == matches!(
+                        span.direction,
+                        BezierAlgebraicChordAxisDirection2::PositiveX
+                            | BezierAlgebraicChordAxisDirection2::PositiveY
+                    ) => {}
+            Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(true));
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
