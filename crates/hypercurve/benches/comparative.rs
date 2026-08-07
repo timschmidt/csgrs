@@ -619,6 +619,7 @@ fn benchmark_contour_offset(runner: &Runner) {
 #[cfg(feature = "predicates")]
 fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
+    let chord_pair_transform_name = "algebraic_chord_pair/affine_transform_offset";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
     let shared_chord_name = "algebraic_round_boolean/shared_chord_circle_order";
@@ -626,6 +627,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let shared_chord_collinear_reentry_name =
         "algebraic_round_boolean/shared_chord_collinear_reentry";
     if !runner.group_enabled(offset_name)
+        && !runner.group_enabled(chord_pair_transform_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
         && !runner.group_enabled(shared_chord_name)
@@ -759,6 +761,133 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .map(PlineSource::vertex_count)
                 .sum()
         });
+    }
+
+    if runner.group_enabled(chord_pair_transform_name) {
+        let quarter =
+            (Real::one() / Real::from(4_u8)).expect("exact chord-pair benchmark translation");
+        let shifted = hypercurve
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &quarter,
+                &quarter,
+                &policy,
+            )
+            .expect("translated chord-pair benchmark operand remains exact")
+            .into_value();
+        let exact_intersection = hypercurve
+            .boolean_regions(&shifted, &policy)
+            .expect("chord-pair benchmark intersection completes")
+            .into_value()
+            .intersection()
+            .clone();
+        let pair_endpoint_count = exact_intersection
+            .boundary_loops()
+            .iter()
+            .flat_map(|boundary| boundary.fragments())
+            .filter_map(|fragment| match fragment {
+                BezierSplitFragment2::AlgebraicChord(chord) => Some(
+                    usize::from(matches!(
+                        chord.start(),
+                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                    )) + usize::from(matches!(
+                        chord.end(),
+                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                    )),
+                ),
+                _ => None,
+            })
+            .sum::<usize>();
+        assert!(pair_endpoint_count >= 2);
+
+        let transformed_region = || {
+            exact_intersection.transform_affine(
+                &Real::zero(),
+                &Real::one(),
+                &Real::one(),
+                &Real::zero(),
+                &Real::from(2_i8),
+                &Real::from(-3_i8),
+                &policy,
+            )
+        };
+        let region_weight = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>()
+        };
+        let transform_complete = transformed_region().is_ok();
+        let transform_offset_complete = transformed_region().is_ok_and(|transformed| {
+            transformed
+                .value
+                .offset(
+                    (Real::one() / Real::from(20_u8))
+                        .expect("exact transformed chord-pair offset distance"),
+                    &miter,
+                    &policy,
+                )
+                .is_ok()
+        });
+
+        let mut cavalier_shifted = cavalier.clone();
+        cavalier_shifted.translate_mut(0.25, 0.25);
+        let cavalier_intersection_result =
+            cavalier.boolean(&cavalier_shifted, CavalierBooleanOp::And);
+        assert_eq!(cavalier_intersection_result.pos_plines.len(), 1);
+        assert!(cavalier_intersection_result.neg_plines.is_empty());
+        let cavalier_intersection = cavalier_intersection_result.pos_plines[0].pline.clone();
+
+        runner.measure(
+            chord_pair_transform_name,
+            if transform_complete {
+                "hypercurve_exact_transform"
+            } else {
+                "hypercurve_rejected_transform"
+            },
+            || transformed_region().map_or(0, |result| region_weight(&result.value)),
+        );
+        runner.measure(
+            chord_pair_transform_name,
+            if transform_offset_complete {
+                "hypercurve_exact_transform_offset"
+            } else {
+                "hypercurve_rejected_transform_offset"
+            },
+            || {
+                transformed_region().map_or(0, |transformed| {
+                    transformed
+                        .value
+                        .offset(
+                            (Real::one() / Real::from(20_u8))
+                                .expect("exact transformed chord-pair offset distance"),
+                            &miter,
+                            &policy,
+                        )
+                        .map_or(0, |result| region_weight(&result.value))
+                })
+            },
+        );
+        runner.measure(
+            chord_pair_transform_name,
+            "cavalier_f64_transform_offset",
+            || {
+                let mut transformed = cavalier_intersection.clone();
+                for index in 0..transformed.vertex_count() {
+                    let vertex = transformed.at(index);
+                    transformed.set(index, vertex.y + 2.0, vertex.x - 3.0, -vertex.bulge);
+                }
+                transformed
+                    .parallel_offset(black_box(0.05))
+                    .iter()
+                    .map(PlineSource::vertex_count)
+                    .sum()
+            },
+        );
     }
 
     if runner.group_enabled(shared_chord_name)
