@@ -37972,6 +37972,151 @@ mod conversion_tests {
         }
     }
 
+    /// Manual matched benchmark for the private correlated-circle carrier.
+    ///
+    /// Run with `--release --all-features -- --ignored --nocapture` and select
+    /// `mapped`, `unsplit`, `disabled`, or `cavalier` through
+    /// `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
+    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[test]
+    #[ignore = "manual performance checkpoint driver"]
+    fn benchmark_correlated_circle_partition_offset_driver() {
+        use cavalier_contours::polyline::{PlineSource, PlineSourceMut as _, Polyline};
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let region = |partitioned| {
+            let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let mut fragments = Vec::new();
+            if partitioned {
+                let rotated =
+                    synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                        .transform_similarity(
+                            &Similarity2::try_from_real_affine(
+                                Real::zero(),
+                                Real::from(-1_i8),
+                                Real::one(),
+                                Real::zero(),
+                                Real::zero(),
+                                Real::from(5_i8),
+                            )
+                            .unwrap(),
+                        )
+                        .unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                ) = upper.pair_intersections(&rotated, &policy).unwrap()
+                else {
+                    panic!("benchmark selected circles must overlap");
+                };
+                let cut = overlap.first_start_parameter();
+                for (start, end) in [
+                    (
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                        cut.clone(),
+                    ),
+                    (
+                        cut,
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                    ),
+                ] {
+                    let Classification::Decided(fragment) =
+                        BezierAlgebraicCuspSemicircleFragment2::try_new(
+                            upper.clone(),
+                            start,
+                            end,
+                            false,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("benchmark mapped circle partition must be ordered");
+                    };
+                    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment));
+                }
+            } else {
+                fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(upper.clone(), &policy),
+                ));
+            }
+            fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                BezierAlgebraicCuspSemicircleFragment2::full(upper.complementary_half(), &policy),
+            ));
+            CurveRegion2::try_new_with_loop_topology(
+                vec![CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap()],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap()
+        };
+
+        let mode = std::env::var("HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE")
+            .unwrap_or_else(|_| "mapped".into());
+        let iterations = std::env::var("HYPERCURVE_MAPPED_CIRCLE_BENCH_ITERS")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(64);
+        let warmups = std::env::var("HYPERCURVE_MAPPED_CIRCLE_BENCH_WARMUP")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(1);
+        assert!(iterations > 0);
+
+        let exact = match mode.as_str() {
+            "mapped" | "disabled" => Some(region(true)),
+            "unsplit" => Some(region(false)),
+            "cavalier" => None,
+            _ => panic!("unknown HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE={mode:?}"),
+        };
+        let mut cavalier = Polyline::new_closed();
+        cavalier.add(1.0, 0.0, 1.0);
+        cavalier.add(-1.0, 0.0, 1.0);
+
+        let operation = || match mode.as_str() {
+            "mapped" | "unsplit" => exact
+                .as_ref()
+                .unwrap()
+                .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+                .map_or(0, |result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                }),
+            "disabled" => exact.as_ref().unwrap().boundary_loops().len(),
+            "cavalier" => cavalier
+                .parallel_offset(black_box(-0.5))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
+            _ => unreachable!(),
+        };
+        let complete = match mode.as_str() {
+            "mapped" | "unsplit" | "cavalier" => operation() != 0,
+            "disabled" => true,
+            _ => unreachable!(),
+        };
+        for _ in 0..warmups {
+            black_box(operation());
+        }
+        let started = Instant::now();
+        let mut checksum = 0_usize;
+        for _ in 0..iterations {
+            checksum ^= black_box(operation());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "correlated_circle_partition_offset mode={mode} complete={complete} iterations={iterations} elapsed_ns={} ns_per_iter={:.3} checksum={checksum}",
+            elapsed.as_nanos(),
+            elapsed.as_secs_f64() * 1.0e9 / iterations as f64,
+        );
+    }
+
     #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
