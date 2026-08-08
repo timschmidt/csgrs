@@ -47224,6 +47224,236 @@ mod conversion_tests {
         );
     }
 
+    /// Manual matched benchmark for an independently selected oblique chord
+    /// closing a selected-circle cap.  The re-offset lane starts from the
+    /// retained exact parallel produced by the first bevel offset.
+    ///
+    /// Run with `--release --all-features -- --ignored --nocapture` and select
+    /// construction, first-offset, re-offset, matched disabled, or Cavalier
+    /// binary64 context through `HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_MODE`.
+    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[test]
+    #[ignore = "manual performance checkpoint driver"]
+    fn benchmark_independent_oblique_chord_cap_offset_driver() {
+        use cavalier_contours::polyline::{PlineSource, PlineSourceMut as _, Polyline};
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        fn decided<T>(classification: Classification<T>) -> Option<T> {
+            match classification {
+                Classification::Decided(value) => Some(value),
+                Classification::Uncertain(_) => None,
+            }
+        }
+
+        let policy = CurveContext::STRICT;
+        let cap = || -> Option<CurveRegion2> {
+            let circle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let selected_parameter = |denominator: i8| {
+                let BezierParameter2::Algebraic(parameter) = algebraic_parameter(vec![
+                    -(Real::one() / Real::from(denominator)).ok()?,
+                    Real::zero(),
+                    Real::one(),
+                ]) else {
+                    return None;
+                };
+                Some(parameter)
+            };
+            let endpoint_on_support =
+                |x0: i8,
+                 parameter: &BezierAlgebraicParameter2|
+                 -> Option<RationalBezierIntersectionPointEvidence2> {
+                    let x0 = Real::from(x0);
+                    let x1 = &x0 + Real::one();
+                    let y = |x: &Real| -> Option<Real> {
+                        (((Real::from(7_i8) / Real::from(2_i8)).ok()? - Real::from(3_i8) * x)
+                            / Real::from(4_i8))
+                        .ok()
+                    };
+                    let curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                        QuadraticBezier2::from_line_segment(
+                            LineSeg2::try_new(
+                                Point2::new(x0.clone(), y(&x0)?),
+                                Point2::new(x1.clone(), y(&x1)?),
+                            )
+                            .ok()?,
+                        ),
+                    ))
+                    .ok()?;
+                    Some(RationalBezierIntersectionPointEvidence2::Algebraic(
+                        curve
+                            .point_at_algebraic_parameter(parameter, &policy)
+                            .ok()?,
+                    ))
+                };
+            let secant = decided(
+                BezierAlgebraicChord2::try_new(
+                    endpoint_on_support(-3, &selected_parameter(5)?)?,
+                    endpoint_on_support(2, &selected_parameter(7)?)?,
+                    &policy,
+                )
+                .ok()?,
+            )?;
+            let BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts) =
+                decided(circle.chord_intersections(&secant, &policy).ok()?)?
+            else {
+                return None;
+            };
+            let [left, right] = contacts.as_slice() else {
+                return None;
+            };
+            let arc = decided(
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    circle,
+                    right.cusp_parameter.clone(),
+                    left.cusp_parameter.clone(),
+                    false,
+                    &policy,
+                )
+                .ok()?,
+            )?;
+            let closing_chord = BezierAlgebraicChord2::from_ordered_parameter_range(
+                &secant,
+                &left.chord_parameter,
+                &right.chord_parameter,
+                &policy,
+            )
+            .ok()?;
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                    BezierSplitFragment2::AlgebraicChord(closing_chord),
+                ],
+                &policy,
+            )
+            .ok()?;
+            CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .ok()
+        };
+        let first_distance = (Real::one() / Real::from(8_i8)).unwrap();
+        let second_distance = (Real::one() / Real::from(16_i8)).unwrap();
+        let first_offset = |region: &CurveRegion2| {
+            region
+                .offset(
+                    first_distance.clone(),
+                    &crate::OffsetCornerStyle2::Bevel,
+                    &policy,
+                )
+                .ok()
+                .map(|outcome| outcome.value)
+        };
+        let second_offset = |region: &CurveRegion2| {
+            region
+                .offset(
+                    second_distance.clone(),
+                    &crate::OffsetCornerStyle2::Bevel,
+                    &policy,
+                )
+                .ok()
+                .map(|outcome| {
+                    outcome
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                })
+        };
+        let prebuilt_cap = cap();
+        let prebuilt_first_offset = prebuilt_cap.as_ref().and_then(first_offset);
+
+        let root_51 = 51.0_f64.sqrt();
+        let mut cavalier = Polyline::new_closed();
+        cavalier.add(
+            0.42 + 2.0 * root_51 / 25.0,
+            0.56 - 3.0 * root_51 / 50.0,
+            (3.0_f64 / 17.0).sqrt(),
+        );
+        cavalier.add(
+            0.42 - 2.0 * root_51 / 25.0,
+            0.56 + 3.0 * root_51 / 50.0,
+            0.0,
+        );
+
+        let mode = std::env::var("HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_MODE")
+            .unwrap_or_else(|_| "prebuilt_reoffset".into());
+        let iterations = std::env::var("HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_ITERS")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(8);
+        let warmups = std::env::var("HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_WARMUP")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(1);
+        assert!(iterations > 0);
+        let operation = || match mode.as_str() {
+            "construct" => cap().map_or(0, |region| region.boundary_loops().len()),
+            "exact_offset" => cap()
+                .as_ref()
+                .and_then(first_offset)
+                .map_or(0, |region| region.boundary_loops().len()),
+            "prebuilt_exact_offset" => prebuilt_cap
+                .as_ref()
+                .and_then(|region| first_offset(black_box(region)))
+                .map_or(0, |region| region.boundary_loops().len()),
+            "reoffset" => cap()
+                .as_ref()
+                .and_then(first_offset)
+                .as_ref()
+                .and_then(second_offset)
+                .unwrap_or(0),
+            "prebuilt_reoffset" => prebuilt_first_offset
+                .as_ref()
+                .and_then(|region| second_offset(black_box(region)))
+                .unwrap_or(0),
+            "construct_disabled" | "disabled" => 1,
+            "prebuilt_disabled" => {
+                black_box(&prebuilt_cap);
+                1
+            }
+            "prebuilt_reoffset_disabled" => {
+                black_box(&prebuilt_first_offset);
+                1
+            }
+            "cavalier_f64_offset" => cavalier
+                .parallel_offset(black_box(-0.125))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
+            "cavalier_f64_reoffset" => cavalier
+                .parallel_offset(black_box(-0.125))
+                .iter()
+                .flat_map(|polyline| polyline.parallel_offset(black_box(-0.0625)))
+                .map(|polyline| polyline.vertex_count())
+                .sum(),
+            _ => panic!("unknown HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_MODE={mode:?}"),
+        };
+        let preflight = operation();
+        let complete = matches!(
+            mode.as_str(),
+            "construct_disabled" | "disabled" | "prebuilt_disabled" | "prebuilt_reoffset_disabled"
+        ) || preflight != 0;
+        for _ in 0..warmups {
+            black_box(operation());
+        }
+        let started = Instant::now();
+        let mut checksum = 0_usize;
+        for _ in 0..iterations {
+            checksum ^= black_box(operation());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "independent_oblique_chord_cap mode={mode} complete={complete} iterations={iterations} elapsed_ns={} ns_per_iter={:.3} checksum={checksum}",
+            elapsed.as_nanos(),
+            elapsed.as_secs_f64() * 1.0e9 / iterations as f64,
+        );
+    }
+
     #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
