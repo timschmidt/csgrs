@@ -43360,10 +43360,12 @@ mod conversion_tests {
     }
 
     /// Manual capability benchmark for a selected-circle cap whose two
-    /// endpoints are nonrational cuts authored by rational circle carriers.
+    /// endpoints are nonrational cuts authored by rational or analytic
+    /// coincident-circle carriers.
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
-    /// `exact_offset`, `disabled`, or `cavalier_f64_offset` through
+    /// `exact_offset`, `parallel_exact_offset`, their `disabled` controls, or
+    /// `cavalier_f64_offset` through
     /// `HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
@@ -43418,10 +43420,14 @@ mod conversion_tests {
         };
         let start = mapped_cut(&rational_quarter(false));
         let end = mapped_cut(&rational_quarter(true));
-        let Classification::Decided(arc) =
-            BezierAlgebraicCuspSemicircleFragment2::try_new(semicircle, start, end, false, &policy)
-                .unwrap()
-        else {
+        let Classification::Decided(arc) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+            semicircle.clone(),
+            start,
+            end.clone(),
+            false,
+            &policy,
+        )
+        .unwrap() else {
             panic!("the benchmark mapped cuts must bound a selected-circle arc");
         };
         let Classification::Decided(Some(chord_end)) =
@@ -43456,6 +43462,49 @@ mod conversion_tests {
         )
         .unwrap();
 
+        let analytic_source = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(Real::from(2_i8), Real::zero()),
+                Point2::new(Real::from(2_i8), Real::from(2_i8)),
+                Point2::new(Real::zero(), Real::from(2_i8)),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        let analytic_parallel = analytic_source.parallel_left(Real::one()).unwrap();
+        assert!(analytic_parallel.data.certified_ph_offset.set(None).is_ok());
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+            parallel_overlaps,
+        )) = semicircle
+            .parallel_intersections(&analytic_parallel, &policy)
+            .unwrap()
+        else {
+            panic!("the benchmark analytic carrier must overlap the selected circle");
+        };
+        let [parallel_overlap] = parallel_overlaps.as_slice() else {
+            panic!("the benchmark analytic carrier must retain one selected cell");
+        };
+        let Classification::Decided(parallel_start) = parallel_overlap
+            .cusp_parameter_for_other(&algebraic_cut, &policy)
+            .unwrap()
+        else {
+            panic!("the benchmark analytic cut must remain mapped");
+        };
+        let Classification::Decided(parallel_arc) =
+            BezierAlgebraicCuspSemicircleFragment2::try_new(
+                semicircle,
+                parallel_start,
+                end,
+                false,
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("the benchmark analytic and rational cuts must bound a selected-circle arc");
+        };
+
         // t^2=1/2 on the rational quarter maps exactly to
         // (1/3, 2*sqrt(2)/3). The minor-arc bulge is 3-2*sqrt(2).
         let sqrt_two = 2.0_f64.sqrt();
@@ -43475,6 +43524,48 @@ mod conversion_tests {
             .unwrap_or(1);
         assert!(iterations > 0);
         let distance = (Real::one() / Real::from(8_i8)).unwrap();
+        let parallel_exact_offset = || -> Option<usize> {
+            let Classification::Decided(Some(chord_end)) =
+                parallel_arc.endpoint_point_evidence(true, &policy).ok()?
+            else {
+                return None;
+            };
+            let Classification::Decided(Some(chord_start)) =
+                parallel_arc.endpoint_point_evidence(false, &policy).ok()?
+            else {
+                return None;
+            };
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(chord_start, chord_end, &policy).ok()?
+            else {
+                return None;
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(parallel_arc.clone()),
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                ],
+                &policy,
+            )
+            .ok()?;
+            let cap = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .ok()?;
+            cap.offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+                .ok()
+                .map(|result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                })
+        };
         let operation = || match mode.as_str() {
             "exact_offset" => cap
                 .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
@@ -43486,7 +43577,12 @@ mod conversion_tests {
                         .map(|boundary| boundary.fragments().len())
                         .sum()
                 }),
+            "parallel_exact_offset" => parallel_exact_offset().unwrap_or(0),
             "disabled" => cap.boundary_loops().len(),
+            "parallel_disabled" => {
+                black_box(&parallel_arc);
+                1
+            }
             "cavalier_f64_offset" => cavalier
                 .parallel_offset(black_box(-0.125))
                 .iter()
@@ -43495,7 +43591,7 @@ mod conversion_tests {
             _ => panic!("unknown HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE={mode:?}"),
         };
         let preflight = operation();
-        let complete = mode == "disabled" || preflight != 0;
+        let complete = matches!(mode.as_str(), "disabled" | "parallel_disabled") || preflight != 0;
         for _ in 0..warmups {
             black_box(operation());
         }
