@@ -1917,6 +1917,26 @@ pub(crate) enum BezierAlgebraicCuspSemicircleChordIntersections2 {
     },
 }
 
+/// One fully retained finite contact produced by the authoritative selected
+/// semicircle/chord kernel.  Fast paths may use different local elimination
+/// systems, but callers receive the same exact carrier parameters and point
+/// evidence.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+pub(crate) struct BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+    pub(crate) cusp_parameter: BezierAlgebraicCuspSemicircleParameter2,
+    pub(crate) chord_parameter: BezierAlgebraicChordParameter2,
+    pub(crate) point: RationalBezierIntersectionPointEvidence2,
+    pub(crate) tangent_cross_sign: RealSign,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+pub(crate) enum BezierAlgebraicCuspSemicircleRetainedChordIntersections2 {
+    NoContacts,
+    Contacts(Vec<BezierAlgebraicCuspSemicircleRetainedChordContact2>),
+}
+
 /// Exact affine point retained by a selected algebraic-circle/axis-chord
 /// contact.  The one-word carrier shares the same map/contact allocation as
 /// the corresponding mapped semicircle parameter.
@@ -5561,6 +5581,185 @@ impl BezierAlgebraicCuspSemicircle2 {
                 contacts,
                 parameter_map,
             },
+        ))
+    }
+
+    /// Intersects this selected semicircle with any finite retained chord for
+    /// which an exact support kernel is available.
+    ///
+    /// Structurally axis-aligned algebraic supports keep the compact correlated
+    /// square-root fast path. A chord with represented endpoints is an exact
+    /// rational line in any direction and reuses the complete selected-circle
+    /// resultant kernel. Both paths retain identical cusp/chord parameter
+    /// evidence for the region Boolean engine.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn chord_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
+        chord.validate_policy(policy)?;
+        if chord.certified_axis_direction().is_some() {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "axis-correlated-fast-path",
+            );
+            let intersections = match self.axis_chord_intersections(chord, policy)? {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            } = intersections
+            else {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+                ));
+            };
+            let mut retained = Vec::with_capacity(contacts.len());
+            for contact in contacts {
+                let (cusp_parameter, correlated_point) = parameter_map.contact_evidence(&contact);
+                let point = match contact.chord_location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start => chord.start().clone(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::End => chord.end().clone(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                        match contact.cusp_location {
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                                RationalBezierIntersectionPointEvidence2::Algebraic(
+                                    self.start_point_image(policy)?,
+                                )
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                                RationalBezierIntersectionPointEvidence2::Algebraic(
+                                    self.end_point_image(policy)?,
+                                )
+                            }
+                            BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                                correlated_point
+                            }
+                        }
+                    }
+                };
+                let chord_parameter = match contact.chord_location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start => chord.start_parameter(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::End => chord.end_parameter(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                        match chord.parameter_at_certified_point(point.clone(), policy)? {
+                            Classification::Decided(Some(parameter)) => parameter,
+                            Classification::Decided(None) => {
+                                return Err(CurveError::Topology(
+                                    "certified selected-circle/chord contact was outside its chord"
+                                        .into(),
+                                ));
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                };
+                retained.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                    cusp_parameter,
+                    chord_parameter,
+                    point,
+                    tangent_cross_sign: contact.tangent_cross_sign,
+                });
+            }
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(retained),
+            ));
+        }
+
+        let Some(line) = chord.exact_line() else {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "general-algebraic-pending",
+            );
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-chord-kernel",
+            "exact-oblique-rational-line",
+        );
+        let rational_line = RationalBezier2::try_new(
+            vec![line.start().clone(), line.end().clone()],
+            vec![Real::one(), Real::one()],
+        )?;
+        let (intersections, parameter_map) =
+            match self.rational_intersections_with_parameter_map(&rational_line, policy)? {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) = intersections
+        else {
+            return match intersections {
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
+                    Err(CurveError::Topology(
+                        "a nonzero selected circle overlapped an exact line component".into(),
+                    ))
+                }
+                BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => unreachable!(),
+            };
+        };
+        if contacts.is_empty() {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+            ));
+        }
+        let mut retained = Vec::with_capacity(contacts.len());
+        for contact in contacts {
+            let cusp_parameter = algebraic_cusp_semicircle_endpoint_parameter(contact.location)
+                .unwrap_or_else(|| {
+                    parameter_map
+                        .as_ref()
+                        .expect("an interior selected-circle/line contact retains its map")
+                        .contact_parameter(&contact)
+                });
+            let point = if contact.other_parameter.as_exact().is_some_and(|parameter| {
+                compare_reals(parameter, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal)
+            }) {
+                chord.start().clone()
+            } else if contact.other_parameter.as_exact().is_some_and(|parameter| {
+                compare_reals(parameter, &Real::one(), policy) == Some(std::cmp::Ordering::Equal)
+            }) {
+                chord.end().clone()
+            } else {
+                contact.point.clone()
+            };
+            let chord_parameter = match chord.parameter_at_certified_point(point.clone(), policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => {
+                    return Err(CurveError::Topology(
+                        "selected-circle/line contact was outside its retained exact chord".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            retained.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                cusp_parameter,
+                chord_parameter,
+                point,
+                tangent_cross_sign: contact.tangent_cross_sign,
+            });
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(retained),
         ))
     }
 
@@ -36110,6 +36309,99 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts
                 )
             ));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                panic!("sqrt(1/2) must remain a selected algebraic parameter");
+            };
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "test selected oblique circle/chord center",
+                ),
+            );
+            let Classification::Decided(Some(semicircle)) =
+                BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::from(2_i8),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected circle must construct");
+            };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-3, -3)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(3, 3)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the exact oblique chord must construct");
+            };
+            assert!(chord.certified_axis_direction().is_none());
+
+            for (carrier, expected_tangent_sign) in [
+                (chord.clone(), RealSign::Negative),
+                (chord.reversed(), RealSign::Positive),
+            ] {
+                let result = semicircle.chord_intersections(&carrier, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    panic!("the selected upper semicircle must meet the oblique chord: {result:?}");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one selected oblique contact, got {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign, expected_tangent_sign);
+                assert_eq!(
+                    contact
+                        .cusp_parameter
+                        .order_to_real(&Real::zero(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .cusp_parameter
+                        .order_to_real(&Real::one(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                assert!(matches!(
+                    contact.point,
+                    RationalBezierIntersectionPointEvidence2::Algebraic(_)
+                ));
+            }
         }
     }
 
