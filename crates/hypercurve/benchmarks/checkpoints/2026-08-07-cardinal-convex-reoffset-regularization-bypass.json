@@ -1,0 +1,293 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "exact cardinal-convex selected-circle re-offset regularization bypass",
+  "implementation_revision": "f3c57ba5857692bd95d702ae1abaa5945e15839a",
+  "benchmark_revision": "05974016fa34d2f25d2d3ef639284c5cb4e89fb7",
+  "matched_parent_revision": "bdda5739bdb2b327e710a0b81731dc24462ee8b6",
+  "preceding_checkpoint": "2026-08-07-retained-selected-circle-reoffset.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "structural endpoint tangent directions for directly framed selected-circle parameters 0, 1/2, and 1",
+      "exact cardinal convexity proof over retained algebraic chords, exact materialized lines, minor or semicircular native conics, and selected-circle fragments",
+      "one positive full turn required across all curve interiors and joins, with no sampled point or approximate tangent construction",
+      "outward round offsets of one already-regularized filled-left material loop retain independent arrangement provenance and the canonical regularized-topology fact",
+      "regularized_region_raw recognizes the independent exact convex proof and avoids rebuilding a unary arrangement",
+      "a third consecutive exact outward offset verifies that the retained proof remains reusable under STRICT and APPROXIMATE_512",
+      "collapse, past-center reversal, contraction, holes, multiple loops, non-round corners, mapped cuts, noncardinal carriers, and any uncertain certificate continue through the full authority"
+    ],
+    "remaining": [
+      "translate represented selected-circle endpoint images during concentric offsets instead of rebuilding their rational images",
+      "extend a similarly complete proof to safe pre-collapse inward offsets only after global erosion survival is certified",
+      "re-offset genuinely nonrational mapped selected-circle cuts",
+      "construct new corners whose selected-circle endpoint tangents remain algebraic",
+      "general oblique retained carriers, AlgebraicCuspChord transport, and retained-algebraic fillets",
+      "coupled material and hole wavefront events"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::offset -> offset_exact_general_raw -> exact_cardinal_convex_filled_left_loop -> existing exact span/join construction -> with_certified_regularized_filled_left_topology -> regularized_region_raw",
+    "general_fallback": "The call to regularized_region_raw remains unconditional. It returns directly only when the exact convex proof has published the same canonical regularized-topology fact; every unproved path still constructs CurveRegionBooleanContext and build_regularized_region.",
+    "convexity_rule": "Every admitted fragment has structurally cardinal endpoint tangents. Counterclockwise minor arcs contribute one quarter turn, semicircles contribute two, lines contribute zero, and each join may contribute zero or one. Exactly four positive quarter turns on an already-simple filled-left loop certify a convex boundary.",
+    "outward_rule": "The round outward parallel of a convex set is convex and noncrossing. The optimization is therefore restricted to positive material offsets of one filled-left loop; inward offsets are not inferred from local radius survival.",
+    "selected_parameter_rule": "Only exact retained parameters with structural zero identities for 0, 2u-1, or u-1 may produce cardinal tangent evidence. APPROXIMATE_512 cannot round a mapped cut into this topology certificate.",
+    "persistent_state_added": "none; no region field, cache, primitive element, or persistent tangent is added",
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "The source arrangement proof, exact cardinal parameter identities, radius signs, arc sweeps, tangent directions, and complete one-turn inventory are exact. Expansion and repeated expansion report Certified.",
+    "approximate_512": "The same public expansion and repeated-expansion fixtures report Certified because no terminal is needed. The past-center fixture still reaches the general arrangement and reports Approximate512Consumed exactly as before.",
+    "fallback": "Uncertain signs or sweeps, mapped parameters, unsupported carriers, clockwise local curvature, a backward/opposite join, or a turn total other than four simply decline the optimization. They do not assert nonconvexity or select approximate geometry."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_offset/retained_circle_reentry",
+    "cpu": 11,
+    "comparison": "The current f3c57ba executable and immediate-parent bdda573 executable use identical benchmark source and dependency revisions.",
+    "wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=retained_circle_reentry <comparative-executable>",
+    "perf_command": "env HYPERCURVE_COMPARE_GROUP=retained_circle_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_exact_expand HYPERCURVE_COMPARE_ITERS=4096 HYPERCURVE_COMPARE_SAMPLES=1 taskset -c 11 perf stat -x, -e instructions,cycles,branches,branch-misses,cache-misses <comparative-executable>",
+    "normalization": "Subtract a matched implementation-filter=disabled process that retains fixture construction, then divide by 4097 for Runner's warm-up plus 4096 timed calls.",
+    "heap_method": "Heaptrack record-only runs 512 timed expansions plus Runner's warm-up. Recorder counts are fixture-baseline-subtracted and divided by 513; heaptrack_print supplies peak heap.",
+    "competitive_control": "Cavalier Contours remains a binary64 throughput sentinel without selected algebraic fields, exact circular carriers, policy evidence, or exact topology."
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "current_f3c57ba": {
+      "exact_expand_median_ns": 81261.7,
+      "exact_expand_min_ns": 80662.2,
+      "exact_expand_max_ns": 82883.6,
+      "exact_expand_iterations_per_sample": 1280,
+      "exact_past_collapse_median_ns": 17421326.8,
+      "exact_past_collapse_min_ns": 17299712.0,
+      "exact_past_collapse_max_ns": 17543535.3,
+      "exact_past_collapse_iterations_per_sample": 6,
+      "cavalier_f64_expand_median_ns": 1519.1,
+      "cavalier_f64_past_collapse_median_ns": 2431.7
+    },
+    "parent_bdda573": {
+      "exact_expand_median_ns": 222300.0,
+      "exact_expand_min_ns": 220935.7,
+      "exact_expand_max_ns": 227895.3,
+      "exact_expand_iterations_per_sample": 512,
+      "exact_past_collapse_median_ns": 17452713.0,
+      "exact_past_collapse_min_ns": 17306998.2,
+      "exact_past_collapse_max_ns": 17563610.7,
+      "exact_past_collapse_iterations_per_sample": 6,
+      "cavalier_f64_expand_median_ns": 1538.3,
+      "cavalier_f64_past_collapse_median_ns": 2453.3
+    },
+    "exact_expand_improvement": {
+      "speedup": 2.735606,
+      "time_reduction_percent": 63.445029
+    },
+    "past_collapse_change_percent": -0.179836,
+    "current_exact_over_cavalier_f64_ratio": {
+      "expand": 53.493318,
+      "past_collapse": 7164.258256
+    },
+    "interpretation": "Expansion is a correctness-equivalent immediate-parent comparison. Past-collapse is an unchanged fallback control and remains within wall-time noise. Cavalier is non-equivalent competitive context."
+  },
+  "deterministic_perf": {
+    "fixed_timed_iterations": 4096,
+    "normalized_operation_invocations": 4097,
+    "current": {
+      "raw_operation_process": {
+        "instructions": 2910701552,
+        "cycles": 1477643273,
+        "branches": 587371336,
+        "branch_misses": 4392372,
+        "cache_misses": 25379811
+      },
+      "raw_disabled_process": {
+        "instructions": 175779449,
+        "cycles": 80755840,
+        "branches": 33745353,
+        "branch_misses": 443849,
+        "cache_misses": 650617
+      },
+      "normalized_per_operation": {
+        "instructions": 667542.617,
+        "cycles": 340953.730,
+        "branches": 135129.603,
+        "branch_misses": 963.760,
+        "cache_misses": 6035.927
+      }
+    },
+    "parent": {
+      "raw_operation_process": {
+        "instructions": 6949448451,
+        "cycles": 3930847193,
+        "branches": 1392262762,
+        "branch_misses": 19359084,
+        "cache_misses": 99828306
+      },
+      "raw_disabled_process": {
+        "instructions": 176641778,
+        "cycles": 80415385,
+        "branches": 33910632,
+        "branch_misses": 443229,
+        "cache_misses": 649192
+      },
+      "normalized_per_operation": {
+        "instructions": 1653113.662,
+        "cycles": 939817.381,
+        "branches": 331547.994,
+        "branch_misses": 4617.001,
+        "cache_misses": 24207.741
+      }
+    },
+    "reduction_percent": {
+      "instructions": 59.619,
+      "cycles": 63.721,
+      "branches": 59.243,
+      "branch_misses": 79.126,
+      "cache_misses": 75.066
+    }
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 512,
+    "normalized_operation_invocations": 513,
+    "current": {
+      "raw_operation_process": {
+        "allocation_calls": 763083,
+        "temporary_allocations": 64740,
+        "peak_heap_kib": 583.77
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 340370,
+        "temporary_allocations": 25239,
+        "peak_heap_kib": 583.75
+      },
+      "normalized_per_operation": {
+        "allocation_calls": 824.001949,
+        "temporary_allocations": 77.0
+      },
+      "peak_increment_over_preflight_fixture_kib": 0.02
+    },
+    "parent": {
+      "raw_operation_process": {
+        "allocation_calls": 1564936,
+        "temporary_allocations": 142869,
+        "peak_heap_kib": 585.53
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 341941,
+        "temporary_allocations": 25392,
+        "peak_heap_kib": 585.51
+      },
+      "normalized_per_operation": {
+        "allocation_calls": 2384.005848,
+        "temporary_allocations": 229.0
+      },
+      "peak_increment_over_preflight_fixture_kib": 0.02
+    },
+    "reduction_percent": {
+      "allocation_calls": 65.436,
+      "temporary_allocations": 66.376
+    },
+    "profile_observation": "The unary arrangement stacks disappear from the ordinary expansion. Remaining allocation weight is concentrated in selected-circle endpoint point-image reconstruction through Hypercurve and Hypersolve rational-image transforms, followed by native conic reconstruction.",
+    "persistent_memory_cost": "No persistent field or cache was added."
+  },
+  "linked_size": {
+    "artifact": "comparative release executable with identical benchmark source",
+    "all_features": {
+      "parent_file_bytes": 12910840,
+      "current_file_bytes": 12918192,
+      "file_delta_bytes": 7352,
+      "file_delta_percent": 0.056944,
+      "parent_text_bytes": 9855479,
+      "current_text_bytes": 9861331,
+      "text_delta_bytes": 5852,
+      "text_delta_percent": 0.059378,
+      "parent_data_bytes": 308960,
+      "current_data_bytes": 308992,
+      "data_delta_bytes": 32,
+      "parent_bss_bytes": 4000,
+      "current_bss_bytes": 2208,
+      "bss_delta_bytes": -1792,
+      "parent_allocated_total_bytes": 10168439,
+      "current_allocated_total_bytes": 10172531,
+      "allocated_total_delta_bytes": 4092,
+      "allocated_total_delta_percent": 0.040242
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "parent_file_bytes": 11399672,
+      "current_file_bytes": 11399984,
+      "file_delta_bytes": 312,
+      "file_delta_percent": 0.002737,
+      "parent_text_bytes": 8583690,
+      "current_text_bytes": 8583690,
+      "text_delta_bytes": 0,
+      "parent_data_bytes": 300544,
+      "current_data_bytes": 300544,
+      "data_delta_bytes": 0,
+      "parent_bss_bytes": 2008,
+      "current_bss_bytes": 2008,
+      "bss_delta_bytes": 0,
+      "parent_allocated_total_bytes": 8886242,
+      "current_allocated_total_bytes": 8886242,
+      "allocated_total_delta_bytes": 0,
+      "interpretation": "The predicates-disabled linked sections are byte-identical; the 312-byte file delta is nonallocated metadata."
+    }
+  },
+  "static_callgraph": {
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-convex-reoffset-f3c57ba-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "parent_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-convex-reoffset-parent --out-dir target/callgraph-hypercurve-convex-reoffset-parent-bdda573-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "current_artifact": "target/callgraph-hypercurve-convex-reoffset-f3c57ba-all/callgraph.json",
+    "parent_artifact": "target/callgraph-hypercurve-convex-reoffset-parent-bdda573-all/callgraph.json",
+    "current": {
+      "libraries_discovered": 1,
+      "nodes": 29324,
+      "edges": 55898
+    },
+    "parent": {
+      "libraries_discovered": 1,
+      "nodes": 29304,
+      "edges": 55830
+    },
+    "delta": {
+      "nodes": 20,
+      "edges": 68
+    },
+    "source_and_graph_confirm_existing_offset_authority": true,
+    "source_and_graph_confirm_existing_regularizer_fallback": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "479 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "64 passed",
+    "cargo_test_all_features_hypercurve_curve_region_boolean": "29 passed",
+    "cargo_test_all_features_hypercurve_curve_intersection": "29 passed",
+    "cargo_test_all_features_hypercurve_offset": "34 passed",
+    "cargo_test_all_features_hypercurve_analytic_parallel_region": "4 passed",
+    "cargo_test_no_default_features_lib": "324 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_comparative_benchmark_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "minimal_comparative_size_builds": "pass",
+    "aggregate_suite_note": "No full multi-hour curve_region_boolean_fuzz matrix claim is made at this checkpoint.",
+    "known_external_warning": "Hypertri ExactKernel::sub and ExactKernel::cmp remain pre-existing dead code. Hypertri, Hypermesh, and every lower layer were not modified by this checkpoint."
+  },
+  "next_priority": {
+    "performance_and_memory": "Reuse the certified cardinal endpoint relationship when a selected circle changes radius. The current profile shows 824 allocations per expansion, led by endpoint point-image reconstruction through Hypercurve/Hypersolve.",
+    "correctness": "Then transport genuinely mapped selected-circle cuts and AlgebraicCuspChord evidence without treating their tangents or coordinates as represented scalars.",
+    "fallback": "Keep contraction, local collapse, past-center reversal, holes, multiple loops, and every noncardinal or uncertain case on the authoritative regularizer until an equally complete exact proof exists.",
+    "size": "The all-feature allocated-section cost is 4,092 bytes and predicates-disabled allocated sections are unchanged; fold the next optimization into the existing carrier endpoint methods."
+  }
+}
