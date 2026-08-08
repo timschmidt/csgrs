@@ -38500,7 +38500,9 @@ mod conversion_tests {
     /// Manual matched benchmark for the private correlated-circle carrier.
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
-    /// `mapped`, `unsplit`, `disabled`, or `cavalier` through
+    /// `mapped`, `unsplit`, `disabled`, `transformed_mapped`,
+    /// `transformed_unsplit`, `transformed_disabled`, `transform_mapped`,
+    /// `transform_unsplit`, `transform_disabled`, or `cavalier` through
     /// `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
@@ -38590,9 +38592,30 @@ mod conversion_tests {
             .unwrap_or(1);
         assert!(iterations > 0);
 
-        let exact = match mode.as_str() {
-            "mapped" | "disabled" => Some(region(true)),
-            "unsplit" => Some(region(false)),
+        let transform = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-3_i8),
+        )
+        .unwrap();
+        let source = match mode.as_str() {
+            "mapped" | "disabled" | "transform_mapped" | "transform_disabled" => Some(region(true)),
+            "unsplit" | "transform_unsplit" => Some(region(false)),
+            "transformed_mapped" | "transformed_disabled" => Some(
+                region(true)
+                    .transform_similarity(&transform, &policy)
+                    .unwrap()
+                    .into_value(),
+            ),
+            "transformed_unsplit" => Some(
+                region(false)
+                    .transform_similarity(&transform, &policy)
+                    .unwrap()
+                    .into_value(),
+            ),
             "cavalier" => None,
             _ => panic!("unknown HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE={mode:?}"),
         };
@@ -38601,7 +38624,7 @@ mod conversion_tests {
         cavalier.add(-1.0, 0.0, 1.0);
 
         let operation = || match mode.as_str() {
-            "mapped" | "unsplit" => exact
+            "mapped" | "unsplit" => source
                 .as_ref()
                 .unwrap()
                 .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
@@ -38613,7 +38636,33 @@ mod conversion_tests {
                         .map(|boundary| boundary.fragments().len())
                         .sum()
                 }),
-            "disabled" => exact.as_ref().unwrap().boundary_loops().len(),
+            "transformed_mapped" | "transformed_unsplit" => source
+                .as_ref()
+                .unwrap()
+                .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
+                .map_or(0, |result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                }),
+            "transform_mapped" | "transform_unsplit" => source
+                .as_ref()
+                .unwrap()
+                .transform_similarity(&transform, &policy)
+                .map_or(0, |result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                }),
+            "disabled" | "transformed_disabled" | "transform_disabled" => {
+                source.as_ref().unwrap().boundary_loops().len()
+            }
             "cavalier" => cavalier
                 .parallel_offset(black_box(-0.5))
                 .iter()
@@ -38623,8 +38672,14 @@ mod conversion_tests {
         };
         let preflight = operation();
         let complete = match mode.as_str() {
-            "mapped" | "unsplit" | "cavalier" => preflight != 0,
-            "disabled" => true,
+            "mapped"
+            | "unsplit"
+            | "transformed_mapped"
+            | "transformed_unsplit"
+            | "transform_mapped"
+            | "transform_unsplit"
+            | "cavalier" => preflight != 0,
+            "disabled" | "transformed_disabled" | "transform_disabled" => true,
             _ => unreachable!(),
         };
         for _ in 0..warmups {
