@@ -2111,7 +2111,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             pair.first_carrier_index,
                         )
                     };
-                    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+                    if self.authored_carriers_are_adjacent(pair) {
+                        let certificate = cusp
+                            .certified_adjacent_chord_is_endpoint_only(chord, &self.data.policy)
+                            .map_err(|cause| self.invalid(chord_index, cause))?;
+                        match certificate {
+                            Classification::Decided(true) => {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-circle-chord-pair",
+                                    "adjacent-endpoint-only",
+                                );
+                                return Ok(RegionPairResult::empty());
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(RegionPairResult {
+                                    contacts: Vec::new(),
+                                    overlaps: Vec::new(),
+                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                                });
+                            }
+                        }
+                    }
+                    // Refined bounds are only a rejection accelerator. Keep
+                    // their proof budget small and fall through to the exact
+                    // circle/chord kernel when the boxes continue to overlap;
+                    // policy-terminal refinement belongs in predicates that
+                    // can decide the result, not in broad phase replay.
+                    for refinement_steps in [0, 2] {
                         let circle_bounds = cusp
                             .semicircle()
                             .conservative_bounds_refined(refinement_steps, &self.data.policy)
@@ -2136,30 +2165,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 "refined-bounds-disjoint",
                             );
                             return Ok(RegionPairResult::empty());
-                        }
-                    }
-                    if self.authored_carriers_are_adjacent(pair) {
-                        let certificate = cusp
-                            .certified_adjacent_chord_is_endpoint_only(chord, &self.data.policy)
-                            .map_err(|cause| self.invalid(chord_index, cause))?;
-                        match certificate {
-                            Classification::Decided(true) => {
-                                #[cfg(feature = "dispatch-trace")]
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "algebraic-circle-chord-pair",
-                                    "adjacent-endpoint-only",
-                                );
-                                return Ok(RegionPairResult::empty());
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(RegionPairResult {
-                                    contacts: Vec::new(),
-                                    overlaps: Vec::new(),
-                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
-                                });
-                            }
                         }
                     }
                     let intersections = cusp
@@ -6480,7 +6485,9 @@ fn carrier_refined_bounds_decided_disjoint(
     second: &RegionCarrier,
     policy: &CurveContext,
 ) -> CurveResult<bool> {
-    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+    // This is a broad-phase rejection proof, not a terminal predicate.
+    // Unresolved boxes proceed to the authoritative exact pair kernel.
+    for refinement_steps in [0, 2] {
         let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
             carrier_bounds_refined(first, refinement_steps, policy)?,
             carrier_bounds_refined(second, refinement_steps, policy)?,

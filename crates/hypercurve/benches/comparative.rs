@@ -620,6 +620,7 @@ fn benchmark_contour_offset(runner: &Runner) {
 fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
     let reoffset_name = "algebraic_round_offset/retained_circle_reentry";
+    let cusp_chord_reoffset_name = "algebraic_round_offset/cusp_chord_boundary_bevel_reoffset";
     let chord_pair_transform_name = "algebraic_chord_pair/affine_transform_offset";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
@@ -629,6 +630,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         "algebraic_round_boolean/shared_chord_collinear_reentry";
     if !runner.group_enabled(offset_name)
         && !runner.group_enabled(reoffset_name)
+        && !runner.group_enabled(cusp_chord_reoffset_name)
         && !runner.group_enabled(chord_pair_transform_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
@@ -826,6 +828,78 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         runner.measure(reoffset_name, "cavalier_f64_past_collapse", || {
             cavalier_rounded
                 .parallel_offset(black_box(0.15))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum()
+        });
+    }
+
+    if runner.group_enabled(cusp_chord_reoffset_name) {
+        let radius = (Real::one() / Real::from(20_u8)).expect("exact cusp/chord benchmark radius");
+        let first = hypercurve
+            .offset(radius.clone(), &round, &policy)
+            .expect("first cusp/chord benchmark round offset completes")
+            .into_value();
+        let translation = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            radius,
+            (Real::one() / Real::from(40_u8)).expect("exact cusp/chord benchmark translation"),
+        )
+        .expect("valid cusp/chord benchmark translation");
+        let second = first
+            .transform_similarity(&translation, &policy)
+            .expect("translated cusp/chord benchmark region remains exact")
+            .into_value();
+        let intersection = first
+            .boolean_regions(&second, &policy)
+            .expect("cusp/chord benchmark Boolean completes")
+            .into_value()
+            .intersection()
+            .clone();
+        let reoffset_distance =
+            (Real::one() / Real::from(100_u8)).expect("exact cusp/chord re-offset distance");
+        let bevel = OffsetCornerStyle2::Bevel;
+        let reoffset_complete = intersection
+            .offset(reoffset_distance.clone(), &bevel, &policy)
+            .is_ok();
+        let region_weight = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>()
+        };
+
+        let mut cavalier_first = cavalier.parallel_offset(-0.05);
+        assert_eq!(cavalier_first.len(), 1);
+        let cavalier_first = cavalier_first.pop().unwrap();
+        let mut cavalier_second = cavalier_first.clone();
+        cavalier_second.translate_mut(0.05, 0.025);
+        let cavalier_intersection =
+            cavalier_first.boolean(&cavalier_second, CavalierBooleanOp::And);
+        assert_eq!(cavalier_intersection.pos_plines.len(), 1);
+        assert!(cavalier_intersection.neg_plines.is_empty());
+        let cavalier_intersection = cavalier_intersection.pos_plines[0].pline.clone();
+
+        runner.measure(
+            cusp_chord_reoffset_name,
+            if reoffset_complete {
+                "hypercurve_exact_reoffset"
+            } else {
+                "hypercurve_rejected_reoffset"
+            },
+            || {
+                intersection
+                    .offset(reoffset_distance.clone(), &bevel, &policy)
+                    .map_or(0, |result| region_weight(&result.value))
+            },
+        );
+        runner.measure(cusp_chord_reoffset_name, "cavalier_f64_reoffset", || {
+            cavalier_intersection
+                .parallel_offset(black_box(-0.01))
                 .iter()
                 .map(PlineSource::vertex_count)
                 .sum()

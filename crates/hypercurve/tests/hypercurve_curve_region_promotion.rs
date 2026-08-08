@@ -2154,9 +2154,42 @@ fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
                 )
             })
         }));
-        let reoffset = intersection
-            .offset(q(1, 100), &OffsetCornerStyle2::Bevel, &policy)
-            .expect("a retained cusp/chord boundary must re-offset exactly");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let reoffset_work = || intersection.offset(q(1, 100), &OffsetCornerStyle2::Bevel, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(reoffset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = reoffset_work();
+        let reoffset = reoffset.expect("a retained cusp/chord boundary must re-offset exactly");
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-chord-source-incidence",
+                    "diagonal-deflated",
+                ),
+                1
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-selected-fiber-projection",
+                    "quotient-ring",
+                ),
+                1
+            );
+            assert_eq!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-selected-fiber-projection",
+                    "general-resultant-fallback",
+                ),
+                0
+            );
+        }
         assert_eq!(reoffset.certainty, CurveCertainty::Certified);
         assert!(!reoffset.value.is_empty());
     }

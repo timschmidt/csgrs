@@ -2056,10 +2056,15 @@ fn retained_fragment_endpoint_evidence(
             })
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            #[cfg(feature = "predicates")]
             let retained_point = match fragment.endpoint_point_evidence(start_endpoint, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(_) => None,
             };
+            #[cfg(not(feature = "predicates"))]
+            let retained_point = fragment
+                .endpoint_point_image(start_endpoint, policy)?
+                .map(crate::RationalBezierIntersectionPointEvidence2::Algebraic);
             Ok(RetainedEndpointEvidence {
                 point: fragment.endpoint_exact_point(start_endpoint, policy)?,
                 retained_point,

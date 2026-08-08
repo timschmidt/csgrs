@@ -15045,8 +15045,14 @@ impl BezierAlgebraicChord2 {
             }
         }
 
+        // Diagonal deflation returns a fiber polynomial already reduced
+        // modulo the retained root's defining polynomial. Project it directly
+        // in that quotient ring; the reduced projector preserves the general
+        // resultant as its complete fallback for a degenerate or undecided
+        // construction.
         let candidates =
-            match algebraic_selected_fiber_parameters(&residual, source_parameter, policy)? {
+            match algebraic_selected_reduced_fiber_parameters(&residual, source_parameter, policy)?
+            {
                 Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
                     candidates,
                 )) => candidates,
@@ -20440,10 +20446,32 @@ fn algebraic_selected_reduced_fiber_parameters(
     let projection =
         algebraic_selected_quotient_ring_fiber_projection(incidence, &cusp_root, policy)?;
     let candidates = match projection {
-        Classification::Decided(ResultantParameterProjection::Empty) => Vec::new(),
-        Classification::Decided(ResultantParameterProjection::Parameters(candidates)) => candidates,
+        Classification::Decided(ResultantParameterProjection::Empty) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-selected-fiber-projection",
+                "quotient-ring",
+            );
+            Vec::new()
+        }
+        Classification::Decided(ResultantParameterProjection::Parameters(candidates)) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-selected-fiber-projection",
+                "quotient-ring",
+            );
+            candidates
+        }
         Classification::Decided(ResultantParameterProjection::Degenerate)
         | Classification::Uncertain(_) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-selected-fiber-projection",
+                "general-resultant-fallback",
+            );
             return algebraic_selected_fiber_parameters(incidence, cusp, policy);
         }
     };
