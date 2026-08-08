@@ -2114,6 +2114,56 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
+    let radius = q(1, 20);
+    let translation = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        radius.clone(),
+        q(1, 40),
+    )
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let first = axis_aligned_algebraic_rectangle(&policy)
+            .offset(radius.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the first selected round region must remain exact")
+            .into_value();
+        let second = first
+            .transform_similarity(&translation, &policy)
+            .expect("the translated selected round region must remain exact")
+            .into_value();
+        let intersection = first
+            .boolean_regions(&second, &policy)
+            .expect("the selected round regions must Boolean exactly")
+            .into_value()
+            .intersection()
+            .clone();
+        assert!(intersection.boundary_loops().iter().any(|boundary| {
+            boundary.fragments().windows(2).any(|pair| {
+                matches!(
+                    (&pair[0], &pair[1]),
+                    (
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                        BezierSplitFragment2::AlgebraicChord(_)
+                    ) | (
+                        BezierSplitFragment2::AlgebraicChord(_),
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                    )
+                )
+            })
+        }));
+        let reoffset = intersection
+            .offset(q(1, 100), &OffsetCornerStyle2::Bevel, &policy)
+            .expect("a retained cusp/chord boundary must re-offset exactly");
+        assert_eq!(reoffset.certainty, CurveCertainty::Certified);
+        assert!(!reoffset.value.is_empty());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn one_chord_orders_contacts_from_two_selected_round_corners() {
     let radius = q(1, 20);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

@@ -847,14 +847,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for first_carrier_index in 0..carrier_count {
             for second_carrier_index in first_carrier_index + 1..carrier_count {
-                if let Some(pair) = build_candidate_carrier_pair(
+                let candidate = build_candidate_carrier_pair(
                     &carriers,
                     &curves,
                     first_carrier_index,
                     second_carrier_index,
                     policy,
                     &mut intersection_cache,
-                )? {
+                );
+                if let Some(pair) = candidate? {
                     pairs.push(pair);
                 }
             }
@@ -2089,9 +2090,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let _ = cusp_is_first;
                 #[cfg(feature = "predicates")]
                 {
-                    let (cusp, chord, chord_index) = if *cusp_is_first {
+                    let (cusp, cusp_index, chord, chord_index) = if *cusp_is_first {
                         (
                             first.geometry.algebraic_cusp(),
+                            pair.first_carrier_index,
                             match &second.geometry {
                                 RegionCarrierGeometry::AlgebraicChord(chord) => chord,
                                 _ => unreachable!("cusp/chord dispatch retained its chord"),
@@ -2101,6 +2103,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     } else {
                         (
                             second.geometry.algebraic_cusp(),
+                            pair.second_carrier_index,
                             match &first.geometry {
                                 RegionCarrierGeometry::AlgebraicChord(chord) => chord,
                                 _ => unreachable!("chord/cusp dispatch retained its chord"),
@@ -2108,12 +2111,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             pair.first_carrier_index,
                         )
                     };
+                    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+                        let circle_bounds = cusp
+                            .semicircle()
+                            .conservative_bounds_refined(refinement_steps, &self.data.policy)
+                            .map_err(|cause| self.invalid(cusp_index, cause))?;
+                        let chord_bounds = chord
+                            .conservative_bounds_refined(refinement_steps, &self.data.policy)
+                            .map_err(|cause| self.invalid(chord_index, cause))?;
+                        let (
+                            Classification::Decided(circle_bounds),
+                            Classification::Decided(chord_bounds),
+                        ) = (circle_bounds, chord_bounds)
+                        else {
+                            continue;
+                        };
+                        if circle_bounds.overlaps(&chord_bounds, &self.data.policy)
+                            == Classification::Decided(false)
+                        {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                "refined-bounds-disjoint",
+                            );
+                            return Ok(RegionPairResult::empty());
+                        }
+                    }
                     if self.authored_carriers_are_adjacent(pair) {
                         let certificate = cusp
-                            .certified_adjacent_axis_chord_is_endpoint_only(
-                                chord,
-                                &self.data.policy,
-                            )
+                            .certified_adjacent_chord_is_endpoint_only(chord, &self.data.policy)
                             .map_err(|cause| self.invalid(chord_index, cause))?;
                         match certificate {
                             Classification::Decided(true) => {
@@ -2121,7 +2148,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 hyperreal::dispatch_trace::record(
                                     "hypercurve",
                                     "algebraic-circle-chord-pair",
-                                    "adjacent-tangent-endpoint-only",
+                                    "adjacent-endpoint-only",
                                 );
                                 return Ok(RegionPairResult::empty());
                             }
@@ -2135,11 +2162,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             }
                         }
                     }
-                    let intersections = match cusp
+                    let intersections = cusp
                         .semicircle()
                         .axis_chord_intersections(chord, &self.data.policy)
-                        .map_err(|cause| self.invalid(chord_index, cause))?
-                    {
+                        .map_err(|cause| self.invalid(chord_index, cause))?;
+                    let intersections = match intersections {
                         Classification::Decided(intersections) => intersections,
                         Classification::Uncertain(reason) => {
                             return Ok(RegionPairResult {
@@ -2282,7 +2309,66 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ),
                             _ => unreachable!("an algebraic-chord pair retains one chord"),
                         };
+                    if carrier_refined_bounds_decided_disjoint(first, second, &self.data.policy)
+                        .map_err(|cause| self.invalid(chord_index, cause))?
+                    {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-pair",
+                            "refined-carrier-bounds-disjoint",
+                        );
+                        return Ok(RegionPairResult::empty());
+                    }
                     if let RegionCarrierGeometry::AlgebraicChord(other_chord) = other {
+                        if self.authored_carriers_are_adjacent(pair) {
+                            for (axis_chord, candidate) in
+                                [(chord, other_chord), (other_chord, chord)]
+                            {
+                                let direction = match axis_chord
+                                    .axis_direction(&self.data.policy)
+                                    .map_err(|cause| {
+                                    self.invalid(chord_index, cause)
+                                })? {
+                                    Classification::Decided(Some(direction)) => direction,
+                                    Classification::Decided(None)
+                                    | Classification::Uncertain(_) => continue,
+                                };
+                                let constant_axis = match direction.axis() {
+                                    Axis2::X => Axis2::Y,
+                                    Axis2::Y => Axis2::X,
+                                };
+                                let mut certified_noncollinear = false;
+                                for endpoint in [candidate.start(), candidate.end()] {
+                                    match crate::BezierAlgebraicChord2::point_axis_order(
+                                        axis_chord.start(),
+                                        endpoint,
+                                        constant_axis,
+                                        &self.data.policy,
+                                    )
+                                    .map_err(|cause| self.invalid(chord_index, cause))?
+                                    {
+                                        Classification::Decided(
+                                            std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
+                                        ) => {
+                                            certified_noncollinear = true;
+                                            break;
+                                        }
+                                        Classification::Decided(std::cmp::Ordering::Equal)
+                                        | Classification::Uncertain(_) => {}
+                                    }
+                                }
+                                if certified_noncollinear {
+                                    #[cfg(feature = "dispatch-trace")]
+                                    hyperreal::dispatch_trace::record(
+                                        "hypercurve",
+                                        "algebraic-chord-pair",
+                                        "adjacent-axis-noncollinear-complete",
+                                    );
+                                    return Ok(RegionPairResult::empty());
+                                }
+                            }
+                        }
                         if self.authored_carriers_are_adjacent(pair)
                             && let (
                                 Classification::Decided(Some(first_direction)),
@@ -3783,7 +3869,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         reclassification_vertices.resize(next_topology_vertex, false);
         let mut overlaps = Vec::new();
         for pair in &self.data.pairs {
-            let result = self.pair_result(pair)?;
+            let result = self.pair_result(pair);
+            let result = result?;
             if let Some(blocker) = result.blockers.first() {
                 let reason = match blocker {
                     RegionPairBlocker::Bezier(blocker) => match blocker.kind() {
@@ -5711,7 +5798,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 .map_err(|cause| self.invalid(carrier_index, cause))?,
                             Classification::Decided(
                                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_),
+                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                                    _,
+                                ),
                             ) => Classification::Uncertain(UncertaintyReason::Unsupported),
                             Classification::Uncertain(reason) => Classification::Uncertain(reason),
                         },
@@ -5723,6 +5813,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             point,
                             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                         )
                     });
                 let mut interior_classification = None;
@@ -5848,7 +5939,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .map_err(|cause| self.invalid(carrier_index, cause))?,
                 ),
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_) => None,
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_) => None,
             };
             if let Some(classification) = direct {
                 match classification {
@@ -5868,6 +5960,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) => {
+                        point.conservative_bounds_refined(refinement_steps, &self.data.policy)
+                    }
+                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) => {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::Exact(_)
@@ -6324,6 +6419,79 @@ fn carrier_bounds_decided_disjoint(
         ),
         (Classification::Decided(_) | Classification::Uncertain(_), _) => false,
     }
+}
+
+#[cfg(feature = "predicates")]
+fn carrier_bounds_refined(
+    carrier: &RegionCarrier,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Aabb2>> {
+    match &carrier.geometry {
+        RegionCarrierGeometry::AlgebraicChord(chord) => {
+            chord.conservative_bounds_refined(refinement_steps, policy)
+        }
+        RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) => fragment
+            .semicircle()
+            .conservative_bounds_refined(refinement_steps, policy),
+        RegionCarrierGeometry::Bezier(curve) => {
+            let (Some(start), Some(end)) = (
+                carrier.start.as_bezier_parameter(),
+                carrier.end.as_bezier_parameter(),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let start = start
+                .clone()
+                .refined_isolating_interval(refinement_steps, policy);
+            let end = end
+                .clone()
+                .refined_isolating_interval(refinement_steps, policy);
+            let start = match start.known_interval(policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end = match end.known_interval(policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let source = RationalBezier2::try_from_subcurve(curve)?;
+            let subcurve = match source.subcurve_between_exact(start.start(), end.end(), policy)? {
+                Classification::Decided(subcurve) => subcurve,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            Ok(subcurve.certified_bounds_classified(policy))
+        }
+        RegionCarrierGeometry::AnalyticParallel(_) => {
+            Ok(carrier.geometry.certified_outer_bounds(policy))
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn carrier_refined_bounds_decided_disjoint(
+    first: &RegionCarrier,
+    second: &RegionCarrier,
+    policy: &CurveContext,
+) -> CurveResult<bool> {
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
+            carrier_bounds_refined(first, refinement_steps, policy)?,
+            carrier_bounds_refined(second, refinement_steps, policy)?,
+        ) else {
+            continue;
+        };
+        if first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {

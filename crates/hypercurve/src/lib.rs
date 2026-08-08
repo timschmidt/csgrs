@@ -108,8 +108,6 @@ pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 #[cfg(feature = "predicates")]
 pub use bezier_offset::BezierAlgebraicChordPairPoint2;
-#[cfg(feature = "predicates")]
-pub use bezier_offset::BezierAlgebraicCuspChordPoint2;
 pub use bezier_offset::{
     BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2,
     BezierOffsetPreflight2, BezierOffsetRisk, BezierParallel2, BezierParallelApproximationCurve2,
@@ -123,6 +121,8 @@ pub use bezier_offset::{
     CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
 };
+#[cfg(feature = "predicates")]
+pub use bezier_offset::{BezierAlgebraicCuspChordDerivedPoint2, BezierAlgebraicCuspChordPoint2};
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, BezierRootIsolationResult2,

@@ -1232,7 +1232,10 @@ fn retained_endpoint_data(
                     #[cfg(feature = "predicates")]
                     crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => None,
                     #[cfg(feature = "predicates")]
-                    crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_) => None,
+                    crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                    | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                        _,
+                    ) => None,
                 };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());
