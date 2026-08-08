@@ -1205,6 +1205,7 @@ pub(crate) fn intersect_polygons_with_vertices(
         other,
         other_vertices,
         None,
+        false,
         &mut scratch,
     )
     .map(|intersection| intersection.into_public(other_polygon_idx))
@@ -1249,6 +1250,58 @@ fn classify_polygon_vertex_with_plane_predicate_decision(
     )
 }
 
+#[inline]
+fn classify_triangle_vertices_with_plane_predicate_decision(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    vertices: &[Point3],
+    retained_on_plane: Option<usize>,
+    plane_predicate: &PointPlanePredicate<'_>,
+) -> HypermeshResult<[Classification; 3]> {
+    let mut classes = [Classification::On; 3];
+    for (vertex, class) in classes.iter_mut().enumerate() {
+        if retained_on_plane == Some(vertex) {
+            continue;
+        }
+        *class = classify_polygon_vertex_with_plane_predicate_decision(
+            decisions,
+            polygon,
+            vertices,
+            vertex,
+            plane_predicate,
+        )?;
+    }
+    Ok(classes)
+}
+
+#[inline]
+fn probe_triangle_vertices_with_plane_predicate_strict(
+    decisions: &DecisionContext,
+    polygon: &ConvexPolygon,
+    vertices: &[Point3],
+    retained_on_plane: usize,
+    plane_predicate: &PointPlanePredicate<'_>,
+) -> Option<[Classification; 3]> {
+    let mut classes = [Classification::On; 3];
+    for (vertex, class) in classes.iter_mut().enumerate() {
+        if retained_on_plane == vertex {
+            continue;
+        }
+        *class = plane_predicate.probe_strict(
+            decisions,
+            vertices.get(vertex)?,
+            polygon.known_vertex_predicate_query(vertex),
+        )?;
+    }
+    Some(classes)
+}
+
+enum RetainedSharedVertexSchedule {
+    Unavailable,
+    PointOnly,
+    Classified([[Classification; 3]; 2]),
+}
+
 fn intersect_polygons_with_vertices_constructed<'point>(
     decisions: &DecisionContext,
     polygon: &'point ConvexPolygon,
@@ -1257,6 +1310,10 @@ fn intersect_polygons_with_vertices_constructed<'point>(
     other: &'point ConvexPolygon,
     other_vertices: &'point [Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
+    // Arrangement graph construction may omit an authored shared point after
+    // the ordinary support classifications prove that it is the whole
+    // intersection. Public closed-set intersection callers always pass false.
+    omit_authored_shared_point: bool,
     scratch: &mut PairwiseIntersectionScratch<'point>,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
     scratch.coplanar_points.clear();
@@ -1268,6 +1325,26 @@ fn intersect_polygons_with_vertices_constructed<'point>(
     }
     let polygon_support = polygon.support_plane();
     let other_support = other.support_plane();
+    let retained_triangle_classes = if omit_authored_shared_point {
+        match retained_shared_vertex_schedule(
+            decisions,
+            polygon,
+            polygon_vertices,
+            polygon_support,
+            other,
+            other_vertices,
+            other_support,
+        )? {
+            RetainedSharedVertexSchedule::Unavailable => None,
+            RetainedSharedVertexSchedule::PointOnly => {
+                crate::trace_dispatch!("pairwise-intersection", "known-shared-vertex");
+                return Ok(ConstructedPairwiseIntersection::Disjoint);
+            }
+            RetainedSharedVertexSchedule::Classified(classes) => Some(classes),
+        }
+    } else {
+        None
+    };
     let Some(support_line_axis) =
         support_line_order_axis(decisions, polygon_support, other_support)?
     else {
@@ -1304,6 +1381,7 @@ fn intersect_polygons_with_vertices_constructed<'point>(
         other,
         other_vertices,
         other_support_identity,
+        retained_triangle_classes,
         support_line_axis,
     )
 }
@@ -1316,6 +1394,7 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     other: &'point ConvexPolygon,
     other_vertices: &'point [Point3],
     other_support_identity: Option<ConstructionPlaneIdentity>,
+    retained_triangle_classes: Option<[[Classification; 3]; 2]>,
     support_line_axis: SupportLineAxis,
 ) -> HypermeshResult<ConstructedPairwiseIntersection> {
     let polygon_support = polygon.support_plane();
@@ -1324,24 +1403,22 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     // A closed triangle reaches a plane only through an on-plane vertex or a
     // pair of vertices on opposite sides. Certifying this symmetric support
     // separator before constructing crossings avoids exact points that the
-    // other direction would later reject. A successful triangle pair always
-    // needs all six classifications, so retaining them changes no successful
-    // policy-decision set.
+    // other direction would later reject. Ordinary successful triangle pairs
+    // need all six classifications. A retained source incidence can supply
+    // the two exact on-plane facts and four certified strict probes instead;
+    // those same facts may prove that the complete slice is the shared vertex.
     let polygon_classes = if polygon_vertices.len() == 3 && other_vertices.len() == 3 {
-        let classify_polygon = |vertex| {
-            classify_polygon_vertex_with_plane_predicate_decision(
+        let polygon_classes = if let Some(classes) = retained_triangle_classes {
+            classes[0]
+        } else {
+            classify_triangle_vertices_with_plane_predicate_decision(
                 decisions,
                 polygon,
                 polygon_vertices,
-                vertex,
+                None,
                 &other_support_predicate,
-            )
+            )?
         };
-        let polygon_classes = [
-            classify_polygon(0)?,
-            classify_polygon(1)?,
-            classify_polygon(2)?,
-        ];
         if !triangle_reaches_plane(polygon_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
@@ -1355,16 +1432,17 @@ fn intersect_nonparallel_polygons_constructed<'point>(
     // passed. A rejected triangle pair has no reverse predicates to schedule.
     let polygon_support_predicate = PointPlanePredicate::new(decisions, polygon_support);
     let triangle_classes = if let Some(polygon_classes) = polygon_classes {
-        let classify_other = |vertex| {
-            classify_polygon_vertex_with_plane_predicate_decision(
+        let other_classes = if let Some(classes) = retained_triangle_classes {
+            classes[1]
+        } else {
+            classify_triangle_vertices_with_plane_predicate_decision(
                 decisions,
                 other,
                 other_vertices,
-                vertex,
+                None,
                 &polygon_support_predicate,
-            )
+            )?
         };
-        let other_classes = [classify_other(0)?, classify_other(1)?, classify_other(2)?];
         if !triangle_reaches_plane(other_classes) {
             crate::trace_dispatch!("intersect-polygons", "separating-support-plane");
             return Ok(ConstructedPairwiseIntersection::Disjoint);
@@ -1598,6 +1676,7 @@ fn append_pairwise_intersection<'point>(
         &polygons[global_j],
         right_vertices,
         right_support_identity,
+        same_mesh,
         scratch,
     )
     .inspect_err(|_error| {
@@ -1815,6 +1894,120 @@ fn points_match(
     right: &Point3,
 ) -> HypermeshResult<bool> {
     Ok(left == right || crate::predicate::points_equal(decisions, left, right)?)
+}
+
+fn retained_shared_triangle_vertex(
+    left_polygon: &ConvexPolygon,
+    left: &[Point3],
+    right_polygon: &ConvexPolygon,
+    right: &[Point3],
+) -> HypermeshResult<Option<[usize; 2]>> {
+    if left.len() != 3 || right.len() != 3 {
+        return Ok(None);
+    }
+    let (Some((left_mesh, left_vertices)), Some((right_mesh, right_vertices))) = (
+        left_polygon.known_source_triangle_identity(),
+        right_polygon.known_source_triangle_identity(),
+    ) else {
+        return Ok(None);
+    };
+    if left_mesh != right_mesh {
+        return Ok(None);
+    }
+
+    let mut shared = None;
+    for (left_vertex, left_identity) in left_vertices.iter().enumerate() {
+        for (right_vertex, right_identity) in right_vertices.iter().enumerate() {
+            if left_identity != right_identity {
+                continue;
+            }
+            if shared.replace((left_vertex, right_vertex)).is_some() {
+                return Ok(None);
+            }
+        }
+    }
+    let Some((left_shared, right_shared)) = shared else {
+        return Ok(None);
+    };
+    if left[left_shared] != right[right_shared] {
+        if exact_rational_points_contradict(&left[left_shared], &right[right_shared]) {
+            return Err(HypermeshError::SurfaceArrangementFailed {
+                reason: "one source vertex identity has contradictory points",
+            });
+        }
+        return Ok(None);
+    }
+
+    Ok(Some([left_shared, right_shared]))
+}
+
+#[inline]
+fn retained_shared_vertex_schedule(
+    decisions: &DecisionContext,
+    left_polygon: &ConvexPolygon,
+    left: &[Point3],
+    left_support: &Plane,
+    right_polygon: &ConvexPolygon,
+    right: &[Point3],
+    right_support: &Plane,
+) -> HypermeshResult<RetainedSharedVertexSchedule> {
+    if left_support == right_support {
+        return Ok(RetainedSharedVertexSchedule::Unavailable);
+    }
+    let Some([left_shared, right_shared]) =
+        retained_shared_triangle_vertex(left_polygon, left, right_polygon, right)?
+    else {
+        return Ok(RetainedSharedVertexSchedule::Unavailable);
+    };
+
+    // Source identity and equal retained coordinates certify the shared
+    // vertex's incidence with both authored supports. Classify only the four
+    // remaining vertices. When all four probes certify, retain a failed
+    // point-only proof for the ordinary nonparallel intersection schedule.
+    let right_plane = PointPlanePredicate::new(decisions, right_support);
+    let Some(left_classes) = probe_triangle_vertices_with_plane_predicate_strict(
+        decisions,
+        left_polygon,
+        left,
+        left_shared,
+        &right_plane,
+    ) else {
+        return Ok(RetainedSharedVertexSchedule::Unavailable);
+    };
+    if triangle_plane_slice_vertex(left_classes) == Some(left_shared) {
+        return Ok(RetainedSharedVertexSchedule::PointOnly);
+    }
+
+    let left_plane = PointPlanePredicate::new(decisions, left_support);
+    let Some(right_classes) = probe_triangle_vertices_with_plane_predicate_strict(
+        decisions,
+        right_polygon,
+        right,
+        right_shared,
+        &left_plane,
+    ) else {
+        return Ok(RetainedSharedVertexSchedule::Unavailable);
+    };
+    if triangle_plane_slice_vertex(right_classes) == Some(right_shared) {
+        return Ok(RetainedSharedVertexSchedule::PointOnly);
+    }
+
+    Ok(RetainedSharedVertexSchedule::Classified([
+        left_classes,
+        right_classes,
+    ]))
+}
+
+fn triangle_plane_slice_vertex([c0, c1, c2]: [Classification; 3]) -> Option<usize> {
+    if c0 == Classification::On && c1 != Classification::On && c1 == c2 {
+        Some(0)
+    } else if c1 == Classification::On && c0 != Classification::On && c0 == c2 {
+        Some(1)
+    } else if c2 == Classification::On && c0 != Classification::On && c0 == c1 {
+        Some(2)
+    } else {
+        None
+    }
 }
 
 fn polygon_cycles_share_reversed_manifold_triangle_edge(
@@ -3302,13 +3495,15 @@ mod tests {
         DeferredIntersectionGeometry, DeferredIntersectionPoint, DeferredIntersectionSpan,
         DeferredSegmentPlaneRatio, PairwiseIntersection, PairwiseIntersectionEvent,
         PairwiseIntersectionEventIds, PairwiseIntersectionGraphBuilder,
-        PairwiseIntersectionScratch, PolygonVertexArena, StoredIntersectionKind,
-        affine_deferred_geometry, certified_enclosure_ordering, certified_ratio_enclosure,
-        classify_two_product_difference, compare_deferred_points, dedup_deferred_coplanar_points,
-        intersect_deferred_spans, intersect_polygons_with_vertices_constructed,
-        pairwise_intersections_by_polygon_from_bvh,
-        polygon_cycles_share_reversed_manifold_triangle_edge, source_face_pair_key,
-        support_line_order_axis, triangle_has_two_proper_plane_crossings, triangle_reaches_plane,
+        PairwiseIntersectionScratch, PolygonVertexArena, RetainedSharedVertexSchedule,
+        StoredIntersectionKind, affine_deferred_geometry, certified_enclosure_ordering,
+        certified_ratio_enclosure, classify_two_product_difference, compare_deferred_points,
+        dedup_deferred_coplanar_points, intersect_deferred_spans,
+        intersect_polygons_with_vertices_constructed, pairwise_intersections_by_polygon_from_bvh,
+        polygon_cycles_share_reversed_manifold_triangle_edge, retained_shared_triangle_vertex,
+        retained_shared_vertex_schedule, source_face_pair_key, support_line_order_axis,
+        triangle_has_two_proper_plane_crossings, triangle_plane_slice_vertex,
+        triangle_reaches_plane,
     };
     use crate::bvh::ExactBvh;
     use crate::context::{DecisionContext, MeshContext};
@@ -3364,6 +3559,37 @@ mod tests {
                         || (classifications.contains(&Classification::Negative)
                             && classifications.contains(&Classification::Positive));
                     assert_eq!(triangle_reaches_plane(classifications), expected);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_vertex_slice_proof_covers_every_triangle_classification() {
+        let values = [
+            Classification::Negative,
+            Classification::On,
+            Classification::Positive,
+        ];
+        for c0 in values {
+            for c1 in values {
+                for c2 in values {
+                    let classifications = [c0, c1, c2];
+                    let expected = (0..3).find(|&vertex| {
+                        classifications[vertex] == Classification::On
+                            && (0..3)
+                                .filter(|&other| other != vertex)
+                                .map(|other| classifications[other])
+                                .reduce(|first, second| {
+                                    if first == second {
+                                        first
+                                    } else {
+                                        Classification::On
+                                    }
+                                })
+                                .is_some_and(|side| side != Classification::On)
+                    });
+                    assert_eq!(triangle_plane_slice_vertex(classifications), expected);
                 }
             }
         }
@@ -3915,6 +4141,7 @@ mod tests {
                 &triangle,
                 &triangle_vertices,
                 None,
+                false,
                 &mut scratch,
             )
             .unwrap(),
@@ -3940,6 +4167,7 @@ mod tests {
                 &disjoint,
                 &disjoint_vertices,
                 None,
+                false,
                 &mut scratch,
             )
             .unwrap(),
@@ -4234,6 +4462,164 @@ mod tests {
             }))
         ));
         assert!(graph.radially_separated_face_pair_keys.is_empty());
+    }
+
+    #[test]
+    fn retained_shared_vertex_side_proof_precedes_pairwise_construction() {
+        let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let mut host = crate::test_support::approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            &p(0, 2, 0),
+            0,
+            0,
+        );
+        host.set_source_triangle_edge_identities(0, [0, 1, 2])
+            .unwrap();
+        let mut point_contact = crate::test_support::approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, -1, 1),
+            &p(-1, 1, 1),
+            0,
+            1,
+        );
+        point_contact
+            .set_source_triangle_edge_identities(0, [0, 3, 4])
+            .unwrap();
+        let mut segment_contact = crate::test_support::approximate_convex_triangle(
+            &p(0, 0, 0),
+            &p(1, -1, 1),
+            &p(-1, 2, -1),
+            0,
+            2,
+        );
+        segment_contact
+            .set_source_triangle_edge_identities(0, [0, 5, 6])
+            .unwrap();
+
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = MeshContext::new(policy);
+            let decisions = DecisionContext::new(&context);
+            let host_vertices = host.vertices_decision(&decisions).unwrap();
+            let point_vertices = point_contact.vertices_decision(&decisions).unwrap();
+            let segment_vertices = segment_contact.vertices_decision(&decisions).unwrap();
+            assert_eq!(
+                retained_shared_triangle_vertex(
+                    &host,
+                    &host_vertices,
+                    &point_contact,
+                    &point_vertices,
+                )
+                .unwrap(),
+                Some([0, 0])
+            );
+            assert_eq!(
+                retained_shared_triangle_vertex(
+                    &host,
+                    &host_vertices,
+                    &segment_contact,
+                    &segment_vertices,
+                )
+                .unwrap(),
+                Some([0, 0])
+            );
+
+            let graph = super::pairwise_intersections_by_polygon(
+                &decisions,
+                &[host.clone(), point_contact.clone()],
+            )
+            .unwrap();
+            assert!(graph.events.is_empty());
+            let graph = super::pairwise_intersections_by_polygon(
+                &decisions,
+                &[host.clone(), segment_contact.clone()],
+            )
+            .unwrap();
+            assert!(matches!(
+                graph.event_ids(0).unwrap().next(),
+                Some(Ok(PairwiseIntersectionEventIds::NonCoplanarSegment {
+                    other_polygon: 1,
+                    ..
+                }))
+            ));
+            assert_eq!(decisions.certainty(), crate::MeshCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn retained_shared_vertex_schedule_obeys_terminal_policy() {
+        let first = Real::pi() + Real::e();
+        let equivalent = Real::e() + Real::pi();
+        let origin = Point3::origin();
+        let mut host = crate::test_support::approximate_convex_triangle(
+            &origin,
+            &Point3::new(Real::one(), Real::one(), Real::zero()),
+            &Point3::new(Real::from(2), Real::one(), Real::zero()),
+            0,
+            0,
+        );
+        host.set_source_triangle_edge_identities(0, [0, 1, 2])
+            .unwrap();
+        let mut other = crate::test_support::approximate_convex_triangle(
+            &origin,
+            &Point3::new(Real::zero(), Real::zero(), Real::one()),
+            &Point3::new(equivalent, first, Real::zero()),
+            0,
+            1,
+        );
+        other
+            .set_source_triangle_edge_identities(0, [0, 3, 4])
+            .unwrap();
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        let host_vertices = host.vertices_decision(&strict).unwrap();
+        let other_vertices = other.vertices_decision(&strict).unwrap();
+        assert!(matches!(
+            retained_shared_vertex_schedule(
+                &strict,
+                &host,
+                &host_vertices,
+                host.support_plane(),
+                &other,
+                &other_vertices,
+                other.support_plane(),
+            ),
+            Ok(RetainedSharedVertexSchedule::Unavailable)
+        ));
+        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+        assert!(matches!(
+            super::pairwise_intersections_by_polygon(&strict, &[host.clone(), other.clone()]),
+            Err(HypermeshError::PredicateUndecided { .. })
+        ));
+        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        let host_vertices = host.vertices_decision(&approximate).unwrap();
+        let other_vertices = other.vertices_decision(&approximate).unwrap();
+        assert!(matches!(
+            retained_shared_vertex_schedule(
+                &approximate,
+                &host,
+                &host_vertices,
+                host.support_plane(),
+                &other,
+                &other_vertices,
+                other.support_plane(),
+            )
+            .unwrap(),
+            RetainedSharedVertexSchedule::Unavailable
+        ));
+        assert_eq!(approximate.certainty(), crate::MeshCertainty::Certified);
+        super::pairwise_intersections_by_polygon(&approximate, &[host, other]).unwrap();
+        assert_eq!(
+            approximate.certainty(),
+            crate::MeshCertainty::Approximate512Consumed
+        );
     }
 
     #[test]

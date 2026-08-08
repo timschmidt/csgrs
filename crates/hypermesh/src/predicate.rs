@@ -251,6 +251,40 @@ impl<'plane> PointPlanePredicate<'plane> {
         classify_real(decisions, &self.plane.expression_at_point(point))
     }
 
+    /// Attempts a certified classification without consuming the caller's
+    /// approximate terminal. Optional schedules use this to decline cleanly
+    /// when the ordinary required predicate path must make the decision.
+    #[inline]
+    pub(crate) fn probe_strict(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+        rational_query: Option<&RationalLinearForm4Query>,
+    ) -> Option<Classification> {
+        if let [Some(x), Some(y), Some(z)] =
+            [&point.x, &point.y, &point.z].map(Real::exact_rational_ref)
+            && let Some(classification) = self.classify_exact_rational_coordinates(
+                [x, y, z],
+                Rational::one_ref(),
+                rational_query,
+            )
+        {
+            return Some(classification);
+        }
+
+        let value = self.plane.expression_at_point(point);
+        decisions
+            .probe(classify_real_sign(
+                &value,
+                hyperlimit::PredicatePolicy::STRICT,
+            ))
+            .map(|sign| match sign {
+                Sign::Negative => Classification::Negative,
+                Sign::Zero => Classification::On,
+                Sign::Positive => Classification::Positive,
+            })
+    }
+
     #[inline]
     pub(crate) fn rational_filter(&self) -> Option<RationalLinearForm4Filter> {
         self.exact_rational.and_then(|exact| exact.filter)

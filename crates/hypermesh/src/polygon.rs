@@ -973,6 +973,13 @@ impl ConvexPolygon {
             .map(RetainedIdentityCycles::vertices)
     }
 
+    pub(crate) fn known_source_triangle_identity(&self) -> Option<(u32, [u32; 3])> {
+        match self.known_identities.as_ref()? {
+            RetainedIdentityCycles::SourceTriangle { mesh, vertices } => Some((*mesh, *vertices)),
+            RetainedIdentityCycles::Owned { .. } => None,
+        }
+    }
+
     /// Returns the certified rational filter query retained by an authored
     /// source vertex. Owned/constructed cycles keep using local predicate
     /// scheduling because they have no shared dense source-ID domain.
