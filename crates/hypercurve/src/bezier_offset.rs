@@ -2668,6 +2668,62 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
+    /// Recovers a selected-circle/chord contact beneath any number of exact
+    /// coincident-circle transports. The Boolean overlap orientation records
+    /// whether the destination traversal tangent is reversed relative to the
+    /// circle that authored the chord contact.
+    #[cfg(feature = "predicates")]
+    fn coincident_chord_source(
+        &self,
+    ) -> Option<(
+        &BezierAlgebraicCuspSemicircleChordParameterMap2,
+        &BezierAlgebraicCuspSemicircleChordContact2,
+        bool,
+    )> {
+        match self {
+            Self::Chord { map, contact } => Some((map, contact, false)),
+            Self::PairOverlapMap {
+                overlap, source, ..
+            } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                let (map, contact, reversed) = source.coincident_chord_source()?;
+                Some((
+                    map,
+                    contact,
+                    reversed
+                        ^ (overlap.data.orientation == RationalBezierOverlapOrientation2::Reversed),
+                ))
+            }
+            Self::Rational { .. }
+            | Self::Parallel { .. }
+            | Self::Pair { .. }
+            | Self::PairOverlap { .. } => None,
+        }
+    }
+
+    /// Returns the original one-word chord-contact parameter allocation below
+    /// coincident-circle wrappers. Keeping that allocation beside the current
+    /// mapped parameter preserves both the original point system and the
+    /// destination selected-circle center without constructing a compositum.
+    #[cfg(feature = "predicates")]
+    fn coincident_chord_parameter(self: &Arc<Self>) -> Option<Arc<Self>> {
+        match self.as_ref() {
+            Self::Chord { .. } => Some(self.clone()),
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.coincident_chord_parameter()
+            }
+            Self::Rational { .. }
+            | Self::Parallel { .. }
+            | Self::Pair { .. }
+            | Self::PairOverlap { .. } => None,
+        }
+    }
+
     /// Returns whether two mapped parameters name the same physical
     /// circle-circle contact, regardless of which participating semicircle
     /// owns the local parameter or how many coincident-circle transports wrap
@@ -10351,10 +10407,12 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
         &BezierAlgebraicCuspSemicircleChordParameterMap2,
         &BezierAlgebraicCuspSemicircleChordContact2,
     )> {
-        let Self::Chord(point) = self else {
-            return None;
-        };
-        Some(point.map_contact())
+        match self {
+            Self::Chord(point) => Some(point.map_contact()),
+            Self::Mapped { parameter, .. } => parameter
+                .coincident_chord_source()
+                .map(|(map, contact, _)| (map, contact)),
+        }
     }
 
     fn direct_pair_map_contact(
@@ -11784,6 +11842,41 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         if let BezierAlgebraicCuspSemicircleParameter2::Exact(source) = source {
             return self.mapped_exact_parameter_order_to_real(source, source_first, target);
         }
+        // A partial coincident-circle overlap does not define the inverse map
+        // outside its retained target range. In particular, mapping target
+        // endpoint 0 or 1 back through that partial overlap can select the
+        // antipodal source point and invert the global range test. Refine the
+        // already-authoritative forward image instead. This proves strict
+        // interior cuts are inside [0, 1] without adjoining the source field
+        // to either selected-circle field.
+        if target == &Real::zero() || target == &Real::one() {
+            for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+                let bracket =
+                    match self.mapped_parameter_bracket(source, source_first, refinement_steps)? {
+                        Classification::Decided(bracket) => bracket,
+                        Classification::Uncertain(_) => continue,
+                    };
+                let (start, end) = cusp_semicircle_parameter_bracket_bounds(&bracket);
+                if compare_reals(end, target, &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Less)
+                {
+                    return Ok(Classification::Decided(std::cmp::Ordering::Less));
+                }
+                if compare_reals(start, target, &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Greater)
+                {
+                    return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+                }
+                if compare_reals(start, end, &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Equal)
+                    && compare_reals(start, target, &CurveContext::STRICT)
+                        == Some(std::cmp::Ordering::Equal)
+                {
+                    return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+                }
+            }
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
         let inverse = self.map_parameter(
             &BezierAlgebraicCuspSemicircleParameter2::Exact(target.clone()),
             !source_first,
@@ -12119,6 +12212,26 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 ),
             )));
         }
+        if let Self::Mapped(data) = self
+            && data.semicircle_carrier() == semicircle
+            && let Some(chord_parameter) = data.coincident_chord_parameter()
+        {
+            return Ok(Classification::Decided(Some(
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
+                        data.clone(),
+                        Some(
+                            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(
+                                BezierAlgebraicCuspChordPoint2 {
+                                    data: chord_parameter,
+                                },
+                            ),
+                        ),
+                        Real::one(),
+                    ),
+                ),
+            )));
+        }
         match self.coincident_point_image(semicircle, policy)? {
             Classification::Decided(Some(point)) => {
                 return Ok(Classification::Decided(Some(
@@ -12266,6 +12379,23 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                     BezierAlgebraicCuspChordPoint2 { data: data.clone() }
                         .radial_scaled(radial_scale),
+                ),
+            )));
+        }
+        if let Some(chord_parameter) = data.coincident_chord_parameter() {
+            return Ok(Classification::Decided(Some(
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
+                        data.clone(),
+                        Some(
+                            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(
+                                BezierAlgebraicCuspChordPoint2 {
+                                    data: chord_parameter,
+                                },
+                            ),
+                        ),
+                        radial_scale,
+                    ),
                 ),
             )));
         }
@@ -22793,22 +22923,21 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } =
-            data.as_ref()
-        else {
+        let Some((map, contact, mapped_reversed)) = data.coincident_chord_source() else {
             return Ok(Classification::Decided(None));
         };
         map.validate_policy(policy)?;
         let Some(tangent) = map.data.chord.certified_unit_tangent() else {
             return Ok(Classification::Decided(None));
         };
-        if self.data.semicircle.data.frame != map.data.semicircle.data.frame
-            || self.data.semicircle.is_clockwise() != map.data.semicircle.is_clockwise()
+        let mapped_source = data.semicircle_carrier();
+        if self.data.semicircle.data.frame != mapped_source.data.frame
+            || self.data.semicircle.is_clockwise() != mapped_source.is_clockwise()
         {
             return Ok(Classification::Decided(None));
         }
         let radial_scale_sign = match real_sign(
-            &(self.data.semicircle.radial_distance() * map.data.semicircle.radial_distance()),
+            &(self.data.semicircle.radial_distance() * mapped_source.radial_distance()),
             policy,
         ) {
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
@@ -22819,7 +22948,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let reverse = self.data.reversed != (radial_scale_sign == RealSign::Negative);
+        let reverse =
+            self.data.reversed ^ mapped_reversed ^ (radial_scale_sign == RealSign::Negative);
         let cross = if reverse {
             match contact.tangent_cross_sign {
                 RealSign::Negative => RealSign::Positive,
@@ -43397,6 +43527,372 @@ mod conversion_tests {
                             0,
                         );
                     }
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_reoffsets_nested_chord_mapped_cap() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_operation(
+                &policy,
+                |construction_policy| -> CurveResult<()> {
+                    let policy = *construction_policy;
+                    let source =
+                        synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+                    let target =
+                        synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                            .transform_similarity(
+                                &Similarity2::try_from_real_affine(
+                                    (Real::from(4_i8) / Real::from(5_i8))?,
+                                    (-Real::from(3_i8) / Real::from(5_i8))?,
+                                    (Real::from(3_i8) / Real::from(5_i8))?,
+                                    (Real::from(4_i8) / Real::from(5_i8))?,
+                                    Real::from(4_i8),
+                                    Real::from(3_i8),
+                                )
+                                .unwrap(),
+                            )?;
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                    ) = source.pair_intersections(&target, &policy)?
+                    else {
+                        panic!("independent selected circles must retain their shared quadrant");
+                    };
+                    assert_eq!(
+                        overlap.orientation(),
+                        RationalBezierOverlapOrientation2::Same,
+                    );
+
+                    let fifth = (Real::one() / Real::from(5_i8))?;
+                    let BezierParameter2::Algebraic(start_parameter) = algebraic_parameter(vec![
+                        -(Real::one() / Real::from(2_i8))?,
+                        Real::zero(),
+                        Real::one(),
+                    ])
+                    else {
+                        unreachable!("sqrt(1/2) must remain algebraic");
+                    };
+                    let BezierParameter2::Algebraic(end_parameter) = algebraic_parameter(vec![
+                        -(Real::one() / Real::from(3_i8))?,
+                        Real::zero(),
+                        Real::one(),
+                    ])
+                    else {
+                        unreachable!("sqrt(1/3) must remain algebraic");
+                    };
+                    let endpoint = |start_x: i8,
+                                    end_x: i8,
+                                    parameter: &BezierAlgebraicParameter2|
+                     -> CurveResult<RationalBezierIntersectionPointEvidence2> {
+                        let curve = RationalBezier2::try_from_subcurve(
+                            &BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                                LineSeg2::try_new(
+                                    Point2::new(Real::from(start_x), Real::from(4_i8) * &fifth),
+                                    Point2::new(Real::from(end_x), Real::from(4_i8) * &fifth),
+                                )?,
+                            )),
+                        )?;
+                        Ok(RationalBezierIntersectionPointEvidence2::Algebraic(
+                            curve.point_at_algebraic_parameter(parameter, &policy)?,
+                        ))
+                    };
+                    let secant = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                        endpoint(-2, -1, &start_parameter)?,
+                        endpoint(1, 2, &end_parameter)?,
+                        BezierAlgebraicChordAxisDirection2::PositiveX,
+                        &policy,
+                    );
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                            contacts,
+                            parameter_map,
+                        },
+                    ) = source.axis_chord_intersections(&secant, &policy)?
+                    else {
+                        panic!("the source circle must retain both secant contacts");
+                    };
+                    let [left_contact, right_contact] = contacts.as_slice() else {
+                        panic!("the upper-circle secant must have two contacts");
+                    };
+                    let (left_source_parameter, left_point) =
+                        parameter_map.contact_evidence(left_contact);
+                    let (right_source_parameter, right_point) =
+                        parameter_map.contact_evidence(right_contact);
+                    assert_eq!(
+                        right_source_parameter
+                            .cmp_by_refinement(&left_source_parameter, &policy)?,
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                    let left_target_parameter =
+                        overlap.map_parameter(&left_source_parameter, true);
+                    let right_target_parameter =
+                        overlap.map_parameter(&right_source_parameter, true);
+                    assert!(
+                        matches!(
+                            (&left_target_parameter, &right_target_parameter),
+                            (
+                                BezierAlgebraicCuspSemicircleParameter2::Mapped(left),
+                                BezierAlgebraicCuspSemicircleParameter2::Mapped(right),
+                            ) if matches!(
+                                (left.as_ref(), right.as_ref()),
+                                (
+                                    BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { source, .. },
+                                    BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. },
+                                ) if matches!(
+                                    source,
+                                    BezierAlgebraicCuspSemicircleParameter2::Mapped(source)
+                                        if matches!(
+                                            source.as_ref(),
+                                            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }
+                                        )
+                                )
+                            )
+                        ),
+                        "unexpected mapped chord parameters: {left_target_parameter:?}, {right_target_parameter:?}",
+                    );
+                    assert_eq!(
+                        right_target_parameter
+                            .cmp_by_refinement(&left_target_parameter, &policy)?,
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                    for parameter in [&right_target_parameter, &left_target_parameter] {
+                        assert_eq!(
+                            parameter.order_to_real(&Real::zero(), &policy)?,
+                            Classification::Decided(std::cmp::Ordering::Greater),
+                        );
+                        assert_eq!(
+                            parameter.order_to_real(&Real::one(), &policy)?,
+                            Classification::Decided(std::cmp::Ordering::Less),
+                        );
+                    }
+                    let Classification::Decided(arc) =
+                        BezierAlgebraicCuspSemicircleFragment2::try_new(
+                            target.clone(),
+                            right_target_parameter,
+                            left_target_parameter,
+                            false,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!("the nested chord cuts must map into the target range: {error:?}")
+                        })
+                    else {
+                        panic!("the nested chord cuts must bound one selected-circle cap");
+                    };
+                    let Classification::Decided(Some(arc_start)) =
+                        arc.endpoint_point_evidence(true, &policy)?
+                    else {
+                        panic!("the nested right chord cut must retain exact point evidence");
+                    };
+                    let Classification::Decided(Some(arc_end)) =
+                        arc.endpoint_point_evidence(false, &policy)?
+                    else {
+                        panic!("the nested left chord cut must retain exact point evidence");
+                    };
+                    assert_eq!(
+                        arc_start.same_point(&right_point, &policy),
+                        Classification::Decided(true),
+                    );
+                    assert_eq!(
+                        arc_end.same_point(&left_point, &policy),
+                        Classification::Decided(true),
+                    );
+                    let Classification::Decided(Some(start_chord_tangent)) =
+                        arc.endpoint_chord_tangent_cross(true, &policy)?
+                    else {
+                        panic!("the nested right chord cut must retain exact tangent evidence");
+                    };
+                    let Classification::Decided(Some(end_chord_tangent)) =
+                        arc.endpoint_chord_tangent_cross(false, &policy)?
+                    else {
+                        panic!("the nested left chord cut must retain exact tangent evidence");
+                    };
+
+                    let Classification::Decided(Some(left_chord_parameter)) =
+                        secant.parameter_at_certified_point(left_point.clone(), &policy)?
+                    else {
+                        panic!("the left selected-circle contact must map to the secant");
+                    };
+                    let Classification::Decided(Some(right_chord_parameter)) =
+                        secant.parameter_at_certified_point(right_point.clone(), &policy)?
+                    else {
+                        panic!("the right selected-circle contact must map to the secant");
+                    };
+                    let closing_chord = BezierAlgebraicChord2::from_ordered_parameter_range(
+                        &secant,
+                        &left_chord_parameter,
+                        &right_chord_parameter,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("the two retained contacts must bound the secant: {error:?}")
+                    });
+                    let boundary = CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                            BezierSplitFragment2::AlgebraicChord(closing_chord.clone()),
+                        ],
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("the nested mapped arc and source secant must close: {error:?}")
+                    });
+                    let cap = CurveRegion2::try_new_with_loop_topology(
+                        vec![boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![CurveBoundaryInteriorSide2::Left],
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("the nested chord-mapped cap topology must construct: {error:?}")
+                    });
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let offset_distance = (Real::one() / Real::from(8_i8))?;
+                    let offset_work = || {
+                        cap.offset(
+                            offset_distance.clone(),
+                            &crate::OffsetCornerStyle2::Bevel,
+                            &policy,
+                        )
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let offset = hyperreal::dispatch_trace::with_recording(offset_work);
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let offset = offset_work();
+                    #[cfg(feature = "dispatch-trace")]
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let offset = offset.unwrap_or_else(|error| {
+                        #[cfg(feature = "dispatch-trace")]
+                        panic!(
+                            "a nested chord-mapped cap must re-offset exactly: {error:?}; {trace:?}"
+                        );
+                        #[cfg(not(feature = "dispatch-trace"))]
+                        panic!("a nested chord-mapped cap must re-offset exactly: {error:?}");
+                    });
+                    assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
+                    assert!(!offset.value.boundary_loops().is_empty());
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "curve-region-exact-offset-span",
+                                "axis-algebraic-chord",
+                            ),
+                            1,
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "curve-region-exact-offset-tangent",
+                                "selected-circle-chord-contact",
+                            ),
+                            2,
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "curve-region-exact-offset-span",
+                                "uncertified-oblique-algebraic-chord",
+                            ),
+                            0,
+                        );
+                    }
+
+                    let reversed_target = target.reversed();
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                            reversed_overlap,
+                        ),
+                    ) = source.pair_intersections(&reversed_target, &policy)?
+                    else {
+                        panic!("the reversed selected circle must retain the same overlap");
+                    };
+                    assert_eq!(
+                        reversed_overlap.orientation(),
+                        RationalBezierOverlapOrientation2::Reversed,
+                    );
+                    let reversed_left =
+                        reversed_overlap.map_parameter(&left_source_parameter, true);
+                    let reversed_right =
+                        reversed_overlap.map_parameter(&right_source_parameter, true);
+                    assert_eq!(
+                        reversed_left.cmp_by_refinement(&reversed_right, &policy)?,
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                    let Classification::Decided(reversed_arc) =
+                        BezierAlgebraicCuspSemicircleFragment2::try_new(
+                            reversed_target,
+                            reversed_left,
+                            reversed_right,
+                            true,
+                            &policy,
+                        )?
+                    else {
+                        panic!("the reversed nested chord cuts must retain their physical arc");
+                    };
+                    let Classification::Decided(Some(reversed_start)) =
+                        reversed_arc.endpoint_point_evidence(true, &policy)?
+                    else {
+                        panic!("the reversed nested arc start must retain exact evidence");
+                    };
+                    let Classification::Decided(Some(reversed_end)) =
+                        reversed_arc.endpoint_point_evidence(false, &policy)?
+                    else {
+                        panic!("the reversed nested arc end must retain exact evidence");
+                    };
+                    assert_eq!(
+                        reversed_start.same_point(&right_point, &policy),
+                        Classification::Decided(true),
+                    );
+                    assert_eq!(
+                        reversed_end.same_point(&left_point, &policy),
+                        Classification::Decided(true),
+                    );
+                    assert_eq!(
+                        reversed_arc.endpoint_chord_tangent_cross(true, &policy)?,
+                        Classification::Decided(Some(start_chord_tangent)),
+                    );
+                    assert_eq!(
+                        reversed_arc.endpoint_chord_tangent_cross(false, &policy)?,
+                        Classification::Decided(Some(end_chord_tangent)),
+                    );
+                    let reversed_boundary = CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(reversed_arc),
+                            BezierSplitFragment2::AlgebraicChord(closing_chord),
+                        ],
+                        &policy,
+                    )?;
+                    let reversed_cap = CurveRegion2::try_new_with_loop_topology(
+                        vec![reversed_boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![CurveBoundaryInteriorSide2::Left],
+                    )?;
+                    let reversed_offset = reversed_cap
+                        .offset(
+                            offset_distance,
+                            &crate::OffsetCornerStyle2::Bevel,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "a reversed nested chord-mapped cap must re-offset exactly: {error:?}"
+                            )
+                        });
+                    assert_eq!(
+                        reversed_offset.certainty,
+                        crate::CurveCertainty::Certified,
+                    );
+                    assert!(!reversed_offset.value.boundary_loops().is_empty());
                     Ok(())
                 },
             )
