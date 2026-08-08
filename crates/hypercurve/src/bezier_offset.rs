@@ -2332,10 +2332,11 @@ pub struct BezierAlgebraicChord2 {
 
 /// Certified traversal direction of an axis-aligned retained algebraic chord.
 ///
-/// The unit directions contain no normalized algebraic scalar, so an exact
+/// Cardinal directions contain no normalized algebraic scalar, so an exact
 /// signed parallel can translate each retained endpoint in its existing
-/// selected field. General directions deliberately remain on the algebraic
-/// parallel-carrier boundary.
+/// selected field. Certified similarities may retain the corresponding exact
+/// unit tangent for an oblique image; an uncertified general direction remains
+/// on the algebraic parallel-carrier boundary.
 #[cfg(feature = "predicates")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum BezierAlgebraicChordAxisDirection2 {
