@@ -1,0 +1,232 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "exact retained cusp/chord boundary re-offset with algebraic bevel joins",
+  "implementation_revision": "513ff32f2cbef38fd7a9e8a6efc20c92263073b8",
+  "semantic_revision": "b9f0bf7",
+  "benchmark_revision": "513ff32f2cbef38fd7a9e8a6efc20c92263073b8",
+  "correctness_equivalent_pre_optimization_revision": "b9f0bf7",
+  "historical_rejecting_revision": "3111455",
+  "preceding_checkpoint": "2026-08-07-mapped-circle-similarity-transport.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "retained selected-circle/certified-chord contacts survive a Boolean as compact correlated point evidence and become reusable CurveRegion2 boundary endpoints",
+      "a correlated derived point retains the exact affine model Q = C + s(P-C) + T without adjoining another primitive field",
+      "same-frame concentric-circle incidence, cardinal contact order, finite chord bounds, equality, and linear predicates are exact",
+      "noncardinal bevel joins are certified endpoint-only by exact disk incidence and convexity",
+      "circular rational-quadratic endpoint-image parallels, endpoint tangents, and bevel joins remain exact",
+      "the retained cusp/chord intersection boundary re-offsets through CurveRegion2 under STRICT and APPROXIMATE_512",
+      "broad-phase bounds are a bounded rejection accelerator and no longer replay a 512-step isolator before exact pair dispatch",
+      "a deflated source-related chord fiber uses the existing exact quotient-ring projection and retains the general Hypersolve resultant as complete fallback",
+      "the predicates-disabled endpoint path compiles and retains algebraic endpoint images without referencing predicates-only evidence"
+    ],
+    "remaining": [
+      "general oblique selected-circle/chord supports",
+      "non-endpoint rational, parallel, pair, and chord mapped-cut transport",
+      "general retained-algebraic fillet centers and tangency replay",
+      "collinear AlgebraicChordPair source replay",
+      "coupled material/hole wavefront events and remaining global erosion cases"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::offset -> offset_exact_general_raw -> exact retained circle/chord spans and bevel joins -> regularized_region_raw -> CurveRegionBooleanContext::build_regularized_region -> build_split_topology -> pair_result",
+    "circle_chord_route": "RegionCarrierPairContext::CuspChord -> authored endpoint-only certificate or two-step exact bounds rejection -> BezierAlgebraicCuspSemicircle2::axis_chord_intersections",
+    "source_related_route": "BezierAlgebraicChord2::source_related_intersections -> exact diagonal fiber deflation -> algebraic_selected_reduced_fiber_parameters -> quotient-ring projection, with algebraic_selected_fiber_parameters as complete fallback",
+    "broad_phase_rule": "Only refinement budgets 0 and 2 are used for carrier-box rejection. An unresolved overlap falls through to the authoritative exact pair kernel; policy-terminal 512-bit work is not spent on speculative separation.",
+    "adjacency_rule": "Authored circle/chord adjacency is certified before any endpoint-box refinement because topology already supplies the shared endpoint.",
+    "persistent_state_added": "none",
+    "public_or_carrier_layout_growth": "none; BezierAlgebraicCuspChordDerivedPoint2 remains one word",
+    "compatibility_shim_added": false,
+    "duplicate_region_boolean_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "lower_layer_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "Every completed fixture uses exact retained field, support, branch, disk, tangent, and topology predicates. Unproved facts remain uncertain.",
+    "approximate_512": "The same graph is used. Only shared terminal predicates may consume the 512-bit interpretation, and no approximate coordinate or bound becomes reusable construction evidence.",
+    "public_fixture": "The translated selected-round intersection re-offsets by 1/100 with bevel corners as Certified under both policies.",
+    "dispatch_guard": "The public regression observes one exact diagonal deflation, one quotient-ring selected-fiber projection, and zero general-resultant fallbacks for the measured source-related pair.",
+    "no_policy_upgrade": true
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_offset/cusp_chord_boundary_bevel_reoffset",
+    "fixture": "Two exact selected-round offsets of the algebraic rectangle, translated by (1/20, 1/40), are intersected before timing. The timed operation offsets that retained intersection by 1/100 with bevel corners.",
+    "timed_scope": "Fixture construction and the first capability probe are outside Runner timing. Runner performs one warm-up before every sample set.",
+    "wall_command": "env HYPERCURVE_COMPARE_GROUP=cusp_chord_boundary HYPERCURVE_COMPARE_SAMPLES=9 HYPERCURVE_COMPARE_SAMPLE_MS=120 <comparative-executable>",
+    "matched_control": "Detached b9f0bf7 uses the identical 74-line benchmark patch, release settings, and dependency revisions and returns the same certified exact geometry.",
+    "historical_control": "Detached 3111455 uses the same benchmark patch but rejects the re-offset; its latency is capability context, not an equivalent performance baseline.",
+    "competitive_control": "Cavalier Contours performs the analogous binary64 polyline intersection fixture and bevel-like parallel offset. It has no selected fields, retained exact topology, or policy outcome and is a throughput sentinel only.",
+    "perf_method": "perf stat user-space instructions, cycles, branches, branch misses, and cache misses. The implementation-filter=disabled process retains fixture construction and the untimed capability probe. Current normalization divides the process difference by 257 warm-up/timed calls; b9f0bf7 normalization divides by two.",
+    "heap_method": "Heaptrack record-only runs 32 timed current operations plus the Runner warm-up. The disabled process retains fixture construction and the untimed capability probe; subtracting it and dividing by 33 reports operation allocation counts. Heaptrack wall time is not used.",
+    "profile_method": "Frame-pointer release perf records compare the correctness-equivalent semantic implementation and optimized implementation. Percentages are sampled-cycle attribution, not deterministic work counters."
+  },
+  "matched_wall_performance": {
+    "samples_per_variant": 9,
+    "current_513ff32": {
+      "exact_reoffset_median_ns": 1977270.1,
+      "exact_reoffset_min_ns": 1945407.8,
+      "exact_reoffset_max_ns": 2100480.6,
+      "iterations_per_sample": 64,
+      "cavalier_f64_median_ns": 1864.7,
+      "cavalier_f64_min_ns": 1847.2,
+      "cavalier_f64_max_ns": 2008.3
+    },
+    "semantic_parent_b9f0bf7": {
+      "exact_reoffset_median_ns": 1297070274.0,
+      "exact_reoffset_min_ns": 1280096437.0,
+      "exact_reoffset_max_ns": 1311133252.0,
+      "iterations_per_sample": 1,
+      "cavalier_f64_median_ns": 1860.8
+    },
+    "historical_3111455": {
+      "result": "rejected",
+      "reoffset_median_ns": 4736.4,
+      "cavalier_f64_median_ns": 1886.9
+    },
+    "optimization": {
+      "speedup_over_correctness_equivalent_parent": 655.990436,
+      "time_reduction_percent": 99.847559,
+      "current_exact_over_cavalier_ratio": 1060.369014,
+      "current_exact_over_historical_rejection_ratio": 417.462651
+    },
+    "interpretation": "The optimization comparison is correctness-equivalent and removes 99.85% of wall time. Historical rejection and Cavalier binary64 are explicitly non-equivalent context."
+  },
+  "deterministic_perf": {
+    "raw_array_order": [
+      "instructions",
+      "cycles",
+      "branches",
+      "branch_misses",
+      "cache_misses"
+    ],
+    "current": {
+      "fixed_timed_iterations": 256,
+      "normalized_operation_invocations": 257,
+      "raw_operation_process": [4276812976, 2235715289, 818465237, 16436563, 25739480],
+      "raw_disabled_process": [95521862, 45582357, 18211522, 377524, 357186],
+      "normalized_per_operation": [
+        16269615.230,
+        8521918.023,
+        3113827.685,
+        62486.533,
+        98763.790
+      ]
+    },
+    "semantic_parent": {
+      "fixed_timed_iterations": 1,
+      "normalized_operation_invocations": 2,
+      "raw_operation_process": [55809500795, 16574292283, 8479737867, 66169050, 9235205],
+      "raw_disabled_process": [18867836406, 5615500870, 2876132263, 23883392, 3066028],
+      "normalized_per_operation": [
+        18470832194.500,
+        5479395706.500,
+        2801802802.000,
+        21142829.000,
+        3084588.500
+      ]
+    },
+    "reduction_percent": {
+      "instructions": 99.911917,
+      "cycles": 99.844473,
+      "branches": 99.888863,
+      "branch_misses": 99.704455,
+      "cache_misses": 96.798153
+    },
+    "interpretation": "The wall improvement is algorithmic: the operation retires about 16.27 million instructions instead of 18.47 billion."
+  },
+  "allocation_evidence": {
+    "current_only": true,
+    "fixed_timed_iterations": 32,
+    "normalized_operation_invocations": 33,
+    "raw_operation_process": {
+      "allocation_calls": 948849,
+      "temporary_allocations": 108729,
+      "peak_heap_kib": 681.74
+    },
+    "raw_disabled_process": {
+      "allocation_calls": 169456,
+      "temporary_allocations": 33721,
+      "peak_heap_kib": 669.83
+    },
+    "normalized_per_operation": {
+      "allocation_calls": 23617.969697,
+      "temporary_allocations": 2272.969697
+    },
+    "peak_increment_over_prebuilt_fixture_kib": 11.91,
+    "parent_caveat": "The parent 512-step refinement path becomes severely perturbed under Heaptrack, so its recorder wall time and incomplete matched subtraction are intentionally excluded. Wall and deterministic perf provide the parent comparison.",
+    "persistent_memory_cost": "none"
+  },
+  "runtime_profile": {
+    "semantic_parent_artifact": "/tmp/hypercurve-cusp-chord-reoffset-fp.perf",
+    "semantic_parent_observation": "84.48% of sampled cycles are in BezierAlgebraicChord2::conservative_bounds_refined; 83.29% are in BezierParameter2::refined_isolating_interval and 82.67% in RefinedParameter::refine_once. Exact rational GCD and BigUint division dominate.",
+    "current_artifact": "/tmp/hypercurve-cusp-chord-reoffset-final-fp.perf",
+    "current_observation": "The 512-step spike is gone. Current sampled weight is distributed across exact pair predicates: 37.46% algebraic chord point coordinate order, 21.73% conservative chord bounds, 12.04% exact bevel join construction, and 9.86% source-related intersections."
+  },
+  "linked_size": {
+    "artifact": "matched comparative release executable with identical benchmark source",
+    "all_features": {
+      "semantic_parent_file_bytes": 12977864,
+      "current_file_bytes": 12975008,
+      "file_delta_bytes": -2856,
+      "semantic_parent_text_bytes": 9908643,
+      "current_text_bytes": 9906103,
+      "text_delta_bytes": -2540,
+      "semantic_parent_data_bytes": 309576,
+      "current_data_bytes": 309576,
+      "data_delta_bytes": 0,
+      "semantic_parent_bss_bytes": 3496,
+      "current_bss_bytes": 1912,
+      "bss_delta_bytes": -1584,
+      "semantic_parent_allocated_total_bytes": 10221715,
+      "current_allocated_total_bytes": 10217591,
+      "allocated_total_delta_bytes": -4124,
+      "allocated_total_delta_percent": -0.040345
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "matched_parent_includes_identical_compile_fix": true,
+      "semantic_parent_text_bytes": 8589458,
+      "current_text_bytes": 8589458,
+      "semantic_parent_data_bytes": 299784,
+      "current_data_bytes": 299784,
+      "semantic_parent_bss_bytes": 5200,
+      "current_bss_bytes": 5200,
+      "semantic_parent_allocated_total_bytes": 8894442,
+      "current_allocated_total_bytes": 8894442,
+      "allocated_total_delta_bytes": 0,
+      "file_delta_bytes": 80,
+      "interpretation": "Allocated sections are byte-identical; the 80-byte file difference is outside allocated text/data/BSS."
+    }
+  },
+  "static_callgraph": {
+    "utility": "tools/hyper-callgraph/target/release/hyper-callgraph",
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-cusp-chord-reoffset-513ff32-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "semantic_parent_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-cusp-chord-reoffset-semantic --out-dir hypercurve/target/callgraph-cusp-chord-reoffset-semantic-b9f0bf7-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "current_artifact": "target/callgraph-cusp-chord-reoffset-513ff32-all/callgraph.json",
+    "semantic_parent_artifact": "target/callgraph-cusp-chord-reoffset-semantic-b9f0bf7-all/callgraph.json",
+    "current": {"libraries_discovered": 1, "nodes": 29616, "edges": 56595},
+    "semantic_parent": {"libraries_discovered": 1, "nodes": 29614, "edges": 56589},
+    "delta": {"nodes": 2, "edges": 6},
+    "authority_edge": "CurveRegion2::offset -> regularized_region_raw -> CurveRegionBooleanContext::pair_result -> exact CuspChord/AlgebraicChordPair dispatch -> quotient-ring or complete general fallback",
+    "duplicate_public_engine_found": false,
+    "caveat": "The graph is syntax-level navigation and source-complexity evidence, not runtime reachability or linked-size evidence."
+  },
+  "verification": {
+    "all_features_library": "cargo test --all-features --lib: 482 passed, 0 failed, 1 ignored",
+    "public_promotion": "cargo test --all-features --test hypercurve_curve_region_promotion: 65 passed, 0 failed",
+    "minimal_library": "cargo test --no-default-features --lib: 324 passed, 0 failed",
+    "all_features_clippy": "cargo clippy --all-targets --all-features -- -D warnings: passed for Hypercurve; only the pre-existing Hypertri dependency dead-code warning was emitted",
+    "minimal_clippy": "cargo clippy --all-targets --no-default-features -- -D warnings: passed",
+    "benchmark_build": "cargo check --release --all-features --bench comparative: passed",
+    "policy_regression": "cusp_chord_boolean_boundary_reoffsets_with_exact_bevels passes STRICT and APPROXIMATE_512 and asserts the quotient-ring dispatch path under dispatch-trace"
+  }
+}
