@@ -5864,7 +5864,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                                     _,
-                                ),
+                                )
+                                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
                             ) => Classification::Uncertain(UncertaintyReason::Unsupported),
                             Classification::Uncertain(reason) => Classification::Uncertain(reason),
                         },
@@ -5877,6 +5878,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
                         )
                     });
                 let mut interior_classification = None;
@@ -6003,7 +6005,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ),
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_) => None,
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => None,
             };
             if let Some(classification) = direct {
                 match classification {
@@ -6026,6 +6029,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) => {
+                        point.conservative_bounds_refined(refinement_steps, &self.data.policy)
+                    }
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) => {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::Exact(_)

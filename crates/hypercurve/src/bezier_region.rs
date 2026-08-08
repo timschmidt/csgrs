@@ -2043,7 +2043,8 @@ fn retained_fragment_endpoint_evidence(
                 #[cfg(feature = "predicates")]
                 crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_) => {
+                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
                     (None, None)
                 }
             };
@@ -2447,6 +2448,8 @@ struct ExactOffsetSpan2 {
 
 enum ExactOffsetTangent2 {
     Vector((Real, Real)),
+    #[cfg(feature = "predicates")]
+    AlgebraicChord(crate::BezierAlgebraicChord2),
     CircularPoint {
         point: RationalBezierIntersectionPointEvidence2,
         circle: Arc<crate::rational_bezier::RationalQuadraticCircle2>,
@@ -2459,7 +2462,9 @@ enum ExactOffsetTangent2 {
     },
     #[cfg(feature = "predicates")]
     ChordContact {
-        chord_tangent: (Real, Real),
+        fragment: crate::BezierAlgebraicCuspSemicircleFragment2,
+        at_start: bool,
+        chord: crate::BezierAlgebraicChord2,
         circle_cross_chord: RealSign,
     },
 }
@@ -4596,9 +4601,19 @@ fn exact_offset_span_from_algebraic_chord(
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "curve-region-exact-offset-span",
-            "uncertified-oblique-algebraic-chord",
+            "retained-oblique-algebraic-chord",
         );
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let offset_chord = chord.parallel_left_retained(distance.clone(), policy)?;
+        let offset_start = offset_chord.start().clone();
+        let offset_end = offset_chord.end().clone();
+        return Ok(Classification::Decided(ExactOffsetSpan2 {
+            fragments: vec![retained_chord_or_exact_line_fragment(offset_chord)?],
+            source_end: chord.end().clone(),
+            offset_start,
+            offset_end,
+            start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
+            end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
+        }));
     };
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
@@ -4670,7 +4685,7 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<ExactOffsetTangent2>>> {
     match offset.endpoint_chord_tangent_cross(at_start, policy)? {
-        Classification::Decided(Some((chord_tangent, circle_cross_chord))) => {
+        Classification::Decided(Some((chord, circle_cross_chord))) => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -4679,7 +4694,9 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
             );
             return Ok(Classification::Decided(Some(
                 ExactOffsetTangent2::ChordContact {
-                    chord_tangent,
+                    fragment: offset.clone(),
+                    at_start,
+                    chord,
                     circle_cross_chord,
                 },
             )));
@@ -5646,41 +5663,6 @@ const fn exact_sign_reverse(sign: RealSign) -> RealSign {
     }
 }
 
-#[cfg(feature = "predicates")]
-fn exact_parallel_vector_factor(
-    reference: &(Real, Real),
-    vector: &(Real, Real),
-    policy: &CurveContext,
-) -> Classification<RealSign> {
-    match real_sign(&offset_vector_cross(reference, vector), policy) {
-        Some(RealSign::Zero) => {}
-        Some(RealSign::Negative | RealSign::Positive) => {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "curve-region-exact-offset-tangent-cross",
-                "chord-contact-vector-nonparallel",
-            );
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        }
-        None => {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "curve-region-exact-offset-tangent-cross",
-                "chord-contact-vector-cross-uncertain",
-            );
-            return Classification::Uncertain(UncertaintyReason::RealSign);
-        }
-    }
-    let dot = &reference.0 * &vector.0 + &reference.1 * &vector.1;
-    match real_sign(&dot, policy) {
-        Some(sign @ (RealSign::Negative | RealSign::Positive)) => Classification::Decided(sign),
-        Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
-        None => Classification::Uncertain(UncertaintyReason::RealSign),
-    }
-}
-
 fn exact_circular_tangent_cross_vector(
     point: &RationalBezierIntersectionPointEvidence2,
     circle: &crate::rational_bezier::RationalQuadraticCircle2,
@@ -5752,6 +5734,58 @@ fn exact_circular_tangent_cross_vector(
     }
 }
 
+#[cfg(feature = "predicates")]
+fn exact_algebraic_chord_parallel_factor(
+    reference: &crate::BezierAlgebraicChord2,
+    candidate: &crate::BezierAlgebraicChord2,
+    policy: &CurveContext,
+) -> Classification<RealSign> {
+    match reference.tangent_cross_sign(candidate, policy) {
+        Ok(Classification::Decided(RealSign::Zero)) => {}
+        Ok(Classification::Decided(RealSign::Negative | RealSign::Positive)) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+    match reference.tangent_dot_sign(candidate, policy) {
+        Ok(Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive))) => {
+            Classification::Decided(sign)
+        }
+        Ok(Classification::Decided(RealSign::Zero)) => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn exact_algebraic_chord_vector_factor(
+    reference: &crate::BezierAlgebraicChord2,
+    candidate: &(Real, Real),
+    policy: &CurveContext,
+) -> Classification<RealSign> {
+    match reference.tangent_cross_vector_sign(candidate, policy) {
+        Ok(Classification::Decided(RealSign::Zero)) => {}
+        Ok(Classification::Decided(RealSign::Negative | RealSign::Positive)) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+    match reference.tangent_dot_vector_sign(candidate, policy) {
+        Ok(Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive))) => {
+            Classification::Decided(sign)
+        }
+        Ok(Classification::Decided(RealSign::Zero)) => {
+            Classification::Uncertain(UncertaintyReason::Boundary)
+        }
+        Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
 fn exact_offset_tangent_cross_sign(
     first: &ExactOffsetTangent2,
     second: &ExactOffsetTangent2,
@@ -5768,6 +5802,36 @@ fn exact_offset_tangent_cross_sign(
             match real_sign(&offset_vector_cross(first, second), policy) {
                 Some(sign) => Classification::Decided(sign),
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::AlgebraicChord(first),
+            ExactOffsetTangent2::AlgebraicChord(second),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "algebraic-chord-algebraic-chord",
+            );
+            match first.tangent_cross_sign(second, policy) {
+                Ok(sign) => sign,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (ExactOffsetTangent2::AlgebraicChord(first), ExactOffsetTangent2::Vector(second)) => {
+            match first.tangent_cross_vector_sign(second, policy) {
+                Ok(sign) => sign,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::AlgebraicChord(second)) => {
+            match second.tangent_cross_vector_sign(first, policy) {
+                Ok(sign) => sign.map(exact_sign_reverse),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
         (
@@ -5822,7 +5886,9 @@ fn exact_offset_tangent_cross_sign(
         #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::ChordContact {
-                chord_tangent,
+                fragment,
+                at_start,
+                chord,
                 circle_cross_chord,
             },
             ExactOffsetTangent2::Vector(second),
@@ -5833,14 +5899,22 @@ fn exact_offset_tangent_cross_sign(
                 "curve-region-exact-offset-tangent-cross",
                 "circle-chord-contact-vector",
             );
-            exact_parallel_vector_factor(chord_tangent, second, policy)
-                .map(|factor| exact_sign_product(*circle_cross_chord, factor))
+            match exact_algebraic_chord_vector_factor(chord, second, policy) {
+                Classification::Decided(factor) => {
+                    Classification::Decided(exact_sign_product(*circle_cross_chord, factor))
+                }
+                Classification::Uncertain(_) => fragment
+                    .endpoint_tangent_cross_vector(*at_start, second, policy)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            }
         }
         #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::Vector(first),
             ExactOffsetTangent2::ChordContact {
-                chord_tangent,
+                fragment,
+                at_start,
+                chord,
                 circle_cross_chord,
             },
         ) => {
@@ -5850,9 +5924,82 @@ fn exact_offset_tangent_cross_sign(
                 "curve-region-exact-offset-tangent-cross",
                 "vector-circle-chord-contact",
             );
-            exact_parallel_vector_factor(chord_tangent, first, policy)
-                .map(|factor| exact_sign_reverse(exact_sign_product(*circle_cross_chord, factor)))
+            match exact_algebraic_chord_vector_factor(chord, first, policy) {
+                Classification::Decided(factor) => Classification::Decided(exact_sign_reverse(
+                    exact_sign_product(*circle_cross_chord, factor),
+                )),
+                Classification::Uncertain(_) => fragment
+                    .endpoint_tangent_cross_vector(*at_start, first, policy)
+                    .map(|cross| cross.map(exact_sign_reverse))
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            }
         }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::ChordContact {
+                fragment,
+                at_start,
+                chord,
+                circle_cross_chord,
+            },
+            ExactOffsetTangent2::AlgebraicChord(second),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "circle-chord-contact-algebraic-chord",
+            );
+            match exact_algebraic_chord_parallel_factor(chord, second, policy) {
+                Classification::Decided(factor) => {
+                    Classification::Decided(exact_sign_product(*circle_cross_chord, factor))
+                }
+                Classification::Uncertain(_) => fragment
+                    .endpoint_tangent_cross_algebraic_chord(*at_start, second, policy)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::AlgebraicChord(first),
+            ExactOffsetTangent2::ChordContact {
+                fragment,
+                at_start,
+                chord,
+                circle_cross_chord,
+            },
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "algebraic-chord-circle-chord-contact",
+            );
+            match exact_algebraic_chord_parallel_factor(chord, first, policy) {
+                Classification::Decided(factor) => Classification::Decided(exact_sign_reverse(
+                    exact_sign_product(*circle_cross_chord, factor),
+                )),
+                Classification::Uncertain(_) => fragment
+                    .endpoint_tangent_cross_algebraic_chord(*at_start, first, policy)
+                    .map(|cross| cross.map(exact_sign_reverse))
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+            ExactOffsetTangent2::AlgebraicChord(second),
+        ) => fragment
+            .endpoint_tangent_cross_algebraic_chord(*at_start, second, policy)
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::AlgebraicChord(first),
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+        ) => fragment
+            .endpoint_tangent_cross_algebraic_chord(*at_start, first, policy)
+            .map(|cross| cross.map(exact_sign_reverse))
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
@@ -5899,7 +6046,11 @@ fn exact_offset_tangent_cross_sign(
         | (
             ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },
             ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        )
+        | (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::CircularPoint { .. })
+        | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::AlgebraicChord(_)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
         #[cfg(not(feature = "predicates"))]
         (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
@@ -5934,6 +6085,32 @@ fn exact_offset_tangents_are_opposite(
         }
         #[cfg(feature = "predicates")]
         (
+            ExactOffsetTangent2::AlgebraicChord(first),
+            ExactOffsetTangent2::AlgebraicChord(second),
+        ) => match first.tangent_dot_sign(second, policy) {
+            Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
+            Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
+            Ok(Classification::Decided(RealSign::Zero)) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        },
+        #[cfg(feature = "predicates")]
+        (ExactOffsetTangent2::AlgebraicChord(chord), ExactOffsetTangent2::Vector(vector))
+        | (ExactOffsetTangent2::Vector(vector), ExactOffsetTangent2::AlgebraicChord(chord)) => {
+            match chord.tangent_dot_vector_sign(vector, policy) {
+                Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
+                Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
+                Ok(Classification::Decided(RealSign::Zero)) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
             ExactOffsetTangent2::Vector(vector),
         )
@@ -5964,7 +6141,9 @@ fn exact_offset_tangents_are_opposite(
         #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_))
         | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. })
-        | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
+        | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. })
+        | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::AlgebraicChord(_))
+        | (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::ChordContact { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
     }
@@ -9261,6 +9440,12 @@ impl CurveRegion2 {
                 {
                     Classification::Decided(span) => spans.push(span),
                     Classification::Uncertain(reason) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-exact-offset-blocker",
+                            "span",
+                        );
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
@@ -9293,6 +9478,12 @@ impl CurveRegion2 {
                 {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-exact-offset-blocker",
+                            "join",
+                        );
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
@@ -9349,7 +9540,16 @@ impl CurveRegion2 {
                 .with_certified_regularized_filled_left_topology()
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         }
-        raw.regularized_region_raw(policy)
+        let regularized = raw.regularized_region_raw(policy);
+        #[cfg(feature = "dispatch-trace")]
+        if regularized.is_err() {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-blocker",
+                "regularization",
+            );
+        }
+        regularized
             .map(Classification::Decided)
             .map_err(|error| error.with_operation(CurveOperation2::Offset))
     }

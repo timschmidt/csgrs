@@ -177,6 +177,10 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// contact, such as one endpoint of an axis-aligned parallel.
     #[cfg(feature = "predicates")]
     AlgebraicCuspChordDerived(crate::BezierAlgebraicCuspChordDerivedPoint2),
+    /// One endpoint of an exact Euclidean parallel to a retained algebraic
+    /// chord whose normalized direction spans selected endpoint fields.
+    #[cfg(feature = "predicates")]
+    AlgebraicChordParallel(crate::BezierAlgebraicChordParallelPoint2),
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
@@ -191,6 +195,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChord(_) => None,
             #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChordDerived(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordParallel(_) => None,
         }
     }
 
@@ -211,6 +217,10 @@ impl RationalBezierIntersectionPointEvidence2 {
             (Self::AlgebraicCuspChordDerived(first), Self::AlgebraicCuspChordDerived(second)) => {
                 first.shares_storage(second)
             }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicChordParallel(first), Self::AlgebraicChordParallel(second)) => {
+                first.shares_storage(second)
+            }
             _ => false,
         }
     }
@@ -226,6 +236,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChord(_) => None,
             #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChordDerived(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordParallel(_) => None,
         }
     }
 
@@ -237,7 +249,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::Exact(_)
             | Self::Algebraic(_)
             | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicCuspChordDerived(_) => None,
+            | Self::AlgebraicCuspChordDerived(_)
+            | Self::AlgebraicChordParallel(_) => None,
         }
     }
 
@@ -249,7 +262,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::Exact(_)
             | Self::Algebraic(_)
             | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChordDerived(_) => None,
+            | Self::AlgebraicCuspChordDerived(_)
+            | Self::AlgebraicChordParallel(_) => None,
         }
     }
 
@@ -263,7 +277,23 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::Exact(_)
             | Self::Algebraic(_)
             | Self::AlgebraicChordPair(_)
-            | Self::AlgebraicCuspChord(_) => None,
+            | Self::AlgebraicCuspChord(_)
+            | Self::AlgebraicChordParallel(_) => None,
+        }
+    }
+
+    /// Returns a retained algebraic-chord parallel endpoint, when present.
+    #[cfg(feature = "predicates")]
+    pub const fn as_algebraic_chord_parallel(
+        &self,
+    ) -> Option<&crate::BezierAlgebraicChordParallelPoint2> {
+        match self {
+            Self::AlgebraicChordParallel(point) => Some(point),
+            Self::Exact(_)
+            | Self::Algebraic(_)
+            | Self::AlgebraicChordPair(_)
+            | Self::AlgebraicCuspChord(_)
+            | Self::AlgebraicCuspChordDerived(_) => None,
         }
     }
 
@@ -406,6 +436,11 @@ impl RationalBezierIntersectionPointEvidence2 {
             #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChordDerived(point), other)
             | (other, Self::AlgebraicCuspChordDerived(point)) => {
+                point.same_point_evidence(other, policy)
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AlgebraicChordParallel(point), other)
+            | (other, Self::AlgebraicChordParallel(point)) => {
                 point.same_point_evidence(other, policy)
             }
         }
