@@ -2114,6 +2114,122 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts() {
+    let radius = q(1, 20);
+    let rotation = Similarity2::try_from_real_affine(
+        q(3, 5),
+        -q(4, 5),
+        q(4, 5),
+        q(3, 5),
+        Real::zero(),
+        Real::zero(),
+    )
+    .unwrap();
+    // Rotate the cardinal translation `(radius, radius / 2)` with the source.
+    let translated_in_rotated_frame = Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        q(1, 100),
+        q(11, 200),
+    )
+    .unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let rounded = axis_aligned_algebraic_rectangle(&policy)
+            .offset(radius.clone(), &OffsetCornerStyle2::Round, &policy)
+            .expect("the selected round region must remain exact")
+            .into_value();
+        let first = rounded
+            .transform_similarity(&rotation, &policy)
+            .expect("a rational rotation must retain all selected fields")
+            .into_value();
+        let second = first
+            .transform_similarity(&translated_in_rotated_frame, &policy)
+            .expect("the rotated selected fields must survive translation")
+            .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let intersection_work = || first.intersect_region(&second, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let evidence = hyperreal::dispatch_trace::with_recording(intersection_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let evidence = intersection_work();
+        let evidence = evidence
+            .expect("rotated round boundaries must intersect through the exact oblique kernel");
+        assert_eq!(evidence.certainty, CurveCertainty::Certified);
+        let evidence = evidence.into_value();
+        assert!(evidence.is_complete(), "{evidence:?}");
+        assert!(
+            evidence.contacts().iter().any(|contact| matches!(
+                contact.point(),
+                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
+            )),
+            "the rotated round regions must retain an oblique cusp/chord contact: {evidence:?}",
+        );
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "general-algebraic-oblique",
+                ) > 0,
+                "the public rotated-region path must enter the general algebraic kernel: {trace:?}",
+            );
+        }
+
+        let batch = first
+            .boolean_regions(&second, &policy)
+            .expect("rotated selected round regions must Boolean exactly");
+        assert_eq!(batch.certainty, CurveCertainty::Certified);
+        assert!(!batch.value.union().is_empty());
+        assert!(!batch.value.intersection().is_empty());
+        assert!(!batch.value.difference().is_empty());
+        assert!(!batch.value.xor().is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let reoffset_work = || {
+            batch
+                .value
+                .intersection()
+                .offset(q(1, 500), &OffsetCornerStyle2::Bevel, &policy)
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let reoffset = hyperreal::dispatch_trace::with_recording(reoffset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let reoffset = reoffset_work();
+        let reoffset =
+            reoffset.expect("an oblique retained cusp/chord boundary must re-offset exactly");
+        assert_eq!(reoffset.certainty, CurveCertainty::Certified);
+        assert!(!reoffset.value.is_empty());
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let trace = hyperreal::dispatch_trace::take_trace();
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-span",
+                    "certified-oblique-algebraic-chord",
+                ) > 0,
+                "the reoffset must retain its oblique chord fast path: {trace:?}",
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-pair",
+                    "adjacent-endpoint-only",
+                ) > 0,
+                "the derived bevel endpoint proof must survive regularization: {trace:?}",
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
     let radius = q(1, 20);
     let translation = Similarity2::try_from_real_affine(

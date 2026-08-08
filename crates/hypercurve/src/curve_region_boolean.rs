@@ -2263,6 +2263,58 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     if let RegionCarrierGeometry::AlgebraicChord(other_chord) = other {
                         if self.authored_carriers_are_adjacent(pair) {
+                            for (support, candidate) in [(chord, other_chord), (other_chord, chord)]
+                            {
+                                for endpoint in [candidate.start(), candidate.end()] {
+                                    if matches!(
+                                        support
+                                            .certified_tangent_side(endpoint, &self.data.policy,),
+                                        Classification::Decided(
+                                            crate::classify::LineSide::Left
+                                                | crate::classify::LineSide::Right
+                                        )
+                                    ) {
+                                        // One endpoint off the retained line
+                                        // proves the adjacent supports are
+                                        // noncollinear. Their sole support
+                                        // intersection is the authored vertex.
+                                        #[cfg(feature = "dispatch-trace")]
+                                        hyperreal::dispatch_trace::record(
+                                            "hypercurve",
+                                            "algebraic-chord-pair",
+                                            "adjacent-certified-tangent-complete",
+                                        );
+                                        return Ok(RegionPairResult::empty());
+                                    }
+                                }
+                            }
+                        }
+                        if self.authored_carriers_are_adjacent(pair)
+                            && let (Some(first_tangent), Some(second_tangent)) = (
+                                chord.certified_unit_tangent(),
+                                other_chord.certified_unit_tangent(),
+                            )
+                        {
+                            let tangent_cross = &first_tangent.0 * &second_tangent.1
+                                - &first_tangent.1 * &second_tangent.0;
+                            if matches!(
+                                real_sign(&tangent_cross, &self.data.policy),
+                                Some(RealSign::Positive | RealSign::Negative)
+                            ) {
+                                // Nonparallel straight supports meet exactly
+                                // once. Authored adjacency already owns that
+                                // endpoint, so there is no additional contact
+                                // or overlap to add to the arrangement.
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-pair",
+                                    "adjacent-certified-nonparallel-complete",
+                                );
+                                return Ok(RegionPairResult::empty());
+                            }
+                        }
+                        if self.authored_carriers_are_adjacent(pair) {
                             for (axis_chord, candidate) in
                                 [(chord, other_chord), (other_chord, chord)]
                             {
@@ -2358,6 +2410,29 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 "exact-line-one-sided",
                             );
                             return Ok(RegionPairResult::empty());
+                        }
+                        for (support, candidate) in [(chord, other_chord), (other_chord, chord)] {
+                            let sides = [candidate.start(), candidate.end()].map(|endpoint| {
+                                support.certified_tangent_side(endpoint, &self.data.policy)
+                            });
+                            if matches!(
+                                sides,
+                                [
+                                    Classification::Decided(crate::classify::LineSide::Left),
+                                    Classification::Decided(crate::classify::LineSide::Left)
+                                ] | [
+                                    Classification::Decided(crate::classify::LineSide::Right),
+                                    Classification::Decided(crate::classify::LineSide::Right)
+                                ]
+                            ) {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-pair",
+                                    "certified-tangent-one-sided",
+                                );
+                                return Ok(RegionPairResult::empty());
+                            }
                         }
                         let intersections = match chord
                             .chord_intersections(other_chord, &self.data.policy)
@@ -9583,6 +9658,32 @@ mod certified_successor_tests {
         )
     }
 
+    #[cfg(feature = "predicates")]
+    fn sqrt_reciprocal_parameter(
+        denominator: i8,
+        policy: &CurveContext,
+    ) -> BezierAlgebraicParameter2 {
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![(-1).into(), 0.into(), denominator.into()],
+                policy,
+            )
+            .expect("valid reciprocal-square-root parameter polynomial"),
+        );
+        let interval = decided(
+            crate::BezierParameterInterval::try_new(
+                (Real::one() / Real::from(4_i8)).expect("nonzero denominator"),
+                (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                policy,
+            )
+            .expect("valid reciprocal-square-root parameter interval"),
+        );
+        decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+                .expect("isolated reciprocal-square-root parameter"),
+        )
+    }
+
     fn rational_line(start_x: i32, end_x: i32) -> RationalBezier2 {
         RationalBezier2::try_new(
             vec![
@@ -9829,6 +9930,132 @@ mod certified_successor_tests {
             let evidence = context
                 .build_intersection_evidence()
                 .expect("the exact oblique contact must enter region evidence");
+            assert!(evidence.is_complete(), "{evidence:?}");
+            assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn cusp_chord_pair_retains_an_independent_field_oblique_contact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_parameter = sqrt_half_parameter(&policy);
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    center_parameter.clone(),
+                    crate::bezier_algebraic_image::parameter_representation(
+                        &center_parameter,
+                        &policy,
+                    ),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "test region independent-field oblique circle center",
+                ),
+            );
+            let semicircle = decided(
+                BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::from(2_i8),
+                    false,
+                    &policy,
+                )
+                .expect("valid selected circle"),
+            )
+            .expect("nonzero circle radius");
+            let endpoint = |parameter: &BezierAlgebraicParameter2, start: Point2, end: Point2| {
+                let curve =
+                    RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
+                        .expect("valid endpoint carrier");
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    curve
+                        .point_at_algebraic_parameter(parameter, &policy)
+                        .expect("valid endpoint image"),
+                )
+            };
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    endpoint(
+                        &sqrt_reciprocal_parameter(5, &policy),
+                        Point2::from_values(-3, -3),
+                        Point2::from_values(-2, -3),
+                    ),
+                    endpoint(
+                        &sqrt_reciprocal_parameter(7, &policy),
+                        Point2::from_values(3, 3),
+                        Point2::from_values(3, 4),
+                    ),
+                    &policy,
+                )
+                .expect("valid independent-field oblique chord"),
+            );
+            assert!(chord.exact_line().is_none());
+            let cusp = cusp_test_carrier(
+                semicircle,
+                Real::zero(),
+                Real::one(),
+                CurvePathBooleanOperand2::First,
+                &policy,
+            );
+            let empty_first = CurveRegion2::empty();
+            let empty_second = CurveRegion2::empty();
+            let pair = RegionCarrierPair {
+                first_carrier_index: 0,
+                second_carrier_index: 1,
+                context: RegionCarrierPairContext::CuspChord {
+                    cusp_is_first: true,
+                },
+            };
+            let context = CurveRegionBooleanContext {
+                data: CurveRegionBooleanContextData {
+                    first: &empty_first,
+                    second: &empty_second,
+                    policy,
+                    carriers: vec![
+                        cusp,
+                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone()),
+                    ],
+                    first_carrier_count: 1,
+                    authored_carrier_pair_count: 1,
+                    pairs: vec![pair],
+                    bezier_self_intersections: Vec::new(),
+                    parallel_self_intersections: Vec::new(),
+                    strict_line_image_only: OnceLock::new(),
+                },
+            };
+            let result = context
+                .pair_result(&context.data.pairs[0])
+                .expect("independent-field oblique cusp/chord pair must complete");
+            assert!(result.blockers.is_empty(), "{result:?}");
+            let [contact] = result.contacts.as_slice() else {
+                panic!("expected one independent-field oblique contact: {result:?}");
+            };
+            assert!(contact.is_certified_transverse());
+            assert_eq!(contact.tangent_cross_sign, Some(RealSign::Negative));
+            assert!(matches!(
+                contact.point(),
+                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
+            ));
+            let chord_parameter = contact
+                .second_parameter()
+                .as_algebraic_chord()
+                .expect("the second carrier must retain an oblique chord parameter");
+            assert_eq!(
+                chord_parameter
+                    .cmp_by_refinement(&chord.start_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(Ordering::Greater),
+            );
+            assert_eq!(
+                chord_parameter
+                    .cmp_by_refinement(&chord.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(Ordering::Less),
+            );
+            let evidence = context
+                .build_intersection_evidence()
+                .expect("the independent-field oblique contact must enter region evidence");
             assert!(evidence.is_complete(), "{evidence:?}");
             assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
         }

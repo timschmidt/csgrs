@@ -34,14 +34,15 @@ use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
+use crate::bezier_offset::BezierAlgebraicCuspSemicircleSimilarityCache2;
+#[cfg(not(feature = "predicates"))]
+use crate::bezier_offset::algebraic_chord_point_coordinate_order;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
-    algebraic_selected_correlated_predicate_sign, algebraic_selected_fiber_parameters,
-    bivariate_fiber_strict_sign_on_parameter_range, signed_bivariate_at_parameter_pair,
-};
-use crate::bezier_offset::{
-    BezierAlgebraicCuspSemicircleSimilarityCache2, algebraic_chord_point_coordinate_order,
+    algebraic_chord_point_linear_order_to_exact, algebraic_selected_correlated_predicate_sign,
+    algebraic_selected_fiber_parameters, bivariate_fiber_strict_sign_on_parameter_range,
+    signed_bivariate_at_parameter_pair,
 };
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 #[cfg(feature = "predicates")]
@@ -2452,8 +2453,8 @@ enum ExactOffsetTangent2 {
         clockwise: bool,
     },
     #[cfg(feature = "predicates")]
-    AxisChordContact {
-        chord_direction: BezierAlgebraicChordAxisDirection2,
+    ChordContact {
+        chord_tangent: (Real, Real),
         circle_cross_chord: RealSign,
     },
 }
@@ -3800,6 +3801,12 @@ fn exact_axis_aligned_algebraic_join(
         }
         Classification::Decided(false) => {}
         Classification::Uncertain(reason) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "endpoint-equality-uncertain",
+            );
             return Ok(Classification::Uncertain(reason));
         }
     }
@@ -4537,39 +4544,77 @@ fn exact_offset_span_from_native_arc(
 }
 
 #[cfg(feature = "predicates")]
-fn exact_offset_span_from_axis_aligned_algebraic_chord(
+fn exact_offset_span_from_algebraic_chord(
     chord: &crate::BezierAlgebraicChord2,
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
     let direction = match chord.axis_direction(policy)? {
-        Classification::Decided(Some(direction)) => direction,
-        Classification::Decided(None) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
+        Classification::Decided(direction) => direction,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let offset = match exact_axis_aligned_algebraic_offset_span(chord, direction, distance, policy)?
-    {
-        Classification::Decided(offset) => offset,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+    if let Some(direction) = direction {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-span",
+            "axis-algebraic-chord",
+        );
+        let offset =
+            match exact_axis_aligned_algebraic_offset_span(chord, direction, distance, policy)? {
+                Classification::Decided(offset) => offset,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let offset_chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+            offset.offset_start.clone(),
+            offset.offset_end.clone(),
+            direction,
+            policy,
+        );
+        let tangent = direction.unit_tangent();
+        return Ok(Classification::Decided(ExactOffsetSpan2 {
+            fragments: vec![retained_chord_or_exact_line_fragment(offset_chord)?],
+            source_end: chord.end().clone(),
+            offset_start: offset.offset_start,
+            offset_end: offset.offset_end,
+            start_tangent: Some(ExactOffsetTangent2::Vector(tangent.clone())),
+            end_tangent: Some(ExactOffsetTangent2::Vector(tangent)),
+        }));
+    }
+
+    let Some(tangent) = chord.certified_unit_tangent() else {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-span",
+            "uncertified-oblique-algebraic-chord",
+        );
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let offset_chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-        offset.offset_start.clone(),
-        offset.offset_end.clone(),
-        direction,
-        policy,
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-span",
+        "certified-oblique-algebraic-chord",
     );
-    let tangent = direction.unit_tangent();
+    let normal_offset = (-(&tangent.1 * distance), &tangent.0 * distance);
+    let offset_chord = match chord.translated(&normal_offset.0, &normal_offset.1, policy)? {
+        Classification::Decided(chord) => chord,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_start = offset_chord.start().clone();
+    let offset_end = offset_chord.end().clone();
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments: vec![retained_chord_or_exact_line_fragment(offset_chord)?],
         source_end: chord.end().clone(),
-        offset_start: offset.offset_start,
-        offset_end: offset.offset_end,
+        offset_start,
+        offset_end,
         start_tangent: Some(ExactOffsetTangent2::Vector(tangent.clone())),
         end_tangent: Some(ExactOffsetTangent2::Vector(tangent)),
     }))
@@ -4619,11 +4664,17 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
     at_start: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<ExactOffsetTangent2>>> {
-    match offset.endpoint_axis_chord_tangent_cross(at_start, policy)? {
-        Classification::Decided(Some((chord_direction, circle_cross_chord))) => {
+    match offset.endpoint_chord_tangent_cross(at_start, policy)? {
+        Classification::Decided(Some((chord_tangent, circle_cross_chord))) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent",
+                "selected-circle-chord-contact",
+            );
             return Ok(Classification::Decided(Some(
-                ExactOffsetTangent2::AxisChordContact {
-                    chord_direction,
+                ExactOffsetTangent2::ChordContact {
+                    chord_tangent,
                     circle_cross_chord,
                 },
             )));
@@ -4633,11 +4684,20 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    Ok(offset
-        .cardinal_endpoint_tangent_direction(at_start, policy)?
-        .map(|direction| {
-            direction.map(|direction| ExactOffsetTangent2::Vector(direction.unit_tangent()))
-        }))
+    let tangent = offset
+        .represented_endpoint_tangent(at_start, policy)?
+        .map(|tangent| tangent.map(ExactOffsetTangent2::Vector));
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-tangent",
+        match &tangent {
+            Classification::Decided(Some(_)) => "represented-selected-circle-endpoint",
+            Classification::Decided(None) => "unsupported-selected-circle-endpoint",
+            Classification::Uncertain(_) => "uncertain-selected-circle-endpoint",
+        },
+    );
+    Ok(tangent)
 }
 
 #[cfg(feature = "predicates")]
@@ -5195,15 +5255,36 @@ fn append_exact_offset_join(
     style: &OffsetCornerStyle2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    match previous.offset_end.same_point(&next.offset_start, policy) {
-        Classification::Decided(true) => return Ok(Classification::Decided(())),
+    let endpoint_equality = previous.offset_end.same_point(&next.offset_start, policy);
+    match endpoint_equality {
+        Classification::Decided(true) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "shared-endpoint",
+            );
+            return Ok(Classification::Decided(()));
+        }
         Classification::Decided(false) => {}
         Classification::Uncertain(reason) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "endpoint-equality-uncertain",
+            );
             return Ok(Classification::Uncertain(reason));
         }
     }
     let (Some(previous_tangent), Some(next_tangent)) = (&previous.end_tangent, &next.start_tangent)
     else {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-join",
+            "missing-tangent",
+        );
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let turn_sign = match exact_offset_tangent_cross_sign(previous_tangent, next_tangent, policy) {
@@ -5217,6 +5298,19 @@ fn append_exact_offset_join(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
     let inward = exact_sign_product(turn_sign, distance_sign) == RealSign::Positive;
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-join",
+        match (style, inward) {
+            (OffsetCornerStyle2::Round, false) => "round-outer",
+            (OffsetCornerStyle2::Bevel, false) => "bevel-outer",
+            (OffsetCornerStyle2::Miter { .. }, false) => "miter-outer",
+            (OffsetCornerStyle2::Round, true) => "round-inner-miter",
+            (OffsetCornerStyle2::Bevel, true) => "bevel-inner-miter",
+            (OffsetCornerStyle2::Miter { .. }, true) => "miter-inner",
+        },
+    );
     match style {
         OffsetCornerStyle2::Round if !inward => {
             let opposite =
@@ -5444,6 +5538,12 @@ fn append_exact_miter_join(
         Some(ExactOffsetTangent2::Vector(next_tangent)),
     ) = (&previous.end_tangent, &next.start_tangent)
     else {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-miter",
+            "non-vector-tangent",
+        );
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let (Some(previous_offset_end), Some(next_offset_start), Some(source_vertex)) = (
@@ -5451,6 +5551,12 @@ fn append_exact_miter_join(
         next.offset_start.as_exact(),
         previous.source_end.as_exact(),
     ) else {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-miter",
+            "non-represented-point",
+        );
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let denominator = if offset_vectors_are_structurally_opposite(previous_tangent, next_tangent) {
@@ -5523,18 +5629,31 @@ const fn exact_sign_reverse(sign: RealSign) -> RealSign {
 }
 
 #[cfg(feature = "predicates")]
-fn exact_axis_direction_vector_factor(
-    direction: BezierAlgebraicChordAxisDirection2,
+fn exact_parallel_vector_factor(
+    reference: &(Real, Real),
     vector: &(Real, Real),
     policy: &CurveContext,
 ) -> Classification<RealSign> {
-    let reference = direction.unit_tangent();
-    match real_sign(&offset_vector_cross(&reference, vector), policy) {
+    match real_sign(&offset_vector_cross(reference, vector), policy) {
         Some(RealSign::Zero) => {}
         Some(RealSign::Negative | RealSign::Positive) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "chord-contact-vector-nonparallel",
+            );
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        None => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "chord-contact-vector-cross-uncertain",
+            );
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
     }
     let dot = &reference.0 * &vector.0 + &reference.1 * &vector.1;
     match real_sign(&dot, policy) {
@@ -5551,38 +5670,67 @@ fn exact_circular_tangent_cross_vector(
     vector: &(Real, Real),
     policy: &CurveContext,
 ) -> Classification<RealSign> {
-    let (axis, factor) = match (real_sign(&vector.0, policy), real_sign(&vector.1, policy)) {
-        (Some(sign @ (RealSign::Negative | RealSign::Positive)), Some(RealSign::Zero)) => {
-            (Axis2::X, sign)
+    #[cfg(feature = "predicates")]
+    {
+        match algebraic_chord_point_linear_order_to_exact(
+            point,
+            &circle.center,
+            &vector.0,
+            &vector.1,
+            policy,
+        ) {
+            Ok(Classification::Decided(order)) => {
+                let radial_projection_sign = match order {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                };
+                let orientation = if clockwise {
+                    RealSign::Positive
+                } else {
+                    RealSign::Negative
+                };
+                Classification::Decided(exact_sign_product(radial_projection_sign, orientation))
+            }
+            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         }
-        (Some(RealSign::Zero), Some(sign @ (RealSign::Negative | RealSign::Positive))) => {
-            (Axis2::Y, sign)
+    }
+    #[cfg(not(feature = "predicates"))]
+    {
+        let (axis, factor) = match (real_sign(&vector.0, policy), real_sign(&vector.1, policy)) {
+            (Some(sign @ (RealSign::Negative | RealSign::Positive)), Some(RealSign::Zero)) => {
+                (Axis2::X, sign)
+            }
+            (Some(RealSign::Zero), Some(sign @ (RealSign::Negative | RealSign::Positive))) => {
+                (Axis2::Y, sign)
+            }
+            (Some(_), Some(_)) => {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            _ => return Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+        let center = RationalBezierIntersectionPointEvidence2::Exact(circle.center.clone());
+        match algebraic_chord_point_coordinate_order(point, &center, axis, policy) {
+            Ok(Classification::Decided(order)) => {
+                let radial_sign = match order {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                };
+                let orientation = if clockwise {
+                    RealSign::Positive
+                } else {
+                    RealSign::Negative
+                };
+                Classification::Decided(exact_sign_product(
+                    exact_sign_product(radial_sign, orientation),
+                    factor,
+                ))
+            }
+            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         }
-        (Some(_), Some(_)) => {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        }
-        _ => return Classification::Uncertain(UncertaintyReason::RealSign),
-    };
-    let center = RationalBezierIntersectionPointEvidence2::Exact(circle.center.clone());
-    match algebraic_chord_point_coordinate_order(point, &center, axis, policy) {
-        Ok(Classification::Decided(order)) => {
-            let radial_sign = match order {
-                std::cmp::Ordering::Less => RealSign::Negative,
-                std::cmp::Ordering::Equal => RealSign::Zero,
-                std::cmp::Ordering::Greater => RealSign::Positive,
-            };
-            let orientation = if clockwise {
-                RealSign::Positive
-            } else {
-                RealSign::Negative
-            };
-            Classification::Decided(exact_sign_product(
-                exact_sign_product(radial_sign, orientation),
-                factor,
-            ))
-        }
-        Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
-        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
 }
 
@@ -5593,6 +5741,12 @@ fn exact_offset_tangent_cross_sign(
 ) -> Classification<RealSign> {
     match (first, second) {
         (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::Vector(second)) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "vector-vector",
+            );
             match real_sign(&offset_vector_cross(first, second), policy) {
                 Some(sign) => Classification::Decided(sign),
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
@@ -5617,36 +5771,45 @@ fn exact_offset_tangent_cross_sign(
             .map(exact_sign_reverse),
         #[cfg(feature = "predicates")]
         (
-            ExactOffsetTangent2::AxisChordContact {
-                chord_direction,
+            ExactOffsetTangent2::ChordContact {
+                chord_tangent,
                 circle_cross_chord,
             },
             ExactOffsetTangent2::Vector(second),
-        ) => exact_axis_direction_vector_factor(*chord_direction, second, policy)
-            .map(|factor| exact_sign_product(*circle_cross_chord, factor)),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "circle-chord-contact-vector",
+            );
+            exact_parallel_vector_factor(chord_tangent, second, policy)
+                .map(|factor| exact_sign_product(*circle_cross_chord, factor))
+        }
         #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::Vector(first),
-            ExactOffsetTangent2::AxisChordContact {
-                chord_direction,
+            ExactOffsetTangent2::ChordContact {
+                chord_tangent,
                 circle_cross_chord,
             },
-        ) => exact_axis_direction_vector_factor(*chord_direction, first, policy)
-            .map(|factor| exact_sign_reverse(exact_sign_product(*circle_cross_chord, factor))),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "vector-circle-chord-contact",
+            );
+            exact_parallel_vector_factor(chord_tangent, first, policy)
+                .map(|factor| exact_sign_reverse(exact_sign_product(*circle_cross_chord, factor)))
+        }
         #[cfg(feature = "predicates")]
-        (
-            ExactOffsetTangent2::AxisChordContact { .. },
-            ExactOffsetTangent2::AxisChordContact { .. },
-        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
         #[cfg(feature = "predicates")]
-        (
-            ExactOffsetTangent2::AxisChordContact { .. },
-            ExactOffsetTangent2::CircularPoint { .. },
-        )
-        | (
-            ExactOffsetTangent2::CircularPoint { .. },
-            ExactOffsetTangent2::AxisChordContact { .. },
-        )
+        (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::CircularPoint { .. })
+        | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
@@ -5687,12 +5850,11 @@ fn exact_offset_tangents_are_opposite(
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
         #[cfg(feature = "predicates")]
-        (ExactOffsetTangent2::AxisChordContact { .. }, ExactOffsetTangent2::Vector(_))
-        | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::AxisChordContact { .. })
-        | (
-            ExactOffsetTangent2::AxisChordContact { .. },
-            ExactOffsetTangent2::AxisChordContact { .. },
-        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_))
+        | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. })
+        | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
     }
 }
 
@@ -8932,11 +9094,7 @@ impl CurveRegion2 {
                     }
                     #[cfg(feature = "predicates")]
                     BezierSplitFragment2::AlgebraicChord(chord) => {
-                        exact_offset_span_from_axis_aligned_algebraic_chord(
-                            chord,
-                            &signed_left_distance,
-                            policy,
-                        )
+                        exact_offset_span_from_algebraic_chord(chord, &signed_left_distance, policy)
                     }
                     #[cfg(feature = "predicates")]
                     BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
