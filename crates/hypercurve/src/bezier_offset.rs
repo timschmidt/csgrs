@@ -38116,6 +38116,49 @@ mod conversion_tests {
         }
     }
 
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_circle_partition_coalescing_obeys_terminal_policy() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let unresolved_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let fragment = |start, end| {
+                let Classification::Decided(fragment) =
+                    BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        semicircle.clone(),
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(start),
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(end),
+                        false,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the half-domain fragment endpoints must be ordered");
+                };
+                fragment
+            };
+            let first = fragment(Real::zero(), half.clone());
+            let second = fragment(half.clone() + &unresolved_zero, Real::one());
+            let coalesced = crate::policy::resolve_certified_operation(&policy, |active_policy| {
+                first.coalesced_with_next(&second, active_policy)
+            })
+            .unwrap();
+
+            if policy == CurveContext::STRICT {
+                assert_eq!(coalesced.certainty, crate::CurveCertainty::Certified);
+                assert!(coalesced.value.is_none());
+            } else {
+                assert_eq!(
+                    coalesced.certainty,
+                    crate::CurveCertainty::Approximate512Consumed
+                );
+                assert!(coalesced.value.is_some());
+            }
+        }
+    }
+
     /// Manual matched benchmark for the private correlated-circle carrier.
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
