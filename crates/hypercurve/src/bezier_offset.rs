@@ -2903,6 +2903,51 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.data.clockwise
     }
 
+    /// Builds the exact concentric left parallel of this selected half circle.
+    ///
+    /// `radial_distance` is signed because its sign selects which diameter
+    /// endpoint is parameter zero.  The geometric radius grows under a left
+    /// offset for clockwise traversal and shrinks for counterclockwise
+    /// traversal, while retaining that endpoint sign until a genuine radius
+    /// collapse.  Crossing the center is still a regular circle whenever the
+    /// resulting signed radius is nonzero; the changed sign exactly records
+    /// the reversed differential of that parallel branch.
+    pub(crate) fn offset_left(
+        &self,
+        distance: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let radial_sign = match real_sign(&self.data.radial_distance, policy) {
+            Some(RealSign::Positive) => Real::one(),
+            Some(RealSign::Negative) => -Real::one(),
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "selected algebraic semicircle retained a zero radius".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let oriented_distance = if self.data.clockwise {
+            radial_sign * distance
+        } else {
+            -(radial_sign * distance)
+        };
+        let radial_distance = &self.data.radial_distance + oriented_distance;
+        match real_sign(&radial_distance, policy) {
+            Some(RealSign::Zero) => Ok(Classification::Decided(None)),
+            Some(RealSign::Positive | RealSign::Negative) => {
+                Ok(Classification::Decided(Some(Self {
+                    data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                        frame: self.data.frame.clone(),
+                        radial_distance,
+                        clockwise: self.data.clockwise,
+                    }),
+                })))
+            }
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+
     /// Returns the same geometric half circle with traversal reversed.
     pub(crate) fn reversed(&self) -> Self {
         Self {
@@ -17981,6 +18026,48 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 policy: self.data.policy,
             }),
         })
+    }
+
+    /// Composes a left offset while retaining this fragment's exact circle
+    /// parameter interval.
+    ///
+    /// Reversed fragments traverse the supporting semicircle in the opposite
+    /// direction, so their left parallel is the carrier's right parallel.
+    /// Endpoint images are deliberately rebuilt from the new radius rather
+    /// than copied from the source circle.
+    pub(crate) fn offset_left(
+        &self,
+        distance: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        self.validate_policy(policy)?;
+        let carrier_distance = if self.data.reversed {
+            -distance
+        } else {
+            distance.clone()
+        };
+        let semicircle = match self
+            .data
+            .semicircle
+            .offset_left(&carrier_distance, policy)?
+        {
+            Classification::Decided(Some(semicircle)) => semicircle,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(Some(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
+                semicircle,
+                start: self.data.start.clone(),
+                end: self.data.end.clone(),
+                start_point_image: OnceLock::new(),
+                end_point_image: OnceLock::new(),
+                reversed: self.data.reversed,
+                policy: self.data.policy,
+            }),
+        })))
     }
 
     pub(crate) fn representative_parameter(&self) -> CurveResult<Classification<Real>> {
@@ -33581,6 +33668,113 @@ mod conversion_tests {
                 assert_eq!(transformed.radial_distance(), &Real::from(radius));
                 assert_eq!(transformed.is_clockwise(), clockwise);
             }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn direct_algebraic_circle_left_offsets_cover_collapse_crossing_and_reversal() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
+            else {
+                panic!("the selected center coordinate must remain algebraic");
+            };
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "test direct selected algebraic circle offset center",
+                ),
+            );
+            let circle = |radial_distance: Real, clockwise| {
+                let Classification::Decided(Some(circle)) =
+                    BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                        &center,
+                        (1, 0),
+                        radial_distance,
+                        clockwise,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the direct selected circle must construct");
+                };
+                circle
+            };
+
+            for (radial_distance, clockwise, distance, expected) in [
+                (
+                    Real::from(2_i8),
+                    false,
+                    half.clone(),
+                    Real::from(3_i8) / Real::from(2_i8),
+                ),
+                (
+                    Real::from(2_i8),
+                    true,
+                    half.clone(),
+                    Real::from(5_i8) / Real::from(2_i8),
+                ),
+                (
+                    Real::from(-2_i8),
+                    false,
+                    half.clone(),
+                    Real::from(-3_i8) / Real::from(2_i8),
+                ),
+                (
+                    Real::from(-2_i8),
+                    true,
+                    half.clone(),
+                    Real::from(-5_i8) / Real::from(2_i8),
+                ),
+                (
+                    Real::from(2_i8),
+                    false,
+                    Real::from(3_i8),
+                    Ok(Real::from(-1_i8)),
+                ),
+            ] {
+                let expected = expected.unwrap();
+                let Classification::Decided(Some(offset)) = circle(radial_distance, clockwise)
+                    .offset_left(&distance, &policy)
+                    .unwrap()
+                else {
+                    panic!("the nonzero concentric parallel must construct");
+                };
+                assert_eq!(offset.radial_distance(), &expected);
+                assert_eq!(offset.is_clockwise(), clockwise);
+            }
+
+            for (circle, distance) in [
+                (circle(Real::from(2_i8), false), Real::from(2_i8)),
+                (circle(Real::from(2_i8), true), Real::from(-2_i8)),
+            ] {
+                assert!(matches!(
+                    circle.offset_left(&distance, &policy).unwrap(),
+                    Classification::Decided(None)
+                ));
+            }
+
+            let reversed = BezierAlgebraicCuspSemicircleFragment2::full(
+                circle(Real::from(2_i8), false),
+                &policy,
+            )
+            .reversed();
+            let Classification::Decided(Some(offset)) =
+                reversed.offset_left(&half, &policy).unwrap()
+            else {
+                panic!("the reversed selected-circle parallel must construct");
+            };
+            assert!(offset.is_reversed());
+            assert_eq!(
+                offset.semicircle().radial_distance(),
+                &(Real::from(5_i8) / Real::from(2_i8)).unwrap(),
+            );
         }
     }
 

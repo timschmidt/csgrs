@@ -1839,6 +1839,102 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = axis_aligned_algebraic_rectangle(&policy);
+        let rounded = source
+            .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)
+            .expect("the first selected-field round offset must remain exact")
+            .into_value();
+
+        let expanded = rounded
+            .offset(q(1, 20), &OffsetCornerStyle2::Round, &policy)
+            .expect("retained selected circles must support a second exact offset");
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        assert!(
+            expanded.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        assert_eq!(
+            certified(
+                expanded
+                    .value
+                    .classify_point(&Point2::new(Real::zero(), -q(3, 20)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+
+        let contracted = rounded
+            .offset(-q(1, 20), &OffsetCornerStyle2::Round, &policy)
+            .expect("a retained selected circle must contract before its radius collapses");
+        assert_eq!(contracted.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                contracted
+                    .value
+                    .classify_point(&Point2::new(Real::zero(), -q(1, 20)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+
+        let collapsed_round = rounded
+            .offset(-q(1, 10), &OffsetCornerStyle2::Round, &policy)
+            .expect("an exact selected-circle radius collapse must remove only the arc")
+            .into_value();
+        assert!(
+            collapsed_round.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .all(|fragment| !matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        assert_eq!(
+            certified(
+                collapsed_round
+                    .classify_point(&Point2::new(q(1, 4), Real::zero()), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
+
+        let past_collapse = rounded
+            .offset(-q(3, 20), &OffsetCornerStyle2::Round, &policy)
+            .expect("a selected-circle parallel past its local collapse must regularize exactly");
+        assert_eq!(
+            past_collapse.certainty,
+            if policy == CurveContext::STRICT {
+                CurveCertainty::Certified
+            } else {
+                CurveCertainty::Approximate512Consumed
+            },
+        );
+        for (point, expected) in [
+            (
+                Point2::new(q(1, 4), q(1, 20)),
+                RegionPointLocation::Boundary,
+            ),
+            (Point2::new(q(1, 4), q(1, 40)), RegionPointLocation::Outside),
+            (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
+        ] {
+            assert_eq!(
+                certified(past_collapse.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn algebraic_chords_and_round_centers_survive_exact_similarities() {
     let quarter_turn = Similarity2::try_from_real_affine(
         Real::zero(),

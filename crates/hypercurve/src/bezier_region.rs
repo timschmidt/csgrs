@@ -68,9 +68,10 @@ use crate::{
     CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
     CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
     ExactCurveResult, FillRule, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
-    RegionArrangement2, RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus,
-    Segment2, UncertaintyReason,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
+    RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
+    UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -2426,12 +2427,12 @@ fn require_decided_corner_region(
 
 struct ExactOffsetSpan2 {
     fragments: Vec<BezierSplitFragment2>,
-    source_start: Point2,
-    source_end: Point2,
-    offset_start: Point2,
-    offset_end: Point2,
-    start_tangent: (Real, Real),
-    end_tangent: (Real, Real),
+    source_start: RationalBezierIntersectionPointEvidence2,
+    source_end: RationalBezierIntersectionPointEvidence2,
+    offset_start: RationalBezierIntersectionPointEvidence2,
+    offset_end: RationalBezierIntersectionPointEvidence2,
+    start_tangent: Option<(Real, Real)>,
+    end_tangent: Option<(Real, Real)>,
 }
 
 #[cfg(feature = "predicates")]
@@ -3935,10 +3936,21 @@ fn exact_offset_span_from_materialized_curve(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    if let Classification::Decided(segment) = materialized_native_subcurve_segment(curve, policy)?
-        && let Classification::Decided(offset) = segment.offset_left(distance.clone(), policy)?
-    {
-        return exact_offset_span_from_native_segment(curve, &offset, policy);
+    if let Classification::Decided(segment) = materialized_native_subcurve_segment(curve, policy)? {
+        let native_offset = match &segment {
+            Segment2::Line(line) => {
+                Classification::Decided(Segment2::Line(line.offset_left(distance.clone())?))
+            }
+            Segment2::Arc(arc) => {
+                match exact_offset_span_from_native_arc(curve, arc, distance, policy)? {
+                    decided @ Classification::Decided(_) => return Ok(decided),
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            }
+        };
+        if let Classification::Decided(offset) = native_offset {
+            return exact_offset_span_from_native_segment(curve, &offset, policy);
+        }
     }
 
     let source = match curve {
@@ -4030,12 +4042,178 @@ fn exact_offset_span_from_materialized_curve(
     };
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments,
-        source_start: curve.start().clone(),
-        source_end: curve.end().clone(),
+        source_start: curve.start().clone().into(),
+        source_end: curve.end().clone().into(),
+        offset_start: offset_start.into(),
+        offset_end: offset_end.into(),
+        start_tangent: Some(start_tangent),
+        end_tangent: Some(end_tangent),
+    }))
+}
+
+fn exact_offset_span_from_native_arc(
+    source: &BezierSubcurve2,
+    arc: &CircularArc2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let radius_scale = arc.left_offset_radius_scale(distance)?;
+    match real_sign(&radius_scale, policy) {
+        Some(RealSign::Zero) => {
+            let center = RationalBezierIntersectionPointEvidence2::Exact(arc.center().clone());
+            Ok(Classification::Decided(ExactOffsetSpan2 {
+                fragments: Vec::new(),
+                source_start: source.start().clone().into(),
+                source_end: source.end().clone().into(),
+                offset_start: center.clone(),
+                offset_end: center,
+                start_tangent: None,
+                end_tangent: None,
+            }))
+        }
+        Some(RealSign::Positive | RealSign::Negative) => {
+            let scale_point = |point: &Point2| {
+                let (delta_x, delta_y) = point.delta_from(arc.center());
+                arc.center()
+                    .translated(&delta_x * &radius_scale, &delta_y * &radius_scale)
+            };
+            let offset = CircularArc2::try_from_center_with_bulge(
+                scale_point(arc.start()),
+                scale_point(arc.end()),
+                arc.center().clone(),
+                arc.is_clockwise(),
+                arc.bulge().cloned(),
+            )?;
+            exact_offset_span_from_native_segment(source, &Segment2::Arc(offset), policy)
+        }
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn exact_offset_span_from_axis_aligned_algebraic_chord(
+    chord: &crate::BezierAlgebraicChord2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let direction = match chord.axis_direction(policy)? {
+        Classification::Decided(Some(direction)) => direction,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset = match exact_axis_aligned_algebraic_offset_span(chord, direction, distance, policy)?
+    {
+        Classification::Decided(offset) => offset,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+        offset.offset_start.clone(),
+        offset.offset_end.clone(),
+        direction,
+        policy,
+    );
+    let tangent = direction.unit_tangent();
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments: vec![retained_chord_or_exact_line_fragment(offset_chord)?],
+        source_start: chord.start().clone(),
+        source_end: chord.end().clone(),
+        offset_start: offset.offset_start,
+        offset_end: offset.offset_end,
+        start_tangent: Some(tangent.clone()),
+        end_tangent: Some(tangent),
+    }))
+}
+
+#[cfg(feature = "predicates")]
+fn exact_algebraic_cusp_semicircle_endpoint(
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    at_start: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+    match fragment.endpoint_point_image(at_start, policy)? {
+        Some(point) => Ok(Classification::Decided(
+            RationalBezierIntersectionPointEvidence2::Algebraic(point),
+        )),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn exact_offset_span_from_algebraic_cusp_semicircle(
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ExactOffsetSpan2>> {
+    let source_start = match exact_algebraic_cusp_semicircle_endpoint(fragment, true, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let source_end = match exact_algebraic_cusp_semicircle_endpoint(fragment, false, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_fragment = match fragment.offset_left(distance, policy)? {
+        Classification::Decided(Some(fragment)) => fragment,
+        Classification::Decided(None) => {
+            // Every parameter maps to the selected center at the exact radius
+            // collapse.  Retain that point at both span boundaries and emit
+            // no degenerate curve; adjacent parallels can then meet there and
+            // the authoritative regularizer sees the lower-complexity loop.
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                fragment.semicircle().center_point_image(policy)?,
+            );
+            return Ok(Classification::Decided(ExactOffsetSpan2 {
+                fragments: Vec::new(),
+                source_start,
+                source_end,
+                offset_start: center.clone(),
+                offset_end: center,
+                start_tangent: None,
+                end_tangent: None,
+            }));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_start =
+        match exact_algebraic_cusp_semicircle_endpoint(&offset_fragment, true, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let offset_end =
+        match exact_algebraic_cusp_semicircle_endpoint(&offset_fragment, false, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    Ok(Classification::Decided(ExactOffsetSpan2 {
+        fragments: vec![BezierSplitFragment2::AlgebraicCuspSemicircle(
+            offset_fragment,
+        )],
+        source_start,
+        source_end,
         offset_start,
         offset_end,
-        start_tangent,
-        end_tangent,
+        // Algebraic tangent images are unnecessary at a smooth retained
+        // junction: shared endpoint evidence returns before the corner path.
+        // A genuinely new corner still reports Unsupported instead of using
+        // a rounded tangent.
+        start_tangent: None,
+        end_tangent: None,
     }))
 }
 
@@ -4210,12 +4388,12 @@ fn exact_offset_span_from_analytic_parallel(
     };
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments,
-        source_start,
-        source_end,
-        offset_start,
-        offset_end,
-        start_tangent,
-        end_tangent,
+        source_start: source_start.into(),
+        source_end: source_end.into(),
+        offset_start: offset_start.into(),
+        offset_end: offset_end.into(),
+        start_tangent: Some(start_tangent),
+        end_tangent: Some(end_tangent),
     }))
 }
 
@@ -4437,12 +4615,12 @@ fn exact_offset_span_from_native_segment(
     };
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments,
-        source_start: source.start().clone(),
-        source_end: source.end().clone(),
-        offset_start: offset.start().clone(),
-        offset_end: offset.end().clone(),
-        start_tangent,
-        end_tangent,
+        source_start: source.start().clone().into(),
+        source_end: source.end().clone().into(),
+        offset_start: offset.start().clone().into(),
+        offset_end: offset.end().clone().into(),
+        start_tangent: Some(start_tangent),
+        end_tangent: Some(end_tangent),
     }))
 }
 
@@ -4469,29 +4647,31 @@ fn append_exact_offset_join(
     style: &OffsetCornerStyle2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    match is_zero(
-        &previous.offset_end.distance_squared(&next.offset_start),
-        policy,
-    ) {
-        Some(true) => return Ok(Classification::Decided(())),
-        Some(false) => {}
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    match previous.offset_end.same_point(&next.offset_start, policy) {
+        Classification::Decided(true) => return Ok(Classification::Decided(())),
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
     }
-    match is_zero(
-        &previous.source_end.distance_squared(&next.source_start),
-        policy,
-    ) {
-        Some(true) => {}
-        Some(false) => return Err(CurveError::DisconnectedCurvePath),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    match previous.source_end.same_point(&next.source_start, policy) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Err(CurveError::DisconnectedCurvePath),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
     }
 
+    let (Some(previous_tangent), Some(next_tangent)) = (&previous.end_tangent, &next.start_tangent)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
     let opposite_tangents =
-        offset_vectors_are_structurally_opposite(&previous.end_tangent, &next.start_tangent);
+        offset_vectors_are_structurally_opposite(previous_tangent, next_tangent);
     let turn = if opposite_tangents {
         Real::zero()
     } else {
-        offset_vector_cross(&previous.end_tangent, &next.start_tangent)
+        offset_vector_cross(previous_tangent, next_tangent)
     };
     let inward = match real_sign(&(turn * distance), policy) {
         Some(RealSign::Positive) => true,
@@ -4516,7 +4696,12 @@ fn append_exact_offset_join(
             policy,
         ),
         OffsetCornerStyle2::Bevel if !inward => {
-            append_exact_line_join(fragments, &previous.offset_end, &next.offset_start, policy)
+            let (Some(from), Some(to)) =
+                (previous.offset_end.as_exact(), next.offset_start.as_exact())
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            append_exact_line_join(fragments, from, to, policy)
         }
         OffsetCornerStyle2::Miter { limit } if !inward => {
             append_exact_miter_join(fragments, previous, next, distance, Some(limit), policy)
@@ -4602,11 +4787,18 @@ fn append_exact_round_join(
         Some(RealSign::Zero) => return Ok(Classification::Decided(())),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
+    let (Some(previous_offset_end), Some(next_offset_start), Some(center)) = (
+        previous.offset_end.as_exact(),
+        next.offset_start.as_exact(),
+        previous.source_end.as_exact(),
+    ) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
     let radius_squared = distance * distance;
     let arc = CircularArc2::new_with_certified_radius_and_sweep(
-        previous.offset_end.clone(),
-        next.offset_start.clone(),
-        previous.source_end.clone(),
+        previous_offset_end.clone(),
+        next_offset_start.clone(),
+        center.clone(),
         radius_squared.clone(),
         clockwise,
         sweep_kind,
@@ -4622,8 +4814,8 @@ fn append_exact_round_join(
         }
     };
     let mut parallel_contacts = [
-        exact_offset_parallel_tangent_contact(previous, false, &previous.offset_end),
-        exact_offset_parallel_tangent_contact(next, true, &next.offset_start),
+        exact_offset_parallel_tangent_contact(previous, false, previous_offset_end),
+        exact_offset_parallel_tangent_contact(next, true, next_offset_start),
     ]
     .into_iter()
     .flatten()
@@ -4646,15 +4838,15 @@ fn append_exact_round_join(
         .map(crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel)
         .chain(
             [
-                exact_offset_line_tangent_contact(previous, false, &previous.offset_end),
-                exact_offset_line_tangent_contact(next, true, &next.offset_start),
+                exact_offset_line_tangent_contact(previous, false, previous_offset_end),
+                exact_offset_line_tangent_contact(next, true, next_offset_start),
             ]
             .into_iter()
             .flatten(),
         )
         .collect::<Vec<_>>();
     let circular_conic = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-        center: previous.source_end.clone(),
+        center: center.clone(),
         radius_squared,
         tangent_contacts: (!tangent_contacts.is_empty()).then(|| Arc::from(tangent_contacts)),
     });
@@ -4694,50 +4886,60 @@ fn append_exact_miter_join(
     limit: Option<&Real>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let denominator =
-        if offset_vectors_are_structurally_opposite(&previous.end_tangent, &next.start_tangent) {
-            Real::zero()
-        } else {
-            offset_vector_cross(&previous.end_tangent, &next.start_tangent)
-        };
+    let (Some(previous_tangent), Some(next_tangent)) = (&previous.end_tangent, &next.start_tangent)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let (Some(previous_offset_end), Some(next_offset_start), Some(source_vertex)) = (
+        previous.offset_end.as_exact(),
+        next.offset_start.as_exact(),
+        previous.source_end.as_exact(),
+    ) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let denominator = if offset_vectors_are_structurally_opposite(previous_tangent, next_tangent) {
+        Real::zero()
+    } else {
+        offset_vector_cross(previous_tangent, next_tangent)
+    };
     let denominator_sign = real_sign(&denominator, policy);
     let Some(RealSign::Positive | RealSign::Negative) = denominator_sign else {
         return match denominator_sign {
             Some(RealSign::Zero) => {
-                append_exact_line_join(fragments, &previous.offset_end, &next.offset_start, policy)
+                append_exact_line_join(fragments, previous_offset_end, next_offset_start, policy)
             }
             None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             Some(RealSign::Positive | RealSign::Negative) => unreachable!(),
         };
     };
-    let delta = next.offset_start.delta_from(&previous.offset_end);
-    let numerator = &delta.0 * &next.start_tangent.1 - &delta.1 * &next.start_tangent.0;
+    let delta = next_offset_start.delta_from(previous_offset_end);
+    let numerator = &delta.0 * &next_tangent.1 - &delta.1 * &next_tangent.0;
     let parameter = (numerator / denominator)?;
-    let miter = previous.offset_end.translated(
-        &previous.end_tangent.0 * &parameter,
-        &previous.end_tangent.1 * parameter,
+    let miter = previous_offset_end.translated(
+        &previous_tangent.0 * &parameter,
+        &previous_tangent.1 * parameter,
     );
     if let Some(limit) = limit {
-        let miter_distance_squared = miter.distance_squared(&previous.source_end);
+        let miter_distance_squared = miter.distance_squared(source_vertex);
         let maximum_squared = distance * distance * limit * limit;
         match compare_reals(&miter_distance_squared, &maximum_squared, policy) {
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
             Some(std::cmp::Ordering::Greater) => {
                 return append_exact_line_join(
                     fragments,
-                    &previous.offset_end,
-                    &next.offset_start,
+                    previous_offset_end,
+                    next_offset_start,
                     policy,
                 );
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
     }
-    match append_exact_line_join(fragments, &previous.offset_end, &miter, policy)? {
+    match append_exact_line_join(fragments, previous_offset_end, &miter, policy)? {
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    append_exact_line_join(fragments, &miter, &next.offset_start, policy)
+    append_exact_line_join(fragments, &miter, next_offset_start, policy)
 }
 
 fn offset_vector_cross(first: &(Real, Real), second: &(Real, Real)) -> Real {
@@ -7928,10 +8130,29 @@ impl CurveRegion2 {
                             }
                         }
                     }
+                    #[cfg(feature = "predicates")]
+                    BezierSplitFragment2::AlgebraicChord(chord) => {
+                        exact_offset_span_from_axis_aligned_algebraic_chord(
+                            chord,
+                            &signed_left_distance,
+                            policy,
+                        )
+                    }
+                    #[cfg(feature = "predicates")]
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                        exact_offset_span_from_algebraic_cusp_semicircle(
+                            fragment,
+                            &signed_left_distance,
+                            policy,
+                        )
+                    }
                     BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                    | BezierSplitFragment2::AlgebraicChord(_)
-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                     | BezierSplitFragment2::Unresolved { .. } => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    #[cfg(not(feature = "predicates"))]
+                    BezierSplitFragment2::AlgebraicChord(_)
+                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
                 };
