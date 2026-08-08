@@ -4770,6 +4770,46 @@ fn coalesced_analytic_parallel_offset_run(
     Ok(Classification::Decided(None))
 }
 
+/// Coalesces one traversal-contiguous selected-circle run before offsetting.
+///
+/// Boolean arrangements may split a regular circular carrier at a mapped
+/// contact that is not a geometric corner. Keeping that partition through the
+/// unary arrangement repeats correlated parameter proofs and constructs two
+/// identical concentric carriers. The fragment authority accepts only the
+/// same carrier, traversal, and an exactly shared/equal cut; every other case
+/// falls back to the ordinary per-fragment path.
+#[cfg(feature = "predicates")]
+fn coalesced_algebraic_circle_offset_run(
+    fragments: &[BezierSplitFragment2],
+    first_index: usize,
+    maximum_run_length: usize,
+    policy: &CurveContext,
+) -> CurveResult<Option<(crate::BezierAlgebraicCuspSemicircleFragment2, usize)>> {
+    if fragments.is_empty() || maximum_run_length == 0 {
+        return Ok(None);
+    }
+    let Some(BezierSplitFragment2::AlgebraicCuspSemicircle(first)) =
+        fragments.get(first_index % fragments.len())
+    else {
+        return Ok(None);
+    };
+    let mut coalesced = first.clone();
+    let mut consumed = 1;
+    while consumed < maximum_run_length.min(fragments.len()) {
+        let Some(BezierSplitFragment2::AlgebraicCuspSemicircle(next)) =
+            fragments.get((first_index + consumed) % fragments.len())
+        else {
+            break;
+        };
+        let Some(merged) = coalesced.coalesced_with_next(next, policy)? else {
+            break;
+        };
+        coalesced = merged;
+        consumed += 1;
+    }
+    Ok((consumed > 1).then_some((coalesced, consumed)))
+}
+
 fn exact_parallel_limiting_tangent(
     parallel: &BezierParallel2,
     parameter: &Real,
@@ -8353,6 +8393,21 @@ impl CurveRegion2 {
                         })
                         .unwrap_or(0)
                 }
+                #[cfg(feature = "predicates")]
+                Some(BezierSplitFragment2::AlgebraicCuspSemicircle(first))
+                    if !first.traversal_start_parameter_is_exact() =>
+                {
+                    source_fragments
+                        .iter()
+                        .position(|fragment| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(candidate)
+                                    if candidate.traversal_start_parameter_is_exact()
+                            )
+                        })
+                        .unwrap_or(0)
+                }
                 _ => 0,
             };
             let mut processed = 0;
@@ -8407,11 +8462,28 @@ impl CurveRegion2 {
                     }
                     #[cfg(feature = "predicates")]
                     BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                        exact_offset_span_from_algebraic_cusp_semicircle(
-                            fragment,
-                            &signed_left_distance,
+                        match coalesced_algebraic_circle_offset_run(
+                            source_fragments,
+                            fragment_index,
+                            source_fragments.len() - processed,
                             policy,
                         )
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                        {
+                            Some((coalesced, run_length)) => {
+                                consumed = run_length;
+                                exact_offset_span_from_algebraic_cusp_semicircle(
+                                    &coalesced,
+                                    &signed_left_distance,
+                                    policy,
+                                )
+                            }
+                            None => exact_offset_span_from_algebraic_cusp_semicircle(
+                                fragment,
+                                &signed_left_distance,
+                                policy,
+                            ),
+                        }
                     }
                     BezierSplitFragment2::AlgebraicEndpointImages { .. }
                     | BezierSplitFragment2::Unresolved { .. } => {

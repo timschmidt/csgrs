@@ -18766,6 +18766,70 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
+    /// Returns whether the traversal begins at an inline represented
+    /// parameter rather than a retained correlation.
+    pub(crate) fn traversal_start_parameter_is_exact(&self) -> bool {
+        matches!(
+            self.endpoint_parameter(true),
+            BezierAlgebraicCuspSemicircleParameter2::Exact(_)
+        )
+    }
+
+    /// Coalesces two traversal-contiguous fragments of one selected circle.
+    ///
+    /// Shared retained evidence is the constant-time path. An independently
+    /// reconstructed but exactly equal cut may use the existing parameter
+    /// comparator; any inconclusive comparison simply declines coalescing so
+    /// the complete per-fragment offset path remains authoritative.
+    pub(crate) fn coalesced_with_next(
+        &self,
+        next: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Self>> {
+        self.validate_policy(policy)?;
+        next.validate_policy(policy)?;
+        if self.data.semicircle != next.data.semicircle || self.data.reversed != next.data.reversed
+        {
+            return Ok(None);
+        }
+        let current_end = self.endpoint_parameter(false);
+        let next_start = next.endpoint_parameter(true);
+        if !current_end.shares_exact_evidence(next_start)
+            && !matches!(
+                current_end.cmp_by_refinement(next_start, policy)?,
+                Classification::Decided(std::cmp::Ordering::Equal)
+            )
+        {
+            return Ok(None);
+        }
+        let (start, start_point_image, end, end_point_image) = if self.data.reversed {
+            (
+                next.data.start.clone(),
+                cloned_once_lock(&next.data.start_point_image),
+                self.data.end.clone(),
+                cloned_once_lock(&self.data.end_point_image),
+            )
+        } else {
+            (
+                self.data.start.clone(),
+                cloned_once_lock(&self.data.start_point_image),
+                next.data.end.clone(),
+                cloned_once_lock(&next.data.end_point_image),
+            )
+        };
+        Ok(Some(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
+                semicircle: self.data.semicircle.clone(),
+                start,
+                end,
+                start_point_image,
+                end_point_image,
+                reversed: self.data.reversed,
+                policy: self.data.policy,
+            }),
+        }))
+    }
+
     pub(crate) fn shares_endpoint_evidence(
         &self,
         start_endpoint: bool,
@@ -37927,48 +37991,128 @@ mod conversion_tests {
                     panic!("the correlated circle partition must be ordered: {reason:?}")
                 }
             };
-            let boundary = CurveRegionBoundaryLoop2::new(
+            let first = retained(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                cut.clone(),
+            );
+            let second = retained(
+                cut,
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+            );
+            let merged = first
+                .coalesced_with_next(&second, &policy)
+                .unwrap()
+                .expect("the shared mapped cut is only an arrangement partition");
+            assert!(matches!(
+                (merged.start_parameter(), merged.end_parameter()),
+                (
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(start),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(end),
+                ) if start == &Real::zero() && end == &Real::one()
+            ));
+            let reversed = second
+                .reversed()
+                .coalesced_with_next(&first.reversed(), &policy)
+                .unwrap()
+                .expect("the reversed shared mapped cut must coalesce");
+            assert!(reversed.is_reversed());
+            assert!(matches!(
+                (reversed.start_parameter(), reversed.end_parameter()),
+                (
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(start),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(end),
+                ) if start == &Real::zero() && end == &Real::one()
+            ));
+
+            let lower =
+                BezierAlgebraicCuspSemicircleFragment2::full(upper.complementary_half(), &policy);
+            assert!(
+                first
+                    .coalesced_with_next(&lower, &policy)
+                    .unwrap()
+                    .is_none()
+            );
+            let fragments = vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(first),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(second),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(lower.clone()),
+            ];
+            let mut cyclic = fragments.clone();
+            cyclic.rotate_left(1);
+            let reversed = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            let unsplit = CurveRegion2::try_new_with_loop_topology(
                 vec![
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(retained(
-                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
-                        cut.clone(),
-                    )),
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(retained(
-                        cut,
-                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
-                    )),
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(
-                        BezierAlgebraicCuspSemicircleFragment2::full(
-                            upper.complementary_half(),
-                            &policy,
-                        ),
-                    ),
+                    CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                                BezierAlgebraicCuspSemicircleFragment2::full(
+                                    upper.clone(),
+                                    &policy,
+                                ),
+                            ),
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(lower),
+                        ],
+                        &policy,
+                    )
+                    .unwrap(),
                 ],
-                &policy,
-            )
-            .expect("the correlated partition must remain an exact closed circle");
-            let source = CurveRegion2::try_new_with_loop_topology(
-                vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
                 vec![CurveBoundaryInteriorSide2::Left],
             )
+            .unwrap()
+            .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
             .unwrap();
-            let expanded = source
-                .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
-                .expect("an internal mapped circle partition must re-offset exactly");
-            assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
-            assert!(expanded.value.boundary_loops()[0].fragments().iter().any(
-                |fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-            ));
-            assert_eq!(
-                expanded
-                    .value
-                    .classify_point(&Point2::new(Real::zero(), -(Real::one() + &half)), &policy,)
-                    .unwrap()
-                    .into_value(),
-                Classification::Decided(crate::RegionPointLocation::Boundary),
-            );
+
+            for (fragments, filled_side) in [
+                (fragments, CurveBoundaryInteriorSide2::Left),
+                (cyclic, CurveBoundaryInteriorSide2::Left),
+                (reversed, CurveBoundaryInteriorSide2::Right),
+            ] {
+                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy)
+                    .expect("the correlated partition must remain an exact closed circle");
+                let source = CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![filled_side],
+                )
+                .unwrap();
+                let expanded = source
+                    .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+                    .expect("an internal mapped circle partition must re-offset exactly");
+                assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
+                let expanded_fragments = expanded.value.boundary_loops()[0].fragments();
+                let unsplit_fragments = unsplit.value.boundary_loops()[0].fragments();
+                assert_eq!(expanded_fragments.len(), unsplit_fragments.len());
+                assert!((0..expanded_fragments.len()).any(|rotation| {
+                    expanded_fragments
+                        .iter()
+                        .enumerate()
+                        .all(|(index, fragment)| {
+                            fragment
+                                == &unsplit_fragments[(index + rotation) % unsplit_fragments.len()]
+                        })
+                }));
+                assert!(expanded.value.boundary_loops()[0].fragments().iter().any(
+                    |fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                ));
+                assert_eq!(
+                    expanded
+                        .value
+                        .classify_point(
+                            &Point2::new(Real::zero(), -(Real::one() + &half)),
+                            &policy,
+                        )
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(crate::RegionPointLocation::Boundary),
+                );
+            }
         }
     }
 
