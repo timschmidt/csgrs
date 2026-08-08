@@ -38096,8 +38096,9 @@ mod conversion_tests {
                 .sum(),
             _ => unreachable!(),
         };
+        let preflight = operation();
         let complete = match mode.as_str() {
-            "mapped" | "unsplit" | "cavalier" => operation() != 0,
+            "mapped" | "unsplit" | "cavalier" => preflight != 0,
             "disabled" => true,
             _ => unreachable!(),
         };
