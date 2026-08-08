@@ -45400,8 +45400,15 @@ mod conversion_tests {
         let operation = || match mode.as_str() {
             "construct" => lens().map_or(0, |region| region.boundary_loops().len()),
             "exact_offset" => lens().as_ref().and_then(offset).unwrap_or(0),
-            "prebuilt_exact_offset" => prebuilt.as_ref().and_then(offset).unwrap_or(0),
-            "construct_disabled" | "disabled" | "prebuilt_disabled" => 1,
+            "prebuilt_exact_offset" => prebuilt
+                .as_ref()
+                .and_then(|region| offset(black_box(region)))
+                .unwrap_or(0),
+            "prebuilt_disabled" => {
+                black_box(&prebuilt);
+                1
+            }
+            "construct_disabled" | "disabled" => 1,
             "cavalier_f64_offset" => cavalier
                 .parallel_offset(black_box(-0.125))
                 .iter()
