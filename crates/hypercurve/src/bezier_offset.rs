@@ -539,6 +539,10 @@ pub(crate) struct BezierAlgebraicCuspSemicircleParallelParameterMap2 {
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+    /// Stable exact carrier identity for rejecting mapped point evidence that
+    /// was retained across a transform without transforming this correlation.
+    #[cfg(feature = "predicates")]
+    semicircle: BezierAlgebraicCuspSemicircle2,
     parallel: BezierParallel2,
     cusp_parameter: BezierParameter2,
     /// A nondegenerate relation selecting correlated parallel parameters
@@ -2024,6 +2028,32 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
 }
 
 impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
+    /// Returns the selected semicircle on which this retained parameter was
+    /// authored. This identity prevents a genuinely mapped point from being
+    /// replayed after its fragment was transformed without transforming the
+    /// correlation itself.
+    #[cfg(feature = "predicates")]
+    fn semicircle_carrier(&self) -> &BezierAlgebraicCuspSemicircle2 {
+        match self {
+            Self::Rational { map, .. } => &map.data.semicircle,
+            Self::Parallel { map, .. } => &map.data.semicircle,
+            Self::Pair { map, first, .. } => {
+                if *first {
+                    &map.data.first_semicircle
+                } else {
+                    &map.data.second_semicircle
+                }
+            }
+            Self::Chord { map, .. } => &map.data.semicircle,
+            Self::PairOverlap { overlap, first, .. } => overlap.semicircle(*first),
+            Self::PairOverlapMap {
+                overlap,
+                source_first,
+                ..
+            } => overlap.semicircle(!*source_first),
+        }
+    }
+
     /// Recovers the rational carrier at the base of any exact coincident-circle
     /// pair-overlap transports.
     ///
@@ -2584,7 +2614,10 @@ struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
 #[derive(Debug)]
 #[allow(dead_code)]
 enum BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2 {
-    ExactEndpoints,
+    ExactEndpoints {
+        first_semicircle: BezierAlgebraicCuspSemicircle2,
+        second_semicircle: BezierAlgebraicCuspSemicircle2,
+    },
     Correlated {
         first_semicircle: BezierAlgebraicCuspSemicircle2,
         second_semicircle: BezierAlgebraicCuspSemicircle2,
@@ -2943,6 +2976,34 @@ impl BezierAlgebraicCuspSemicircle2 {
             -(radial_sign * distance)
         };
         let radial_distance = &self.data.radial_distance + oriented_distance;
+        match real_sign(&radial_distance, policy) {
+            Some(RealSign::Zero) => Ok(Classification::Decided(None)),
+            Some(RealSign::Positive | RealSign::Negative) => {
+                Ok(Classification::Decided(Some(Self {
+                    data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                        frame: self.data.frame.clone(),
+                        radial_distance,
+                        clockwise: self.data.clockwise,
+                    }),
+                })))
+            }
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+
+    /// Scales this carrier's signed radius without changing its exact center,
+    /// frame, or rational half-circle parameterization.
+    ///
+    /// This is used when a mapped cut is nonrational on one coincident circle
+    /// but is an authored endpoint of another. Scaling both coincident radial
+    /// vectors by the same exact factor preserves the shared geometric point
+    /// without adjoining either selected center field to the other.
+    fn scaled_radial_distance(
+        &self,
+        scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let radial_distance = &self.data.radial_distance * scale;
         match real_sign(&radial_distance, policy) {
             Some(RealSign::Zero) => Ok(Classification::Decided(None)),
             Some(RealSign::Positive | RealSign::Negative) => {
@@ -4749,6 +4810,8 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+                #[cfg(feature = "predicates")]
+                semicircle: self.clone(),
                 parallel: other.clone(),
                 cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
                 incidence,
@@ -5492,6 +5555,8 @@ impl BezierAlgebraicCuspSemicircle2 {
     }
 
     fn exact_full_pair_overlap(
+        first: &Self,
+        second: &Self,
         orientation: RationalBezierOverlapOrientation2,
         policy: &CurveContext,
     ) -> BezierAlgebraicCuspSemicirclePairIntersections2 {
@@ -5499,7 +5564,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierAlgebraicCuspSemicirclePairOverlap2 {
                 data: Arc::new(BezierAlgebraicCuspSemicirclePairOverlapData2 {
                     parameter_map:
-                        BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints,
+                        BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
+                            first_semicircle: first.clone(),
+                            second_semicircle: second.clone(),
+                        },
                     first_boundaries: [
                         BezierAlgebraicCuspSemicirclePairEndpoint2::FirstStart,
                         BezierAlgebraicCuspSemicirclePairEndpoint2::FirstEnd,
@@ -5622,7 +5690,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             (first_boundaries, second_boundaries)
         };
         let parameter_map = if radial_cross == RealSign::Zero {
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
+            }
         } else {
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated {
                 first_semicircle: self.clone(),
@@ -5671,7 +5742,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     RationalBezierOverlapOrientation2::Reversed
                 };
                 let result = if radial_same == traversal_same {
-                    Self::exact_full_pair_overlap(orientation, policy)
+                    Self::exact_full_pair_overlap(self, other, orientation, policy)
                 } else {
                     BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(
                         Self::coincident_endpoint_contacts(radial_same),
@@ -7796,6 +7867,25 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         self.data.second_boundaries
     }
 
+    fn semicircle(&self, first: bool) -> &BezierAlgebraicCuspSemicircle2 {
+        let (first_semicircle, second_semicircle) = match &self.data.parameter_map {
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
+                first_semicircle,
+                second_semicircle,
+            }
+            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated {
+                first_semicircle,
+                second_semicircle,
+                ..
+            } => (first_semicircle, second_semicircle),
+        };
+        if first {
+            first_semicircle
+        } else {
+            second_semicircle
+        }
+    }
+
     fn boundary_parameter(
         &self,
         endpoint: BezierAlgebraicCuspSemicirclePairEndpoint2,
@@ -7849,7 +7939,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
         if matches!(
             self.data.parameter_map,
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints { .. }
         ) {
             return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
                 parameter.clone()
@@ -8166,7 +8256,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
         if matches!(
             self.data.parameter_map,
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints { .. }
         ) {
             let bracket = match source.parameter_bracket(refinement_steps, &self.data.policy)? {
                 Classification::Decided(bracket) => bracket,
@@ -8338,7 +8428,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     ..
                 } if matches!(
                     overlap.data.parameter_map,
-                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints
+                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints { .. }
                 ) =>
                 {
                     Ok(source.represented_rational_value(policy)?.map(|parameter| {
@@ -8391,6 +8481,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         let Self::Mapped(data) = self else {
             unreachable!("an exact cusp parameter always has a represented rational value");
         };
+        if data.semicircle_carrier() != semicircle {
+            return Ok(Classification::Decided(None));
+        }
         if let Some((map, contact)) = data.coincident_rational_source() {
             return Ok(match &contact.other_parameter {
                 BezierParameter2::Algebraic(parameter) => Classification::Decided(Some(
@@ -8440,6 +8533,72 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             }));
         }
         Ok(Classification::Decided(None))
+    }
+
+    /// Replays this mapped point after an exact concentric radius change.
+    ///
+    /// Represented parameters evaluate directly on the target carrier. A
+    /// correlated coincident-circle boundary instead reuses the participating
+    /// circle on which that point is structurally parameter 0 or 1, scaling
+    /// its signed radius by the same target/source ratio. Other genuinely
+    /// multi-field cuts remain explicit and decline this path.
+    #[cfg(feature = "predicates")]
+    fn concentric_offset_point_image(
+        &self,
+        source: &BezierAlgebraicCuspSemicircle2,
+        offset: &BezierAlgebraicCuspSemicircle2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {
+        self.validate_policy(policy)?;
+        if source.data.frame != offset.data.frame || source.is_clockwise() != offset.is_clockwise()
+        {
+            return Ok(Classification::Decided(None));
+        }
+        if source == offset {
+            return self.coincident_point_image(source, policy);
+        }
+        match self.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => {
+                return Ok(offset.point_at(&parameter, policy)?.map(Some));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let Self::Mapped(data) = self else {
+            unreachable!("an exact cusp parameter always has a represented rational value");
+        };
+        if data.semicircle_carrier() != source {
+            return Ok(Classification::Decided(None));
+        }
+        let Some((endpoint_circle, start, endpoint_policy)) =
+            data.coincident_pair_endpoint_source()
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        if endpoint_policy != *policy {
+            return Err(CurveError::Topology(
+                "coincident circle endpoint was replayed under a different predicate policy".into(),
+            ));
+        }
+        let radial_scale = (offset.radial_distance() / source.radial_distance())?;
+        let endpoint_circle = match endpoint_circle.scaled_radial_distance(&radial_scale, policy)? {
+            Classification::Decided(Some(circle)) => circle,
+            Classification::Decided(None) => {
+                return Err(CurveError::Topology(
+                    "nonzero concentric offset collapsed a coincident endpoint carrier".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(Some(if start {
+            endpoint_circle.start_point_image(policy)?
+        } else {
+            endpoint_circle.end_point_image(policy)?
+        })))
     }
 
     pub(crate) fn shares_exact_evidence(&self, other: &Self) -> bool {
@@ -18128,6 +18287,45 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         Ok(Classification::Decided(Some(translated)))
     }
 
+    /// Replays a noncardinal endpoint on an exact concentric offset whenever
+    /// its retained parameter already owns a one-field target construction.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn concentric_offset_endpoint_point_image(
+        &self,
+        offset: &Self,
+        start_endpoint: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {
+        self.validate_policy(policy)?;
+        offset.validate_policy(policy)?;
+        if self.data.reversed != offset.data.reversed
+            || !self
+                .endpoint_parameter(start_endpoint)
+                .shares_exact_evidence(offset.endpoint_parameter(start_endpoint))
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let point = match self
+            .endpoint_parameter(start_endpoint)
+            .concentric_offset_point_image(&self.data.semicircle, &offset.data.semicircle, policy)?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if let Some(point) = &point {
+            let source_start = start_endpoint != offset.data.reversed;
+            let cache = if source_start {
+                &offset.data.start_point_image
+            } else {
+                &offset.data.end_point_image
+            };
+            let _ = cache.set(Some(point.clone()));
+        }
+        Ok(Classification::Decided(point))
+    }
+
     /// Returns whether this traversal endpoint and one retained circle/chord
     /// point are the two carriers created from the same mapped contact.
     #[cfg(feature = "predicates")]
@@ -18378,13 +18576,20 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         } else {
             &self.data.end
         };
-        let parameter = match parameter.represented_rational_value(policy)? {
-            Classification::Decided(Some(parameter)) => parameter,
-            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
-        };
-        let point = match self.data.semicircle.point_at(&parameter, policy)? {
-            Classification::Decided(point) => Some(point),
+        #[cfg(feature = "predicates")]
+        let point = match parameter.coincident_point_image(&self.data.semicircle, policy)? {
+            Classification::Decided(point) => point,
             Classification::Uncertain(_) => None,
+        };
+        #[cfg(not(feature = "predicates"))]
+        let point = match parameter.represented_rational_value(policy)? {
+            Classification::Decided(Some(parameter)) => {
+                match self.data.semicircle.point_at(&parameter, policy)? {
+                    Classification::Decided(point) => Some(point),
+                    Classification::Uncertain(_) => None,
+                }
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => None,
         };
         let _ = cache.set(point.clone());
         Ok(point)
@@ -37112,6 +37317,89 @@ mod conversion_tests {
                         BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
                     )
             ));
+            let Classification::Decided(mapped_endpoint_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    first.clone(),
+                    pair_endpoint.clone(),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(three_quarters.clone()),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the mapped overlap endpoint must bound a retained subfragment");
+            };
+            assert_eq!(
+                mapped_endpoint_fragment
+                    .endpoint_point_image(true, &policy)
+                    .unwrap()
+                    .expect("the coincident endpoint must reuse its owning circle field")
+                    .exact_rational_point(&policy),
+                Some(Point2::new(Real::zero(), Real::one())),
+            );
+            for (distance, expected_y) in [
+                (half.clone(), half.clone()),
+                (Real::from(2_i8), Real::from(-1_i8)),
+            ] {
+                let Classification::Decided(Some(offset_fragment)) = mapped_endpoint_fragment
+                    .offset_left(&distance, &policy)
+                    .unwrap()
+                else {
+                    panic!("the mapped-endpoint concentric offset must remain nonzero");
+                };
+                let Classification::Decided(Some(offset_endpoint)) = mapped_endpoint_fragment
+                    .concentric_offset_endpoint_point_image(&offset_fragment, true, &policy)
+                    .unwrap()
+                else {
+                    panic!("the coincident endpoint field must survive a radius change");
+                };
+                assert_eq!(
+                    offset_endpoint.exact_rational_point(&policy),
+                    Some(Point2::new(Real::zero(), expected_y)),
+                );
+                assert!(
+                    offset_fragment
+                        .endpoint_point_image(true, &policy)
+                        .unwrap()
+                        .expect("the transported endpoint must be cached")
+                        .shares_storage(&offset_endpoint)
+                );
+            }
+            let translated_fragment = mapped_endpoint_fragment
+                .transform_similarity(
+                    &Similarity2::try_from_real_affine(
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                        Real::from(2_i8),
+                        Real::from(3_i8),
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+            assert!(
+                translated_fragment
+                    .endpoint_point_image(true, &policy)
+                    .unwrap()
+                    .is_none(),
+                "untransformed mapped evidence must not replay on a transformed carrier",
+            );
+            let Classification::Decided(Some(translated_offset_fragment)) =
+                translated_fragment.offset_left(&half, &policy).unwrap()
+            else {
+                panic!("the transformed carrier offset must remain nonzero");
+            };
+            assert!(matches!(
+                translated_fragment
+                    .concentric_offset_endpoint_point_image(
+                        &translated_offset_fragment,
+                        true,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
             let rational_wide_arc = RationalBezier2::from(
                 RationalQuadraticBezier2::try_new(
                     Point2::new(three_fifths.clone(), four_fifths.clone()),
@@ -37179,6 +37467,34 @@ mod conversion_tests {
                         BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. }
                     )
             ));
+            let Classification::Decided(wrapped_endpoint_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    independent_reversed.clone(),
+                    wrapped_pair_endpoint.clone(),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(three_quarters.clone()),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the wrapped overlap endpoint must bound a retained subfragment");
+            };
+            let Classification::Decided(Some(wrapped_offset_fragment)) = wrapped_endpoint_fragment
+                .offset_left(&half, &policy)
+                .unwrap()
+            else {
+                panic!("the wrapped mapped-endpoint offset must remain nonzero");
+            };
+            let Classification::Decided(Some(wrapped_offset_endpoint)) = wrapped_endpoint_fragment
+                .concentric_offset_endpoint_point_image(&wrapped_offset_fragment, true, &policy)
+                .unwrap()
+            else {
+                panic!("nested coincident transports must retain the endpoint field");
+            };
+            assert_eq!(
+                wrapped_offset_endpoint.exact_rational_point(&policy),
+                Some(Point2::new(Real::zero(), Real::one() + &half)),
+            );
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
                     independent_wide_overlaps,
@@ -37559,6 +37875,100 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts
                 ),
             ));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
+        let quarter_turn_to_origin = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1_i8),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::from(5_i8),
+        )
+        .unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let rotated = synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                .transform_similarity(&quarter_turn_to_origin)
+                .unwrap();
+            let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                overlap,
+            )) = upper.pair_intersections(&rotated, &policy).unwrap()
+            else {
+                panic!("the independently selected coincident circles must overlap");
+            };
+            let cut = overlap.first_start_parameter();
+            assert!(matches!(
+                &cut,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
+                    )
+            ));
+
+            let retained = |start, end| match BezierAlgebraicCuspSemicircleFragment2::try_new(
+                upper.clone(),
+                start,
+                end,
+                false,
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(fragment) => fragment,
+                Classification::Uncertain(reason) => {
+                    panic!("the correlated circle partition must be ordered: {reason:?}")
+                }
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(retained(
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                        cut.clone(),
+                    )),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(retained(
+                        cut,
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                    )),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(
+                            upper.complementary_half(),
+                            &policy,
+                        ),
+                    ),
+                ],
+                &policy,
+            )
+            .expect("the correlated partition must remain an exact closed circle");
+            let source = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let expanded = source
+                .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
+                .expect("an internal mapped circle partition must re-offset exactly");
+            assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
+            assert!(expanded.value.boundary_loops()[0].fragments().iter().any(
+                |fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+            ));
+            assert_eq!(
+                expanded
+                    .value
+                    .classify_point(&Point2::new(Real::zero(), -(Real::one() + &half)), &policy,)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(crate::RegionPointLocation::Boundary),
+            );
         }
     }
 

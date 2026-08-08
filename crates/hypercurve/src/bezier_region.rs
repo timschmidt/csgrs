@@ -4372,7 +4372,15 @@ fn exact_offset_algebraic_cusp_semicircle_endpoint(
     match source.translated_cardinal_offset_endpoint(offset, at_start, source_endpoint, policy)? {
         Classification::Decided(Some(point)) => Ok(Classification::Decided(point)),
         Classification::Decided(None) => {
-            exact_algebraic_cusp_semicircle_endpoint(offset, at_start, policy)
+            match source.concentric_offset_endpoint_point_image(offset, at_start, policy)? {
+                Classification::Decided(Some(point)) => Ok(Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::Algebraic(point),
+                )),
+                Classification::Decided(None) => {
+                    exact_algebraic_cusp_semicircle_endpoint(offset, at_start, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
         }
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
