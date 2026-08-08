@@ -1,0 +1,329 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "retained selected-circle exact re-offset, collapse, and past-collapse regularization",
+  "implementation_revision": "f59cd7af6871b9ab70adc076a73e22bb263bb208",
+  "benchmark_revisions": [
+    "05974016fa34d2f25d2d3ef639284c5cb4e89fb7"
+  ],
+  "historical_semantic_revision": "3e503b804d9cb661d624296930aaed5967493458",
+  "historical_benchmark_worktree_revision": "a51b64df2374b6e480ab153134a9dfb15924cc73",
+  "preceding_checkpoint": "2026-08-07-correlated-chord-pair-transform-offset.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "exact concentric left-offset composition for retained selected algebraic semicircles with both orientations and either signed diameter frame",
+      "correct distance reversal for reversed selected-circle fragment traversal",
+      "exact-radius collapse represented by an empty span whose two boundaries retain the exact center",
+      "past-center nonzero parallels retained for authoritative CurveRegion2 regularization",
+      "mixed materialized line, materialized circular-conic, AlgebraicChord, and AlgebraicCuspSemicircle spans in the existing exact offset loop",
+      "native rational-circle radius collapse and reversal in the CurveRegion2 engine without weakening the primitive CircularArc2 contract",
+      "STRICT and APPROXIMATE_512 public regression coverage for expansion, pre-collapse contraction, exact collapse, and past-collapse topology",
+      "matched historical rejection, competitive floating, deterministic perf, allocation, peak-heap, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "re-offset of selected-circle fragments whose Boolean cut parameters remain genuinely nonrational mapped evidence",
+      "new corners involving selected-circle endpoints whose tangents remain algebraic rather than represented Real vectors",
+      "affine and translation transport of AlgebraicCuspChord endpoint evidence",
+      "general oblique selected-circle and retained-chord interaction",
+      "general oblique retained chord and analytic-parallel interaction",
+      "general retained-algebraic fillet centers, tangency parameters, and arcs",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::offset -> offset_exact_general_raw -> exact_offset_span_from_axis_aligned_algebraic_chord / exact_offset_span_from_algebraic_cusp_semicircle / exact_offset_span_from_native_arc -> append_exact_offset_join -> CurveRegion2::regularized_region_raw -> CurveRegionBooleanContext",
+    "selected_circle_rule": "For x(u)=C+r*q(u), the left parallel coefficient is r+sign(r)*d for clockwise traversal and r-sign(r)*d for counterclockwise traversal. Reversed fragments compose the carrier with -d. The exact zero coefficient emits no curve, while either nonzero sign remains a valid concentric carrier for later topology regularization.",
+    "native_circle_rule": "CurveRegion2 handles zero and negative native arc radius scale as region-topology events, while CircularArc2::offset_left retains its narrower primitive contract and continues to reject collapse or reversal.",
+    "endpoint_rule": "Every span endpoint is retained as RationalBezierIntersectionPointEvidence2. Smooth mixed joins first prove exact endpoint identity; if a selected-circle join is not shared and needs an algebraic tangent construction, it remains Unsupported rather than sampling a tangent.",
+    "persistent_state_added": "no persistent region fields or caches; each new selected carrier is one Arc-backed word and exact span evidence is operation-local",
+    "primitive_element_added": false,
+    "persistent_cache_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "All radius signs, endpoint identities, span connectivity, intersections, winding decisions, and regularized topology remain exact. The past-collapse fixture completes as Certified under STRICT.",
+    "approximate_512": "Ordinary expansion, pre-collapse contraction, and exact collapse complete as Certified under APPROXIMATE_512. Past-collapse regularization exercises the existing terminal equality path and reports Approximate512Consumed; it never stores rounded coordinates, radii, tangents, or topology evidence.",
+    "construction_policy": "The selected carriers validate the same CurveContext used to construct them. The public fixture is independently rebuilt under STRICT and APPROXIMATE_512.",
+    "uncertainty_rule": "An unresolved reusable radius sign remains RealSign uncertainty. A non-shared selected-circle corner requiring an unrepresented algebraic tangent remains Unsupported. Only the existing terminal equality decision may consume APPROXIMATE_512."
+  },
+  "fixture": {
+    "source": "The exact rectangle [0, sqrt(1/2)] x [0, 1], represented by retained algebraic chords with independently selected right endpoints.",
+    "first_offset": "Expand by exactly 1/10 with round joins. Exact-center corners remain rational circular conics; selected-field centers retain AlgebraicCuspSemicircle quarter arcs.",
+    "ordinary_reentry": "Expand the retained rounded result by exactly 1/20 through CurveRegion2::offset.",
+    "collapse": "Contract by exactly 1/10. Every radius-1/10 round join collapses to its retained center and disappears without emitting a zero-radius curve.",
+    "past_collapse": "Contract by exactly 3/20. Raw concentric parallels cross their local centers and the authoritative unary arrangement removes the resulting loops, yielding the rectangle contracted by 1/20.",
+    "historical_failure": "The semantic parent rejects AlgebraicCuspSemicircle in offset_exact_general_raw before constructing any usable second offset. Both historical timed lanes therefore measure Unsupported exits, not geometry production."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_offset/retained_circle_reentry",
+    "cpu": 11,
+    "timing_scope": "The algebraic rectangle, its first exact round offset, completion preflights, and Cavalier first offset are outside timed loops. Timed Hypercurve lanes run either exact re-expansion or exact past-collapse regularization. Cavalier lanes re-offset a prebuilt binary64 rounded polyline.",
+    "wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_offset/retained_circle_reentry <comparative-executable>",
+    "perf_expand_command": "perf stat -x, -e instructions,cycles -- taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=4096 HYPERCURVE_COMPARE_GROUP=algebraic_round_offset/retained_circle_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_exact_expand <current-comparative-executable>",
+    "perf_past_collapse_command": "perf stat -x, -e instructions,cycles -- taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=64 HYPERCURVE_COMPARE_GROUP=algebraic_round_offset/retained_circle_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_exact_past_collapse <current-comparative-executable>",
+    "perf_historical_command": "perf stat -x, -e instructions,cycles -- taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=1048576 HYPERCURVE_COMPARE_GROUP=algebraic_round_offset/retained_circle_reentry HYPERCURVE_COMPARE_IMPL=hypercurve_rejected_expand <historical-comparative-executable>",
+    "normalization": "Subtract the matched implementation-filter=disabled process and divide by fixed iterations plus Runner's one warm-up invocation.",
+    "heap_method": "Heaptrack directly profiles 512 current expansion iterations, 8 current past-collapse iterations, or 65536 historical rejection iterations. Recorder allocation counts are baseline-subtracted and normalized by iterations plus one; heaptrack_print supplies peak heap.",
+    "historical_control": "Semantic revision 3e503b8 with the benchmark-only commit cherry-picked as detached revision a51b64d.",
+    "competitive_control": "Cavalier Contours uses binary64 polylines and floating parallel_offset. It does not retain selected algebraic fields, exact circular carriers, policy evidence, or authoritative exact regularization."
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "current_0597401": {
+      "exact_expand_median_ns": 223557.0,
+      "exact_expand_min_ns": 221675.8,
+      "exact_expand_max_ns": 228750.1,
+      "exact_expand_iterations_per_sample": 512,
+      "exact_past_collapse_median_ns": 17224867.5,
+      "exact_past_collapse_min_ns": 17069043.2,
+      "exact_past_collapse_max_ns": 17417574.3,
+      "exact_past_collapse_iterations_per_sample": 6,
+      "cavalier_f64_expand_median_ns": 1521.6,
+      "cavalier_f64_expand_min_ns": 1502.5,
+      "cavalier_f64_expand_max_ns": 1552.2,
+      "cavalier_expand_iterations_per_sample": 65536,
+      "cavalier_f64_past_collapse_median_ns": 2434.1,
+      "cavalier_f64_past_collapse_min_ns": 2421.3,
+      "cavalier_f64_past_collapse_max_ns": 2448.7,
+      "cavalier_past_collapse_iterations_per_sample": 40960
+    },
+    "historical_3e503b8": {
+      "rejected_expand_median_ns": 230.4,
+      "rejected_expand_min_ns": 229.6,
+      "rejected_expand_max_ns": 246.0,
+      "rejected_expand_iterations_per_sample": 458752,
+      "rejected_past_collapse_median_ns": 224.3,
+      "rejected_past_collapse_min_ns": 222.9,
+      "rejected_past_collapse_max_ns": 227.3,
+      "rejected_past_collapse_iterations_per_sample": 458752,
+      "result": "Both lanes return no usable second-offset geometry."
+    },
+    "success_over_historical_rejection_ratio": {
+      "expand": 970.299479,
+      "past_collapse": 76793.880963
+    },
+    "current_exact_over_cavalier_f64_ratio": {
+      "expand": 146.922319,
+      "past_collapse": 7076.483094
+    },
+    "interpretation": "Historical and Cavalier numbers are capability context, not correctness-equivalent throughput controls. The ordinary exact lane exposes avoidable unary-arrangement cost; the past-collapse lane measures a real topology reconstruction."
+  },
+  "deterministic_perf": {
+    "current_expand": {
+      "fixed_timed_iterations": 4096,
+      "normalized_operation_invocations": 4097,
+      "raw_operation_process": {
+        "instructions": 7017774902,
+        "cycles": 3929582978
+      },
+      "raw_disabled_process": {
+        "instructions": 177438073,
+        "cycles": 80417822
+      },
+      "normalized_per_operation": {
+        "instructions": 1669596.492,
+        "cycles": 939508.215
+      }
+    },
+    "current_past_collapse": {
+      "fixed_timed_iterations": 64,
+      "normalized_operation_invocations": 65,
+      "raw_operation_process": {
+        "instructions": 11109861534,
+        "cycles": 4808038677
+      },
+      "raw_disabled_process": {
+        "instructions": 177437947,
+        "cycles": 80734805
+      },
+      "normalized_per_operation": {
+        "instructions": 168191132.108,
+        "cycles": 72727751.877
+      }
+    },
+    "historical_rejection": {
+      "fixed_timed_iterations": 1048576,
+      "normalized_operation_invocations": 1048577,
+      "raw_operation_process": {
+        "instructions": 3349917037,
+        "cycles": 1086935620
+      },
+      "raw_disabled_process": {
+        "instructions": 5993891,
+        "cycles": 6467393
+      },
+      "normalized_per_rejection": {
+        "instructions": 3189.011,
+        "cycles": 1030.414
+      }
+    },
+    "interpretation": "The historical denominator is a fast Unsupported exit. Expansion is the immediate fast-path target; past-collapse is dominated by exact arrangement and selected-field predicates."
+  },
+  "allocation_evidence": {
+    "current_expand": {
+      "fixed_timed_iterations": 512,
+      "normalized_operation_invocations": 513,
+      "raw_operation_process": {
+        "allocation_calls": 1564936,
+        "temporary_allocations": 142869,
+        "peak_heap_kib": 585.55
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 341941,
+        "temporary_allocations": 25392,
+        "peak_heap_kib": 585.54
+      },
+      "normalized_per_operation": {
+        "allocation_calls": 2384.005848,
+        "temporary_allocations": 229.0
+      },
+      "peak_increment_over_preflight_fixture_kib": 0.01
+    },
+    "current_past_collapse": {
+      "fixed_timed_iterations": 8,
+      "normalized_operation_invocations": 9,
+      "raw_operation_process": {
+        "allocation_calls": 3295265,
+        "temporary_allocations": 244987,
+        "peak_heap_kib": 704.41
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 341941,
+        "temporary_allocations": 25392,
+        "peak_heap_kib": 585.54
+      },
+      "normalized_per_operation": {
+        "allocation_calls": 328147.111111,
+        "temporary_allocations": 24399.444444
+      },
+      "peak_increment_over_preflight_fixture_kib": 118.87
+    },
+    "historical_rejection": {
+      "fixed_timed_iterations": 65536,
+      "normalized_operation_invocations": 65537,
+      "raw_operation_process": {
+        "allocation_calls": 465815,
+        "temporary_allocations": 66275,
+        "peak_heap_kib": 163.68
+      },
+      "raw_disabled_process": {
+        "allocation_calls": 7055,
+        "temporary_allocations": 738,
+        "peak_heap_kib": 163.67
+      },
+      "normalized_per_rejection": {
+        "allocation_calls": 7.000015,
+        "temporary_allocations": 1.0
+      },
+      "peak_increment_over_fixture_kib": 0.01
+    },
+    "profile_observation": "Expansion allocation stacks are dominated by unary pair_result line fitting, selected chord/circle bounds predicates, Sturm replay, and build_regularized_region. Past-collapse repeats the same authority at much greater arrangement complexity.",
+    "persistent_memory_cost": "No persistent fields or caches were added."
+  },
+  "linked_size": {
+    "artifact": "comparative release executable with identical benchmark source",
+    "all_features": {
+      "historical_file_bytes": 12899856,
+      "current_file_bytes": 12910840,
+      "file_delta_bytes": 10984,
+      "file_delta_percent": 0.085148,
+      "historical_text_bytes": 9846099,
+      "current_text_bytes": 9855479,
+      "text_delta_bytes": 9380,
+      "text_delta_percent": 0.095266,
+      "historical_data_bytes": 308976,
+      "current_data_bytes": 308960,
+      "data_delta_bytes": -16,
+      "historical_bss_bytes": 5200,
+      "current_bss_bytes": 4000,
+      "bss_delta_bytes": -1200,
+      "historical_allocated_total_bytes": 10160275,
+      "current_allocated_total_bytes": 10168439,
+      "allocated_total_delta_bytes": 8164,
+      "allocated_total_delta_percent": 0.080352
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "historical_file_bytes": 11395536,
+      "current_file_bytes": 11399672,
+      "file_delta_bytes": 4136,
+      "file_delta_percent": 0.036295,
+      "historical_text_bytes": 8581842,
+      "current_text_bytes": 8583690,
+      "text_delta_bytes": 1848,
+      "text_delta_percent": 0.021534,
+      "historical_data_bytes": 300560,
+      "current_data_bytes": 300544,
+      "data_delta_bytes": -16,
+      "historical_bss_bytes": 3832,
+      "current_bss_bytes": 2008,
+      "bss_delta_bytes": -1824,
+      "historical_allocated_total_bytes": 8886234,
+      "current_allocated_total_bytes": 8886242,
+      "allocated_total_delta_bytes": 8,
+      "allocated_total_delta_percent": 0.00009,
+      "interpretation": "Only the native circular-collapse support remains linked without predicates; its net allocated-section delta is eight bytes."
+    }
+  },
+  "static_callgraph": {
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-selected-circle-reoffset-0597401 --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-selected-circle-reoffset-parent --out-dir target/callgraph-hypercurve-selected-circle-reoffset-parent-a51b64d --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "current_artifact": "target/callgraph-hypercurve-selected-circle-reoffset-0597401/callgraph.json",
+    "historical_artifact": "target/callgraph-hypercurve-selected-circle-reoffset-parent-a51b64d/callgraph.json",
+    "current": {
+      "libraries_discovered": 1,
+      "nodes": 29304,
+      "edges": 55830
+    },
+    "historical": {
+      "libraries_discovered": 1,
+      "nodes": 29275,
+      "edges": 55710
+    },
+    "delta": {
+      "nodes": 29,
+      "edges": 120
+    },
+    "source_and_graph_confirm_existing_offset_authority": true,
+    "source_and_graph_confirm_existing_regularizer_authority": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "479 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "64 passed",
+    "cargo_test_all_features_hypercurve_curve_region_boolean": "29 passed",
+    "cargo_test_all_features_hypercurve_curve_intersection": "29 passed",
+    "cargo_test_all_features_hypercurve_offset": "34 passed",
+    "cargo_test_all_features_hypercurve_analytic_parallel_region": "4 passed",
+    "cargo_test_no_default_features_lib": "324 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_comparative_benchmark_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "minimal_comparative_size_builds": "pass",
+    "aggregate_suite_note": "No full multi-hour curve_region_boolean_fuzz matrix claim is made at this checkpoint.",
+    "known_external_warning": "Hypertri ExactKernel::sub and ExactKernel::cmp remain pre-existing dead code. Hypertri, Hypermesh, and every lower layer were not modified by this checkpoint."
+  },
+  "next_priority": {
+    "correctness": "Transport genuinely mapped selected-circle cut parameters through concentric re-offset, then address AlgebraicCuspChord transport and the next general oblique retained-carrier interaction.",
+    "performance_and_memory": "Certify no-collapse convex mixed loops so ordinary re-expansion can bypass unary arrangement. Baseline: 223.557 us, 1.67M instructions, and 2,384 allocations. Keep full regularization for past-collapse until an exact wavefront/topology certificate replaces it.",
+    "past_collapse": "Profile and reduce the 17.225 ms, 168.19M-instruction, 328K-allocation topology path only through reusable exact pair and arrangement evidence; do not special-case the fixture geometry.",
+    "size": "The all-feature allocated delta is 8,164 bytes and the minimal delta is eight bytes. Fold further work into the same private span and carrier methods."
+  }
+}
