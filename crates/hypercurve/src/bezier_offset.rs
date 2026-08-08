@@ -42638,6 +42638,159 @@ mod conversion_tests {
         );
     }
 
+    /// Manual capability benchmark for a selected-circle cap whose two
+    /// endpoints are nonrational cuts authored by rational circle carriers.
+    ///
+    /// Run with `--release --all-features -- --ignored --nocapture` and select
+    /// `exact_offset`, `disabled`, or `cavalier_f64_offset` through
+    /// `HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE`.
+    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[test]
+    #[ignore = "manual performance checkpoint driver"]
+    fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
+        use cavalier_contours::polyline::{PlineSource, PlineSourceMut as _, Polyline};
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        let policy = CurveContext::STRICT;
+        let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+        let rational_quarter = |reflected: bool| {
+            let x = if reflected {
+                Real::from(-1_i8)
+            } else {
+                Real::one()
+            };
+            RationalBezier2::from(
+                RationalQuadraticBezier2::try_new(
+                    Point2::new(x.clone(), Real::zero()),
+                    Point2::new(x, Real::one()),
+                    Point2::new(Real::zero(), Real::one()),
+                    Real::one(),
+                    Real::one(),
+                    Real::from(2_i8),
+                )
+                .unwrap(),
+            )
+        };
+        let algebraic_cut = algebraic_parameter(vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let mapped_cut = |carrier: &RationalBezier2| {
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+            ) = semicircle.rational_intersections(carrier, &policy).unwrap()
+            else {
+                panic!("the benchmark rational carrier must overlap the selected circle");
+            };
+            let [overlap] = overlaps.as_slice() else {
+                panic!("the benchmark rational carrier must retain one selected cell");
+            };
+            let Classification::Decided(cut) = overlap
+                .cusp_parameter_for_other(&algebraic_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the benchmark rational cut must remain mapped");
+            };
+            cut
+        };
+        let start = mapped_cut(&rational_quarter(false));
+        let end = mapped_cut(&rational_quarter(true));
+        let Classification::Decided(arc) =
+            BezierAlgebraicCuspSemicircleFragment2::try_new(semicircle, start, end, false, &policy)
+                .unwrap()
+        else {
+            panic!("the benchmark mapped cuts must bound a selected-circle arc");
+        };
+        let Classification::Decided(Some(chord_end)) =
+            arc.endpoint_point_evidence(true, &policy).unwrap()
+        else {
+            panic!("the benchmark arc start must retain exact point evidence");
+        };
+        let Classification::Decided(Some(chord_start)) =
+            arc.endpoint_point_evidence(false, &policy).unwrap()
+        else {
+            panic!("the benchmark arc end must retain exact point evidence");
+        };
+        let chord = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+            chord_start,
+            chord_end,
+            BezierAlgebraicChordAxisDirection2::PositiveX,
+            &policy,
+        );
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                BezierSplitFragment2::AlgebraicChord(chord),
+            ],
+            &policy,
+        )
+        .unwrap();
+        let cap = CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap();
+
+        // t^2=1/2 on the rational quarter maps exactly to
+        // (1/3, 2*sqrt(2)/3). The minor-arc bulge is 3-2*sqrt(2).
+        let sqrt_two = 2.0_f64.sqrt();
+        let mut cavalier = Polyline::new_closed();
+        cavalier.add(1.0 / 3.0, 2.0 * sqrt_two / 3.0, 3.0 - 2.0 * sqrt_two);
+        cavalier.add(-1.0 / 3.0, 2.0 * sqrt_two / 3.0, 0.0);
+
+        let mode = std::env::var("HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE")
+            .unwrap_or_else(|_| "exact_offset".into());
+        let iterations = std::env::var("HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_ITERS")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(32);
+        let warmups = std::env::var("HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_WARMUP")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(1);
+        assert!(iterations > 0);
+        let distance = (Real::one() / Real::from(8_i8)).unwrap();
+        let operation = || match mode.as_str() {
+            "exact_offset" => cap
+                .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+                .map_or(0, |result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                }),
+            "disabled" => cap.boundary_loops().len(),
+            "cavalier_f64_offset" => cavalier
+                .parallel_offset(black_box(-0.125))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
+            _ => panic!("unknown HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE={mode:?}"),
+        };
+        let preflight = operation();
+        let complete = mode == "disabled" || preflight != 0;
+        for _ in 0..warmups {
+            black_box(operation());
+        }
+        let started = Instant::now();
+        let mut checksum = 0_usize;
+        for _ in 0..iterations {
+            checksum ^= black_box(operation());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "nonendpoint_rational_mapped_cap mode={mode} complete={complete} iterations={iterations} elapsed_ns={} ns_per_iter={:.3} checksum={checksum}",
+            elapsed.as_nanos(),
+            elapsed.as_secs_f64() * 1.0e9 / iterations as f64,
+        );
+    }
+
     #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
