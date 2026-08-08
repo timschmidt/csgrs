@@ -38623,7 +38623,9 @@ mod conversion_tests {
     /// `transformed_mapped`, `transformed_exact_partition`,
     /// `transformed_unsplit`, `transformed_disabled`, `transform_mapped`,
     /// `transform_exact_partition`, `transform_unsplit`, `transform_disabled`,
-    /// or `cavalier` through `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
+    /// `cavalier`, `cavalier_transform`, `cavalier_transformed_offset`, or
+    /// `cavalier_transform_offset` through
+    /// `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
@@ -38750,12 +38752,23 @@ mod conversion_tests {
                     .unwrap()
                     .into_value(),
             ),
-            "cavalier" => None,
+            "cavalier"
+            | "cavalier_transform"
+            | "cavalier_transformed_offset"
+            | "cavalier_transform_offset" => None,
             _ => panic!("unknown HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE={mode:?}"),
         };
         let mut cavalier = Polyline::new_closed();
         cavalier.add(1.0, 0.0, 1.0);
         cavalier.add(-1.0, 0.0, 1.0);
+        let transform_cavalier = || {
+            let mut transformed = Polyline::new_closed();
+            for vertex in cavalier.iter_vertexes() {
+                transformed.add(5.0 - 2.0 * vertex.y, -3.0 + 2.0 * vertex.x, vertex.bulge);
+            }
+            transformed
+        };
+        let transformed_cavalier = (mode == "cavalier_transformed_offset").then(transform_cavalier);
 
         let operation = || match mode.as_str() {
             "mapped" | "exact_partition" | "unsplit" => source
@@ -38802,6 +38815,19 @@ mod conversion_tests {
                 .iter()
                 .map(PlineSource::vertex_count)
                 .sum(),
+            "cavalier_transform" => transform_cavalier().vertex_count(),
+            "cavalier_transformed_offset" => transformed_cavalier
+                .as_ref()
+                .unwrap()
+                .parallel_offset(black_box(-1.0))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
+            "cavalier_transform_offset" => transform_cavalier()
+                .parallel_offset(black_box(-1.0))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
             _ => unreachable!(),
         };
         let preflight = operation();
@@ -38815,7 +38841,10 @@ mod conversion_tests {
             | "transform_mapped"
             | "transform_exact_partition"
             | "transform_unsplit"
-            | "cavalier" => preflight != 0,
+            | "cavalier"
+            | "cavalier_transform"
+            | "cavalier_transformed_offset"
+            | "cavalier_transform_offset" => preflight != 0,
             "disabled" | "transformed_disabled" | "transform_disabled" => true,
             _ => unreachable!(),
         };
