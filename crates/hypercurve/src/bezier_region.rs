@@ -34,6 +34,7 @@ use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
+use crate::bezier_offset::BezierAlgebraicCuspSemicircleSimilarityCache2;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
@@ -5855,12 +5856,26 @@ impl CurveRegion2 {
         };
 
         let mut loops = Vec::with_capacity(self.data.boundary_loops.len());
+        let similarity = std::cell::OnceCell::new();
+        let mut semicircle_similarity_cache =
+            BezierAlgebraicCuspSemicircleSimilarityCache2::default();
         for boundary in &self.data.boundary_loops {
             let fragments = boundary
                 .fragments()
                 .iter()
                 .map(|fragment| {
-                    transform_retained_region_fragment(fragment, m00, m01, m10, m11, tx, ty, policy)
+                    transform_retained_region_fragment(
+                        fragment,
+                        m00,
+                        m01,
+                        m10,
+                        m11,
+                        tx,
+                        ty,
+                        &similarity,
+                        &mut semicircle_similarity_cache,
+                        policy,
+                    )
                 })
                 .collect::<ExactCurveResult<Vec<_>>>()?;
             let boundary = match boundary.arrangement_sources() {
@@ -10111,8 +10126,32 @@ fn transform_retained_region_fragment(
     m11: &Real,
     tx: &Real,
     ty: &Real,
+    similarity: &std::cell::OnceCell<Option<crate::Similarity2>>,
+    semicircle_similarity_cache: &mut BezierAlgebraicCuspSemicircleSimilarityCache2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
+    let retained_similarity = || {
+        similarity
+            .get_or_init(|| {
+                crate::Similarity2::try_from_real_affine(
+                    m00.clone(),
+                    m01.clone(),
+                    m10.clone(),
+                    m11.clone(),
+                    tx.clone(),
+                    ty.clone(),
+                )
+                .ok()
+            })
+            .as_ref()
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                )
+            })
+    };
     match fragment {
         BezierSplitFragment2::Materialized { start, end, curve } => {
             Ok(BezierSplitFragment2::Materialized {
@@ -10139,24 +10178,9 @@ fn transform_retained_region_fragment(
             })
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
-            let similarity = crate::Similarity2::try_from_real_affine(
-                m00.clone(),
-                m01.clone(),
-                m10.clone(),
-                m11.clone(),
-                tx.clone(),
-                ty.clone(),
-            )
-            .map_err(|_| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Transformation,
-                    CurveFamily2::RationalBezier,
-                    UncertaintyReason::Unsupported,
-                )
-            })?;
             let parallel = fragment
                 .parallel()
-                .transform_similarity(&similarity)
+                .transform_similarity(retained_similarity()?)
                 .map_err(affine_region_error)?;
             Ok(BezierSplitFragment2::AnalyticParallel(
                 crate::BezierParallelFragment2::from_certified_range(
@@ -10194,24 +10218,12 @@ fn transform_retained_region_fragment(
             }
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-            let similarity = crate::Similarity2::try_from_real_affine(
-                m00.clone(),
-                m01.clone(),
-                m10.clone(),
-                m11.clone(),
-                tx.clone(),
-                ty.clone(),
-            )
-            .map_err(|_| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Transformation,
-                    CurveFamily2::RationalBezier,
-                    UncertaintyReason::Unsupported,
-                )
-            })?;
             Ok(BezierSplitFragment2::AlgebraicCuspSemicircle(
                 fragment
-                    .transform_similarity(&similarity)
+                    .transform_similarity_cached(
+                        retained_similarity()?,
+                        semicircle_similarity_cache,
+                    )
                     .map_err(affine_region_error)?,
             ))
         }

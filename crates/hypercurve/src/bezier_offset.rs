@@ -2633,6 +2633,187 @@ enum BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2 {
     },
 }
 
+/// Operation-local sharing for similarity-transformed selected circles and
+/// their mapped cuts. Arrangement partitions commonly clone one carrier and
+/// one cut across adjacent fragments; retaining that identity avoids repeating
+/// exact polynomial-frame transforms and proof-wrapper allocations.
+#[derive(Default)]
+pub(crate) struct BezierAlgebraicCuspSemicircleSimilarityCache2 {
+    frames: Vec<(
+        BezierParallelAlgebraicCuspFrame2,
+        BezierParallelAlgebraicCuspFrame2,
+    )>,
+    semicircles: Vec<(
+        BezierAlgebraicCuspSemicircle2,
+        BezierAlgebraicCuspSemicircle2,
+    )>,
+    overlaps: Vec<(
+        BezierAlgebraicCuspSemicirclePairOverlap2,
+        BezierAlgebraicCuspSemicirclePairOverlap2,
+    )>,
+    parameters: Vec<(
+        Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
+        BezierAlgebraicCuspSemicircle2,
+        Option<BezierAlgebraicCuspSemicircleParameter2>,
+    )>,
+}
+
+impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
+    fn frame(
+        &mut self,
+        source: &BezierParallelAlgebraicCuspFrame2,
+        transform: &Similarity2,
+    ) -> CurveResult<BezierParallelAlgebraicCuspFrame2> {
+        if let Some(transformed) = self
+            .frames
+            .iter()
+            .find(|(cached, _)| Arc::ptr_eq(&cached.data, &source.data))
+            .map(|(_, transformed)| transformed.clone())
+        {
+            return Ok(transformed);
+        }
+        let transformed = source.transform_similarity(transform)?;
+        self.frames.push((source.clone(), transformed.clone()));
+        Ok(transformed)
+    }
+
+    fn semicircle(
+        &mut self,
+        source: &BezierAlgebraicCuspSemicircle2,
+        transform: &Similarity2,
+    ) -> CurveResult<BezierAlgebraicCuspSemicircle2> {
+        if let Some(transformed) = self
+            .semicircles
+            .iter()
+            .find(|(cached, _)| Arc::ptr_eq(&cached.data, &source.data))
+            .map(|(_, transformed)| transformed.clone())
+        {
+            return Ok(transformed);
+        }
+        let mut radial_distance = source.radial_distance() * transform.scale();
+        if transform.reverses_orientation() {
+            radial_distance = -radial_distance;
+        }
+        let transformed = BezierAlgebraicCuspSemicircle2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: self.frame(&source.data.frame, transform)?,
+                radial_distance,
+                clockwise: source.is_clockwise() ^ transform.reverses_orientation(),
+            }),
+        };
+        self.semicircles.push((source.clone(), transformed.clone()));
+        Ok(transformed)
+    }
+
+    fn overlap(
+        &mut self,
+        overlap: &BezierAlgebraicCuspSemicirclePairOverlap2,
+        transform: &Similarity2,
+    ) -> CurveResult<BezierAlgebraicCuspSemicirclePairOverlap2> {
+        if let Some(transformed) = self
+            .overlaps
+            .iter()
+            .find(|(cached, _)| Arc::ptr_eq(&cached.data, &overlap.data))
+            .map(|(_, transformed)| transformed.clone())
+        {
+            return Ok(transformed);
+        }
+        let first_semicircle = self.semicircle(overlap.semicircle(true), transform)?;
+        let second_semicircle = self.semicircle(overlap.semicircle(false), transform)?;
+        let source = match &overlap.data.parameter_map {
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
+                source,
+                ..
+            } => source.clone(),
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
+                ..
+            }
+            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated { .. } => {
+                overlap.clone()
+            }
+        };
+        let transformed = BezierAlgebraicCuspSemicirclePairOverlap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicirclePairOverlapData2 {
+                parameter_map:
+                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
+                        first_semicircle,
+                        second_semicircle,
+                        source,
+                    },
+                first_boundaries: overlap.data.first_boundaries,
+                second_boundaries: overlap.data.second_boundaries,
+                orientation: overlap.data.orientation,
+                policy: overlap.data.policy,
+            }),
+        };
+        self.overlaps.push((overlap.clone(), transformed.clone()));
+        Ok(transformed)
+    }
+
+    fn parameter(
+        &mut self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        source_carrier: &BezierAlgebraicCuspSemicircle2,
+        transform: &Similarity2,
+    ) -> CurveResult<Option<BezierAlgebraicCuspSemicircleParameter2>> {
+        let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter else {
+            return Ok(Some(parameter.clone()));
+        };
+        if let Some(transformed) = self
+            .parameters
+            .iter()
+            .find(|(cached, cached_carrier, _)| {
+                Arc::ptr_eq(cached, data) && cached_carrier == source_carrier
+            })
+            .map(|(_, _, transformed)| transformed.clone())
+        {
+            return Ok(transformed);
+        }
+        let transformed = match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
+                overlap,
+                endpoint,
+                first,
+            } if overlap.semicircle(*first) == source_carrier => {
+                Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
+                        overlap: self.overlap(overlap, transform)?,
+                        endpoint: *endpoint,
+                        first: *first,
+                    },
+                )))
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                overlap,
+                source,
+                source_first,
+            } if overlap.semicircle(!*source_first) == source_carrier => {
+                let transformed_overlap = self.overlap(overlap, transform)?;
+                self.parameter(source, overlap.semicircle(*source_first), transform)?
+                    .map(|transformed_source| {
+                        BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                                overlap: transformed_overlap,
+                                source: transformed_source,
+                                source_first: *source_first,
+                            },
+                        ))
+                    })
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. } => None,
+            #[cfg(feature = "predicates")]
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. } => None,
+        };
+        self.parameters
+            .push((data.clone(), source_carrier.clone(), transformed.clone()));
+        Ok(transformed)
+    }
+}
+
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicirclePairIntersections2 {
@@ -7933,52 +8114,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             && self.data.policy == other.data.policy
     }
 
-    /// Applies one similarity to both coincident carriers while sharing the
-    /// original parameter-space certificate. The caller-provided carrier pair
-    /// lets a transformed fragment reuse its already-created selected circle.
-    fn transform_similarity_reusing_carrier(
-        &self,
-        transform: &Similarity2,
-        source_carrier: &BezierAlgebraicCuspSemicircle2,
-        transformed_carrier: &BezierAlgebraicCuspSemicircle2,
-    ) -> CurveResult<Self> {
-        let transform_semicircle = |semicircle: &BezierAlgebraicCuspSemicircle2| {
-            if semicircle == source_carrier {
-                Ok(transformed_carrier.clone())
-            } else {
-                semicircle.transform_similarity(transform)
-            }
-        };
-        let first_semicircle = transform_semicircle(self.semicircle(true))?;
-        let second_semicircle = transform_semicircle(self.semicircle(false))?;
-        let source = match &self.data.parameter_map {
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
-                source,
-                ..
-            } => source.clone(),
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
-                ..
-            }
-            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Correlated { .. } => {
-                self.clone()
-            }
-        };
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicCuspSemicirclePairOverlapData2 {
-                parameter_map:
-                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
-                        first_semicircle,
-                        second_semicircle,
-                        source,
-                    },
-                first_boundaries: self.data.first_boundaries,
-                second_boundaries: self.data.second_boundaries,
-                orientation: self.data.orientation,
-                policy: self.data.policy,
-            }),
-        })
-    }
-
     fn boundary_parameter(
         &self,
         endpoint: BezierAlgebraicCuspSemicirclePairEndpoint2,
@@ -8469,75 +8604,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleParameter2 {
-    /// Transports similarity-invariant coincident-circle parameter evidence to
-    /// a transformed carrier. Unsupported map families deliberately return
-    /// `None`; the fragment keeps their original evidence, whose carrier guard
-    /// then prevents stale geometric replay while parameter order remains
-    /// available on the unchanged local domain.
-    fn transform_similarity_on_carrier(
-        &self,
-        source_carrier: &BezierAlgebraicCuspSemicircle2,
-        transformed_carrier: &BezierAlgebraicCuspSemicircle2,
-        transform: &Similarity2,
-    ) -> CurveResult<Option<Self>> {
-        let Self::Mapped(data) = self else {
-            return Ok(Some(self.clone()));
-        };
-        let transformed = match data.as_ref() {
-            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
-                overlap,
-                endpoint,
-                first,
-            } if overlap.semicircle(*first) == source_carrier => {
-                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
-                    overlap: overlap.transform_similarity_reusing_carrier(
-                        transform,
-                        source_carrier,
-                        transformed_carrier,
-                    )?,
-                    endpoint: *endpoint,
-                    first: *first,
-                }
-            }
-            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                overlap,
-                source,
-                source_first,
-            } if overlap.semicircle(!*source_first) == source_carrier => {
-                let transformed_overlap = overlap.transform_similarity_reusing_carrier(
-                    transform,
-                    source_carrier,
-                    transformed_carrier,
-                )?;
-                let Some(transformed_source) = source.transform_similarity_on_carrier(
-                    overlap.semicircle(*source_first),
-                    transformed_overlap.semicircle(*source_first),
-                    transform,
-                )?
-                else {
-                    return Ok(None);
-                };
-                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                    overlap: transformed_overlap,
-                    source: transformed_source,
-                    source_first: *source_first,
-                }
-            }
-            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. }
-            | BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
-            | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
-            | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
-            | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. } => {
-                return Ok(None);
-            }
-            #[cfg(feature = "predicates")]
-            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. } => {
-                return Ok(None);
-            }
-        };
-        Ok(Some(Self::Mapped(Arc::new(transformed))))
-    }
-
     fn evidence_policy(&self) -> Option<CurveContext> {
         let Self::Mapped(data) = self else {
             return None;
@@ -18528,16 +18594,23 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     }
 
     pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
-        let semicircle = self.data.semicircle.transform_similarity(transform)?;
-        let start = self
-            .data
-            .start
-            .transform_similarity_on_carrier(&self.data.semicircle, &semicircle, transform)?
+        self.transform_similarity_cached(
+            transform,
+            &mut BezierAlgebraicCuspSemicircleSimilarityCache2::default(),
+        )
+    }
+
+    pub(crate) fn transform_similarity_cached(
+        &self,
+        transform: &Similarity2,
+        cache: &mut BezierAlgebraicCuspSemicircleSimilarityCache2,
+    ) -> CurveResult<Self> {
+        let semicircle = cache.semicircle(&self.data.semicircle, transform)?;
+        let start = cache
+            .parameter(&self.data.start, &self.data.semicircle, transform)?
             .unwrap_or_else(|| self.data.start.clone());
-        let end = self
-            .data
-            .end
-            .transform_similarity_on_carrier(&self.data.semicircle, &semicircle, transform)?
+        let end = cache
+            .parameter(&self.data.end, &self.data.semicircle, transform)?
             .unwrap_or_else(|| self.data.end.clone());
         Ok(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
@@ -38240,6 +38313,15 @@ mod conversion_tests {
             Real::from(5_i8),
         )
         .unwrap();
+        let scale_rotate_translate = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-3_i8),
+        )
+        .unwrap();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -38309,6 +38391,20 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleParameter2::Exact(end),
                 ) if start == &Real::zero() && end == &Real::one()
             ));
+            assert!(
+                first
+                    .transform_similarity(&scale_rotate_translate)
+                    .unwrap()
+                    .coalesced_with_next(
+                        &second
+                            .transform_similarity(&scale_rotate_translate)
+                            .unwrap(),
+                        &policy,
+                    )
+                    .unwrap()
+                    .is_some(),
+                "independently transformed partitions must retain structural authority",
+            );
 
             let lower =
                 BezierAlgebraicCuspSemicircleFragment2::full(upper.complementary_half(), &policy);
@@ -38426,6 +38522,29 @@ mod conversion_tests {
                     )
                     .expect("the mapped circle partition must transform exactly");
                 assert_eq!(transformed.certainty, crate::CurveCertainty::Certified);
+                let transformed_circles = transformed.value.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter_map(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => Some(fragment),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(transformed_circles.len(), 3);
+                assert!(transformed_circles.iter().all(|fragment| Arc::ptr_eq(
+                    &fragment.semicircle().data.frame.data,
+                    &transformed_circles[0].semicircle().data.frame.data,
+                )));
+                let mapped_parameters = transformed_circles
+                    .iter()
+                    .flat_map(|fragment| [fragment.start_parameter(), fragment.end_parameter()])
+                    .filter_map(|parameter| match parameter {
+                        BezierAlgebraicCuspSemicircleParameter2::Mapped(data) => Some(data),
+                        BezierAlgebraicCuspSemicircleParameter2::Exact(_) => None,
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(mapped_parameters.len(), 2);
+                assert!(Arc::ptr_eq(mapped_parameters[0], mapped_parameters[1]));
                 let transformed_expanded = transformed
                     .value
                     .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
@@ -38500,10 +38619,11 @@ mod conversion_tests {
     /// Manual matched benchmark for the private correlated-circle carrier.
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
-    /// `mapped`, `unsplit`, `disabled`, `transformed_mapped`,
+    /// `mapped`, `exact_partition`, `unsplit`, `disabled`,
+    /// `transformed_mapped`, `transformed_exact_partition`,
     /// `transformed_unsplit`, `transformed_disabled`, `transform_mapped`,
-    /// `transform_unsplit`, `transform_disabled`, or `cavalier` through
-    /// `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
+    /// `transform_exact_partition`, `transform_unsplit`, `transform_disabled`,
+    /// or `cavalier` through `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
@@ -38514,31 +38634,36 @@ mod conversion_tests {
 
         let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let region = |partitioned| {
+        let region = |partition: &str| {
             let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let mut fragments = Vec::new();
-            if partitioned {
-                let rotated =
-                    synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
-                        .transform_similarity(
-                            &Similarity2::try_from_real_affine(
-                                Real::zero(),
-                                Real::from(-1_i8),
-                                Real::one(),
-                                Real::zero(),
-                                Real::zero(),
-                                Real::from(5_i8),
+            if partition != "unsplit" {
+                let cut = if partition == "mapped" {
+                    let rotated =
+                        synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                            .transform_similarity(
+                                &Similarity2::try_from_real_affine(
+                                    Real::zero(),
+                                    Real::from(-1_i8),
+                                    Real::one(),
+                                    Real::zero(),
+                                    Real::zero(),
+                                    Real::from(5_i8),
+                                )
+                                .unwrap(),
                             )
-                            .unwrap(),
-                        )
-                        .unwrap();
-                let Classification::Decided(
-                    BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
-                ) = upper.pair_intersections(&rotated, &policy).unwrap()
-                else {
-                    panic!("benchmark selected circles must overlap");
+                            .unwrap();
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                    ) = upper.pair_intersections(&rotated, &policy).unwrap()
+                    else {
+                        panic!("benchmark selected circles must overlap");
+                    };
+                    overlap.first_start_parameter()
+                } else {
+                    assert_eq!(partition, "exact");
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(half.clone())
                 };
-                let cut = overlap.first_start_parameter();
                 for (start, end) in [
                     (
                         BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
@@ -38602,16 +38727,25 @@ mod conversion_tests {
         )
         .unwrap();
         let source = match mode.as_str() {
-            "mapped" | "disabled" | "transform_mapped" | "transform_disabled" => Some(region(true)),
-            "unsplit" | "transform_unsplit" => Some(region(false)),
+            "mapped" | "disabled" | "transform_mapped" | "transform_disabled" => {
+                Some(region("mapped"))
+            }
+            "exact_partition" | "transform_exact_partition" => Some(region("exact")),
+            "unsplit" | "transform_unsplit" => Some(region("unsplit")),
             "transformed_mapped" | "transformed_disabled" => Some(
-                region(true)
+                region("mapped")
+                    .transform_similarity(&transform, &policy)
+                    .unwrap()
+                    .into_value(),
+            ),
+            "transformed_exact_partition" => Some(
+                region("exact")
                     .transform_similarity(&transform, &policy)
                     .unwrap()
                     .into_value(),
             ),
             "transformed_unsplit" => Some(
-                region(false)
+                region("unsplit")
                     .transform_similarity(&transform, &policy)
                     .unwrap()
                     .into_value(),
@@ -38624,7 +38758,7 @@ mod conversion_tests {
         cavalier.add(-1.0, 0.0, 1.0);
 
         let operation = || match mode.as_str() {
-            "mapped" | "unsplit" => source
+            "mapped" | "exact_partition" | "unsplit" => source
                 .as_ref()
                 .unwrap()
                 .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
@@ -38636,7 +38770,7 @@ mod conversion_tests {
                         .map(|boundary| boundary.fragments().len())
                         .sum()
                 }),
-            "transformed_mapped" | "transformed_unsplit" => source
+            "transformed_mapped" | "transformed_exact_partition" | "transformed_unsplit" => source
                 .as_ref()
                 .unwrap()
                 .offset(Real::one(), &crate::OffsetCornerStyle2::Round, &policy)
@@ -38648,7 +38782,7 @@ mod conversion_tests {
                         .map(|boundary| boundary.fragments().len())
                         .sum()
                 }),
-            "transform_mapped" | "transform_unsplit" => source
+            "transform_mapped" | "transform_exact_partition" | "transform_unsplit" => source
                 .as_ref()
                 .unwrap()
                 .transform_similarity(&transform, &policy)
@@ -38673,10 +38807,13 @@ mod conversion_tests {
         let preflight = operation();
         let complete = match mode.as_str() {
             "mapped"
+            | "exact_partition"
             | "unsplit"
             | "transformed_mapped"
+            | "transformed_exact_partition"
             | "transformed_unsplit"
             | "transform_mapped"
+            | "transform_exact_partition"
             | "transform_unsplit"
             | "cavalier" => preflight != 0,
             "disabled" | "transformed_disabled" | "transform_disabled" => true,
