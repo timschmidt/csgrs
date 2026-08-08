@@ -621,6 +621,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
     let reoffset_name = "algebraic_round_offset/retained_circle_reentry";
     let cusp_chord_reoffset_name = "algebraic_round_offset/cusp_chord_boundary_bevel_reoffset";
+    let oblique_cusp_chord_name = "algebraic_round_boolean/oblique_cusp_chord_bevel_reoffset";
     let chord_pair_transform_name = "algebraic_chord_pair/affine_transform_offset";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
@@ -631,6 +632,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     if !runner.group_enabled(offset_name)
         && !runner.group_enabled(reoffset_name)
         && !runner.group_enabled(cusp_chord_reoffset_name)
+        && !runner.group_enabled(oblique_cusp_chord_name)
         && !runner.group_enabled(chord_pair_transform_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
@@ -904,6 +906,160 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .map(PlineSource::vertex_count)
                 .sum()
         });
+    }
+
+    if runner.group_enabled(oblique_cusp_chord_name) {
+        let radius = (Real::one() / Real::from(20_u8)).expect("exact oblique benchmark radius");
+        let rounded = hypercurve
+            .offset(radius, &round, &policy)
+            .expect("oblique benchmark round offset completes")
+            .into_value();
+        let rotation = Similarity2::try_from_real_affine(
+            (Real::from(3_u8) / Real::from(5_u8)).expect("exact rotation cosine"),
+            -(Real::from(4_u8) / Real::from(5_u8)).expect("exact rotation sine"),
+            (Real::from(4_u8) / Real::from(5_u8)).expect("exact rotation sine"),
+            (Real::from(3_u8) / Real::from(5_u8)).expect("exact rotation cosine"),
+            Real::zero(),
+            Real::zero(),
+        )
+        .expect("valid exact oblique benchmark rotation");
+        let first = rounded
+            .transform_similarity(&rotation, &policy)
+            .expect("oblique benchmark rotation remains exact")
+            .into_value();
+        let translated_in_rotated_frame = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            (Real::one() / Real::from(100_u8)).expect("exact rotated-frame x translation"),
+            (Real::from(11_u8) / Real::from(200_u8)).expect("exact rotated-frame y translation"),
+        )
+        .expect("valid exact rotated-frame translation");
+        let second = first
+            .transform_similarity(&translated_in_rotated_frame, &policy)
+            .expect("translated oblique benchmark operand remains exact")
+            .into_value();
+        let reoffset_distance =
+            (Real::one() / Real::from(500_u16)).expect("exact oblique re-offset distance");
+        let bevel = OffsetCornerStyle2::Bevel;
+        let region_weight = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>()
+        };
+        let evidence_complete = first
+            .intersect_region(&second, &policy)
+            .is_ok_and(|result| result.value.is_complete());
+        let boolean_complete = first.boolean_regions(&second, &policy).is_ok();
+        let reoffset_complete = first.boolean_regions(&second, &policy).is_ok_and(|result| {
+            result
+                .value
+                .intersection()
+                .offset(reoffset_distance.clone(), &bevel, &policy)
+                .is_ok()
+        });
+
+        let mut cavalier_first = cavalier.parallel_offset(-0.05);
+        assert_eq!(cavalier_first.len(), 1);
+        let cavalier_first = cavalier_first.pop().unwrap();
+        let mut cavalier_second = cavalier_first.clone();
+        // This unrotated pair is rigidly equivalent to the Hypercurve pair:
+        // R(0.05, 0.025) = (0.01, 0.055). Binary64 has no selected-field
+        // representation whose cost would depend on preserving that frame.
+        cavalier_second.translate_mut(0.05, 0.025);
+        let cavalier_intersection =
+            cavalier_first.boolean(&cavalier_second, CavalierBooleanOp::And);
+        assert_eq!(cavalier_intersection.pos_plines.len(), 1);
+        assert!(cavalier_intersection.neg_plines.is_empty());
+
+        runner.measure(
+            oblique_cusp_chord_name,
+            if evidence_complete {
+                "hypercurve_exact_evidence"
+            } else {
+                "hypercurve_rejected_evidence"
+            },
+            || {
+                first
+                    .intersect_region(&second, &policy)
+                    .map_or(0, |result| {
+                        result.value.contacts().len() + usize::from(result.value.is_complete())
+                    })
+            },
+        );
+        runner.measure(
+            oblique_cusp_chord_name,
+            if boolean_complete {
+                "hypercurve_exact_four_booleans"
+            } else {
+                "hypercurve_rejected_four_booleans"
+            },
+            || {
+                first.boolean_regions(&second, &policy).map_or(0, |result| {
+                    region_weight(result.value.union())
+                        + region_weight(result.value.intersection())
+                        + region_weight(result.value.difference())
+                        + region_weight(result.value.xor())
+                })
+            },
+        );
+        runner.measure(
+            oblique_cusp_chord_name,
+            if reoffset_complete {
+                "hypercurve_exact_boolean_reoffset"
+            } else {
+                "hypercurve_rejected_boolean_reoffset"
+            },
+            || {
+                first.boolean_regions(&second, &policy).map_or(0, |result| {
+                    result
+                        .value
+                        .intersection()
+                        .offset(reoffset_distance.clone(), &bevel, &policy)
+                        .map_or(0, |reoffset| region_weight(&reoffset.value))
+                })
+            },
+        );
+        runner.measure(oblique_cusp_chord_name, "cavalier_f64_intersection", || {
+            cavalier_boolean_result_size(
+                black_box(&cavalier_first),
+                black_box(&cavalier_second),
+                CommonBooleanOp::Intersection,
+            )
+        });
+        runner.measure(oblique_cusp_chord_name, "cavalier_f64_four_calls", || {
+            [
+                CommonBooleanOp::Union,
+                CommonBooleanOp::Intersection,
+                CommonBooleanOp::Difference,
+                CommonBooleanOp::Xor,
+            ]
+            .into_iter()
+            .map(|operation| {
+                cavalier_boolean_result_size(
+                    black_box(&cavalier_first),
+                    black_box(&cavalier_second),
+                    operation,
+                )
+            })
+            .sum()
+        });
+        runner.measure(
+            oblique_cusp_chord_name,
+            "cavalier_f64_boolean_reoffset",
+            || {
+                let intersection = cavalier_first.boolean(&cavalier_second, CavalierBooleanOp::And);
+                intersection
+                    .pos_plines
+                    .iter()
+                    .flat_map(|polyline| polyline.pline.parallel_offset(black_box(-0.002)))
+                    .map(|polyline| polyline.vertex_count())
+                    .sum()
+            },
+        );
     }
 
     if runner.group_enabled(chord_pair_transform_name) {
