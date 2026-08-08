@@ -5854,6 +5854,37 @@ fn exact_offset_tangent_cross_sign(
                 .map(|factor| exact_sign_reverse(exact_sign_product(*circle_cross_chord, factor)))
         }
         #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: first_fragment,
+                at_start: first_start,
+            },
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                fragment: second_fragment,
+                at_start: second_start,
+            },
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "selected-circle-pair-contact",
+            );
+            match first_fragment.endpoint_pair_tangent_cross(
+                *first_start,
+                second_fragment,
+                *second_start,
+                policy,
+            ) {
+                Ok(Classification::Decided(Some(sign))) => Classification::Decided(sign),
+                Ok(Classification::Decided(None)) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
@@ -5861,10 +5892,6 @@ fn exact_offset_tangent_cross_sign(
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::CircularPoint { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. })
-        | (
-            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
-        )
         | (
             ExactOffsetTangent2::SelectedCircularEndpoint { .. },
             ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },

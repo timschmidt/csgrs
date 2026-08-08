@@ -2171,27 +2171,46 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     // strictly inside the supporting disk cannot meet its
                     // boundary. Run this exact but potentially expensive
                     // certificate only after the cheap broad-phase rejects.
-                    let mut chord_is_strictly_inside_disk = true;
-                    for endpoint in [chord.start(), chord.end()] {
+                    let mut endpoint_incidence = [None, None];
+                    for (index, endpoint) in [chord.start(), chord.end()].into_iter().enumerate() {
                         match cusp
                             .semicircle()
                             .strict_point_incidence_sign(endpoint, &self.data.policy)
                             .map_err(|cause| self.invalid(chord_index, cause))?
                         {
-                            Classification::Decided(RealSign::Negative) => {}
-                            Classification::Decided(RealSign::Zero | RealSign::Positive)
-                            | Classification::Uncertain(_) => {
-                                chord_is_strictly_inside_disk = false;
-                                break;
-                            }
+                            Classification::Decided(sign) => endpoint_incidence[index] = Some(sign),
+                            Classification::Uncertain(_) => {}
                         }
                     }
-                    if chord_is_strictly_inside_disk {
+                    if endpoint_incidence == [Some(RealSign::Negative), Some(RealSign::Negative)] {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
                             "hypercurve",
                             "algebraic-circle-chord-pair",
                             "chord-strictly-inside-disk",
+                        );
+                        return Ok(RegionPairResult::empty());
+                    }
+                    let support_endpoint = match endpoint_incidence {
+                        [Some(RealSign::Zero), Some(RealSign::Negative)] => Some(chord.start()),
+                        [Some(RealSign::Negative), Some(RealSign::Zero)] => Some(chord.end()),
+                        _ => None,
+                    };
+                    if let Some(
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point),
+                    ) = support_endpoint
+                        && point
+                            .excluded_by_complementary_pair_semicircle(
+                                cusp.semicircle(),
+                                &self.data.policy,
+                            )
+                            .map_err(|cause| self.invalid(chord_index, cause))?
+                    {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-circle-chord-pair",
+                            "complementary-pair-endpoint-excluded",
                         );
                         return Ok(RegionPairResult::empty());
                     }
