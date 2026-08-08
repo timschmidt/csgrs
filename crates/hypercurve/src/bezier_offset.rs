@@ -17989,6 +17989,44 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         self.data.reversed
     }
 
+    /// Returns the signed-radius unit direction at one structurally cardinal
+    /// endpoint of a directly framed retained circle.
+    ///
+    /// This deliberately inspects only authored `Real` identities. In
+    /// particular, a mapped cut or an APPROXIMATE_512 terminal equality can
+    /// never promote a general endpoint into the cardinal fast path.
+    #[cfg(feature = "predicates")]
+    fn cardinal_endpoint_radial_components(&self, start_endpoint: bool) -> Option<(i8, i8)> {
+        let (normal_x, normal_y) = self.data.semicircle.data.frame.data.cardinal_normal?;
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) =
+            self.endpoint_parameter(start_endpoint)
+        else {
+            return None;
+        };
+        let parameter_slot = if parameter.zero_status() == hyperreal::ZeroKnowledge::Zero {
+            0_u8
+        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status()
+            == hyperreal::ZeroKnowledge::Zero
+        {
+            1
+        } else if (parameter - Real::one()).zero_status() == hyperreal::ZeroKnowledge::Zero {
+            2
+        } else {
+            return None;
+        };
+        let turn_sign = if self.data.semicircle.is_clockwise() {
+            -1_i8
+        } else {
+            1_i8
+        };
+        Some(match parameter_slot {
+            0 => (normal_x, normal_y),
+            1 => (-normal_y * turn_sign, normal_x * turn_sign),
+            2 => (-normal_x, -normal_y),
+            _ => unreachable!("cardinal parameter slot is closed"),
+        })
+    }
+
     /// Returns a structurally certified cardinal traversal tangent at an
     /// endpoint of a directly framed retained circle fragment.
     ///
@@ -18003,24 +18041,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
         self.validate_policy(policy)?;
-        let Some((normal_x, normal_y)) = self.data.semicircle.data.frame.data.cardinal_normal
+        let Some((radial_x, radial_y)) = self.cardinal_endpoint_radial_components(start_endpoint)
         else {
-            return Ok(Classification::Decided(None));
-        };
-        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) =
-            self.endpoint_parameter(start_endpoint)
-        else {
-            return Ok(Classification::Decided(None));
-        };
-        let parameter_slot = if parameter.zero_status() == hyperreal::ZeroKnowledge::Zero {
-            0_u8
-        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status()
-            == hyperreal::ZeroKnowledge::Zero
-        {
-            1
-        } else if (parameter - Real::one()).zero_status() == hyperreal::ZeroKnowledge::Zero {
-            2
-        } else {
             return Ok(Classification::Decided(None));
         };
         let radial_sign = match real_sign(self.data.semicircle.radial_distance(), policy) {
@@ -18039,24 +18061,71 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             1_i8
         };
         let traversal_sign = if self.data.reversed { -1_i8 } else { 1_i8 };
-        let (x, y) = match parameter_slot {
-            0 => {
-                let scale = turn_sign * radial_sign * traversal_sign;
-                (-normal_y * scale, normal_x * scale)
-            }
-            1 => {
-                let scale = -radial_sign * traversal_sign;
-                (normal_x * scale, normal_y * scale)
-            }
-            2 => {
-                let scale = -turn_sign * radial_sign * traversal_sign;
-                (-normal_y * scale, normal_x * scale)
-            }
-            _ => unreachable!("cardinal parameter slot is closed"),
-        };
+        let scale = turn_sign * radial_sign * traversal_sign;
+        let (x, y) = (-radial_y * scale, radial_x * scale);
         Ok(Classification::Decided(
             BezierAlgebraicChordAxisDirection2::from_cardinal_components(x, y),
         ))
+    }
+
+    /// Reuses one retained endpoint field for an exact concentric cardinal
+    /// circle offset and caches that translated image on the result fragment.
+    ///
+    /// General frames, mapped cuts, and noncardinal exact parameters decline
+    /// this path. Their endpoints remain owned by `endpoint_point_image`, so
+    /// this optimization cannot alter STRICT/APPROXIMATE_512 decisions.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn translated_cardinal_offset_endpoint(
+        &self,
+        offset: &Self,
+        start_endpoint: bool,
+        source_endpoint: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
+        self.validate_policy(policy)?;
+        offset.validate_policy(policy)?;
+        if self.data.reversed != offset.data.reversed
+            || self.data.semicircle.is_clockwise() != offset.data.semicircle.is_clockwise()
+            || self.data.semicircle.data.frame != offset.data.semicircle.data.frame
+            || !self
+                .endpoint_parameter(start_endpoint)
+                .shares_exact_evidence(offset.endpoint_parameter(start_endpoint))
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let Some((radial_x, radial_y)) = self.cardinal_endpoint_radial_components(start_endpoint)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let radial_delta =
+            offset.data.semicircle.radial_distance() - self.data.semicircle.radial_distance();
+        let scaled_component = |component| match component {
+            -1 => -radial_delta.clone(),
+            0 => Real::zero(),
+            1 => radial_delta.clone(),
+            _ => unreachable!("cardinal radial component is closed"),
+        };
+        let translated = match BezierAlgebraicChord2::translated_endpoint(
+            source_endpoint,
+            &scaled_component(radial_x),
+            &scaled_component(radial_y),
+            policy,
+        )? {
+            Classification::Decided(translated) => translated,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if let RationalBezierIntersectionPointEvidence2::Algebraic(point) = &translated {
+            let source_start = start_endpoint != offset.data.reversed;
+            let cache = if source_start {
+                &offset.data.start_point_image
+            } else {
+                &offset.data.end_point_image
+            };
+            let _ = cache.set(Some(point.clone()));
+        }
+        Ok(Classification::Decided(Some(translated)))
     }
 
     /// Returns whether this traversal endpoint and one retained circle/chord
@@ -33855,6 +33924,152 @@ mod conversion_tests {
                 offset.semicircle().radial_distance(),
                 &(Real::from(5_i8) / Real::from(2_i8)).unwrap(),
             );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn direct_algebraic_circle_cardinal_offsets_translate_cached_endpoint_fields() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
+            else {
+                panic!("the selected center coordinate must remain algebraic");
+            };
+            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    parameter.clone(),
+                    parameter_representation(&parameter, &policy),
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "test cardinal endpoint translation center",
+                ),
+            );
+            for (normal, radius, clockwise, distance) in [
+                ((1, 0), Real::from(2_i8), false, half.clone()),
+                ((0, -1), Real::from(-2_i8), true, half.clone()),
+                ((-1, 0), Real::from(2_i8), false, Real::from(3_i8)),
+            ] {
+                let Classification::Decided(Some(circle)) =
+                    BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                        &center, normal, radius, clockwise, &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the direct selected circle must construct");
+                };
+                for (start, end) in [(Real::zero(), half.clone()), (half.clone(), Real::one())] {
+                    let Classification::Decided(fragment) =
+                        BezierAlgebraicCuspSemicircleFragment2::try_new(
+                            circle.clone(),
+                            BezierAlgebraicCuspSemicircleParameter2::Exact(start),
+                            BezierAlgebraicCuspSemicircleParameter2::Exact(end),
+                            false,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the cardinal selected-circle fragment must construct");
+                    };
+                    for fragment in [fragment.clone(), fragment.reversed()] {
+                        let Classification::Decided(Some(offset)) =
+                            fragment.offset_left(&distance, &policy).unwrap()
+                        else {
+                            panic!("the nonzero cardinal circle offset must construct");
+                        };
+                        for at_start in [true, false] {
+                            let source = RationalBezierIntersectionPointEvidence2::Algebraic(
+                                fragment
+                                    .endpoint_point_image(at_start, &policy)
+                                    .unwrap()
+                                    .expect("a cardinal source endpoint must have one image"),
+                            );
+                            let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) =
+                                offset.endpoint_parameter(at_start)
+                            else {
+                                panic!("the cardinal endpoint parameter must remain exact");
+                            };
+                            let Classification::Decided(expected) =
+                                offset.semicircle().point_at(parameter, &policy).unwrap()
+                            else {
+                                panic!("the offset circle endpoint must evaluate exactly");
+                            };
+                            let Classification::Decided(Some(translated)) = fragment
+                                .translated_cardinal_offset_endpoint(
+                                    &offset, at_start, &source, &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("the cardinal endpoint must translate in-field");
+                            };
+                            assert_eq!(
+                                translated.same_point(
+                                    &RationalBezierIntersectionPointEvidence2::Algebraic(expected),
+                                    &policy,
+                                ),
+                                Classification::Decided(true),
+                            );
+                            let RationalBezierIntersectionPointEvidence2::Algebraic(translated) =
+                                translated
+                            else {
+                                panic!("the translated selected endpoint must stay algebraic");
+                            };
+                            assert!(
+                                offset
+                                    .endpoint_point_image(at_start, &policy)
+                                    .unwrap()
+                                    .expect("the translated endpoint must be cached")
+                                    .shares_storage(&translated)
+                            );
+                        }
+                    }
+                }
+            }
+
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::from(2_i8),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the direct selected circle must construct");
+            };
+            let third = (Real::one() / Real::from(3_i8)).unwrap();
+            let Classification::Decided(noncardinal) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    circle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(third.clone()),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one() - third),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the noncardinal selected-circle fragment must construct");
+            };
+            let Classification::Decided(Some(offset)) =
+                noncardinal.offset_left(&half, &policy).unwrap()
+            else {
+                panic!("the noncardinal circle offset must construct");
+            };
+            let source = RationalBezierIntersectionPointEvidence2::Algebraic(
+                noncardinal
+                    .endpoint_point_image(true, &policy)
+                    .unwrap()
+                    .expect("the noncardinal source endpoint must have one image"),
+            );
+            assert!(matches!(
+                noncardinal
+                    .translated_cardinal_offset_endpoint(&offset, true, &source, &policy)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
         }
     }
 

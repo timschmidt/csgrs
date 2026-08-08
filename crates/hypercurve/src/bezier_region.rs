@@ -4362,6 +4362,23 @@ fn exact_algebraic_cusp_semicircle_endpoint(
 }
 
 #[cfg(feature = "predicates")]
+fn exact_offset_algebraic_cusp_semicircle_endpoint(
+    source: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    offset: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    source_endpoint: &RationalBezierIntersectionPointEvidence2,
+    at_start: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+    match source.translated_cardinal_offset_endpoint(offset, at_start, source_endpoint, policy)? {
+        Classification::Decided(Some(point)) => Ok(Classification::Decided(point)),
+        Classification::Decided(None) => {
+            exact_algebraic_cusp_semicircle_endpoint(offset, at_start, policy)
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+#[cfg(feature = "predicates")]
 fn exact_offset_span_from_algebraic_cusp_semicircle(
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     distance: &Real,
@@ -4403,20 +4420,30 @@ fn exact_offset_span_from_algebraic_cusp_semicircle(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let offset_start =
-        match exact_algebraic_cusp_semicircle_endpoint(&offset_fragment, true, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let offset_end =
-        match exact_algebraic_cusp_semicircle_endpoint(&offset_fragment, false, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let offset_start = match exact_offset_algebraic_cusp_semicircle_endpoint(
+        fragment,
+        &offset_fragment,
+        &source_start,
+        true,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_end = match exact_offset_algebraic_cusp_semicircle_endpoint(
+        fragment,
+        &offset_fragment,
+        &source_end,
+        false,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     Ok(Classification::Decided(ExactOffsetSpan2 {
         fragments: vec![BezierSplitFragment2::AlgebraicCuspSemicircle(
             offset_fragment,
