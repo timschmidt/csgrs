@@ -43364,8 +43364,8 @@ mod conversion_tests {
     /// coincident-circle carriers.
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
-    /// `exact_offset`, `parallel_exact_offset`, their `disabled` controls, or
-    /// `cavalier_f64_offset` through
+    /// `exact_offset`, `parallel_exact_offset`, `parallel_prebuilt_exact_offset`,
+    /// their `disabled` controls, or `cavalier_f64_offset` through
     /// `HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
@@ -43524,7 +43524,7 @@ mod conversion_tests {
             .unwrap_or(1);
         assert!(iterations > 0);
         let distance = (Real::one() / Real::from(8_i8)).unwrap();
-        let parallel_exact_offset = || -> Option<usize> {
+        let parallel_cap = || -> Option<CurveRegion2> {
             let Classification::Decided(Some(chord_end)) =
                 parallel_arc.endpoint_point_evidence(true, &policy).ok()?
             else {
@@ -43548,13 +43548,16 @@ mod conversion_tests {
                 &policy,
             )
             .ok()?;
-            let cap = CurveRegion2::try_new_with_loop_topology(
+            CurveRegion2::try_new_with_loop_topology(
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
                 vec![CurveBoundaryInteriorSide2::Left],
             )
-            .ok()?;
+            .ok()
+        };
+        let prebuilt_parallel_cap = parallel_cap();
+        let offset_parallel_cap = |cap: &CurveRegion2| {
             cap.offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
                 .ok()
                 .map(|result| {
@@ -43577,10 +43580,22 @@ mod conversion_tests {
                         .map(|boundary| boundary.fragments().len())
                         .sum()
                 }),
-            "parallel_exact_offset" => parallel_exact_offset().unwrap_or(0),
+            "parallel_construct" => parallel_cap().map_or(0, |cap| cap.boundary_loops().len()),
+            "parallel_exact_offset" => parallel_cap()
+                .as_ref()
+                .and_then(offset_parallel_cap)
+                .unwrap_or(0),
+            "parallel_prebuilt_exact_offset" => prebuilt_parallel_cap
+                .as_ref()
+                .and_then(offset_parallel_cap)
+                .unwrap_or(0),
             "disabled" => cap.boundary_loops().len(),
             "parallel_disabled" => {
                 black_box(&parallel_arc);
+                1
+            }
+            "parallel_prebuilt_disabled" => {
+                black_box(&prebuilt_parallel_cap);
                 1
             }
             "cavalier_f64_offset" => cavalier
@@ -43591,7 +43606,10 @@ mod conversion_tests {
             _ => panic!("unknown HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE={mode:?}"),
         };
         let preflight = operation();
-        let complete = matches!(mode.as_str(), "disabled" | "parallel_disabled") || preflight != 0;
+        let complete = matches!(
+            mode.as_str(),
+            "disabled" | "parallel_disabled" | "parallel_prebuilt_disabled"
+        ) || preflight != 0;
         for _ in 0..warmups {
             black_box(operation());
         }
