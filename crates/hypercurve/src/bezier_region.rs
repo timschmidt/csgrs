@@ -2724,6 +2724,223 @@ enum ExactAxisAlignedAlgebraicOffsetLoop2 {
 }
 
 #[cfg(feature = "predicates")]
+#[derive(Clone, Copy)]
+struct ExactCardinalConvexFragment2 {
+    start_tangent: BezierAlgebraicChordAxisDirection2,
+    end_tangent: BezierAlgebraicChordAxisDirection2,
+    quarter_turns: u8,
+}
+
+#[cfg(feature = "predicates")]
+const fn cardinal_direction_index(direction: BezierAlgebraicChordAxisDirection2) -> u8 {
+    match direction {
+        BezierAlgebraicChordAxisDirection2::PositiveX => 0,
+        BezierAlgebraicChordAxisDirection2::PositiveY => 1,
+        BezierAlgebraicChordAxisDirection2::NegativeX => 2,
+        BezierAlgebraicChordAxisDirection2::NegativeY => 3,
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn cardinal_direction_from_delta(
+    x: &Real,
+    y: &Real,
+    policy: &CurveContext,
+) -> Classification<Option<BezierAlgebraicChordAxisDirection2>> {
+    let Some(x_sign) = real_sign(x, policy) else {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    };
+    let Some(y_sign) = real_sign(y, policy) else {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    };
+    Classification::Decided(match (x_sign, y_sign) {
+        (RealSign::Positive, RealSign::Zero) => Some(BezierAlgebraicChordAxisDirection2::PositiveX),
+        (RealSign::Negative, RealSign::Zero) => Some(BezierAlgebraicChordAxisDirection2::NegativeX),
+        (RealSign::Zero, RealSign::Positive) => Some(BezierAlgebraicChordAxisDirection2::PositiveY),
+        (RealSign::Zero, RealSign::Negative) => Some(BezierAlgebraicChordAxisDirection2::NegativeY),
+        (RealSign::Zero, RealSign::Zero)
+        | (RealSign::Positive | RealSign::Negative, RealSign::Positive | RealSign::Negative) => {
+            None
+        }
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn exact_cardinal_convex_fragment(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<ExactCardinalConvexFragment2>>> {
+    let line_certificate = |line: &LineSeg2| {
+        let (dx, dy) = line.delta();
+        cardinal_direction_from_delta(&dx, &dy, policy).map(|direction| {
+            direction.map(|direction| ExactCardinalConvexFragment2 {
+                start_tangent: direction,
+                end_tangent: direction,
+                quarter_turns: 0,
+            })
+        })
+    };
+    match fragment {
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            chord.axis_direction(policy).map(|classification| {
+                classification.map(|direction| {
+                    direction.map(|direction| ExactCardinalConvexFragment2 {
+                        start_tangent: direction,
+                        end_tangent: direction,
+                        quarter_turns: 0,
+                    })
+                })
+            })
+        }
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+            if fragment.semicircle().is_clockwise() ^ fragment.is_reversed() {
+                return Ok(Classification::Decided(None));
+            }
+            let start = match fragment.cardinal_endpoint_tangent_direction(true, policy)? {
+                Classification::Decided(Some(direction)) => direction,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end = match fragment.cardinal_endpoint_tangent_direction(false, policy)? {
+                Classification::Decided(Some(direction)) => direction,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let quarter_turns =
+                (cardinal_direction_index(end) + 4 - cardinal_direction_index(start)) % 4;
+            Ok(Classification::Decided(
+                matches!(quarter_turns, 1 | 2).then_some(ExactCardinalConvexFragment2 {
+                    start_tangent: start,
+                    end_tangent: end,
+                    quarter_turns,
+                }),
+            ))
+        }
+        BezierSplitFragment2::Materialized { curve, .. } => {
+            match materialized_native_subcurve_segment(curve, policy)? {
+                Classification::Decided(Segment2::Line(line)) => Ok(line_certificate(&line)),
+                Classification::Decided(Segment2::Arc(arc)) => {
+                    if arc.is_clockwise() {
+                        return Ok(Classification::Decided(None));
+                    }
+                    let sweep = match crate::arc_bezier::classify_sweep_with_policy(&arc, policy) {
+                        Ok(Classification::Decided(sweep)) => sweep,
+                        Ok(Classification::Uncertain(reason)) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+                        Err(ExactCurveError::Blocked(blocker)) => {
+                            return Ok(Classification::Uncertain(blocker.reason()));
+                        }
+                    };
+                    if !matches!(
+                        sweep,
+                        crate::arc_bezier::ArcSweepKind::Minor
+                            | crate::arc_bezier::ArcSweepKind::Semicircle
+                    ) {
+                        return Ok(Classification::Decided(None));
+                    }
+                    let start_radius = arc.start().delta_from(arc.center());
+                    let end_radius = arc.end().delta_from(arc.center());
+                    let start = match cardinal_direction_from_delta(
+                        &-start_radius.1,
+                        &start_radius.0,
+                        policy,
+                    ) {
+                        Classification::Decided(Some(direction)) => direction,
+                        Classification::Decided(None) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let end = match cardinal_direction_from_delta(
+                        &-end_radius.1,
+                        &end_radius.0,
+                        policy,
+                    ) {
+                        Classification::Decided(Some(direction)) => direction,
+                        Classification::Decided(None) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let quarter_turns =
+                        (cardinal_direction_index(end) + 4 - cardinal_direction_index(start)) % 4;
+                    let expected_turns = match sweep {
+                        crate::arc_bezier::ArcSweepKind::Minor => 1,
+                        crate::arc_bezier::ArcSweepKind::Semicircle => 2,
+                        crate::arc_bezier::ArcSweepKind::Major
+                        | crate::arc_bezier::ArcSweepKind::FullCircle => unreachable!(),
+                    };
+                    Ok(Classification::Decided(
+                        (quarter_turns == expected_turns).then_some(ExactCardinalConvexFragment2 {
+                            start_tangent: start,
+                            end_tangent: end,
+                            quarter_turns,
+                        }),
+                    ))
+                }
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                    Ok(Classification::Decided(None))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
+        BezierSplitFragment2::AnalyticParallel(_)
+        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::Unresolved { .. } => Ok(Classification::Decided(None)),
+    }
+}
+
+/// Certifies one already-regularized filled-left loop as a cardinal convex
+/// boundary. Each admitted curve contributes zero, one, or two positive
+/// quarter turns, every join contributes at most one, and exactly one full
+/// positive turn is required. No coordinate sampling or approximate tangent
+/// construction participates in the certificate.
+#[cfg(feature = "predicates")]
+fn exact_cardinal_convex_filled_left_loop(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut certificates = Vec::with_capacity(boundary_loop.len());
+    for fragment in boundary_loop.fragments() {
+        match exact_cardinal_convex_fragment(fragment, policy)? {
+            Classification::Decided(Some(certificate)) => certificates.push(certificate),
+            Classification::Decided(None) => return Ok(Classification::Decided(false)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    if certificates.is_empty() {
+        return Ok(Classification::Decided(false));
+    }
+    let mut quarter_turns = certificates
+        .iter()
+        .map(|certificate| usize::from(certificate.quarter_turns))
+        .sum::<usize>();
+    for index in 0..certificates.len() {
+        let previous = certificates[index].end_tangent;
+        let next = certificates[(index + 1) % certificates.len()].start_tangent;
+        let join_turn =
+            (cardinal_direction_index(next) + 4 - cardinal_direction_index(previous)) % 4;
+        if join_turn > 1 {
+            return Ok(Classification::Decided(false));
+        }
+        quarter_turns += usize::from(join_turn);
+    }
+    Ok(Classification::Decided(quarter_turns == 4))
+}
+
+#[cfg(feature = "predicates")]
 fn axis_aligned_loop_is_convex_inward(
     spans: &[ExactAxisAlignedAlgebraicFiber2],
     distance: &Real,
@@ -5689,12 +5906,14 @@ impl CurveRegion2 {
         Ok(self)
     }
 
-    /// Publishes the topology proven by an authoritative filled-left face walk.
+    /// Publishes independently certified regularized filled-left topology.
     ///
-    /// Unlike authored boundary provenance, this marker certifies that every
-    /// retained chain is a noncrossing regularized boundary.  Expensive exact
-    /// nesting may therefore be deferred until a caller actually needs loop
-    /// roles.
+    /// An authoritative filled-left face walk is the general producer. Narrow
+    /// exact geometric proofs, such as the one-turn cardinal convex parallel
+    /// certificate, may publish the same fact. Unlike authored boundary
+    /// provenance, this marker certifies that every retained chain is a
+    /// noncrossing regularized boundary. Expensive exact nesting may therefore
+    /// be deferred until a caller actually needs loop roles.
     pub(crate) fn with_certified_regularized_filled_left_topology(mut self) -> CurveResult<Self> {
         if self.data.boundary_loops.iter().any(|boundary_loop| {
             !boundary_loop.has_arrangement_sources() || boundary_loop.is_empty()
@@ -6234,12 +6453,12 @@ impl CurveRegion2 {
 
     /// Assigns roles to already-regularized retained boundary loops by exact nesting.
     ///
-    /// The authoritative unary arrangement guarantees that distinct output
-    /// chains are noncrossing simple boundaries with fill on their left.  A
-    /// represented interior point of one retained fragment is therefore
-    /// inside exactly the loops that contain that complete boundary.  Nesting
-    /// parity assigns material and hole roles without requiring a Green
-    /// integral for procedural analytic parallels.
+    /// The retained regularization certificate guarantees that distinct
+    /// output chains are noncrossing simple boundaries with fill on their
+    /// left. A represented interior point of one retained fragment is
+    /// therefore inside exactly the loops that contain that complete
+    /// boundary. Nesting parity assigns material and hole roles without
+    /// requiring a Green integral for procedural analytic parallels.
     pub(crate) fn regularized_retained_loop_roles_raw(
         &self,
         policy: &CurveContext,
@@ -8002,6 +8221,19 @@ impl CurveRegion2 {
             ));
         }
 
+        #[cfg(feature = "predicates")]
+        let certify_cardinal_convex_outward_topology = distance_positive
+            && self.data.boundary_loops.len() == 1
+            && roles[0] == CurveRegionLoopRole::Material
+            && filled_sides[0]
+            && self.has_certified_regularized_filled_left_topology()
+            && matches!(corner_style, OffsetCornerStyle2::Round)
+            && matches!(
+                exact_cardinal_convex_filled_left_loop(&self.data.boundary_loops[0], policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Classification::Decided(true)
+            );
+
         let mut offset_loops = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_roles = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_fill_rules = Vec::with_capacity(self.data.boundary_loops.len());
@@ -8197,10 +8429,36 @@ impl CurveRegion2 {
                     }
                 }
             }
-            offset_loops.push(
+            #[cfg(feature = "predicates")]
+            let retain_convex_arrangement_sources =
+                certify_cardinal_convex_outward_topology && loop_index == 0;
+            #[cfg(not(feature = "predicates"))]
+            let retain_convex_arrangement_sources = false;
+            let offset_loop = if retain_convex_arrangement_sources {
+                let arrangement_sources = (0..fragments.len())
+                    .map(|fragment_index| {
+                        CurveRegionFragmentSource2::new(fragment_index, fragment_index, 0)
+                    })
+                    .collect();
+                CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+                    fragments,
+                    arrangement_sources,
+                    policy,
+                )
+            } else {
                 CurveRegionBoundaryLoop2::new(fragments, policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
-            );
+            }
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+            #[cfg(feature = "predicates")]
+            if retain_convex_arrangement_sources {
+                // The outward parallel of a convex set is convex. The source
+                // face walk already proves simplicity, while the cardinal
+                // turn inventory above proves convexity without sampling.
+                // Unique fragment sources preserve that proof for subsequent
+                // offsets and Booleans without rebuilding a unary graph.
+                certified_regularized_filled_left_topology = true;
+            }
+            offset_loops.push(offset_loop);
             offset_roles.push(roles[loop_index]);
             offset_fill_rules.push(fill_rules[loop_index]);
             offset_filled_sides.push(filled_sides[loop_index]);

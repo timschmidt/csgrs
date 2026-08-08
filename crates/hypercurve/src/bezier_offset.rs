@@ -2211,6 +2211,16 @@ pub(crate) enum BezierAlgebraicChordAxisDirection2 {
 
 #[cfg(feature = "predicates")]
 impl BezierAlgebraicChordAxisDirection2 {
+    const fn from_cardinal_components(x: i8, y: i8) -> Option<Self> {
+        match (x, y) {
+            (1, 0) => Some(Self::PositiveX),
+            (-1, 0) => Some(Self::NegativeX),
+            (0, 1) => Some(Self::PositiveY),
+            (0, -1) => Some(Self::NegativeY),
+            _ => None,
+        }
+    }
+
     pub(crate) const fn axis(self) -> Axis2 {
         match self {
             Self::PositiveX | Self::NegativeX => Axis2::X,
@@ -17977,6 +17987,76 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     pub(crate) fn is_reversed(&self) -> bool {
         self.data.reversed
+    }
+
+    /// Returns a structurally certified cardinal traversal tangent at an
+    /// endpoint of a directly framed retained circle fragment.
+    ///
+    /// Only the exact diameter and quarter-turn parameters are admitted. A
+    /// mapped/nonrational cut therefore cannot become a convex-topology fast
+    /// path merely because APPROXIMATE_512 rounded its parameter to a cardinal
+    /// value.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn cardinal_endpoint_tangent_direction(
+        &self,
+        start_endpoint: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
+        self.validate_policy(policy)?;
+        let Some((normal_x, normal_y)) = self.data.semicircle.data.frame.data.cardinal_normal
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) =
+            self.endpoint_parameter(start_endpoint)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let parameter_slot = if parameter.zero_status() == hyperreal::ZeroKnowledge::Zero {
+            0_u8
+        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status()
+            == hyperreal::ZeroKnowledge::Zero
+        {
+            1
+        } else if (parameter - Real::one()).zero_status() == hyperreal::ZeroKnowledge::Zero {
+            2
+        } else {
+            return Ok(Classification::Decided(None));
+        };
+        let radial_sign = match real_sign(self.data.semicircle.radial_distance(), policy) {
+            Some(RealSign::Positive) => 1_i8,
+            Some(RealSign::Negative) => -1_i8,
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "selected algebraic semicircle retained a zero radius".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let turn_sign = if self.data.semicircle.is_clockwise() {
+            -1_i8
+        } else {
+            1_i8
+        };
+        let traversal_sign = if self.data.reversed { -1_i8 } else { 1_i8 };
+        let (x, y) = match parameter_slot {
+            0 => {
+                let scale = turn_sign * radial_sign * traversal_sign;
+                (-normal_y * scale, normal_x * scale)
+            }
+            1 => {
+                let scale = -radial_sign * traversal_sign;
+                (normal_x * scale, normal_y * scale)
+            }
+            2 => {
+                let scale = -turn_sign * radial_sign * traversal_sign;
+                (-normal_y * scale, normal_x * scale)
+            }
+            _ => unreachable!("cardinal parameter slot is closed"),
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicChordAxisDirection2::from_cardinal_components(x, y),
+        ))
     }
 
     /// Returns whether this traversal endpoint and one retained circle/chord

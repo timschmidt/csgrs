@@ -717,10 +717,11 @@ impl CurveRegion2 {
         if self.is_empty() {
             return Ok(self.clone());
         }
-        // An authoritative filled-left face walk is already the canonical
-        // regularization proof.  Rebuilding its arrangement wastes work and,
-        // for compact correlated chord cuts, would throw away the topology
-        // evidence that deliberately replaces coordinate materialization.
+        // An authoritative filled-left face walk or an independent exact
+        // convex-boundary certificate is already a canonical regularization
+        // proof. Rebuilding its arrangement wastes work and, for compact
+        // correlated chord cuts, would throw away the topology evidence that
+        // deliberately replaces coordinate materialization.
         if self.has_certified_regularized_filled_left_topology() {
             return Ok(self.clone());
         }

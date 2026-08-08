@@ -1869,6 +1869,25 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             ),
             Classification::Decided(RegionPointLocation::Boundary),
         );
+        assert!(
+            expanded.value.boundary_loops()[0]
+                .arrangement_sources()
+                .is_some()
+        );
+        let expanded_again = expanded
+            .value
+            .offset(q(1, 100), &OffsetCornerStyle2::Round, &policy)
+            .expect("a certified convex selected-circle parallel must remain reusable");
+        assert_eq!(expanded_again.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(
+                expanded_again
+                    .value
+                    .classify_point(&Point2::new(q(1, 4), -q(4, 25)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Boundary),
+        );
 
         let contracted = rounded
             .offset(-q(1, 20), &OffsetCornerStyle2::Round, &policy)
