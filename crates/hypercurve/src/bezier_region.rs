@@ -2470,6 +2470,15 @@ enum ExactOffsetTangent2 {
 }
 
 #[cfg(feature = "predicates")]
+fn exact_offset_tangent_is_selected_circle(tangent: &ExactOffsetTangent2) -> bool {
+    matches!(
+        tangent,
+        ExactOffsetTangent2::SelectedCircularEndpoint { .. }
+            | ExactOffsetTangent2::ChordContact { .. }
+    )
+}
+
+#[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicOffsetSpan2 {
     source: crate::BezierAlgebraicChord2,
     offset_start: crate::RationalBezierIntersectionPointEvidence2,
@@ -2557,6 +2566,7 @@ fn append_exact_algebraic_line_join(
     from: &crate::RationalBezierIntersectionPointEvidence2,
     to: &crate::RationalBezierIntersectionPointEvidence2,
     certified_direction: Option<BezierAlgebraicChordAxisDirection2>,
+    certified_circle_transverse_endpoints: [bool; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
     let endpoint_equality = match certified_direction {
@@ -2584,6 +2594,8 @@ fn append_exact_algebraic_line_join(
                     }
                 }
             };
+            let chord = chord
+                .with_certified_circle_transverse_endpoints(certified_circle_transverse_endpoints);
             fragments.push(retained_chord_or_exact_line_fragment(chord)?);
             Ok(Classification::Decided(()))
         }
@@ -4146,6 +4158,7 @@ fn exact_axis_aligned_algebraic_offset_loop(
             &spans[span_index].offset_start,
             &spans[span_index].offset_end,
             Some(spans[span_index].direction),
+            [false; 2],
             policy,
         )? {
             Classification::Decided(()) => {}
@@ -4163,6 +4176,7 @@ fn exact_axis_aligned_algebraic_offset_loop(
                 &spans[span_index].offset_end,
                 &spans[next_index].offset_start,
                 None,
+                [false; 2],
                 policy,
             )?,
             ExactAxisAlignedAlgebraicJoin2::Round(sweep_kind) => {
@@ -5374,6 +5388,18 @@ fn append_exact_offset_join(
             &previous.offset_end,
             &next.offset_start,
             None,
+            // For a nonzero turn, the difference of the two unit normals
+            // cannot be parallel to either endpoint tangent. Thus this bevel
+            // is strictly transverse to every selected-circle endpoint it
+            // joins, independent of the represented offset distance.
+            if turn_sign == RealSign::Zero {
+                [false; 2]
+            } else {
+                [
+                    exact_offset_tangent_is_selected_circle(previous_tangent),
+                    exact_offset_tangent_is_selected_circle(next_tangent),
+                ]
+            },
             policy,
         ),
         #[cfg(not(feature = "predicates"))]
@@ -5955,7 +5981,7 @@ fn exact_offset_tangent_cross_sign(
                     Classification::Decided(exact_sign_product(*circle_cross_chord, factor))
                 }
                 Classification::Uncertain(_) => fragment
-                    .endpoint_tangent_cross_algebraic_chord(*at_start, second, policy)
+                    .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         }
@@ -5980,7 +6006,7 @@ fn exact_offset_tangent_cross_sign(
                     exact_sign_product(*circle_cross_chord, factor),
                 )),
                 Classification::Uncertain(_) => fragment
-                    .endpoint_tangent_cross_algebraic_chord(*at_start, first, policy)
+                    .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
                     .map(|cross| cross.map(exact_sign_reverse))
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
@@ -5990,14 +6016,14 @@ fn exact_offset_tangent_cross_sign(
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
             ExactOffsetTangent2::AlgebraicChord(second),
         ) => fragment
-            .endpoint_tangent_cross_algebraic_chord(*at_start, second, policy)
+            .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
         ) => fragment
-            .endpoint_tangent_cross_algebraic_chord(*at_start, first, policy)
+            .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
             .map(|cross| cross.map(exact_sign_reverse))
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         #[cfg(feature = "predicates")]

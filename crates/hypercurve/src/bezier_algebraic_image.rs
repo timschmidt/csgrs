@@ -659,6 +659,71 @@ impl RationalBezierAlgebraicPointImage2 {
         ))
     }
 
+    /// Returns an exact affine-line equation retained by this rational point
+    /// expression, when a coefficientwise proof is available.
+    ///
+    /// The homogeneous power-basis coefficients are vectors `(X, Y, W)`.
+    /// If they all lie in one projective plane `aX + bY + cW = 0`, every
+    /// selected affine image lies on the corresponding line.  This is a
+    /// deliberately sufficient structural certificate: every residual and
+    /// every nondegeneracy decision is made under [`CurveContext::STRICT`], so
+    /// an approximate terminal can never create geometry.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn strict_retained_affine_line_coefficients(&self) -> Option<[Real; 3]> {
+        let (x, y, weight) = self.retained_coordinate_polynomials()?;
+        let coefficient_count = x.len().max(y.len()).max(weight.len());
+        if coefficient_count < 2 {
+            return None;
+        }
+        let coefficient =
+            |source: &[Real], index: usize| source.get(index).cloned().unwrap_or_else(Real::zero);
+        let homogeneous = |index| {
+            [
+                coefficient(x, index),
+                coefficient(y, index),
+                coefficient(weight, index),
+            ]
+        };
+        let strict = &CurveContext::STRICT;
+
+        for first_index in 0..coefficient_count {
+            let first = homogeneous(first_index);
+            for second_index in (first_index + 1)..coefficient_count {
+                let second = homogeneous(second_index);
+                let candidate = [
+                    Real::diff_of_products(&first[1], &second[2], &first[2], &second[1]),
+                    Real::diff_of_products(&first[2], &second[0], &first[0], &second[2]),
+                    Real::diff_of_products(&first[0], &second[1], &first[1], &second[0]),
+                ];
+                let first_affine_sign = real_sign(&candidate[0], strict);
+                let second_affine_sign = real_sign(&candidate[1], strict);
+                if matches!(
+                    (first_affine_sign, second_affine_sign),
+                    (Some(RealSign::Zero), Some(RealSign::Zero))
+                ) {
+                    continue;
+                }
+                if first_affine_sign.is_none() || second_affine_sign.is_none() {
+                    continue;
+                }
+                let all_coefficients_incident = (0..coefficient_count).all(|index| {
+                    let point = homogeneous(index);
+                    real_sign(
+                        &Real::dot3_refs(
+                            [&candidate[0], &candidate[1], &candidate[2]],
+                            [&point[0], &point[1], &point[2]],
+                        ),
+                        strict,
+                    ) == Some(RealSign::Zero)
+                });
+                if all_coefficients_incident {
+                    return Some(candidate);
+                }
+            }
+        }
+        None
+    }
+
     /// Compares two rational point expressions in one selected parameter
     /// field without constructing independent coordinate roots.
     ///

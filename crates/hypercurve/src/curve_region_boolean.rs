@@ -2221,6 +2221,32 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let intersections = match intersections {
                         Classification::Decided(intersections) => intersections,
                         Classification::Uncertain(reason) => {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                match reason {
+                                    UncertaintyReason::Unsupported => "kernel-unsupported",
+                                    UncertaintyReason::Predicate => "kernel-predicate",
+                                    UncertaintyReason::Ordering => "kernel-ordering",
+                                    UncertaintyReason::RealSign => "kernel-real-sign",
+                                    UncertaintyReason::Boundary => "kernel-boundary",
+                                },
+                            );
+                            #[cfg(feature = "dispatch-trace")]
+                            if reason == UncertaintyReason::Unsupported {
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-circle-chord-kernel-blocker",
+                                    if chord.exact_line().is_some() {
+                                        "exact-line"
+                                    } else if chord.certified_unit_tangent().is_some() {
+                                        "certified-tangent"
+                                    } else {
+                                        "general-retained"
+                                    },
+                                );
+                            }
                             return Ok(RegionPairResult {
                                 contacts: Vec::new(),
                                 overlaps: Vec::new(),
