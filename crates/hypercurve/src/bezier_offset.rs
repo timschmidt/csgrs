@@ -2845,6 +2845,24 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         )))
     }
 
+    /// Restricts the general complement predicate to analytic-parallel maps.
+    /// That branch proves every equality under STRICT even when the retained
+    /// construction policy is APPROXIMATE_512.
+    #[cfg(feature = "predicates")]
+    fn parallel_complementary_to(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        if !matches!(
+            (self, other),
+            (Self::Parallel { .. }, Self::Parallel { .. })
+        ) {
+            return Ok(None);
+        }
+        Ok(Some(self.is_complementary_to(other, policy)?))
+    }
+
     /// Proves that two mapped cuts are complementary parameters on the same
     /// selected semicircle without adjoining their carrier fields.
     #[cfg(feature = "predicates")]
@@ -10432,6 +10450,28 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Option<std::cmp::Ordering>> {
+        self.complementary_mapped_axis_order_with_authority(other, axis, false, policy)
+    }
+
+    /// Recognizes the same equality only when two analytic-parallel maps
+    /// supply the STRICT complement proof. This result may be retained as a
+    /// construction fact rather than used only for the current query.
+    fn strict_parallel_complementary_mapped_axis_order(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<std::cmp::Ordering>> {
+        self.complementary_mapped_axis_order_with_authority(other, axis, true, policy)
+    }
+
+    fn complementary_mapped_axis_order_with_authority(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        strict_parallel_only: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<std::cmp::Ordering>> {
         if self.data.radial_scale != other.data.radial_scale
             || self.data.translation_x != other.data.translation_x
             || self.data.translation_y != other.data.translation_y
@@ -10439,7 +10479,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         {
             return Ok(None);
         }
-        if self.data.radial_scale.zero_status() == ZeroStatus::Zero {
+        if self.data.radial_scale.zero_status() == ZeroStatus::Zero && !strict_parallel_only {
             return Ok(Some(std::cmp::Ordering::Equal));
         }
         let tangent_axis = match self
@@ -10469,9 +10509,14 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         else {
             return Ok(None);
         };
-        Ok(match first.is_complementary_to(second, policy)? {
-            Classification::Decided(true) => Some(std::cmp::Ordering::Equal),
-            Classification::Decided(false) | Classification::Uncertain(_) => None,
+        let complementary = if strict_parallel_only {
+            first.parallel_complementary_to(second, policy)?
+        } else {
+            Some(first.is_complementary_to(second, policy)?)
+        };
+        Ok(match complementary {
+            Some(Classification::Decided(true)) => Some(std::cmp::Ordering::Equal),
+            None | Some(Classification::Decided(false) | Classification::Uncertain(_)) => None,
         })
     }
 
@@ -12131,16 +12176,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
             return Ok(None);
         };
-        if !matches!(
-            (first.as_ref(), second.as_ref()),
-            (
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. },
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
-            )
-        ) {
-            return Ok(None);
-        }
-        Ok(Some(first.is_complementary_to(second, policy)?))
+        first.parallel_complementary_to(second, policy)
     }
 
     pub(crate) fn order_to_real(
@@ -16162,6 +16198,23 @@ impl BezierAlgebraicChord2 {
                 }));
             }
         };
+        #[cfg(feature = "predicates")]
+        let certified_axis_aligned = if let (
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first),
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(second),
+        ) = (&start, &end)
+        {
+            let constant_axis = match parameter_axis.axis {
+                Axis2::X => Axis2::Y,
+                Axis2::Y => Axis2::X,
+            };
+            first.strict_parallel_complementary_mapped_axis_order(second, constant_axis, policy)?
+                == Some(std::cmp::Ordering::Equal)
+        } else {
+            false
+        };
+        #[cfg(not(feature = "predicates"))]
+        let certified_axis_aligned = false;
         // A strict coordinate order is itself a complete noncoincidence proof.
         // This matters when endpoints inhabit independent selected fields: a
         // generic two-coordinate equality predicate may be unavailable even
@@ -16171,7 +16224,7 @@ impl BezierAlgebraicChord2 {
                 start,
                 end,
                 parameter_axis,
-                certified_axis_aligned: false,
+                certified_axis_aligned,
                 certified_unit_tangent: None,
                 source: None,
                 reversed: false,
@@ -42066,6 +42119,7 @@ mod conversion_tests {
                     else {
                         panic!("the two analytic cuts must construct an exact chord");
                     };
+                    assert!(chord.data.certified_axis_aligned);
                     let direction = chord.axis_direction(&policy).unwrap();
                     assert!(
                         matches!(
