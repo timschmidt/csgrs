@@ -2167,6 +2167,34 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             return Ok(RegionPairResult::empty());
                         }
                     }
+                    // A disk is convex, so a chord whose endpoints are both
+                    // strictly inside the supporting disk cannot meet its
+                    // boundary. Run this exact but potentially expensive
+                    // certificate only after the cheap broad-phase rejects.
+                    let mut chord_is_strictly_inside_disk = true;
+                    for endpoint in [chord.start(), chord.end()] {
+                        match cusp
+                            .semicircle()
+                            .strict_point_incidence_sign(endpoint, &self.data.policy)
+                            .map_err(|cause| self.invalid(chord_index, cause))?
+                        {
+                            Classification::Decided(RealSign::Negative) => {}
+                            Classification::Decided(RealSign::Zero | RealSign::Positive)
+                            | Classification::Uncertain(_) => {
+                                chord_is_strictly_inside_disk = false;
+                                break;
+                            }
+                        }
+                    }
+                    if chord_is_strictly_inside_disk {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-circle-chord-pair",
+                            "chord-strictly-inside-disk",
+                        );
+                        return Ok(RegionPairResult::empty());
+                    }
                     let intersections = cusp
                         .semicircle()
                         .chord_intersections(chord, &self.data.policy)
