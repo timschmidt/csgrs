@@ -619,6 +619,7 @@ fn benchmark_contour_offset(runner: &Runner) {
 #[cfg(feature = "predicates")]
 fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
+    let reoffset_name = "algebraic_round_offset/retained_circle_reentry";
     let chord_pair_transform_name = "algebraic_chord_pair/affine_transform_offset";
     let boolean_name = "algebraic_round_boolean/translated_rectangle";
     let reentry_name = "algebraic_round_boolean/correlated_endpoint_reentry";
@@ -627,6 +628,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let shared_chord_collinear_reentry_name =
         "algebraic_round_boolean/shared_chord_collinear_reentry";
     if !runner.group_enabled(offset_name)
+        && !runner.group_enabled(reoffset_name)
         && !runner.group_enabled(chord_pair_transform_name)
         && !runner.group_enabled(boolean_name)
         && !runner.group_enabled(reentry_name)
@@ -757,6 +759,73 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         runner.measure(offset_name, "cavalier_f64", || {
             cavalier
                 .parallel_offset(black_box(-0.1))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum()
+        });
+    }
+
+    if runner.group_enabled(reoffset_name) {
+        let rounded = hypercurve
+            .offset(distance.clone(), &round, &policy)
+            .expect("selected-circle benchmark source completes")
+            .into_value();
+        let expansion =
+            (Real::one() / Real::from(20_u8)).expect("exact re-offset expansion distance");
+        let past_collapse =
+            -(Real::from(3_u8) / Real::from(20_u8)).expect("exact past-collapse distance");
+        let result_weight = |region: &CurveRegion2| {
+            region
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.fragments().len())
+                .sum::<usize>()
+        };
+        let expansion_complete = rounded.offset(expansion.clone(), &round, &policy).is_ok();
+        let past_collapse_complete = rounded
+            .offset(past_collapse.clone(), &round, &policy)
+            .is_ok();
+
+        let mut cavalier_rounded = cavalier.parallel_offset(-0.1);
+        assert_eq!(cavalier_rounded.len(), 1);
+        let cavalier_rounded = cavalier_rounded.pop().unwrap();
+
+        runner.measure(
+            reoffset_name,
+            if expansion_complete {
+                "hypercurve_exact_expand"
+            } else {
+                "hypercurve_rejected_expand"
+            },
+            || {
+                rounded
+                    .offset(expansion.clone(), &round, &policy)
+                    .map_or(0, |result| result_weight(&result.value))
+            },
+        );
+        runner.measure(reoffset_name, "cavalier_f64_expand", || {
+            cavalier_rounded
+                .parallel_offset(black_box(-0.05))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum()
+        });
+        runner.measure(
+            reoffset_name,
+            if past_collapse_complete {
+                "hypercurve_exact_past_collapse"
+            } else {
+                "hypercurve_rejected_past_collapse"
+            },
+            || {
+                rounded
+                    .offset(past_collapse.clone(), &round, &policy)
+                    .map_or(0, |result| result_weight(&result.value))
+            },
+        );
+        runner.measure(reoffset_name, "cavalier_f64_past_collapse", || {
+            cavalier_rounded
+                .parallel_offset(black_box(0.15))
                 .iter()
                 .map(PlineSource::vertex_count)
                 .sum()
