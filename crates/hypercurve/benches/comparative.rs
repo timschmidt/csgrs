@@ -17,14 +17,14 @@ use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2,
-    CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2,
+    CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2, Similarity2,
 };
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2,
     OffsetCornerStyle2, Point2, RationalBezier2, RationalBezierIntersectionContacts2, Real,
-    Segment2, Similarity2,
+    Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
