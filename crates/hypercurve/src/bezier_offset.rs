@@ -9480,67 +9480,82 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if map.data.semicircle.data.frame != semicircle.data.frame {
             return Ok(Classification::Decided(None));
         }
+        if self.data.translation_x.zero_status() == ZeroStatus::Zero
+            && self.data.translation_y.zero_status() == ZeroStatus::Zero
+        {
+            let source_radius_squared =
+                map.data.semicircle.radial_distance() * map.data.semicircle.radial_distance();
+            let target_radius_squared = semicircle.radial_distance() * semicircle.radial_distance();
+            let scale_squared = &self.data.radial_scale * &self.data.radial_scale;
+            let residual = scale_squared * source_radius_squared - target_radius_squared;
+            return Ok(real_sign(&residual, policy).map_or(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                |sign| Classification::Decided(Some(sign)),
+            ));
+        }
         if let Some(system) = map.oblique_system() {
-            let relative_coordinate = |axis| {
-                let coordinate = map.oblique_derived_coordinate_expression(
-                    axis,
-                    &self.data.radial_scale,
-                    match axis {
-                        Axis2::X => &self.data.translation_x,
-                        Axis2::Y => &self.data.translation_y,
-                    },
-                )?;
-                Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                    rational: coordinate.rational.subtract(match axis {
-                        Axis2::X => &system.center_x,
-                        Axis2::Y => &system.center_y,
-                    })?,
-                    radical: coordinate.radical,
-                })
-            };
-            let square = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
-                Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                    rational: expression.rational.multiply(&expression.rational)?.add(
-                        &expression
-                            .radical
-                            .multiply(&expression.radical)?
-                            .multiply(&system.discriminant)?,
-                    )?,
-                    radical: expression
-                        .rational
-                        .multiply(&expression.radical)?
-                        .scale(&Real::from(2_i8))?,
-                })
-            };
-            let (Some(x), Some(y)) = (relative_coordinate(Axis2::X), relative_coordinate(Axis2::Y))
-            else {
+            // The source contact P already satisfies |P-C|^2 = r0^2.
+            // For Q = C + s(P-C) + T, reuse that exact selected-root
+            // incidence instead of expanding two squared radical coordinates:
+            //
+            //   |Q-C|^2-r^2 = s^2 r0^2 + 2s T·(P-C) + |T|^2-r^2.
+            //
+            // With the retained positive homogeneous denominator D, only the
+            // middle term carries the original square root. This is an exact
+            // quotient-ring substitution at the same three selected roots.
+            let negative_translation_x = -self.data.translation_x.clone();
+            let negative_translation_y = -self.data.translation_y.clone();
+            let Some(rational_dot) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.rational, &self.data.translation_x),
+                (&system.center_x, &negative_translation_x),
+                (&system.point_y.rational, &self.data.translation_y),
+                (&system.center_y, &negative_translation_y),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let (Some(x_squared), Some(y_squared)) = (square(&x), square(&y)) else {
+            let Some(radical_dot) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.radical, &self.data.translation_x),
+                (&system.point_y.radical, &self.data.translation_y),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let radius_squared = semicircle.radial_distance() * semicircle.radial_distance();
-            let Some(radius_term) = system
+            let source_radius_squared =
+                map.data.semicircle.radial_distance() * map.data.semicircle.radial_distance();
+            let target_radius_squared = semicircle.radial_distance() * semicircle.radial_distance();
+            let scale_squared = &self.data.radial_scale * &self.data.radial_scale;
+            let translation_squared = &self.data.translation_x * &self.data.translation_x
+                + &self.data.translation_y * &self.data.translation_y;
+            let constant =
+                scale_squared * source_radius_squared + translation_squared - target_radius_squared;
+            let twice_scale = Real::from(2_i8) * &self.data.radial_scale;
+            let Some(denominator_squared) = system
                 .common_denominator
                 .multiply(&system.common_denominator)
-                .and_then(|denominator| denominator.scale(&radius_squared))
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(incidence) = x_squared
-                .rational
-                .add(&y_squared.rational)
-                .and_then(|sum| sum.subtract(&radius_term))
-                .and_then(|rational| {
-                    x_squared.radical.add(&y_squared.radical).map(|radical| {
-                        BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical }
-                    })
-                })
+            let Some(rational_cross) = system
+                .common_denominator
+                .multiply(&rational_dot)
+                .and_then(|cross| cross.scale(&twice_scale))
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(rational) = denominator_squared
+                .scale(&constant)
+                .and_then(|constant| constant.add(&rational_cross))
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(radical) = system
+                .common_denominator
+                .multiply(&radical_dot)
+                .and_then(|cross| cross.scale(&twice_scale))
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(map
-                .trivariate_radical_sign(&incidence, contact.branch)?
+                .trivariate_radical_components_sign(&rational, &radical, contact.branch)?
                 .map(Some));
         }
         let Some(system) = map.axis_system() else {
@@ -38120,6 +38135,38 @@ mod conversion_tests {
                     point.conservative_bounds_refined(16, &policy),
                     Classification::Decided(_)
                 ));
+                for (scale, translation_x, translation_y, expected) in [
+                    (Real::one(), Real::zero(), Real::zero(), RealSign::Zero),
+                    (Real::zero(), Real::zero(), Real::zero(), RealSign::Negative),
+                    (
+                        Real::from(2_i8),
+                        Real::zero(),
+                        Real::zero(),
+                        RealSign::Positive,
+                    ),
+                    (
+                        Real::from(-1_i8),
+                        Real::zero(),
+                        Real::zero(),
+                        RealSign::Zero,
+                    ),
+                    (
+                        Real::one(),
+                        Real::from(10_i8),
+                        Real::from(-7_i8),
+                        RealSign::Positive,
+                    ),
+                ] {
+                    let derived = point
+                        .radial_scaled(scale)
+                        .translated(&translation_x, &translation_y);
+                    assert_eq!(
+                        derived
+                            .concentric_circle_incidence_sign(&semicircle, &policy)
+                            .unwrap(),
+                        Classification::Decided(Some(expected)),
+                    );
+                }
             }
 
             let general_chord = |start_x, start_y, end_x, end_y, start_label, end_label| {
