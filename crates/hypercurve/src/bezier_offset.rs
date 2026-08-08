@@ -44074,7 +44074,9 @@ mod conversion_tests {
     ///
     /// Run with `--release --all-features -- --ignored --nocapture` and select
     /// `exact_offset`, `parallel_exact_offset`, `parallel_prebuilt_exact_offset`,
-    /// their `disabled` controls, or `cavalier_f64_offset` through
+    /// `two_parallel_construct`, `two_parallel_exact_offset`,
+    /// `two_parallel_prebuilt_exact_offset`, their `disabled` controls, or
+    /// `cavalier_f64_offset` through
     /// `HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE`.
     #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
     #[test]
@@ -44203,8 +44205,8 @@ mod conversion_tests {
         };
         let Classification::Decided(parallel_arc) =
             BezierAlgebraicCuspSemicircleFragment2::try_new(
-                semicircle,
-                parallel_start,
+                semicircle.clone(),
+                parallel_start.clone(),
                 end,
                 false,
                 &policy,
@@ -44212,6 +44214,66 @@ mod conversion_tests {
             .unwrap()
         else {
             panic!("the benchmark analytic and rational cuts must bound a selected-circle arc");
+        };
+
+        // Preserve the same reflected radius-two circle through a distinct
+        // positive homogeneous gauge. Its inward analytic parallel is the
+        // left half of the selected unit circle, but its speed root differs
+        // from the right carrier above.
+        let left_gauged = RationalBezier2::try_new_with_implicit_quadratic_conic(
+            vec![
+                Point2::new(Real::from(-2_i8), Real::zero()),
+                Point2::new(Real::from(-2_i8), Real::one()),
+                Point2::new(
+                    (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
+                    Real::from(2_i8),
+                ),
+                Point2::new(Real::zero(), Real::from(2_i8)),
+            ],
+            vec![
+                Real::one(),
+                (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
+                Real::from(2_i8),
+                Real::from(4_i8),
+            ],
+            Arc::new([
+                Real::one(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::from(-4_i8),
+            ]),
+            analytic_source.retained_circular_conic().cloned(),
+        )
+        .unwrap();
+        let reversed_left_parallel = left_gauged
+            .parallel_left(Real::from(-1_i8))
+            .unwrap()
+            .reversed();
+        assert!(
+            reversed_left_parallel
+                .data
+                .certified_ph_offset
+                .set(None)
+                .is_ok()
+        );
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+            left_overlaps,
+        )) = semicircle
+            .parallel_intersections(&reversed_left_parallel, &policy)
+            .unwrap()
+        else {
+            panic!("the benchmark reflected analytic carrier must overlap the selected circle");
+        };
+        let [left_overlap] = left_overlaps.as_slice() else {
+            panic!("the reflected analytic carrier must retain one selected cell");
+        };
+        let Classification::Decided(two_parallel_end) = left_overlap
+            .cusp_parameter_for_other(&algebraic_cut.unit_complement(), &policy)
+            .unwrap()
+        else {
+            panic!("the reflected analytic cut must remain mapped");
         };
 
         // t^2=1/2 on the rational quarter maps exactly to
@@ -44233,14 +44295,14 @@ mod conversion_tests {
             .unwrap_or(1);
         assert!(iterations > 0);
         let distance = (Real::one() / Real::from(8_i8)).unwrap();
-        let parallel_cap = || -> Option<CurveRegion2> {
+        let cap_from_arc = |arc: BezierAlgebraicCuspSemicircleFragment2| -> Option<CurveRegion2> {
             let Classification::Decided(Some(chord_end)) =
-                parallel_arc.endpoint_point_evidence(true, &policy).ok()?
+                arc.endpoint_point_evidence(true, &policy).ok()?
             else {
                 return None;
             };
             let Classification::Decided(Some(chord_start)) =
-                parallel_arc.endpoint_point_evidence(false, &policy).ok()?
+                arc.endpoint_point_evidence(false, &policy).ok()?
             else {
                 return None;
             };
@@ -44251,7 +44313,7 @@ mod conversion_tests {
             };
             let boundary = CurveRegionBoundaryLoop2::new(
                 vec![
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(parallel_arc.clone()),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
                     BezierSplitFragment2::AlgebraicChord(chord),
                 ],
                 &policy,
@@ -44265,8 +44327,24 @@ mod conversion_tests {
             )
             .ok()
         };
+        let parallel_cap = || cap_from_arc(parallel_arc.clone());
+        let two_parallel_cap = || -> Option<CurveRegion2> {
+            let Classification::Decided(arc) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+                semicircle.clone(),
+                parallel_start.clone(),
+                two_parallel_end.clone(),
+                false,
+                &policy,
+            )
+            .ok()?
+            else {
+                return None;
+            };
+            cap_from_arc(arc)
+        };
         let prebuilt_parallel_cap = parallel_cap();
-        let offset_parallel_cap = |cap: &CurveRegion2| {
+        let prebuilt_two_parallel_cap = two_parallel_cap();
+        let offset_cap = |cap: &CurveRegion2| {
             cap.offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
                 .ok()
                 .map(|result| {
@@ -44290,13 +44368,21 @@ mod conversion_tests {
                         .sum()
                 }),
             "parallel_construct" => parallel_cap().map_or(0, |cap| cap.boundary_loops().len()),
-            "parallel_exact_offset" => parallel_cap()
-                .as_ref()
-                .and_then(offset_parallel_cap)
-                .unwrap_or(0),
+            "parallel_exact_offset" => parallel_cap().as_ref().and_then(offset_cap).unwrap_or(0),
             "parallel_prebuilt_exact_offset" => prebuilt_parallel_cap
                 .as_ref()
-                .and_then(offset_parallel_cap)
+                .and_then(offset_cap)
+                .unwrap_or(0),
+            "two_parallel_construct" => {
+                two_parallel_cap().map_or(0, |cap| cap.boundary_loops().len())
+            }
+            "two_parallel_exact_offset" => two_parallel_cap()
+                .as_ref()
+                .and_then(offset_cap)
+                .unwrap_or(0),
+            "two_parallel_prebuilt_exact_offset" => prebuilt_two_parallel_cap
+                .as_ref()
+                .and_then(offset_cap)
                 .unwrap_or(0),
             "disabled" => cap.boundary_loops().len(),
             "parallel_disabled" => {
@@ -44305,6 +44391,14 @@ mod conversion_tests {
             }
             "parallel_prebuilt_disabled" => {
                 black_box(&prebuilt_parallel_cap);
+                1
+            }
+            "two_parallel_disabled" => {
+                black_box((&parallel_start, &two_parallel_end));
+                1
+            }
+            "two_parallel_prebuilt_disabled" => {
+                black_box(&prebuilt_two_parallel_cap);
                 1
             }
             "cavalier_f64_offset" => cavalier
@@ -44317,7 +44411,11 @@ mod conversion_tests {
         let preflight = operation();
         let complete = matches!(
             mode.as_str(),
-            "disabled" | "parallel_disabled" | "parallel_prebuilt_disabled"
+            "disabled"
+                | "parallel_disabled"
+                | "parallel_prebuilt_disabled"
+                | "two_parallel_disabled"
+                | "two_parallel_prebuilt_disabled"
         ) || preflight != 0;
         for _ in 0..warmups {
             black_box(operation());
