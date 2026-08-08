@@ -12784,6 +12784,36 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if self.shares_exact_evidence(other) {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
+        if let (Self::Mapped(first), Self::Mapped(second)) = (self, other)
+            && let (
+                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                    overlap: first_overlap,
+                    source: first_source,
+                    source_first: first_source_side,
+                },
+                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                    overlap: second_overlap,
+                    source: second_source,
+                    source_first: second_source_side,
+                },
+            ) = (first.as_ref(), second.as_ref())
+            && first_source_side == second_source_side
+            && first_overlap.shares_parameter_authority(second_overlap)
+        {
+            // One coincident-circle overlap is monotone on its retained
+            // source range. Preserve the source order directly instead of
+            // reconstructing two destination brackets through the same
+            // selected-root correspondence.
+            return Ok(first_source
+                .cmp_by_refinement(second_source, policy)?
+                .map(|order| {
+                    if first_overlap.data.orientation == RationalBezierOverlapOrientation2::Same {
+                        order
+                    } else {
+                        order.reverse()
+                    }
+                }));
+        }
         #[cfg(feature = "predicates")]
         if let Some(Classification::Decided(true)) =
             self.correlated_chord_same_value(other, policy)?
