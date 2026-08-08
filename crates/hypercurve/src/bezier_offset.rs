@@ -22659,22 +22659,29 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 Classification::Decided(None) | Classification::Uncertain(_) => continue,
             };
             let chord_points = [chord.start(), chord.end()];
-            for chord_index in 0..2 {
-                if circle_point.same_point(chord_points[chord_index], policy)
-                    != Classification::Decided(true)
-                {
+            let other_endpoint_is_strictly_inside = |chord_index: usize| -> CurveResult<bool> {
+                Ok(matches!(
+                    self.data
+                        .semicircle
+                        .retained_point_incidence_sign(chord_points[1 - chord_index], policy)?,
+                    Classification::Decided(RealSign::Negative)
+                ))
+            };
+            if let Some(chord_index) = chord_points
+                .iter()
+                .position(|endpoint| circle_point == **endpoint)
+            {
+                if other_endpoint_is_strictly_inside(chord_index)? {
+                    return Ok(Classification::Decided(true));
+                }
+                continue;
+            }
+            for (chord_index, chord_point) in chord_points.iter().enumerate() {
+                if circle_point.same_point(chord_point, policy) != Classification::Decided(true) {
                     continue;
                 }
-                match self
-                    .data
-                    .semicircle
-                    .retained_point_incidence_sign(chord_points[1 - chord_index], policy)?
-                {
-                    Classification::Decided(RealSign::Negative) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Classification::Decided(RealSign::Zero | RealSign::Positive)
-                    | Classification::Uncertain(_) => {}
+                if other_endpoint_is_strictly_inside(chord_index)? {
+                    return Ok(Classification::Decided(true));
                 }
             }
         }
