@@ -5453,24 +5453,33 @@ impl BezierAlgebraicCuspSemicircle2 {
             let ny = axis(&frame.normal_y, 2)?;
             let one = TrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0)?;
 
-            let dx = bx.multiply(&aw)?.subtract(&ax.multiply(&bw)?)?;
-            let dy = by.multiply(&aw)?.subtract(&ay.multiply(&bw)?)?;
-            let vx = ax.multiply(&cw)?.subtract(&cx.multiply(&aw)?)?;
-            let vy = ay.multiply(&cw)?.subtract(&cy.multiply(&aw)?)?;
-            let d_squared = dx.multiply(&dx)?.add(&dy.multiply(&dy)?)?;
-            let v_dot_d = vx.multiply(&dx)?.add(&vy.multiply(&dy)?)?;
+            let dx = TrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy = TrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let vx = TrivariatePolynomial2::sum_products(&[(&ax, &cw, false), (&cx, &aw, true)])?;
+            let vy = TrivariatePolynomial2::sum_products(&[(&ay, &cw, false), (&cy, &aw, true)])?;
+            let d_squared =
+                TrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+            let v_dot_d =
+                TrivariatePolynomial2::sum_products(&[(&vx, &dx, false), (&vy, &dy, false)])?;
             let aw_cw = aw.multiply(&cw)?;
             let radius_squared = self.radial_distance() * self.radial_distance();
-            let v_squared_minus_radius = vx
-                .multiply(&vx)?
-                .add(&vy.multiply(&vy)?)?
-                .subtract(&aw_cw.multiply(&aw_cw)?.scale(&radius_squared)?)?;
-            let discriminant = v_dot_d
-                .multiply(&v_dot_d)?
-                .subtract(&d_squared.multiply(&v_squared_minus_radius)?)?;
+            let v_squared =
+                TrivariatePolynomial2::sum_products(&[(&vx, &vx, false), (&vy, &vy, false)])?;
+            let radius_term = aw_cw.multiply(&aw_cw)?.scale(&radius_squared)?;
+            let v_squared_minus_radius = v_squared.subtract(&radius_term)?;
+            let discriminant = TrivariatePolynomial2::sum_products(&[
+                (&v_dot_d, &v_dot_d, false),
+                (&d_squared, &v_squared_minus_radius, true),
+            ])?;
 
-            let radial_x_rational = vx.multiply(&d_squared)?.subtract(&dx.multiply(&v_dot_d)?)?;
-            let radial_y_rational = vy.multiply(&d_squared)?.subtract(&dy.multiply(&v_dot_d)?)?;
+            let radial_x_rational = TrivariatePolynomial2::sum_products(&[
+                (&vx, &d_squared, false),
+                (&dx, &v_dot_d, true),
+            ])?;
+            let radial_y_rational = TrivariatePolynomial2::sum_products(&[
+                (&vy, &d_squared, false),
+                (&dy, &v_dot_d, true),
+            ])?;
             let center_x = cx.multiply(&aw)?.multiply(&d_squared)?;
             let center_y = cy.multiply(&aw)?.multiply(&d_squared)?;
             let point_x = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
@@ -5485,24 +5494,28 @@ impl BezierAlgebraicCuspSemicircle2 {
 
             let turn_radius = self.turn_sign() * self.radial_distance();
             let selected_half_plane = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: nx
-                    .multiply(&radial_y_rational)?
-                    .subtract(&ny.multiply(&radial_x_rational)?)?
-                    .scale(&turn_radius)?,
-                radical: nx
-                    .multiply(&dy)?
-                    .subtract(&ny.multiply(&dx)?)?
-                    .scale(&turn_radius)?,
+                rational: TrivariatePolynomial2::sum_products(&[
+                    (&nx, &radial_y_rational, false),
+                    (&ny, &radial_x_rational, true),
+                ])?
+                .scale(&turn_radius)?,
+                radical: TrivariatePolynomial2::sum_products(&[
+                    (&nx, &dy, false),
+                    (&ny, &dx, true),
+                ])?
+                .scale(&turn_radius)?,
             };
             let diameter_side = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: nx
-                    .multiply(&radial_x_rational)?
-                    .add(&ny.multiply(&radial_y_rational)?)?
-                    .scale(self.radial_distance())?,
-                radical: nx
-                    .multiply(&dx)?
-                    .add(&ny.multiply(&dy)?)?
-                    .scale(self.radial_distance())?,
+                rational: TrivariatePolynomial2::sum_products(&[
+                    (&nx, &radial_x_rational, false),
+                    (&ny, &radial_y_rational, false),
+                ])?
+                .scale(self.radial_distance())?,
+                radical: TrivariatePolynomial2::sum_products(&[
+                    (&nx, &dx, false),
+                    (&ny, &dy, false),
+                ])?
+                .scale(self.radial_distance())?,
             };
             let radius_squared_denominator =
                 cw.multiply(&common_denominator)?.scale(&radius_squared)?;
@@ -5511,10 +5524,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radical: one,
             };
             let point_minus_end = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: bw
-                    .multiply(&v_dot_d)?
-                    .scale(&Real::from(-1_i8))?
-                    .subtract(&cw.multiply(&d_squared)?)?,
+                rational: TrivariatePolynomial2::sum_products(&[
+                    (&bw, &v_dot_d, true),
+                    (&cw, &d_squared, true),
+                ])?,
                 radical: bw,
             };
             Some(BezierAlgebraicCuspSemicircleObliqueChordSystem2 {
@@ -8193,11 +8206,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
         branch: i8,
     ) -> CurveResult<Classification<RealSign>> {
+        self.trivariate_radical_components_sign(&expression.rational, &expression.radical, branch)
+    }
+
+    fn trivariate_radical_components_sign(
+        &self,
+        rational: &TrivariatePolynomial2,
+        radical: &TrivariatePolynomial2,
+        branch: i8,
+    ) -> CurveResult<Classification<RealSign>> {
         let system = self.oblique_system().ok_or_else(|| {
             CurveError::Topology("an axis cusp/chord map used the oblique radical kernel".into())
         })?;
-        algebraic_cusp_trivariate_square_root_sum_sign(
-            expression,
+        algebraic_cusp_trivariate_square_root_components_sign(
+            rational,
+            radical,
             &system.discriminant,
             &system.first_parameter,
             &system.second_parameter,
@@ -8410,21 +8433,15 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 Axis2::X => &system.point_x,
                 Axis2::Y => &system.point_y,
             };
-            let Some(rational) = system
-                .common_denominator
-                .scale(value)
-                .and_then(|scaled| expression.rational.subtract(&scaled))
-            else {
+            let negative_value = -value.clone();
+            let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+                (&expression.rational, &Real::one()),
+                (&system.common_denominator, &negative_value),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .trivariate_radical_sign(
-                    &BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                        rational,
-                        radical: expression.radical.clone(),
-                    },
-                    contact.branch,
-                )?
+                .trivariate_radical_components_sign(&rational, &expression.radical, contact.branch)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -8462,33 +8479,18 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(system) = self.oblique_system() {
-            let Some(rational) = system
-                .point_x
-                .rational
-                .scale(x_factor)
-                .and_then(|x| {
-                    system
-                        .point_y
-                        .rational
-                        .scale(y_factor)
-                        .and_then(|y| x.add(&y))
-                })
-                .and_then(|sum| {
-                    system
-                        .common_denominator
-                        .scale(value)
-                        .and_then(|offset| sum.subtract(&offset))
-                })
-            else {
+            let negative_value = -value.clone();
+            let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.rational, x_factor),
+                (&system.point_y.rational, y_factor),
+                (&system.common_denominator, &negative_value),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(radical) = system.point_x.radical.scale(x_factor).and_then(|x| {
-                system
-                    .point_y
-                    .radical
-                    .scale(y_factor)
-                    .and_then(|y| x.add(&y))
-            }) else {
+            let Some(radical) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.radical, x_factor),
+                (&system.point_y.radical, y_factor),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
@@ -8566,11 +8568,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             Axis2::Y => (&system.point_y, &system.center_y),
         };
         let one_minus_scale = Real::one() - radial_scale;
-        let rational = point
-            .rational
-            .scale(radial_scale)?
-            .add(&center.scale(&one_minus_scale)?)?
-            .add(&system.common_denominator.scale(translation)?)?;
+        let rational = TrivariatePolynomial2::linear_combination(&[
+            (&point.rational, radial_scale),
+            (center, &one_minus_scale),
+            (&system.common_denominator, translation),
+        ])?;
         Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
             rational,
             radical: point.radical.scale(radial_scale)?,
@@ -8586,26 +8588,24 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(system) = self.oblique_system() {
-            let Some(expression) =
-                self.oblique_derived_coordinate_expression(axis, radial_scale, translation)
-            else {
+            let (point, center) = match axis {
+                Axis2::X => (&system.point_x, &system.center_x),
+                Axis2::Y => (&system.point_y, &system.center_y),
+            };
+            let one_minus_scale = Real::one() - radial_scale;
+            let translation_minus_value = translation - value;
+            let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+                (&point.rational, radial_scale),
+                (center, &one_minus_scale),
+                (&system.common_denominator, &translation_minus_value),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(rational) = system
-                .common_denominator
-                .scale(value)
-                .and_then(|offset| expression.rational.subtract(&offset))
-            else {
+            let Some(radical) = point.radical.scale(radial_scale) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
-                .trivariate_radical_sign(
-                    &BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                        rational,
-                        radical: expression.radical,
-                    },
-                    contact.branch,
-                )?
+                .trivariate_radical_components_sign(&rational, &radical, contact.branch)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -8643,30 +8643,25 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         if let Some(system) = self.oblique_system() {
-            let (Some(x), Some(y)) = (
-                self.oblique_derived_coordinate_expression(Axis2::X, radial_scale, translation_x),
-                self.oblique_derived_coordinate_expression(Axis2::Y, radial_scale, translation_y),
-            ) else {
+            let point_x_factor = radial_scale * x_factor;
+            let point_y_factor = radial_scale * y_factor;
+            let center_scale = Real::one() - radial_scale;
+            let center_x_factor = &center_scale * x_factor;
+            let center_y_factor = &center_scale * y_factor;
+            let denominator_factor = translation_x * x_factor + translation_y * y_factor - value;
+            let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.rational, &point_x_factor),
+                (&system.center_x, &center_x_factor),
+                (&system.point_y.rational, &point_y_factor),
+                (&system.center_y, &center_y_factor),
+                (&system.common_denominator, &denominator_factor),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(rational) = x
-                .rational
-                .scale(x_factor)
-                .and_then(|x| y.rational.scale(y_factor).and_then(|y| x.add(&y)))
-                .and_then(|sum| {
-                    system
-                        .common_denominator
-                        .scale(value)
-                        .and_then(|offset| sum.subtract(&offset))
-                })
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(radical) = x
-                .radical
-                .scale(x_factor)
-                .and_then(|x| y.radical.scale(y_factor).and_then(|y| x.add(&y)))
-            else {
+            let Some(radical) = TrivariatePolynomial2::linear_combination(&[
+                (&system.point_x.radical, &point_x_factor),
+                (&system.point_y.radical, &point_y_factor),
+            ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(self
@@ -8718,21 +8713,22 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         second_translation_x: &Real,
         second_translation_y: &Real,
     ) -> CurveResult<Classification<bool>> {
-        if self.oblique_system().is_some() {
-            let difference = |axis, first_translation, second_translation| {
-                let first = self.oblique_derived_coordinate_expression(
-                    axis,
-                    first_radial_scale,
-                    first_translation,
-                )?;
-                let second = self.oblique_derived_coordinate_expression(
-                    axis,
-                    second_radial_scale,
-                    second_translation,
-                )?;
+        if let Some(system) = self.oblique_system() {
+            let radial_difference = first_radial_scale - second_radial_scale;
+            let center_difference = -radial_difference.clone();
+            let difference = |axis, first_translation: &Real, second_translation: &Real| {
+                let (point, center) = match axis {
+                    Axis2::X => (&system.point_x, &system.center_x),
+                    Axis2::Y => (&system.point_y, &system.center_y),
+                };
+                let translation_difference = first_translation - second_translation;
                 Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                    rational: first.rational.subtract(&second.rational)?,
-                    radical: first.radical.subtract(&second.radical)?,
+                    rational: TrivariatePolynomial2::linear_combination(&[
+                        (&point.rational, &radial_difference),
+                        (center, &center_difference),
+                        (&system.common_denominator, &translation_difference),
+                    ])?,
+                    radical: point.radical.scale(&radial_difference)?,
                 })
             };
             let (Some(x), Some(y)) = (
@@ -11529,14 +11525,25 @@ impl TrivariatePolynomial2 {
         )
     }
 
-    fn multiply(&self, other: &Self) -> Option<Self> {
-        let first = self.dimensions();
-        let second = other.dimensions();
-        let dimensions = (
-            first.0.checked_add(second.0)?.checked_sub(1)?,
-            first.1.checked_add(second.1)?.checked_sub(1)?,
-            first.2.checked_add(second.2)?.checked_sub(1)?,
-        );
+    /// Forms an exact weighted sum with one rectangular tensor allocation.
+    ///
+    /// Predicate replay frequently needs a short affine combination of the
+    /// retained contact polynomials.  Building each scaled term and then
+    /// combining them materializes several dense temporary tensors; direct
+    /// accumulation keeps the same coefficient arithmetic and cap while
+    /// allocating only the result.
+    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
+        let dimensions = terms.iter().fold((0, 0, 0), |dimensions, (term, _)| {
+            let term = term.dimensions();
+            (
+                dimensions.0.max(term.0),
+                dimensions.1.max(term.1),
+                dimensions.2.max(term.2),
+            )
+        });
+        if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
+            return None;
+        }
         dimensions
             .0
             .checked_mul(dimensions.1)?
@@ -11545,14 +11552,73 @@ impl TrivariatePolynomial2 {
             .then_some(())?;
         let mut coefficients =
             vec![vec![vec![Real::zero(); dimensions.2]; dimensions.1]; dimensions.0];
-        for (first_a, first_rows) in self.coefficients.iter().enumerate() {
-            for (second_a, first_row) in first_rows.iter().enumerate() {
-                for (third_a, first_coefficient) in first_row.iter().enumerate() {
-                    for (first_b, second_rows) in other.coefficients.iter().enumerate() {
-                        for (second_b, second_row) in second_rows.iter().enumerate() {
-                            for (third_b, second_coefficient) in second_row.iter().enumerate() {
-                                coefficients[first_a + first_b][second_a + second_b]
-                                    [third_a + third_b] += first_coefficient * second_coefficient;
+        for (term, scale) in terms {
+            if scale.zero_status() == ZeroStatus::Zero {
+                continue;
+            }
+            for (first, rows) in term.coefficients.iter().enumerate() {
+                for (second, row) in rows.iter().enumerate() {
+                    for (third, coefficient) in row.iter().enumerate() {
+                        coefficients[first][second][third] += coefficient * *scale;
+                    }
+                }
+            }
+        }
+        Self::from_coefficients(coefficients)
+    }
+
+    fn multiply(&self, other: &Self) -> Option<Self> {
+        Self::sum_products(&[(self, other, false)])
+    }
+
+    /// Forms a signed sum of polynomial products in one result tensor.
+    /// Exact convolution order within each product is unchanged; only the
+    /// dense product and subsequent add/subtract temporaries are elided.
+    fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
+        let dimensions = terms.iter().try_fold(
+            (0_usize, 0_usize, 0_usize),
+            |dimensions, (first, second, _)| {
+                let first = first.dimensions();
+                let second = second.dimensions();
+                Some((
+                    dimensions
+                        .0
+                        .max(first.0.checked_add(second.0)?.checked_sub(1)?),
+                    dimensions
+                        .1
+                        .max(first.1.checked_add(second.1)?.checked_sub(1)?),
+                    dimensions
+                        .2
+                        .max(first.2.checked_add(second.2)?.checked_sub(1)?),
+                ))
+            },
+        )?;
+        if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
+            return None;
+        }
+        dimensions
+            .0
+            .checked_mul(dimensions.1)?
+            .checked_mul(dimensions.2)?
+            .le(&MAX_TRIVARIATE_BERNSTEIN_CONTROLS)
+            .then_some(())?;
+        let mut coefficients =
+            vec![vec![vec![Real::zero(); dimensions.2]; dimensions.1]; dimensions.0];
+        for (first, second, subtract) in terms {
+            for (first_a, first_rows) in first.coefficients.iter().enumerate() {
+                for (second_a, first_row) in first_rows.iter().enumerate() {
+                    for (third_a, first_coefficient) in first_row.iter().enumerate() {
+                        for (first_b, second_rows) in second.coefficients.iter().enumerate() {
+                            for (second_b, second_row) in second_rows.iter().enumerate() {
+                                for (third_b, second_coefficient) in second_row.iter().enumerate() {
+                                    let target = &mut coefficients[first_a + first_b]
+                                        [second_a + second_b][third_a + third_b];
+                                    if *subtract {
+                                        *target -= first_coefficient * second_coefficient;
+                                    } else {
+                                        *target += first_coefficient * second_coefficient;
+                                    }
+                                }
                             }
                         }
                     }
@@ -22515,6 +22581,29 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
     branch: i8,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
+    algebraic_cusp_trivariate_square_root_components_sign(
+        &expression.rational,
+        &expression.radical,
+        radicand,
+        first_parameter,
+        second_parameter,
+        third_parameter,
+        branch,
+        policy,
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_cusp_trivariate_square_root_components_sign(
+    rational_term: &TrivariatePolynomial2,
+    radical_term: &TrivariatePolynomial2,
+    radicand: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    third_parameter: &BezierParameter2,
+    branch: i8,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
     debug_assert!((-1..=1).contains(&branch));
     let sign = |polynomial: &TrivariatePolynomial2| {
         trivariate_parameter_triple_sign_by_refinement(
@@ -22525,7 +22614,7 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
             policy,
         )
     };
-    let rational = match sign(&expression.rational)? {
+    let rational = match sign(rational_term)? {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -22534,7 +22623,7 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
     let radical = if branch == 0 {
         RealSign::Zero
     } else {
-        match sign(&expression.radical)? {
+        match sign(radical_term)? {
             Classification::Decided(sign) => {
                 if branch < 0 {
                     match sign {
@@ -22560,16 +22649,13 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
         }
         _ => {}
     }
-    let Some(rational_squared) = expression.rational.multiply(&expression.rational) else {
+    let Some(radical_squared) = radical_term.multiply(radical_term) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let Some(radical_squared) = expression.radical.multiply(&expression.radical) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(radical_magnitude) = radical_squared.multiply(radicand) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(magnitude) = rational_squared.subtract(&radical_magnitude) else {
+    let Some(magnitude) = TrivariatePolynomial2::sum_products(&[
+        (rational_term, rational_term, false),
+        (&radical_squared, radicand, true),
+    ]) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     Ok(match sign(&magnitude)? {
