@@ -14,6 +14,7 @@
 //! identities. Hypercurve deliberately replaces their sampling/error heuristics
 //! with exact-scalar interval certification at the acceptance boundary.
 
+use std::borrow::Cow;
 use std::sync::{Arc, Mutex, OnceLock};
 
 #[cfg(feature = "predicates")]
@@ -1458,6 +1459,291 @@ fn rational_parallel_parameters_are_complementary_at_cut(
 }
 
 #[cfg(feature = "predicates")]
+fn algebraic_cusp_independent_two_radical_sum_is_zero(
+    rational: &BivariatePolynomial,
+    first_radical: &BivariatePolynomial,
+    first_radicand: &BivariatePolynomial,
+    second_radical: &BivariatePolynomial,
+    second_radicand: &BivariatePolynomial,
+    cusp_parameter: &BezierParameter2,
+    other_parameter: &BezierParameter2,
+) -> CurveResult<Classification<bool>> {
+    let exact = &CurveContext::STRICT;
+    let sign = |polynomial: &BivariatePolynomial| {
+        signed_bivariate_at_parameter_pair(polynomial, cusp_parameter, other_parameter, exact)
+    };
+    let rational_sign = match sign(rational)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let first_sign = match sign(first_radical)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let second_sign = match sign(second_radical)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    for radicand in [first_radicand, second_radicand] {
+        match sign(radicand)? {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero | RealSign::Negative) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+
+    let signs = [rational_sign, first_sign, second_sign];
+    let mut nonzero = [0_usize; 3];
+    let mut nonzero_count = 0_usize;
+    for (index, sign) in signs.into_iter().enumerate() {
+        if sign != RealSign::Zero {
+            nonzero[nonzero_count] = index;
+            nonzero_count += 1;
+        }
+    }
+    match nonzero_count {
+        0 => return Ok(Classification::Decided(true)),
+        1 => return Ok(Classification::Decided(false)),
+        2 => {
+            let first = nonzero[0];
+            let second = nonzero[1];
+            if signs[first] == signs[second] {
+                return Ok(Classification::Decided(false));
+            }
+        }
+        3 if rational_sign == first_sign && first_sign == second_sign => {
+            return Ok(Classification::Decided(false));
+        }
+        3 => {}
+        _ => unreachable!("the radical sum has exactly three terms"),
+    }
+
+    // Multiplication by both positive square roots changes
+    //
+    //     A + B/sqrt(S) + C/sqrt(T)
+    //
+    // into X+Y+Z, where X=A*sqrt(S*T), Y=B*sqrt(T), and
+    // Z=C*sqrt(S). Their signs are the coefficient signs above and their
+    // squares are ordinary bivariate polynomials. Exact cancellation of two
+    // terms is equality of their squares with opposite signs. With three
+    // terms, isolate the uniquely signed term L from the two same-signed
+    // terms M,N and certify
+    //
+    //     D=L^2-M^2-N^2 > 0,   D^2=4*M^2*N^2.
+    //
+    // The sign precondition rejects every conjugate introduced by squaring.
+    let square = |index| match index {
+        0 => bivariate_multiply(
+            &bivariate_multiply(rational, rational),
+            &bivariate_multiply(first_radicand, second_radicand),
+        ),
+        1 => bivariate_multiply(
+            &bivariate_multiply(first_radical, first_radical),
+            second_radicand,
+        ),
+        2 => bivariate_multiply(
+            &bivariate_multiply(second_radical, second_radical),
+            first_radicand,
+        ),
+        _ => unreachable!("the radical sum has exactly three terms"),
+    };
+    if nonzero_count == 2 {
+        return Ok(
+            match sign(&bivariate_subtract(
+                &square(nonzero[0]),
+                &square(nonzero[1]),
+            ))? {
+                Classification::Decided(RealSign::Zero) => Classification::Decided(true),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    Classification::Decided(false)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        );
+    }
+    let squares = [square(0), square(1), square(2)];
+    let odd = if rational_sign != first_sign && rational_sign != second_sign {
+        0
+    } else if first_sign != rational_sign && first_sign != second_sign {
+        1
+    } else {
+        2
+    };
+    let [first_same, second_same] = match odd {
+        0 => [1, 2],
+        1 => [0, 2],
+        2 => [0, 1],
+        _ => unreachable!(),
+    };
+    let magnitude_difference = bivariate_subtract(
+        &bivariate_subtract(&squares[odd], &squares[first_same]),
+        &squares[second_same],
+    );
+    match sign(&magnitude_difference)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Zero | RealSign::Negative) => {
+            return Ok(Classification::Decided(false));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let conjugate_residual = bivariate_subtract(
+        &bivariate_multiply(&magnitude_difference, &magnitude_difference),
+        &bivariate_scale(
+            bivariate_multiply(&squares[first_same], &squares[second_same]),
+            &Real::from(4_i8),
+        ),
+    );
+    Ok(match sign(&conjugate_residual)? {
+        Classification::Decided(RealSign::Zero) => Classification::Decided(true),
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+            Classification::Decided(false)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
+}
+
+#[cfg(feature = "predicates")]
+fn parallel_parameters_are_complementary_at_cut(
+    first: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
+    second: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
+    shared_parameter: &BezierParameter2,
+    orientation: RationalBezierOverlapOrientation2,
+    construction_policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if first.data.policy != *construction_policy || second.data.policy != *construction_policy {
+        return Err(CurveError::Topology(
+            "parallel cusp diameter comparison used a different predicate policy".into(),
+        ));
+    }
+
+    // This relation creates reusable axis evidence, so every equality is
+    // proved under STRICT even when the enclosing construction was authored
+    // with APPROXIMATE_512. The construction policy above validates the
+    // retained maps; it is not permission to turn a terminal equality into a
+    // cardinal chord certificate.
+    let exact = &CurveContext::STRICT;
+    match first
+        .data
+        .cusp_parameter
+        .same_value(&second.data.cusp_parameter, exact)?
+    {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Ok(Classification::Decided(false)),
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    // Each directed diameter coordinate has the form
+    //
+    //     (A + B/sqrt(S)) / D,       D > 0.
+    //
+    // Cross-multiply the positive denominators. Equal speed roots reduce to
+    // the cheaper two-term radical signer; otherwise the exact two-radical
+    // norm identity below rejects every conjugate introduced by squaring. A
+    // zero sum is precisely the unit-complement relation on the selected
+    // semicircle.
+    let second_speed_squared =
+        bivariate_orient_second_parameter(&second.data.speed_squared, orientation);
+    let second_radius_squared_denominator =
+        bivariate_orient_second_parameter(&second.data.radius_squared_denominator, orientation);
+    let second_diameter_rational =
+        bivariate_orient_second_parameter(&second.data.diameter_side.rational, orientation);
+    let second_diameter_radical =
+        bivariate_orient_second_parameter(&second.data.diameter_side.radical, orientation);
+    let common_denominator =
+        first.data.radius_squared_denominator == *second_radius_squared_denominator;
+    let rational = if common_denominator {
+        bivariate_add(
+            &first.data.diameter_side.rational,
+            second_diameter_rational.as_ref(),
+        )
+    } else {
+        bivariate_add(
+            &bivariate_multiply(
+                &first.data.diameter_side.rational,
+                second_radius_squared_denominator.as_ref(),
+            ),
+            &bivariate_multiply(
+                second_diameter_rational.as_ref(),
+                &first.data.radius_squared_denominator,
+            ),
+        )
+    };
+    let first_radical = if common_denominator {
+        Cow::Borrowed(&first.data.diameter_side.radical)
+    } else {
+        Cow::Owned(bivariate_multiply(
+            &first.data.diameter_side.radical,
+            second_radius_squared_denominator.as_ref(),
+        ))
+    };
+    let second_radical = if common_denominator {
+        Cow::Borrowed(second_diameter_radical.as_ref())
+    } else {
+        Cow::Owned(bivariate_multiply(
+            second_diameter_radical.as_ref(),
+            &first.data.radius_squared_denominator,
+        ))
+    };
+    let speeds_equal = first.data.speed_squared == *second_speed_squared || {
+        let speed_difference =
+            bivariate_subtract(&first.data.speed_squared, second_speed_squared.as_ref());
+        matches!(
+            signed_bivariate_at_parameter_pair(
+                &speed_difference,
+                &first.data.cusp_parameter,
+                shared_parameter,
+                exact,
+            )?,
+            Classification::Decided(RealSign::Zero)
+        )
+    };
+    if speeds_equal {
+        let expression = BezierAlgebraicCuspTwoTermExpression2 {
+            rational,
+            radical: bivariate_add(first_radical.as_ref(), second_radical.as_ref()),
+        };
+        return Ok(
+            match algebraic_cusp_independent_radical_sum_sign(
+                &expression,
+                &first.data.speed_squared,
+                &first.data.cusp_parameter,
+                shared_parameter,
+                exact,
+            )? {
+                Classification::Decided(RealSign::Zero) => Classification::Decided(true),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    Classification::Decided(false)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        );
+    }
+    algebraic_cusp_independent_two_radical_sum_is_zero(
+        &rational,
+        first_radical.as_ref(),
+        &first.data.speed_squared,
+        second_radical.as_ref(),
+        second_speed_squared.as_ref(),
+        &first.data.cusp_parameter,
+        shared_parameter,
+    )
+}
+
+#[cfg(feature = "predicates")]
 fn rational_parameters_are_complementary_at_cut(
     first: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     second: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
@@ -1530,25 +1816,22 @@ fn rational_parallel_diameter_relation_at_cut(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    let orient = |polynomial: &BivariatePolynomial| {
-        if orientation == RationalBezierOverlapOrientation2::Same {
-            polynomial.clone()
-        } else {
-            bivariate_complement_second_parameter(polynomial)
-        }
-    };
-    let parallel_diameter_rational = orient(&parallel.data.diameter_side.rational);
-    let parallel_diameter_radical = orient(&parallel.data.diameter_side.radical);
-    let parallel_radius_squared_denominator = orient(&parallel.data.radius_squared_denominator);
-    let parallel_speed_squared = orient(&parallel.data.speed_squared);
+    let parallel_diameter_rational =
+        bivariate_orient_second_parameter(&parallel.data.diameter_side.rational, orientation);
+    let parallel_diameter_radical =
+        bivariate_orient_second_parameter(&parallel.data.diameter_side.radical, orientation);
+    let parallel_radius_squared_denominator =
+        bivariate_orient_second_parameter(&parallel.data.radius_squared_denominator, orientation);
+    let parallel_speed_squared =
+        bivariate_orient_second_parameter(&parallel.data.speed_squared, orientation);
 
     let parallel_term = bivariate_multiply(
-        &parallel_diameter_rational,
+        parallel_diameter_rational.as_ref(),
         &rational.data.radius_squared_denominator,
     );
     let rational_term = bivariate_multiply(
         &rational.data.diameter_side,
-        &parallel_radius_squared_denominator,
+        parallel_radius_squared_denominator.as_ref(),
     );
     let rational_term = if opposite {
         bivariate_add(&parallel_term, &rational_term)
@@ -1556,7 +1839,7 @@ fn rational_parallel_diameter_relation_at_cut(
         bivariate_subtract(&parallel_term, &rational_term)
     };
     let radical_term = bivariate_multiply(
-        &parallel_diameter_radical,
+        parallel_diameter_radical.as_ref(),
         &rational.data.radius_squared_denominator,
     );
     let expression = BezierAlgebraicCuspTwoTermExpression2 {
@@ -1566,7 +1849,7 @@ fn rational_parallel_diameter_relation_at_cut(
     Ok(
         match algebraic_cusp_independent_radical_sum_sign(
             &expression,
-            &parallel_speed_squared,
+            parallel_speed_squared.as_ref(),
             &rational.data.cusp_parameter,
             rational_parameter,
             policy,
@@ -1578,6 +1861,17 @@ fn rational_parallel_diameter_relation_at_cut(
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         },
     )
+}
+
+fn bivariate_orient_second_parameter<'a>(
+    polynomial: &'a BivariatePolynomial,
+    orientation: RationalBezierOverlapOrientation2,
+) -> Cow<'a, BivariatePolynomial> {
+    if orientation == RationalBezierOverlapOrientation2::Same {
+        Cow::Borrowed(polynomial)
+    } else {
+        Cow::Owned(bivariate_complement_second_parameter(polynomial))
+    }
 }
 
 fn bivariate_complement_second_parameter(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
@@ -2590,6 +2884,58 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 second_map,
                 &first_contact.other_parameter,
                 policy,
+            );
+        }
+        if let (
+            Self::Parallel {
+                map: first_map,
+                contact: first_contact,
+            },
+            Self::Parallel {
+                map: second_map,
+                contact: second_contact,
+            },
+        ) = (self, other)
+        {
+            let mut uncertainty = None;
+            for orientation in [
+                RationalBezierOverlapOrientation2::Same,
+                RationalBezierOverlapOrientation2::Reversed,
+            ] {
+                let second_parameter = if orientation == RationalBezierOverlapOrientation2::Same {
+                    second_contact.parallel_parameter.clone()
+                } else {
+                    second_contact.parallel_parameter.unit_complement()
+                };
+                match first_contact
+                    .parallel_parameter
+                    .same_value(&second_parameter, &CurveContext::STRICT)?
+                {
+                    Classification::Decided(true) => {
+                        match parallel_parameters_are_complementary_at_cut(
+                            first_map,
+                            second_map,
+                            &first_contact.parallel_parameter,
+                            orientation,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {
+                                return Ok(Classification::Decided(true));
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                uncertainty.get_or_insert(reason);
+                            }
+                        }
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        uncertainty.get_or_insert(reason);
+                    }
+                }
+            }
+            return Ok(
+                uncertainty.map_or(Classification::Decided(false), Classification::Uncertain)
             );
         }
         let (rational_map, rational_parameter, parallel_map, parallel_parameter) =
@@ -11771,6 +12117,32 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         ))
     }
 
+    /// Returns the exact unit-complement relation for two independently
+    /// mapped analytic parallel cuts. Other parameter representations do not
+    /// participate in this specialized certificate.
+    #[cfg(feature = "predicates")]
+    fn parallel_complementary_to(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
+            return Ok(None);
+        };
+        if !matches!(
+            (first.as_ref(), second.as_ref()),
+            (
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. },
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
+            )
+        ) {
+            return Ok(None);
+        }
+        Ok(Some(first.is_complementary_to(second, policy)?))
+    }
+
     pub(crate) fn order_to_real(
         &self,
         parameter: &Real,
@@ -11884,6 +12256,16 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             self.correlated_chord_rational_same_value(other, policy)?
         {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        #[cfg(feature = "predicates")]
+        if let Some(Classification::Decided(true)) =
+            self.parallel_complementary_to(other, policy)?
+        {
+            // For v=1-u, ordering u against v is exactly ordering u against
+            // 1/2. This keeps independently parameterized coincident
+            // analytic carriers out of a redundant two-map bracket replay.
+            let half = (Real::one() / Real::from(2_i8))?;
+            return self.order_to_real(&half, policy);
         }
         if let Self::Exact(parameter) = other {
             return self.order_to_real(parameter, policy);
@@ -21731,7 +22113,20 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         reversed: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        match start.cmp_by_refinement(&end, policy)? {
+        #[cfg(feature = "predicates")]
+        let parallel_complement = start.parallel_complementary_to(&end, policy)?;
+        #[cfg(not(feature = "predicates"))]
+        let parallel_complement = None::<Classification<bool>>;
+        let parameter_order = if matches!(parallel_complement, Some(Classification::Decided(true)))
+        {
+            // For end=1-start, start<end is exactly start<1/2. Retain the
+            // complement result for the unit-range proof below instead of
+            // reconstructing its two-radical certificate twice.
+            start.order_to_real(&(Real::one() / Real::from(2_i8))?, policy)?
+        } else {
+            start.cmp_by_refinement(&end, policy)?
+        };
+        match parameter_order {
             Classification::Decided(std::cmp::Ordering::Less) => {}
             Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
                 return Err(CurveError::InvalidBezierRange);
@@ -21740,19 +22135,31 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        for (boundary, endpoint, invalid) in [
-            (&start, Real::zero(), std::cmp::Ordering::Less),
-            (&end, Real::one(), std::cmp::Ordering::Greater),
-        ] {
-            match boundary.order_to_real(&endpoint, policy)? {
-                Classification::Decided(order) if order == invalid => {
-                    return Err(CurveError::InvalidBezierRange);
-                }
-                Classification::Decided(_) => {}
+        let start_order = match start.order_to_real(&Real::zero(), policy)? {
+            Classification::Decided(std::cmp::Ordering::Less) => {
+                return Err(CurveError::InvalidBezierRange);
+            }
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end_order = if matches!(parallel_complement, Some(Classification::Decided(true))) {
+            // If end=1-start, comparing end with 1 is exactly the reverse of
+            // comparing start with 0. Reuse the strict pair certificate rather
+            // than replaying a differently gauged analytic carrier to the
+            // terminal refinement bound.
+            start_order.reverse()
+        } else {
+            match end.order_to_real(&Real::one(), policy)? {
+                Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
+        };
+        if end_order == std::cmp::Ordering::Greater {
+            return Err(CurveError::InvalidBezierRange);
         }
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
@@ -41439,6 +41846,301 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new()),
                 ),
             );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn independent_two_radical_zero_rejects_squared_conjugate() {
+        let constant = |numerator: i8, denominator: i8| {
+            BivariatePolynomial::new(vec![vec![
+                (Real::from(numerator) / Real::from(denominator)).unwrap(),
+            ]])
+        };
+        let parameter = BezierParameter2::Exact(Real::zero());
+        let first_radicand = constant(4, 1);
+        let second_radicand = constant(9, 1);
+        let decide = |rational: BivariatePolynomial,
+                      first_radical: BivariatePolynomial,
+                      second_radical: BivariatePolynomial| {
+            algebraic_cusp_independent_two_radical_sum_is_zero(
+                &rational,
+                &first_radical,
+                &first_radicand,
+                &second_radical,
+                &second_radicand,
+                &parameter,
+                &parameter,
+            )
+            .unwrap()
+        };
+
+        // -1 + 1/sqrt(4) + (3/2)/sqrt(9) = 0.
+        assert_eq!(
+            decide(constant(-1, 1), constant(1, 1), constant(3, 2)),
+            Classification::Decided(true),
+        );
+        // After multiplication by sqrt(4*9), the magnitudes are -2, 3,
+        // and 1. The squared norm residual vanishes for 2=3-1, but the
+        // unsquared expression is nonzero; the D>0 guard must reject it.
+        assert_eq!(
+            decide(constant(-1, 3), constant(1, 1), constant(1, 2)),
+            Classification::Decided(false),
+        );
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_operation(
+                &policy,
+                |construction_policy| -> CurveResult<()> {
+                    let policy = *construction_policy;
+                    let semicircle =
+                        synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+                    let quarter_source = |x: i8| {
+                        RationalBezier2::from(
+                            RationalQuadraticBezier2::try_new(
+                                Point2::new(Real::from(2_i8 * x), Real::zero()),
+                                Point2::new(Real::from(2_i8 * x), Real::from(2_i8)),
+                                Point2::new(Real::zero(), Real::from(2_i8)),
+                                Real::one(),
+                                Real::one(),
+                                Real::from(2_i8),
+                            )
+                            .unwrap(),
+                        )
+                    };
+                    let right = quarter_source(1).parallel_left(Real::one()).unwrap();
+                    let left_source = quarter_source(-1);
+                    // Multiplying the reflected homogeneous curve by the
+                    // positive gauge 1+t preserves its parameterized points
+                    // but changes the tangent-numerator speed square. This
+                    // forces the general two-radical complement proof.
+                    let left_gauged = RationalBezier2::try_new_with_implicit_quadratic_conic(
+                        vec![
+                            Point2::new(Real::from(-2_i8), Real::zero()),
+                            Point2::new(Real::from(-2_i8), Real::one()),
+                            Point2::new(
+                                (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
+                                Real::from(2_i8),
+                            ),
+                            Point2::new(Real::zero(), Real::from(2_i8)),
+                        ],
+                        vec![
+                            Real::one(),
+                            (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
+                            Real::from(2_i8),
+                            Real::from(4_i8),
+                        ],
+                        Arc::new([
+                            Real::one(),
+                            Real::zero(),
+                            Real::one(),
+                            Real::zero(),
+                            Real::zero(),
+                            Real::from(-4_i8),
+                        ]),
+                        left_source.retained_circular_conic().cloned(),
+                    )
+                    .unwrap();
+                    let left = left_gauged.parallel_left(Real::from(-1_i8)).unwrap();
+                    assert!(right.data.certified_ph_offset.set(None).is_ok());
+                    assert!(left.data.certified_ph_offset.set(None).is_ok());
+                    let native_cut = algebraic_parameter(vec![
+                        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                        Real::zero(),
+                        Real::one(),
+                    ]);
+                    let mapped_cut = |parallel: &BezierParallel2, native_cut: &BezierParameter2| {
+                        let Classification::Decided(
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                        ) = semicircle
+                            .parallel_intersections(parallel, &policy)
+                            .unwrap()
+                        else {
+                            panic!("the analytic quarter must overlap the selected circle");
+                        };
+                        let [overlap] = overlaps.as_slice() else {
+                            panic!("the analytic quarter must retain one selected overlap");
+                        };
+                        let Classification::Decided(cut) = overlap
+                            .cusp_parameter_for_other(native_cut, &policy)
+                            .unwrap()
+                        else {
+                            panic!("the nonrational analytic cut must remain mapped");
+                        };
+                        cut
+                    };
+                    let right_cut = mapped_cut(&right, &native_cut);
+                    let left_cut = mapped_cut(&left, &native_cut);
+                    let reversed_left = left.reversed();
+                    assert!(reversed_left.data.certified_ph_offset.set(None).is_ok());
+                    let reversed_left_cut =
+                        mapped_cut(&reversed_left, &native_cut.unit_complement());
+                    fn mapped_data(
+                        cut: &BezierAlgebraicCuspSemicircleParameter2,
+                    ) -> &BezierAlgebraicCuspSemicircleMappedParameterData2 {
+                        let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = cut else {
+                            panic!("the nonrational analytic cut must retain mapped evidence");
+                        };
+                        data.as_ref()
+                    }
+                    assert_eq!(
+                        mapped_data(&right_cut)
+                            .is_complementary_to(mapped_data(&left_cut), &policy)
+                            .unwrap(),
+                        Classification::Decided(true),
+                    );
+                    assert_eq!(
+                        mapped_data(&right_cut)
+                            .is_complementary_to(mapped_data(&reversed_left_cut), &policy)
+                            .unwrap(),
+                        Classification::Decided(true),
+                    );
+                    assert_eq!(
+                        mapped_data(&right_cut)
+                            .is_complementary_to(mapped_data(&right_cut), &policy)
+                            .unwrap(),
+                        Classification::Decided(false),
+                    );
+                    let half = (Real::one() / Real::from(2_i8)).unwrap();
+                    assert_eq!(
+                        right_cut.order_to_real(&half, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                    assert_eq!(
+                        right_cut.order_to_real(&Real::zero(), &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        right_cut.represented_rational_value(&policy).unwrap(),
+                        Classification::Decided(None),
+                    );
+                    assert_eq!(
+                        left_cut.represented_rational_value(&policy).unwrap(),
+                        Classification::Decided(None),
+                    );
+                    let arc = BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        semicircle,
+                        right_cut,
+                        reversed_left_cut,
+                        false,
+                        &policy,
+                    )
+                    .unwrap();
+                    let Classification::Decided(arc) = arc else {
+                        panic!("two analytic cuts must bound one selected-circle cap: {arc:?}");
+                    };
+                    let Classification::Decided(Some(chord_end)) =
+                        arc.endpoint_point_evidence(true, &policy).unwrap()
+                    else {
+                        panic!("the right analytic cut must retain exact point evidence");
+                    };
+                    let Classification::Decided(Some(chord_start)) =
+                        arc.endpoint_point_evidence(false, &policy).unwrap()
+                    else {
+                        panic!("the left analytic cut must retain exact point evidence");
+                    };
+                    for point in [&chord_start, &chord_end] {
+                        let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                            point,
+                        ) = point
+                        else {
+                            panic!("an analytic cut must retain its lazy derived-point carrier");
+                        };
+                        assert!(matches!(
+                            point.conservative_bounds_refined(16, &policy),
+                            Classification::Decided(_)
+                        ));
+                        assert_eq!(
+                            point
+                                .concentric_circle_incidence_sign(arc.semicircle(), &policy)
+                                .unwrap(),
+                            Classification::Decided(Some(RealSign::Zero)),
+                        );
+                    }
+                    let Classification::Decided(chord) =
+                        BezierAlgebraicChord2::try_new(chord_start, chord_end, &policy).unwrap()
+                    else {
+                        panic!("the two analytic cuts must construct an exact chord");
+                    };
+                    let direction = chord.axis_direction(&policy).unwrap();
+                    assert!(
+                        matches!(
+                            direction,
+                            Classification::Decided(Some(
+                                BezierAlgebraicChordAxisDirection2::PositiveX
+                            )),
+                        ),
+                        "two analytic cuts produced {direction:?}",
+                    );
+                    let boundary = CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(arc),
+                            BezierSplitFragment2::AlgebraicChord(chord),
+                        ],
+                        &policy,
+                    )
+                    .unwrap();
+                    let cap = CurveRegion2::try_new_with_loop_topology(
+                        vec![boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![CurveBoundaryInteriorSide2::Left],
+                    )
+                    .unwrap();
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let offset_work = || {
+                        cap.offset(
+                            (Real::one() / Real::from(8_i8)).unwrap(),
+                            &crate::OffsetCornerStyle2::Bevel,
+                            &policy,
+                        )
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let offset = hyperreal::dispatch_trace::with_recording(offset_work);
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let offset = offset_work();
+                    #[cfg(feature = "dispatch-trace")]
+                    let trace = hyperreal::dispatch_trace::take_trace();
+                    let offset = offset.expect("a two-analytic-cut cap must re-offset exactly");
+                    assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
+                    assert!(!offset.value.boundary_loops().is_empty());
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "curve-region-exact-offset-tangent",
+                                "retained-selected-circle-endpoint",
+                            ),
+                            2,
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                "adjacent-endpoint-only",
+                            ),
+                            2,
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                "chord-strictly-inside-disk",
+                            ),
+                            1,
+                        );
+                    }
+                    Ok(())
+                },
+            )
+            .unwrap();
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
         }
     }
 
