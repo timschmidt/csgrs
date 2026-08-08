@@ -2453,6 +2453,11 @@ enum ExactOffsetTangent2 {
         clockwise: bool,
     },
     #[cfg(feature = "predicates")]
+    SelectedCircularEndpoint {
+        fragment: crate::BezierAlgebraicCuspSemicircleFragment2,
+        at_start: bool,
+    },
+    #[cfg(feature = "predicates")]
     ChordContact {
         chord_tangent: (Real, Real),
         circle_cross_chord: RealSign,
@@ -4686,14 +4691,27 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
     }
     let tangent = offset
         .represented_endpoint_tangent(at_start, policy)?
-        .map(|tangent| tangent.map(ExactOffsetTangent2::Vector));
+        .map(|tangent| {
+            Some(tangent.map_or_else(
+                || ExactOffsetTangent2::SelectedCircularEndpoint {
+                    fragment: offset.clone(),
+                    at_start,
+                },
+                ExactOffsetTangent2::Vector,
+            ))
+        });
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
         "curve-region-exact-offset-tangent",
         match &tangent {
+            Classification::Decided(Some(ExactOffsetTangent2::SelectedCircularEndpoint {
+                ..
+            })) => "retained-selected-circle-endpoint",
             Classification::Decided(Some(_)) => "represented-selected-circle-endpoint",
-            Classification::Decided(None) => "unsupported-selected-circle-endpoint",
+            Classification::Decided(None) => {
+                unreachable!("mapped tangents always retain a carrier")
+            }
             Classification::Uncertain(_) => "uncertain-selected-circle-endpoint",
         },
     );
@@ -5771,6 +5789,38 @@ fn exact_offset_tangent_cross_sign(
             .map(exact_sign_reverse),
         #[cfg(feature = "predicates")]
         (
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+            ExactOffsetTangent2::Vector(second),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "selected-circle-endpoint-vector",
+            );
+            match fragment.endpoint_tangent_cross_vector(*at_start, second, policy) {
+                Ok(cross) => cross,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::Vector(first),
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "vector-selected-circle-endpoint",
+            );
+            match fragment.endpoint_tangent_cross_vector(*at_start, first, policy) {
+                Ok(cross) => cross.map(exact_sign_reverse),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
             ExactOffsetTangent2::ChordContact {
                 chord_tangent,
                 circle_cross_chord,
@@ -5810,9 +5860,19 @@ fn exact_offset_tangent_cross_sign(
         #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::CircularPoint { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::ChordContact { .. })
-        | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. }) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        }
+        | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. })
+        | (
+            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+        )
+        | (
+            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+            ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },
+        )
+        | (
+            ExactOffsetTangent2::CircularPoint { .. } | ExactOffsetTangent2::ChordContact { .. },
+            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
         #[cfg(not(feature = "predicates"))]
         (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
@@ -5845,8 +5905,33 @@ fn exact_offset_tangents_are_opposite(
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
+        #[cfg(feature = "predicates")]
+        (
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+            ExactOffsetTangent2::Vector(vector),
+        )
+        | (
+            ExactOffsetTangent2::Vector(vector),
+            ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
+        ) => {
+            let perpendicular = (-vector.1.clone(), vector.0.clone());
+            match fragment.endpoint_tangent_cross_vector(*at_start, &perpendicular, policy) {
+                Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
+                Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
+                Ok(Classification::Decided(RealSign::Zero)) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
         (ExactOffsetTangent2::CircularPoint { .. }, _)
         | (_, ExactOffsetTangent2::CircularPoint { .. }) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        #[cfg(feature = "predicates")]
+        (ExactOffsetTangent2::SelectedCircularEndpoint { .. }, _)
+        | (_, ExactOffsetTangent2::SelectedCircularEndpoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
         #[cfg(feature = "predicates")]
