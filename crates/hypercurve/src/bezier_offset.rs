@@ -45252,6 +45252,184 @@ mod conversion_tests {
         );
     }
 
+    /// Manual matched benchmark for the exact circle-pair mapped lens.
+    ///
+    /// Run with `--release --all-features -- --ignored --nocapture` and select
+    /// `construct`, `exact_offset`, `prebuilt_exact_offset`, their `disabled`
+    /// controls, or `cavalier_f64_offset` through
+    /// `HYPERCURVE_PAIR_MAPPED_LENS_BENCH_MODE`.
+    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[test]
+    #[ignore = "manual performance checkpoint driver"]
+    fn benchmark_pair_mapped_lens_offset_driver() {
+        use cavalier_contours::polyline::{PlineSource, PlineSourceMut as _, Polyline};
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        fn decided<T>(classification: Classification<T>) -> Option<T> {
+            match classification {
+                Classification::Decided(value) => Some(value),
+                Classification::Uncertain(_) => None,
+            }
+        }
+        let policy = CurveContext::STRICT;
+        let lens = || -> Option<CurveRegion2> {
+            let first_upper =
+                synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let second_upper =
+                synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                    .transform_similarity(
+                        &Similarity2::try_from_real_affine(
+                            Real::one(),
+                            Real::zero(),
+                            Real::zero(),
+                            Real::one(),
+                            Real::from(6_i8),
+                            Real::zero(),
+                        )
+                        .ok()?,
+                    )
+                    .ok()?;
+            let first_lower = first_upper.complementary_half();
+            let second_lower = second_upper.complementary_half();
+            let (
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts: top_contacts,
+                    parameter_map: top_map,
+                },
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts: bottom_contacts,
+                    parameter_map: bottom_map,
+                },
+            ) = (
+                decided(
+                    first_upper
+                        .pair_intersections(&second_upper, &policy)
+                        .ok()?,
+                )?,
+                decided(
+                    first_lower
+                        .pair_intersections(&second_lower, &policy)
+                        .ok()?,
+                )?,
+            )
+            else {
+                return None;
+            };
+            let [top_contact] = top_contacts.as_slice() else {
+                return None;
+            };
+            let [bottom_contact] = bottom_contacts.as_slice() else {
+                return None;
+            };
+            let top_first = top_map.first_contact_parameter(top_contact);
+            let top_second = top_map.second_contact_parameter(top_contact);
+            let bottom_first = bottom_map.first_contact_parameter(bottom_contact);
+            let bottom_second = bottom_map.second_contact_parameter(bottom_contact);
+            let fragment = |semicircle, start, end| {
+                decided(
+                    BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        semicircle, start, end, false, &policy,
+                    )
+                    .ok()?,
+                )
+            };
+            let fragments = vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment(
+                    first_lower,
+                    bottom_first,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                )?),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment(
+                    first_upper,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    top_first,
+                )?),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment(
+                    second_upper,
+                    top_second,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                )?),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment(
+                    second_lower,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    bottom_second,
+                )?),
+            ];
+            let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).ok()?;
+            CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .ok()
+        };
+        let prebuilt = lens();
+        let distance = (Real::one() / Real::from(8_i8)).unwrap();
+        let offset = |region: &CurveRegion2| {
+            region
+                .offset(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
+                .ok()
+                .map(|result| {
+                    result
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .map(|boundary| boundary.fragments().len())
+                        .sum()
+                })
+        };
+
+        let sqrt_three = 3.0_f64.sqrt();
+        let mut cavalier = Polyline::new_closed();
+        cavalier.add(0.5, -sqrt_three / 2.0, 1.0 / sqrt_three);
+        cavalier.add(0.5, sqrt_three / 2.0, 1.0 / sqrt_three);
+
+        let mode = std::env::var("HYPERCURVE_PAIR_MAPPED_LENS_BENCH_MODE")
+            .unwrap_or_else(|_| "exact_offset".into());
+        let iterations = std::env::var("HYPERCURVE_PAIR_MAPPED_LENS_BENCH_ITERS")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(32);
+        let warmups = std::env::var("HYPERCURVE_PAIR_MAPPED_LENS_BENCH_WARMUP")
+            .ok()
+            .map(|value| value.parse::<u64>().unwrap())
+            .unwrap_or(1);
+        assert!(iterations > 0);
+        let operation = || match mode.as_str() {
+            "construct" => lens().map_or(0, |region| region.boundary_loops().len()),
+            "exact_offset" => lens().as_ref().and_then(offset).unwrap_or(0),
+            "prebuilt_exact_offset" => prebuilt.as_ref().and_then(offset).unwrap_or(0),
+            "construct_disabled" | "disabled" | "prebuilt_disabled" => 1,
+            "cavalier_f64_offset" => cavalier
+                .parallel_offset(black_box(-0.125))
+                .iter()
+                .map(PlineSource::vertex_count)
+                .sum(),
+            _ => panic!("unknown HYPERCURVE_PAIR_MAPPED_LENS_BENCH_MODE={mode:?}"),
+        };
+        let preflight = operation();
+        let complete = matches!(
+            mode.as_str(),
+            "construct_disabled" | "disabled" | "prebuilt_disabled"
+        ) || preflight != 0;
+        for _ in 0..warmups {
+            black_box(operation());
+        }
+        let started = Instant::now();
+        let mut checksum = 0_usize;
+        for _ in 0..iterations {
+            checksum ^= black_box(operation());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "pair_mapped_lens_offset mode={mode} complete={complete} iterations={iterations} elapsed_ns={} ns_per_iter={:.3} checksum={checksum}",
+            elapsed.as_nanos(),
+            elapsed.as_secs_f64() * 1.0e9 / iterations as f64,
+        );
+    }
+
     #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
