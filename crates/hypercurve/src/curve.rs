@@ -7743,15 +7743,36 @@ fn bezier_parallel_source_point_evidence(
             .map(Into::into);
     }
     let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;
-    crate::rational_bezier_general::exact_contact_point_evidence(
+    if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
         &rational_source,
         parameter,
         policy,
     )
     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    .ok_or_else(|| {
-        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-    })
+    {
+        return Ok(point);
+    }
+    #[cfg(feature = "predicates")]
+    {
+        // A selected fiber can have non-rational coefficients even though the
+        // source curve is rational. Keep the source point in the same procedural
+        // normalized-frame carrier used by analytic parallels instead of rejecting
+        // an exact parameter merely because a one-field coordinate image was not
+        // profitable to materialize.
+        Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            crate::BezierAnalyticParallelPoint2::new(
+                parallel.with_distance(Real::zero()),
+                parameter.clone(),
+                policy,
+            ),
+        ))
+    }
+    #[cfg(not(feature = "predicates"))]
+    Err(ExactCurveError::blocked(
+        operation,
+        family,
+        crate::UncertaintyReason::Unsupported,
+    ))
 }
 
 fn bezier_parallel_rational_source(

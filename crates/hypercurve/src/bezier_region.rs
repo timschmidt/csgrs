@@ -1826,12 +1826,29 @@ fn retained_fragment_endpoint_evidence(
                 }
                 None => None,
             };
+            #[cfg(feature = "predicates")]
+            let analytic_source = source_curve
+                .as_ref()
+                .map(|source_curve| {
+                    match source_curve {
+                        BezierSubcurve2::Quadratic(source) => source.parallel_left(Real::zero()),
+                        BezierSubcurve2::Cubic(source) => source.parallel_left(Real::zero()),
+                        BezierSubcurve2::RationalQuadratic(source) => {
+                            source.parallel_left(Real::zero())
+                        }
+                        BezierSubcurve2::Rational(source) => source.parallel_left(Real::zero()),
+                    }
+                    .map(|parallel| (parallel, parameter.clone()))
+                })
+                .transpose()?;
+            #[cfg(not(feature = "predicates"))]
+            let analytic_source = None;
             Ok(RetainedEndpointEvidence {
                 point,
                 retained_point,
                 algebraic,
                 source,
-                analytic_source: None,
+                analytic_source,
                 algebraic_cusp_source: None,
             })
         }
@@ -1987,8 +2004,10 @@ fn retained_endpoint_equality(
         return RetainedEndpointEquality::Equal;
     }
 
-    if let (Some(left), Some(right)) = (&left.analytic_source, &right.analytic_source)
-        && left == right
+    if let (Some((left_parallel, left_parameter)), Some((right_parallel, right_parameter))) =
+        (&left.analytic_source, &right.analytic_source)
+        && left_parameter == right_parameter
+        && left_parallel.shares_parameterized_curve_evidence(right_parallel)
     {
         return RetainedEndpointEquality::Equal;
     }
@@ -8468,12 +8487,7 @@ impl CurveRegion2 {
                 CurveError::InvalidCurveRange,
             ));
         }
-        if fragment_count < 2
-            || boundary_loop
-                .fragments()
-                .iter()
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
-        {
+        if fragment_count < 2 {
             return Ok(None);
         }
         let previous_index = if vertex_index == 0 {
@@ -8651,7 +8665,7 @@ impl CurveRegion2 {
         other_reversed: bool,
         fillet_clockwise: bool,
         policy: &CurveContext,
-    ) -> ExactCurveResult<(u8, RealSign)> {
+    ) -> ExactCurveResult<(u8, RealSign, RealSign)> {
         let (tangent_cross, tangent_dot) = if let Some(relation) = frame.anchor_evidence.as_ref() {
             match (relation.cross, relation.dot) {
                 (Some(cross), dot) => (cross, dot.unwrap_or(RealSign::Zero)),
@@ -8720,7 +8734,7 @@ impl CurveRegion2 {
                 ));
             }
         };
-        Ok((sweep_halves, tangent_cross))
+        Ok((sweep_halves, tangent_cross, tangent_dot))
     }
 
     #[cfg(feature = "predicates")]
@@ -8737,7 +8751,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         other_cut.parameter = CurveRegionParameter2::from_bezier(other_parameter.clone());
-        let (sweep_halves, tangent_cross) = Self::retained_fillet_sweep(
+        let (sweep_halves, tangent_cross, tangent_dot) = Self::retained_fillet_sweep(
             frame,
             other_parallel,
             &other_parameter,
@@ -8752,6 +8766,64 @@ impl CurveRegion2 {
         };
         let fillet_parameter = if tangent_cross == RealSign::Zero {
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+        } else if terminal_circle.uses_selected_parallel_normal_frame() {
+            let derivative_scale = match other_parallel
+                .parallel_derivative_scale_sign(&other_parameter, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::RationalBezier,
+                        UncertaintyReason::Boundary,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    ));
+                }
+            };
+            let traversal_agrees_with_source =
+                (derivative_scale == RealSign::Positive) != other_reversed;
+            let signed_offset_sign = if fillet_clockwise {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            let other_radial_sign = if traversal_agrees_with_source {
+                exact_sign_reverse(signed_offset_sign)
+            } else {
+                signed_offset_sign
+            };
+            let frame_cross = if frame.anchor_is_previous {
+                tangent_cross
+            } else {
+                exact_sign_reverse(tangent_cross)
+            };
+            match terminal_circle
+                .certified_selected_parallel_contact_parameter(
+                    other_parallel.clone(),
+                    other_parameter.clone(),
+                    other_radial_sign,
+                    frame_cross,
+                    tangent_dot,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    ));
+                }
+            }
         } else {
             let parameter_map = match terminal_circle
                 .parallel_parameter_map(other_parallel, policy)
@@ -8788,11 +8860,19 @@ impl CurveRegion2 {
                 ));
             }
         };
-        anchor_cut.point = RationalBezierIntersectionPointEvidence2::Algebraic(
-            fillet
-                .start_point_image(policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?,
-        );
+        anchor_cut.point = match fillet
+            .start_point_evidence(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
 
         let exact_zero =
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero());
@@ -8962,7 +9042,6 @@ impl CurveRegion2 {
                     center_parameter,
                     policy: frame_policy,
                 } => {
-                    let _ = (center_support, center_parameter);
                     if frame_policy != policy {
                         return Err(curve_region_edit_error(
                             CurveOperation2::Fillet,
@@ -8971,7 +9050,13 @@ impl CurveRegion2 {
                             ),
                         ));
                     }
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                        center_support.clone(),
+                        center_parameter.clone(),
+                        frame.radial_distance.clone(),
+                        fillet_clockwise,
+                        policy,
+                    )
                 }
             }
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))? {
@@ -9218,11 +9303,19 @@ impl CurveRegion2 {
                 }
             };
             other_cut.point = shared_point;
-            anchor_cut.point = RationalBezierIntersectionPointEvidence2::Algebraic(
-                fillet
-                    .start_point_image(policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?,
-            );
+            anchor_cut.point = match fillet
+                .start_point_evidence(policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            };
 
             let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
                 fillet,

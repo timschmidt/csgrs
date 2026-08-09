@@ -3738,6 +3738,58 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 2), p(-1, 0), p(0, 0))),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(2, 2))),
+        Curve2::from(LineSeg2::try_new(p(2, 2), p(-2, 2)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+            .unwrap()
+            .into_value();
+        let result = source
+            .fillet_loop_vertex_by_radius(0, 1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .expect("a regular non-PH Bezier pair must retain its exact fillet");
+        let CurveCornerSolutions2::Unique(filleted) = result.into_value() else {
+            panic!("the convex non-PH Bezier corner must have one fillet");
+        };
+        assert_eq!(
+            filleted.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .filter(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+                .count(),
+            1,
+        );
+        assert_eq!(
+            certified(filleted.classify_point(&p(0, 1), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+        assert_eq!(
+            certified(filleted.classify_point(&p(0, 0), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Outside),
+        );
+        let distant =
+            CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
+                .unwrap()
+                .into_value();
+        let batch = filleted
+            .boolean_regions(&distant, &policy)
+            .expect("the general selected-circle fillet must re-enter the Boolean kernel")
+            .into_value();
+        assert!(batch.intersection().is_empty());
+        assert_eq!(batch.union().boundary_loops().len(), 2);
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = analytic_parallel_cap_region(&policy)
