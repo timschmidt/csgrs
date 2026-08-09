@@ -1,7 +1,8 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurveString2,
-    CurveStringEndpoint2, CurveStringTrimPoint2, LineArcRegion2, LineSeg2, Point2, Real, Segment2,
-    SegmentKindCounts, UncertaintyReason,
+    BezierSplitFragment2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
+    CurveError, CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2,
+    CurveStringTrimPoint2, ExactCurveError, LineSeg2, Point2, Real, Segment2, SegmentKindCounts,
+    UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -20,16 +21,23 @@ fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
-fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> LineArcRegion2 {
-    LineArcRegion2::from_material_contours(vec![
-        Contour2::from_bulge_vertices(&[
-            BulgeVertex2::new(p(xmin, ymin), s(0)),
-            BulgeVertex2::new(p(xmax, ymin), s(0)),
-            BulgeVertex2::new(p(xmax, ymax), s(0)),
-            BulgeVertex2::new(p(xmin, ymax), s(0)),
-        ])
-        .unwrap(),
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
+    Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(p(xmin, ymin), s(0)),
+        BulgeVertex2::new(p(xmax, ymin), s(0)),
+        BulgeVertex2::new(p(xmax, ymax), s(0)),
+        BulgeVertex2::new(p(xmin, ymax), s(0)),
     ])
+    .unwrap()
+}
+
+fn rectangle_region(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> CurveRegion2 {
+    CurveRegion2::try_from_native_material_contours(
+        vec![rectangle(xmin, ymin, xmax, ymax)],
+        &policy(),
+    )
+    .unwrap()
+    .into_value()
 }
 
 fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
@@ -38,6 +46,18 @@ fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
     };
     assert_eq!(line.start(), &start);
     assert_eq!(line.end(), &end);
+}
+
+fn assert_trim_path_line(path: &CurvePathRegionTrim2, start: Point2, end: Point2) {
+    let [fragment] = path.fragments() else {
+        panic!("expected one retained fragment");
+    };
+    let BezierSplitFragment2::Materialized { curve, .. } = fragment.trim_fragment().fragment()
+    else {
+        panic!("expected a materialized retained line");
+    };
+    assert_eq!(curve.start(), &start);
+    assert_eq!(curve.end(), &end);
 }
 
 fn policy() -> CurveContext {
@@ -948,37 +968,41 @@ fn curve_string_trim_between_curve_intersections_evidence_overlap_blocker() {
 #[test]
 fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
-    let first = rectangle_region(0, 0, 2, 2);
-    let second = rectangle_region(4, 0, 6, 2);
-    let region = LineArcRegion2::from_material_contours(vec![
-        first.material_contours()[0].clone(),
-        second.material_contours()[0].clone(),
-    ]);
+    let region = CurveRegion2::try_from_native_material_contours(
+        vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
-    let Classification::Decided(trimmed) = curve.trim_inside_region(&region, &policy()).unwrap()
-    else {
-        panic!("disconnected inside windows should materialize");
-    };
+    let trimmed = curve
+        .trim_inside_region(&region, &policy())
+        .unwrap()
+        .into_value();
 
     assert_eq!(trimmed.len(), 2);
-    assert_line(&trimmed[0].segments()[0], p(0, 1), p(2, 1));
-    assert_line(&trimmed[1].segments()[0], p(4, 1), p(6, 1));
+    assert_trim_path_line(&trimmed[0], p(0, 1), p(2, 1));
+    assert_trim_path_line(&trimmed[1], p(4, 1), p(6, 1));
 }
 
 #[test]
 fn curve_string_trim_inside_region_respects_holes() {
-    let material = rectangle_region(0, 0, 10, 4).material_contours()[0].clone();
-    let hole = rectangle_region(4, 0, 6, 4).material_contours()[0].clone();
-    let region = LineArcRegion2::new(vec![material], vec![hole]);
+    let region = CurveRegion2::try_from_native_contours(
+        vec![rectangle(0, 0, 10, 4)],
+        vec![rectangle(4, 0, 6, 4)],
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
     let curve = CurveString2::try_new(vec![line_segment(1, 2, 9, 2)]).unwrap();
 
-    let Classification::Decided(trimmed) = curve.trim_inside_region(&region, &policy()).unwrap()
-    else {
-        panic!("hole trim should materialize");
-    };
+    let trimmed = curve
+        .trim_inside_region(&region, &policy())
+        .unwrap()
+        .into_value();
 
-    assert_line(&trimmed[0].segments()[0], p(1, 2), p(4, 2));
-    assert_line(&trimmed[1].segments()[0], p(6, 2), p(9, 2));
+    assert_trim_path_line(&trimmed[0], p(1, 2), p(4, 2));
+    assert_trim_path_line(&trimmed[1], p(6, 2), p(9, 2));
 }
 
 #[test]
@@ -986,8 +1010,10 @@ fn curve_string_trim_inside_region_evidence_boundary_overlap_blocker() {
     let region = rectangle_region(0, 0, 4, 4);
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
-    assert_eq!(
-        curve.trim_inside_region(&region, &policy()).unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
+    let error = curve.trim_inside_region(&region, &policy()).unwrap_err();
+    assert!(matches!(
+        error,
+        ExactCurveError::Blocked(blocker)
+            if blocker.reason() == UncertaintyReason::Boundary
+    ));
 }

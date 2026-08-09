@@ -12,9 +12,9 @@ use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveContext, CurveError,
-    CurveResult, LineArcIntersection, LineArcOrder, LineArcRegion2, LineLineIntersection, LineSeg2,
-    LineSide, ParamRange, Point2, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
-    UncertaintyReason,
+    CurvePath2, CurvePathRegionTrim2, CurveRegion2, CurveResult, ExactCurveResult,
+    LineArcIntersection, LineLineIntersection, LineSeg2, LineSide, ParamRange, Point2, Segment2,
+    SegmentIntersection, SegmentKind, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -495,21 +495,26 @@ impl CurveString2 {
         self.trim_between_curve_intersection_events(start_events, end_events, policy)
     }
 
-    /// Retains the portions of this open curve string inside a region.
+    /// Retains the maximal connected portions of this open curve string inside a region.
     ///
-    /// This is the first arrangement-style trim-by-region slice. Boundary
-    /// intersections against all material and hole contours are collected with
-    /// exact segment relations, source segments are split at retained
-    /// parameters, and each retained interval is classified by an exact native
-    /// representative. Point hits split intervals; overlaps and undecidable
-    /// segment relations remain explicit blockers because they require a
-    /// higher-order boundary traversal rather than a local interval decision.
+    /// Native segments are promoted to one [`CurvePath2`] and clipped by its
+    /// authoritative all-family kernel. Algebraic boundary contacts remain
+    /// retained exact fragment evidence rather than being coerced into native
+    /// line/arc endpoints.
     pub fn trim_inside_region(
         &self,
-        region: &LineArcRegion2,
+        region: &CurveRegion2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<CurveString2>>> {
-        trim_curve_string_inside_region(self, region, policy)
+    ) -> ExactCurveResult<crate::CurveOutcome<Vec<CurvePathRegionTrim2>>> {
+        let curves = self
+            .segments()
+            .iter()
+            .map(|segment| match segment {
+                Segment2::Line(line) => crate::Curve2::from(line.clone()),
+                Segment2::Arc(arc) => crate::Curve2::from(arc.clone()),
+            })
+            .collect();
+        CurvePath2::try_new(curves)?.trim_inside_region(region, policy)
     }
 
     /// Chamfers one interior native-segment vertex by exact segment parameters.
@@ -1306,393 +1311,10 @@ struct CurveTrimHitExtraction {
     blocker: Option<UncertaintyReason>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-struct RegionTrimSplitPoint2 {
-    trim_point: CurveStringTrimPoint2,
-    point: Point2,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct RegionTrimHit2 {
-    source_segment_index: usize,
-    point: Point2,
-    source_param: Real,
-}
-
 struct CurveStringEndpointPair2 {
     kind: CurveStringLinkKind2,
     distance_squared: Real,
     connection: Classification<bool>,
-}
-
-fn trim_curve_string_inside_region(
-    curve_string: &CurveString2,
-    region: &LineArcRegion2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Vec<CurveString2>>> {
-    let mut boundary_hits = Vec::new();
-    if let Some(blocker) =
-        collect_region_trim_boundary_hits(curve_string, region, policy, &mut boundary_hits)?
-    {
-        return Ok(Classification::Uncertain(blocker));
-    }
-
-    trim_curve_string_inside_region_with_hits(curve_string, boundary_hits, policy, |point| {
-        region.classify_point(point, policy)
-    })
-}
-
-fn trim_curve_string_inside_region_with_hits(
-    curve_string: &CurveString2,
-    boundary_hits: Vec<RegionTrimHit2>,
-    policy: &CurveContext,
-    mut classify_point: impl FnMut(&Point2) -> Classification<RegionPointLocation>,
-) -> CurveResult<Classification<Vec<CurveString2>>> {
-    let mut output_segments: Vec<Vec<Segment2>> = Vec::new();
-    let mut current_segments = Vec::new();
-
-    for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
-        let split_points = match region_trim_split_points_for_segment(
-            source_segment_index,
-            source_segment,
-            &boundary_hits,
-            policy,
-        )? {
-            Classification::Decided(split_points) => split_points,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-
-        for window in split_points.windows(2) {
-            let start = &window[0];
-            let end = &window[1];
-            let source_range =
-                ParamRange::new(start.trim_point.param.clone(), end.trim_point.param.clone());
-            let fragment = match trim_segment_by_point_range(
-                source_segment,
-                &source_range,
-                &start.point,
-                &end.point,
-                policy,
-            )? {
-                SegmentTrimMaterialization::Materialized(fragment) => fragment,
-                SegmentTrimMaterialization::SkippedEmpty => continue,
-                SegmentTrimMaterialization::Unresolved(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-
-            let representative = match fragment.representative_point(policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-
-            let location = match classify_point(&representative) {
-                Classification::Decided(location) => location,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-
-            match location {
-                RegionPointLocation::Inside => {
-                    current_segments.push(fragment);
-                }
-                RegionPointLocation::Outside => {
-                    flush_region_trim_chain(&mut output_segments, &mut current_segments);
-                }
-                RegionPointLocation::Boundary => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-            }
-        }
-    }
-
-    flush_region_trim_chain(&mut output_segments, &mut current_segments);
-    let mut curve_strings = Vec::with_capacity(output_segments.len());
-    for segments in output_segments {
-        curve_strings.push(CurveString2::try_new(segments)?);
-    }
-    Ok(Classification::Decided(curve_strings))
-}
-
-fn collect_region_trim_boundary_hits(
-    curve_string: &CurveString2,
-    region: &LineArcRegion2,
-    policy: &CurveContext,
-    hits: &mut Vec<RegionTrimHit2>,
-) -> CurveResult<Option<UncertaintyReason>> {
-    let source_segment_boxes: Vec<_> = curve_string
-        .segments()
-        .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
-        .collect();
-    for contour in region.material_contours() {
-        if let Some(blocker) = collect_region_trim_contour_hits(
-            curve_string,
-            &source_segment_boxes,
-            contour,
-            policy,
-            hits,
-        )? {
-            return Ok(Some(blocker));
-        }
-    }
-    for contour in region.hole_contours() {
-        if let Some(blocker) = collect_region_trim_contour_hits(
-            curve_string,
-            &source_segment_boxes,
-            contour,
-            policy,
-            hits,
-        )? {
-            return Ok(Some(blocker));
-        }
-    }
-    Ok(None)
-}
-
-fn collect_region_trim_contour_hits(
-    curve_string: &CurveString2,
-    source_segment_boxes: &[Option<crate::Aabb2>],
-    contour: &crate::Contour2,
-    policy: &CurveContext,
-    hits: &mut Vec<RegionTrimHit2>,
-) -> CurveResult<Option<UncertaintyReason>> {
-    let region_segment_boxes: Vec<_> = contour
-        .segments()
-        .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
-        .collect();
-
-    for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
-        for (region_segment_index, region_segment) in contour.segments().iter().enumerate() {
-            if let (Some(Some(source_box)), Some(Some(region_box))) = (
-                source_segment_boxes.get(source_segment_index),
-                region_segment_boxes.get(region_segment_index),
-            ) && aabbs_decided_disjoint(source_box, region_box, policy)
-            {
-                continue;
-            }
-
-            let relation = source_segment.intersect_segment(region_segment, policy)?;
-            if let Some(blocker) = append_region_trim_hits_from_relation(
-                hits,
-                source_segment_index,
-                source_segment,
-                relation,
-                policy,
-            )? {
-                return Ok(Some(blocker));
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn append_region_trim_hits_from_relation(
-    hits: &mut Vec<RegionTrimHit2>,
-    source_segment_index: usize,
-    source_segment: &Segment2,
-    relation: SegmentIntersection,
-    policy: &CurveContext,
-) -> CurveResult<Option<UncertaintyReason>> {
-    match relation {
-        SegmentIntersection::LineLine(LineLineIntersection::None)
-        | SegmentIntersection::LineArc {
-            result: LineArcIntersection::None,
-            ..
-        }
-        | SegmentIntersection::ArcArc(ArcArcIntersection::None) => Ok(None),
-        SegmentIntersection::LineLine(LineLineIntersection::Point { point, a_param, .. }) => {
-            push_region_trim_hit(hits, source_segment_index, point, a_param)
-        }
-        SegmentIntersection::LineArc {
-            result: LineArcIntersection::Point(hit),
-            order,
-        } => match line_arc_region_trim_source_param(source_segment, order, &hit, policy)? {
-            Ok(source_param) => {
-                push_region_trim_hit(hits, source_segment_index, hit.point, source_param)
-            }
-            Err(reason) => Ok(Some(reason)),
-        },
-        SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
-            match region_trim_source_param(source_segment, &hit.point, policy)? {
-                Ok(source_param) => {
-                    push_region_trim_hit(hits, source_segment_index, hit.point, source_param)
-                }
-                Err(reason) => Ok(Some(reason)),
-            }
-        }
-        SegmentIntersection::LineArc {
-            result: LineArcIntersection::TwoPoints { first, second },
-            order,
-        } => {
-            let source_param =
-                match line_arc_region_trim_source_param(source_segment, order, &first, policy)? {
-                    Ok(param) => param,
-                    Err(reason) => return Ok(Some(reason)),
-                };
-            push_region_trim_hit(hits, source_segment_index, first.point, source_param)?;
-            let source_param =
-                match line_arc_region_trim_source_param(source_segment, order, &second, policy)? {
-                    Ok(param) => param,
-                    Err(reason) => return Ok(Some(reason)),
-                };
-            push_region_trim_hit(hits, source_segment_index, second.point, source_param)
-        }
-        SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
-            let source_param = match region_trim_source_param(source_segment, &first.point, policy)?
-            {
-                Ok(param) => param,
-                Err(reason) => return Ok(Some(reason)),
-            };
-            push_region_trim_hit(hits, source_segment_index, first.point, source_param)?;
-            let source_param =
-                match region_trim_source_param(source_segment, &second.point, policy)? {
-                    Ok(param) => param,
-                    Err(reason) => return Ok(Some(reason)),
-                };
-            push_region_trim_hit(hits, source_segment_index, second.point, source_param)
-        }
-        SegmentIntersection::LineLine(LineLineIntersection::Overlap { .. })
-        | SegmentIntersection::ArcArc(ArcArcIntersection::Overlap { .. }) => {
-            Ok(Some(UncertaintyReason::Unsupported))
-        }
-        SegmentIntersection::LineLine(LineLineIntersection::Uncertain { reason })
-        | SegmentIntersection::LineArc {
-            result: LineArcIntersection::Uncertain { reason },
-            ..
-        }
-        | SegmentIntersection::ArcArc(ArcArcIntersection::Uncertain { reason }) => Ok(Some(reason)),
-    }
-}
-
-fn push_region_trim_hit(
-    hits: &mut Vec<RegionTrimHit2>,
-    source_segment_index: usize,
-    point: Point2,
-    source_param: Real,
-) -> CurveResult<Option<UncertaintyReason>> {
-    hits.push(RegionTrimHit2 {
-        source_segment_index,
-        point,
-        source_param,
-    });
-    Ok(None)
-}
-
-fn line_arc_region_trim_source_param(
-    source_segment: &Segment2,
-    order: LineArcOrder,
-    hit: &crate::LineArcIntersectionPoint,
-    policy: &CurveContext,
-) -> CurveResult<Result<Real, UncertaintyReason>> {
-    match order {
-        LineArcOrder::LineThenArc => Ok(Ok(hit.line_param.clone())),
-        LineArcOrder::ArcThenLine => region_trim_source_param(source_segment, &hit.point, policy),
-    }
-}
-
-fn region_trim_source_param(
-    source_segment: &Segment2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> CurveResult<Result<Real, UncertaintyReason>> {
-    match segment_point_parameter(source_segment, point, policy)? {
-        Classification::Decided(param) => Ok(Ok(param)),
-        Classification::Uncertain(reason) => Ok(Err(reason)),
-    }
-}
-
-fn region_trim_split_points_for_segment(
-    source_segment_index: usize,
-    source_segment: &Segment2,
-    hits: &[RegionTrimHit2],
-    policy: &CurveContext,
-) -> CurveResult<Classification<Vec<RegionTrimSplitPoint2>>> {
-    let mut split_points = vec![RegionTrimSplitPoint2 {
-        trim_point: CurveStringTrimPoint2::new(source_segment_index, Real::zero()),
-        point: source_segment.start().clone(),
-    }];
-
-    for hit in hits
-        .iter()
-        .filter(|hit| hit.source_segment_index == source_segment_index)
-    {
-        match insert_region_trim_split_point(
-            &mut split_points,
-            RegionTrimSplitPoint2 {
-                trim_point: CurveStringTrimPoint2::new(
-                    source_segment_index,
-                    hit.source_param.clone(),
-                ),
-                point: hit.point.clone(),
-            },
-            policy,
-        ) {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    }
-
-    match insert_region_trim_split_point(
-        &mut split_points,
-        RegionTrimSplitPoint2 {
-            trim_point: CurveStringTrimPoint2::new(source_segment_index, Real::one()),
-            point: source_segment.end().clone(),
-        },
-        policy,
-    ) {
-        Classification::Decided(()) => Ok(Classification::Decided(split_points)),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
-}
-
-fn insert_region_trim_split_point(
-    split_points: &mut Vec<RegionTrimSplitPoint2>,
-    point: RegionTrimSplitPoint2,
-    policy: &CurveContext,
-) -> Classification<()> {
-    for index in 0..split_points.len() {
-        let ordering = match compare_reals(
-            point.trim_point.param(),
-            split_points[index].trim_point.param(),
-            policy,
-        ) {
-            Some(ordering) => ordering,
-            None => return Classification::Uncertain(UncertaintyReason::Ordering),
-        };
-        match ordering {
-            Ordering::Less => {
-                split_points.insert(index, point);
-                return Classification::Decided(());
-            }
-            Ordering::Equal => {
-                return match is_zero(
-                    &point.point.distance_squared(&split_points[index].point),
-                    policy,
-                ) {
-                    Some(true) => Classification::Decided(()),
-                    Some(false) => Classification::Uncertain(UncertaintyReason::Boundary),
-                    None => Classification::Uncertain(UncertaintyReason::RealSign),
-                };
-            }
-            Ordering::Greater => {}
-        }
-    }
-    split_points.push(point);
-    Classification::Decided(())
-}
-
-fn flush_region_trim_chain(
-    output_segments: &mut Vec<Vec<Segment2>>,
-    current_segments: &mut Vec<Segment2>,
-) {
-    if !current_segments.is_empty() {
-        output_segments.push(std::mem::take(current_segments));
-    }
 }
 
 fn extract_curve_trim_hits(events: &[CurveStringIntersection]) -> CurveTrimHitExtraction {

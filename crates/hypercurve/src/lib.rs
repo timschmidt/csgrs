@@ -207,7 +207,8 @@ pub use curve_region_boolean::{
     CurveRegionIntersectionResult2,
 };
 pub use curve_region_trim::{
-    CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionTrimFragment2,
+    CurvePathRegionTrim2, CurvePathRegionTrimFragment2, CurveRegionBoundaryContact2,
+    CurveRegionBoundaryKind2, CurveRegionTrimFragment2,
 };
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,

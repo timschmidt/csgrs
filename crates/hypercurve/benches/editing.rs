@@ -203,15 +203,21 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
 
 fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
-    let region =
-        LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
     let policy = CurveContext::STRICT;
+    let region = CurveRegion2::try_from_native_material_contours(
+        vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
+        &policy,
+    )
+    .expect("benchmark region must promote exactly")
+    .into_value();
     let started = Instant::now();
     let mut total_outputs = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.trim_inside_region(&region, &policy)?;
-        let trimmed = expect_decided(result, "region trim benchmark became uncertain");
+        let trimmed = curve
+            .trim_inside_region(&region, &policy)
+            .expect("region trim benchmark must remain exact")
+            .into_value();
         total_outputs += black_box(trimmed.len());
     }
 
