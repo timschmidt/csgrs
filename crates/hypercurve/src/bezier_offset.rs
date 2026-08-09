@@ -2608,12 +2608,223 @@ enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
 #[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
-    incidence: BivariatePolynomial,
     diameter_side: BezierAlgebraicCuspTwoTermExpression2,
     radius_squared_denominator: BivariatePolynomial,
     speed_squared: BivariatePolynomial,
-    center_parameter: BezierAlgebraicParameter2,
     line: LineSeg2,
+}
+
+/// Shared exact authority for scalar roots retained directly in one selected
+/// algebraic fiber `F(alpha, u) = 0`.
+///
+/// This is the canonical representation for high-degree local curve
+/// parameters.  It keeps the already selected root `alpha` and reduced
+/// incidence once, while each scalar stores only its isolating interval and a
+/// pointer to this authority.  It deliberately does not construct the global
+/// norm of `u`.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+struct BezierAlgebraicSelectedFiberAuthority2 {
+    data: Arc<BezierAlgebraicSelectedFiberAuthorityData2>,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Debug, PartialEq)]
+struct BezierAlgebraicSelectedFiberAuthorityData2 {
+    incidence: BivariatePolynomial,
+    retained_parameter: BezierAlgebraicParameter2,
+    policy: CurveContext,
+}
+
+#[cfg(feature = "predicates")]
+impl PartialEq for BezierAlgebraicSelectedFiberAuthority2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
+    }
+}
+
+/// One exact scalar root in a selected algebraic fiber.
+///
+/// Clones are one word and share all polynomial evidence.  The interval is a
+/// certified singleton in `Q(alpha)`, not an approximate coordinate.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+pub(crate) struct BezierAlgebraicSelectedFiberParameter2 {
+    data: Arc<BezierAlgebraicSelectedFiberParameterData2>,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Debug, PartialEq)]
+struct BezierAlgebraicSelectedFiberParameterData2 {
+    authority: BezierAlgebraicSelectedFiberAuthority2,
+    root: IsolatedRootInterval,
+}
+
+#[cfg(feature = "predicates")]
+impl PartialEq for BezierAlgebraicSelectedFiberParameter2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicSelectedFiberAuthority2 {
+    fn new(
+        incidence: BivariatePolynomial,
+        retained_parameter: BezierAlgebraicParameter2,
+        policy: &CurveContext,
+    ) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicSelectedFiberAuthorityData2 {
+                incidence,
+                retained_parameter,
+                policy: *policy,
+            }),
+        }
+    }
+
+    fn parameter(&self, root: IsolatedRootInterval) -> BezierAlgebraicSelectedFiberParameter2 {
+        BezierAlgebraicSelectedFiberParameter2 {
+            data: Arc::new(BezierAlgebraicSelectedFiberParameterData2 {
+                authority: self.clone(),
+                root,
+            }),
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAlgebraicSelectedFiberParameter2 {
+    fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
+        if self.data.authority.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "a selected-fiber scalar crossed predicate policies".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn root(&self) -> &IsolatedRootInterval {
+        &self.data.root
+    }
+
+    fn refined(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        Ok(algebraic_selected_fiber_root_interval_refined(
+            &self.data.authority.data.incidence,
+            &self.data.authority.data.retained_parameter,
+            &self.data.root,
+            refinement_steps,
+            policy,
+        )?
+        .map(|root| self.data.authority.parameter(root)))
+    }
+
+    fn predicate_sign(
+        &self,
+        predicate: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        algebraic_selected_fiber_root_predicate_sign(
+            &self.data.authority.data.incidence,
+            predicate,
+            &self.data.authority.data.retained_parameter,
+            &self.data.root,
+            policy,
+        )
+    }
+
+    fn radical_sum_sign(
+        &self,
+        expression: &BezierAlgebraicCuspTwoTermExpression2,
+        speed_squared: &BivariatePolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        algebraic_selected_fiber_root_radical_sum_sign(
+            &self.data.authority.data.incidence,
+            expression,
+            speed_squared,
+            &self.data.authority.data.retained_parameter,
+            &self.data.root,
+            policy,
+        )
+    }
+
+    pub(crate) fn order_to_real(
+        &self,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let predicate = bivariate_outer_product(&[Real::one()], &[(-value.clone()), Real::one()]);
+        Ok(self
+            .predicate_sign(&predicate, policy)?
+            .map(|sign| match sign {
+                RealSign::Negative => std::cmp::Ordering::Less,
+                RealSign::Zero => std::cmp::Ordering::Equal,
+                RealSign::Positive => std::cmp::Ordering::Greater,
+            }))
+    }
+
+    fn cmp_same_authority(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        if self == other {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        if self.data.authority != other.data.authority {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let mut refinement_steps = 0_usize;
+        loop {
+            let first = match self.refined(refinement_steps, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let second = match other.refined(refinement_steps, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if first == second {
+                return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+            }
+            if compare_reals(
+                &first.root().upper,
+                &second.root().lower,
+                &CurveContext::STRICT,
+            ) == Some(std::cmp::Ordering::Less)
+            {
+                return Ok(Classification::Decided(std::cmp::Ordering::Less));
+            }
+            if compare_reals(
+                &second.root().upper,
+                &first.root().lower,
+                &CurveContext::STRICT,
+            ) == Some(std::cmp::Ordering::Less)
+            {
+                return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+            }
+            refinement_steps = refinement_steps
+                .checked_mul(2)
+                .and_then(|steps| steps.checked_add(1))
+                .ok_or_else(|| {
+                    CurveError::Topology("selected-fiber scalar refinement overflow".into())
+                })?;
+        }
+    }
 }
 
 #[cfg(feature = "predicates")]
@@ -2681,7 +2892,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleChordContact2 {
     /// Exact singleton interval for a line parameter retained directly over
     /// the selected circle-center field. Legacy analytic fast paths encode
     /// their contact through `branch` and leave this absent.
-    selected_fiber_root: Option<IsolatedRootInterval>,
+    selected_fiber_parameter: Option<BezierAlgebraicSelectedFiberParameter2>,
     pub(crate) cusp_location: BezierAlgebraicCuspSemicircleContactLocation2,
     pub(crate) chord_location: BezierAlgebraicCuspSemicircleContactLocation2,
     pub(crate) tangent_cross_sign: RealSign,
@@ -8641,7 +8852,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
                 branch,
-                selected_fiber_root: None,
+                selected_fiber_parameter: None,
                 cusp_location,
                 chord_location,
                 tangent_cross_sign,
@@ -8800,7 +9011,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
                 branch,
-                selected_fiber_root: None,
+                selected_fiber_parameter: None,
                 cusp_location,
                 chord_location,
                 tangent_cross_sign,
@@ -8967,36 +9178,29 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
 
-        let polynomial_sign = |predicate: &BivariatePolynomial, root: &IsolatedRootInterval| {
-            algebraic_selected_fiber_root_predicate_sign(
-                &incidence,
-                predicate,
-                &center_parameter,
-                root,
-                policy,
-            )
-        };
-        let radical_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2,
-                            root: &IsolatedRootInterval| {
-            algebraic_selected_fiber_root_radical_sum_sign(
-                &incidence,
-                expression,
-                &speed_squared,
-                &center_parameter,
-                root,
-                policy,
-            )
-        };
+        let authority =
+            BezierAlgebraicSelectedFiberAuthority2::new(incidence, center_parameter, policy);
+        let polynomial_sign =
+            |predicate: &BivariatePolynomial,
+             parameter: &BezierAlgebraicSelectedFiberParameter2| {
+                parameter.predicate_sign(predicate, policy)
+            };
+        let radical_sign =
+            |expression: &BezierAlgebraicCuspTwoTermExpression2,
+             parameter: &BezierAlgebraicSelectedFiberParameter2| {
+                parameter.radical_sum_sign(expression, &speed_squared, policy)
+            };
         let mut contacts = Vec::with_capacity(roots.len().min(2));
         for root in roots {
-            match radical_sign(&circle, &root)? {
+            let parameter = authority.parameter(root);
+            match radical_sign(&circle, &parameter)? {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Negative | RealSign::Positive) => continue,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let selected = match polynomial_sign(&selected_half_plane, &root)? {
+            let selected = match polynomial_sign(&selected_half_plane, &parameter)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -9005,7 +9209,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let cusp_location = match selected {
                 RealSign::Negative => continue,
                 RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                RealSign::Zero => match radical_sign(&diameter_side, &root)? {
+                RealSign::Zero => match radical_sign(&diameter_side, &parameter)? {
                     Classification::Decided(RealSign::Positive) => {
                         BezierAlgebraicCuspSemicircleContactLocation2::Start
                     }
@@ -9023,30 +9227,36 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let tangent_cross_sign = match radical_sign(&tangent_cross, &root)? {
+            let tangent_cross_sign = match radical_sign(&tangent_cross, &parameter)? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let chord_location = match root.exact_root.as_ref() {
-                Some(parameter)
-                    if compare_reals(parameter, &Real::zero(), &CurveContext::STRICT)
-                        == Some(std::cmp::Ordering::Equal) =>
-                {
+            let chord_location = match parameter.order_to_real(&Real::zero(), policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
                     BezierAlgebraicCuspSemicircleContactLocation2::Start
                 }
-                Some(parameter)
-                    if compare_reals(parameter, &Real::one(), &CurveContext::STRICT)
-                        == Some(std::cmp::Ordering::Equal) =>
-                {
-                    BezierAlgebraicCuspSemicircleContactLocation2::End
+                Classification::Decided(_) => {
+                    match parameter.order_to_real(&Real::one(), policy)? {
+                        Classification::Decided(std::cmp::Ordering::Equal) => {
+                            BezierAlgebraicCuspSemicircleContactLocation2::End
+                        }
+                        Classification::Decided(_) => {
+                            BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
                 }
-                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             };
             contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
                 branch: 0,
-                selected_fiber_root: Some(root),
+                selected_fiber_parameter: Some(parameter),
                 cusp_location,
                 chord_location,
                 tangent_cross_sign,
@@ -9068,11 +9278,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 chord: chord.clone(),
                 system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(
                     BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
-                        incidence,
                         diameter_side,
                         radius_squared_denominator,
                         speed_squared,
-                        center_parameter,
                         line: line.clone(),
                     },
                 ),
@@ -11789,11 +11997,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         )
     }
 
-    fn selected_fiber_line_root<'a>(
+    fn selected_fiber_line_parameter<'a>(
         &self,
         contact: &'a BezierAlgebraicCuspSemicircleChordContact2,
-    ) -> CurveResult<&'a IsolatedRootInterval> {
-        contact.selected_fiber_root.as_ref().ok_or_else(|| {
+    ) -> CurveResult<&'a BezierAlgebraicSelectedFiberParameter2> {
+        contact.selected_fiber_parameter.as_ref().ok_or_else(|| {
             CurveError::Topology("a selected-fiber line map lost its local contact interval".into())
         })
     }
@@ -11803,16 +12011,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         predicate: &BivariatePolynomial,
     ) -> CurveResult<Classification<RealSign>> {
-        let system = self.selected_fiber_line_system().ok_or_else(|| {
+        self.selected_fiber_line_system().ok_or_else(|| {
             CurveError::Topology("a nonlocal cusp/chord map used the selected-fiber kernel".into())
         })?;
-        algebraic_selected_fiber_root_predicate_sign(
-            &system.incidence,
-            predicate,
-            &system.center_parameter,
-            self.selected_fiber_line_root(contact)?,
-            &self.data.policy,
-        )
+        self.selected_fiber_line_parameter(contact)?
+            .predicate_sign(predicate, &self.data.policy)
     }
 
     fn selected_fiber_line_radical_sign(
@@ -11823,14 +12026,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let system = self.selected_fiber_line_system().ok_or_else(|| {
             CurveError::Topology("a nonlocal cusp/chord map used the selected-fiber kernel".into())
         })?;
-        algebraic_selected_fiber_root_radical_sum_sign(
-            &system.incidence,
-            expression,
-            &system.speed_squared,
-            &system.center_parameter,
-            self.selected_fiber_line_root(contact)?,
-            &self.data.policy,
-        )
+        self.selected_fiber_line_parameter(contact)?
+            .radical_sum_sign(expression, &system.speed_squared, &self.data.policy)
     }
 
     fn selected_fiber_line_linear_predicate(
@@ -12471,8 +12668,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
         if let Some(system) = self.selected_fiber_line_system() {
-            let root = match self.selected_fiber_line_root(contact) {
-                Ok(root) => root,
+            let parameter = match self.selected_fiber_line_parameter(contact) {
+                Ok(parameter) => parameter,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
             };
             // The construction interval is already an exact singleton and is
@@ -12480,7 +12677,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             // Keeping it fixed lets mixed-evidence comparisons refine only the
             // opposite point instead of rebuilding the same local field for
             // every generic bounds request.
-            let interval = root.clone();
+            let interval = parameter.root();
             let (delta_x, delta_y) = system.line.delta();
             let coordinate = |start: &Real, delta: &Real| {
                 let lower = start + delta * &interval.lower;
@@ -12842,17 +13039,11 @@ impl BezierAlgebraicCuspChordPoint2 {
             if !first_local || !second_local || !Arc::ptr_eq(&first_map.data, &second_map.data) {
                 return Ok(None);
             }
-            let first_root = first_map.selected_fiber_line_root(first_contact)?;
-            let second_root = second_map.selected_fiber_line_root(second_contact)?;
-            let order = if first_root == second_root {
-                std::cmp::Ordering::Equal
-            } else {
-                let Some(order) =
-                    compare_reals(&first_root.lower, &second_root.lower, &CurveContext::STRICT)
-                else {
-                    return Ok(None);
-                };
-                order
+            let first_parameter = first_map.selected_fiber_line_parameter(first_contact)?;
+            let second_parameter = second_map.selected_fiber_line_parameter(second_contact)?;
+            let order = match first_parameter.cmp_same_authority(second_parameter, policy)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(_) => return Ok(None),
             };
             return Ok(Some(
                 if first_map
@@ -58695,6 +58886,81 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts
                 ),
             ));
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the retained root polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the retained root interval must construct");
+            };
+            let Classification::Decided(retained) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the retained root must isolate");
+            };
+
+            // (2u-t)(2u-t-1) has the two selected-fiber roots
+            // alpha/2 and (alpha+1)/2.  Their global norms would duplicate
+            // the retained conjugates; the local authority needs neither.
+            let incidence = BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::from(-2_i8), Real::from(4_i8)],
+                vec![Real::one(), Real::from(-4_i8)],
+                vec![Real::one()],
+            ]);
+            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                &incidence,
+                CurveResultantParameter::First,
+                &parameter_representation(&retained, &policy),
+                &Real::zero(),
+                &Real::one(),
+                AlgebraicFiberRootIsolationConfig {
+                    max_subdivision_depth: 128,
+                    refinement_steps: 8,
+                },
+                hypersolve::PredicatePolicy::STRICT,
+            );
+            assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+            let authority =
+                BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained, &policy);
+            let parameters = report
+                .intervals
+                .into_iter()
+                .map(|root| authority.parameter(root))
+                .collect::<Vec<_>>();
+            let [first, second] = parameters.as_slice() else {
+                panic!("the selected fiber must contain two roots");
+            };
+            assert_eq!(
+                std::mem::size_of::<BezierAlgebraicSelectedFiberParameter2>(),
+                std::mem::size_of::<usize>(),
+            );
+            assert_eq!(
+                first.cmp_same_authority(second, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                first.order_to_real(&half, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                second.order_to_real(&half, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
         }
     }
 
