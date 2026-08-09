@@ -3245,12 +3245,13 @@ pub struct BezierAlgebraicChord2 {
     data: Arc<BezierAlgebraicChordData2>,
 }
 
-/// One endpoint of an exact Euclidean parallel to a retained algebraic chord.
+/// One endpoint displaced along an exact unit direction of a retained chord.
 ///
 /// The shared carrier keeps the two independently selected source endpoints
-/// separate and evaluates
-/// `P + d*(-dy, dx)/sqrt(dx^2 + dy^2)` lazily.  This is the general counterpart
-/// of the represented-unit-tangent fast path: no primitive element, rounded
+/// separate and lazily evaluates either the left-normal image
+/// `P + d*(-dy, dx)/sqrt(dx^2 + dy^2)` or the tangent image
+/// `P + d*(dx, dy)/sqrt(dx^2 + dy^2)`. This is the general counterpart of the
+/// represented-unit-tangent fast path: no primitive element, rounded
 /// coordinate, or approximate construction fact is introduced.
 #[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
@@ -3266,7 +3267,17 @@ struct BezierAlgebraicChordParallelData2 {
     distance: Real,
     translation_x: Real,
     translation_y: Real,
+    /// Reuses one lazy normalized-expression carrier for offset normals and
+    /// corner-setback tangents.
+    direction: BezierAlgebraicChordUnitDisplacement2,
     policy: CurveContext,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BezierAlgebraicChordUnitDisplacement2 {
+    LeftNormal,
+    Tangent,
 }
 
 /// Certified traversal direction of an axis-aligned retained algebraic chord.
@@ -3581,6 +3592,7 @@ impl PartialEq for BezierAlgebraicChordParallelPoint2 {
                     && self.data.distance == other.data.distance
                     && self.data.translation_x == other.data.translation_x
                     && self.data.translation_y == other.data.translation_y
+                    && self.data.direction == other.data.direction
                     && self.data.policy == other.data.policy))
     }
 }
@@ -17559,6 +17571,41 @@ impl BezierAlgebraicChord2 {
             .map(|direction| direction.unit_tangent())
     }
 
+    /// Retains the endpoint displaced by a signed Euclidean distance along
+    /// this chord's traversal tangent.
+    ///
+    /// Represented unit tangents keep the existing translated-endpoint fast
+    /// path. General independently selected endpoints retain the normalized
+    /// tangent expression lazily, without adjoining their fields or rounding.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn endpoint_at_signed_tangent_distance(
+        &self,
+        at_end: bool,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
+        self.validate_policy(policy)?;
+        let endpoint = if at_end { self.end() } else { self.start() };
+        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
+            return Self::translated_endpoint(
+                endpoint,
+                &(tangent_x * &distance),
+                &(tangent_y * distance),
+                policy,
+            );
+        }
+        Ok(Classification::Decided(
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(
+                BezierAlgebraicChordParallelPoint2::tangent_endpoint(
+                    self.clone(),
+                    at_end,
+                    distance,
+                    policy,
+                ),
+            ),
+        ))
+    }
+
     /// Classifies a point against this support from a retained traversal
     /// tangent and exact endpoint enclosures. This preserves the compact
     /// transformed-chord certificate without adjoining the endpoint fields.
@@ -18518,6 +18565,19 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
+    #[cfg(feature = "predicates")]
+    fn has_composite_endpoint(&self) -> bool {
+        [self.start(), self.end()].into_iter().any(|point| {
+            matches!(
+                point,
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            )
+        })
+    }
+
     /// Classifies incidence of one represented affine point on this chord.
     #[cfg(feature = "predicates")]
     pub(crate) fn contains_point(
@@ -18527,6 +18587,24 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<bool>> {
         if let Some(line) = self.exact_line() {
             return Ok(line.contains_point(point, policy));
+        }
+        if self.has_composite_endpoint() {
+            let support = match BezierAlgebraicChordSupportPredicate2::try_new(self, policy)? {
+                Classification::Decided(support) => support,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let point_evidence = RationalBezierIntersectionPointEvidence2::Exact(point.clone());
+            return match support.oriented_side(&point_evidence, policy)? {
+                Classification::Decided(crate::classify::LineSide::On) => self
+                    .parameter_at_certified_point(point_evidence, policy)
+                    .map(|parameter| parameter.map(|parameter| parameter.is_some())),
+                Classification::Decided(
+                    crate::classify::LineSide::Left | crate::classify::LineSide::Right,
+                ) => Ok(Classification::Decided(false)),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
         }
         let evaluator = match self.algebraic_ray_evaluator(policy)? {
             Classification::Decided(evaluator) => evaluator,
@@ -18703,15 +18781,7 @@ impl BezierAlgebraicChord2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        if matches!(
-            self.start(),
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-        ) || matches!(
-            self.end(),
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-        ) {
+        if self.has_composite_endpoint() {
             let side_x = -direction_y.clone();
             let side_y = direction_x.clone();
             let start_side = match algebraic_chord_point_linear_order_to_exact(
@@ -23088,6 +23158,7 @@ impl BezierAlgebraicChordParallelPoint2 {
             distance,
             translation_x,
             translation_y,
+            direction: BezierAlgebraicChordUnitDisplacement2::LeftNormal,
             policy: *policy,
         });
         (
@@ -23097,6 +23168,25 @@ impl BezierAlgebraicChordParallelPoint2 {
             },
             Self { data, at_end: true },
         )
+    }
+
+    fn tangent_endpoint(
+        source: BezierAlgebraicChord2,
+        at_end: bool,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicChordParallelData2 {
+                source,
+                distance,
+                translation_x: Real::zero(),
+                translation_y: Real::zero(),
+                direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
+                policy: *policy,
+            }),
+            at_end,
+        }
     }
 
     fn source_endpoint(&self) -> &RationalBezierIntersectionPointEvidence2 {
@@ -23117,6 +23207,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 && self.data.distance == other.data.distance
                 && self.data.translation_x == other.data.translation_x
                 && self.data.translation_y == other.data.translation_y
+                && self.data.direction == other.data.direction
                 && self.data.policy == other.data.policy)
     }
 
@@ -23138,6 +23229,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 distance: self.data.distance.clone(),
                 translation_x: &self.data.translation_x + delta_x,
                 translation_y: &self.data.translation_y + delta_y,
+                direction: self.data.direction,
                 policy: *policy,
             }),
             at_end: self.at_end,
@@ -23180,14 +23272,23 @@ impl BezierAlgebraicChordParallelPoint2 {
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(normal_x) = (BezierAlgebraicChordRealInterval2 {
-            lower: -delta_y.upper.clone(),
-            upper: -delta_y.lower.clone(),
-        })
-        .divide(&speed, strict) else {
+        let direction_x = match self.data.direction {
+            BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
+                BezierAlgebraicChordRealInterval2 {
+                    lower: -delta_y.upper.clone(),
+                    upper: -delta_y.lower.clone(),
+                }
+            }
+            BezierAlgebraicChordUnitDisplacement2::Tangent => delta_x.clone(),
+        };
+        let direction_y = match self.data.direction {
+            BezierAlgebraicChordUnitDisplacement2::LeftNormal => delta_x,
+            BezierAlgebraicChordUnitDisplacement2::Tangent => delta_y,
+        };
+        let Some(unit_x) = direction_x.divide(&speed, strict) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let Some(normal_y) = delta_x.divide(&speed, strict) else {
+        let Some(unit_y) = direction_y.divide(&speed, strict) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let distance = BezierAlgebraicChordRealInterval2 {
@@ -23195,8 +23296,8 @@ impl BezierAlgebraicChordParallelPoint2 {
             upper: self.data.distance.clone(),
         };
         let (Some(offset_x), Some(offset_y)) = (
-            normal_x.multiply(&distance, strict),
-            normal_y.multiply(&distance, strict),
+            unit_x.multiply(&distance, strict),
+            unit_y.multiply(&distance, strict),
         ) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -23234,6 +23335,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RealSign>>> {
         if self.data.policy != *policy
+            || self.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
             || self.data.translation_x.zero_status() != ZeroStatus::Zero
             || self.data.translation_y.zero_status() != ZeroStatus::Zero
         {
@@ -23437,7 +23539,10 @@ impl BezierAlgebraicChord2 {
             (
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start),
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end),
-            ) if start.shares_carrier(end) && start.at_end != end.at_end => {
+            ) if start.shares_carrier(end)
+                && start.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
+                && start.at_end != end.at_end =>
+            {
                 if start.at_end {
                     (
                         start.data.source.reversed(),

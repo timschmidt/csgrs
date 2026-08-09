@@ -12,12 +12,11 @@ use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
 };
 use crate::{
-    Aabb2, BezierAlgebraicParameter2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2,
-    BezierSubcurve2, CircularArc2, Classification, ContourPointLocation, CubicBezier2,
-    CurveContext, CurveError, CurveOperation2, CurveOutcome, ExactCurveError, ExactCurveResult,
-    LineSeg2, LineSide, NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
-    Similarity2,
+    Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
+    Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
+    CurveOutcome, CurveRegionParameter2, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
+    NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real, Similarity2,
 };
 
 /// Exact planar curve family.
@@ -2039,11 +2038,13 @@ impl CurvePath2 {
                     vertex_index,
                     solution
                         .previous
-                        .parameter
+                        .exact_parameter()
+                        .cloned()
                         .expect("line fillet cuts retain affine parameters"),
                     solution
                         .next
-                        .parameter
+                        .exact_parameter()
+                        .cloned()
                         .expect("line fillet cuts retain affine parameters"),
                     &solution.center,
                     solution.clockwise,
@@ -3358,16 +3359,18 @@ enum CornerPlacement2 {
     Extension,
 }
 
+fn exact_corner_parameter(parameter: Real) -> Option<CurveRegionParameter2> {
+    Some(CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+        parameter,
+    )))
+}
+
 #[derive(Clone, Debug)]
 struct CornerCut2 {
-    /// Carrier-native parameter when the consuming representation needs it.
-    /// Native fillet arcs defer their sweep parameter because exact Cartesian
-    /// incidence is sufficient for CurveString/Contour reconstruction.
-    parameter: Option<Real>,
-    /// One clone-shared selected root for a non-represented Bezier cut.
-    /// Keeping only the algebraic Arc avoids inflating every native cut by a
-    /// full `BezierParameter2`/`Real` union.
-    algebraic_parameter: Option<BezierAlgebraicParameter2>,
+    /// Canonical carrier-local parameter when the consuming representation
+    /// needs it. Native fillet arcs may defer their sweep parameter because
+    /// exact Cartesian incidence is sufficient for reconstruction.
+    parameter: Option<CurveRegionParameter2>,
     point: RationalBezierIntersectionPointEvidence2,
     placement: CornerPlacement2,
 }
@@ -3377,35 +3380,28 @@ impl CornerCut2 {
         self.point.as_exact()
     }
 
-    fn into_trim_evidence(self) -> Option<CornerTrimCut2> {
-        if self.placement != CornerPlacement2::Trim {
+    fn into_retained_evidence(self) -> Option<CornerTrimCut2> {
+        if self.placement == CornerPlacement2::Extension {
             return None;
         }
-        let parameter = self.parameter.map_or_else(
-            || {
-                self.algebraic_parameter
-                    .map(BezierParameter2::Algebraic)
-                    .map(CornerTrimParameter2::Bezier)
-            },
-            |parameter| Some(CornerTrimParameter2::Exact(parameter)),
-        )?;
+        let parameter = self.parameter?;
         Some(CornerTrimCut2 {
             parameter,
             point: self.point,
+            trim: self.placement == CornerPlacement2::Trim,
         })
+    }
+
+    fn exact_parameter(&self) -> Option<&Real> {
+        self.parameter.as_ref()?.as_exact()
     }
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum CornerTrimParameter2 {
-    Exact(Real),
-    Bezier(BezierParameter2),
-}
-
-#[derive(Clone, Debug)]
 pub(crate) struct CornerTrimCut2 {
-    pub(crate) parameter: CornerTrimParameter2,
+    pub(crate) parameter: CurveRegionParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
+    pub(crate) trim: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -3415,10 +3411,10 @@ pub(crate) struct ChamferCorner2 {
 }
 
 impl ChamferCorner2 {
-    pub(crate) fn into_retained_trim_evidence(self) -> Option<(CornerTrimCut2, CornerTrimCut2)> {
+    pub(crate) fn into_retained_cut_evidence(self) -> Option<(CornerTrimCut2, CornerTrimCut2)> {
         Some((
-            self.previous.into_trim_evidence()?,
-            self.next.into_trim_evidence()?,
+            self.previous.into_retained_evidence()?,
+            self.next.into_retained_evidence()?,
         ))
     }
 }
@@ -3507,6 +3503,8 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     RetainedRationalArc(Box<RetainedRationalCornerArc2<'a>>),
     Bezier(&'a Curve2),
     NativeBezierSpan(&'a NativeBezierFragment2),
+    #[cfg(feature = "predicates")]
+    AlgebraicChord(&'a crate::BezierAlgebraicChord2),
 }
 
 #[derive(Clone, Copy)]
@@ -3612,10 +3610,12 @@ impl ExactCornerArc2<'_> {
 
 impl<'a> ExactCornerCarrier2<'a> {
     const fn supports_extension(&self) -> bool {
-        !matches!(
-            self,
-            Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_)
-        )
+        match self {
+            Self::Line(_) | Self::Arc(_) => true,
+            Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChord(_) => false,
+        }
     }
 }
 
@@ -3948,6 +3948,12 @@ impl<'a> PreparedFilletCarrier2<'a> {
             ExactCornerCarrier2::NativeBezierSpan(fragment) => Ok(Self::Bezier {
                 source: ExactCornerBezier2::NativeSpan(fragment),
             }),
+            #[cfg(feature = "predicates")]
+            ExactCornerCarrier2::AlgebraicChord(_) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            )),
         }
     }
 
@@ -4629,8 +4635,7 @@ fn fillet_cut_from_center(
             )?
             .map(|placement| CornerCut2 {
                 point: source.point_at(parameter.clone()).into(),
-                parameter: Some(parameter),
-                algebraic_parameter: None,
+                parameter: exact_corner_parameter(parameter),
                 placement,
             }))
         }
@@ -4678,8 +4683,7 @@ fn fillet_cut_from_center(
             )?;
             Ok(Some(CornerCut2 {
                 point: point.into(),
-                parameter: Some(source.public_parameter(&parameter)),
-                algebraic_parameter: None,
+                parameter: exact_corner_parameter(source.public_parameter(&parameter)),
                 placement,
             }))
         }
@@ -4810,14 +4814,12 @@ fn solve_line_fillet_corner(
             Some(true) => continue,
             Some(false) => candidates.push(FilletCorner2 {
                 previous: CornerCut2 {
-                    parameter: Some(previous_parameter),
-                    algebraic_parameter: None,
+                    parameter: exact_corner_parameter(previous_parameter),
                     point: previous_point.into(),
                     placement: previous_placement,
                 },
                 next: CornerCut2 {
-                    parameter: Some(next_parameter),
-                    algebraic_parameter: None,
+                    parameter: exact_corner_parameter(next_parameter),
                     point: next_point.into(),
                     placement: next_placement,
                 },
@@ -5044,7 +5046,114 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
+        #[cfg(feature = "predicates")]
+        ExactCornerCarrier2::AlgebraicChord(chord) => algebraic_chord_chamfer_cuts(
+            chord,
+            setback,
+            setback_sign,
+            previous,
+            mode,
+            operation,
+            family,
+            policy,
+        ),
     }
+}
+
+#[cfg(feature = "predicates")]
+#[allow(clippy::too_many_arguments)]
+fn algebraic_chord_chamfer_cuts(
+    chord: &crate::BezierAlgebraicChord2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CornerCuts2> {
+    chord
+        .validate_policy(policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    if mode != CurveCornerMode2::TrimOnly {
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
+    let corner_parameter = if previous {
+        chord.end_parameter()
+    } else {
+        chord.start_parameter()
+    };
+    let corner = if previous { chord.end() } else { chord.start() };
+    if setback_sign == RealSign::Zero {
+        return Ok(CornerCuts2 {
+            first: Some(CornerCut2 {
+                parameter: Some(CurveRegionParameter2::from_algebraic_chord(
+                    corner_parameter,
+                )),
+                point: corner.clone(),
+                placement: CornerPlacement2::Corner,
+            }),
+            second: None,
+            overflow: Vec::new(),
+        });
+    }
+    let signed_setback = if previous {
+        -setback.clone()
+    } else {
+        setback.clone()
+    };
+    // Unit-tangent displacement is construction evidence for support
+    // incidence. General endpoint fields remain separate behind one lazy
+    // normalized expression; only finite-domain placement is a predicate.
+    let point = match chord
+        .endpoint_at_signed_tangent_distance(previous, signed_setback, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    let parameter = match chord
+        .parameter_at_certified_point(point.clone(), policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => return Ok(CornerCuts2::default()),
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    let start = chord.start_parameter();
+    let end = chord.end_parameter();
+    let compare = |boundary| {
+        parameter
+            .cmp_by_refinement(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|order| match order {
+                Classification::Decided(order) => Ok(order),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
+    };
+    if compare(&start)? != std::cmp::Ordering::Greater || compare(&end)? != std::cmp::Ordering::Less
+    {
+        return Ok(CornerCuts2::default());
+    }
+    Ok(CornerCuts2 {
+        first: Some(CornerCut2 {
+            parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+            point,
+            placement: CornerPlacement2::Trim,
+        }),
+        second: None,
+        overflow: Vec::new(),
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -5061,12 +5170,11 @@ fn bezier_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(if previous {
+                parameter: exact_corner_parameter(if previous {
                     source.public_parameter(&Real::one())
                 } else {
                     source.public_parameter(&Real::zero())
                 }),
-                algebraic_parameter: None,
                 point: corner.clone().into(),
                 placement: CornerPlacement2::Corner,
             }),
@@ -5092,12 +5200,11 @@ fn bezier_chamfer_cuts(
         if !bezier_trim_parameter_is_interior(&parameter, operation, family, policy)? {
             continue;
         }
-        let (point, algebraic_parameter) = match &parameter {
-            BezierParameter2::Exact(parameter) => (
+        let point = match &parameter {
+            BezierParameter2::Exact(parameter) => {
                 decided_parallel_point(&parallel, parameter, true, operation, family, policy)?
-                    .into(),
-                None,
-            ),
+                    .into()
+            }
             BezierParameter2::Algebraic(parameter) => {
                 let rational_source = match &rational_source {
                     Some(source) => source,
@@ -5119,7 +5226,7 @@ fn bezier_chamfer_cuts(
                         rational_source.insert(source)
                     }
                 };
-                let point = crate::rational_bezier_general::exact_contact_point_evidence(
+                crate::rational_bezier_general::exact_contact_point_evidence(
                     rational_source,
                     &BezierParameter2::Algebraic(parameter.clone()),
                     policy,
@@ -5131,17 +5238,19 @@ fn bezier_chamfer_cuts(
                         family,
                         crate::UncertaintyReason::Unsupported,
                     )
-                })?;
-                (point, Some(parameter.clone()))
+                })?
             }
         };
-        let public_parameter = match &parameter {
-            BezierParameter2::Exact(parameter) => Some(source.public_parameter(parameter)),
-            BezierParameter2::Algebraic(_) => None,
+        let parameter = match parameter {
+            BezierParameter2::Exact(parameter) => {
+                exact_corner_parameter(source.public_parameter(&parameter))
+            }
+            parameter @ BezierParameter2::Algebraic(_) => {
+                Some(CurveRegionParameter2::from_bezier(parameter))
+            }
         };
         cuts.push(CornerCut2 {
-            parameter: public_parameter,
-            algebraic_parameter,
+            parameter,
             point,
             placement: CornerPlacement2::Trim,
         });
@@ -5170,8 +5279,7 @@ fn arc_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(arc.corner_parameter(previous)),
-                algebraic_parameter: None,
+                parameter: exact_corner_parameter(arc.corner_parameter(previous)),
                 point: corner.clone().into(),
                 placement: CornerPlacement2::Corner,
             }),
@@ -5293,10 +5401,9 @@ fn arc_corner_cut_from_incident_point(
                     parameter: match arc
                         .source_parameter_at_point(&point, operation, family, policy)?
                     {
-                        Some(parameter) => Some(parameter),
-                        None => Some(sweep_fraction),
+                        Some(parameter) => exact_corner_parameter(parameter),
+                        None => exact_corner_parameter(sweep_fraction),
                     },
-                    algebraic_parameter: None,
                     point: point.into(),
                     placement: CornerPlacement2::Trim,
                 }));
@@ -5306,8 +5413,7 @@ fn arc_corner_cut_from_incident_point(
             if arc_extension_contains_corner(support, &point, previous, operation, family, policy)?
             {
                 return Ok(Some(CornerCut2 {
-                    parameter: Some(arc.corner_parameter(previous)),
-                    algebraic_parameter: None,
+                    parameter: exact_corner_parameter(arc.corner_parameter(previous)),
                     point: point.into(),
                     placement: CornerPlacement2::Extension,
                 }));
@@ -5334,13 +5440,9 @@ fn arc_fillet_cut_from_incident_point(
     let support = arc.support();
     match support.strict_sweep_point_location(&point, policy) {
         Classification::Decided(ArcSweepPointLocation2::Interior) => Ok(Some(CornerCut2 {
-            parameter: arc.source_parameter_at_point(
-                &point,
-                CurveOperation2::Fillet,
-                family,
-                policy,
-            )?,
-            algebraic_parameter: None,
+            parameter: arc
+                .source_parameter_at_point(&point, CurveOperation2::Fillet, family, policy)?
+                .and_then(exact_corner_parameter),
             point: point.into(),
             placement: CornerPlacement2::Trim,
         })),
@@ -5358,7 +5460,6 @@ fn arc_fillet_cut_from_incident_point(
             )? {
                 Ok(Some(CornerCut2 {
                     parameter: None,
-                    algebraic_parameter: None,
                     point: point.into(),
                     placement: CornerPlacement2::Extension,
                 }))
@@ -5492,8 +5593,11 @@ fn line_chamfer_cuts(
     if setback_sign == RealSign::Zero {
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
-                parameter: Some(if previous { Real::one() } else { Real::zero() }),
-                algebraic_parameter: None,
+                parameter: exact_corner_parameter(if previous {
+                    Real::one()
+                } else {
+                    Real::zero()
+                }),
                 point: if previous {
                     line.end().clone()
                 } else {
@@ -5530,8 +5634,7 @@ fn line_chamfer_cuts(
     {
         cuts.push(CornerCut2 {
             point: line.point_at(interior_parameter.clone()).into(),
-            parameter: Some(interior_parameter),
-            algebraic_parameter: None,
+            parameter: exact_corner_parameter(interior_parameter),
             placement: CornerPlacement2::Trim,
         });
     }
@@ -5543,8 +5646,7 @@ fn line_chamfer_cuts(
         };
         cuts.push(CornerCut2 {
             point: line.point_at(extension_parameter.clone()).into(),
-            parameter: Some(extension_parameter),
-            algebraic_parameter: None,
+            parameter: exact_corner_parameter(extension_parameter),
             placement: CornerPlacement2::Extension,
         });
     }
@@ -5574,7 +5676,7 @@ fn materialize_corner_cut(
                 // endpoint instead of evaluating an algebraically equivalent
                 // rational parameter and then asking path connectivity to
                 // rediscover the equality.
-                let sweep_fraction = if let Some(parameter) = cut.parameter.as_ref() {
+                let sweep_fraction = if let Some(parameter) = cut.exact_parameter() {
                     parameter.clone()
                 } else {
                     match arc
@@ -5638,7 +5740,7 @@ fn materialize_corner_cut(
                     .with_lineage(CurveGeometry2::CircularArc(trimmed), lineage)
                     .map_err(|error| remap_operation(error, operation))
             } else {
-                let parameter = cut.parameter.as_ref().ok_or_else(|| {
+                let parameter = cut.exact_parameter().ok_or_else(|| {
                     ExactCurveError::blocked(
                         operation,
                         curve.family(),

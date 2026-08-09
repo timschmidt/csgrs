@@ -48,8 +48,8 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::{
-    CornerTrimCut2, CornerTrimParameter2, exact_corner_carrier, solve_exact_chamfer_corner,
-    try_map_corner_solutions, validate_corner_design_value,
+    CornerTrimCut2, exact_corner_carrier, solve_exact_chamfer_corner, try_map_corner_solutions,
+    validate_corner_design_value,
 };
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -2127,12 +2127,34 @@ fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> Exa
     ExactCurveError::invalid(operation, CurveFamily2::Line, cause)
 }
 
-fn retained_materialized_fragment_trim(
+fn retained_corner_fragment_trim(
     fragment: &BezierSplitFragment2,
-    parameter: CornerTrimParameter2,
+    parameter: CurveRegionParameter2,
     keep_before_cut: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
+    #[cfg(feature = "predicates")]
+    if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+        let parameter = parameter.as_algebraic_chord().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            )
+        })?;
+        let start = chord.start_parameter();
+        let end = chord.end_parameter();
+        let (start, end) = if keep_before_cut {
+            (&start, parameter)
+        } else {
+            (parameter, &end)
+        };
+        return crate::BezierAlgebraicChord2::from_ordered_parameter_range(
+            chord, start, end, policy,
+        )
+        .map(BezierSplitFragment2::AlgebraicChord)
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause));
+    }
     let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
         return Err(ExactCurveError::blocked(
             CurveOperation2::Chamfer,
@@ -2140,10 +2162,13 @@ fn retained_materialized_fragment_trim(
             UncertaintyReason::Unsupported,
         ));
     };
-    let parameter = match parameter {
-        CornerTrimParameter2::Exact(parameter) => BezierParameter2::Exact(parameter),
-        CornerTrimParameter2::Bezier(parameter) => parameter,
-    };
+    let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
+        ExactCurveError::blocked(
+            CurveOperation2::Chamfer,
+            CurveFamily2::RationalBezier,
+            UncertaintyReason::Unsupported,
+        )
+    })?;
     let split = match curve
         .split_at_parameters_refined(&[parameter], policy)
         .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
@@ -7822,7 +7847,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         if mode == CurveCornerMode2::TrimOnly
-            && let Some(solutions) = self.retained_materialized_chamfer_solutions(
+            && let Some(solutions) = self.retained_chamfer_solutions(
                 loop_index,
                 vertex_index,
                 previous_setback.clone(),
@@ -7862,7 +7887,7 @@ impl CurveRegion2 {
         )
     }
 
-    fn retained_materialized_chamfer_solutions(
+    fn retained_chamfer_solutions(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -7895,24 +7920,26 @@ impl CurveRegion2 {
             vertex_index - 1
         };
         let next_index = vertex_index;
-        let BezierSplitFragment2::Materialized {
-            curve: previous_curve,
-            ..
-        } = &boundary_loop.fragments()[previous_index]
-        else {
-            return Ok(None);
+        let previous_fragment = &boundary_loop.fragments()[previous_index];
+        let next_fragment = &boundary_loop.fragments()[next_index];
+        let previous_top_level = match previous_fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(_) => None,
+            _ => return Ok(None),
         };
-        let BezierSplitFragment2::Materialized {
-            curve: next_curve, ..
-        } = &boundary_loop.fragments()[next_index]
-        else {
-            return Ok(None);
+        let next_top_level = match next_fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(_) => None,
+            _ => return Ok(None),
         };
-
-        let previous_top_level = Curve2::from(previous_curve.clone());
-        let next_top_level = Curve2::from(next_curve.clone());
-        let previous_family = previous_top_level.family();
-        let next_family = next_top_level.family();
+        let previous_family = previous_top_level
+            .as_ref()
+            .map_or(CurveFamily2::RationalBezier, Curve2::family);
+        let next_family = next_top_level
+            .as_ref()
+            .map_or(CurveFamily2::RationalBezier, Curve2::family);
         let previous_sign = validate_corner_design_value(
             &previous_setback,
             CurveOperation2::Chamfer,
@@ -7925,31 +7952,50 @@ impl CurveRegion2 {
             next_family,
             policy,
         )?;
-        // Corner-preserving zero-setback edits remain representable through
-        // the ordinary materialized path. This retained route owns the case
-        // where both incident fragments acquire interior algebraic endpoints.
-        if previous_sign == RealSign::Zero || next_sign == RealSign::Zero {
-            return Ok(None);
-        }
-
-        let previous_carrier =
-            exact_corner_carrier(&previous_top_level, true, CurveOperation2::Chamfer, policy)?
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        previous_family,
-                        UncertaintyReason::Unsupported,
-                    )
-                })?;
-        let next_carrier =
-            exact_corner_carrier(&next_top_level, false, CurveOperation2::Chamfer, policy)?
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        next_family,
-                        UncertaintyReason::Unsupported,
-                    )
-                })?;
+        let previous_carrier = match previous_fragment {
+            BezierSplitFragment2::Materialized { .. } => exact_corner_carrier(
+                previous_top_level
+                    .as_ref()
+                    .expect("a materialized corner fragment has a top-level carrier"),
+                true,
+                CurveOperation2::Chamfer,
+                policy,
+            )?
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Chamfer,
+                    previous_family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?,
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
+            }
+            _ => unreachable!("unsupported retained corner fragments returned above"),
+        };
+        let next_carrier = match next_fragment {
+            BezierSplitFragment2::Materialized { .. } => exact_corner_carrier(
+                next_top_level
+                    .as_ref()
+                    .expect("a materialized corner fragment has a top-level carrier"),
+                false,
+                CurveOperation2::Chamfer,
+                policy,
+            )?
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Chamfer,
+                    next_family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?,
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
+            }
+            _ => unreachable!("unsupported retained corner fragments returned above"),
+        };
         let solutions = solve_exact_chamfer_corner(
             previous_carrier,
             next_carrier,
@@ -7964,25 +8010,19 @@ impl CurveRegion2 {
         )?;
         try_map_corner_solutions(solutions, |solution| {
             let (previous_cut, next_cut) =
-                solution.into_retained_trim_evidence().ok_or_else(|| {
+                solution.into_retained_cut_evidence().ok_or_else(|| {
                     ExactCurveError::blocked(
                         CurveOperation2::Chamfer,
                         previous_family,
                         UncertaintyReason::Unsupported,
                     )
                 })?;
-            self.rebuild_retained_materialized_chamfer(
-                loop_index,
-                vertex_index,
-                previous_cut,
-                next_cut,
-                policy,
-            )
+            self.rebuild_retained_chamfer(loop_index, vertex_index, previous_cut, next_cut, policy)
         })
         .map(Some)
     }
 
-    fn rebuild_retained_materialized_chamfer(
+    fn rebuild_retained_chamfer(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -7998,18 +8038,26 @@ impl CurveRegion2 {
             vertex_index - 1
         };
         let next_index = vertex_index;
-        let previous_trim = retained_materialized_fragment_trim(
-            &boundary_loop.fragments()[previous_index],
-            previous_cut.parameter,
-            true,
-            policy,
-        )?;
-        let next_trim = retained_materialized_fragment_trim(
-            &boundary_loop.fragments()[next_index],
-            next_cut.parameter,
-            false,
-            policy,
-        )?;
+        let previous_trim = if previous_cut.trim {
+            retained_corner_fragment_trim(
+                &boundary_loop.fragments()[previous_index],
+                previous_cut.parameter,
+                true,
+                policy,
+            )?
+        } else {
+            boundary_loop.fragments()[previous_index].clone()
+        };
+        let next_trim = if next_cut.trim {
+            retained_corner_fragment_trim(
+                &boundary_loop.fragments()[next_index],
+                next_cut.parameter,
+                false,
+                policy,
+            )?
+        } else {
+            boundary_loop.fragments()[next_index].clone()
+        };
         let chord = if let (Some(previous_point), Some(next_point)) =
             (previous_cut.point.as_exact(), next_cut.point.as_exact())
         {

@@ -177,8 +177,9 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// contact, such as one endpoint of an axis-aligned parallel.
     #[cfg(feature = "predicates")]
     AlgebraicCuspChordDerived(crate::BezierAlgebraicCuspChordDerivedPoint2),
-    /// One endpoint of an exact Euclidean parallel to a retained algebraic
-    /// chord whose normalized direction spans selected endpoint fields.
+    /// One endpoint displaced along an exact unit normal or tangent of a
+    /// retained algebraic chord whose normalized direction spans selected
+    /// endpoint fields.
     #[cfg(feature = "predicates")]
     AlgebraicChordParallel(crate::BezierAlgebraicChordParallelPoint2),
 }

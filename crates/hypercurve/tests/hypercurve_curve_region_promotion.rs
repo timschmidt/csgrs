@@ -1253,6 +1253,182 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
     }
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn unified_region_chamfer_reenters_general_algebraic_chords() {
+    let bottom = Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap());
+    let curved = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
+    let top = Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap());
+    let left = Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap());
+    let paths = [
+        (
+            CurvePath2::try_new(vec![
+                bottom.clone(),
+                curved.clone(),
+                top.clone(),
+                left.clone(),
+            ])
+            .unwrap(),
+            [1, 1, 2],
+            false,
+        ),
+        (
+            CurvePath2::try_new(vec![curved, top, left, bottom]).unwrap(),
+            [0, 0, 1],
+            false,
+        ),
+        (
+            CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-4, 0), p(-4, 2)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-4, 2), p(1, 2)).unwrap()),
+                Curve2::from(QuadraticBezier2::new(p(1, 2), p(0, 1), p(0, 0))),
+                Curve2::from(LineSeg2::try_new(p(0, 0), p(-4, 0)).unwrap()),
+            ])
+            .unwrap(),
+            [3, 4, 4],
+            true,
+        ),
+    ];
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (path, vertices, chord_is_previous) in &paths {
+            let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
+                .unwrap()
+                .into_value();
+            let first = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertices[0],
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.into_value() else {
+                panic!("the first Bezier setback must retain one algebraic chord");
+            };
+
+            let one_sided = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertices[1],
+                    Real::zero(),
+                    q(1, 4),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(one_sided.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                one_sided.into_value(),
+                CurveCornerSolutions2::Unique(_)
+            ));
+            let (over_previous, over_next) = if *chord_is_previous {
+                (Real::from(2), q(1, 4))
+            } else {
+                (q(1, 4), Real::from(2))
+            };
+            let over = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertices[1],
+                    over_previous,
+                    over_next,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(over.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                over.into_value(),
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            );
+
+            // The next edit meets a represented line and the retained general
+            // chord. Its chord-side cut is a lazy exact unit-tangent displacement.
+            let second = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertices[1],
+                    q(1, 4),
+                    q(1, 4),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(second.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(second) = second.into_value() else {
+                panic!("the materialized/algebraic-chord corner must have one chamfer");
+            };
+            assert_eq!(second.boundary_loops()[0].fragments().len(), 6);
+            assert_eq!(
+                second.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .count(),
+                2
+            );
+
+            // The inserted chord and retained source chord now meet directly.
+            // Both have independently selected endpoints and neither requires a
+            // represented unit tangent.
+            let third = second
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertices[2],
+                    q(1, 10),
+                    q(1, 10),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(third.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(third) = third.into_value() else {
+                panic!("the algebraic-chord/algebraic-chord corner must have one chamfer");
+            };
+            assert_eq!(third.boundary_loops()[0].fragments().len(), 7);
+            assert_eq!(
+                third.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .count(),
+                3
+            );
+            assert_eq!(
+                decided(third.loop_roles(&policy).unwrap()),
+                vec![CurveRegionLoopRole::Material]
+            );
+            assert_eq!(
+                certified(third.classify_point(&p(-2, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+            assert_eq!(
+                certified(third.classify_point(&p(0, 0), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside)
+            );
+
+            let distant = CurveRegion2::try_from_native_material_contours(
+                vec![square(10, 10, 12, 12)],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let batch = third
+                .boolean_regions(&distant, &policy)
+                .unwrap()
+                .into_value();
+            assert!(batch.intersection().is_empty());
+            assert_eq!(batch.union().boundary_loops().len(), 2);
+            assert_eq!(batch.difference().boundary_loops().len(), 1);
+            assert_eq!(batch.xor().boundary_loops().len(), 2);
+        }
+    }
+}
+
 #[test]
 fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
     let previous = Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0)));
