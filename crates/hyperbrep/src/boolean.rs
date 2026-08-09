@@ -3865,10 +3865,16 @@ fn model_boundary_contacts(
             .edge_uses()
             .get(contact.segment_index())
             .ok_or(GeometryError::UnsupportedIntersection)?;
-        let Some(pcurve_parameter) = contact.boundary_parameter().exact_curve_parameter() else {
+        let Some(pcurve_parameter) = contact
+            .boundary_parameter()
+            .as_bezier_parameter()
+            .and_then(hypercurve::BezierParameter2::as_exact)
+            .cloned()
+        else {
             return Ok(None);
         };
-        let RationalBezierIntersectionPointEvidence2::Exact(pcurve_point) = contact.point() else {
+        let Some(RationalBezierIntersectionPointEvidence2::Exact(pcurve_point)) = contact.point()
+        else {
             return Ok(None);
         };
         let canonical_coordinate = |coordinate: &Real| {
