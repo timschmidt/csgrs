@@ -9,7 +9,7 @@ use hypercurve::{
     CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
     Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real,
+    RationalQuadraticBezier2, Real, RealSign,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -1367,6 +1367,8 @@ fn parallel_pair_replays_a_general_non_ph_contact_under_both_policies() {
             })
             .unwrap();
         assert!(contact.is_certified_transverse());
+        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Positive));
+        assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Zero));
     }
 }
 
@@ -1562,6 +1564,19 @@ fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
         );
         assert!(forward.is_complete(), "{forward:?}");
         assert!(pair_has_exact_parameters(forward.contacts(), r(0), r(0)));
+        let forward_contact = forward
+            .contacts()
+            .iter()
+            .find(|contact| {
+                contact.first_parameter() == &BezierParameter2::Exact(r(0))
+                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+            })
+            .unwrap();
+        assert_eq!(
+            forward_contact.tangent_cross_sign(),
+            Some(RealSign::Negative)
+        );
+        assert_eq!(forward_contact.tangent_dot_sign(), Some(RealSign::Zero));
 
         let reverse = decided_parallel_pair_set(
             general_second
@@ -1570,6 +1585,19 @@ fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
         );
         assert!(reverse.is_complete(), "{reverse:?}");
         assert!(pair_has_exact_parameters(reverse.contacts(), r(0), r(0)));
+        let reverse_contact = reverse
+            .contacts()
+            .iter()
+            .find(|contact| {
+                contact.first_parameter() == &BezierParameter2::Exact(r(0))
+                    && contact.second_parameter() == &BezierParameter2::Exact(r(0))
+            })
+            .unwrap();
+        assert_eq!(
+            reverse_contact.tangent_cross_sign(),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(reverse_contact.tangent_dot_sign(), Some(RealSign::Zero));
     }
 }
 

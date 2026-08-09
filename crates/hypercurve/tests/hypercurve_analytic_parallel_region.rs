@@ -4,12 +4,12 @@ use hypercurve::{
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, RealSign, RegionPointLocation,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
-    RationalBezierIntersectionPointEvidence2,
+    RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, RealSign,
 };
 
 fn point(x: i64, y: i64) -> Point2 {

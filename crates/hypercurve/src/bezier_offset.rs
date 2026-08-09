@@ -28871,6 +28871,7 @@ pub struct BezierParallelPairIntersectionContact2 {
     second_parameter: BezierParameter2,
     certified_transverse: bool,
     tangent_cross_sign: Option<RealSign>,
+    tangent_dot_sign: Option<RealSign>,
 }
 
 impl BezierParallelPairIntersectionContact2 {
@@ -28893,6 +28894,16 @@ impl BezierParallelPairIntersectionContact2 {
     /// the second parallel tangent, when exact replay decided it.
     pub const fn tangent_cross_sign(&self) -> Option<RealSign> {
         self.tangent_cross_sign
+    }
+
+    /// Returns the certified sign of the first parallel tangent dotted with
+    /// the second parallel tangent, when exact replay decided it.
+    ///
+    /// Together with [`Self::tangent_cross_sign`], this distinguishes equal
+    /// and opposite tangent directions at a tangent contact without sampling
+    /// either selected parameter.
+    pub const fn tangent_dot_sign(&self) -> Option<RealSign> {
+        self.tangent_dot_sign
     }
 }
 
@@ -29570,7 +29581,18 @@ fn parallel_pair_set_from_parallel_rational(
                 first_parameter,
                 second_parameter,
                 certified_transverse: contact.certified_transverse,
-                tangent_cross_sign: None,
+                tangent_cross_sign: contact.tangent_cross_sign.map(|sign| {
+                    if swapped {
+                        match sign {
+                            RealSign::Positive => RealSign::Negative,
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Zero => RealSign::Zero,
+                        }
+                    } else {
+                        sign
+                    }
+                }),
+                tangent_dot_sign: contact.tangent_dot_sign,
             }
         })
         .collect::<Arc<[_]>>();
@@ -31964,36 +31986,60 @@ impl BezierParallel2 {
                         continue;
                     }
                 }
-                let tangent_cross_sign = match tangent_cross {
-                    Some(source_sign @ (RealSign::Positive | RealSign::Negative)) => {
-                        match (
-                            self.parallel_derivative_scale_sign(first_parameter, policy)?,
-                            other.parallel_derivative_scale_sign(second_parameter, policy)?,
-                        ) {
-                            (
-                                Classification::Decided(
-                                    first @ (RealSign::Positive | RealSign::Negative),
-                                ),
-                                Classification::Decided(
-                                    second @ (RealSign::Positive | RealSign::Negative),
-                                ),
-                            ) => Some(product_sign(product_sign(source_sign, first), second)),
-                            _ => None,
-                        }
+                let tangent_relation = match (
+                    self.parallel_derivative_scale_sign(first_parameter, policy)?,
+                    other.parallel_derivative_scale_sign(second_parameter, policy)?,
+                ) {
+                    (
+                        Classification::Decided(first @ (RealSign::Positive | RealSign::Negative)),
+                        Classification::Decided(second @ (RealSign::Positive | RealSign::Negative)),
+                    ) => {
+                        let scale = product_sign(first, second);
+                        let cross = match signed_bivariate_for_either_replay(
+                            &system.tangent_cross,
+                            first_parameter,
+                            second_parameter,
+                            first_replay,
+                            &first_lifts,
+                            second_replay,
+                            second_replay_lifts,
+                            policy,
+                        )? {
+                            Classification::Decided(sign) => Some(product_sign(sign, scale)),
+                            Classification::Uncertain(_) => None,
+                        };
+                        let dot = match signed_bivariate_for_either_replay(
+                            &system.tangent_dot,
+                            first_parameter,
+                            second_parameter,
+                            first_replay,
+                            &first_lifts,
+                            second_replay,
+                            second_replay_lifts,
+                            policy,
+                        )? {
+                            Classification::Decided(sign) => Some(product_sign(sign, scale)),
+                            Classification::Uncertain(_) => None,
+                        };
+                        (cross, dot)
                     }
-                    Some(RealSign::Zero) | None => None,
+                    _ => (None, None),
                 };
+                let (tangent_cross_sign, tangent_dot_sign) = tangent_relation;
                 contacts.push(BezierParallelPairIntersectionContact2 {
                     first_parameter: first_parameter.clone(),
                     second_parameter: second_parameter.clone(),
-                    certified_transverse: tangent_cross_sign.is_some()
-                        || self.certified_transverse_parallel_contact(
-                            other,
-                            first_parameter,
-                            second_parameter,
-                            policy,
-                        ),
+                    certified_transverse: matches!(
+                        tangent_cross_sign,
+                        Some(RealSign::Positive | RealSign::Negative)
+                    ) || self.certified_transverse_parallel_contact(
+                        other,
+                        first_parameter,
+                        second_parameter,
+                        policy,
+                    ),
                     tangent_cross_sign,
+                    tangent_dot_sign,
                 });
             }
         }
