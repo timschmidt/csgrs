@@ -149,15 +149,6 @@ impl LineArcRegion2 {
             policy,
         )
     }
-
-    /// Collects normalized topology events against another region.
-    pub fn intersect_region(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> crate::CurveResult<crate::RegionIntersectionSet> {
-        self.as_view().intersect_region(&other.as_view(), policy)
-    }
 }
 
 /// Borrowed view over material and hole contours.
@@ -336,15 +327,6 @@ impl<'a> RegionView2<'a> {
             self.hole_contours.iter().copied(),
             policy,
         )
-    }
-
-    /// Collects normalized topology events against another region view.
-    pub fn intersect_region(
-        &self,
-        other: &RegionView2<'_>,
-        policy: &CurveContext,
-    ) -> crate::CurveResult<crate::RegionIntersectionSet> {
-        crate::region_events::intersect_region_views(self, other, policy)
     }
 }
 

@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircleCircleRelation, CircularArc2, Classification, Contour2,
-    CurveContext, CurveResult, CurveString2, LineArcRegion2, LineCircleRelation, LineSeg2, Point2,
+    CurveContext, CurveRegion2, CurveResult, CurveString2, LineCircleRelation, LineSeg2, Point2,
     Real, Segment2,
 };
 
@@ -192,35 +192,40 @@ fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) 
     Ok(())
 }
 
-fn bench_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResult<()> {
+fn bench_sparse_region_events(
+    contour_count: i32,
+    iterations: u32,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut contours = Vec::with_capacity(contour_count as usize);
     for index in 0..contour_count {
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    let region = LineArcRegion2::from_material_contours(contours);
-    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
     let policy = CurveContext::STRICT;
+    let region = CurveRegion2::try_from_native_material_contours(contours, &policy)?.into_value();
+    let cutter =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(12, -1, 18, 5)], &policy)?
+            .into_value();
     let started = Instant::now();
     let mut total_pairs = 0_usize;
 
     for _ in 0..iterations {
-        let events = region.intersect_region(&cutter, &policy)?;
-        if events.len() != 1 {
-            panic!("sparse region benchmark expected one contour-pair event set");
+        let evidence = region.intersect_region(&cutter, &policy)?.into_value();
+        if !evidence.is_complete() {
+            panic!("sparse unified-region benchmark returned incomplete evidence");
         }
-        total_pairs += black_box(events.len());
+        total_pairs += black_box(evidence.contacts().len() + evidence.overlaps().len());
     }
 
     let elapsed = started.elapsed();
     println!(
-        "sparse_region_events_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total pairs={total_pairs}",
+        "sparse_curve_region_intersections_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total evidence={total_pairs}",
         elapsed / iterations
     );
     Ok(())
 }
 
-fn main() -> CurveResult<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_line_circle_relation(100_000)?;
     bench_circle_circle_relation(100_000)?;
 

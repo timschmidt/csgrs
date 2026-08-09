@@ -63,7 +63,6 @@ mod rational_bezier;
 mod rational_bezier_general;
 mod reconstruct;
 mod region;
-mod region_events;
 mod region_nesting;
 mod retained_status;
 mod segment;
@@ -257,10 +256,6 @@ pub use reconstruct::PolylineReconstructionOptions;
 #[doc(hidden)]
 pub use region::LineArcRegion2;
 pub use region::{RegionContourProfile, RegionPointLocation, RegionView2};
-pub use region_events::{
-    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionSide,
-};
 pub use region_nesting::{
     RegionArrangement2, RegionArrangementSummary2, RegionBoundaryContourBuildEvidence2,
     RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildResult2,
