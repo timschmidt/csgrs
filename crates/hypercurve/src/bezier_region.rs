@@ -7524,6 +7524,9 @@ impl CurveRegion2 {
         if let Some(roles) = &self.data.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
         }
+        if self.data.boundary_loops.len() == 1 {
+            return Ok(Classification::Decided(vec![CurveRegionLoopRole::Material]));
+        }
         match self.curved_nesting_role_evidence_raw(policy)? {
             Classification::Decided(evidence) => {
                 return Ok(Classification::Decided(evidence.roles().to_vec()));

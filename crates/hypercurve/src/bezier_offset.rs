@@ -49077,6 +49077,40 @@ mod conversion_tests {
                 )),
             );
             assert!(region.has_algebraic_fragments());
+
+            let two = Real::from(2_i8);
+            let source = Curve2::from(
+                LineSeg2::try_new(
+                    Point2::new(
+                        center.x() - (&radial_x * &two),
+                        center.y() - (&radial_y * &two),
+                    ),
+                    Point2::new(
+                        center.x() + (&radial_x * &two),
+                        center.y() + (&radial_y * &two),
+                    ),
+                )
+                .unwrap(),
+            );
+            let trimmed = source
+                .trim_inside_region_with_parameters(&region, &policy)
+                .expect("a rational line must trim against the retained algebraic circle");
+            assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
+            let [trimmed] = trimmed.value.as_slice() else {
+                panic!("a radial line must retain one semicircle interval");
+            };
+            let contacts = [
+                &trimmed.start_boundary_contacts()[0],
+                &trimmed.end_boundary_contacts()[0],
+            ];
+            assert!(contacts.iter().any(|contact| {
+                contact.segment_index() == 0 && contact.boundary_parameter().is_algebraic_cusp()
+            }));
+            assert!(contacts.iter().any(|contact| {
+                contact.segment_index() == 1
+                    && contact.boundary_parameter().as_bezier_parameter().is_some()
+            }));
+
             let regularized = region
                 .regularized_region(&policy)
                 .expect("the retained cusp/diameter loop must regularize")

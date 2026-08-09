@@ -2,9 +2,9 @@ use hypercurve::{
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, CurveBoundaryInteriorSide2, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, Real,
-    RegionPointLocation,
+    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -412,6 +412,21 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
 fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
     check_policy(CurveContext::STRICT);
     check_policy(CurveContext::APPROXIMATE_512);
+}
+
+#[test]
+fn curve_trim_intersects_analytic_parallel_region_boundaries() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let region = analytic_square(0, 4, &policy);
+        let source = Curve2::from(LineSeg2::try_new(point(-1, 2), point(5, 2)).unwrap());
+        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let [BezierSplitFragment2::Materialized { curve, .. }] = outcome.value.as_slice() else {
+            panic!("analytic-square trim must retain one materialized line fragment");
+        };
+        assert_eq!(curve.start(), &point(0, 2));
+        assert_eq!(curve.end(), &point(4, 2));
+    }
 }
 
 #[test]

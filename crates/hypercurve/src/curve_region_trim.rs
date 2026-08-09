@@ -1,11 +1,11 @@
 //! Exact top-level curve clipping against unified curve regions.
 
-use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
+use crate::curve_intersection::split_curve_spans;
 use crate::policy::resolve_certified_operation;
 use crate::{
     BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
-    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2, CurveOutcome,
-    CurvePath2, CurveRegion2, CurveSpanRange2, ExactCurveError, ExactCurveResult,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2, CurveRegion2,
+    CurveRegionParameter2, CurveSpanRange2, ExactCurveError, ExactCurveResult,
     RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, UncertaintyReason,
 };
 
@@ -24,8 +24,8 @@ pub struct CurveRegionBoundaryContact2 {
     kind: CurveRegionBoundaryKind2,
     contour_index: usize,
     segment_index: usize,
-    boundary_parameter: CurveIntersectionParameter2,
-    point: RationalBezierIntersectionPointEvidence2,
+    boundary_parameter: CurveRegionParameter2,
+    point: Option<RationalBezierIntersectionPointEvidence2>,
 }
 
 impl CurveRegionBoundaryContact2 {
@@ -45,13 +45,16 @@ impl CurveRegionBoundaryContact2 {
     }
 
     /// Returns the exact parameter evidence on the contacted boundary segment.
-    pub const fn boundary_parameter(&self) -> &CurveIntersectionParameter2 {
+    pub const fn boundary_parameter(&self) -> &CurveRegionParameter2 {
         &self.boundary_parameter
     }
 
-    /// Returns retained exact point evidence for the contact.
-    pub const fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
-        &self.point
+    /// Returns retained exact point evidence when the pair kernel materializes it.
+    ///
+    /// Some cross-field analytic contacts are represented completely by their
+    /// two selected parameters and therefore have no standalone Cartesian point.
+    pub const fn point(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
+        self.point.as_ref()
     }
 }
 
@@ -162,11 +165,12 @@ impl CurveRegionTrimFragment2 {
 impl Curve2 {
     /// Retains the positive-length exact fragments of this curve inside a region.
     ///
-    /// Every material and hole boundary is intersected with the curve's
-    /// promoted rational-Bézier spans. Certified contacts split the source,
-    /// then one exact representative per fragment is classified against the
-    /// complete region. Shared boundary components and unresolved endpoint
-    /// images remain explicit [`ExactCurveError`] blockers.
+    /// Every material and hole carrier is intersected with the curve's promoted
+    /// rational-Bézier spans through the same pair dispatcher used by region
+    /// Booleans. Certified contacts split the source, then one exact
+    /// representative per fragment is classified against the complete region.
+    /// Shared boundary components and unresolved endpoint images remain
+    /// explicit [`ExactCurveError`] blockers.
     pub fn trim_inside_region(
         &self,
         region: &CurveRegion2,
@@ -232,11 +236,10 @@ impl Curve2 {
             ));
         }
 
-        let mut split_parameters = Vec::new();
-        let mut boundary_contacts = Vec::new();
+        let mut loop_boundaries = Vec::with_capacity(roles.len());
         let mut material_contour_index = 0_usize;
         let mut hole_contour_index = 0_usize;
-        for (boundary_loop, role) in region.boundary_loops().iter().zip(roles) {
+        for role in roles {
             let (kind, contour_index) = match role {
                 crate::CurveRegionLoopRole::Material => {
                     let index = material_contour_index;
@@ -249,58 +252,77 @@ impl Curve2 {
                     (CurveRegionBoundaryKind2::Hole, index)
                 }
             };
-            for (segment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
-                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Subdivision,
-                        self.family(),
-                        UncertaintyReason::Unsupported,
-                    ));
-                };
-                let boundary = Curve2::from(curve.clone());
-                let context = CurveIntersectionContext::try_new(self, &boundary, policy)?;
-                let result = context.result_view()?;
-                if let Some(blocker) = result.blockers().first() {
-                    let reason = match blocker.kind() {
-                        CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                        CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                            UncertaintyReason::Predicate
-                        }
-                        CurveIntersectionPairBlockerKind2::SharedComponent => {
-                            UncertaintyReason::Boundary
-                        }
-                    };
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Subdivision,
-                        self.family(),
-                        reason,
-                    ));
+            loop_boundaries.push((kind, contour_index));
+        }
+
+        let result = region.intersect_curve_boundary_carriers_raw(self, policy)?;
+        if let Some(blocker) = result.blockers().first() {
+            let reason = if let Some(blocker) = blocker.native_blocker() {
+                match blocker.kind() {
+                    CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
+                    CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                        UncertaintyReason::Predicate
+                    }
+                    CurveIntersectionPairBlockerKind2::SharedComponent => {
+                        UncertaintyReason::Boundary
+                    }
                 }
-                if !result.overlaps().is_empty() {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Subdivision,
-                        self.family(),
-                        UncertaintyReason::Boundary,
-                    ));
-                }
-                for contact in result.contacts() {
-                    split_parameters.push((
-                        contact.first().promoted_span_index(),
-                        contact.first().local_parameter().clone(),
-                    ));
-                    boundary_contacts.push(PendingBoundaryContact {
-                        promoted_span_index: contact.first().promoted_span_index(),
-                        source_parameter: contact.first().local_parameter().clone(),
-                        contact: CurveRegionBoundaryContact2 {
-                            kind,
-                            contour_index,
-                            segment_index,
-                            boundary_parameter: contact.second().clone(),
-                            point: contact.point().clone(),
-                        },
-                    });
-                }
-            }
+            } else if let Some(reason) = blocker.uncertainty_reason() {
+                reason
+            } else if blocker.is_point_image_parameter_component() {
+                UncertaintyReason::Boundary
+            } else {
+                UncertaintyReason::Predicate
+            };
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Subdivision,
+                self.family(),
+                reason,
+            ));
+        }
+        if !result.overlaps().is_empty() {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Subdivision,
+                self.family(),
+                UncertaintyReason::Boundary,
+            ));
+        }
+
+        let mut split_parameters = Vec::with_capacity(result.contacts().len());
+        let mut boundary_contacts = Vec::with_capacity(result.contacts().len());
+        for contact in result.contacts() {
+            let Some(source_parameter) = contact.first_parameter().as_bezier_parameter() else {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Subdivision,
+                    self.family(),
+                    crate::CurveError::Topology(
+                        "curve trim source carrier lost its Bezier parameter".into(),
+                    ),
+                ));
+            };
+            let Some(&(kind, contour_index)) = loop_boundaries.get(contact.second().loop_index())
+            else {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Subdivision,
+                    self.family(),
+                    crate::CurveError::Topology(
+                        "curve trim contact references an unknown region loop".into(),
+                    ),
+                ));
+            };
+            let promoted_span_index = contact.first().fragment_index();
+            split_parameters.push((promoted_span_index, source_parameter.clone()));
+            boundary_contacts.push(PendingBoundaryContact {
+                promoted_span_index,
+                source_parameter: source_parameter.clone(),
+                contact: CurveRegionBoundaryContact2 {
+                    kind,
+                    contour_index,
+                    segment_index: contact.second().fragment_index(),
+                    boundary_parameter: contact.second_parameter().clone(),
+                    point: contact.point().cloned(),
+                },
+            });
         }
 
         let materializations = split_curve_spans(self, split_parameters.into_iter(), policy)?;
@@ -953,12 +975,13 @@ mod tests {
             assert_eq!(contact.segment_index(), segment_index);
             assert_eq!(
                 contact.point(),
-                &RationalBezierIntersectionPointEvidence2::Exact(point)
+                Some(&RationalBezierIntersectionPointEvidence2::Exact(point))
             );
             assert!(
                 contact
                     .boundary_parameter()
-                    .exact_curve_parameter()
+                    .as_bezier_parameter()
+                    .and_then(BezierParameter2::as_exact)
                     .is_some()
             );
         }
