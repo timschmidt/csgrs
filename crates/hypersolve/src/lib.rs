@@ -99,12 +99,16 @@ pub use algebraic_binary::{
 pub use algebraic_fiber::{
     AlgebraicFiberDiagonalDeflationReport, AlgebraicFiberDiagonalDeflationStatus,
     AlgebraicFiberProjectionReport, AlgebraicFiberProjectionStatus, AlgebraicFiberRootCountReport,
-    AlgebraicFiberRootCountStatus, count_bivariate_common_fiber_roots_at_algebraic_parameter,
+    AlgebraicFiberRootCountStatus, AlgebraicFiberRootIsolationConfig,
+    AlgebraicFiberRootIsolationReport, AlgebraicFiberRootIsolationStatus,
+    count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
+    isolate_bivariate_fiber_roots_at_algebraic_parameter,
     project_bivariate_fiber_at_algebraic_parameter,
+    project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
@@ -274,6 +278,7 @@ pub use root_isolation::{
     count_descartes_univariate_polynomial_expr, count_descartes_univariate_polynomial_roots,
     isolate_univariate_polynomial_expr, isolate_univariate_polynomial_expr_with_config,
     isolate_univariate_polynomial_roots, isolate_univariate_polynomial_roots_with_config,
+    polynomial_has_one_distinct_root_in_open_interval,
     refine_isolated_univariate_polynomial_interval,
     subdivide_bernstein_univariate_polynomial_interval_expr,
     subdivide_bernstein_univariate_polynomial_interval_roots,

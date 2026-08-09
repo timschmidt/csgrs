@@ -11,7 +11,9 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
-use hyperreal::Real;
+use hyperreal::{Rational as HyperRational, Real};
+use num::bigint::Sign;
+use num::{BigInt, One, Zero};
 
 use crate::analysis::ProblemAnalysis;
 use crate::certification::{
@@ -1799,7 +1801,7 @@ pub(crate) fn polynomials_share_one_root_in_interval(
 
 /// Certifies one distinct root through exact Bernstein variation, removing a
 /// repeated factor only when the direct variation does not already decide.
-pub(crate) fn polynomial_has_one_distinct_root_in_open_interval(
+pub fn polynomial_has_one_distinct_root_in_open_interval(
     polynomial: &[Real],
     lower: &Real,
     upper: &Real,
@@ -1817,6 +1819,24 @@ pub(crate) fn polynomial_has_one_distinct_root_in_open_interval(
     }
     if polynomial.len() <= 3 && lower_sign != upper_sign {
         return Some(true);
+    }
+    // A narrow candidate interval commonly arrives with an independent exact
+    // existence proof (for example, selected algebraic-fiber isolation). An
+    // exact Horner enclosure of the derivative certifies monotonicity in
+    // linear work and avoids a high-degree Bernstein basis change whenever it
+    // excludes zero. Endpoint signs then decide whether the interval owns one
+    // root or none.
+    let derivative = derivative(polynomial);
+    if let Some((derivative_lower, derivative_upper)) =
+        polynomial_interval_enclosure(&derivative, lower, upper, policy)
+    {
+        let derivative_lower_sign =
+            compare_reals(&derivative_lower, &Real::zero(), policy).value()?;
+        let derivative_upper_sign =
+            compare_reals(&derivative_upper, &Real::zero(), policy).value()?;
+        if derivative_lower_sign == Ordering::Greater || derivative_upper_sign == Ordering::Less {
+            return Some(lower_sign != upper_sign);
+        }
     }
     let variations = polynomial_interval_bernstein_variations(
         polynomial,
@@ -1839,6 +1859,41 @@ pub(crate) fn polynomial_has_one_distinct_root_in_open_interval(
         policy,
     )?;
     Some(variations == 1)
+}
+
+fn polynomial_interval_enclosure(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<(Real, Real)> {
+    let leading = polynomial.last()?.clone();
+    let mut range_lower = leading.clone();
+    let mut range_upper = leading;
+    for coefficient in polynomial[..polynomial.len().saturating_sub(1)]
+        .iter()
+        .rev()
+    {
+        let products = [
+            &range_lower * lower,
+            &range_lower * upper,
+            &range_upper * lower,
+            &range_upper * upper,
+        ];
+        let mut product_lower = products[0].clone();
+        let mut product_upper = products[0].clone();
+        for product in &products[1..] {
+            if compare_reals(product, &product_lower, policy).value()? == Ordering::Less {
+                product_lower = product.clone();
+            }
+            if compare_reals(product, &product_upper, policy).value()? == Ordering::Greater {
+                product_upper = product.clone();
+            }
+        }
+        range_lower = product_lower + coefficient;
+        range_upper = product_upper + coefficient;
+    }
+    Some((range_lower, range_upper))
 }
 
 /// Refines one represented source root until its conservative image enclosure
@@ -1917,10 +1972,90 @@ fn polynomial_interval_bernstein_variations(
             + ((upper.clone() - lower.clone()) * derivative_at_lower / Real::from(2_i8)).ok()?;
         return sign_variations_for_coefficients(&[lower_value, middle, upper_value], policy);
     }
+    if let Some(variations) =
+        exact_rational_polynomial_interval_bernstein_variations(polynomial, lower, upper)
+    {
+        return Some(variations);
+    }
     sign_variations_for_coefficients(
         &power_to_bernstein_on_interval(polynomial, lower, upper)?,
         policy,
     )
+}
+
+/// Computes the same affine power-to-Bernstein sign sequence as the generic
+/// `Real` path after clearing every positive denominator once. Resultants and
+/// isolator endpoints are exact rationals, so this fraction-free path avoids a
+/// rational reduction after every intermediate multiply and add.
+fn exact_rational_polynomial_interval_bernstein_variations(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<usize> {
+    let rationals = polynomial
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let coefficients = HyperRational::primitive_bigint_ratio(&rationals);
+    let one = HyperRational::one();
+    let endpoints = HyperRational::primitive_bigint_ratio(&[
+        lower.exact_rational_ref()?,
+        upper.exact_rational_ref()?,
+        &one,
+    ]);
+    let [lower, upper, scale] = endpoints.as_slice() else {
+        return None;
+    };
+    if scale.sign() != Sign::Plus {
+        return None;
+    }
+    let width = upper - lower;
+    let degree = coefficients.len().checked_sub(1)?;
+
+    // S^n p((L + W x) / S), formed by affine Horner composition. The positive
+    // factor S^n preserves every Bernstein coefficient sign.
+    let mut shifted_power = vec![coefficients.last()?.clone()];
+    let mut scale_power = BigInt::one();
+    for coefficient in coefficients[..degree].iter().rev() {
+        scale_power *= scale;
+        let old_len = shifted_power.len();
+        shifted_power.push(BigInt::zero());
+        for power in (1..=old_len).rev() {
+            shifted_power[power] =
+                &shifted_power[power] * lower + &shifted_power[power - 1] * &width;
+        }
+        shifted_power[0] = &shifted_power[0] * lower + coefficient * &scale_power;
+    }
+
+    // Multiplying control i by the positive falling factorial (n)_i clears
+    // every C(n,k) denominator. The weight recurrence remains integral:
+    // w[k+1] = w[k] (i-k)/(n-k).
+    let mut previous = None;
+    let mut variations = 0_usize;
+    let mut degree_falling = BigInt::one();
+    for index in 0..=degree {
+        if index != 0 {
+            degree_falling *= BigInt::from(degree - index + 1);
+        }
+        let mut weight = degree_falling.clone();
+        let mut value = BigInt::zero();
+        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1) {
+            value += coefficient * &weight;
+            if power != index {
+                weight *= BigInt::from(index - power);
+                weight /= BigInt::from(degree - power);
+            }
+        }
+        let sign = value.sign();
+        if sign == Sign::NoSign {
+            continue;
+        }
+        if previous.is_some_and(|previous| previous != sign) {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
 }
 
 pub(crate) fn square_free_part(
@@ -2062,25 +2197,33 @@ fn power_to_bernstein_on_interval(
     lower: &Real,
     upper: &Real,
 ) -> Option<Vec<Real>> {
+    let leading = polynomial.last()?.clone();
     let degree = polynomial.len().saturating_sub(1);
     let width = upper.clone() - lower.clone();
-    let mut shifted_power = vec![Real::zero(); degree + 1];
-    for (power, coefficient) in polynomial.iter().enumerate() {
-        for (target_power, target) in shifted_power.iter_mut().enumerate().take(power + 1) {
-            let binomial = Real::from(binomial(power, target_power)? as i64);
-            let lower_power = pow_real_nonnegative(lower, power - target_power);
-            let width_power = pow_real_nonnegative(&width, target_power);
-            *target += coefficient.clone() * binomial * lower_power * width_power;
+    // Horner composition by `lower + width*x` performs the affine power-basis
+    // change in quadratic time without materializing large binomial integers.
+    let mut shifted_power = vec![leading];
+    for coefficient in polynomial[..degree].iter().rev() {
+        let old_len = shifted_power.len();
+        shifted_power.push(Real::zero());
+        for power in (1..=old_len).rev() {
+            shifted_power[power] =
+                shifted_power[power].clone() * lower + shifted_power[power - 1].clone() * &width;
         }
+        shifted_power[0] = shifted_power[0].clone() * lower + coefficient;
     }
 
     let mut bernstein = vec![Real::zero(); degree + 1];
     for (i, target) in bernstein.iter_mut().enumerate().take(degree + 1) {
         let mut value = Real::zero();
+        let mut ratio = Real::one();
         for (j, coefficient) in shifted_power.iter().enumerate().take(i + 1) {
-            let numerator = Real::from(binomial(i, j)? as i64);
-            let denominator = Real::from(binomial(degree, j)? as i64);
-            value += ((coefficient.clone() * numerator) / denominator).ok()?;
+            value += coefficient * &ratio;
+            if j != i {
+                let numerator = Real::from(u64::try_from(i - j).ok()?);
+                let denominator = Real::from(u64::try_from(degree - j).ok()?);
+                ratio = ((ratio * numerator) / denominator).ok()?;
+            }
         }
         *target = value;
     }
@@ -2210,23 +2353,6 @@ fn push_unique_bernstein_endpoint(intervals: &mut Vec<BernsteinSubdivisionInterv
     });
 }
 
-fn pow_real_nonnegative(value: &Real, exponent: usize) -> Real {
-    (0..exponent).fold(Real::one(), |product, _| product * value.clone())
-}
-
-fn binomial(n: usize, k: usize) -> Option<u64> {
-    if k > n {
-        return Some(0);
-    }
-    let k = k.min(n - k);
-    let mut result = 1_u128;
-    for i in 1..=k {
-        result = result.checked_mul((n - k + i) as u128)?;
-        result /= i as u128;
-    }
-    u64::try_from(result).ok()
-}
-
 fn root_isolation_report(
     constraint_index: usize,
     symbol: Option<SymbolId>,
@@ -2334,6 +2460,37 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn fraction_free_bernstein_exceeds_machine_binomial_range_exactly() {
+        // (x - 1/2)(x + 1)^79 has exactly one root in (2/5, 3/5). Degree 80
+        // makes its central binomial coefficient larger than u64, exercising
+        // the fraction-free falling-factorial basis conversion directly.
+        let mut repeated_factor = vec![Real::one()];
+        for _ in 0..79 {
+            let mut next = vec![Real::zero(); repeated_factor.len() + 1];
+            for (index, coefficient) in repeated_factor.iter().enumerate() {
+                next[index] += coefficient.clone();
+                next[index + 1] += coefficient.clone();
+            }
+            repeated_factor = next;
+        }
+        let half = (real(1) / real(2)).unwrap();
+        let mut polynomial = vec![Real::zero(); repeated_factor.len() + 1];
+        for (index, coefficient) in repeated_factor.iter().enumerate() {
+            polynomial[index] -= half.clone() * coefficient.clone();
+            polynomial[index + 1] += coefficient.clone();
+        }
+
+        assert_eq!(
+            exact_rational_polynomial_interval_bernstein_variations(
+                &polynomial,
+                &(real(2) / real(5)).unwrap(),
+                &(real(3) / real(5)).unwrap(),
+            ),
+            Some(1)
+        );
     }
 
     #[test]

@@ -14,6 +14,7 @@ use num::Integer;
 use num::{BigInt, One, Zero};
 
 use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
+use crate::integer_interpolation::primitive_integer_polynomial;
 
 /// Failure mode for exact univariate resultant construction.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -270,13 +271,14 @@ pub(crate) fn quotient_ring_resultant_polynomial(
 pub(crate) fn quotient_ring_fiber_resultant_polynomial(
     source: &[Real],
     fiber_coefficients: &[Vec<Real>],
+    max_source_degree: usize,
 ) -> Option<Vec<Real>> {
     let degree = source.len().checked_sub(1)?;
     // The subset determinant is exponential only in the selected root's
     // defining degree. Keep that dimension deliberately small; larger fields
     // must use interval/local-field specialization rather than risking an
     // allocation cliff.
-    if degree == 0 || degree > 8 || fiber_coefficients.is_empty() {
+    if degree == 0 || degree > max_source_degree || fiber_coefficients.is_empty() {
         return None;
     }
     let rational_coefficients = source
@@ -325,13 +327,12 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
     while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
         polynomial.pop();
     }
-    Some(
-        polynomial
-            .into_iter()
-            .map(Rational::from_bigint)
-            .map(Real::from)
-            .collect(),
-    )
+    let polynomial = polynomial
+        .into_iter()
+        .map(Rational::from_bigint)
+        .map(Real::from)
+        .collect::<Vec<_>>();
+    primitive_integer_polynomial(&polynomial)
 }
 
 fn determinant_polynomial_matrix(entries: &[Vec<BigInt>], dimension: usize) -> Option<Vec<BigInt>> {
