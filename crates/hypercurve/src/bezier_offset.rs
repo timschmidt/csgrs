@@ -9795,25 +9795,56 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
-        if self.data.frame.shares_storage(&other.data.frame) {
-            let radial_same = self.radial_distance() == other.radial_distance();
-            let radial_opposite = self.radial_distance() == &-other.radial_distance().clone();
-            if radial_same || radial_opposite {
-                let traversal_same = self.is_clockwise() == other.is_clockwise();
-                let orientation = if traversal_same {
-                    RationalBezierOverlapOrientation2::Same
-                } else {
-                    RationalBezierOverlapOrientation2::Reversed
-                };
-                let result = if radial_same == traversal_same {
-                    Self::exact_full_pair_overlap(self, other, orientation, policy)
-                } else {
-                    BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(
-                        Self::coincident_endpoint_contacts(radial_same),
-                    )
-                };
-                return Ok(Classification::Decided(result));
+        // Equal selected frames prove equal centers directly, including the
+        // general parallel-normal representation that cannot enter the
+        // rational two-field pair system below.  Decide every concentric case
+        // before asking either frame for polynomial point numerators.
+        if self.data.frame == other.data.frame {
+            let radius_squared_difference = self.radial_distance() * self.radial_distance()
+                - other.radial_distance() * other.radial_distance();
+            match real_sign(&radius_squared_difference, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                Some(RealSign::Zero) => {}
             }
+            let radial_difference = self.radial_distance() - other.radial_distance();
+            let radial_same = match real_sign(&radial_difference, policy) {
+                Some(RealSign::Zero) => true,
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    let radial_sum = self.radial_distance() + other.radial_distance();
+                    match real_sign(&radial_sum, policy) {
+                        Some(RealSign::Zero) => false,
+                        Some(RealSign::Positive | RealSign::Negative) => {
+                            return Err(CurveError::Topology(
+                                "equal squared selected-circle radii were neither equal nor opposite"
+                                    .into(),
+                            ));
+                        }
+                        None => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                        }
+                    }
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            let traversal_same = self.is_clockwise() == other.is_clockwise();
+            let orientation = if traversal_same {
+                RationalBezierOverlapOrientation2::Same
+            } else {
+                RationalBezierOverlapOrientation2::Reversed
+            };
+            let result = if radial_same == traversal_same {
+                Self::exact_full_pair_overlap(self, other, orientation, policy)
+            } else {
+                BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(
+                    Self::coincident_endpoint_contacts(radial_same),
+                )
+            };
+            return Ok(Classification::Decided(result));
         }
         let system = match self.pair_system(other, policy)? {
             Classification::Decided(system) => system,
@@ -58601,6 +58632,69 @@ mod conversion_tests {
                 point.same_point(&expected(Real::one(), -radius.clone()), &policy),
                 Classification::Decided(true),
             );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_parallel_normal_circle_pair_decides_every_concentric_case() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 1),
+        );
+        let center_support = source.parallel_left(Real::one()).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let build = |radius| {
+                let Classification::Decided(Some(circle)) =
+                    BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                        center_support.clone(),
+                        BezierParameter2::Exact(half.clone()),
+                        Real::from(radius),
+                        false,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the regular selected frame must construct");
+                };
+                circle
+            };
+            let first = build(1);
+            let independently_built = build(1);
+            assert!(matches!(
+                first
+                    .pair_intersections(&independently_built, &policy)
+                    .unwrap(),
+                Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                    _
+                )),
+            ));
+            assert!(matches!(
+                first
+                    .pair_intersections(&independently_built.reversed(), &policy)
+                    .unwrap(),
+                Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                    _
+                )),
+            ));
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(contacts),
+            ) = first
+                .pair_intersections(&independently_built.complementary_half(), &policy)
+                .unwrap()
+            else {
+                panic!("complementary general selected halves must share their endpoints");
+            };
+            assert_eq!(contacts.len(), 2);
+            assert!(matches!(
+                first.pair_intersections(&build(2), &policy).unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts
+                ),
+            ));
         }
     }
 
