@@ -7,14 +7,14 @@
 //! material contours, hole contours, and boolean membership semantics.
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule, LineArcRegion2,
-    Point2, Real, RegionPointLocation,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, Point2, Real,
+    RegionPointLocation,
 };
 
 type HPoint = Point2;
 type HReal = Real;
 type HContour = Contour2;
-type HRegion = LineArcRegion2;
+type HRegion = CurveRegion2;
 type Rect = (f64, f64, f64, f64);
 
 fn s(value: f64) -> HReal {
@@ -44,14 +44,21 @@ fn rectangle((xmin, ymin, xmax, ymax): Rect) -> HContour {
 }
 
 fn region(materials: &[Rect], holes: &[Rect]) -> HRegion {
-    LineArcRegion2::new(
+    CurveRegion2::try_from_native_contours(
         materials.iter().copied().map(rectangle).collect(),
         holes.iter().copied().map(rectangle).collect(),
+        &policy(),
     )
+    .unwrap()
+    .into_value()
 }
 
 fn inside(region: &HRegion, x: f64, y: f64) -> bool {
-    match region.classify_point(&p(x, y), &policy()) {
+    match region
+        .classify_point(&p(x, y), &policy())
+        .unwrap()
+        .into_value()
+    {
         Classification::Decided(RegionPointLocation::Inside) => true,
         Classification::Decided(RegionPointLocation::Outside) => false,
         other => panic!("sample ({x}, {y}) should avoid boundaries, got {other:?}"),
@@ -76,19 +83,25 @@ fn assert_boolean_samples(
     samples: &[(f64, f64)],
 ) -> HRegion {
     let result = first
-        .boolean_region(second, op, FillRule::NonZero, &policy())
-        .unwrap();
-    let Classification::Decided(result) = result else {
-        panic!("expected decided PR #59 region boolean case for {op:?}, got {result:?}");
+        .boolean_region(second, op, &policy())
+        .unwrap()
+        .into_value();
+
+    let Classification::Decided(native) = result
+        .native_contours_fast_path(&policy())
+        .unwrap()
+        .into_value()
+    else {
+        panic!("expected native line topology for PR #59 {op:?}");
     };
 
     assert_eq!(
-        result.material_contours().len(),
+        native.material_contours().len(),
         expected_materials,
         "material count for {op:?}"
     );
     assert_eq!(
-        result.hole_contours().len(),
+        native.hole_contours().len(),
         expected_holes,
         "hole count for {op:?}"
     );

@@ -22,9 +22,8 @@ use hypercurve::{
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2,
-    OffsetCornerStyle2, Point2, RationalBezier2, RationalBezierIntersectionContacts2, Real,
-    Segment2,
+    CurveRegionLoopRole, CurveString2, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
+    RationalBezier2, RationalBezierIntersectionContacts2, Real, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -199,8 +198,13 @@ fn hypercurve_line_arc_contour(points: &[[f64; 2]], bulges: &[f64]) -> Contour2 
     Contour2::from_bulge_vertices(&vertices).expect("valid line/arc benchmark contour")
 }
 
-fn hypercurve_region(points: &[[f64; 2]]) -> LineArcRegion2 {
-    LineArcRegion2::from_material_contours(vec![hypercurve_contour(points)])
+fn hypercurve_region(points: &[[f64; 2]]) -> CurveRegion2 {
+    CurveRegion2::try_from_native_material_contours(
+        vec![hypercurve_contour(points)],
+        &CurveContext::STRICT,
+    )
+    .expect("valid unified hypercurve benchmark region")
+    .into_value()
 }
 
 fn cavalier_polyline(points: &[[f64; 2]], bulges: Option<&[f64]>) -> Polyline<f64> {
@@ -228,56 +232,21 @@ fn geo_polygon(points: &[[f64; 2]]) -> Polygon<f64> {
 }
 
 fn hypercurve_boolean_result_size(
-    first: &LineArcRegion2,
-    second: &LineArcRegion2,
+    first: &CurveRegion2,
+    second: &CurveRegion2,
     operation: CommonBooleanOp,
     policy: &CurveContext,
 ) -> usize {
     let operation = operation.hypercurve();
     let result = first
-        .boolean_region(second, operation, FillRule::EvenOdd, policy)
-        .expect("hypercurve boolean benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("hypercurve boolean benchmark became uncertain");
-    };
+        .boolean_region(second, operation, policy)
+        .expect("hypercurve boolean benchmark completes")
+        .into_value();
     result
-        .material_contours()
+        .boundary_loops()
         .iter()
-        .chain(result.hole_contours())
-        .map(Contour2::len)
+        .map(|boundary| boundary.fragments().len())
         .sum()
-}
-
-fn hypercurve_boundary_contour_result_size(
-    first: &LineArcRegion2,
-    second: &LineArcRegion2,
-    operation: CommonBooleanOp,
-    policy: &CurveContext,
-) -> usize {
-    let operation = operation.hypercurve();
-    let result = first
-        .boolean_boundary_contours(second, operation, FillRule::EvenOdd, policy)
-        .expect("hypercurve boundary-contour benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("hypercurve boundary-contour benchmark became uncertain");
-    };
-    result.iter().map(Contour2::len).sum()
-}
-
-fn hypercurve_boundary_loop_result_size(
-    first: &LineArcRegion2,
-    second: &LineArcRegion2,
-    operation: CommonBooleanOp,
-    policy: &CurveContext,
-) -> usize {
-    let operation = operation.hypercurve();
-    let result = first
-        .boolean_boundary_loops(second, operation, policy)
-        .expect("hypercurve boundary-loop benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("hypercurve boundary-loop benchmark became uncertain");
-    };
-    result.loops().iter().map(|boundary| boundary.len()).sum()
 }
 
 fn cavalier_boolean_result_size(
@@ -367,31 +336,6 @@ fn benchmark_boolean_case(
         hypercurve_result_size, 0,
         "hypercurve {name} fixture must produce a boundary",
     );
-    for (path, result_size) in [
-        (
-            "boundary contours",
-            hypercurve_boundary_contour_result_size(
-                &hypercurve_first,
-                &hypercurve_second,
-                operation,
-                &policy,
-            ),
-        ),
-        (
-            "boundary loops",
-            hypercurve_boundary_loop_result_size(
-                &hypercurve_first,
-                &hypercurve_second,
-                operation,
-                &policy,
-            ),
-        ),
-    ] {
-        assert_eq!(
-            result_size, hypercurve_result_size,
-            "hypercurve {name} {path} must match the ordinary region boundary size",
-        );
-    }
     assert_ne!(
         cavalier_boolean_result_size(&cavalier_first, &cavalier_second, operation),
         0,
@@ -410,22 +354,6 @@ fn benchmark_boolean_case(
 
     runner.measure(name, "hypercurve", || {
         hypercurve_boolean_result_size(
-            black_box(&hypercurve_first),
-            black_box(&hypercurve_second),
-            operation,
-            &policy,
-        )
-    });
-    runner.measure(name, "hypercurve_contours", || {
-        hypercurve_boundary_contour_result_size(
-            black_box(&hypercurve_first),
-            black_box(&hypercurve_second),
-            operation,
-            &policy,
-        )
-    });
-    runner.measure(name, "hypercurve_loops", || {
-        hypercurve_boundary_loop_result_size(
             black_box(&hypercurve_first),
             black_box(&hypercurve_second),
             operation,

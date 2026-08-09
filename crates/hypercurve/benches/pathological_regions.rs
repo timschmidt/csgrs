@@ -5,7 +5,7 @@ use std::env;
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{BooleanOp, Classification, CurveContext, FillRule};
+use hypercurve::{BooleanOp, CurveContext};
 
 use pathological_fixture::{MemoryTier, NativeDataset, rotated_region, selected_tiers};
 
@@ -193,7 +193,6 @@ fn benchmark_booleans(dataset: &NativeDataset) {
 
     let started = Instant::now();
     let mut projection_decided = 0_usize;
-    let mut projection_uncertain = 0_usize;
     let mut projection_errors = 0_usize;
     let mut projection_checksum = 0_usize;
     for cell in &dataset.cells {
@@ -206,25 +205,21 @@ fn benchmark_booleans(dataset: &NativeDataset) {
             match cell.source_projection.boolean_region(
                 &cell.rotated_projection,
                 operation,
-                FillRule::EvenOdd,
                 &policy,
             ) {
-                Ok(Classification::Decided(region)) => {
+                Ok(region) => {
                     projection_decided += 1;
-                    projection_checksum ^=
-                        region.material_contours().len() + region.hole_contours().len();
+                    projection_checksum ^= region.value.len();
                 }
-                Ok(Classification::Uncertain(_)) => projection_uncertain += 1,
                 Err(_) => projection_errors += 1,
             }
         }
     }
     println!(
-        "pathological/{}/flattened_exact_boolean_all_ops: cells={} decided={} uncertain={} errors={} checksum={} elapsed={:?}",
+        "pathological/{}/flattened_exact_boolean_all_ops: cells={} decided={} errors={} checksum={} elapsed={:?}",
         dataset.tier.name(),
         dataset.cells.len(),
         projection_decided,
-        projection_uncertain,
         projection_errors,
         black_box(projection_checksum),
         started.elapsed(),

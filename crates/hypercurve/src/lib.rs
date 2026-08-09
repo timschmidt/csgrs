@@ -30,8 +30,7 @@ mod bezier_split;
 mod bezier_split_endpoint;
 mod bezier_tangent_order;
 mod bezier_topology;
-mod boolean;
-mod boolean_boundary;
+mod boolean_op;
 mod bspline;
 mod bulge;
 mod classify;
@@ -64,10 +63,7 @@ mod rational_bezier;
 mod rational_bezier_general;
 mod reconstruct;
 mod region;
-mod region_boolean;
-mod region_crossing_winding;
 mod region_events;
-mod region_fragments;
 mod region_nesting;
 mod retained_status;
 mod segment;
@@ -177,13 +173,7 @@ pub use bezier_topology::{
     BezierLineCrossingDirection, BezierLineRelation, BezierMonotoneGraphContactOrder,
     BezierMonotoneGraphOrder, BezierMonotoneSpan,
 };
-pub use boolean::{
-    BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
-};
-pub use boolean_boundary::{
-    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
-    BooleanBoundaryLoopSet, DirectedBooleanFragment,
-};
+pub use boolean_op::BooleanOp;
 pub use bspline::{
     PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
     RationalBSplineCurve2, RationalBSplineNativeTopologyEvidence2, RationalBezierSpan2,
@@ -271,7 +261,6 @@ pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
     RegionSide,
 };
-pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
 pub use region_nesting::{
     RegionArrangement2, RegionArrangementSummary2, RegionBoundaryContourBuildEvidence2,
     RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildResult2,

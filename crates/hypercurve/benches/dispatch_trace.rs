@@ -1,9 +1,9 @@
 #[cfg(feature = "triangulation")]
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveResult,
-    CurveString2, FillRule, LineArcRegion2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real,
-    Segment2, Similarity2, StraightSkeletonStage2,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError,
+    CurveRegion2, CurveString2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real, Segment2,
+    Similarity2, StraightSkeletonStage2,
 };
 
 fn r(value: i32) -> Real {
@@ -39,7 +39,7 @@ fn star(vertex_count: usize, center: (f64, f64), radii: (f64, f64), rotation: f6
     Contour2::from_bulge_vertices(&vertices).expect("trace star is valid")
 }
 
-fn trace<T>(name: &str, workload: impl FnOnce() -> CurveResult<T>) {
+fn trace<T, E: std::fmt::Display>(name: &str, workload: impl FnOnce() -> Result<T, E>) {
     hyperreal::dispatch_trace::reset();
     let result = hyperreal::dispatch_trace::with_recording(workload)
         .unwrap_or_else(|error| panic!("{name} trace workload must remain certified: {error}"));
@@ -80,12 +80,12 @@ fn main() {
 
     let quadratic = QuadraticBezier2::new(p(-3, 0), p(0, 6), p(3, 0));
     trace("quadratic_bezier_evaluation", || {
-        Ok(quadratic.point_at((r(1) / r(3))?))
+        Ok::<_, CurveError>(quadratic.point_at((r(1) / r(3))?))
     });
 
     trace("exact_similarity_transform", || {
         let transform = Similarity2::try_from_real_affine(r(0), r(-1), r(1), r(0), r(5), r(7))?;
-        Ok(transform.transform_point(&p(3, 4)))
+        Ok::<_, CurveError>(transform.transform_point(&p(3, 4)))
     });
 
     trace("finite_ring_import", || {
@@ -99,13 +99,15 @@ fn main() {
     });
 
     trace("nurbs_global_interpolation", || {
-        Ok(NurbsCurve2::interpolate_uniform(
-            2,
-            vec![p(0, 0), p(2, 2), p(4, 0)],
-            &CurveContext::STRICT,
+        Ok::<_, CurveError>(
+            NurbsCurve2::interpolate_uniform(
+                2,
+                vec![p(0, 0), p(2, 2), p(4, 0)],
+                &CurveContext::STRICT,
+            )
+            .expect("trace interpolation remains exact")
+            .into_value(),
         )
-        .expect("trace interpolation remains exact")
-        .into_value())
     });
 
     let open_path = CurveString2::try_new(vec![
@@ -116,7 +118,7 @@ fn main() {
     trace("curve_string_offset", || {
         let offset = open_path.offset_left_checked(r(1), &policy)?;
         assert!(matches!(offset, Classification::Decided(_)));
-        Ok(offset)
+        Ok::<_, CurveError>(offset)
     });
 
     let concave = Contour2::from_bulge_vertices(&[
@@ -133,38 +135,44 @@ fn main() {
     trace("straight_skeleton", || {
         let evidence = concave.straight_skeleton(&policy)?;
         assert_eq!(evidence.stage(), StraightSkeletonStage2::Complete);
-        Ok(evidence)
+        Ok::<_, CurveError>(evidence)
     });
 
-    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
+    let first =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
+            .expect("trace region is valid")
+            .into_value();
+    let second =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)], &policy)
+            .expect("trace region is valid")
+            .into_value();
     trace("region_boolean", || {
-        let result = first.boolean_region(&second, BooleanOp::Union, FillRule::NonZero, &policy)?;
-        assert!(matches!(result, Classification::Decided(_)));
-        Ok(result)
+        first.boolean_region(&second, BooleanOp::Union, &policy)
     });
 
-    let first_star =
-        LineArcRegion2::from_material_contours(vec![star(64, (0.0, 0.0), (100.0, 72.0), 0.0)]);
-    let second_star = LineArcRegion2::from_material_contours(vec![star(
-        64,
-        (18.0, 7.0),
-        (96.0, 68.0),
-        std::f64::consts::PI / 64.0,
-    )]);
+    let first_star = CurveRegion2::try_from_native_material_contours(
+        vec![star(64, (0.0, 0.0), (100.0, 72.0), 0.0)],
+        &policy,
+    )
+    .expect("trace star is valid")
+    .into_value();
+    let second_star = CurveRegion2::try_from_native_material_contours(
+        vec![star(
+            64,
+            (18.0, 7.0),
+            (96.0, 68.0),
+            std::f64::consts::PI / 64.0,
+        )],
+        &policy,
+    )
+    .expect("trace star is valid")
+    .into_value();
     trace("star64_region_boolean", || {
-        let result = first_star.boolean_region(
-            &second_star,
-            BooleanOp::Intersection,
-            FillRule::EvenOdd,
-            &policy,
-        )?;
-        assert!(matches!(result, Classification::Decided(_)));
-        Ok(result)
+        first_star.boolean_region(&second_star, BooleanOp::Intersection, &policy)
     });
 
-    trace("batched_region_containment", || {
-        Ok(first.classify_points(&[p(1, 1)], &policy))
+    trace("region_containment", || {
+        first.classify_point(&p(1, 1), &policy)
     });
 
     #[cfg(feature = "triangulation")]

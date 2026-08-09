@@ -13,8 +13,8 @@ use hyperreal::Real;
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::compare_reals;
 use crate::{
-    Classification, ContourIntersection, ContourIntersectionSet, ContourOperand, CurveContext,
-    CurveError, CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
+    ContourIntersection, ContourIntersectionSet, ContourOperand, CurveContext, CurveError,
+    CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
 };
 
 /// Which region side a contour key belongs to.
@@ -349,16 +349,6 @@ impl RegionIntersectionSet {
         self.pairs
             .iter()
             .filter(move |pair| pair.first == key || pair.second == key)
-    }
-
-    /// Splits every contour in both region views at this event set.
-    pub fn split_regions(
-        &self,
-        first: &RegionView2<'_>,
-        second: &RegionView2<'_>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<crate::RegionFragmentSet>> {
-        crate::region_fragments::split_region_views_at_intersections(first, second, self, policy)
     }
 }
 

@@ -2409,20 +2409,24 @@ fn bench_contour_line_merge_evidence(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_region_boolean(iterations: u32) -> CurveResult<()> {
-    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let policy = CurveContext::STRICT;
+    let first =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(0, 0, 4, 4)], &policy)
+            .expect("benchmark region is valid")
+            .into_value();
+    let second =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(2, -1, 6, 3)], &policy)
+            .expect("benchmark region is valid")
+            .into_value();
     let started = Instant::now();
     let mut total_boundary_contours = 0_usize;
 
     for _ in 0..iterations {
-        let Classification::Decided(result) =
-            first.boolean_region(&second, BooleanOp::Union, FillRule::NonZero, &policy)?
-        else {
-            panic!("region boolean benchmark became uncertain");
-        };
-        total_boundary_contours +=
-            black_box(result.material_contours().len() + result.hole_contours().len());
+        let result = first
+            .boolean_region(&second, BooleanOp::Union, &policy)
+            .expect("region Boolean benchmark remains exact")
+            .into_value();
+        total_boundary_contours += black_box(result.len());
     }
 
     let elapsed = started.elapsed();

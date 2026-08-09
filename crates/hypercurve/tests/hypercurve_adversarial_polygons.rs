@@ -1,6 +1,6 @@
 use hypercurve::{
-    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, FillRule,
-    LineArcRegion2, Point2, PolylineReconstructionOptions, Real, Segment2,
+    Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, FillRule,
+    Point2, PolylineReconstructionOptions, Real, Segment2,
 };
 use proptest::prelude::*;
 
@@ -9,7 +9,7 @@ struct PolygonCase {
     source_points: Vec<(i32, i32)>,
     material: Contour2,
     holes: Vec<Contour2>,
-    cutter: LineArcRegion2,
+    cutter: CurveRegion2,
 }
 
 fn s(value: i32) -> Real {
@@ -85,11 +85,24 @@ fn assert_contour_finite(contour: &Contour2) {
     }
 }
 
-fn assert_region_finite(region: &LineArcRegion2) {
-    for contour in region
+fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
+    CurveRegion2::try_from_native_contours(material, holes, &policy())
+        .unwrap()
+        .into_value()
+}
+
+fn assert_region_finite(region: &CurveRegion2) {
+    let Classification::Decided(native) = region
+        .native_contours_fast_path(&policy())
+        .unwrap()
+        .into_value()
+    else {
+        panic!("polygon Boolean did not retain exact native contours");
+    };
+    for contour in native
         .material_contours()
         .iter()
-        .chain(region.hole_contours().iter())
+        .chain(native.hole_contours())
     {
         assert_contour_finite(contour);
     }
@@ -118,7 +131,7 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
     }
 }
 
-fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
+fn exercise_clipping(a: &CurveRegion2, b: &CurveRegion2) {
     let policy = policy();
 
     for op in [
@@ -127,19 +140,8 @@ fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let boundary = a
-            .boolean_boundary_contours(b, op, FillRule::NonZero, &policy)
-            .unwrap();
-        if let Classification::Decided(contours) = &boundary {
-            for contour in contours {
-                assert_contour_finite(contour);
-            }
-        }
-
-        let region = a.boolean_region(b, op, FillRule::NonZero, &policy).unwrap();
-        if let Classification::Decided(region) = &region {
-            assert_region_finite(region);
-        }
+        let region = a.boolean_region(b, op, &policy).unwrap().into_value();
+        assert_region_finite(&region);
     }
 }
 
@@ -225,12 +227,15 @@ fn polygon_case(kind: u8, width: i32, height: i32, offset: i32, teeth: usize) ->
         (width / 3 + 2).min(width - 2),
         4.min(height - 2),
     );
-    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(
-        width / 4,
-        -1,
-        width + offset.max(2),
-        (height / 2).max(3),
-    )]);
+    let cutter = curve_region(
+        vec![rectangle(
+            width / 4,
+            -1,
+            width + offset.max(2),
+            (height / 2).max(3),
+        )],
+        Vec::new(),
+    );
 
     PolygonCase {
         source_points,
@@ -272,7 +277,7 @@ proptest! {
         teeth in 2_usize..6,
     ) {
         let case = polygon_case(kind, width, height, offset, teeth);
-        let region = LineArcRegion2::new(vec![case.material], case.holes);
+        let region = curve_region(vec![case.material], case.holes);
         exercise_clipping(&region, &case.cutter);
     }
 
@@ -327,7 +332,7 @@ fn reconstructed_slender_concavity_offset_evidence_uncertainty_not_radius_mismat
 #[test]
 fn polygon_with_hole_cut_through_slender_concavity_stays_structurally_valid() {
     let case = polygon_case(1, 64, 40, 31, 3);
-    let region = LineArcRegion2::new(vec![case.material.clone()], case.holes.clone());
+    let region = curve_region(vec![case.material.clone()], case.holes.clone());
 
     exercise_offsets(&case.material, 1);
     for hole in &case.holes {

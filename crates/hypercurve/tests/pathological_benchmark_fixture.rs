@@ -3,7 +3,7 @@ mod pathological_fixture;
 
 use std::collections::HashSet;
 
-use hypercurve::{BooleanOp, Classification, CurveContext, CurveFamily2, FillRule};
+use hypercurve::{BooleanOp, CurveContext, CurveFamily2};
 use pathological_fixture::build_native_cell;
 #[cfg(feature = "predicates")]
 use pathological_fixture::{MemoryTier, NativeDataset};
@@ -112,15 +112,11 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        assert!(matches!(
-            cell.source_projection.boolean_region(
-                &cell.rotated_projection,
-                operation,
-                FillRule::EvenOdd,
-                &policy,
-            ),
-            Ok(Classification::Decided(_))
-        ));
+        assert!(
+            cell.source_projection
+                .boolean_region(&cell.rotated_projection, operation, &policy)
+                .is_ok()
+        );
     }
 }
 
