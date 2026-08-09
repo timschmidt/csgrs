@@ -4082,6 +4082,93 @@ impl FilletLinearSource2<'_> {
     }
 }
 
+#[derive(Clone, Copy)]
+enum FilletParallelSource2<'a> {
+    Direct(ExactCornerBezier2<'a>),
+    #[cfg(feature = "predicates")]
+    Retained(&'a crate::BezierParallelFragment2),
+}
+
+impl FilletParallelSource2<'_> {
+    const fn direct(&self) -> Option<ExactCornerBezier2<'_>> {
+        match self {
+            Self::Direct(source) => Some(*source),
+            #[cfg(feature = "predicates")]
+            Self::Retained(_) => None,
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    const fn retained(&self) -> Option<&crate::BezierParallelFragment2> {
+        match self {
+            Self::Direct(_) => None,
+            Self::Retained(source) => Some(source),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn parameter_is_in_open_range(
+        &self,
+        parameter: &BezierParameter2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        match self {
+            Self::Direct(_) => bezier_trim_parameter_is_interior(
+                parameter,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            ),
+            Self::Retained(source) => retained_fillet_parameter_is_in_open_range(
+                parameter,
+                source.range(),
+                family,
+                policy,
+            ),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    fn support_reverses_source(
+        &self,
+        support: &BezierParallel2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let Self::Direct(_) = self else {
+            return retained_fillet_parallel_support_reverses_source(
+                self.retained()
+                    .expect("the non-direct parallel source is retained"),
+                support,
+                family,
+                policy,
+            );
+        };
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        match support
+            .regular_fragment_derivative_scale_sign(&range, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(RealSign::Positive) => Ok(false),
+            Classification::Decided(RealSign::Negative) => Ok(true),
+            Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Boundary,
+            )),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            )),
+        }
+    }
+}
+
 enum PreparedFilletCarrier2<'a> {
     Line {
         source: FilletLinearSource2<'a>,
@@ -4267,8 +4354,8 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     )),
                 }
             }
-            Self::Bezier { source } => Ok(FilletOffsetCarrier2::Bezier {
-                source: *source,
+            Self::Bezier { source } => Ok(FilletOffsetCarrier2::Parallel {
+                source: FilletParallelSource2::Direct(*source),
                 support: exact_corner_bezier_parallel(
                     *source,
                     signed_distance.clone(),
@@ -4335,8 +4422,8 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 } else {
                     source.parallel().distance() - signed_distance
                 };
-                Ok(FilletOffsetCarrier2::AnalyticParallel {
-                    source,
+                Ok(FilletOffsetCarrier2::Parallel {
+                    source: FilletParallelSource2::Retained(source),
                     support: source.parallel().with_distance(distance),
                 })
             }
@@ -4360,19 +4447,14 @@ enum FilletOffsetCarrier2<'a, 'b> {
     Point {
         point: &'b Point2,
     },
-    Bezier {
-        source: ExactCornerBezier2<'a>,
+    Parallel {
+        source: FilletParallelSource2<'a>,
         support: BezierParallel2,
     },
     #[cfg(feature = "predicates")]
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
         support: crate::BezierAlgebraicCuspSemicircleFragment2,
-    },
-    #[cfg(feature = "predicates")]
-    AnalyticParallel {
-        source: &'a crate::BezierParallelFragment2,
-        support: BezierParallel2,
     },
 }
 
@@ -5332,103 +5414,20 @@ fn fillet_offset_centers(
                 ));
             }
         },
-        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Bezier { .. })
-        | (FilletOffsetCarrier2::Bezier { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, line_source, bezier, bezier_is_previous) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Line {
-                        source, support, ..
-                    },
-                    FilletOffsetCarrier2::Bezier {
-                        support: bezier, ..
-                    },
-                ) => (support, source, bezier, false),
-                (
-                    FilletOffsetCarrier2::Bezier {
-                        support: bezier, ..
-                    },
-                    FilletOffsetCarrier2::Line {
-                        source, support, ..
-                    },
-                ) => (support, source, bezier, true),
-                _ => unreachable!(),
-            };
-            let bezier_family = if bezier_is_previous {
-                previous_family
-            } else {
-                next_family
-            };
-            let incidence = bezier
-                .supporting_line_incidence(line, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, bezier_family, cause)
-                })?;
-            let parameters = match incidence {
-                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                    centers.coincident = true;
-                    Vec::new()
-                }
-                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
-                    parameters,
-                )) => parameters,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        bezier_family,
-                        reason,
-                    ));
-                }
-            };
-            for parameter in parameters {
-                let Some(parameter) = represented_bezier_trim_parameter(
-                    &parameter,
-                    CurveOperation2::Fillet,
-                    bezier_family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point = decided_parallel_point(
-                    bezier,
-                    &parameter,
-                    false,
-                    CurveOperation2::Fillet,
-                    bezier_family,
-                    policy,
-                )?;
-                let line_parameter = line_source
-                    .native_line()
-                    .map(|_| {
-                        line_parameter_at_point(
-                            line,
-                            &point,
-                            CurveOperation2::Fillet,
-                            if bezier_is_previous {
-                                next_family
-                            } else {
-                                previous_family
-                            },
-                        )
-                        .map(exact_parameter)
-                    })
-                    .transpose()?;
-                let bezier_parameter = Some(exact_parameter(parameter));
-                let (previous_parameter, next_parameter) = if bezier_is_previous {
-                    (bezier_parameter, line_parameter)
-                } else {
-                    (line_parameter, bezier_parameter)
-                };
-                centers.push(FilletCenterWitness2 {
-                    point: point.into(),
-                    previous_parameter,
-                    next_parameter,
-                    retained_anchor_evidence: None,
-                });
-            }
-        }
-        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Bezier { .. })
-        | (FilletOffsetCarrier2::Bezier { .. }, FilletOffsetCarrier2::Arc { .. }) => {
+        (
+            FilletOffsetCarrier2::Arc { .. },
+            FilletOffsetCarrier2::Parallel {
+                source: parallel_source,
+                ..
+            },
+        )
+        | (
+            FilletOffsetCarrier2::Parallel {
+                source: parallel_source,
+                ..
+            },
+            FilletOffsetCarrier2::Arc { .. },
+        ) if parallel_source.direct().is_some() => {
             let (arc, signed_radius, bezier, bezier_is_previous) = match (previous, next) {
                 (
                     FilletOffsetCarrier2::Arc {
@@ -5436,12 +5435,12 @@ fn fillet_offset_centers(
                         signed_radius,
                         ..
                     },
-                    FilletOffsetCarrier2::Bezier {
+                    FilletOffsetCarrier2::Parallel {
                         support: bezier, ..
                     },
                 ) => (source, signed_radius, bezier, false),
                 (
-                    FilletOffsetCarrier2::Bezier {
+                    FilletOffsetCarrier2::Parallel {
                         support: bezier, ..
                     },
                     FilletOffsetCarrier2::Arc {
@@ -5504,11 +5503,16 @@ fn fillet_offset_centers(
             }
         }
         (
-            FilletOffsetCarrier2::Bezier {
-                support: previous, ..
+            FilletOffsetCarrier2::Parallel {
+                source: previous_source,
+                support: previous,
+                ..
             },
-            FilletOffsetCarrier2::Bezier { support: next, .. },
-        ) => {
+            FilletOffsetCarrier2::Parallel {
+                source: next_source,
+                support: next,
+            },
+        ) if previous_source.direct().is_some() && next_source.direct().is_some() => {
             let intersections = match previous
                 .parallel_intersections_fast_path(next, policy)
                 .map_err(|cause| {
@@ -5574,10 +5578,116 @@ fn fillet_offset_centers(
                 });
             }
         }
+        #[cfg(not(feature = "predicates"))]
+        (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Parallel { .. }) => {
+            unreachable!("the feature-disabled parallel source is always direct")
+        }
+        #[cfg(not(feature = "predicates"))]
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
+        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (line, line_source, parallel, parallel_is_previous) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Line {
+                        source,
+                        support: line_support,
+                        ..
+                    },
+                    FilletOffsetCarrier2::Parallel {
+                        support: parallel_support,
+                        ..
+                    },
+                ) => (line_support, source, parallel_support, false),
+                (
+                    FilletOffsetCarrier2::Parallel {
+                        support: parallel_support,
+                        ..
+                    },
+                    FilletOffsetCarrier2::Line {
+                        source,
+                        support: line_support,
+                        ..
+                    },
+                ) => (line_support, source, parallel_support, true),
+                _ => unreachable!(),
+            };
+            let parallel_family = if parallel_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let parameters =
+                match parallel
+                    .supporting_line_incidence(line, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
+                    })? {
+                    Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                        centers.coincident = true;
+                        Vec::new()
+                    }
+                    Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                        parameters,
+                    )) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            parallel_family,
+                            reason,
+                        ));
+                    }
+                };
+            for parameter in parameters {
+                let Some(parameter) = represented_bezier_trim_parameter(
+                    &parameter,
+                    CurveOperation2::Fillet,
+                    parallel_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let point = decided_parallel_point(
+                    parallel,
+                    &parameter,
+                    false,
+                    CurveOperation2::Fillet,
+                    parallel_family,
+                    policy,
+                )?;
+                let line_parameter = line_source
+                    .native_line()
+                    .map(|_| {
+                        line_parameter_at_point(
+                            line,
+                            &point,
+                            CurveOperation2::Fillet,
+                            if parallel_is_previous {
+                                next_family
+                            } else {
+                                previous_family
+                            },
+                        )
+                        .map(exact_parameter)
+                    })
+                    .transpose()?;
+                let parallel_parameter = Some(exact_parameter(parameter));
+                let (previous_parameter, next_parameter) = if parallel_is_previous {
+                    (parallel_parameter, line_parameter)
+                } else {
+                    (line_parameter, parallel_parameter)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: point.into(),
+                    previous_parameter,
+                    next_parameter,
+                    retained_anchor_evidence: None,
+                });
+            }
+        }
         #[cfg(feature = "predicates")]
-        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AnalyticParallel { .. })
-        | (FilletOffsetCarrier2::AnalyticParallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, line_source, line_unit_x, line_unit_y, analytic, line_is_previous) =
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
+        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (line, line_source, line_unit_x, line_unit_y, parallel, line_is_previous) =
                 match (previous, next) {
                     (
                         FilletOffsetCarrier2::Line {
@@ -5587,10 +5697,10 @@ fn fillet_offset_centers(
                             unit_y,
                             ..
                         },
-                        analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
-                    ) => (support, source, *unit_x, *unit_y, analytic, true),
+                        parallel @ FilletOffsetCarrier2::Parallel { .. },
+                    ) => (support, source, *unit_x, *unit_y, parallel, true),
                     (
-                        analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
+                        parallel @ FilletOffsetCarrier2::Parallel { .. },
                         FilletOffsetCarrier2::Line {
                             source,
                             support,
@@ -5598,13 +5708,13 @@ fn fillet_offset_centers(
                             unit_y,
                             ..
                         },
-                    ) => (support, source, *unit_x, *unit_y, analytic, false),
+                    ) => (support, source, *unit_x, *unit_y, parallel, false),
                     _ => unreachable!(),
                 };
-            let FilletOffsetCarrier2::AnalyticParallel { source, support } = analytic else {
+            let FilletOffsetCarrier2::Parallel { source, support } = parallel else {
                 unreachable!()
             };
-            let analytic_family = if line_is_previous {
+            let parallel_family = if line_is_previous {
                 next_family
             } else {
                 previous_family
@@ -5614,21 +5724,23 @@ fn fillet_offset_centers(
             } else {
                 BezierEndpoint::Start
             };
-            let analytic_corner_parameter = if line_is_previous == source.is_reversed() {
-                source.range().end()
-            } else {
-                source.range().start()
-            };
-            let certified_tangency = analytic_corner_parameter.as_exact().and_then(|parameter| {
-                line_source
-                    .parallel_tangent_contacts()
-                    .iter()
-                    .find(|contact| {
-                        contact.line_endpoint() == line_endpoint
-                            && contact.parallel() == source.parallel()
-                            && contact.parallel_fragment_reversed() == source.is_reversed()
-                            && contact.parameter() == parameter
-                    })
+            let certified_tangency = source.retained().and_then(|source| {
+                let corner_parameter = if line_is_previous == source.is_reversed() {
+                    source.range().end()
+                } else {
+                    source.range().start()
+                };
+                corner_parameter.as_exact().and_then(|parameter| {
+                    line_source
+                        .parallel_tangent_contacts()
+                        .iter()
+                        .find(|contact| {
+                            contact.line_endpoint() == line_endpoint
+                                && contact.parallel() == source.parallel()
+                                && contact.parallel_fragment_reversed() == source.is_reversed()
+                                && contact.parameter() == parameter
+                        })
+                })
             });
             let certified_tangencies = certified_tangency
                 .map(|contact| std::slice::from_ref(contact.parameter()))
@@ -5642,7 +5754,7 @@ fn fillet_offset_centers(
                     policy,
                 )
                 .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
+                    ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
                 })? {
                 Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
                     centers.coincident = true;
@@ -5654,41 +5766,25 @@ fn fillet_offset_centers(
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
-                        analytic_family,
+                        parallel_family,
                         reason,
                     ));
                 }
             };
             for parameter in parameters {
-                match crate::bezier_offset::overlap_parameter_is_in_range(
-                    &parameter,
-                    source.range(),
-                    false,
-                    policy,
-                )
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
-                })? {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            analytic_family,
-                            reason,
-                        ));
-                    }
+                if !source.parameter_is_in_open_range(&parameter, parallel_family, policy)? {
+                    continue;
                 }
                 let (point, line_parameter) = match support
                     .supporting_line_contact_evidence(line, &parameter, policy)
                     .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
+                        ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
                     })? {
                     Classification::Decided(contact) => contact,
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
-                            analytic_family,
+                            parallel_family,
                             reason,
                         ));
                     }
@@ -5701,11 +5797,11 @@ fn fillet_offset_centers(
                     };
                     Some(CurveRegionParameter2::from_bezier(parameter))
                 };
-                let analytic_parameter = Some(CurveRegionParameter2::from_bezier(parameter));
+                let parallel_parameter = Some(CurveRegionParameter2::from_bezier(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
-                    (line_parameter, analytic_parameter)
+                    (line_parameter, parallel_parameter)
                 } else {
-                    (analytic_parameter, line_parameter)
+                    (parallel_parameter, line_parameter)
                 };
                 centers.push(FilletCenterWitness2 {
                     point,
@@ -5716,8 +5812,20 @@ fn fillet_offset_centers(
             }
         }
         #[cfg(feature = "predicates")]
-        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AnalyticParallel { .. })
-        | (FilletOffsetCarrier2::AnalyticParallel { .. }, FilletOffsetCarrier2::Arc { .. }) => {
+        (
+            FilletOffsetCarrier2::Arc { .. },
+            FilletOffsetCarrier2::Parallel {
+                source: parallel_source,
+                ..
+            },
+        )
+        | (
+            FilletOffsetCarrier2::Parallel {
+                source: parallel_source,
+                ..
+            },
+            FilletOffsetCarrier2::Arc { .. },
+        ) if parallel_source.retained().is_some() => {
             let (arc, source_radius, signed_radius, analytic, arc_is_previous) =
                 match (previous, next) {
                     (
@@ -5726,7 +5834,7 @@ fn fillet_offset_centers(
                             source_radius,
                             signed_radius,
                         },
-                        FilletOffsetCarrier2::AnalyticParallel {
+                        FilletOffsetCarrier2::Parallel {
                             source: analytic,
                             support,
                         },
@@ -5738,7 +5846,7 @@ fn fillet_offset_centers(
                         true,
                     ),
                     (
-                        FilletOffsetCarrier2::AnalyticParallel {
+                        FilletOffsetCarrier2::Parallel {
                             source: analytic,
                             support,
                         },
@@ -5781,6 +5889,9 @@ fn fillet_offset_centers(
                 ));
             };
             let (analytic_source, analytic_support) = analytic;
+            let analytic_source = analytic_source
+                .retained()
+                .expect("the retained arc/parallel arm rejects direct sources");
             let intersections = match analytic_support
                 .intersections(&offset_arc.offset, policy)
                 .map_err(|cause| {
@@ -5954,26 +6065,25 @@ fn fillet_offset_centers(
                 });
             }
         }
+        #[cfg(not(feature = "predicates"))]
+        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Parallel { .. })
+        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Arc { .. }) => {
+            unreachable!("the feature-disabled parallel source is always direct")
+        }
         #[cfg(feature = "predicates")]
-        (
-            FilletOffsetCarrier2::AlgebraicCusp { .. },
-            FilletOffsetCarrier2::AnalyticParallel { .. },
-        )
-        | (
-            FilletOffsetCarrier2::AnalyticParallel { .. },
-            FilletOffsetCarrier2::AlgebraicCusp { .. },
-        ) => {
-            let (cusp_source, cusp_support, analytic_source, analytic_support, cusp_is_previous) =
+        (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Parallel { .. })
+        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. }) => {
+            let (cusp_source, cusp_support, parallel_source, analytic_support, cusp_is_previous) =
                 match (previous, next) {
                     (
                         FilletOffsetCarrier2::AlgebraicCusp { source, support },
-                        FilletOffsetCarrier2::AnalyticParallel {
+                        FilletOffsetCarrier2::Parallel {
                             source: analytic,
                             support: analytic_support,
                         },
                     ) => (source, support, analytic, analytic_support, true),
                     (
-                        FilletOffsetCarrier2::AnalyticParallel {
+                        FilletOffsetCarrier2::Parallel {
                             source: analytic,
                             support: analytic_support,
                         },
@@ -5981,6 +6091,15 @@ fn fillet_offset_centers(
                     ) => (source, support, analytic, analytic_support, false),
                     _ => unreachable!(),
                 };
+            let analytic_range = parallel_source.retained().map_or_else(
+                || {
+                    BezierParameterRange2::new_validated(
+                        BezierParameter2::Exact(Real::zero()),
+                        BezierParameter2::Exact(Real::one()),
+                    )
+                },
+                |source| source.range().clone(),
+            );
             let cusp_family = if cusp_is_previous {
                 previous_family
             } else {
@@ -6020,13 +6139,11 @@ fn fillet_offset_centers(
                 (nonzero_radius_sign(cusp_source.semicircle().radial_distance())?
                     != nonzero_radius_sign(cusp_support.semicircle().radial_distance())?)
                     != cusp_source.is_reversed();
-            let analytic_support_reverses_source =
-                retained_fillet_parallel_support_reverses_source(
-                    analytic_source,
-                    analytic_support,
-                    analytic_family,
-                    policy,
-                )?;
+            let analytic_support_reverses_source = parallel_source.support_reverses_source(
+                analytic_support,
+                analytic_family,
+                policy,
+            )?;
             let reverse = |sign: Option<RealSign>| {
                 sign.map(|sign| match sign {
                     RealSign::Positive => RealSign::Negative,
@@ -6105,7 +6222,7 @@ fn fillet_offset_centers(
                             analytic_rational,
                             &span.curve,
                             overlap,
-                            analytic_source.range(),
+                            &analytic_range,
                             &cusp_span_range,
                             analytic_family,
                             policy,
@@ -6119,7 +6236,7 @@ fn fillet_offset_centers(
                     let analytic_inside = match component.parallel_parameter() {
                         Some(parameter) => retained_fillet_parameter_is_in_open_range(
                             parameter,
-                            analytic_source.range(),
+                            &analytic_range,
                             analytic_family,
                             policy,
                         )?,
@@ -6142,7 +6259,7 @@ fn fillet_offset_centers(
                 for contact in intersections.contacts() {
                     if !retained_fillet_parameter_is_in_open_range(
                         contact.parallel_parameter(),
-                        analytic_source.range(),
+                        &analytic_range,
                         analytic_family,
                         policy,
                     )? || !retained_fillet_parameter_is_in_open_range(
@@ -6535,17 +6652,7 @@ fn fillet_offset_centers(
             }
         }
         #[cfg(feature = "predicates")]
-        (FilletOffsetCarrier2::AlgebraicCusp { .. }, _)
-        | (_, FilletOffsetCarrier2::AlgebraicCusp { .. }) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                previous_family,
-                crate::UncertaintyReason::Unsupported,
-            ));
-        }
-        #[cfg(feature = "predicates")]
-        (FilletOffsetCarrier2::AnalyticParallel { .. }, _)
-        | (_, FilletOffsetCarrier2::AnalyticParallel { .. }) => {
+        (FilletOffsetCarrier2::Parallel { .. }, _) | (_, FilletOffsetCarrier2::Parallel { .. }) => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 previous_family,
@@ -6631,7 +6738,7 @@ fn point_on_fillet_offset(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    if let FilletOffsetCarrier2::Bezier { support, .. } = support {
+    if let FilletOffsetCarrier2::Parallel { support, .. } = support {
         return match support
             .contains_point(point, policy)
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
@@ -6645,10 +6752,7 @@ fn point_on_fillet_offset(
         };
     }
     #[cfg(feature = "predicates")]
-    if matches!(
-        support,
-        FilletOffsetCarrier2::AlgebraicCusp { .. } | FilletOffsetCarrier2::AnalyticParallel { .. }
-    ) {
+    if matches!(support, FilletOffsetCarrier2::AlgebraicCusp { .. }) {
         return Err(ExactCurveError::blocked(
             CurveOperation2::Fillet,
             family,
@@ -6667,10 +6771,9 @@ fn point_on_fillet_offset(
             ..
         } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
         FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
-        FilletOffsetCarrier2::Bezier { .. } => unreachable!(),
+        FilletOffsetCarrier2::Parallel { .. } => unreachable!(),
         #[cfg(feature = "predicates")]
-        FilletOffsetCarrier2::AlgebraicCusp { .. }
-        | FilletOffsetCarrier2::AnalyticParallel { .. } => unreachable!(),
+        FilletOffsetCarrier2::AlgebraicCusp { .. } => unreachable!(),
     };
     crate::classify::is_zero(&residual, policy).ok_or_else(|| {
         ExactCurveError::blocked(
@@ -6877,10 +6980,10 @@ fn fillet_cut_from_center(
         FilletOffsetCarrier2::Point { .. } => {
             unreachable!("a collapsed arc offset has no isolated tangency contact")
         }
-        FilletOffsetCarrier2::Bezier { source, support } => {
+        FilletOffsetCarrier2::Parallel { source, support } => {
             let parameter = retained_parameter
-                .expect("a represented Bezier offset intersection retains its source parameter")
-                .as_exact()
+                .expect("a parallel offset intersection retains its source parameter")
+                .as_bezier_parameter()
                 .cloned()
                 .ok_or_else(|| {
                     ExactCurveError::blocked(
@@ -6889,30 +6992,93 @@ fn fillet_cut_from_center(
                         crate::UncertaintyReason::Unsupported,
                     )
                 })?;
-            let Some(placement) = corner_parameter_placement(
-                &parameter,
-                previous,
-                mode,
-                CurveOperation2::Fillet,
-                family,
-                policy,
-            )?
-            else {
-                return Ok(None);
-            };
-            let point = decided_parallel_point(
-                support,
-                &parameter,
-                true,
-                CurveOperation2::Fillet,
-                family,
-                policy,
-            )?;
-            Ok(Some(CornerCut2 {
-                point: point.into(),
-                parameter: exact_corner_parameter(source.public_parameter(&parameter)),
-                placement,
-            }))
+            match source {
+                FilletParallelSource2::Direct(source) => {
+                    let (parameter, placement) = match parameter {
+                        BezierParameter2::Exact(parameter) => {
+                            let Some(placement) = corner_parameter_placement(
+                                &parameter,
+                                previous,
+                                mode,
+                                CurveOperation2::Fillet,
+                                family,
+                                policy,
+                            )?
+                            else {
+                                return Ok(None);
+                            };
+                            (BezierParameter2::Exact(parameter), placement)
+                        }
+                        parameter @ BezierParameter2::Algebraic(_) => {
+                            if mode != CurveCornerMode2::TrimOnly {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    family,
+                                    crate::UncertaintyReason::Unsupported,
+                                ));
+                            }
+                            if !bezier_trim_parameter_is_interior(
+                                &parameter,
+                                CurveOperation2::Fillet,
+                                family,
+                                policy,
+                            )? {
+                                return Ok(None);
+                            }
+                            (parameter, CornerPlacement2::Trim)
+                        }
+                    };
+                    let point = bezier_parallel_source_point_evidence(
+                        support,
+                        &parameter,
+                        CurveOperation2::Fillet,
+                        family,
+                        policy,
+                    )?;
+                    let parameter = match parameter {
+                        BezierParameter2::Exact(parameter) => {
+                            exact_corner_parameter(source.public_parameter(&parameter))
+                        }
+                        parameter @ BezierParameter2::Algebraic(_) => {
+                            Some(CurveRegionParameter2::from_bezier(parameter))
+                        }
+                    };
+                    Ok(Some(CornerCut2 {
+                        point,
+                        parameter,
+                        placement,
+                    }))
+                }
+                #[cfg(feature = "predicates")]
+                FilletParallelSource2::Retained(source) => {
+                    if mode != CurveCornerMode2::TrimOnly {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            crate::UncertaintyReason::Unsupported,
+                        ));
+                    }
+                    if !retained_fillet_parameter_is_in_open_range(
+                        &parameter,
+                        source.range(),
+                        family,
+                        policy,
+                    )? {
+                        return Ok(None);
+                    }
+                    Ok(Some(CornerCut2 {
+                        point: analytic_parallel_point_evidence(
+                            source.parallel(),
+                            &parameter,
+                            CurveOperation2::Fillet,
+                            family,
+                            policy,
+                        )?,
+                        parameter: Some(CurveRegionParameter2::from_bezier(parameter)),
+                        placement: CornerPlacement2::Trim,
+                    }))
+                }
+            }
         }
         #[cfg(feature = "predicates")]
         FilletOffsetCarrier2::AlgebraicCusp { source, support } => {
@@ -6964,56 +7130,6 @@ fn fillet_cut_from_center(
             Ok(Some(CornerCut2 {
                 point,
                 parameter: Some(CurveRegionParameter2::from_algebraic_cusp(parameter)),
-                placement: CornerPlacement2::Trim,
-            }))
-        }
-        #[cfg(feature = "predicates")]
-        FilletOffsetCarrier2::AnalyticParallel { source, .. } => {
-            if mode != CurveCornerMode2::TrimOnly {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
-            let parameter = retained_parameter
-                .expect("an analytic-parallel offset contact retains its source parameter")
-                .as_bezier_parameter()
-                .cloned()
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        crate::UncertaintyReason::Unsupported,
-                    )
-                })?;
-            match crate::bezier_offset::overlap_parameter_is_in_range(
-                &parameter,
-                source.range(),
-                false,
-                policy,
-            )
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => return Ok(None),
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
-                }
-            }
-            Ok(Some(CornerCut2 {
-                point: analytic_parallel_point_evidence(
-                    source.parallel(),
-                    &parameter,
-                    CurveOperation2::Fillet,
-                    family,
-                    policy,
-                )?,
-                parameter: Some(CurveRegionParameter2::from_bezier(parameter)),
                 placement: CornerPlacement2::Trim,
             }))
         }
@@ -7403,6 +7519,38 @@ fn decided_parallel_point(
             Err(ExactCurveError::blocked(operation, family, reason))
         }
     }
+}
+
+fn bezier_parallel_source_point_evidence(
+    parallel: &BezierParallel2,
+    parameter: &BezierParameter2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
+    if let Some(parameter) = parameter.as_exact() {
+        return decided_parallel_point(parallel, parameter, true, operation, family, policy)
+            .map(Into::into);
+    }
+    let rational_source = match parallel.source() {
+        crate::BezierParallelSource2::Quadratic(curve) => {
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(curve.clone()))
+        }
+        crate::BezierParallelSource2::Cubic(curve) => {
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(curve.clone()))
+        }
+        crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
+    }
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    crate::rational_bezier_general::exact_contact_point_evidence(
+        &rational_source,
+        parameter,
+        policy,
+    )
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    .ok_or_else(|| {
+        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -7823,52 +7971,13 @@ fn bezier_chamfer_cuts(
         }
     };
     let mut cuts = CornerCuts2::default();
-    let mut rational_source = None;
     for (parameter, _) in parameters {
         if !bezier_trim_parameter_is_interior(&parameter, operation, family, policy)? {
             continue;
         }
-        let point = match &parameter {
-            BezierParameter2::Exact(parameter) => {
-                decided_parallel_point(&parallel, parameter, true, operation, family, policy)?
-                    .into()
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                let rational_source = match &rational_source {
-                    Some(source) => source,
-                    None => {
-                        let source = match parallel.source() {
-                            crate::BezierParallelSource2::Quadratic(curve) => {
-                                RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-                                    curve.clone(),
-                                ))
-                            }
-                            crate::BezierParallelSource2::Cubic(curve) => {
-                                RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(
-                                    curve.clone(),
-                                ))
-                            }
-                            crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
-                        }
-                        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-                        rational_source.insert(source)
-                    }
-                };
-                crate::rational_bezier_general::exact_contact_point_evidence(
-                    rational_source,
-                    &BezierParameter2::Algebraic(parameter.clone()),
-                    policy,
-                )
-                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        operation,
-                        family,
-                        crate::UncertaintyReason::Unsupported,
-                    )
-                })?
-            }
-        };
+        let point = bezier_parallel_source_point_evidence(
+            &parallel, &parameter, operation, family, policy,
+        )?;
         let parameter = match parameter {
             BezierParameter2::Exact(parameter) => {
                 exact_corner_parameter(source.public_parameter(&parameter))

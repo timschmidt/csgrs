@@ -13153,6 +13153,20 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 ),
             )));
         }
+        if let Self::Mapped(data) = self
+            && data.semicircle_carrier() == semicircle
+            && let Some(BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
+                parallel,
+                parameter,
+                ..
+            }) = data.coincident_tangent_source()
+            && parallel.distance().zero_status() == ZeroStatus::Zero
+        {
+            let source = parallel.source().to_rational_bezier()?;
+            if let Some(point) = exact_contact_point_evidence(&source, parameter, policy)? {
+                return Ok(Classification::Decided(Some(point)));
+            }
+        }
         match self.coincident_point_image(semicircle, policy)? {
             Classification::Decided(Some(point)) => {
                 return Ok(Classification::Decided(Some(

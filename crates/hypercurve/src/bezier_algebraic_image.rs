@@ -649,6 +649,14 @@ impl RationalBezierAlgebraicPointImage2 {
                 expression.denominator.as_slice(),
             ));
         }
+        if let Some(source) = self.data.parametric_source.as_ref() {
+            let power_basis = source.curve.homogeneous_power_basis().ok()?;
+            return Some((
+                power_basis.x_numerator.as_slice(),
+                power_basis.y_numerator.as_slice(),
+                power_basis.weight.as_slice(),
+            ));
+        }
         let (Some(x), Some(y)) = (self.data.x.as_ref(), self.data.y.as_ref()) else {
             return None;
         };

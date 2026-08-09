@@ -8922,6 +8922,54 @@ mod tests {
 
     #[test]
     #[cfg(feature = "predicates")]
+    fn deferred_parametric_point_reuses_source_polynomials_for_exact_equality() {
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-half, Real::zero(), Real::one()],
+            &policy,
+        )
+        .unwrap() else {
+            panic!("quadratic parameter polynomial was not certified");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+        else {
+            panic!("unit parameter interval was not certified");
+        };
+        let Classification::Decided(parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+        else {
+            panic!("positive quadratic parameter was not isolated");
+        };
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::from(-1_i8), Real::zero()),
+                Point2::new(Real::zero(), Real::one()),
+                Point2::new(Real::one(), Real::from(2_i8)),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        let deferred = RationalBezierAlgebraicPointImage2::from_parametric_source(
+            curve.clone(),
+            parameter.clone(),
+            &policy,
+        );
+        let resolved = curve
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .unwrap();
+
+        assert_eq!(
+            deferred
+                .same_retained_rational_point(&resolved, &policy)
+                .unwrap(),
+            Some(Classification::Decided(true))
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
     fn certified_rational_interval_sign_products_match_four_corner_enclosure() {
         for first_lower in -3_i64..=3 {
             for first_upper in first_lower..=3 {
