@@ -3424,7 +3424,7 @@ pub(crate) struct RetainedFilletFrame2 {
     pub(crate) anchor_is_previous: bool,
     pub(crate) radial_frame: RetainedFilletRadialFrame2,
     pub(crate) radial_distance: Real,
-    pub(crate) anchor_other_tangent_relation: Option<RetainedFilletTangentRelation2>,
+    pub(crate) anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
 }
 
 #[derive(Clone, Debug)]
@@ -3439,7 +3439,7 @@ pub(crate) enum RetainedFilletRadialFrame2 {
 
 #[derive(Clone, Debug)]
 #[cfg_attr(not(feature = "predicates"), allow(dead_code))]
-pub(crate) struct RetainedFilletTangentRelation2 {
+pub(crate) struct RetainedFilletAnchorEvidence2 {
     pub(crate) cross: Option<RealSign>,
     pub(crate) dot: Option<RealSign>,
     pub(crate) canonical_anchor_curve: RationalBezier2,
@@ -4366,7 +4366,7 @@ impl FilletOffsetCarrier2<'_, '_> {
     fn retained_arc_frame(
         &self,
         anchor_is_previous: bool,
-        anchor_other_tangent_relation: Option<RetainedFilletTangentRelation2>,
+        anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
     ) -> Option<RetainedFilletFrame2> {
         let (radial_frame, radial_distance) = match self {
             Self::Line {
@@ -4396,11 +4396,11 @@ impl FilletOffsetCarrier2<'_, '_> {
             ),
             #[cfg(feature = "predicates")]
             Self::Arc {
-                source: ExactCornerArc2::RetainedRational(source),
+                source,
                 source_radius,
                 signed_radius,
             } => {
-                let support = &source.support;
+                let support = source.support();
                 let (normal_denominator, radial_distance) = if support.is_clockwise() {
                     (signed_radius.clone(), *source_radius - signed_radius)
                 } else {
@@ -4420,7 +4420,7 @@ impl FilletOffsetCarrier2<'_, '_> {
             anchor_is_previous,
             radial_frame,
             radial_distance,
-            anchor_other_tangent_relation,
+            anchor_evidence,
         })
     }
 }
@@ -4429,7 +4429,7 @@ struct FilletCenterWitness2 {
     point: RationalBezierIntersectionPointEvidence2,
     previous_parameter: Option<CurveRegionParameter2>,
     next_parameter: Option<CurveRegionParameter2>,
-    retained_tangent_relation: Option<RetainedFilletTangentRelation2>,
+    retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
 }
 
 impl FilletCenterWitness2 {
@@ -4541,10 +4541,10 @@ fn solve_carrier_fillet_corner(
                     center: center.point.clone(),
                     clockwise,
                     retained_frame: previous_offset
-                        .retained_arc_frame(true, center.retained_tangent_relation.clone())
+                        .retained_arc_frame(true, center.retained_anchor_evidence.clone())
                         .or_else(|| {
                             next_offset
-                                .retained_arc_frame(false, center.retained_tangent_relation.clone())
+                                .retained_arc_frame(false, center.retained_anchor_evidence.clone())
                         }),
                 }),
                 Classification::Uncertain(reason) => {
@@ -4566,6 +4566,107 @@ fn solve_carrier_fillet_corner(
         CurveCornerNoSolution2::NoTangentCircle
     };
     Ok(candidates.finish(empty_reason))
+}
+
+#[cfg(feature = "predicates")]
+struct RetainedFilletCuspRationalContact2 {
+    other_parameter: BezierParameter2,
+    cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+    point: RationalBezierIntersectionPointEvidence2,
+}
+
+#[cfg(feature = "predicates")]
+struct RetainedFilletCuspRationalContacts2 {
+    contacts: Vec<RetainedFilletCuspRationalContact2>,
+    overlaps: bool,
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fillet_cusp_rational_contacts(
+    cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    rational: &RationalBezier2,
+    include_start: bool,
+    include_end: bool,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<RetainedFilletCuspRationalContacts2> {
+    let (intersections, parameter_map) = match cusp
+        .semicircle()
+        .rational_intersections_with_parameter_map(rational, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(result) => result,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    let contacts = match intersections {
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+            contacts,
+        ) => contacts,
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
+            return Ok(RetainedFilletCuspRationalContacts2 {
+                contacts: Vec::new(),
+                overlaps: true,
+            });
+        }
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+    };
+    let mut retained = Vec::with_capacity(contacts.len());
+    for contact in contacts {
+        let cusp_parameter = match contact.location {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
+            }
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+            }
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                parameter_map
+                    .as_ref()
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            crate::UncertaintyReason::Unsupported,
+                        )
+                    })?
+                    .contact_parameter(&contact)
+            }
+        };
+        match cusp
+            .contains_parameter(&cusp_parameter, include_start, include_end, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(true) => retained.push(RetainedFilletCuspRationalContact2 {
+                other_parameter: contact.other_parameter,
+                cusp_parameter,
+                point: contact.point,
+            }),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    reason,
+                ));
+            }
+        }
+    }
+    Ok(RetainedFilletCuspRationalContacts2 {
+        contacts: retained,
+        overlaps: false,
+    })
 }
 
 fn fillet_offset_centers(
@@ -4638,7 +4739,7 @@ fn fillet_offset_centers(
                     point: point.into(),
                     previous_parameter,
                     next_parameter,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             };
             match relation {
@@ -4691,7 +4792,7 @@ fn fillet_offset_centers(
                     point: point.into(),
                     previous_parameter: None,
                     next_parameter: None,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
             crate::CircleCircleRelation::Secant {
@@ -4702,13 +4803,13 @@ fn fillet_offset_centers(
                     point: first_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
                 centers.push(FilletCenterWitness2 {
                     point: second_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
             crate::CircleCircleRelation::Coincident => centers.coincident = true,
@@ -4806,7 +4907,7 @@ fn fillet_offset_centers(
                     point: point.into(),
                     previous_parameter,
                     next_parameter,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
         }
@@ -4882,7 +4983,7 @@ fn fillet_offset_centers(
                     previous_parameter: bezier_is_previous
                         .then(|| exact_parameter(parameter.clone())),
                     next_parameter: (!bezier_is_previous).then(|| exact_parameter(parameter)),
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
         }
@@ -4953,7 +5054,7 @@ fn fillet_offset_centers(
                     point: point.into(),
                     previous_parameter: Some(exact_parameter(previous_parameter)),
                     next_parameter: Some(exact_parameter(next_parameter)),
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
         }
@@ -5140,7 +5241,7 @@ fn fillet_offset_centers(
                     point,
                     previous_parameter,
                     next_parameter,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
         }
@@ -5287,7 +5388,7 @@ fn fillet_offset_centers(
                     cross = reverse(cross);
                     dot = reverse(dot);
                 }
-                let tangent_relation = RetainedFilletTangentRelation2 {
+                let anchor_evidence = RetainedFilletAnchorEvidence2 {
                     cross: reverse(cross),
                     dot,
                     canonical_anchor_curve: offset_arc.canonical_source.clone(),
@@ -5306,7 +5407,84 @@ fn fillet_offset_centers(
                     point: contact.point().clone(),
                     previous_parameter,
                     next_parameter,
-                    retained_tangent_relation: Some(tangent_relation),
+                    retained_anchor_evidence: Some(anchor_evidence),
+                });
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
+        | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Arc { .. }) => {
+            let (arc, source_radius, signed_radius, cusp, arc_is_previous) = match (previous, next)
+            {
+                (
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        source_radius,
+                        signed_radius,
+                    },
+                    FilletOffsetCarrier2::AlgebraicCusp { support, .. },
+                ) => ((*source), *source_radius, signed_radius, support, true),
+                (
+                    FilletOffsetCarrier2::AlgebraicCusp { support, .. },
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        source_radius,
+                        signed_radius,
+                    },
+                ) => ((*source), *source_radius, signed_radius, support, false),
+                _ => unreachable!(),
+            };
+            let arc_family = if arc_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let cusp_family = if arc_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+            let Some(offset_arc) = arc.retained_rational_offset_evaluator(
+                source_radius,
+                signed_radius,
+                CurveOperation2::Fillet,
+                arc_family,
+                policy,
+            )?
+            else {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    arc_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            };
+            let contacts = retained_fillet_cusp_rational_contacts(
+                cusp,
+                &offset_arc.offset,
+                false,
+                false,
+                cusp_family,
+                policy,
+            )?;
+            centers.coincident |= contacts.overlaps;
+            for contact in contacts.contacts {
+                let arc_parameter = CurveRegionParameter2::from_bezier(contact.other_parameter);
+                let cusp_parameter =
+                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter);
+                let (previous_parameter, next_parameter) = if arc_is_previous {
+                    (Some(arc_parameter), Some(cusp_parameter))
+                } else {
+                    (Some(cusp_parameter), Some(arc_parameter))
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point,
+                    previous_parameter,
+                    next_parameter,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        cross: None,
+                        dot: None,
+                        canonical_anchor_curve: offset_arc.canonical_source.clone(),
+                    }),
                 });
             }
         }
@@ -5347,81 +5525,28 @@ fn fillet_offset_centers(
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
             })?;
-            let result = cusp
-                .semicircle()
-                .rational_intersections_with_parameter_map(&rational_line, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-                })?;
-            let (intersections, parameter_map) = match result {
-                Classification::Decided(result) => result,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        reason,
-                    ));
-                }
-            };
-            let crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                contacts,
-            ) = intersections
-            else {
-                return match intersections {
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
-                        Err(ExactCurveError::invalid(
-                            CurveOperation2::Fillet,
-                            previous_family,
-                            CurveError::Topology(
-                                "a nonzero selected fillet offset circle overlapped a line".into(),
-                            ),
-                        ))
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
-                        Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            previous_family,
-                            crate::UncertaintyReason::Unsupported,
-                        ))
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => unreachable!(),
-                };
-            };
-            for contact in contacts {
-                let cusp_parameter = match contact.location {
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Start => {
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
-                            Real::zero(),
-                        )
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::End => {
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
-                            Real::one(),
-                        )
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior => parameter_map
-                        .as_ref()
-                        .expect("an interior selected-circle contact retains its parameter map")
-                        .contact_parameter(&contact),
-                };
-                match cusp
-                    .contains_parameter(&cusp_parameter, true, true, policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-                    })? {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            previous_family,
-                            reason,
-                        ));
-                    }
-                }
+            let contacts = retained_fillet_cusp_rational_contacts(
+                cusp,
+                &rational_line,
+                true,
+                true,
+                previous_family,
+                policy,
+            )?;
+            if contacts.overlaps {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    CurveError::Topology(
+                        "a nonzero selected fillet offset circle overlapped a line".into(),
+                    ),
+                ));
+            }
+            for contact in contacts.contacts {
                 let line_parameter = (!retained_chord)
-                    .then(|| CurveRegionParameter2::from_bezier(contact.other_parameter.clone()));
-                let cusp_parameter = CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
+                    .then(|| CurveRegionParameter2::from_bezier(contact.other_parameter));
+                let cusp_parameter =
+                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter);
                 let (previous_parameter, next_parameter) = if line_is_previous {
                     (line_parameter, Some(cusp_parameter))
                 } else {
@@ -5431,7 +5556,7 @@ fn fillet_offset_centers(
                     point: contact.point,
                     previous_parameter,
                     next_parameter,
-                    retained_tangent_relation: None,
+                    retained_anchor_evidence: None,
                 });
             }
         }

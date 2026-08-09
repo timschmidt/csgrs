@@ -8720,7 +8720,7 @@ impl CurveRegion2 {
             } else {
                 (&mut *next_cut, &mut *previous_cut, previous_fragment)
             };
-            if let Some(relation) = frame.anchor_other_tangent_relation.as_ref() {
+            if let Some(relation) = frame.anchor_evidence.as_ref() {
                 anchor_cut.replacement_rational_curve =
                     Some(relation.canonical_anchor_curve.clone());
             }
@@ -8946,7 +8946,7 @@ impl CurveRegion2 {
                         CurveRegionParameter2::from_bezier(expected_parameter.clone());
 
                     let (tangent_cross, tangent_dot) =
-                        if let Some(relation) = frame.anchor_other_tangent_relation.as_ref() {
+                        if let Some(relation) = frame.anchor_evidence.as_ref() {
                             match (relation.cross, relation.dot) {
                                 (Some(cross), dot) => (cross, dot.unwrap_or(RealSign::Zero)),
                                 (None, Some(dot)) => (RealSign::Zero, dot),
@@ -15691,6 +15691,195 @@ mod tests {
             panic!("the exact algebraic parameter must be decided");
         };
         BezierParameter2::algebraic(parameter)
+    }
+
+    #[cfg(feature = "predicates")]
+    fn selected_circle_rational_arc_region(
+        policy: &CurveContext,
+        homogeneous_scale: i8,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let center_parameter = sqrt_half_algebraic_parameter(policy);
+        let BezierParameter2::Algebraic(center_parameter) = &center_parameter else {
+            panic!("sqrt(1/2) must remain an isolated algebraic parameter");
+        };
+        let center_source = RationalBezier2::try_new(
+            vec![p(0, 0), p(0, 0), p(1, 0)],
+            vec![Real::one(), Real::one(), Real::one()],
+        )
+        .expect("the selected center source is a valid rational quadratic");
+        let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+            center_source
+                .point_at_algebraic_parameter(center_parameter, policy)
+                .expect("the selected center has an exact rational image"),
+        );
+        let Classification::Decided(Some(support)) =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                &center,
+                (1, 0),
+                Real::one(),
+                true,
+                policy,
+            )
+            .expect("the selected center defines an exact clockwise semicircle")
+        else {
+            panic!("the nonzero selected semicircle must be decided");
+        };
+
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap();
+        let half_sqrt_two = alpha.clone().sqrt().unwrap();
+        let start = Point2::new(&alpha + Real::one(), Real::zero());
+        let join = Point2::new(&alpha - Real::one(), Real::zero());
+        let arc_end = Point2::new(alpha.clone(), Real::one());
+        let scale = Real::from(homogeneous_scale);
+        let arc = RationalQuadraticBezier2::try_new(
+            join.clone(),
+            Point2::new(alpha.clone(), Real::zero()),
+            arc_end.clone(),
+            scale.clone(),
+            &scale * half_sqrt_two,
+            scale,
+        )
+        .expect("the retained quarter circle has a valid homogeneous gauge");
+        assert!(
+            matches!(
+                crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
+                Ok(Classification::Decided(Some(_)))
+            ),
+            "the authored exact quarter circle must promote as circular"
+        );
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                crate::BezierAlgebraicCuspSemicircleFragment2::full(support, policy),
+            ),
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::RationalQuadratic(arc),
+            },
+            quadratic_fragment(
+                arc_end,
+                Point2::new(
+                    &alpha + (Real::one() / Real::from(2_i8)).unwrap(),
+                    (Real::one() / Real::from(2_i8)).unwrap(),
+                ),
+                start,
+            ),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the exact fixture reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("mixed selected-circle/rational-arc endpoints close exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the mixed exact loop has authored topology")
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_circle_and_retained_rational_arc_fillet_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for homogeneous_scale in [1_i8, 2_i8] {
+                for reversed in [false, true] {
+                    let region =
+                        selected_circle_rational_arc_region(&policy, homogeneous_scale, reversed);
+                    let fragments = region.boundary_loops()[0].fragments();
+                    let corner = (0..fragments.len())
+                        .find(|index| {
+                            let previous =
+                                &fragments[(index + fragments.len() - 1) % fragments.len()];
+                            let next = &fragments[*index];
+                            matches!(
+                                (previous, next),
+                                (
+                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                    BezierSplitFragment2::Materialized {
+                                        curve: BezierSubcurve2::RationalQuadratic(_),
+                                        ..
+                                    }
+                                ) | (
+                                    BezierSplitFragment2::Materialized {
+                                        curve: BezierSubcurve2::RationalQuadratic(_),
+                                        ..
+                                    },
+                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                                )
+                            )
+                        })
+                        .expect("the fixture retains its mixed circular corner");
+                    let result = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            (Real::one() / Real::from(10_i8)).unwrap(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the mixed circular corner must fillet exactly: policy={policy:?}, scale={homogeneous_scale}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                        panic!(
+                            "the mixed circular corner must have one retained fillet: policy={policy:?}, scale={homogeneous_scale}, reversed={reversed}"
+                        );
+                    };
+                    assert_eq!(
+                        filleted.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .filter(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            ))
+                            .count(),
+                        2,
+                    );
+                    assert_eq!(
+                        filleted
+                            .classify_point(&p(0, 0), &policy)
+                            .expect("the retained fillet remains classifiable")
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Inside),
+                    );
+                    if homogeneous_scale == 1 && !reversed {
+                        let disjoint = CurveRegion2::new(vec![
+                            CurveRegionBoundaryLoop2::new(
+                                vec![
+                                    quadratic_fragment(p(4, 4), p(5, 4), p(6, 4)),
+                                    quadratic_fragment(p(6, 4), p(6, 5), p(6, 6)),
+                                    quadratic_fragment(p(6, 6), p(5, 6), p(4, 6)),
+                                    quadratic_fragment(p(4, 6), p(4, 5), p(4, 4)),
+                                ],
+                                &policy,
+                            )
+                            .expect("the disjoint exact loop closes"),
+                        ])
+                        .expect("one disjoint exact loop");
+                        let replay = filleted
+                            .boolean_regions(&disjoint, &policy)
+                            .expect("the mixed retained fillet re-enters the Boolean kernel");
+                        assert_eq!(replay.certainty, CurveCertainty::Certified);
+                        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                        assert!(replay.value.intersection().is_empty());
+                    }
+                }
+            }
+        }
     }
 
     #[cfg(feature = "predicates")]
