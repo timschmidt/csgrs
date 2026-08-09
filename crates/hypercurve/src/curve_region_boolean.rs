@@ -10593,6 +10593,77 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn curve_trim_retains_selected_field_algebraic_chord_overlaps() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_field_algebraic_chord_rectangle(&policy);
+                let BezierSplitFragment2::AlgebraicChord(bottom) =
+                    &region.boundary_loops()[0].fragments()[0]
+                else {
+                    unreachable!("the selected-field bottom edge is an algebraic chord");
+                };
+                let (start, end) = if reversed {
+                    (Point2::from_values(1, 0), Point2::from_values(-1, 0))
+                } else {
+                    (Point2::from_values(-1, 0), Point2::from_values(1, 0))
+                };
+                let source = Curve2::from(
+                    LineSeg2::try_new(start, end).expect("valid horizontal overlap source"),
+                );
+
+                let trimmed = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .expect("selected-field boundary overlap must trim exactly");
+                assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
+                let [trimmed] = trimmed.value.as_slice() else {
+                    panic!("the selected-field bottom edge must retain one exact interval");
+                };
+                assert!(matches!(
+                    trimmed.fragment(),
+                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                ));
+                assert!(trimmed.represented_parameter_range().is_none());
+                let start_contact = trimmed
+                    .start_boundary_contacts()
+                    .iter()
+                    .find(|contact| contact.segment_index() == 0)
+                    .expect("the overlap start must retain bottom-edge provenance");
+                let end_contact = trimmed
+                    .end_boundary_contacts()
+                    .iter()
+                    .find(|contact| contact.segment_index() == 0)
+                    .expect("the overlap end must retain bottom-edge provenance");
+                let start_parameter = start_contact
+                    .boundary_parameter()
+                    .as_algebraic_chord()
+                    .expect("bottom-edge contact must retain its chord parameter");
+                let end_parameter = end_contact
+                    .boundary_parameter()
+                    .as_algebraic_chord()
+                    .expect("bottom-edge contact must retain its chord parameter");
+                let (expected_start, expected_end) = if reversed {
+                    (bottom.end_parameter(), bottom.start_parameter())
+                } else {
+                    (bottom.start_parameter(), bottom.end_parameter())
+                };
+                assert_eq!(
+                    start_parameter
+                        .cmp_by_refinement(&expected_start, &policy)
+                        .unwrap(),
+                    Classification::Decided(Ordering::Equal)
+                );
+                assert_eq!(
+                    end_parameter
+                        .cmp_by_refinement(&expected_end, &policy)
+                        .unwrap(),
+                    Classification::Decided(Ordering::Equal)
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn source_related_algebraic_chord_contact_enters_split_topology() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let third = (Real::one() / Real::from(3_i8)).expect("nonzero denominator");

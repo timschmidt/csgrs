@@ -49022,6 +49022,7 @@ mod conversion_tests {
             let boundary_point = boundary_point
                 .exact_rational_point(&policy)
                 .expect("the synthetic rational cusp midpoint must materialize exactly");
+            let clockwise = semicircle.is_clockwise();
             let cusp = crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
                 BezierAlgebraicCuspSemicircleFragment2::full(semicircle, &policy),
             );
@@ -49040,7 +49041,7 @@ mod conversion_tests {
                 start: BezierParameter2::Exact(Real::zero()),
                 end: BezierParameter2::Exact(Real::one()),
                 curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                    LineSeg2::try_new(end, start).unwrap(),
+                    LineSeg2::try_new(end.clone(), start.clone()).unwrap(),
                 )),
             };
             let boundary = crate::CurveRegionBoundaryLoop2::new(vec![cusp, diameter], &policy)
@@ -49110,6 +49111,58 @@ mod conversion_tests {
                 contact.segment_index() == 1
                     && contact.boundary_parameter().as_bezier_parameter().is_some()
             }));
+
+            for reversed in [false, true] {
+                let (arc_start, arc_end, arc_clockwise) = if reversed {
+                    (end.clone(), start.clone(), !clockwise)
+                } else {
+                    (start.clone(), end.clone(), clockwise)
+                };
+                let source = Curve2::from(
+                    crate::CircularArc2::try_from_center(
+                        arc_start,
+                        arc_end,
+                        center.clone(),
+                        arc_clockwise,
+                    )
+                    .expect("valid rational carrier on the selected semicircle"),
+                );
+                let trimmed = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .expect("a coincident rational arc must retain the selected circle boundary");
+                assert_eq!(trimmed.certainty, crate::CurveCertainty::Certified);
+                assert!(!trimmed.value.is_empty());
+                let represented_ranges = trimmed
+                    .value
+                    .iter()
+                    .map(|fragment| {
+                        fragment
+                            .represented_parameter_range()
+                            .expect("a fully coincident rational arc has represented boundaries")
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    represented_ranges.first().map(|range| &range.0),
+                    Some(source.parameter_domain().start())
+                );
+                assert_eq!(
+                    represented_ranges.last().map(|range| &range.1),
+                    Some(source.parameter_domain().end())
+                );
+                for adjacent in represented_ranges.windows(2) {
+                    assert_eq!(adjacent[0].1, adjacent[1].0);
+                }
+                assert!(trimmed.value.iter().any(|fragment| {
+                    fragment
+                        .start_boundary_contacts()
+                        .iter()
+                        .chain(fragment.end_boundary_contacts())
+                        .any(|contact| {
+                            contact.segment_index() == 0
+                                && contact.boundary_parameter().is_algebraic_cusp()
+                        })
+                }));
+            }
 
             let regularized = region
                 .regularized_region(&policy)

@@ -430,6 +430,21 @@ fn curve_trim_intersects_analytic_parallel_region_boundaries() {
 }
 
 #[test]
+fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let region = analytic_square(0, 4, &policy);
+        let source = Curve2::from(LineSeg2::try_new(point(-1, 0), point(5, 0)).unwrap());
+        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let [BezierSplitFragment2::Materialized { curve, .. }] = outcome.value.as_slice() else {
+            panic!("analytic boundary overlap must retain one materialized line fragment");
+        };
+        assert_eq!(curve.start(), &point(0, 0));
+        assert_eq!(curve.end(), &point(4, 0));
+    }
+}
+
+#[test]
 fn radical_parallel_cusp_spans_connect_under_both_policies() {
     assert_eq!(
         radical_cusp_split_parallel_region(&CurveContext::STRICT).boundary_loops()[0].len(),

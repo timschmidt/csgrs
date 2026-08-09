@@ -239,12 +239,12 @@ impl CurveRegionParameterRange2 {
         Self { start, end }
     }
 
-    /// Returns the ascending range start.
+    /// Returns the oriented range start.
     pub const fn start(&self) -> &CurveRegionParameter2 {
         &self.start
     }
 
-    /// Returns the ascending range end.
+    /// Returns the oriented range end.
     pub const fn end(&self) -> &CurveRegionParameter2 {
         &self.end
     }
