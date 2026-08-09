@@ -15694,9 +15694,16 @@ mod tests {
     }
 
     #[cfg(feature = "predicates")]
-    fn selected_circle_rational_arc_region(
+    #[derive(Clone, Copy)]
+    enum SelectedCircleFilletNeighbor2 {
+        RationalArc(i8),
+        SelectedCircle,
+    }
+
+    #[cfg(feature = "predicates")]
+    fn selected_circle_neighbor_region(
         policy: &CurveContext,
-        homogeneous_scale: i8,
+        neighbor: SelectedCircleFilletNeighbor2,
         reversed: bool,
     ) -> CurveRegion2 {
         let center_parameter = sqrt_half_algebraic_parameter(policy);
@@ -15731,32 +15738,77 @@ mod tests {
         let start = Point2::new(&alpha + Real::one(), Real::zero());
         let join = Point2::new(&alpha - Real::one(), Real::zero());
         let arc_end = Point2::new(alpha.clone(), Real::one());
-        let scale = Real::from(homogeneous_scale);
-        let arc = RationalQuadraticBezier2::try_new(
-            join.clone(),
-            Point2::new(alpha.clone(), Real::zero()),
-            arc_end.clone(),
-            scale.clone(),
-            &scale * half_sqrt_two,
-            scale,
-        )
-        .expect("the retained quarter circle has a valid homogeneous gauge");
-        assert!(
-            matches!(
-                crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
-                Ok(Classification::Decided(Some(_)))
-            ),
-            "the authored exact quarter circle must promote as circular"
-        );
+        let neighbor = match neighbor {
+            SelectedCircleFilletNeighbor2::RationalArc(homogeneous_scale) => {
+                let scale = Real::from(homogeneous_scale);
+                let arc = RationalQuadraticBezier2::try_new(
+                    join.clone(),
+                    Point2::new(alpha.clone(), Real::zero()),
+                    arc_end.clone(),
+                    scale.clone(),
+                    &scale * half_sqrt_two,
+                    scale,
+                )
+                .expect("the retained quarter circle has a valid homogeneous gauge");
+                assert!(
+                    matches!(
+                        crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
+                        Ok(Classification::Decided(Some(_)))
+                    ),
+                    "the authored exact quarter circle must promote as circular"
+                );
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::RationalQuadratic(arc),
+                }
+            }
+            SelectedCircleFilletNeighbor2::SelectedCircle => {
+                let neighbor_center_source = RationalBezier2::try_new(
+                    vec![p(0, 1), p(0, 1), p(-1, 1)],
+                    vec![Real::one(), Real::one(), Real::one()],
+                )
+                .expect("the neighboring selected center source is a valid rational quadratic");
+                let neighbor_center = RationalBezierIntersectionPointEvidence2::Algebraic(
+                    neighbor_center_source
+                        .point_at_algebraic_parameter(center_parameter, policy)
+                        .expect("the neighboring center has an exact rational image"),
+                );
+                let Classification::Decided(Some(neighbor_support)) =
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                        &neighbor_center,
+                        (0, -1),
+                        Real::one(),
+                        false,
+                        policy,
+                    )
+                    .expect("the neighboring selected center defines an exact semicircle")
+                else {
+                    panic!("the neighboring selected semicircle must be decided");
+                };
+                let half = (Real::one() / Real::from(2_i8)).unwrap();
+                let Classification::Decided(neighbor_fragment) =
+                    crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        neighbor_support,
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                            Real::zero(),
+                        ),
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(half),
+                        false,
+                        policy,
+                    )
+                    .expect("the neighboring selected quarter has a valid range")
+                else {
+                    panic!("the neighboring selected quarter must be decided");
+                };
+                BezierSplitFragment2::AlgebraicCuspSemicircle(neighbor_fragment)
+            }
+        };
         let mut fragments = vec![
             BezierSplitFragment2::AlgebraicCuspSemicircle(
                 crate::BezierAlgebraicCuspSemicircleFragment2::full(support, policy),
             ),
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::RationalQuadratic(arc),
-            },
+            neighbor,
             quadratic_fragment(
                 arc_end,
                 Point2::new(
@@ -15788,13 +15840,33 @@ mod tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn selected_fillet_disjoint_square(policy: &CurveContext) -> CurveRegion2 {
+        CurveRegion2::new(vec![
+            CurveRegionBoundaryLoop2::new(
+                vec![
+                    quadratic_fragment(p(4, 4), p(5, 4), p(6, 4)),
+                    quadratic_fragment(p(6, 4), p(6, 5), p(6, 6)),
+                    quadratic_fragment(p(6, 6), p(5, 6), p(4, 6)),
+                    quadratic_fragment(p(4, 6), p(4, 5), p(4, 4)),
+                ],
+                policy,
+            )
+            .expect("the disjoint exact loop closes"),
+        ])
+        .expect("one disjoint exact loop")
+    }
+
+    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_and_retained_rational_arc_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for homogeneous_scale in [1_i8, 2_i8] {
                 for reversed in [false, true] {
-                    let region =
-                        selected_circle_rational_arc_region(&policy, homogeneous_scale, reversed);
+                    let region = selected_circle_neighbor_region(
+                        &policy,
+                        SelectedCircleFilletNeighbor2::RationalArc(homogeneous_scale),
+                        reversed,
+                    );
                     let fragments = region.boundary_loops()[0].fragments();
                     let corner = (0..fragments.len())
                         .find(|index| {
@@ -15857,19 +15929,7 @@ mod tests {
                         Classification::Decided(RegionPointLocation::Inside),
                     );
                     if homogeneous_scale == 1 && !reversed {
-                        let disjoint = CurveRegion2::new(vec![
-                            CurveRegionBoundaryLoop2::new(
-                                vec![
-                                    quadratic_fragment(p(4, 4), p(5, 4), p(6, 4)),
-                                    quadratic_fragment(p(6, 4), p(6, 5), p(6, 6)),
-                                    quadratic_fragment(p(6, 6), p(5, 6), p(4, 6)),
-                                    quadratic_fragment(p(4, 6), p(4, 5), p(4, 4)),
-                                ],
-                                &policy,
-                            )
-                            .expect("the disjoint exact loop closes"),
-                        ])
-                        .expect("one disjoint exact loop");
+                        let disjoint = selected_fillet_disjoint_square(&policy);
                         let replay = filleted
                             .boolean_regions(&disjoint, &policy)
                             .expect("the mixed retained fillet re-enters the Boolean kernel");
@@ -15877,6 +15937,79 @@ mod tests {
                         assert_eq!(replay.value.union().boundary_loops().len(), 2);
                         assert!(replay.value.intersection().is_empty());
                     }
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_circle_pair_with_rationalizable_support_fillet_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::SelectedCircle,
+                    reversed,
+                );
+                let fragments = region.boundary_loops()[0].fragments();
+                let corner = (0..fragments.len())
+                    .find(|index| {
+                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[*index];
+                        matches!(
+                            (previous, next),
+                            (
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            )
+                        )
+                    })
+                    .expect("the fixture retains its selected-circle pair corner");
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the selected-circle pair must fillet exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                    panic!(
+                        "the selected-circle pair must have one retained fillet: policy={policy:?}, reversed={reversed}"
+                    );
+                };
+                assert_eq!(
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .filter(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        ))
+                        .count(),
+                    3,
+                );
+                assert_eq!(
+                    filleted
+                        .classify_point(&p(0, 0), &policy)
+                        .expect("the selected-circle pair fillet remains classifiable")
+                        .into_value(),
+                    Classification::Decided(RegionPointLocation::Inside),
+                );
+                if !reversed {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the selected-circle pair fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                    assert!(replay.value.intersection().is_empty());
                 }
             }
         }

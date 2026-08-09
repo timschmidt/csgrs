@@ -12078,6 +12078,76 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         }
     }
 
+    /// Materializes an affine derived point only when every nonrepresented
+    /// quantity already belongs to one retained selected-parameter field.
+    ///
+    /// This is the exact bridge used by retained fillet reconstruction when a
+    /// selected-circle/rational overlap supplies `P` and the circle center
+    /// reduces under STRICT to represented coordinates. The general
+    /// multi-field carrier deliberately remains procedural.
+    fn exact_one_field_point_image(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
+        self.data.source.validate_policy(policy)?;
+        let BezierAlgebraicCuspDerivedPointSource2::Mapped {
+            point: Some(RationalBezierIntersectionPointEvidence2::Algebraic(point)),
+            ..
+        } = &self.data.source
+        else {
+            return Ok(None);
+        };
+        let Some(parameter) = point.retained_parameter().cloned() else {
+            return Ok(None);
+        };
+        let Some(point) = point.resolved(policy) else {
+            return Ok(None);
+        };
+        let Some((point_x, point_y, denominator)) = point.retained_coordinate_polynomials() else {
+            return Ok(None);
+        };
+        let Some(center) = self
+            .data
+            .source
+            .semicircle()
+            .center_point_image(policy)?
+            .exact_rational_point(&CurveContext::STRICT)
+        else {
+            return Ok(None);
+        };
+        let radial = &self.data.radial_scale;
+        let perpendicular = &self.data.perpendicular_scale;
+        let one_minus_radial = Real::one() - radial;
+        let x_constant =
+            &one_minus_radial * center.x() + perpendicular * center.y() + &self.data.translation_x;
+        let y_constant =
+            &one_minus_radial * center.y() - perpendicular * center.x() + &self.data.translation_y;
+        let x_numerator = polynomial_add(
+            &polynomial_subtract(
+                &polynomial_scale(point_x, radial),
+                &polynomial_scale(point_y, perpendicular),
+            ),
+            &polynomial_scale(denominator, &x_constant),
+        );
+        let y_numerator = polynomial_add(
+            &polynomial_add(
+                &polynomial_scale(point_x, perpendicular),
+                &polynomial_scale(point_y, radial),
+            ),
+            &polynomial_scale(denominator, &y_constant),
+        );
+        Ok(Some(
+            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                parameter,
+                point.parameter().clone(),
+                x_numerator,
+                y_numerator,
+                denominator.to_vec(),
+                "retained mapped contact affine image",
+            ),
+        ))
+    }
+
     pub(crate) fn same_point_evidence(
         &self,
         other: &RationalBezierIntersectionPointEvidence2,
@@ -12139,7 +12209,6 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 }
             }
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-            | RationalBezierIntersectionPointEvidence2::Algebraic(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
             | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
@@ -12148,6 +12217,23 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                         self.clone(),
                     ),
                     other,
+                    policy,
+                )
+            }
+            RationalBezierIntersectionPointEvidence2::Algebraic(other) => {
+                if let Ok(Some(point)) = self.exact_one_field_point_image(policy)
+                    && let Ok(Some(classification)) =
+                        point.same_retained_rational_point(other, policy)
+                {
+                    return classification;
+                }
+                let other_evidence =
+                    RationalBezierIntersectionPointEvidence2::Algebraic(other.clone());
+                retained_point_evidence_equality_by_refinement(
+                    &RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                        self.clone(),
+                    ),
+                    &other_evidence,
                     policy,
                 )
             }
