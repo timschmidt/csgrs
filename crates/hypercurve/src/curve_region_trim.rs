@@ -1170,7 +1170,7 @@ mod tests {
     }
 
     #[test]
-    fn parameter_retaining_trim_reports_authored_boundary_provenance() {
+    fn parameter_retaining_trim_reports_canonical_boundary_provenance() {
         let region = native_region(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
@@ -1199,6 +1199,9 @@ mod tests {
                 contact.point(),
                 Some(&RationalBezierIntersectionPointEvidence2::Exact(point))
             );
+            #[cfg(feature = "predicates")]
+            assert!(contact.boundary_parameter().as_algebraic_chord().is_some());
+            #[cfg(not(feature = "predicates"))]
             assert!(
                 contact
                     .boundary_parameter()

@@ -1955,7 +1955,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                     "algebraic-chord-pair",
                     "adjacent-circular-endpoint-only",
                 ),
-                2
+                4
             );
             assert_eq!(
                 trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
@@ -1967,7 +1967,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                     "algebraic-circle-rational-pair",
                     "bounds-disjoint",
                 ),
-                4
+                2
             );
             for path in [
                 "nonadjacent-line",
@@ -2695,6 +2695,205 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
+    let setback = q(1, 100);
+    let repeated_setback = q(1, 200);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let rounded = || {
+            axis_aligned_algebraic_rectangle(&policy)
+                .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)
+                .expect("selected-field round joins must remain exact")
+                .into_value()
+        };
+        for cusp_is_next in [true, false] {
+            let source = rounded();
+            let fragments = source.boundary_loops()[0].fragments();
+            let cusp_index = fragments
+                .iter()
+                .enumerate()
+                .find_map(|(index, fragment)| {
+                    (index > 0
+                        && index + 1 < fragments.len()
+                        && matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+                    .then_some(index)
+                })
+                .expect("the round offset must retain a non-seam cusp fragment");
+            let vertex = if cusp_is_next {
+                cusp_index
+            } else {
+                cusp_index + 1
+            };
+            let first = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("both retained cusp endpoint orientations must chamfer exactly");
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.value else {
+                panic!("a retained cusp endpoint must have one interior setback cut");
+            };
+            assert_eq!(
+                first.boundary_loops()[0].fragments().len(),
+                fragments.len() + 1
+            );
+            assert!(
+                first.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .any(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                    })
+            );
+
+            // Re-enter at the newly created cusp/chord junction. The first
+            // exact angular cut is now the corner parameter for the second.
+            let repeated = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    cusp_index + 1,
+                    repeated_setback.clone(),
+                    repeated_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a retained cusp chamfer endpoint must remain reusable");
+            assert_eq!(repeated.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(repeated) = repeated.value else {
+                panic!("the repeated retained cusp chamfer must be unique");
+            };
+            assert_eq!(
+                repeated.boundary_loops()[0].fragments().len(),
+                fragments.len() + 2
+            );
+            for (point, expected) in [
+                (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+                (
+                    Point2::new(-Real::one(), -Real::one()),
+                    RegionPointLocation::Outside,
+                ),
+            ] {
+                assert_eq!(
+                    certified(repeated.classify_point(&point, &policy).unwrap()),
+                    Classification::Decided(expected),
+                );
+            }
+
+            let zero_source = rounded();
+            let (previous_setback, next_setback) = if cusp_is_next {
+                (setback.clone(), Real::zero())
+            } else {
+                (Real::zero(), setback.clone())
+            };
+            let zero = zero_source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a zero cusp-side setback must retain the exact corner");
+            assert_eq!(zero.certainty, CurveCertainty::Certified);
+            assert!(matches!(zero.value, CurveCornerSolutions2::Unique(_)));
+
+            let over = rounded()
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    Real::one(),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a cusp over-setback must terminate exactly");
+            assert_eq!(over.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                over.value,
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            ));
+        }
+
+        let source = rounded();
+        let mut seam_fragments = source.boundary_loops()[0].fragments().to_vec();
+        let cusp_index = seam_fragments
+            .iter()
+            .position(|fragment| {
+                matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+            })
+            .expect("the round offset must retain a cusp");
+        seam_fragments.rotate_left(cusp_index);
+        let seam_fragment_count = seam_fragments.len();
+        let seam_boundary = CurveRegionBoundaryLoop2::new(seam_fragments.clone(), &policy).unwrap();
+        let seam = CurveRegion2::try_new_with_loop_topology(
+            vec![seam_boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap();
+        let seam_cut = seam
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                0,
+                setback.clone(),
+                setback.clone(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("the loop seam must not alter a retained cusp chamfer");
+        assert_eq!(seam_cut.certainty, CurveCertainty::Certified);
+        assert!(matches!(seam_cut.value, CurveCornerSolutions2::Unique(_)));
+
+        let reversed_fragments = seam_fragments
+            .iter()
+            .rev()
+            .map(|fragment| fragment.reversed().unwrap())
+            .collect();
+        let reversed_boundary = CurveRegionBoundaryLoop2::new(reversed_fragments, &policy).unwrap();
+        let reversed = CurveRegion2::try_new_with_loop_topology(
+            vec![reversed_boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Right],
+        )
+        .unwrap();
+        let reversed_cut = reversed
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                0,
+                setback.clone(),
+                setback.clone(),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("reversed retained cusp traversal must chamfer exactly");
+        assert_eq!(reversed_cut.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(reversed_cut) = reversed_cut.value else {
+            panic!("the reversed seam cusp must have one exact chamfer");
+        };
+        assert_eq!(
+            reversed_cut.boundary_loops()[0].fragments().len(),
+            seam_fragment_count + 1,
+        );
+        assert_eq!(
+            certified(
+                reversed_cut
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn exact_support_cutter_reenters_correlated_chord_collinearly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = axis_aligned_algebraic_rectangle(&policy);
@@ -2749,6 +2948,55 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
             fragment @ BezierSplitFragment2::AlgebraicCuspSemicircle(_) => fragment.clone(),
             _ => panic!("the correlated chord must retain its adjacent selected circle"),
         };
+        let mapped_chamfer = first
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                retained_index,
+                q(1, 1000),
+                q(1, 1000),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("a Boolean-mapped selected-circle endpoint must chamfer exactly");
+        assert_eq!(mapped_chamfer.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(mapped_chamfer) = mapped_chamfer.value else {
+            panic!("the mapped cusp/chord junction must have one exact chamfer");
+        };
+        assert!(
+            mapped_chamfer.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+        let mapped_reentry = mapped_chamfer
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                retained_index,
+                q(1, 2000),
+                q(1, 2000),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("a rotated mapped cusp endpoint must remain reusable");
+        assert_eq!(mapped_reentry.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(mapped_reentry) = mapped_reentry.value else {
+            panic!("the rotated mapped cusp endpoint must have one exact re-entry");
+        };
+        for (point, expected) in [
+            (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+            (
+                Point2::new(-Real::one(), Real::zero()),
+                RegionPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(
+                certified(mapped_reentry.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
         let before_cusp_index = (cusp_index + fragments.len() - 1) % fragments.len();
         let (preceding, closure_end) = match &fragments[before_cusp_index] {
             BezierSplitFragment2::AlgebraicChord(chord) => (chord.clone(), chord.start().clone()),
@@ -2762,6 +3010,9 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
                     curve.point_at(&Real::one(), &policy),
                 )),
             ),
+            fragment @ BezierSplitFragment2::AlgebraicChord(chord) => {
+                (fragment.clone(), chord.end().clone())
+            }
             _ => panic!("the exact-support chord must retain its exact vertical neighbor"),
         };
         let closure = |start, end| {
@@ -2815,6 +3066,12 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         )
         .unwrap()
         .into_value();
+        let mapped_replay = mapped_reentry
+            .boolean_regions(&replay_clip, &policy)
+            .expect("a re-chamfered mapped cusp endpoint must enter the Boolean kernel");
+        assert_eq!(mapped_replay.certainty, CurveCertainty::Certified);
+        assert!(!mapped_replay.value.union().is_empty());
+        assert!(!mapped_replay.value.intersection().is_empty());
         let full_replay_evidence = first
             .intersect_region(&replay_clip, &policy)
             .expect("the complete retained intersection must replay the exact support");
@@ -2887,11 +3144,7 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         let touch_evidence = first
             .intersect_region(&touch_region, &policy)
             .expect("the retained selected-circle/chord endpoint must support a point touch");
-        let touch_certainty = if policy == CurveContext::STRICT {
-            CurveCertainty::Certified
-        } else {
-            CurveCertainty::Approximate512Consumed
-        };
+        let touch_certainty = CurveCertainty::Certified;
         assert_eq!(touch_evidence.certainty, touch_certainty);
         let touch_blockers = touch_evidence
             .value

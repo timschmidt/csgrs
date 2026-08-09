@@ -944,7 +944,7 @@ fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs
     })
 }
 
-fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
+pub(crate) fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
     (line_doubled_signed_area_contribution(start, end) / Real::from(2_i8)).map_err(CurveError::from)
 }
 

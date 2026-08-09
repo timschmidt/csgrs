@@ -1460,6 +1460,14 @@ impl CurveRegionBoundaryLoop2 {
 
         let mut total = Real::zero();
         for fragment in &self.fragments {
+            if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+                let Some(line) = chord.exact_line() else {
+                    return Ok(Classification::Decided(None));
+                };
+                total = &total
+                    + &crate::contour::line_signed_area_contribution(line.start(), line.end())?;
+                continue;
+            }
             let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
                 return Ok(Classification::Decided(None));
             };
@@ -2146,6 +2154,40 @@ fn retained_corner_fragment_trim(
     keep_before_cut: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
+    #[cfg(feature = "predicates")]
+    if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
+        let parameter = parameter.as_algebraic_cusp().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            )
+        })?;
+        let keep_lower_parameter_range = keep_before_cut != fragment.is_reversed();
+        let (start, end) = if keep_lower_parameter_range {
+            (fragment.start_parameter().clone(), parameter)
+        } else {
+            (parameter, fragment.end_parameter().clone())
+        };
+        return match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+            fragment.semicircle().clone(),
+            start,
+            end,
+            fragment.is_reversed(),
+            policy,
+        )
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+        {
+            Classification::Decided(fragment) => {
+                Ok(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment))
+            }
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                CurveFamily2::RationalBezier,
+                reason,
+            )),
+        };
+    }
     #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
         let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
@@ -7961,17 +8003,17 @@ impl CurveRegion2 {
         let previous_top_level = match previous_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::AlgebraicChord(_) | BezierSplitFragment2::AnalyticParallel(_) => {
-                None
-            }
+            BezierSplitFragment2::AlgebraicChord(_)
+            | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
             _ => return Ok(None),
         };
         let next_top_level = match next_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::AlgebraicChord(_) | BezierSplitFragment2::AnalyticParallel(_) => {
-                None
-            }
+            BezierSplitFragment2::AlgebraicChord(_)
+            | BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
             _ => return Ok(None),
         };
         let previous_family = previous_top_level
@@ -8016,6 +8058,10 @@ impl CurveRegion2 {
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
             }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
+            }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };
         let next_carrier = match next_fragment {
@@ -8041,6 +8087,10 @@ impl CurveRegion2 {
             #[cfg(feature = "predicates")]
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
+            }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
             }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };
@@ -10473,12 +10523,11 @@ impl CurveRegion2 {
                 .certified_loop_fill_rules
                 .as_ref()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
-            let magnitude = match curve_region_loop_filled_area_magnitude(
-                boundary_loop,
-                area,
-                fill_rule,
-                policy,
-            )? {
+            let magnitude = match if self.has_certified_regularized_filled_left_topology() {
+                absolute_nonzero_area(area, policy).map(|area| area.map(Some))?
+            } else {
+                curve_region_loop_filled_area_magnitude(boundary_loop, area, fill_rule, policy)?
+            } {
                 Classification::Decided(Some(magnitude)) => magnitude,
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => {
@@ -12053,8 +12102,18 @@ fn prepare_algebraic_ray_retained_fragments(
     let mut fragments = Vec::with_capacity(boundary_loop.fragments().len());
     for fragment in boundary_loop.fragments() {
         match fragment {
-            BezierSplitFragment2::AlgebraicChord(fragment) => {
-                let evaluator = match fragment.algebraic_ray_evaluator(policy)? {
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                if chord.exact_line().is_some() {
+                    let fragment = match retained_fragment_algebraic_ray_curve(fragment, policy)? {
+                        Classification::Decided(fragment) => fragment,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
+                    continue;
+                }
+                let evaluator = match chord.algebraic_ray_evaluator(policy)? {
                     Classification::Decided(evaluator) => evaluator,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -13433,7 +13492,34 @@ fn classify_point_with_retained_ray_skipping_origin(
         };
         #[cfg(feature = "predicates")]
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
-            match chord.forward_ray_winding_delta(point, direction_x, direction_y, policy)? {
+            let source_contact = skipped_origin.and_then(|origin| {
+                (origin.fragment_index == Some(fragment_index))
+                    .then_some(origin)
+                    .and_then(|origin| {
+                        Some((
+                            origin.parameter?.as_algebraic_chord()?,
+                            origin.crossing_direction,
+                        ))
+                    })
+            });
+            let result = match source_contact {
+                Some((parameter, crossing_direction)) => {
+                    let result = chord.forward_ray_winding_delta_skipping_origin(
+                        point,
+                        direction_x,
+                        direction_y,
+                        parameter,
+                        crossing_direction,
+                        policy,
+                    )?;
+                    if matches!(result, Classification::Decided(_)) {
+                        source_origin_contact_was_skipped = true;
+                    }
+                    result
+                }
+                None => chord.forward_ray_winding_delta(point, direction_x, direction_y, policy)?,
+            };
+            match result {
                 Classification::Decided(delta) => winding += delta,
                 Classification::Uncertain(UncertaintyReason::Boundary) => {
                     return Ok(Classification::Decided(ContourPointLocation::Boundary));

@@ -3507,6 +3507,8 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     AlgebraicChord(&'a crate::BezierAlgebraicChord2),
     #[cfg(feature = "predicates")]
     AnalyticParallel(&'a crate::BezierParallelFragment2),
+    #[cfg(feature = "predicates")]
+    AlgebraicCusp(&'a crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
 #[derive(Clone, Copy)]
@@ -3616,7 +3618,7 @@ impl<'a> ExactCornerCarrier2<'a> {
             Self::Line(_) | Self::Arc(_) => true,
             Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
             #[cfg(feature = "predicates")]
-            Self::AlgebraicChord(_) | Self::AnalyticParallel(_) => false,
+            Self::AlgebraicChord(_) | Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
         }
     }
 }
@@ -3951,13 +3953,13 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 source: ExactCornerBezier2::NativeSpan(fragment),
             }),
             #[cfg(feature = "predicates")]
-            ExactCornerCarrier2::AlgebraicChord(_) | ExactCornerCarrier2::AnalyticParallel(_) => {
-                Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    crate::UncertaintyReason::Unsupported,
-                ))
-            }
+            ExactCornerCarrier2::AlgebraicChord(_)
+            | ExactCornerCarrier2::AnalyticParallel(_)
+            | ExactCornerCarrier2::AlgebraicCusp(_) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            )),
         }
     }
 
@@ -5072,7 +5074,92 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
+        #[cfg(feature = "predicates")]
+        ExactCornerCarrier2::AlgebraicCusp(fragment) => algebraic_cusp_chamfer_cuts(
+            fragment,
+            setback,
+            setback_sign,
+            previous,
+            mode,
+            operation,
+            family,
+            policy,
+        ),
     }
+}
+
+#[cfg(feature = "predicates")]
+#[allow(clippy::too_many_arguments)]
+fn algebraic_cusp_chamfer_cuts(
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CornerCuts2> {
+    fragment
+        .validate_policy(policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    if mode != CurveCornerMode2::TrimOnly {
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
+    let start_endpoint = !previous;
+    let corner_parameter = fragment.endpoint_parameter(start_endpoint).clone();
+    let corner = match fragment
+        .endpoint_point_evidence(start_endpoint, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(Some(point)) => point,
+        Classification::Decided(None) => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    if setback_sign == RealSign::Zero {
+        return Ok(CornerCuts2 {
+            first: Some(CornerCut2 {
+                parameter: Some(CurveRegionParameter2::from_algebraic_cusp(corner_parameter)),
+                point: corner,
+                placement: CornerPlacement2::Corner,
+            }),
+            second: None,
+            overflow: Vec::new(),
+        });
+    }
+    let cut = match fragment
+        .endpoint_chord_setback_cut(start_endpoint, setback, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(cut) => cut,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    let Some((parameter, point)) = cut else {
+        return Ok(CornerCuts2::default());
+    };
+    Ok(CornerCuts2 {
+        first: Some(CornerCut2 {
+            parameter: Some(CurveRegionParameter2::from_algebraic_cusp(parameter)),
+            point,
+            placement: CornerPlacement2::Trim,
+        }),
+        second: None,
+        overflow: Vec::new(),
+    })
 }
 
 #[cfg(feature = "predicates")]

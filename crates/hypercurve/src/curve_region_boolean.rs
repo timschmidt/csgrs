@@ -5392,15 +5392,58 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(carrier_index, reason));
             }
         };
+        if let RationalBezierIntersectionPointEvidence2::Exact(representative) = representative {
+            let (tangent_x, tangent_y) = chord
+                .exact_line()
+                .map(|line| line.delta())
+                .or_else(|| chord.certified_unit_tangent())
+                .ok_or_else(|| self.blocked(carrier_index, UncertaintyReason::Unsupported))?;
+            let parameter = match chord
+                .parameter_at_certified_point(
+                    RationalBezierIntersectionPointEvidence2::Exact(representative.clone()),
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(Some(parameter)) => {
+                    CurveRegionParameter2::from_algebraic_chord(parameter)
+                }
+                Classification::Decided(None) => {
+                    return Err(self.invalid(
+                        carrier_index,
+                        CurveError::Topology(
+                            "an exact chord rejected its exact representative".into(),
+                        ),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            };
+            let left = self.fragment_side_location(
+                carrier_index,
+                &representative,
+                Some(&parameter),
+                &tangent_x,
+                &tangent_y,
+                true,
+            )?;
+            let right = self.fragment_side_location(
+                carrier_index,
+                &representative,
+                Some(&parameter),
+                &tangent_x,
+                &tangent_y,
+                false,
+            )?;
+            return Ok(action_from_result_sides(
+                left == RegionPointLocation::Inside,
+                right == RegionPointLocation::Inside,
+            ));
+        }
         let RationalBezierIntersectionPointEvidence2::Algebraic(representative) = representative
         else {
-            return Err(self.invalid(
-                carrier_index,
-                CurveError::Topology(
-                    "an exact chord reached the algebraic Boolean carrier instead of its native line fast path"
-                        .into(),
-                ),
-            ));
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
         };
         let [tangent_x, tangent_y] = chord
             .tangent_coordinate_signs(&self.data.policy)
@@ -5861,8 +5904,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .iter()
                 .all(|carrier| match &carrier.geometry {
                     RegionCarrierGeometry::Bezier(curve) => subcurve_is_strict_line_image(curve),
+                    RegionCarrierGeometry::AlgebraicChord(chord) => chord.exact_line().is_some(),
                     RegionCarrierGeometry::AnalyticParallel(_)
-                    | RegionCarrierGeometry::AlgebraicChord(_)
                     | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => false,
                 })
         })
@@ -6522,13 +6565,12 @@ fn build_bezier_self_intersection_caches(
 }
 
 fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
-    matches!(
-        fragment,
-        BezierSplitFragment2::Materialized {
-            curve: BezierSubcurve2::Quadratic(curve),
-            ..
-        } if curve.retained_exact_line_image().is_some()
-    )
+    match fragment {
+        BezierSplitFragment2::Materialized { curve, .. } => subcurve_is_strict_line_image(curve),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().is_some(),
+        _ => false,
+    }
 }
 
 fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
@@ -6571,20 +6613,6 @@ fn retained_axis_aligned_line_chord(
         return None;
     };
     let line = curve.retained_exact_line_image()?;
-    if [
-        line.start().x(),
-        line.start().y(),
-        line.end().x(),
-        line.end().y(),
-    ]
-    .into_iter()
-    .all(|coordinate| coordinate.exact_rational_ref().is_some())
-    {
-        // Pure rational lines already use the compact line/Bezier kernels.
-        // Promotion is for exact symbolic line images whose generic
-        // resultant coefficients cannot be normalized as rationals.
-        return None;
-    }
     let direction = exact_axis_aligned_line_direction(line)?;
     Some(
         crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
@@ -6831,27 +6859,12 @@ fn build_region_carrier(
             CurveRegionParameter2::from_bezier(fragment.range().end().clone()),
             fragment.is_reversed(),
         ),
-        BezierSplitFragment2::AlgebraicChord(chord) => {
-            if let Some(line) = chord.exact_line() {
-                (
-                    RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
-                        QuadraticBezier2::from_line_segment(line),
-                    )),
-                    CurveRegionParameter2::from_bezier(
-                        BezierParameter2::Exact(crate::Real::zero()),
-                    ),
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
-                    false,
-                )
-            } else {
-                (
-                    RegionCarrierGeometry::AlgebraicChord(chord.clone()),
-                    CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
-                    CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
-                    false,
-                )
-            }
-        }
+        BezierSplitFragment2::AlgebraicChord(chord) => (
+            RegionCarrierGeometry::AlgebraicChord(chord.clone()),
+            CurveRegionParameter2::from_algebraic_chord(chord.start_parameter()),
+            CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
+            false,
+        ),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => (
             RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone()),
             CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
@@ -10393,7 +10406,7 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
-    fn exact_retained_chord_uses_the_native_boolean_carrier() {
+    fn exact_retained_chord_uses_the_canonical_boolean_carrier() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let chord = decided(
                 crate::BezierAlgebraicChord2::try_new(
@@ -10432,12 +10445,12 @@ mod certified_successor_tests {
                 .expect("valid unary exact-chord context");
             assert!(matches!(
                 context.data.carriers[0].geometry,
-                RegionCarrierGeometry::Bezier(_)
+                RegionCarrierGeometry::AlgebraicChord(_)
             ));
             let regularized = context.build_regularized_region();
             assert!(
                 regularized.is_ok(),
-                "the exact retained chord must reuse the native line/Bezier authority: {regularized:?}"
+                "the exact retained chord must preserve the canonical chord authority: {regularized:?}"
             );
         }
     }
