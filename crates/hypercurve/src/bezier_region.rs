@@ -8721,8 +8721,7 @@ impl CurveRegion2 {
                 (&mut *next_cut, &mut *previous_cut, previous_fragment)
             };
             if let Some(relation) = frame.anchor_evidence.as_ref() {
-                anchor_cut.replacement_rational_curve =
-                    Some(relation.canonical_anchor_curve.clone());
+                anchor_cut.replacement_rational_curve = relation.canonical_anchor_curve.clone();
             }
             if !matches!(
                 other_fragment,
@@ -12233,10 +12232,17 @@ fn retained_line_loop_to_contour(
     let mut segments = Vec::with_capacity(boundary_loop.fragments().len());
     let mut materialized_fragment_count = 0_usize;
     let mut algebraic_fragment_count = 0_usize;
+    let mut blocker = None;
     for fragment in boundary_loop.fragments() {
         let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
             Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                blocker.get_or_insert(reason);
+                continue;
+            }
         };
         match endpoints.source {
             RetainedLineFragmentSource::MaterializedFit => materialized_fragment_count += 1,
@@ -12244,6 +12250,9 @@ fn retained_line_loop_to_contour(
         }
         let (start, end) = endpoints.points;
         segments.push(Segment2::Line(LineSeg2::try_new(start, end)?));
+    }
+    if let Some(reason) = blocker {
+        return Ok(Classification::Uncertain(reason));
     }
     Contour2::try_new(segments).map(|contour| {
         Classification::Decided(RetainedLineLoopContour {
@@ -15698,6 +15707,7 @@ mod tests {
     enum SelectedCircleFilletNeighbor2 {
         RationalArc(i8),
         SelectedCircle,
+        AnalyticParallel(bool),
     }
 
     #[cfg(feature = "predicates")]
@@ -15802,6 +15812,33 @@ mod tests {
                     panic!("the neighboring selected quarter must be decided");
                 };
                 BezierSplitFragment2::AlgebraicCuspSemicircle(neighbor_fragment)
+            }
+            SelectedCircleFilletNeighbor2::AnalyticParallel(curved) => {
+                let analytic = if curved {
+                    QuadraticBezier2::new(
+                        join.clone(),
+                        Point2::new(alpha.clone(), Real::zero()),
+                        arc_end.clone(),
+                    )
+                    .parallel_left(Real::zero())
+                    .expect("the neighboring curved analytic parallel is valid")
+                } else {
+                    let half = (Real::one() / Real::from(2_i8)).unwrap();
+                    QuadraticBezier2::new(join.clone(), join.lerp(&arc_end, half), arc_end.clone())
+                        .parallel_left(Real::zero())
+                        .expect("the neighboring exact-line parallel is valid")
+                };
+                let range = BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                );
+                let Classification::Decided(analytic) =
+                    crate::BezierParallelFragment2::try_new(analytic, range, policy)
+                        .expect("the neighboring analytic range is valid")
+                else {
+                    panic!("the neighboring analytic fragment must be decided");
+                };
+                BezierSplitFragment2::AnalyticParallel(analytic)
             }
         };
         let mut fragments = vec![
@@ -16007,6 +16044,92 @@ mod tests {
                     let replay = filleted
                         .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
                         .expect("the selected-circle pair fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                    assert!(replay.value.intersection().is_empty());
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn selected_circle_and_analytic_parallel_fillet_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (curved, reversed) in [false, true]
+                .into_iter()
+                .flat_map(|curved| [false, true].map(|reversed| (curved, reversed)))
+            {
+                let region = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::AnalyticParallel(curved),
+                    reversed,
+                );
+                let fragments = region.boundary_loops()[0].fragments();
+                let corner = (0..fragments.len())
+                    .find(|index| {
+                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[*index];
+                        matches!(
+                            (previous, next),
+                            (
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                BezierSplitFragment2::AnalyticParallel(_)
+                            ) | (
+                                BezierSplitFragment2::AnalyticParallel(_),
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            )
+                        )
+                    })
+                    .expect("the fixture retains its selected-circle/analytic corner");
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the selected-circle/analytic corner must fillet exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                    panic!(
+                        "the selected-circle/analytic corner must have one retained fillet: policy={policy:?}, reversed={reversed}"
+                    );
+                };
+                assert_eq!(
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .filter(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        ))
+                        .count(),
+                    2,
+                );
+                assert_eq!(
+                    filleted
+                        .classify_point(&p(0, 0), &policy)
+                        .expect("the selected-circle/analytic fillet remains classifiable")
+                        .into_value(),
+                    Classification::Decided(RegionPointLocation::Inside),
+                );
+                assert_eq!(
+                    filleted
+                        .classify_point(&p(-1, 0), &policy)
+                        .expect("the selected-circle/analytic exterior remains classifiable")
+                        .into_value(),
+                    Classification::Decided(RegionPointLocation::Outside),
+                );
+                if !curved {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the selected-circle/analytic fillet re-enters the Boolean kernel");
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
                     assert!(replay.value.intersection().is_empty());

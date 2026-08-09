@@ -11,6 +11,8 @@ use crate::arc_bezier::{
 use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
 };
+#[cfg(feature = "predicates")]
+use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
     Classification, ContourPointLocation, CubicBezier2, CurveContext, CurveError, CurveOperation2,
@@ -3442,7 +3444,7 @@ pub(crate) enum RetainedFilletRadialFrame2 {
 pub(crate) struct RetainedFilletAnchorEvidence2 {
     pub(crate) cross: Option<RealSign>,
     pub(crate) dot: Option<RealSign>,
-    pub(crate) canonical_anchor_curve: RationalBezier2,
+    pub(crate) canonical_anchor_curve: Option<RationalBezier2>,
 }
 
 impl FilletCorner2 {
@@ -4741,18 +4743,161 @@ fn retained_fillet_ranges_overlap(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let greater = |left: &BezierParameter2, right: &BezierParameter2| match left
-        .cmp_by_refinement(right, policy)
+    Ok(
+        retained_fillet_bezier_parameter_order(first.end(), second.start(), family, policy)?
+            .is_gt()
+            && retained_fillet_bezier_parameter_order(second.end(), first.start(), family, policy)?
+                .is_gt(),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fillet_bezier_parameter_order(
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<std::cmp::Ordering> {
+    match first
+        .cmp_by_refinement(second, policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
-        Classification::Decided(order) => Ok(order.is_gt()),
+        Classification::Decided(order) => Ok(order),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fillet_corresponding_overlap_is_positive(
+    first_curve: &RationalBezier2,
+    second_curve: &RationalBezier2,
+    overlap: &crate::RationalBezierIntersectionOverlap2,
+    first_fragment: &BezierParameterRange2,
+    second_fragment: &BezierParameterRange2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let ascending = |range: &BezierParameterRange2| {
+        Ok(
+            match retained_fillet_bezier_parameter_order(
+                range.start(),
+                range.end(),
+                family,
+                policy,
+            )? {
+                std::cmp::Ordering::Less => (range.start().clone(), range.end().clone()),
+                std::cmp::Ordering::Greater => (range.end().clone(), range.start().clone()),
+                std::cmp::Ordering::Equal => {
+                    return Err(ExactCurveError::invalid(
+                        CurveOperation2::Fillet,
+                        family,
+                        CurveError::DegenerateOverlapRange,
+                    ));
+                }
+            },
+        )
+    };
+    let maximum = |parameters: [&BezierParameter2; 3]| {
+        let mut selected = parameters[0];
+        for parameter in &parameters[1..] {
+            if retained_fillet_bezier_parameter_order(selected, parameter, family, policy)?.is_lt()
+            {
+                selected = parameter;
+            }
+        }
+        Ok(selected.clone())
+    };
+    let minimum = |parameters: [&BezierParameter2; 3]| {
+        let mut selected = parameters[0];
+        for parameter in &parameters[1..] {
+            if retained_fillet_bezier_parameter_order(selected, parameter, family, policy)?.is_gt()
+            {
+                selected = parameter;
+            }
+        }
+        Ok(selected.clone())
+    };
+
+    let (first_overlap_start, first_overlap_end) = ascending(overlap.first_range())?;
+    let (first_fragment_start, first_fragment_end) = ascending(first_fragment)?;
+    let first_start = if retained_fillet_bezier_parameter_order(
+        &first_overlap_start,
+        &first_fragment_start,
+        family,
+        policy,
+    )?
+    .is_lt()
+    {
+        first_fragment_start.clone()
+    } else {
+        first_overlap_start.clone()
+    };
+    let first_end = if retained_fillet_bezier_parameter_order(
+        &first_overlap_end,
+        &first_fragment_end,
+        family,
+        policy,
+    )?
+    .is_gt()
+    {
+        first_fragment_end.clone()
+    } else {
+        first_overlap_end.clone()
+    };
+    if !retained_fillet_bezier_parameter_order(&first_start, &first_end, family, policy)?.is_lt() {
+        return Ok(false);
+    }
+
+    let correspondence = RationalBezierOverlapParameterCorrespondence2::for_overlap(
+        first_curve,
+        second_curve,
+        overlap,
+        policy,
+    );
+    let map = |parameter| match correspondence
+        .map_first_to_second(
+            parameter,
+            overlap.first_range(),
+            overlap.second_range(),
+            policy,
+        )
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(Some(parameter)) => Ok(parameter),
+        Classification::Decided(None) => Err(ExactCurveError::invalid(
+            CurveOperation2::Fillet,
+            family,
+            CurveError::Topology(
+                "a certified fillet overlap omitted its parameter correspondence".into(),
+            ),
+        )),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             CurveOperation2::Fillet,
             family,
             reason,
         )),
     };
-    Ok(greater(first.end(), second.start())? && greater(second.end(), first.start())?)
+    let mapped_first = map(&first_start)?;
+    let mapped_second = map(&first_end)?;
+    let (mapped_low, mapped_high) = match retained_fillet_bezier_parameter_order(
+        &mapped_first,
+        &mapped_second,
+        family,
+        policy,
+    )? {
+        std::cmp::Ordering::Less => (&mapped_first, &mapped_second),
+        std::cmp::Ordering::Greater => (&mapped_second, &mapped_first),
+        std::cmp::Ordering::Equal => return Ok(false),
+    };
+    let (second_overlap_start, second_overlap_end) = ascending(overlap.second_range())?;
+    let (second_fragment_start, second_fragment_end) = ascending(second_fragment)?;
+    let second_start = maximum([mapped_low, &second_overlap_start, &second_fragment_start])?;
+    let second_end = minimum([mapped_high, &second_overlap_end, &second_fragment_end])?;
+    Ok(retained_fillet_bezier_parameter_order(&second_start, &second_end, family, policy)?.is_lt())
 }
 
 #[cfg(feature = "predicates")]
@@ -4973,6 +5118,54 @@ fn retained_fillet_rationalized_cusp_spans(
         });
     }
     Ok(Some(spans))
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fillet_parallel_support_reverses_source(
+    source: &crate::BezierParallelFragment2,
+    support: &BezierParallel2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let derivative_scale = |parallel: &BezierParallel2| match parallel
+        .regular_fragment_derivative_scale_sign(source.range(), policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
+        Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            crate::UncertaintyReason::Boundary,
+        )),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    };
+    Ok(
+        (derivative_scale(source.parallel())? != derivative_scale(support)?)
+            != source.is_reversed(),
+    )
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fillet_parameter_is_in_open_range(
+    parameter: &BezierParameter2,
+    range: &BezierParameterRange2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    match crate::bezier_offset::overlap_parameter_is_in_range(parameter, range, false, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(inside) => Ok(inside),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    }
 }
 
 fn fillet_offset_centers(
@@ -5638,8 +5831,81 @@ fn fillet_offset_centers(
                     crate::UncertaintyReason::Predicate,
                 ));
             }
-            centers.coincident = !intersections.overlaps().is_empty()
-                || !intersections.parameter_components().is_empty();
+            let full_arc_range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            if !intersections.overlaps().is_empty() {
+                let analytic_rational = match analytic_support
+                    .exact_rational_parallel_component(policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
+                    })? {
+                    Classification::Decided(Some(curve)) => curve,
+                    Classification::Decided(None) => {
+                        return Err(ExactCurveError::invalid(
+                            CurveOperation2::Fillet,
+                            analytic_family,
+                            CurveError::Topology(
+                                "an analytic/rational fillet overlap omitted its rational analytic carrier"
+                                    .into(),
+                            ),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            analytic_family,
+                            reason,
+                        ));
+                    }
+                };
+                for overlap in intersections.overlaps() {
+                    if retained_fillet_corresponding_overlap_is_positive(
+                        &analytic_rational,
+                        &offset_arc.offset,
+                        overlap,
+                        analytic_source.range(),
+                        &full_arc_range,
+                        analytic_family,
+                        policy,
+                    )? {
+                        centers.coincident = true;
+                        break;
+                    }
+                }
+            }
+            for component in intersections.parameter_components() {
+                let parallel_inside = match component.parallel_parameter() {
+                    Some(parameter) => retained_fillet_parameter_is_in_open_range(
+                        parameter,
+                        analytic_source.range(),
+                        analytic_family,
+                        policy,
+                    )?,
+                    None => true,
+                };
+                let arc_inside = match component.other_parameter() {
+                    Some(parameter) => retained_fillet_parameter_is_in_open_range(
+                        parameter,
+                        &full_arc_range,
+                        arc_family,
+                        policy,
+                    )?,
+                    None => true,
+                };
+                if parallel_inside && arc_inside {
+                    centers.coincident = true;
+                    break;
+                }
+            }
+            let analytic_support_reverses_source =
+                retained_fillet_parallel_support_reverses_source(
+                    analytic_source,
+                    analytic_support,
+                    analytic_family,
+                    policy,
+                )?;
             let signed_radius_sign = match crate::classify::real_sign(signed_radius, policy) {
                 Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
                 Some(RealSign::Zero) => unreachable!("collapsed arc offsets use the point carrier"),
@@ -5686,7 +5952,7 @@ fn fillet_offset_centers(
                 // arc tangent even though its parameter remains unchanged.
                 let mut cross = contact.tangent_cross_sign();
                 let mut dot = contact.tangent_dot_sign();
-                if analytic_source.is_reversed() {
+                if analytic_support_reverses_source {
                     cross = reverse(cross);
                     dot = reverse(dot);
                 }
@@ -5697,7 +5963,7 @@ fn fillet_offset_centers(
                 let anchor_evidence = RetainedFilletAnchorEvidence2 {
                     cross: reverse(cross),
                     dot,
-                    canonical_anchor_curve: offset_arc.canonical_source.clone(),
+                    canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
                 };
 
                 let arc_parameter =
@@ -5715,6 +5981,292 @@ fn fillet_offset_centers(
                     next_parameter,
                     retained_anchor_evidence: Some(anchor_evidence),
                 });
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+            FilletOffsetCarrier2::AnalyticParallel { .. },
+        )
+        | (
+            FilletOffsetCarrier2::AnalyticParallel { .. },
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+        ) => {
+            let (cusp_source, cusp_support, analytic_source, analytic_support, cusp_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::AlgebraicCusp { source, support },
+                        FilletOffsetCarrier2::AnalyticParallel {
+                            source: analytic,
+                            support: analytic_support,
+                        },
+                    ) => (source, support, analytic, analytic_support, true),
+                    (
+                        FilletOffsetCarrier2::AnalyticParallel {
+                            source: analytic,
+                            support: analytic_support,
+                        },
+                        FilletOffsetCarrier2::AlgebraicCusp { source, support },
+                    ) => (source, support, analytic, analytic_support, false),
+                    _ => unreachable!(),
+                };
+            let cusp_family = if cusp_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let analytic_family = if cusp_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+            let Some(spans) =
+                retained_fillet_rationalized_cusp_spans(cusp_support, cusp_family, policy)?
+            else {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    cusp_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            };
+            let nonzero_radius_sign =
+                |radius: &Real| match crate::classify::real_sign(radius, policy) {
+                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
+                    Some(RealSign::Zero) => Err(ExactCurveError::invalid(
+                        CurveOperation2::Fillet,
+                        cusp_family,
+                        CurveError::Topology(
+                            "a retained selected-circle fillet support had zero radius".into(),
+                        ),
+                    )),
+                    None => Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        cusp_family,
+                        crate::UncertaintyReason::RealSign,
+                    )),
+                };
+            let cusp_support_reverses_source =
+                (nonzero_radius_sign(cusp_source.semicircle().radial_distance())?
+                    != nonzero_radius_sign(cusp_support.semicircle().radial_distance())?)
+                    != cusp_source.is_reversed();
+            let analytic_support_reverses_source =
+                retained_fillet_parallel_support_reverses_source(
+                    analytic_source,
+                    analytic_support,
+                    analytic_family,
+                    policy,
+                )?;
+            let reverse = |sign: Option<RealSign>| {
+                sign.map(|sign| match sign {
+                    RealSign::Positive => RealSign::Negative,
+                    RealSign::Negative => RealSign::Positive,
+                    RealSign::Zero => RealSign::Zero,
+                })
+            };
+            let mut analytic_rational = None;
+            for (span_index, span) in spans.into_iter().enumerate() {
+                let Some(cusp_span_range) = retained_fillet_cusp_overlap_range(
+                    cusp_support,
+                    &span.parameter_map,
+                    cusp_family,
+                    policy,
+                )?
+                else {
+                    continue;
+                };
+                let intersections = match analytic_support
+                    .intersections(&span.curve, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
+                    })? {
+                    Classification::Decided(intersections) => intersections,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            analytic_family,
+                            reason,
+                        ));
+                    }
+                };
+                if !intersections.is_complete() {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        analytic_family,
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+                if !intersections.overlaps().is_empty() {
+                    let analytic_rational = if let Some(curve) = &analytic_rational {
+                        curve
+                    } else {
+                        let curve = match analytic_support
+                            .exact_rational_parallel_component(policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Fillet,
+                                    analytic_family,
+                                    cause,
+                                )
+                            })? {
+                            Classification::Decided(Some(curve)) => curve,
+                            Classification::Decided(None) => {
+                                return Err(ExactCurveError::invalid(
+                                    CurveOperation2::Fillet,
+                                    analytic_family,
+                                    CurveError::Topology(
+                                        "an analytic/selected-circle fillet overlap omitted its rational analytic carrier"
+                                            .into(),
+                                    ),
+                                ));
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    analytic_family,
+                                    reason,
+                                ));
+                            }
+                        };
+                        analytic_rational.insert(curve)
+                    };
+                    for overlap in intersections.overlaps() {
+                        if retained_fillet_corresponding_overlap_is_positive(
+                            analytic_rational,
+                            &span.curve,
+                            overlap,
+                            analytic_source.range(),
+                            &cusp_span_range,
+                            analytic_family,
+                            policy,
+                        )? {
+                            centers.coincident = true;
+                            break;
+                        }
+                    }
+                }
+                for component in intersections.parameter_components() {
+                    let analytic_inside = match component.parallel_parameter() {
+                        Some(parameter) => retained_fillet_parameter_is_in_open_range(
+                            parameter,
+                            analytic_source.range(),
+                            analytic_family,
+                            policy,
+                        )?,
+                        None => true,
+                    };
+                    let cusp_inside = match component.other_parameter() {
+                        Some(parameter) => retained_fillet_parameter_is_in_open_range(
+                            parameter,
+                            &cusp_span_range,
+                            cusp_family,
+                            policy,
+                        )?,
+                        None => true,
+                    };
+                    if analytic_inside && cusp_inside {
+                        centers.coincident = true;
+                        break;
+                    }
+                }
+                for contact in intersections.contacts() {
+                    if !retained_fillet_parameter_is_in_open_range(
+                        contact.parallel_parameter(),
+                        analytic_source.range(),
+                        analytic_family,
+                        policy,
+                    )? || !retained_fillet_parameter_is_in_open_range(
+                        contact.other_parameter(),
+                        &cusp_span_range,
+                        cusp_family,
+                        policy,
+                    )? {
+                        continue;
+                    }
+                    if span_index > 0 {
+                        match contact
+                            .other_parameter()
+                            .same_value(&BezierParameter2::Exact(Real::zero()), policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Fillet,
+                                    cusp_family,
+                                    cause,
+                                )
+                            })? {
+                            Classification::Decided(true) => continue,
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    cusp_family,
+                                    reason,
+                                ));
+                            }
+                        }
+                    }
+                    let cusp_parameter = match span
+                        .parameter_map
+                        .cusp_parameter_for_other(contact.other_parameter(), policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+                        })? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                cusp_family,
+                                reason,
+                            ));
+                        }
+                    };
+                    match cusp_source
+                        .contains_parameter(&cusp_parameter, false, false, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+                        })? {
+                        Classification::Decided(true) => {}
+                        Classification::Decided(false) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                cusp_family,
+                                reason,
+                            ));
+                        }
+                    }
+
+                    let mut cross = contact.tangent_cross_sign();
+                    let mut dot = contact.tangent_dot_sign();
+                    if analytic_support_reverses_source {
+                        cross = reverse(cross);
+                        dot = reverse(dot);
+                    }
+                    let rational_reverses_cusp_source = (span.parameter_map.orientation()
+                        == crate::RationalBezierOverlapOrientation2::Reversed)
+                        != cusp_support_reverses_source;
+                    if rational_reverses_cusp_source {
+                        cross = reverse(cross);
+                        dot = reverse(dot);
+                    }
+                    let cusp_parameter = CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
+                    let analytic_parameter =
+                        CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                    let (previous_parameter, next_parameter) = if cusp_is_previous {
+                        (Some(cusp_parameter), Some(analytic_parameter))
+                    } else {
+                        (Some(analytic_parameter), Some(cusp_parameter))
+                    };
+                    centers.push(FilletCenterWitness2 {
+                        point: contact.point().clone(),
+                        previous_parameter,
+                        next_parameter,
+                        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                            cross: reverse(cross),
+                            dot,
+                            canonical_anchor_curve: None,
+                        }),
+                    });
+                }
             }
         }
         #[cfg(feature = "predicates")]
@@ -5789,7 +6341,7 @@ fn fillet_offset_centers(
                     retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
                         cross: None,
                         dot: None,
-                        canonical_anchor_curve: offset_arc.canonical_source.clone(),
+                        canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
                     }),
                 });
             }
