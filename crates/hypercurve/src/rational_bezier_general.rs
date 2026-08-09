@@ -182,6 +182,10 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// endpoint fields.
     #[cfg(feature = "predicates")]
     AlgebraicChordParallel(crate::BezierAlgebraicChordParallelPoint2),
+    /// One exact point on an analytic Bezier parallel at a retained source
+    /// parameter. The normalized direction is evaluated only by predicates.
+    #[cfg(feature = "predicates")]
+    AnalyticParallel(crate::BezierAnalyticParallelPoint2),
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
@@ -198,6 +202,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChordDerived(_) => None,
             #[cfg(feature = "predicates")]
             Self::AlgebraicChordParallel(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AnalyticParallel(_) => None,
         }
     }
 
@@ -222,6 +228,10 @@ impl RationalBezierIntersectionPointEvidence2 {
             (Self::AlgebraicChordParallel(first), Self::AlgebraicChordParallel(second)) => {
                 first.shares_storage(second)
             }
+            #[cfg(feature = "predicates")]
+            (Self::AnalyticParallel(first), Self::AnalyticParallel(second)) => {
+                first.shares_storage(second)
+            }
             _ => false,
         }
     }
@@ -239,6 +249,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChordDerived(_) => None,
             #[cfg(feature = "predicates")]
             Self::AlgebraicChordParallel(_) => None,
+            #[cfg(feature = "predicates")]
+            Self::AnalyticParallel(_) => None,
         }
     }
 
@@ -251,7 +263,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::Algebraic(_)
             | Self::AlgebraicCuspChord(_)
             | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_) => None,
+            | Self::AlgebraicChordParallel(_)
+            | Self::AnalyticParallel(_) => None,
         }
     }
 
@@ -264,7 +277,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::Algebraic(_)
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_) => None,
+            | Self::AlgebraicChordParallel(_)
+            | Self::AnalyticParallel(_) => None,
         }
     }
 
@@ -279,7 +293,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::Algebraic(_)
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicChordParallel(_) => None,
+            | Self::AlgebraicChordParallel(_)
+            | Self::AnalyticParallel(_) => None,
         }
     }
 
@@ -294,7 +309,22 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::Algebraic(_)
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChord(_)
-            | Self::AlgebraicCuspChordDerived(_) => None,
+            | Self::AlgebraicCuspChordDerived(_)
+            | Self::AnalyticParallel(_) => None,
+        }
+    }
+
+    /// Returns a retained analytic-parallel point, when present.
+    #[cfg(feature = "predicates")]
+    pub const fn as_analytic_parallel(&self) -> Option<&crate::BezierAnalyticParallelPoint2> {
+        match self {
+            Self::AnalyticParallel(point) => Some(point),
+            Self::Exact(_)
+            | Self::Algebraic(_)
+            | Self::AlgebraicChordPair(_)
+            | Self::AlgebraicCuspChord(_)
+            | Self::AlgebraicCuspChordDerived(_)
+            | Self::AlgebraicChordParallel(_) => None,
         }
     }
 
@@ -442,6 +472,10 @@ impl RationalBezierIntersectionPointEvidence2 {
             #[cfg(feature = "predicates")]
             (Self::AlgebraicChordParallel(point), other)
             | (other, Self::AlgebraicChordParallel(point)) => {
+                point.same_point_evidence(other, policy)
+            }
+            #[cfg(feature = "predicates")]
+            (Self::AnalyticParallel(point), other) | (other, Self::AnalyticParallel(point)) => {
                 point.same_point_evidence(other, policy)
             }
         }

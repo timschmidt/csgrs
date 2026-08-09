@@ -1837,9 +1837,21 @@ fn retained_fragment_endpoint_evidence(
                 },
                 None => None,
             };
+            #[cfg(feature = "predicates")]
+            let retained_point = point.is_none().then(|| {
+                crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new(
+                        fragment.parallel().clone(),
+                        parameter.clone(),
+                        policy,
+                    ),
+                )
+            });
+            #[cfg(not(feature = "predicates"))]
+            let retained_point = None;
             Ok(RetainedEndpointEvidence {
                 point,
-                retained_point: None,
+                retained_point,
                 algebraic: None,
                 source: None,
                 analytic_source: Some((fragment.parallel().clone(), parameter.clone())),
@@ -1869,7 +1881,8 @@ fn retained_fragment_endpoint_evidence(
                 crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+                | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                     (None, None)
                 }
             };
@@ -2133,6 +2146,29 @@ fn retained_corner_fragment_trim(
     keep_before_cut: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
+    #[cfg(feature = "predicates")]
+    if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
+        let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            )
+        })?;
+        let keep_lower_parameter_range = keep_before_cut != fragment.is_reversed();
+        let range = if keep_lower_parameter_range {
+            BezierParameterRange2::new_validated(fragment.range().start().clone(), parameter)
+        } else {
+            BezierParameterRange2::new_validated(parameter, fragment.range().end().clone())
+        };
+        return Ok(BezierSplitFragment2::AnalyticParallel(
+            crate::BezierParallelFragment2::from_certified_range(
+                fragment.parallel().clone(),
+                range,
+                fragment.is_reversed(),
+            ),
+        ));
+    }
     #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
         let parameter = parameter.as_algebraic_chord().ok_or_else(|| {
@@ -7925,13 +7961,17 @@ impl CurveRegion2 {
         let previous_top_level = match previous_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::AlgebraicChord(_) => None,
+            BezierSplitFragment2::AlgebraicChord(_) | BezierSplitFragment2::AnalyticParallel(_) => {
+                None
+            }
             _ => return Ok(None),
         };
         let next_top_level = match next_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::AlgebraicChord(_) => None,
+            BezierSplitFragment2::AlgebraicChord(_) | BezierSplitFragment2::AnalyticParallel(_) => {
+                None
+            }
             _ => return Ok(None),
         };
         let previous_family = previous_top_level
@@ -7972,6 +8012,10 @@ impl CurveRegion2 {
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
             }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AnalyticParallel(fragment) => {
+                crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
+            }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };
         let next_carrier = match next_fragment {
@@ -7993,6 +8037,10 @@ impl CurveRegion2 {
             #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
+            }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AnalyticParallel(fragment) => {
+                crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
             }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };

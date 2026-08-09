@@ -1998,7 +1998,7 @@ fn retain_direct_overlap_parameter(
     }
 }
 
-fn overlap_parameter_is_in_range(
+pub(crate) fn overlap_parameter_is_in_range(
     parameter: &BezierParameter2,
     range: &BezierParameterRange2,
     include_boundaries: bool,
@@ -2583,6 +2583,102 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
     }
 }
 
+/// Encloses one exact analytic-parallel point without adjoining its normalized
+/// tangent field to the retained source parameter.
+#[cfg(feature = "predicates")]
+fn analytic_parallel_point_bounds_refined(
+    parallel: &BezierParallel2,
+    parameter: &BezierParameter2,
+    translation_x: &Real,
+    translation_y: &Real,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let parameter = parameter
+        .clone()
+        .refined_isolating_interval(refinement_steps, policy);
+    let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
+    let strict = &CurveContext::STRICT;
+    let evaluate = |polynomial: &[Real]| {
+        BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, &parameter, strict)
+    };
+    let differential = match parallel.differential() {
+        Ok(differential) => differential,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let (Some(tangent_x), Some(tangent_y)) = (
+        evaluate(&differential.tangent_x),
+        evaluate(&differential.tangent_y),
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let Some(speed) = tangent_x
+        .square(strict)
+        .and_then(|x| tangent_y.square(strict).map(|y| x.add(&y)))
+        .and_then(|speed_squared| speed_squared.nonnegative_square_root(strict))
+    else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let Some(normal_x) = (BezierAlgebraicChordRealInterval2 {
+        lower: -tangent_y.upper.clone(),
+        upper: -tangent_y.lower.clone(),
+    })
+    .divide(&speed, strict) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let Some(normal_y) = tangent_x.divide(&speed, strict) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let source = match parallel.source_power_basis() {
+        Ok(source) => source,
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let (Some(mut point_x), Some(mut point_y)) =
+        (evaluate(source.x_numerator), evaluate(source.y_numerator))
+    else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    if let Some(weight) = source.weight {
+        let Some(weight) = evaluate(weight) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let (Some(x), Some(y)) = (
+            point_x.divide(&weight, strict),
+            point_y.divide(&weight, strict),
+        ) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        point_x = x;
+        point_y = y;
+    }
+    let distance = BezierAlgebraicChordRealInterval2 {
+        lower: parallel.distance().clone(),
+        upper: parallel.distance().clone(),
+    };
+    let (Some(offset_x), Some(offset_y)) = (
+        normal_x.multiply(&distance, strict),
+        normal_y.multiply(&distance, strict),
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Ordering);
+    };
+    let point_x = point_x
+        .add(&offset_x)
+        .add(&BezierAlgebraicChordRealInterval2 {
+            lower: translation_x.clone(),
+            upper: translation_x.clone(),
+        });
+    let point_y = point_y
+        .add(&offset_y)
+        .add(&BezierAlgebraicChordRealInterval2 {
+            lower: translation_y.clone(),
+            upper: translation_y.clone(),
+        });
+    Classification::Decided(Aabb2::new_unchecked(
+        Point2::new(point_x.lower, point_y.lower),
+        Point2::new(point_x.upper, point_y.upper),
+    ))
+}
+
 impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// Returns the selected semicircle on which this retained parameter was
     /// authored. This identity prevents a genuinely mapped point from being
@@ -2926,83 +3022,14 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         if source_policy != *policy {
             return Some(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        let parameter = parameter
-            .clone()
-            .refined_isolating_interval(refinement_steps, policy);
-        let parameter = BezierAlgebraicChordRealInterval2::from_parameter(&parameter);
-        let strict = &CurveContext::STRICT;
-        let evaluate = |polynomial: &[Real]| {
-            BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, &parameter, strict)
-        };
-        let differential = match parallel.differential() {
-            Ok(differential) => differential,
-            Err(_) => {
-                return Some(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-        };
-        let (Some(tangent_x), Some(tangent_y)) = (
-            evaluate(&differential.tangent_x),
-            evaluate(&differential.tangent_y),
-        ) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        let Some(speed) = tangent_x
-            .square(strict)
-            .and_then(|x| tangent_y.square(strict).map(|y| x.add(&y)))
-            .and_then(|speed_squared| speed_squared.nonnegative_square_root(strict))
-        else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        let Some(normal_x) = (BezierAlgebraicChordRealInterval2 {
-            lower: -tangent_y.upper.clone(),
-            upper: -tangent_y.lower.clone(),
-        })
-        .divide(&speed, strict) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        let Some(normal_y) = tangent_x.divide(&speed, strict) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        let source = match parallel.source_power_basis() {
-            Ok(source) => source,
-            Err(_) => {
-                return Some(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-        };
-        let (Some(mut point_x), Some(mut point_y)) =
-            (evaluate(source.x_numerator), evaluate(source.y_numerator))
-        else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        if let Some(weight) = source.weight {
-            let Some(weight) = evaluate(weight) else {
-                return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-            };
-            let (Some(x), Some(y)) = (
-                point_x.divide(&weight, strict),
-                point_y.divide(&weight, strict),
-            ) else {
-                return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-            };
-            point_x = x;
-            point_y = y;
-        }
-        let distance = BezierAlgebraicChordRealInterval2 {
-            lower: parallel.distance().clone(),
-            upper: parallel.distance().clone(),
-        };
-        let (Some(offset_x), Some(offset_y)) = (
-            normal_x.multiply(&distance, strict),
-            normal_y.multiply(&distance, strict),
-        ) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Ordering));
-        };
-        let point_x = point_x.add(&offset_x);
-        let point_y = point_y.add(&offset_y);
-        Some(Classification::Decided(Aabb2::new_unchecked(
-            Point2::new(point_x.lower, point_y.lower),
-            Point2::new(point_x.upper, point_y.upper),
-        )))
+        Some(analytic_parallel_point_bounds_refined(
+            parallel,
+            parameter,
+            &Real::zero(),
+            &Real::zero(),
+            refinement_steps,
+            policy,
+        ))
     }
 
     /// Encloses a retained circle-circle contact by refining its existing
@@ -3258,6 +3285,27 @@ pub struct BezierAlgebraicChord2 {
 pub struct BezierAlgebraicChordParallelPoint2 {
     data: Arc<BezierAlgebraicChordParallelData2>,
     at_end: bool,
+}
+
+/// One exact point on an analytic Bezier parallel at a retained parameter.
+///
+/// The point evaluates `P(t) + d*(-H_y,H_x)/sqrt(H dot H)` lazily. Its one-word
+/// handle keeps the selected parameter and normalized source expression
+/// together without adjoining the speed square root or rounding coordinates.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug)]
+pub struct BezierAnalyticParallelPoint2 {
+    data: Arc<BezierAnalyticParallelPointData2>,
+}
+
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+struct BezierAnalyticParallelPointData2 {
+    parallel: BezierParallel2,
+    parameter: BezierParameter2,
+    translation_x: Real,
+    translation_y: Real,
+    policy: CurveContext,
 }
 
 #[cfg(feature = "predicates")]
@@ -3594,6 +3642,18 @@ impl PartialEq for BezierAlgebraicChordParallelPoint2 {
                     && self.data.translation_y == other.data.translation_y
                     && self.data.direction == other.data.direction
                     && self.data.policy == other.data.policy))
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl PartialEq for BezierAnalyticParallelPoint2 {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+            || (self.data.parallel == other.data.parallel
+                && self.data.parameter == other.data.parameter
+                && self.data.translation_x == other.data.translation_x
+                && self.data.translation_y == other.data.translation_y
+                && self.data.policy == other.data.policy)
     }
 }
 
@@ -10557,7 +10617,8 @@ impl BezierAlgebraicCuspChordPoint2 {
             }
             RationalBezierIntersectionPointEvidence2::Algebraic(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                 retained_point_evidence_equality_by_refinement(
                     &RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(self.clone()),
                     other,
@@ -11695,7 +11756,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::Algebraic(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                 retained_point_evidence_equality_by_refinement(
                     &RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                         self.clone(),
@@ -18121,6 +18183,13 @@ impl BezierAlgebraicChord2 {
                     ),
                 ))
             }
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+                Ok(Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                        point.translated(delta_x, delta_y, policy)?,
+                    ),
+                ))
+            }
         }
     }
 
@@ -18183,7 +18252,8 @@ impl BezierAlgebraicChord2 {
                 .map(RationalBezierIntersectionPointEvidence2::AlgebraicChordPair)),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -18574,6 +18644,7 @@ impl BezierAlgebraicChord2 {
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                    | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
             )
         })
     }
@@ -20319,6 +20390,7 @@ impl BezierAlgebraicChord2 {
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
         ) {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
@@ -20346,7 +20418,8 @@ impl BezierAlgebraicChord2 {
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                 unreachable!("correlated chord endpoints return before image normalization")
             }
         };
@@ -20780,7 +20853,8 @@ impl BezierAlgebraicChord2 {
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                     Classification::Uncertain(UncertaintyReason::Predicate)
                 }
             };
@@ -21350,6 +21424,27 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)
             .map(std::cmp::Ordering::reverse)),
         #[cfg(feature = "predicates")]
+        (
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(first),
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(second),
+        ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
+        #[cfg(feature = "predicates")]
+        (
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(first),
+            RationalBezierIntersectionPointEvidence2::Exact(second),
+        ) => Ok(first.axis_coordinate_order_to_real(
+            axis,
+            if use_x { second.x() } else { second.y() },
+            policy,
+        )),
+        #[cfg(feature = "predicates")]
+        (
+            RationalBezierIntersectionPointEvidence2::Exact(first),
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(second),
+        ) => Ok(second
+            .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)
+            .map(std::cmp::Ordering::reverse)),
+        #[cfg(feature = "predicates")]
         (RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_), _)
         | (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_))
         | (RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_), _)
@@ -21357,7 +21452,9 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         | (RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_), _)
         | (_, RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_))
         | (RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_), _)
-        | (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)) => Ok(
+        | (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_))
+        | (RationalBezierIntersectionPointEvidence2::AnalyticParallel(_), _)
+        | (_, RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)) => Ok(
             algebraic_chord_point_coordinate_order_by_refinement(first, second, axis, policy),
         ),
     }
@@ -21490,7 +21587,8 @@ fn algebraic_axis_point_coordinates(
         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
@@ -21549,7 +21647,8 @@ fn algebraic_chord_point_coordinate_representation(
         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => None,
+        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
     }
 }
 
@@ -21660,6 +21759,9 @@ fn algebraic_chord_endpoint_bounds_refined(
             return point.conservative_bounds_refined(refinement_steps, policy);
         }
         if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) = endpoint {
+            return point.conservative_bounds_refined(refinement_steps, policy);
+        }
+        if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = endpoint {
             return point.conservative_bounds_refined(refinement_steps, policy);
         }
     }
@@ -21984,12 +22086,14 @@ fn algebraic_chord_endpoint_images(
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
     ) || matches!(
         end,
         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
     ) {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
@@ -22001,7 +22105,8 @@ fn algebraic_chord_endpoint_images(
         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
             unreachable!("correlated chord endpoints return before algebraic image normalization")
         }
     };
@@ -22873,6 +22978,9 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
+                RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
+                    return chord.oriented_side_by_refinement(point, policy);
+                }
             },
             Self::Algebraic { chord, ray } => {
                 if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = point {
@@ -22889,6 +22997,7 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 if matches!(
                     point,
                     RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
                 ) {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
@@ -22905,7 +23014,8 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                     | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                    | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
                         unreachable!("correlated chord points return before image normalization")
                     }
                 };
@@ -23141,6 +23251,46 @@ impl BezierAlgebraicChordRealInterval2 {
             }
         }
         Some(Self { lower, upper })
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn retained_bounds_axis_order_to_real(
+    mut bounds_at: impl FnMut(usize) -> Classification<Aabb2>,
+    axis: Axis2,
+    value: &Real,
+    policy: &CurveContext,
+) -> Classification<std::cmp::Ordering> {
+    let mut terminal_refined = false;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let Classification::Decided(bounds) = bounds_at(refinement_steps) else {
+            continue;
+        };
+        terminal_refined |= refinement_steps == 512;
+        let coordinate = BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis);
+        if compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Less)
+        {
+            return Classification::Decided(std::cmp::Ordering::Less);
+        }
+        if compare_reals(&coordinate.lower, value, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Greater)
+        {
+            return Classification::Decided(std::cmp::Ordering::Greater);
+        }
+        if compare_reals(&coordinate.lower, value, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Equal)
+            && compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Equal)
+        {
+            return Classification::Decided(std::cmp::Ordering::Equal);
+        }
+    }
+    if terminal_refined && policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        Classification::Decided(std::cmp::Ordering::Equal)
+    } else {
+        Classification::Uncertain(UncertaintyReason::Ordering)
     }
 }
 
@@ -23459,39 +23609,12 @@ impl BezierAlgebraicChordParallelPoint2 {
         value: &Real,
         policy: &CurveContext,
     ) -> Classification<std::cmp::Ordering> {
-        let mut terminal_refined = false;
-        for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            let Classification::Decided(bounds) =
-                self.conservative_bounds_refined(refinement_steps, policy)
-            else {
-                continue;
-            };
-            terminal_refined |= refinement_steps == 512;
-            let coordinate = BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis);
-            if compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Classification::Decided(std::cmp::Ordering::Less);
-            }
-            if compare_reals(&coordinate.lower, value, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Greater)
-            {
-                return Classification::Decided(std::cmp::Ordering::Greater);
-            }
-            if compare_reals(&coordinate.lower, value, &CurveContext::STRICT)
-                == Some(std::cmp::Ordering::Equal)
-                && compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Equal)
-            {
-                return Classification::Decided(std::cmp::Ordering::Equal);
-            }
-        }
-        if terminal_refined && policy.permits_approximate_512() {
-            policy.observe_approximate_512();
-            Classification::Decided(std::cmp::Ordering::Equal)
-        } else {
-            Classification::Uncertain(UncertaintyReason::Ordering)
-        }
+        retained_bounds_axis_order_to_real(
+            |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
+            axis,
+            value,
+            policy,
+        )
     }
 
     pub(crate) fn same_point_evidence(
@@ -23515,6 +23638,108 @@ impl BezierAlgebraicChordParallelPoint2 {
         }
         retained_point_evidence_equality_by_refinement(
             &RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(self.clone()),
+            other,
+            policy,
+        )
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierAnalyticParallelPoint2 {
+    pub(crate) fn new(
+        parallel: BezierParallel2,
+        parameter: BezierParameter2,
+        policy: &CurveContext,
+    ) -> Self {
+        Self {
+            data: Arc::new(BezierAnalyticParallelPointData2 {
+                parallel,
+                parameter,
+                translation_x: Real::zero(),
+                translation_y: Real::zero(),
+                policy: *policy,
+            }),
+        }
+    }
+
+    pub(crate) fn shares_storage(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+    }
+
+    fn shares_carrier(&self, other: &Self) -> bool {
+        self.data.parallel == other.data.parallel
+            && self.data.parameter == other.data.parameter
+            && self.data.translation_x == other.data.translation_x
+            && self.data.translation_y == other.data.translation_y
+            && self.data.policy == other.data.policy
+    }
+
+    fn translated(
+        &self,
+        delta_x: &Real,
+        delta_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "analytic-parallel point was translated under a different predicate policy".into(),
+            ));
+        }
+        Ok(Self {
+            data: Arc::new(BezierAnalyticParallelPointData2 {
+                parallel: self.data.parallel.clone(),
+                parameter: self.data.parameter.clone(),
+                translation_x: &self.data.translation_x + delta_x,
+                translation_y: &self.data.translation_y + delta_y,
+                policy: *policy,
+            }),
+        })
+    }
+
+    pub(crate) fn conservative_bounds_refined(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> Classification<Aabb2> {
+        if self.data.policy != *policy {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        }
+        analytic_parallel_point_bounds_refined(
+            &self.data.parallel,
+            &self.data.parameter,
+            &self.data.translation_x,
+            &self.data.translation_y,
+            refinement_steps,
+            policy,
+        )
+    }
+
+    fn axis_coordinate_order_to_real(
+        &self,
+        axis: Axis2,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> Classification<std::cmp::Ordering> {
+        retained_bounds_axis_order_to_real(
+            |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
+            axis,
+            value,
+            policy,
+        )
+    }
+
+    pub(crate) fn same_point_evidence(
+        &self,
+        other: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(other) = other
+            && self.shares_carrier(other)
+        {
+            return Classification::Decided(true);
+        }
+        retained_point_evidence_equality_by_refinement(
+            &RationalBezierIntersectionPointEvidence2::AnalyticParallel(self.clone()),
             other,
             policy,
         )
@@ -23853,7 +24078,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {}
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {}
             }
         }
 
@@ -24133,7 +24359,8 @@ impl BezierAlgebraicChordPairPoint2 {
             | RationalBezierIntersectionPointEvidence2::Algebraic(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => None,
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
         };
         let (owner, opposite, owner_sides) = if chord.shares_retained_support(&self.data.first) {
             (&self.data.first, &self.data.second, self.data.first_sides)

@@ -6,6 +6,11 @@ use hypercurve::{
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
     QuadraticBezier2, Real, RegionPointLocation,
 };
+#[cfg(feature = "predicates")]
+use hypercurve::{
+    CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2,
+    RationalBezierIntersectionPointEvidence2,
+};
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -100,6 +105,45 @@ fn materialized_line(start: Point2, end: Point2, policy: &CurveContext) -> Bezie
 
 fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(2, 2), point(4, 0))
+        .parallel_left(Real::one())
+        .unwrap();
+    let right = match parallel.point_at(&Real::one(), policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("right cap endpoint: {reason:?}"),
+    };
+    let left = match parallel.point_at(&Real::zero(), policy).unwrap() {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("left cap endpoint: {reason:?}"),
+    };
+    let analytic =
+        match BezierParallelFragment2::try_new(parallel, range(1, 0, policy), policy).unwrap() {
+            Classification::Decided(fragment) => BezierSplitFragment2::AnalyticParallel(fragment),
+            Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
+        };
+    let lower_left = Point2::new(left.x().clone(), Real::from(-2));
+    let lower_right = Point2::new(right.x().clone(), Real::from(-2));
+    let boundary = CurveRegionBoundaryLoop2::new(
+        vec![
+            analytic,
+            materialized_line(left, lower_left.clone(), policy),
+            materialized_line(lower_left, lower_right.clone(), policy),
+            materialized_line(lower_right, right, policy),
+        ],
+        policy,
+    )
+    .unwrap();
+    CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![CurveBoundaryInteriorSide2::Left],
+    )
+    .unwrap()
+}
+
+#[cfg(feature = "predicates")]
+fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
+    let parallel = QuadraticBezier2::new(point(0, 0), point(0, 2), point(4, 2))
         .parallel_left(Real::one())
         .unwrap();
     let right = match parallel.point_at(&Real::one(), policy).unwrap() {
@@ -412,6 +456,146 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
 fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies() {
     check_policy(CurveContext::STRICT);
     check_policy(CurveContext::APPROXIMATE_512);
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_chamfers_retain_normalized_cut_points() {
+    let setback = (Real::one() / Real::from(4_u8)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for vertex in [0, 1] {
+            let source = rational_endpoint_curved_parallel_cap(&policy);
+            let outcome = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a represented-endpoint analytic parallel chamfer must complete");
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let region = match outcome.value {
+                CurveCornerSolutions2::Unique(region) => region,
+                other => {
+                    panic!("the analytic-parallel corner must have one finite chamfer: {other:?}")
+                }
+            };
+            let fragments = region.boundary_loops()[0].fragments();
+            assert_eq!(fragments.len(), 5);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                    })
+                    .count(),
+                1
+            );
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
+                    })
+                    .count(),
+                1
+            );
+            let chord = fragments
+                .iter()
+                .find_map(|fragment| match fragment {
+                    BezierSplitFragment2::AlgebraicChord(chord) => Some(chord),
+                    _ => None,
+                })
+                .expect("the chamfer is retained as one authoritative exact chord");
+            let is_analytic = |endpoint: &RationalBezierIntersectionPointEvidence2| {
+                matches!(
+                    endpoint,
+                    RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                )
+            };
+            let is_exact = |endpoint: &RationalBezierIntersectionPointEvidence2| {
+                matches!(endpoint, RationalBezierIntersectionPointEvidence2::Exact(_))
+            };
+            assert_eq!(
+                usize::from(is_analytic(chord.start())) + usize::from(is_analytic(chord.end())),
+                1
+            );
+            assert_eq!(
+                usize::from(is_exact(chord.start())) + usize::from(is_exact(chord.end())),
+                1
+            );
+
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(6, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    region.classify_point(&sample, &policy).unwrap().value,
+                    Classification::Decided(expected)
+                );
+            }
+
+            let union = region
+                .boolean_region(
+                    &analytic_square(10, 14, &policy),
+                    hypercurve::BooleanOp::Union,
+                    &policy,
+                )
+                .expect("a later Boolean must consume the retained chamfer evidence");
+            assert_eq!(union.certainty, CurveCertainty::Certified);
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(12, 2), RegionPointLocation::Inside),
+                (point(7, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    union.value.classify_point(&sample, &policy).unwrap().value,
+                    Classification::Decided(expected)
+                );
+            }
+
+            let (previous_setback, next_setback) = if vertex == 0 {
+                (setback.clone(), Real::zero())
+            } else {
+                (Real::zero(), setback.clone())
+            };
+            let one_sided = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a zero analytic-side setback must retain the exact corner");
+            assert_eq!(one_sided.certainty, CurveCertainty::Certified);
+            assert!(matches!(one_sided.value, CurveCornerSolutions2::Unique(_)));
+
+            let (previous_setback, next_setback) = if vertex == 0 {
+                (setback.clone(), Real::from(100_u8))
+            } else {
+                (Real::from(100_u8), setback.clone())
+            };
+            let over_setback = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("an over-setback must terminate as an exact no-solution");
+            assert_eq!(over_setback.certainty, CurveCertainty::Certified);
+            assert!(matches!(
+                over_setback.value,
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
+            ));
+        }
+    }
 }
 
 #[test]

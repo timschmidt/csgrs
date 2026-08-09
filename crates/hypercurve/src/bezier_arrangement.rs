@@ -1217,8 +1217,8 @@ fn retained_endpoint_data(
             }))
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {
-            let endpoint_key = |endpoint: &crate::RationalBezierIntersectionPointEvidence2| {
-                match endpoint {
+            let endpoint_key =
+                |endpoint: &crate::RationalBezierIntersectionPointEvidence2| match endpoint {
                     crate::RationalBezierIntersectionPointEvidence2::Exact(point) => {
                         Some(RetainedEndpointKey::Exact(Box::new(point.clone())))
                     }
@@ -1236,11 +1236,9 @@ fn retained_endpoint_data(
                     | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                         _,
                     )
-                    | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
-                        None
-                    }
-                }
-            };
+                    | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                    | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
+                };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());
             data.end = endpoint_key(chord.end());

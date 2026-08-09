@@ -3505,6 +3505,8 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     NativeBezierSpan(&'a NativeBezierFragment2),
     #[cfg(feature = "predicates")]
     AlgebraicChord(&'a crate::BezierAlgebraicChord2),
+    #[cfg(feature = "predicates")]
+    AnalyticParallel(&'a crate::BezierParallelFragment2),
 }
 
 #[derive(Clone, Copy)]
@@ -3614,7 +3616,7 @@ impl<'a> ExactCornerCarrier2<'a> {
             Self::Line(_) | Self::Arc(_) => true,
             Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
             #[cfg(feature = "predicates")]
-            Self::AlgebraicChord(_) => false,
+            Self::AlgebraicChord(_) | Self::AnalyticParallel(_) => false,
         }
     }
 }
@@ -3949,11 +3951,13 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 source: ExactCornerBezier2::NativeSpan(fragment),
             }),
             #[cfg(feature = "predicates")]
-            ExactCornerCarrier2::AlgebraicChord(_) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                crate::UncertaintyReason::Unsupported,
-            )),
+            ExactCornerCarrier2::AlgebraicChord(_) | ExactCornerCarrier2::AnalyticParallel(_) => {
+                Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Unsupported,
+                ))
+            }
         }
     }
 
@@ -5057,6 +5061,17 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
+        #[cfg(feature = "predicates")]
+        ExactCornerCarrier2::AnalyticParallel(fragment) => analytic_parallel_chamfer_cuts(
+            fragment,
+            setback,
+            setback_sign,
+            previous,
+            mode,
+            operation,
+            family,
+            policy,
+        ),
     }
 }
 
@@ -5154,6 +5169,116 @@ fn algebraic_chord_chamfer_cuts(
         second: None,
         overflow: Vec::new(),
     })
+}
+
+#[cfg(feature = "predicates")]
+fn analytic_parallel_point_evidence(
+    parallel: &BezierParallel2,
+    parameter: &BezierParameter2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
+    if let Some(parameter) = parameter.as_exact() {
+        return decided_parallel_point(parallel, parameter, false, operation, family, policy)
+            .map(Into::into);
+    }
+    Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+        crate::BezierAnalyticParallelPoint2::new(parallel.clone(), parameter.clone(), policy),
+    ))
+}
+
+#[cfg(feature = "predicates")]
+#[allow(clippy::too_many_arguments)]
+fn analytic_parallel_chamfer_cuts(
+    fragment: &crate::BezierParallelFragment2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CornerCuts2> {
+    if mode != CurveCornerMode2::TrimOnly {
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
+    let corner_parameter = match (previous, fragment.is_reversed()) {
+        (true, false) | (false, true) => fragment.range().end(),
+        (true, true) | (false, false) => fragment.range().start(),
+    };
+    let corner = analytic_parallel_point_evidence(
+        fragment.parallel(),
+        corner_parameter,
+        operation,
+        family,
+        policy,
+    )?;
+    if setback_sign == RealSign::Zero {
+        return Ok(CornerCuts2 {
+            first: Some(CornerCut2 {
+                parameter: Some(CurveRegionParameter2::from_bezier(corner_parameter.clone())),
+                point: corner,
+                placement: CornerPlacement2::Corner,
+            }),
+            second: None,
+            overflow: Vec::new(),
+        });
+    }
+    let Some(corner) = corner.as_exact() else {
+        // An algebraic endpoint center requires the retained two-parameter
+        // distance system; never approximate that construction into a circle.
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    };
+    let radius_squared = setback * setback;
+    let parameters = match fragment
+        .parallel()
+        .circle_incidence(corner, &radius_squared, &[], policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(operation, family, reason));
+        }
+    };
+    let mut cuts = CornerCuts2::default();
+    for (parameter, _) in parameters {
+        let in_range = crate::bezier_offset::overlap_parameter_is_in_range(
+            &parameter,
+            fragment.range(),
+            false,
+            policy,
+        )
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+        match in_range {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => continue,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        }
+        let point = analytic_parallel_point_evidence(
+            fragment.parallel(),
+            &parameter,
+            operation,
+            family,
+            policy,
+        )?;
+        cuts.push(CornerCut2 {
+            parameter: Some(CurveRegionParameter2::from_bezier(parameter)),
+            point,
+            placement: CornerPlacement2::Trim,
+        });
+    }
+    Ok(cuts)
 }
 
 #[allow(clippy::too_many_arguments)]
