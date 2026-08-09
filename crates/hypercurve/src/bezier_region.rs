@@ -48,8 +48,8 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::{
-    CornerTrimCut2, exact_corner_carrier, solve_exact_chamfer_corner, try_map_corner_solutions,
-    validate_corner_design_value,
+    CornerTrimCut2, exact_corner_carrier, solve_exact_chamfer_corner, solve_exact_fillet_corner,
+    try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -2152,13 +2152,14 @@ fn retained_corner_fragment_trim(
     fragment: &BezierSplitFragment2,
     parameter: CurveRegionParameter2,
     keep_before_cut: bool,
+    operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
     #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
         let parameter = parameter.as_algebraic_cusp().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
+                operation,
                 CurveFamily2::RationalBezier,
                 UncertaintyReason::Unsupported,
             )
@@ -2176,13 +2177,13 @@ fn retained_corner_fragment_trim(
             fragment.is_reversed(),
             policy,
         )
-        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+        .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(fragment) => {
                 Ok(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment))
             }
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
+                operation,
                 CurveFamily2::RationalBezier,
                 reason,
             )),
@@ -2192,7 +2193,7 @@ fn retained_corner_fragment_trim(
     if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
         let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
+                operation,
                 CurveFamily2::RationalBezier,
                 UncertaintyReason::Unsupported,
             )
@@ -2215,7 +2216,7 @@ fn retained_corner_fragment_trim(
     if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
         let parameter = parameter.as_algebraic_chord().ok_or_else(|| {
             ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
+                operation,
                 CurveFamily2::RationalBezier,
                 UncertaintyReason::Unsupported,
             )
@@ -2231,30 +2232,30 @@ fn retained_corner_fragment_trim(
             chord, start, end, policy,
         )
         .map(BezierSplitFragment2::AlgebraicChord)
-        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause));
+        .map_err(|cause| curve_region_edit_error(operation, cause));
     }
     let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
         return Err(ExactCurveError::blocked(
-            CurveOperation2::Chamfer,
+            operation,
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
         ));
     };
     let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
         ExactCurveError::blocked(
-            CurveOperation2::Chamfer,
+            operation,
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
         )
     })?;
     let split = match curve
         .split_at_parameters_refined(&[parameter], policy)
-        .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+        .map_err(|cause| curve_region_edit_error(operation, cause))?
     {
         Classification::Decided(split) => split,
         Classification::Uncertain(reason) => {
             return Err(ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
+                operation,
                 CurveFamily2::RationalBezier,
                 reason,
             ));
@@ -2262,9 +2263,9 @@ fn retained_corner_fragment_trim(
     };
     if split.fragments().len() != 2 {
         return Err(curve_region_edit_error(
-            CurveOperation2::Chamfer,
+            operation,
             CurveError::Topology(
-                "an interior retained chamfer cut did not produce two source fragments".into(),
+                "an interior retained corner cut did not produce two source fragments".into(),
             ),
         ));
     }
@@ -8128,34 +8129,6 @@ impl CurveRegion2 {
         next_cut: CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let boundary_loop = &self.data.boundary_loops[loop_index];
-        let fragment_count = boundary_loop.fragments().len();
-        let previous_index = if vertex_index == 0 {
-            fragment_count - 1
-        } else {
-            vertex_index - 1
-        };
-        let next_index = vertex_index;
-        let previous_trim = if previous_cut.trim {
-            retained_corner_fragment_trim(
-                &boundary_loop.fragments()[previous_index],
-                previous_cut.parameter,
-                true,
-                policy,
-            )?
-        } else {
-            boundary_loop.fragments()[previous_index].clone()
-        };
-        let next_trim = if next_cut.trim {
-            retained_corner_fragment_trim(
-                &boundary_loop.fragments()[next_index],
-                next_cut.parameter,
-                false,
-                policy,
-            )?
-        } else {
-            boundary_loop.fragments()[next_index].clone()
-        };
         let chord = if let (Some(previous_point), Some(next_point)) =
             (previous_cut.point.as_exact(), next_cut.point.as_exact())
         {
@@ -8169,8 +8142,12 @@ impl CurveRegion2 {
                 )),
             }
         } else {
-            match crate::BezierAlgebraicChord2::try_new(previous_cut.point, next_cut.point, policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+            match crate::BezierAlgebraicChord2::try_new(
+                previous_cut.point.clone(),
+                next_cut.point.clone(),
+                policy,
+            )
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
             {
                 Classification::Decided(chord) => BezierSplitFragment2::AlgebraicChord(chord),
                 Classification::Uncertain(reason) => {
@@ -8182,10 +8159,62 @@ impl CurveRegion2 {
                 }
             }
         };
+        self.rebuild_retained_corner(
+            loop_index,
+            vertex_index,
+            previous_cut,
+            next_cut,
+            vec![chord],
+            CurveOperation2::Chamfer,
+            policy,
+        )
+    }
 
-        let mut fragments = Vec::with_capacity(fragment_count + 1);
+    #[allow(clippy::too_many_arguments)]
+    fn rebuild_retained_corner(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        previous_cut: CornerTrimCut2,
+        next_cut: CornerTrimCut2,
+        inserted: Vec<BezierSplitFragment2>,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let boundary_loop = &self.data.boundary_loops[loop_index];
+        let fragment_count = boundary_loop.fragments().len();
+        let previous_index = if vertex_index == 0 {
+            fragment_count - 1
+        } else {
+            vertex_index - 1
+        };
+        let next_index = vertex_index;
+        let previous_trim = if previous_cut.trim {
+            retained_corner_fragment_trim(
+                &boundary_loop.fragments()[previous_index],
+                previous_cut.parameter,
+                true,
+                operation,
+                policy,
+            )?
+        } else {
+            boundary_loop.fragments()[previous_index].clone()
+        };
+        let next_trim = if next_cut.trim {
+            retained_corner_fragment_trim(
+                &boundary_loop.fragments()[next_index],
+                next_cut.parameter,
+                false,
+                operation,
+                policy,
+            )?
+        } else {
+            boundary_loop.fragments()[next_index].clone()
+        };
+
+        let mut fragments = Vec::with_capacity(fragment_count + inserted.len());
         if vertex_index == 0 {
-            fragments.push(chord);
+            fragments.extend(inserted);
             fragments.push(next_trim);
             fragments.extend(
                 boundary_loop.fragments()[next_index + 1..previous_index]
@@ -8196,21 +8225,21 @@ impl CurveRegion2 {
         } else {
             fragments.extend(boundary_loop.fragments()[..previous_index].iter().cloned());
             fragments.push(previous_trim);
-            fragments.push(chord);
+            fragments.extend(inserted);
             fragments.push(next_trim);
             fragments.extend(boundary_loop.fragments()[next_index + 1..].iter().cloned());
         }
         let edited_loop = CurveRegionBoundaryLoop2::new(fragments, policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?;
+            .map_err(|cause| curve_region_edit_error(operation, cause))?;
 
         let roles = match self
             .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+            .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
-                    CurveOperation2::Chamfer,
+                    operation,
                     CurveFamily2::RationalBezier,
                     reason,
                 ));
@@ -8222,7 +8251,7 @@ impl CurveRegion2 {
         );
         let interior_sides = match self
             .filled_side_is_left_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))?
+            .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(sides) => sides
                 .iter()
@@ -8236,7 +8265,7 @@ impl CurveRegion2 {
                 .collect(),
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
-                    CurveOperation2::Chamfer,
+                    operation,
                     CurveFamily2::RationalBezier,
                     reason,
                 ));
@@ -8245,7 +8274,7 @@ impl CurveRegion2 {
         let mut loops = self.data.boundary_loops.clone();
         loops[loop_index] = edited_loop;
         Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Chamfer, cause))
+            .map_err(|cause| curve_region_edit_error(operation, cause))
     }
 
     /// Solves a boundary-loop circular fillet from an exact radius.
@@ -8275,6 +8304,12 @@ impl CurveRegion2 {
         mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        if mode == CurveCornerMode2::TrimOnly
+            && let Some(solutions) =
+                self.retained_fillet_solutions(loop_index, vertex_index, radius.clone(), policy)?
+        {
+            return Ok(solutions);
+        }
         let paths =
             match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)? {
                 Classification::Decided(paths) => paths,
@@ -8297,6 +8332,205 @@ impl CurveRegion2 {
             CurveOperation2::Fillet,
             policy,
         )
+    }
+
+    fn retained_fillet_solutions(
+        &self,
+        loop_index: usize,
+        vertex_index: usize,
+        radius: Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+        let Some(boundary_loop) = self.data.boundary_loops.get(loop_index) else {
+            return Err(curve_region_edit_error(
+                CurveOperation2::Fillet,
+                CurveError::InvalidCurveRange,
+            ));
+        };
+        let fragment_count = boundary_loop.fragments().len();
+        if vertex_index >= fragment_count {
+            return Err(curve_region_edit_error(
+                CurveOperation2::Fillet,
+                CurveError::InvalidCurveRange,
+            ));
+        }
+        if fragment_count < 2
+            || boundary_loop
+                .fragments()
+                .iter()
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
+        {
+            return Ok(None);
+        }
+        let previous_index = if vertex_index == 0 {
+            fragment_count - 1
+        } else {
+            vertex_index - 1
+        };
+        let next_index = vertex_index;
+        let operation_curve = |fragment: &BezierSplitFragment2| match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().map(Curve2::from),
+            _ => None,
+        };
+        let Some(previous_curve) = operation_curve(&boundary_loop.fragments()[previous_index])
+        else {
+            return Ok(None);
+        };
+        let Some(next_curve) = operation_curve(&boundary_loop.fragments()[next_index]) else {
+            return Ok(None);
+        };
+        let previous_family = previous_curve.family();
+        let next_family = next_curve.family();
+        let radius_sign = validate_corner_design_value(
+            &radius,
+            CurveOperation2::Fillet,
+            previous_family,
+            policy,
+        )?;
+        if radius_sign == RealSign::Zero {
+            return Ok(Some(CurveCornerSolutions2::NoSolution(
+                crate::CurveCornerNoSolution2::ZeroDesignValue,
+            )));
+        }
+        let previous_carrier =
+            exact_corner_carrier(&previous_curve, true, CurveOperation2::Fillet, policy)?
+                .ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        UncertaintyReason::Unsupported,
+                    )
+                })?;
+        let next_carrier =
+            exact_corner_carrier(&next_curve, false, CurveOperation2::Fillet, policy)?.ok_or_else(
+                || {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        next_family,
+                        UncertaintyReason::Unsupported,
+                    )
+                },
+            )?;
+        let solutions = solve_exact_fillet_corner(
+            previous_carrier,
+            next_carrier,
+            &radius,
+            radius_sign,
+            CurveCornerMode2::TrimOnly,
+            previous_family,
+            next_family,
+            policy,
+        )?;
+        try_map_corner_solutions(solutions, |solution| {
+            let (mut previous_cut, mut next_cut, center, clockwise) =
+                solution.into_retained_cut_evidence().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        UncertaintyReason::Unsupported,
+                    )
+                })?;
+            self.canonicalize_retained_fillet_cut(
+                &boundary_loop.fragments()[previous_index],
+                &mut previous_cut,
+                policy,
+            )?;
+            self.canonicalize_retained_fillet_cut(
+                &boundary_loop.fragments()[next_index],
+                &mut next_cut,
+                policy,
+            )?;
+            let previous_point = previous_cut.point.as_exact().cloned().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+            let next_point = next_cut.point.as_exact().cloned().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    next_family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+            let arc = CircularArc2::new_with_certified_radius(
+                previous_point,
+                next_point,
+                center,
+                &radius * &radius,
+                clockwise,
+                None,
+            );
+            let decomposition = match crate::arc_bezier::decompose_circular_arc(&arc, policy)? {
+                Classification::Decided(decomposition) => decomposition,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            };
+            let inserted = decomposition
+                .spans()
+                .iter()
+                .map(|span| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
+                })
+                .collect();
+            self.rebuild_retained_corner(
+                loop_index,
+                vertex_index,
+                previous_cut,
+                next_cut,
+                inserted,
+                CurveOperation2::Fillet,
+                policy,
+            )
+        })
+        .map(Some)
+    }
+
+    fn canonicalize_retained_fillet_cut(
+        &self,
+        fragment: &BezierSplitFragment2,
+        cut: &mut CornerTrimCut2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<()> {
+        #[cfg(feature = "predicates")]
+        if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+            cut.parameter = match chord
+                .parameter_at_certified_point(cut.point.clone(), policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(Some(parameter)) => {
+                    CurveRegionParameter2::from_algebraic_chord(parameter)
+                }
+                Classification::Decided(None) => {
+                    return Err(curve_region_edit_error(
+                        CurveOperation2::Fillet,
+                        CurveError::Topology(
+                            "an exact retained fillet cut lay outside its chord".into(),
+                        ),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    ));
+                }
+            };
+        }
+        #[cfg(not(feature = "predicates"))]
+        let _ = (fragment, cut, policy);
+        Ok(())
     }
 
     /// Chamfers one boundary-loop vertex without leaving the unified carrier.
@@ -10652,7 +10886,7 @@ fn curve_region_loop_filled_area_magnitude(
     if let Some(period) = repeated_boundary_fragment_period(boundary_loop.fragments()) {
         let base_loop =
             CurveRegionBoundaryLoop2::new(boundary_loop.fragments()[..period].to_vec(), policy)?;
-        match materialized_boundary_loop_is_simple(&base_loop, policy)? {
+        match represented_boundary_loop_is_simple(&base_loop, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -10673,7 +10907,7 @@ fn curve_region_loop_filled_area_magnitude(
         return absolute_nonzero_area(base_area, policy).map(|area| area.map(Some));
     }
 
-    match materialized_boundary_loop_is_simple(boundary_loop, policy)? {
+    match represented_boundary_loop_is_simple(boundary_loop, policy)? {
         Classification::Decided(true) => {
             absolute_nonzero_area(signed_area, policy).map(|area| area.map(Some))
         }
@@ -10702,25 +10936,34 @@ fn absolute_nonzero_area(area: Real, policy: &CurveContext) -> CurveResult<Class
     })
 }
 
-fn materialized_boundary_loop_is_simple(
+fn represented_boundary_loop_is_simple(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let mut curves = Vec::with_capacity(boundary_loop.fragments().len());
     for fragment in boundary_loop.fragments() {
-        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        match curve.certified_injective_image(policy)? {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                match curve.certified_injective_image(policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                curves.push(Curve2::from(curve.clone()));
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                let Some(line) = chord.exact_line() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                curves.push(Curve2::from(line));
             }
+            _ => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         }
-        curves.push(Curve2::from(curve.clone()));
     }
     let path = match CurvePath2::try_new_raw(curves, policy) {
         Ok(path) => path,

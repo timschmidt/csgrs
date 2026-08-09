@@ -3427,6 +3427,19 @@ pub(crate) struct FilletCorner2 {
     clockwise: bool,
 }
 
+impl FilletCorner2 {
+    pub(crate) fn into_retained_cut_evidence(
+        self,
+    ) -> Option<(CornerTrimCut2, CornerTrimCut2, Point2, bool)> {
+        Some((
+            self.previous.into_retained_evidence()?,
+            self.next.into_retained_evidence()?,
+            self.center,
+            self.clockwise,
+        ))
+    }
+}
+
 enum CornerSolutionAccumulator<T> {
     Empty,
     One(T),

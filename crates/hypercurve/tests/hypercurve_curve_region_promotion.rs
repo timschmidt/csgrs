@@ -2894,6 +2894,156 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn canonical_exact_chord_regions_fillet_without_line_demotion() {
+    let exact_chord_rectangle = |policy: &CurveContext, x_offset: i64| {
+        let points = [
+            p(x_offset, 0),
+            p(x_offset + 4, 0),
+            p(x_offset + 4, 4),
+            p(x_offset, 4),
+            p(x_offset, 0),
+        ];
+        let fragments = points
+            .windows(2)
+            .map(|edge| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(edge[0].clone()),
+                    RationalBezierIntersectionPointEvidence2::Exact(edge[1].clone()),
+                    policy,
+                )
+                .unwrap() else {
+                    panic!("an exact rectangle edge must define a retained chord");
+                };
+                BezierSplitFragment2::AlgebraicChord(chord)
+            })
+            .collect();
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let seam_source = exact_chord_rectangle(&policy, 0);
+            let seam_source = if reverse {
+                let fragments = seam_source.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .rev()
+                    .map(|fragment| fragment.reversed().unwrap())
+                    .collect();
+                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+                CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![CurveBoundaryInteriorSide2::Right],
+                )
+                .unwrap()
+            } else {
+                seam_source
+            };
+            let seam = seam_source
+                .fillet_loop_vertex_by_radius(0, 0, q(1, 8), CurveCornerMode2::TrimOnly, &policy)
+                .expect("the exact-chord loop seam must retain fillet semantics");
+            assert_eq!(seam.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(seam) = seam.value else {
+                panic!("the exact-chord seam fillet must be unique");
+            };
+            assert_eq!(
+                certified(
+                    seam.classify_point(&Point2::new(Real::from(2), Real::from(2)), &policy)
+                        .unwrap(),
+                ),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+        }
+
+        let source = exact_chord_rectangle(&policy, 0);
+        let first = source
+            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .expect("canonical exact chords must reuse the authoritative fillet solver");
+        assert_eq!(first.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(first) = first.value else {
+            panic!("a convex exact-chord corner must have one in-domain fillet");
+        };
+        let fragments = first.boundary_loops()[0].fragments();
+        assert_eq!(fragments.len(), 5);
+        assert_eq!(
+            fragments
+                .iter()
+                .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .count(),
+            4,
+        );
+        assert!(fragments.iter().any(|fragment| matches!(
+            fragment,
+            BezierSplitFragment2::Materialized {
+                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                ..
+            }
+        )));
+        assert!(matches!(
+            certified(first.filled_area(&policy).unwrap()),
+            Classification::Decided(Some(_))
+        ));
+
+        let fragment_count = fragments.len();
+        let next_chord_corner = (0..fragment_count)
+            .find(|index| {
+                matches!(
+                    fragments[(index + fragment_count - 1) % fragment_count],
+                    BezierSplitFragment2::AlgebraicChord(_)
+                ) && matches!(fragments[*index], BezierSplitFragment2::AlgebraicChord(_))
+            })
+            .expect("the once-filleted rectangle retains another chord/chord corner");
+        let second = first
+            .fillet_loop_vertex_by_radius(
+                0,
+                next_chord_corner,
+                q(1, 4),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .expect("a later canonical chord corner must remain filletable");
+        assert_eq!(second.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(second) = second.value else {
+            panic!("the repeated exact-chord fillet must remain unique");
+        };
+        assert_eq!(
+            certified(
+                second
+                    .classify_point(&Point2::new(Real::from(2), Real::from(2)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Inside),
+        );
+        assert_eq!(
+            certified(
+                second
+                    .classify_point(&Point2::new(Real::from(-1), Real::from(-1)), &policy)
+                    .unwrap(),
+            ),
+            Classification::Decided(RegionPointLocation::Outside),
+        );
+
+        let disjoint = exact_chord_rectangle(&policy, 10);
+        let replay = second
+            .boolean_regions(&disjoint, &policy)
+            .expect("a retained fillet must re-enter the canonical Boolean kernel");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+        assert!(replay.value.intersection().is_empty());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn exact_support_cutter_reenters_correlated_chord_collinearly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = axis_aligned_algebraic_rectangle(&policy);
