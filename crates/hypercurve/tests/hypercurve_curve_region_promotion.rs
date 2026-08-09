@@ -3785,6 +3785,34 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
             .into_value();
         assert!(batch.intersection().is_empty());
         assert_eq!(batch.union().boundary_loops().len(), 2);
+
+        let cutter_points = [
+            Point2::new(q(-1, 1), q(1, 8)),
+            Point2::new(q(1, 1), q(1, 8)),
+            Point2::new(q(1, 1), q(3, 8)),
+            Point2::new(q(-1, 1), q(3, 8)),
+            Point2::new(q(-1, 1), q(1, 8)),
+        ];
+        let cutter_path = CurvePath2::try_new(
+            cutter_points
+                .windows(2)
+                .map(|edge| {
+                    Curve2::from(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+                })
+                .collect(),
+        )
+        .unwrap();
+        let cutter =
+            CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&cutter_path), &policy)
+                .expect("the exact crossing cutter must form a region")
+                .into_value();
+        let crossing = filleted
+            .boolean_regions(&cutter, &policy)
+            .expect("the local selected-fiber fillet contacts must complete Boolean topology")
+            .into_value();
+        assert!(!crossing.intersection().is_empty());
+        assert!(!crossing.difference().is_empty());
+        assert!(!crossing.xor().is_empty());
     }
 }
 

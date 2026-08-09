@@ -68,7 +68,7 @@ use hypersolve::{
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig, IsolatedRootInterval,
     compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
     greatest_common_divisor_univariate_polynomials_exact,
 };
@@ -2599,6 +2599,21 @@ struct BezierAlgebraicCuspSemicircleChordParameterMapData2 {
 enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
     Axis(BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2),
     Oblique(BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2),
+    SelectedFiberLine(BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2),
+}
+
+/// Compact local-field map for a line contact with a general selected
+/// parallel-normal circle. The line parameter remains a root in `Q(alpha)`;
+/// no degree-multiplied global norm is constructed merely to name it.
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+struct BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
+    incidence: BivariatePolynomial,
+    diameter_side: BezierAlgebraicCuspTwoTermExpression2,
+    radius_squared_denominator: BivariatePolynomial,
+    speed_squared: BivariatePolynomial,
+    center_parameter: BezierAlgebraicParameter2,
+    line: LineSeg2,
 }
 
 #[cfg(feature = "predicates")]
@@ -2663,6 +2678,10 @@ pub(crate) struct BezierAlgebraicCuspSemicircleChordContact2 {
     /// `-1` and `+1` select the two transverse support contacts; zero is the
     /// unique tangent contact.  Branch order follows the chord traversal.
     branch: i8,
+    /// Exact singleton interval for a line parameter retained directly over
+    /// the selected circle-center field. Legacy analytic fast paths encode
+    /// their contact through `branch` and leave this absent.
+    selected_fiber_root: Option<IsolatedRootInterval>,
     pub(crate) cusp_location: BezierAlgebraicCuspSemicircleContactLocation2,
     pub(crate) chord_location: BezierAlgebraicCuspSemicircleContactLocation2,
     pub(crate) tangent_cross_sign: RealSign,
@@ -8622,6 +8641,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
                 branch,
+                selected_fiber_root: None,
                 cusp_location,
                 chord_location,
                 tangent_cross_sign,
@@ -8780,6 +8800,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
                 branch,
+                selected_fiber_root: None,
                 cusp_location,
                 chord_location,
                 tangent_cross_sign,
@@ -8805,6 +8826,333 @@ impl BezierAlgebraicCuspSemicircle2 {
                 contacts,
                 parameter_map,
             },
+        ))
+    }
+
+    /// Intersects a general selected parallel-normal circle with one exact
+    /// finite line while retaining each line parameter directly in the
+    /// selected center field.
+    ///
+    /// The ordinary rational intersection path projects the line parameter to
+    /// a global norm. For a degree-56 selected center and quartic local
+    /// incidence that creates a degree-224 representation solely to name at
+    /// most two circle/line contacts. This kernel instead isolates and replays
+    /// those local roots in `Q(alpha)`.
+    #[cfg(feature = "predicates")]
+    fn selected_parallel_normal_line_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        let BezierParameter2::Algebraic(center_parameter) = self.selected_frame_parameter() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let rational_line = RationalBezier2::try_new(
+            vec![line.start().clone(), line.end().clone()],
+            vec![Real::one(), Real::one()],
+        )?;
+        let system = match self.selected_parallel_normal_rational_system(&rational_line, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let center = BezierParameter2::Algebraic(center_parameter.clone());
+        let incidence =
+            match reduce_bivariate_in_selected_parameter(system.incidence, &center, policy)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let circle = match reduce_radical_expression_in_selected_parameter(
+            system.circle,
+            &center,
+            policy,
+        )? {
+            Classification::Decided(expression) => expression,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let selected_half_plane = match reduce_bivariate_in_selected_parameter(
+            system.selected_half_plane,
+            &center,
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let diameter_side = match reduce_radical_expression_in_selected_parameter(
+            system.diameter,
+            &center,
+            policy,
+        )? {
+            Classification::Decided(expression) => expression,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radius_squared_denominator = match reduce_bivariate_in_selected_parameter(
+            system.radius_squared_denominator,
+            &center,
+            policy,
+        )? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let speed_squared =
+            match reduce_bivariate_in_selected_parameter(system.speed_squared, &center, policy)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let tangent_cross = match reduce_radical_expression_in_selected_parameter(
+            system.tangent_cross,
+            &center,
+            policy,
+        )? {
+            Classification::Decided(expression) => expression,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let BezierParameter2::Algebraic(refined_center_parameter) = center
+            .clone()
+            .refined_isolating_interval(64, &CurveContext::STRICT)
+        else {
+            unreachable!("the local selected-fiber line has an algebraic center")
+        };
+        let retained_root = parameter_representation(&refined_center_parameter, policy);
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+            &incidence,
+            CurveResultantParameter::First,
+            &retained_root,
+            &Real::zero(),
+            &Real::one(),
+            AlgebraicFiberRootIsolationConfig {
+                max_subdivision_depth: 512,
+                refinement_steps: 8,
+            },
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        let roots = match report.status {
+            AlgebraicFiberRootIsolationStatus::Isolated => report.intervals,
+            AlgebraicFiberRootIsolationStatus::NoRoots => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
+                ));
+            }
+            AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
+                return Err(CurveError::Topology(
+                    "a nonzero selected circle had identically-zero line incidence".into(),
+                ));
+            }
+            AlgebraicFiberRootIsolationStatus::InvalidEvidence
+            | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            AlgebraicFiberRootIsolationStatus::DepthLimit
+            | AlgebraicFiberRootIsolationStatus::Undecided => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+        };
+
+        let polynomial_sign = |predicate: &BivariatePolynomial, root: &IsolatedRootInterval| {
+            algebraic_selected_fiber_root_predicate_sign(
+                &incidence,
+                predicate,
+                &center_parameter,
+                root,
+                policy,
+            )
+        };
+        let radical_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2,
+                            root: &IsolatedRootInterval| {
+            algebraic_selected_fiber_root_radical_sum_sign(
+                &incidence,
+                expression,
+                &speed_squared,
+                &center_parameter,
+                root,
+                policy,
+            )
+        };
+        let mut contacts = Vec::with_capacity(roots.len().min(2));
+        for root in roots {
+            match radical_sign(&circle, &root)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Negative | RealSign::Positive) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let selected = match polynomial_sign(&selected_half_plane, &root)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let cusp_location = match selected {
+                RealSign::Negative => continue,
+                RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                RealSign::Zero => match radical_sign(&diameter_side, &root)? {
+                    Classification::Decided(RealSign::Positive) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    }
+                    Classification::Decided(RealSign::Negative) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::End
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "a nonzero general selected circle had an indeterminate line endpoint"
+                                .into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            };
+            let tangent_cross_sign = match radical_sign(&tangent_cross, &root)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let chord_location = match root.exact_root.as_ref() {
+                Some(parameter)
+                    if compare_reals(parameter, &Real::zero(), &CurveContext::STRICT)
+                        == Some(std::cmp::Ordering::Equal) =>
+                {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start
+                }
+                Some(parameter)
+                    if compare_reals(parameter, &Real::one(), &CurveContext::STRICT)
+                        == Some(std::cmp::Ordering::Equal) =>
+                {
+                    BezierAlgebraicCuspSemicircleContactLocation2::End
+                }
+                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            };
+            contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
+                branch: 0,
+                selected_fiber_root: Some(root),
+                cusp_location,
+                chord_location,
+                tangent_cross_sign,
+            });
+        }
+        if contacts.len() > 2 {
+            return Err(CurveError::Topology(
+                "a selected circle retained more than two contacts with one line".into(),
+            ));
+        }
+        if contacts.is_empty() {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
+            ));
+        }
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
+                semicircle: self.clone(),
+                chord: chord.clone(),
+                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(
+                    BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
+                        incidence,
+                        diameter_side,
+                        radius_squared_denominator,
+                        speed_squared,
+                        center_parameter,
+                        line: line.clone(),
+                    },
+                ),
+                policy: *policy,
+            }),
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        ))
+    }
+
+    #[cfg(feature = "predicates")]
+    fn retain_selected_fiber_line_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        intersections: BezierAlgebraicCuspSemicircleChordIntersections2,
+        line_is_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
+        let BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+            contacts,
+            parameter_map,
+        } = intersections
+        else {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+            ));
+        };
+        let mut retained = Vec::with_capacity(contacts.len());
+        for contact in contacts {
+            let (cusp_parameter, correlated_point) = parameter_map.contact_evidence(&contact);
+            let point = if line_is_finite_chord
+                && contact.chord_location == BezierAlgebraicCuspSemicircleContactLocation2::Start
+            {
+                chord.start().clone()
+            } else if line_is_finite_chord
+                && contact.chord_location == BezierAlgebraicCuspSemicircleContactLocation2::End
+            {
+                chord.end().clone()
+            } else {
+                match contact.cusp_location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                        RationalBezierIntersectionPointEvidence2::Algebraic(
+                            self.start_point_image(policy)?,
+                        )
+                    }
+                    BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                        RationalBezierIntersectionPointEvidence2::Algebraic(
+                            self.end_point_image(policy)?,
+                        )
+                    }
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior => correlated_point,
+                }
+            };
+            let chord_parameter_result =
+                chord.parameter_at_certified_point(point.clone(), policy)?;
+            let chord_parameter = match chord_parameter_result {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) if !line_is_finite_chord => continue,
+                Classification::Decided(None) => {
+                    return Err(CurveError::Topology(
+                        "selected-fiber circle/line contact was outside its exact chord".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            retained.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                cusp_parameter,
+                chord_parameter,
+                point,
+                tangent_cross_sign: contact.tangent_cross_sign,
+            });
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(retained),
         ))
     }
 
@@ -8930,6 +9278,29 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "certified-oblique-support-line"
             },
         );
+        if self.uses_selected_parallel_normal_frame()
+            && matches!(
+                self.selected_frame_parameter(),
+                BezierParameter2::Algebraic(_)
+            )
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-circle-chord-kernel",
+                "selected-fiber-line",
+            );
+            return match self.selected_parallel_normal_line_intersections(chord, &line, policy)? {
+                Classification::Decided(intersections) => self
+                    .retain_selected_fiber_line_intersections(
+                        chord,
+                        intersections,
+                        line_is_finite_chord,
+                        policy,
+                    ),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
         let rational_line = RationalBezier2::try_new(
             vec![line.start().clone(), line.end().clone()],
             vec![Real::one(), Real::one()],
@@ -11300,7 +11671,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     fn axis_system(&self) -> Option<&BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2> {
         match &self.data.system {
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(system) => Some(system),
-            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_) => None,
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => None,
         }
     }
 
@@ -11312,8 +11684,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
     ) -> Option<&BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2> {
         match &self.data.system {
-            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_) => None,
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => None,
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(system) => Some(system),
+        }
+    }
+
+    fn selected_fiber_line_system(
+        &self,
+    ) -> Option<&BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2> {
+        match &self.data.system {
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(system) => {
+                Some(system)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_) => None,
         }
     }
 
@@ -11373,11 +11758,131 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         )
     }
 
+    fn selected_fiber_line_root<'a>(
+        &self,
+        contact: &'a BezierAlgebraicCuspSemicircleChordContact2,
+    ) -> CurveResult<&'a IsolatedRootInterval> {
+        contact.selected_fiber_root.as_ref().ok_or_else(|| {
+            CurveError::Topology("a selected-fiber line map lost its local contact interval".into())
+        })
+    }
+
+    fn selected_fiber_line_predicate_sign(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        predicate: &BivariatePolynomial,
+    ) -> CurveResult<Classification<RealSign>> {
+        let system = self.selected_fiber_line_system().ok_or_else(|| {
+            CurveError::Topology("a nonlocal cusp/chord map used the selected-fiber kernel".into())
+        })?;
+        algebraic_selected_fiber_root_predicate_sign(
+            &system.incidence,
+            predicate,
+            &system.center_parameter,
+            self.selected_fiber_line_root(contact)?,
+            &self.data.policy,
+        )
+    }
+
+    fn selected_fiber_line_radical_sign(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        expression: &BezierAlgebraicCuspTwoTermExpression2,
+    ) -> CurveResult<Classification<RealSign>> {
+        let system = self.selected_fiber_line_system().ok_or_else(|| {
+            CurveError::Topology("a nonlocal cusp/chord map used the selected-fiber kernel".into())
+        })?;
+        algebraic_selected_fiber_root_radical_sum_sign(
+            &system.incidence,
+            expression,
+            &system.speed_squared,
+            &system.center_parameter,
+            self.selected_fiber_line_root(contact)?,
+            &self.data.policy,
+        )
+    }
+
+    fn selected_fiber_line_linear_predicate(
+        &self,
+        x_factor: &Real,
+        y_factor: &Real,
+        value: &Real,
+    ) -> CurveResult<BivariatePolynomial> {
+        let system = self.selected_fiber_line_system().ok_or_else(|| {
+            CurveError::Topology("a nonlocal cusp/chord map requested a local line value".into())
+        })?;
+        let (delta_x, delta_y) = system.line.delta();
+        let constant =
+            x_factor * system.line.start().x() + y_factor * system.line.start().y() - value;
+        let slope = x_factor * delta_x + y_factor * delta_y;
+        Ok(bivariate_outer_product(&[Real::one()], &[constant, slope]))
+    }
+
+    fn selected_fiber_line_contact_order_to_real(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        parameter: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
+            contact.cusp_location,
+            parameter,
+            &self.data.policy,
+        ) {
+            return Ok(order);
+        }
+        match in_closed_unit_interval(parameter, &self.data.policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let system = self
+            .selected_fiber_line_system()
+            .expect("the local parameter order is entered only for a local line map");
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, &self.data.policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle parameter-order denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let predicate = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_scaled_difference(
+                &system.diameter_side.rational,
+                &denominator,
+                &system.radius_squared_denominator,
+                &radial_coefficient,
+            ),
+            radical: bivariate_scale(system.diameter_side.radical.clone(), &denominator),
+        };
+        Ok(
+            match self.selected_fiber_line_radical_sign(contact, &predicate)? {
+                Classification::Decided(RealSign::Positive) => {
+                    Classification::Decided(std::cmp::Ordering::Less)
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     fn contact_order_to_real(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         parameter: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if self.selected_fiber_line_system().is_some() {
+            return self.selected_fiber_line_contact_order_to_real(contact, parameter);
+        }
         if self.oblique_system().is_some() {
             return self.oblique_contact_order_to_real(contact, parameter);
         }
@@ -11544,6 +12049,21 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         axis: Axis2,
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if self.selected_fiber_line_system().is_some() {
+            let (x_factor, y_factor) = match axis {
+                Axis2::X => (Real::one(), Real::zero()),
+                Axis2::Y => (Real::zero(), Real::one()),
+            };
+            let predicate =
+                self.selected_fiber_line_linear_predicate(&x_factor, &y_factor, value)?;
+            return Ok(self
+                .selected_fiber_line_predicate_sign(contact, &predicate)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
         if let Some(system) = self.oblique_system() {
             let expression = match axis {
                 Axis2::X => &system.point_x,
@@ -11594,6 +12114,16 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         y_factor: &Real,
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if self.selected_fiber_line_system().is_some() {
+            let predicate = self.selected_fiber_line_linear_predicate(x_factor, y_factor, value)?;
+            return Ok(self
+                .selected_fiber_line_predicate_sign(contact, &predicate)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
         if let Some(system) = self.oblique_system() {
             let negative_value = -value.clone();
             let Some(rational) = TrivariatePolynomial2::linear_combination(&[
@@ -11869,6 +12399,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 }
             });
         }
+        if self.axis_system().is_none() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
         let difference = |axis, first_translation, second_translation| {
             let first =
                 self.derived_coordinate_expression(axis, first_radial_scale, first_translation);
@@ -11906,6 +12439,39 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
+        if let Some(system) = self.selected_fiber_line_system() {
+            let root = match self.selected_fiber_line_root(contact) {
+                Ok(root) => root,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
+            // The construction interval is already an exact singleton and is
+            // generally much narrower than neighboring carrier evidence.
+            // Keeping it fixed lets mixed-evidence comparisons refine only the
+            // opposite point instead of rebuilding the same local field for
+            // every generic bounds request.
+            let interval = root.clone();
+            let (delta_x, delta_y) = system.line.delta();
+            let coordinate = |start: &Real, delta: &Real| {
+                let lower = start + delta * &interval.lower;
+                let upper = start + delta * &interval.upper;
+                match real_sign(delta, &CurveContext::STRICT) {
+                    Some(RealSign::Positive) => Some((lower, upper)),
+                    Some(RealSign::Negative) => Some((upper, lower)),
+                    Some(RealSign::Zero) => Some((start.clone(), start.clone())),
+                    None => None,
+                }
+            };
+            let (Some((min_x, max_x)), Some((min_y, max_y))) = (
+                coordinate(system.line.start().x(), &delta_x),
+                coordinate(system.line.start().y(), &delta_y),
+            ) else {
+                return Classification::Uncertain(UncertaintyReason::RealSign);
+            };
+            return Classification::Decided(Aabb2::new_unchecked(
+                Point2::new(min_x, min_y),
+                Point2::new(max_x, max_y),
+            ));
+        }
         if let Some(system) = self.oblique_system() {
             return self.oblique_expressions_bounds_refined(
                 contact,
@@ -12238,6 +12804,39 @@ impl BezierAlgebraicCuspChordPoint2 {
         };
         if collinear != Classification::Decided(true) {
             return Ok(None);
+        }
+        let first_local = first_map.selected_fiber_line_system().is_some();
+        let second_local = second_map.selected_fiber_line_system().is_some();
+        if first_local || second_local {
+            if !first_local || !second_local || !Arc::ptr_eq(&first_map.data, &second_map.data) {
+                return Ok(None);
+            }
+            let first_root = first_map.selected_fiber_line_root(first_contact)?;
+            let second_root = second_map.selected_fiber_line_root(second_contact)?;
+            let order = if first_root == second_root {
+                std::cmp::Ordering::Equal
+            } else {
+                let Some(order) =
+                    compare_reals(&first_root.lower, &second_root.lower, &CurveContext::STRICT)
+                else {
+                    return Ok(None);
+                };
+                order
+            };
+            return Ok(Some(
+                if first_map
+                    .data
+                    .chord
+                    .data
+                    .parameter_axis
+                    .coordinate_increases
+                    == target_axis.coordinate_increases
+                {
+                    order
+                } else {
+                    order.reverse()
+                },
+            ));
         }
         let orient = |map: &BezierAlgebraicCuspSemicircleChordParameterMap2, branch: i8| {
             if map.data.chord.data.parameter_axis.coordinate_increases
@@ -15036,6 +15635,17 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         second_map.validate_policy(policy)?;
         if first_map.data.semicircle != second_map.data.semicircle {
             return Ok(None);
+        }
+        if first_map.selected_fiber_line_system().is_some()
+            || second_map.selected_fiber_line_system().is_some()
+        {
+            let first_point = BezierAlgebraicCuspChordPoint2 {
+                data: first.clone(),
+            };
+            let second_point = BezierAlgebraicCuspChordPoint2 {
+                data: second.clone(),
+            };
+            return Ok(Some(first_point.same_point(&second_point, policy)));
         }
         let collinearity = first_map
             .data
@@ -24163,6 +24773,13 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
         ) => {
+            if first.map_contact().0.selected_fiber_line_system().is_some() {
+                return first.axis_coordinate_order_to_real(
+                    axis,
+                    if use_x { second.x() } else { second.y() },
+                    policy,
+                );
+            }
             if first.same_point_evidence(
                 &RationalBezierIntersectionPointEvidence2::Exact(second.clone()),
                 policy,
@@ -24181,6 +24798,20 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(second),
         ) => {
+            if second
+                .map_contact()
+                .0
+                .selected_fiber_line_system()
+                .is_some()
+            {
+                return Ok(second
+                    .axis_coordinate_order_to_real(
+                        axis,
+                        if use_x { first.x() } else { first.y() },
+                        policy,
+                    )?
+                    .map(std::cmp::Ordering::reverse));
+            }
             if second.same_point_evidence(
                 &RationalBezierIntersectionPointEvidence2::Exact(first.clone()),
                 policy,
@@ -30286,6 +30917,260 @@ pub(crate) fn algebraic_selected_correlated_predicate_sign(
                 CurveError::Topology("selected-field sign refinement overflow".into())
             })?;
     }
+}
+
+/// Refines one exact root retained directly in a selected algebraic fiber.
+///
+/// The returned interval continues to name a root of `incidence(t, u)` over
+/// the already selected `t = alpha`; it is deliberately not converted into a
+/// univariate norm whose degree multiplies by the degree of `alpha`.
+#[cfg(feature = "predicates")]
+fn algebraic_selected_fiber_root_interval_refined(
+    incidence: &BivariatePolynomial,
+    retained: &BezierAlgebraicParameter2,
+    root: &IsolatedRootInterval,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<IsolatedRootInterval>> {
+    if refinement_steps == 0 || root.exact_root.is_some() {
+        return Ok(Classification::Decided(root.clone()));
+    }
+    let retained_parameter = BezierParameter2::Algebraic(retained.clone())
+        .refined_isolating_interval(refinement_steps.max(64), &CurveContext::STRICT);
+    let BezierParameter2::Algebraic(retained_parameter) = retained_parameter else {
+        unreachable!("a selected-fiber root has an algebraic retained parameter")
+    };
+    let retained = parameter_representation(&retained_parameter, policy);
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        incidence,
+        CurveResultantParameter::First,
+        &retained,
+        &root.lower,
+        &root.upper,
+        AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: refinement_steps.saturating_add(256),
+            refinement_steps,
+        },
+        hypersolve::PredicatePolicy::STRICT,
+    );
+    match report.status {
+        AlgebraicFiberRootIsolationStatus::Isolated if report.intervals.len() == 1 => {
+            Ok(Classification::Decided(
+                report
+                    .intervals
+                    .into_iter()
+                    .next()
+                    .expect("a singleton selected-fiber report has one interval"),
+            ))
+        }
+        AlgebraicFiberRootIsolationStatus::Isolated => Err(CurveError::Topology(
+            "a certified selected-fiber singleton refined to multiple roots".into(),
+        )),
+        AlgebraicFiberRootIsolationStatus::NoRoots => Err(CurveError::Topology(
+            "a certified selected-fiber singleton disappeared during refinement".into(),
+        )),
+        AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => Err(CurveError::Topology(
+            "a selected-fiber contact incidence became identically zero during refinement".into(),
+        )),
+        AlgebraicFiberRootIsolationStatus::InvalidEvidence
+        | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+            Err(CurveError::InvalidBezierAlgebraicParameter)
+        }
+        AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        AlgebraicFiberRootIsolationStatus::DepthLimit
+        | AlgebraicFiberRootIsolationStatus::Undecided => {
+            Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+        }
+    }
+}
+
+/// Signs a polynomial at one root retained locally over `Q(alpha)`.
+///
+/// Strict Bernstein boxes decide every separated nonzero value. Exact
+/// common-fiber counting decides zero without a primitive element. Only the
+/// final 512-step equality query may consume APPROXIMATE_512.
+#[cfg(feature = "predicates")]
+fn algebraic_selected_fiber_root_predicate_sign(
+    incidence: &BivariatePolynomial,
+    predicate: &BivariatePolynomial,
+    retained: &BezierAlgebraicParameter2,
+    root: &IsolatedRootInterval,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    if matches!(bivariate_exact_nonzero_metadata(predicate), Some(None)) {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    let retained_parameter = BezierParameter2::Algebraic(retained.clone())
+        .refined_isolating_interval(64, &CurveContext::STRICT);
+    if let Some(exact_root) = &root.exact_root
+        && let Classification::Decided(sign) = signed_coefficients_at_parameter(
+            bivariate_specialize_second(predicate, exact_root),
+            &retained_parameter,
+            &CurveContext::STRICT,
+        )?
+    {
+        return Ok(Classification::Decided(sign));
+    }
+
+    let BezierParameter2::Algebraic(refined_retained) = &retained_parameter else {
+        unreachable!("a selected-fiber root has an algebraic retained parameter")
+    };
+    let retained_root = parameter_representation(refined_retained, policy);
+    let mut latest = root.clone();
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        if refinement_steps != 0 {
+            latest = match algebraic_selected_fiber_root_interval_refined(
+                incidence,
+                retained,
+                root,
+                refinement_steps,
+                policy,
+            )? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        }
+        if let Some(exact_root) = &latest.exact_root {
+            return signed_coefficients_at_parameter(
+                bivariate_specialize_second(predicate, exact_root),
+                &retained_parameter,
+                policy,
+            );
+        }
+        let retained_refined = BezierParameter2::Algebraic(retained.clone())
+            .clone()
+            .refined_isolating_interval(refinement_steps.max(64), &CurveContext::STRICT);
+        let BezierParameter2::Algebraic(retained_refined) = retained_refined else {
+            unreachable!("a selected-fiber root has an algebraic retained parameter")
+        };
+        let restricted = bivariate_restrict_to_box_bounds(
+            predicate,
+            retained_refined.interval().start(),
+            retained_refined.interval().end(),
+            &latest.lower,
+            &latest.upper,
+            &CurveContext::STRICT,
+        );
+        if let Some(sign) =
+            bivariate_unit_square_strict_bernstein_sign(&restricted, &CurveContext::STRICT)?
+        {
+            return Ok(Classification::Decided(sign));
+        }
+
+        if refinement_steps < 32 {
+            continue;
+        }
+        let predicate_policy = if refinement_steps == 512 && policy.permits_approximate_512() {
+            policy.predicate_policy()
+        } else {
+            hypersolve::PredicatePolicy::STRICT
+        };
+        let zero_report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+            incidence,
+            predicate,
+            CurveResultantParameter::First,
+            &retained_root,
+            &latest.lower,
+            &latest.upper,
+            predicate_policy,
+        );
+        if zero_report.certainty == PredicateCertainty::Approximate {
+            policy.observe_approximate_512();
+        }
+        match zero_report.status {
+            AlgebraicFiberRootCountStatus::Counted
+                if zero_report
+                    .distinct_root_count
+                    .is_some_and(|count| count > 0) =>
+            {
+                return Ok(Classification::Decided(RealSign::Zero));
+            }
+            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
+                return Ok(Classification::Decided(RealSign::Zero));
+            }
+            AlgebraicFiberRootCountStatus::Counted
+            | AlgebraicFiberRootCountStatus::EndpointRoot => {}
+            AlgebraicFiberRootCountStatus::InvalidEvidence
+            | AlgebraicFiberRootCountStatus::InvalidInterval => {
+                return Err(CurveError::InvalidBezierAlgebraicParameter);
+            }
+            AlgebraicFiberRootCountStatus::UnsupportedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            AlgebraicFiberRootCountStatus::Undecided => {
+                if refinement_steps == 512 {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+            }
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+}
+
+#[cfg(feature = "predicates")]
+fn algebraic_selected_fiber_root_radical_sum_sign(
+    incidence: &BivariatePolynomial,
+    expression: &BezierAlgebraicCuspTwoTermExpression2,
+    speed_squared: &BivariatePolynomial,
+    retained: &BezierAlgebraicParameter2,
+    root: &IsolatedRootInterval,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let sign = |polynomial: &BivariatePolynomial| {
+        algebraic_selected_fiber_root_predicate_sign(incidence, polynomial, retained, root, policy)
+    };
+    let rational = match sign(&expression.rational)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let radical = match sign(&expression.radical)? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    match (rational, radical) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
+            return Ok(Classification::Decided(sign));
+        }
+        (first, second) if first == second => {
+            return Ok(Classification::Decided(first));
+        }
+        _ => {}
+    }
+    let magnitude = bivariate_subtract(
+        &bivariate_multiply(
+            &bivariate_multiply(&expression.rational, &expression.rational),
+            speed_squared,
+        ),
+        &bivariate_multiply(&expression.radical, &expression.radical),
+    );
+    let magnitude = match bivariate_reduce_axis(
+        &magnitude,
+        retained.polynomial(),
+        CurveResultantParameter::First,
+        policy,
+    )? {
+        Classification::Decided(magnitude) => magnitude,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if magnitude == *incidence {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    Ok(match sign(&magnitude)? {
+        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
+        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
+        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
 }
 
 fn algebraic_cusp_correlated_radical_sum_sign(
@@ -43251,6 +44136,18 @@ pub(crate) fn signed_bivariate_at_parameter_pair(
             first @ BezierParameter2::Algebraic(first_algebraic),
             second @ BezierParameter2::Algebraic(second_algebraic),
         ) => {
+            // Most predicates at independently retained algebraic parameters
+            // are nonzero and separate under a small number of exact interval
+            // refinements. Prove that cheap case before attempting structural
+            // reduction or concluding that the two-field value is unknown.
+            if let Some(sign) = bivariate_parameter_pair_strict_sign_by_refinement(
+                polynomial,
+                first,
+                second,
+                &CurveContext::STRICT,
+            )? {
+                return Ok(Classification::Decided(sign));
+            }
             let mut blocker = UncertaintyReason::Predicate;
             match bivariate_single_axis_coefficients(
                 polynomial,
