@@ -3439,6 +3439,14 @@ pub(crate) enum RetainedFilletRadialFrame2 {
         support_center: Point2,
         normal_denominator: Real,
     },
+    /// The center lies on `center_support` at `center_parameter`; its source
+    /// unit left normal is the fillet's start radial direction. This retains a
+    /// general non-PH frame without adjoining the selected speed square root.
+    ParallelNormal {
+        center_support: BezierParallel2,
+        center_parameter: BezierParameter2,
+        policy: CurveContext,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -4178,6 +4186,14 @@ impl FilletParallelSource2<'_> {
             )),
         }
     }
+
+    #[cfg(feature = "predicates")]
+    fn parallel_distance(&self) -> Real {
+        match self {
+            Self::Direct(_) => Real::zero(),
+            Self::Retained(source) => source.parallel().distance().clone(),
+        }
+    }
 }
 
 enum PreparedFilletCarrier2<'a> {
@@ -4474,6 +4490,7 @@ impl FilletOffsetCarrier2<'_, '_> {
     fn retained_fillet_frame(
         &self,
         anchor_is_previous: bool,
+        anchor_parameter: Option<&CurveRegionParameter2>,
         anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
         family: CurveFamily2,
         policy: &CurveContext,
@@ -4539,6 +4556,27 @@ impl FilletOffsetCarrier2<'_, '_> {
                     radial_distance,
                 )
             }
+            #[cfg(feature = "predicates")]
+            Self::Parallel { source, support } => {
+                let center_parameter = anchor_parameter
+                    .and_then(CurveRegionParameter2::as_bezier_parameter)
+                    .cloned()
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            crate::UncertaintyReason::Unsupported,
+                        )
+                    })?;
+                (
+                    RetainedFilletRadialFrame2::ParallelNormal {
+                        center_support: support.clone(),
+                        center_parameter,
+                        policy: *policy,
+                    },
+                    source.parallel_distance() - support.distance(),
+                )
+            }
             _ => return Ok(None),
         };
         Ok(Some(RetainedFilletFrame2 {
@@ -4555,6 +4593,15 @@ struct FilletCenterWitness2 {
     previous_parameter: Option<CurveRegionParameter2>,
     next_parameter: Option<CurveRegionParameter2>,
     retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
+}
+
+#[cfg(feature = "predicates")]
+const fn reverse_fillet_sign(sign: RealSign) -> RealSign {
+    match sign {
+        RealSign::Positive => RealSign::Negative,
+        RealSign::Negative => RealSign::Positive,
+        RealSign::Zero => RealSign::Zero,
+    }
 }
 
 impl FilletCenterWitness2 {
@@ -4689,20 +4736,42 @@ fn solve_carrier_fillet_corner(
                                 next_family,
                             )
                         };
-                    let retained_frame = if let Some(frame) = first.retained_fillet_frame(
+                    let first_frame = first.retained_fillet_frame(
                         first_is_previous,
+                        center.parameter(first_is_previous),
                         center.retained_anchor_evidence.clone(),
                         first_family,
                         policy,
-                    )? {
+                    )?;
+                    let retained_frame = match first_frame {
                         Some(frame)
-                    } else {
-                        second.retained_fillet_frame(
-                            !first_is_previous,
-                            center.retained_anchor_evidence.clone(),
-                            second_family,
-                            policy,
-                        )?
+                            if !matches!(
+                                &frame.radial_frame,
+                                RetainedFilletRadialFrame2::ParallelNormal { .. }
+                            ) =>
+                        {
+                            Some(frame)
+                        }
+                        general_frame => {
+                            let second_frame = second.retained_fillet_frame(
+                                !first_is_previous,
+                                center.parameter(!first_is_previous),
+                                center.retained_anchor_evidence.clone(),
+                                second_family,
+                                policy,
+                            )?;
+                            match second_frame {
+                                Some(frame)
+                                    if !matches!(
+                                        &frame.radial_frame,
+                                        RetainedFilletRadialFrame2::ParallelNormal { .. }
+                                    ) =>
+                                {
+                                    Some(frame)
+                                }
+                                _ => general_frame,
+                            }
+                        }
                     };
                     candidates.push(FilletCorner2 {
                         previous: previous_cut,
@@ -5670,6 +5739,12 @@ fn fillet_offset_centers(
                     break;
                 }
             }
+            let previous_support_reverses_source =
+                previous_source.support_reverses_source(previous, previous_family, policy)?;
+            let next_support_reverses_source =
+                next_source.support_reverses_source(next, next_family, policy)?;
+            let reverse_tangent_relation =
+                previous_support_reverses_source != next_support_reverses_source;
             for contact in intersections.contacts() {
                 if !previous_source.parameter_is_in_open_range(
                     contact.first_parameter(),
@@ -5697,7 +5772,23 @@ fn fillet_offset_centers(
                     next_parameter: Some(CurveRegionParameter2::from_bezier(
                         contact.second_parameter().clone(),
                     )),
-                    retained_anchor_evidence: None,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        cross: contact.tangent_cross_sign().map(|sign| {
+                            if reverse_tangent_relation {
+                                reverse_fillet_sign(sign)
+                            } else {
+                                sign
+                            }
+                        }),
+                        dot: contact.tangent_dot_sign().map(|sign| {
+                            if reverse_tangent_relation {
+                                reverse_fillet_sign(sign)
+                            } else {
+                                sign
+                            }
+                        }),
+                        canonical_anchor_curve: None,
+                    }),
                 });
             }
         }
@@ -8912,6 +9003,57 @@ fn validate_subcurve_range(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn parallel_fillet_frame_retains_selected_normal_and_radial_distance() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 1),
+        );
+        let authored = Curve2::from(source.clone());
+        let support = source.parallel_left(Real::from(2_i8)).unwrap();
+        let center_parameter = BezierParameter2::Exact(
+            (Real::one() / Real::from(2_i8)).expect("one half is represented"),
+        );
+        let parameter = CurveRegionParameter2::from_bezier(center_parameter.clone());
+        let carrier = FilletOffsetCarrier2::Parallel {
+            source: FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&authored)),
+            support: support.clone(),
+        };
+        let frame = carrier
+            .retained_fillet_frame(
+                true,
+                Some(&parameter),
+                Some(RetainedFilletAnchorEvidence2 {
+                    cross: Some(RealSign::Positive),
+                    dot: Some(RealSign::Zero),
+                    canonical_anchor_curve: None,
+                }),
+                CurveFamily2::QuadraticBezier,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .expect("a general parallel retains one radial frame");
+        assert_eq!(frame.radial_distance, Real::from(-2_i8));
+        assert_eq!(
+            frame.anchor_evidence.as_ref().and_then(|value| value.cross),
+            Some(RealSign::Positive)
+        );
+        match frame.radial_frame {
+            RetainedFilletRadialFrame2::ParallelNormal {
+                center_support,
+                center_parameter: retained_parameter,
+                policy,
+            } => {
+                assert_eq!(center_support, support);
+                assert_eq!(retained_parameter, center_parameter);
+                assert_eq!(policy, CurveContext::STRICT);
+            }
+            other => panic!("expected a selected parallel-normal frame, got {other:?}"),
+        }
+    }
 
     #[cfg(feature = "predicates")]
     fn rationalizable_selected_semicircle(

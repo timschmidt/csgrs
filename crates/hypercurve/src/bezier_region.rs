@@ -8957,6 +8957,22 @@ impl CurveRegion2 {
                     fillet_clockwise,
                     policy,
                 ),
+                RetainedFilletRadialFrame2::ParallelNormal {
+                    center_support,
+                    center_parameter,
+                    policy: frame_policy,
+                } => {
+                    let _ = (center_support, center_parameter);
+                    if frame_policy != policy {
+                        return Err(curve_region_edit_error(
+                            CurveOperation2::Fillet,
+                            CurveError::Topology(
+                                "a parallel-normal fillet frame crossed predicate policies".into(),
+                            ),
+                        ));
+                    }
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
             }
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))? {
                 Classification::Decided(Some(fillet)) => fillet,

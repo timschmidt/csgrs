@@ -2588,6 +2588,7 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
 fn analytic_parallel_point_bounds_refined(
     parallel: &BezierParallel2,
     parameter: &BezierParameter2,
+    tangent_distance: &Real,
     translation_x: &Real,
     translation_y: &Real,
     refinement_steps: usize,
@@ -2654,24 +2655,40 @@ fn analytic_parallel_point_bounds_refined(
         lower: parallel.distance().clone(),
         upper: parallel.distance().clone(),
     };
-    let (Some(offset_x), Some(offset_y)) = (
+    let tangent_distance = BezierAlgebraicChordRealInterval2 {
+        lower: tangent_distance.clone(),
+        upper: tangent_distance.clone(),
+    };
+    let (
+        Some(normal_offset_x),
+        Some(normal_offset_y),
+        Some(tangent_offset_x),
+        Some(tangent_offset_y),
+    ) = (
         normal_x.multiply(&distance, strict),
         normal_y.multiply(&distance, strict),
-    ) else {
+        tangent_x
+            .divide(&speed, strict)
+            .and_then(|unit| unit.multiply(&tangent_distance, strict)),
+        tangent_y
+            .divide(&speed, strict)
+            .and_then(|unit| unit.multiply(&tangent_distance, strict)),
+    )
+    else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
-    let point_x = point_x
-        .add(&offset_x)
-        .add(&BezierAlgebraicChordRealInterval2 {
+    let point_x = point_x.add(&normal_offset_x).add(&tangent_offset_x).add(
+        &BezierAlgebraicChordRealInterval2 {
             lower: translation_x.clone(),
             upper: translation_x.clone(),
-        });
-    let point_y = point_y
-        .add(&offset_y)
-        .add(&BezierAlgebraicChordRealInterval2 {
+        },
+    );
+    let point_y = point_y.add(&normal_offset_y).add(&tangent_offset_y).add(
+        &BezierAlgebraicChordRealInterval2 {
             lower: translation_y.clone(),
             upper: translation_y.clone(),
-        });
+        },
+    );
     Classification::Decided(Aabb2::new_unchecked(
         Point2::new(point_x.lower, point_y.lower),
         Point2::new(point_x.upper, point_y.upper),
@@ -3032,6 +3049,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             parameter,
             &Real::zero(),
             &Real::zero(),
+            &Real::zero(),
             refinement_steps,
             policy,
         ))
@@ -3308,6 +3326,9 @@ pub struct BezierAnalyticParallelPoint2 {
 struct BezierAnalyticParallelPointData2 {
     parallel: BezierParallel2,
     parameter: BezierParameter2,
+    /// Signed displacement along the source's unit tangent. The parallel
+    /// distance already stores the orthogonal unit-normal displacement.
+    tangent_distance: Real,
     translation_x: Real,
     translation_y: Real,
     policy: CurveContext,
@@ -3663,6 +3684,7 @@ impl PartialEq for BezierAnalyticParallelPoint2 {
         Arc::ptr_eq(&self.data, &other.data)
             || (self.data.parallel == other.data.parallel
                 && self.data.parameter == other.data.parameter
+                && self.data.tangent_distance == other.data.tangent_distance
                 && self.data.translation_x == other.data.translation_x
                 && self.data.translation_y == other.data.translation_y
                 && self.data.policy == other.data.policy)
@@ -24998,10 +25020,23 @@ impl BezierAnalyticParallelPoint2 {
         parameter: BezierParameter2,
         policy: &CurveContext,
     ) -> Self {
+        Self::new_with_tangent_distance(parallel, parameter, Real::zero(), policy)
+    }
+
+    /// Retains one exact point in the source curve's selected orthonormal
+    /// frame. `parallel.distance()` is the signed unit-normal displacement and
+    /// `tangent_distance` is the signed unit-tangent displacement.
+    pub(crate) fn new_with_tangent_distance(
+        parallel: BezierParallel2,
+        parameter: BezierParameter2,
+        tangent_distance: Real,
+        policy: &CurveContext,
+    ) -> Self {
         Self {
             data: Arc::new(BezierAnalyticParallelPointData2 {
                 parallel,
                 parameter,
+                tangent_distance,
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 policy: *policy,
@@ -25016,6 +25051,7 @@ impl BezierAnalyticParallelPoint2 {
     fn shares_carrier(&self, other: &Self) -> bool {
         self.data.parallel == other.data.parallel
             && self.data.parameter == other.data.parameter
+            && self.data.tangent_distance == other.data.tangent_distance
             && self.data.translation_x == other.data.translation_x
             && self.data.translation_y == other.data.translation_y
             && self.data.policy == other.data.policy
@@ -25036,6 +25072,7 @@ impl BezierAnalyticParallelPoint2 {
             data: Arc::new(BezierAnalyticParallelPointData2 {
                 parallel: self.data.parallel.clone(),
                 parameter: self.data.parameter.clone(),
+                tangent_distance: self.data.tangent_distance.clone(),
                 translation_x: &self.data.translation_x + delta_x,
                 translation_y: &self.data.translation_y + delta_y,
                 policy: *policy,
@@ -25054,6 +25091,7 @@ impl BezierAnalyticParallelPoint2 {
         analytic_parallel_point_bounds_refined(
             &self.data.parallel,
             &self.data.parameter,
+            &self.data.tangent_distance,
             &self.data.translation_x,
             &self.data.translation_y,
             refinement_steps,
@@ -55543,6 +55581,34 @@ mod conversion_tests {
                 Classification::Decided(false)
             );
         }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn analytic_parallel_point_retains_tangent_displacement_in_one_frame() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 0),
+        );
+        let parallel = source.parallel_left(Real::from(3_i8)).unwrap();
+        let parameter = BezierParameter2::Exact(
+            (Real::one() / Real::from(2_i8)).expect("one half is represented"),
+        );
+        let point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+            parallel,
+            parameter,
+            Real::from(4_i8),
+            &CurveContext::STRICT,
+        );
+        let Classification::Decided(bounds) =
+            point.conservative_bounds_refined(0, &CurveContext::STRICT)
+        else {
+            panic!("a represented orthonormal-frame point must have exact bounds");
+        };
+        let expected = Point2::from_values(5, 3);
+        assert_eq!(bounds.min(), &expected);
+        assert_eq!(bounds.max(), &expected);
     }
 
     #[test]
