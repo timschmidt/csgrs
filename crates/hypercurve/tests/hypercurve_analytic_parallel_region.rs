@@ -598,6 +598,79 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
     }
 }
 
+#[cfg(feature = "predicates")]
+#[test]
+fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
+    let first_setback = (Real::one() / Real::from(4_u8)).unwrap();
+    let second_setback = (Real::one() / Real::from(16_u8)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for first_vertex in [0, 1] {
+            let source = rational_endpoint_curved_parallel_cap(&policy);
+            let first = source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    first_vertex,
+                    first_setback.clone(),
+                    first_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("the first analytic-parallel chamfer must complete");
+            assert_eq!(first.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(first) = first.value else {
+                panic!("the first analytic-parallel chamfer must be unique");
+            };
+
+            // The first cut is an algebraic parameter retained jointly by the
+            // analytic fragment and its chord. Chamfer that new junction in
+            // both carrier orientations without materializing its point.
+            let second = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    second_setback.clone(),
+                    second_setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("an algebraic-endpoint analytic chamfer must complete");
+            assert_eq!(second.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(second) = second.value else {
+                panic!("the algebraic-endpoint analytic chamfer must be unique");
+            };
+            let fragments = second.boundary_loops()[0].fragments();
+            assert_eq!(fragments.len(), 6);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                    })
+                    .count(),
+                1
+            );
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
+                    })
+                    .count(),
+                2
+            );
+            for (sample, expected) in [
+                (point(2, 0), RegionPointLocation::Inside),
+                (point(6, 0), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    second.classify_point(&sample, &policy).unwrap().value,
+                    Classification::Decided(expected)
+                );
+            }
+        }
+    }
+}
+
 #[test]
 fn curve_trim_intersects_analytic_parallel_region_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

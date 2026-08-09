@@ -1169,6 +1169,9 @@ struct CandidatePointReplay {
 pub(crate) enum ResultantParameterProjection {
     Empty,
     Parameters(Vec<BezierParameter2>),
+    /// Parameters isolated directly in the caller's selected algebraic fiber.
+    /// Unlike an ordinary quotient norm, these need no conjugate-root replay.
+    SelectedParameters(Vec<BezierParameter2>),
     Degenerate,
 }
 
@@ -1307,8 +1310,10 @@ fn project_retained_lineage_residual_system(
             RationalBezierIntersectionCandidates2::DegenerateResultant
         }
         (
-            ResultantParameterProjection::Parameters(first_parameters),
-            ResultantParameterProjection::Parameters(second_parameters),
+            ResultantParameterProjection::Parameters(first_parameters)
+            | ResultantParameterProjection::SelectedParameters(first_parameters),
+            ResultantParameterProjection::Parameters(second_parameters)
+            | ResultantParameterProjection::SelectedParameters(second_parameters),
         ) => RationalBezierIntersectionCandidates2::Candidates {
             first_parameters,
             second_parameters,
@@ -1340,7 +1345,8 @@ fn project_symmetric_self_intersection_system(
         ResultantParameterProjection::Degenerate => {
             RationalBezierIntersectionCandidates2::DegenerateResultant
         }
-        ResultantParameterProjection::Parameters(parameters) => {
+        ResultantParameterProjection::Parameters(parameters)
+        | ResultantParameterProjection::SelectedParameters(parameters) => {
             RationalBezierIntersectionCandidates2::Candidates {
                 first_parameters: parameters.clone(),
                 second_parameters: parameters,
@@ -4271,8 +4277,10 @@ impl RationalBezier2 {
                 RationalBezierIntersectionCandidates2::DegenerateResultant
             }
             (
-                ResultantParameterProjection::Parameters(first_parameters),
-                ResultantParameterProjection::Parameters(second_parameters),
+                ResultantParameterProjection::Parameters(first_parameters)
+                | ResultantParameterProjection::SelectedParameters(first_parameters),
+                ResultantParameterProjection::Parameters(second_parameters)
+                | ResultantParameterProjection::SelectedParameters(second_parameters),
             ) => RationalBezierIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,

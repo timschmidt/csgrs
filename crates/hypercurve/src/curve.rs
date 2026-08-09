@@ -5229,19 +5229,10 @@ fn analytic_parallel_chamfer_cuts(
             overflow: Vec::new(),
         });
     }
-    let Some(corner) = corner.as_exact() else {
-        // An algebraic endpoint center requires the retained two-parameter
-        // distance system; never approximate that construction into a circle.
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
-    };
     let radius_squared = setback * setback;
     let parameters = match fragment
         .parallel()
-        .circle_incidence(corner, &radius_squared, &[], policy)
+        .fixed_distance_incidence_from_parameter(corner_parameter, &radius_squared, policy)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
         Classification::Decided(parameters) => parameters,
@@ -5250,7 +5241,7 @@ fn analytic_parallel_chamfer_cuts(
         }
     };
     let mut cuts = CornerCuts2::default();
-    for (parameter, _) in parameters {
+    for parameter in parameters {
         let in_range = crate::bezier_offset::overlap_parameter_is_in_range(
             &parameter,
             fragment.range(),

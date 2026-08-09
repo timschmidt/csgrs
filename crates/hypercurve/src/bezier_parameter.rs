@@ -1538,17 +1538,8 @@ impl BezierParameter2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
-        if matches!(
-            compare_reals(left.end(), right.start(), policy),
-            Some(Ordering::Less | Ordering::Equal)
-        ) {
-            return Ok(Classification::Decided(Ordering::Less));
-        }
-        if matches!(
-            compare_reals(right.end(), left.start(), policy),
-            Some(Ordering::Less | Ordering::Equal)
-        ) {
-            return Ok(Classification::Decided(Ordering::Greater));
+        if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
+            return Ok(Classification::Decided(ordering));
         }
 
         match self.same_value(other, policy)? {
@@ -1590,19 +1581,45 @@ impl BezierParameter2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
-        match self.cmp_by_interval(other, policy)? {
-            Classification::Decided(ordering) => {
+        if self == other {
+            return Ok(Classification::Decided(Ordering::Equal));
+        }
+        if let (Self::Exact(left), Self::Exact(right)) = (self, other) {
+            return Ok(compare_reals(left, right, policy)
+                .map(Classification::Decided)
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
+        }
+        let left = match self.known_interval(policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let right = match other.known_interval(policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
+            return Ok(Classification::Decided(ordering));
+        }
+
+        // Distinct construction roots are much more common than equal values
+        // represented by different polynomials. First bisect simple
+        // sign-changing isolators without constructing either polynomial's
+        // Sturm sequence or their GCD; retain the equality machinery below as
+        // the authoritative fallback when intervals continue to overlap.
+        let mut left_refinement = BezierParameterRefinement2::new(self, policy);
+        let mut right_refinement = BezierParameterRefinement2::new(other, policy);
+        for steps in [1, 3, 7, 15, 31] {
+            let left = match left_refinement.refine_to(steps).known_interval(policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => continue,
+            };
+            let right = match right_refinement.refine_to(steps).known_interval(policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => continue,
+            };
+            if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
                 return Ok(Classification::Decided(ordering));
             }
-            Classification::Uncertain(reason) if reason != UncertaintyReason::Ordering => {
-                if let Some(ordering) =
-                    compare_parameters_by_exact_difference(self, other, None, None, policy)
-                {
-                    return Ok(Classification::Decided(ordering));
-                }
-                return Ok(Classification::Uncertain(reason));
-            }
-            Classification::Uncertain(_) => {}
         }
         match self.same_value(other, policy)? {
             Classification::Decided(true) => Ok(Classification::Decided(Ordering::Equal)),
@@ -1708,6 +1725,24 @@ impl BezierParameter2 {
             }
         }
     }
+}
+
+fn disjoint_parameter_interval_order(
+    left: &BezierParameterInterval,
+    right: &BezierParameterInterval,
+    policy: &CurveContext,
+) -> Option<Ordering> {
+    if matches!(
+        compare_reals(left.end(), right.start(), policy),
+        Some(Ordering::Less | Ordering::Equal)
+    ) {
+        return Some(Ordering::Less);
+    }
+    matches!(
+        compare_reals(right.end(), left.start(), policy),
+        Some(Ordering::Less | Ordering::Equal)
+    )
+    .then_some(Ordering::Greater)
 }
 
 impl<'a> BezierParameterRefinement2<'a> {
