@@ -284,8 +284,8 @@ fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     assert!(!contacts.overlaps().is_empty());
     assert!(contacts.blockers().is_empty());
     assert!(contacts.contacts().iter().all(|contact| {
-        contact.first().operand() == hypercurve::CurvePathBooleanOperand2::First
-            && contact.second().operand() == hypercurve::CurvePathBooleanOperand2::Second
+        contact.first().operand() == hypercurve::CurveRegionBooleanOperand2::First
+            && contact.second().operand() == hypercurve::CurveRegionBooleanOperand2::Second
             && contact.first().loop_index() == 0
             && contact.second().loop_index() == 0
     }));

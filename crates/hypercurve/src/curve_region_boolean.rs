@@ -32,20 +32,28 @@ use crate::{
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Curve2, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveOperation2, CurveOutcome, CurvePathBooleanOperand2, CurveRegion2, CurveRegionLoopRole,
-    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
-    ExactCurveResult, FillRule, LineSeg2, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    CurveOperation2, CurveOutcome, CurveRegion2, CurveRegionLoopRole, CurveRegionParameter2,
+    CurveRegionParameterRange2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
+
+/// Region operand that owns one retained Boolean carrier.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveRegionBooleanOperand2 {
+    /// Carrier originates in the first region.
+    First,
+    /// Carrier originates in the second region.
+    Second,
+}
 
 /// Stable identity for one retained region-boundary carrier.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionCarrierRef2 {
     carrier_index: usize,
-    operand: CurvePathBooleanOperand2,
+    operand: CurveRegionBooleanOperand2,
     loop_index: usize,
     fragment_index: usize,
     family: CurveFamily2,
@@ -136,7 +144,7 @@ struct BezierSelfIntersectionCache {
 
 #[derive(Clone, Debug)]
 struct RegionCarrier {
-    operand: CurvePathBooleanOperand2,
+    operand: CurveRegionBooleanOperand2,
     loop_index: usize,
     fragment_index: usize,
     family: CurveFamily2,
@@ -332,7 +340,7 @@ impl CurveRegionCarrierRef2 {
     }
 
     /// Returns the region operand that owns this carrier.
-    pub const fn operand(&self) -> CurvePathBooleanOperand2 {
+    pub const fn operand(&self) -> CurveRegionBooleanOperand2 {
         self.operand
     }
 
@@ -767,7 +775,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
         let first_carriers = build_region_carriers(
             first,
-            CurvePathBooleanOperand2::First,
+            CurveRegionBooleanOperand2::First,
             policy,
             &mut rational_quadratic_area_cache,
             true,
@@ -776,7 +784,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut carriers = first_carriers;
         carriers.extend(build_region_carriers(
             second,
-            CurvePathBooleanOperand2::Second,
+            CurveRegionBooleanOperand2::Second,
             policy,
             &mut rational_quadratic_area_cache,
             true,
@@ -847,7 +855,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         for (fragment_index, fragment) in source_fragments.iter().enumerate() {
             let geometry = RegionCarrierGeometry::Bezier(fragment.curve().clone());
             carriers.push(RegionCarrier {
-                operand: CurvePathBooleanOperand2::First,
+                operand: CurveRegionBooleanOperand2::First,
                 loop_index: 0,
                 fragment_index,
                 family: geometry.family(),
@@ -864,7 +872,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
         carriers.extend(build_region_carriers(
             region,
-            CurvePathBooleanOperand2::Second,
+            CurveRegionBooleanOperand2::Second,
             policy,
             &mut rational_quadratic_area_cache,
             false,
@@ -926,7 +934,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
         let carriers = build_region_carriers(
             region,
-            CurvePathBooleanOperand2::First,
+            CurveRegionBooleanOperand2::First,
             policy,
             &mut rational_quadratic_area_cache,
             false,
@@ -1544,8 +1552,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return false;
         }
         let region = match first.operand {
-            CurvePathBooleanOperand2::First => self.data.first,
-            CurvePathBooleanOperand2::Second => self.data.second,
+            CurveRegionBooleanOperand2::First => self.data.first,
+            CurveRegionBooleanOperand2::Second => self.data.second,
         };
         let Some(fragment_count) = region
             .boundary_loops()
@@ -2700,8 +2708,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let authored_adjacent = self.authored_carriers_are_adjacent(pair);
                         let chord_precedes_other = authored_adjacent.then(|| {
                             let boundary = match chord_carrier.operand {
-                                CurvePathBooleanOperand2::First => self.data.first,
-                                CurvePathBooleanOperand2::Second => self.data.second,
+                                CurveRegionBooleanOperand2::First => self.data.first,
+                                CurveRegionBooleanOperand2::Second => self.data.second,
                             }
                             .boundary_loops()
                             .get(chord_carrier.loop_index)
@@ -3545,8 +3553,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return false;
         };
         let boundary = match first.operand {
-            CurvePathBooleanOperand2::First => self.data.first.boundary_loops(),
-            CurvePathBooleanOperand2::Second => self.data.second.boundary_loops(),
+            CurveRegionBooleanOperand2::First => self.data.first.boundary_loops(),
+            CurveRegionBooleanOperand2::Second => self.data.second.boundary_loops(),
         }
         .get(first.loop_index);
         let Some(boundary) = boundary else {
@@ -4948,7 +4956,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             || topology.split_fragments.len() != self.data.carriers.len()
             || !topology.overlaps.is_empty()
             || self.data.carriers.iter().any(|carrier| {
-                carrier.operand != CurvePathBooleanOperand2::First
+                carrier.operand != CurveRegionBooleanOperand2::First
                     || carrier.loop_index != 0
                     || !carrier
                         .geometry
@@ -5951,8 +5959,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
     ) -> ExactCurveResult<RegionPointLocation> {
         let carrier = &self.data.carriers[carrier_index];
         let other = match carrier.operand {
-            CurvePathBooleanOperand2::First => &self.data.second,
-            CurvePathBooleanOperand2::Second => &self.data.first,
+            CurveRegionBooleanOperand2::First => &self.data.second,
+            CurveRegionBooleanOperand2::Second => &self.data.first,
         };
         if self.carrier_bounds_are_outside_other_region(carrier_index) {
             return Ok(RegionPointLocation::Outside);
@@ -6705,7 +6713,7 @@ fn subcurve_certified_outer_bounds(
 
 fn build_region_carriers(
     region: &CurveRegion2,
-    operand: CurvePathBooleanOperand2,
+    operand: CurveRegionBooleanOperand2,
     policy: &CurveContext,
     rational_quadratic_area_cache: &mut RationalQuadraticAreaIntegralCache,
     require_filled_sides: bool,
@@ -6749,7 +6757,7 @@ fn build_region_carriers(
 
 fn build_region_carrier(
     fragment: &BezierSplitFragment2,
-    operand: CurvePathBooleanOperand2,
+    operand: CurveRegionBooleanOperand2,
     loop_index: usize,
     fragment_index: usize,
     filled_side_is_left: bool,
@@ -7512,7 +7520,7 @@ fn certified_boolean_successors(
 ///
 /// When both adjacent retained pieces have the same decided non-boundary
 /// location relative to the other operand, their source boundary does not
-/// cross that operand at the shared vertex. If Boolean selection retained the
+/// cross that operand at the shared vertex. If Boolean classification retained the
 /// two pieces with the same traversal orientation, continuing along the
 /// authored loop is therefore an exact face continuation. This resolves an
 /// external point touch without asking tangent order to distinguish coincident
@@ -8691,16 +8699,16 @@ fn event_vertex(
 
 fn action_for_sides(
     operation: BooleanOp,
-    operand: CurvePathBooleanOperand2,
+    operand: CurveRegionBooleanOperand2,
     own_left: bool,
     other_inside: bool,
 ) -> RegionFragmentAction {
     let (result_left, result_right) = match operand {
-        CurvePathBooleanOperand2::First => (
+        CurveRegionBooleanOperand2::First => (
             operation.apply(own_left, other_inside),
             operation.apply(!own_left, other_inside),
         ),
-        CurvePathBooleanOperand2::Second => (
+        CurveRegionBooleanOperand2::Second => (
             operation.apply(other_inside, own_left),
             operation.apply(other_inside, !own_left),
         ),
@@ -8984,8 +8992,8 @@ pub(crate) fn clip_cusp_overlap_for_test(
             bounds: OnceLock::new(),
         }
     };
-    let first_carrier = carrier(first_fragment, CurvePathBooleanOperand2::First);
-    let second_carrier = carrier(second_fragment, CurvePathBooleanOperand2::Second);
+    let first_carrier = carrier(first_fragment, CurveRegionBooleanOperand2::First);
+    let second_carrier = carrier(second_fragment, CurveRegionBooleanOperand2::Second);
     clip_cusp_parameter_overlap(
         &CurveRegionParameterRange2::new_validated(
             CurveRegionParameter2::from_algebraic_cusp(correspondence.first_start_parameter()),
@@ -9805,7 +9813,7 @@ mod certified_successor_tests {
 
     #[cfg(feature = "predicates")]
     fn algebraic_chord_carrier(
-        operand: CurvePathBooleanOperand2,
+        operand: CurveRegionBooleanOperand2,
         chord: crate::BezierAlgebraicChord2,
     ) -> RegionCarrier {
         RegionCarrier {
@@ -9911,7 +9919,7 @@ mod certified_successor_tests {
                 semicircle,
                 Real::zero(),
                 Real::one(),
-                CurvePathBooleanOperand2::First,
+                CurveRegionBooleanOperand2::First,
                 &policy,
             );
             let empty_first = CurveRegion2::empty();
@@ -9930,7 +9938,7 @@ mod certified_successor_tests {
                     policy,
                     carriers: vec![
                         cusp,
-                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone()),
+                        algebraic_chord_carrier(CurveRegionBooleanOperand2::Second, chord.clone()),
                     ],
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
@@ -10024,7 +10032,7 @@ mod certified_successor_tests {
                 semicircle,
                 Real::zero(),
                 Real::one(),
-                CurvePathBooleanOperand2::First,
+                CurveRegionBooleanOperand2::First,
                 &policy,
             );
             let empty_first = CurveRegion2::empty();
@@ -10043,7 +10051,7 @@ mod certified_successor_tests {
                     policy,
                     carriers: vec![
                         cusp,
-                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone()),
+                        algebraic_chord_carrier(CurveRegionBooleanOperand2::Second, chord.clone()),
                     ],
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
@@ -10150,7 +10158,7 @@ mod certified_successor_tests {
                 semicircle,
                 Real::zero(),
                 Real::one(),
-                CurvePathBooleanOperand2::First,
+                CurveRegionBooleanOperand2::First,
                 &policy,
             );
             let empty_first = CurveRegion2::empty();
@@ -10169,7 +10177,7 @@ mod certified_successor_tests {
                     policy,
                     carriers: vec![
                         cusp,
-                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone()),
+                        algebraic_chord_carrier(CurveRegionBooleanOperand2::Second, chord.clone()),
                     ],
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
@@ -10284,7 +10292,8 @@ mod certified_successor_tests {
                 &second_parameter,
                 "second shared-chord selected circle center",
             ));
-            let carrier = algebraic_chord_carrier(CurvePathBooleanOperand2::Second, chord.clone());
+            let carrier =
+                algebraic_chord_carrier(CurveRegionBooleanOperand2::Second, chord.clone());
             let event = |parameter, topology_vertex| CarrierEvent {
                 parameter,
                 topology_vertex: Some(topology_vertex),
@@ -10329,7 +10338,7 @@ mod certified_successor_tests {
         );
         let geometry = RegionCarrierGeometry::AlgebraicChord(chord.clone());
         let carrier = RegionCarrier {
-            operand: CurvePathBooleanOperand2::First,
+            operand: CurveRegionBooleanOperand2::First,
             loop_index: 0,
             fragment_index: 0,
             family: geometry.family(),
@@ -10964,7 +10973,7 @@ mod certified_successor_tests {
                 .carriers
                 .iter()
                 .position(|carrier| {
-                    carrier.operand == CurvePathBooleanOperand2::First
+                    carrier.operand == CurveRegionBooleanOperand2::First
                         && matches!(carrier.geometry, RegionCarrierGeometry::AlgebraicChord(_))
                 })
                 .expect("retained independent-field chord carrier");
@@ -10973,7 +10982,7 @@ mod certified_successor_tests {
                 .carriers
                 .iter()
                 .position(|carrier| {
-                    carrier.operand == CurvePathBooleanOperand2::Second
+                    carrier.operand == CurveRegionBooleanOperand2::Second
                         && carrier.fragment_index == 0
                 })
                 .expect("nonadjacent diagonal carrier");
@@ -11059,7 +11068,7 @@ mod certified_successor_tests {
                 (Real::from(2_i8) / Real::from(3_i8)).expect("nonzero source-range denominator");
             let carriers = vec![
                 RegionCarrier {
-                    operand: CurvePathBooleanOperand2::First,
+                    operand: CurveRegionBooleanOperand2::First,
                     loop_index: 0,
                     fragment_index: 0,
                     family: chord_geometry.family(),
@@ -11072,7 +11081,7 @@ mod certified_successor_tests {
                     bounds: OnceLock::new(),
                 },
                 RegionCarrier {
-                    operand: CurvePathBooleanOperand2::Second,
+                    operand: CurveRegionBooleanOperand2::Second,
                     loop_index: 0,
                     fragment_index: 0,
                     family: source_geometry.family(),
@@ -11278,8 +11287,8 @@ mod certified_successor_tests {
                     second: &empty_second,
                     policy,
                     carriers: vec![
-                        carrier(CurvePathBooleanOperand2::First, first),
-                        carrier(CurvePathBooleanOperand2::Second, second),
+                        carrier(CurveRegionBooleanOperand2::First, first),
+                        carrier(CurveRegionBooleanOperand2::Second, second),
                     ],
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
@@ -11343,7 +11352,7 @@ mod certified_successor_tests {
                         policy,
                         carriers: vec![
                             RegionCarrier {
-                                operand: CurvePathBooleanOperand2::First,
+                                operand: CurveRegionBooleanOperand2::First,
                                 loop_index: 0,
                                 fragment_index: 0,
                                 family: chord_geometry.family(),
@@ -11360,7 +11369,7 @@ mod certified_successor_tests {
                                 bounds: OnceLock::new(),
                             },
                             RegionCarrier {
-                                operand: CurvePathBooleanOperand2::Second,
+                                operand: CurveRegionBooleanOperand2::Second,
                                 loop_index: 0,
                                 fragment_index: 0,
                                 family: curve_geometry.family(),
@@ -11455,7 +11464,7 @@ mod certified_successor_tests {
                         policy,
                         carriers: vec![
                             RegionCarrier {
-                                operand: CurvePathBooleanOperand2::First,
+                                operand: CurveRegionBooleanOperand2::First,
                                 loop_index: 0,
                                 fragment_index: 0,
                                 family: chord_geometry.family(),
@@ -11472,7 +11481,7 @@ mod certified_successor_tests {
                                 bounds: OnceLock::new(),
                             },
                             RegionCarrier {
-                                operand: CurvePathBooleanOperand2::Second,
+                                operand: CurveRegionBooleanOperand2::Second,
                                 loop_index: 0,
                                 fragment_index: 0,
                                 family: parallel_geometry.family(),
@@ -11649,8 +11658,8 @@ mod certified_successor_tests {
                     second: &empty_second,
                     policy,
                     carriers: vec![
-                        algebraic_chord_carrier(CurvePathBooleanOperand2::First, first.clone()),
-                        algebraic_chord_carrier(CurvePathBooleanOperand2::Second, second.clone()),
+                        algebraic_chord_carrier(CurveRegionBooleanOperand2::First, first.clone()),
+                        algebraic_chord_carrier(CurveRegionBooleanOperand2::Second, second.clone()),
                     ],
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
@@ -12048,7 +12057,7 @@ mod certified_successor_tests {
                     policy,
                     carriers: vec![
                         RegionCarrier {
-                            operand: CurvePathBooleanOperand2::First,
+                            operand: CurveRegionBooleanOperand2::First,
                             loop_index: 0,
                             fragment_index: 0,
                             family: chord_geometry.family(),
@@ -12063,7 +12072,7 @@ mod certified_successor_tests {
                             bounds: OnceLock::new(),
                         },
                         RegionCarrier {
-                            operand: CurvePathBooleanOperand2::Second,
+                            operand: CurveRegionBooleanOperand2::Second,
                             loop_index: 0,
                             fragment_index: 0,
                             family: source_geometry.family(),
@@ -12271,7 +12280,7 @@ mod certified_successor_tests {
 
     fn injective_test_carrier() -> RegionCarrier {
         RegionCarrier {
-            operand: CurvePathBooleanOperand2::First,
+            operand: CurveRegionBooleanOperand2::First,
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::RationalBezier,
@@ -12287,7 +12296,7 @@ mod certified_successor_tests {
 
     fn noninjective_test_carrier() -> RegionCarrier {
         RegionCarrier {
-            operand: CurvePathBooleanOperand2::First,
+            operand: CurveRegionBooleanOperand2::First,
             loop_index: 0,
             fragment_index: 0,
             family: CurveFamily2::QuadraticBezier,
@@ -12339,7 +12348,7 @@ mod certified_successor_tests {
         semicircle: BezierAlgebraicCuspSemicircle2,
         start: Real,
         end: Real,
-        operand: CurvePathBooleanOperand2,
+        operand: CurveRegionBooleanOperand2,
         policy: &CurveContext,
     ) -> RegionCarrier {
         let fragment = decided(
@@ -12806,14 +12815,14 @@ mod certified_successor_tests {
                     first.clone(),
                     quarter.clone(),
                     three_quarters.clone(),
-                    CurvePathBooleanOperand2::First,
+                    CurveRegionBooleanOperand2::First,
                     &policy,
                 );
                 let second_carrier = cusp_test_carrier(
                     second,
                     second_start,
                     second_end,
-                    CurvePathBooleanOperand2::Second,
+                    CurveRegionBooleanOperand2::Second,
                     &policy,
                 );
                 let clipped = clip_cusp_parameter_overlap(
@@ -13649,9 +13658,9 @@ mod certified_successor_tests {
         let mut carriers = (0..4).map(|_| injective_test_carrier()).collect::<Vec<_>>();
         for (index, carrier) in carriers.iter_mut().enumerate() {
             carrier.operand = if index < 2 {
-                CurvePathBooleanOperand2::First
+                CurveRegionBooleanOperand2::First
             } else {
-                CurvePathBooleanOperand2::Second
+                CurveRegionBooleanOperand2::Second
             };
             carrier.fragment_index = index % 2;
         }

@@ -3,7 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurvePath2, LineSeg2, Point2, QuadraticBezier2, Real,
+    CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2,
+    QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -31,6 +32,22 @@ fn rectangle(x0: i32, y0: i32, x1: i32, y1: i32) -> CurvePath2 {
             .collect(),
     )
     .expect("benchmark rectangle is connected")
+}
+
+fn path_region(
+    path: &CurvePath2,
+    interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        std::slice::from_ref(path),
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+        &[interior_side],
+        policy,
+    )
+    .expect("benchmark path is a valid exact region boundary")
+    .into_value()
 }
 
 fn full_circle(center_x: i32) -> Curve2 {
@@ -225,7 +242,6 @@ fn main() {
         elapsed / spline_split_iterations
     );
 
-    let replay_iterations = 20_000_u32;
     let immediate_iterations = 2_000_u32;
     let started = Instant::now();
     let mut evidence_checksum = 0_usize;
@@ -268,58 +284,50 @@ fn main() {
 
     let partial_first = rectangle(0, 0, 2, 4);
     let partial_second = rectangle(2, 1, 4, 3);
+    let partial_first_region =
+        path_region(&partial_first, CurveBoundaryInteriorSide2::Left, &policy);
+    let partial_second_region =
+        path_region(&partial_second, CurveBoundaryInteriorSide2::Left, &policy);
     let boolean_iterations = 500_u32;
     let started = Instant::now();
     let mut boolean_checksum = 0_usize;
     for _ in 0..boolean_iterations {
-        let selections = partial_first
-            .boolean_selections(
-                &partial_second,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .expect("all immediate partial-overlap Booleans are exact")
+        let regions = partial_first_region
+            .boolean_regions(&partial_second_region, &policy)
+            .expect("all canonical partial-overlap Booleans are exact")
             .into_value();
         boolean_checksum ^= black_box(
-            selections.union().kept_fragment_count()
-                + selections.intersection().kept_fragment_count()
-                + selections.difference().kept_fragment_count()
-                + selections.xor().kept_fragment_count(),
+            regions.union().boundary_loops().len()
+                + regions.intersection().boundary_loops().len()
+                + regions.difference().boundary_loops().len()
+                + regions.xor().boundary_loops().len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_immediate_boolean_batch: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boolean_checksum}",
+        "curve_region_authoritative_boolean_batch: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boolean_checksum}",
         elapsed / boolean_iterations
     );
 
-    let partial_union = partial_first
-        .boolean_selection(
-            &partial_second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .expect("partial-overlap union selection is exact")
-        .into_value();
-    partial_union
-        .region_view()
-        .expect("partial-overlap union region is exact");
     let started = Instant::now();
     let mut partial_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let region = partial_union
-            .region_view()
-            .expect("cached partial-overlap union remains exact");
-        partial_checksum ^=
-            black_box(partial_union.kept_fragment_count() + region.boundary_loops().len());
+    for _ in 0..boolean_iterations {
+        let region = partial_first
+            .boolean_region(
+                &partial_second,
+                BooleanOp::Union,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .expect("partial-overlap union is exact")
+            .into_value();
+        partial_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_partial_line_overlap_union: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={partial_checksum}",
-        elapsed / replay_iterations
+        "curve_path_authoritative_partial_line_overlap_union: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={partial_checksum}",
+        elapsed / boolean_iterations
     );
 
     let partial_arc_first = CurvePath2::try_new(vec![
@@ -340,32 +348,25 @@ fn main() {
         ),
     ])
     .expect("benchmark circular-segment path is connected");
-    let partial_arc_union = partial_arc_first
-        .boolean_selection(
-            &partial_arc_second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .expect("partial-arc union selection is exact")
-        .into_value();
-    partial_arc_union
-        .region_view()
-        .expect("partial-arc union region is exact");
     let started = Instant::now();
     let mut partial_arc_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let region = partial_arc_union
-            .region_view()
-            .expect("cached partial-arc union remains exact");
-        partial_arc_checksum ^=
-            black_box(partial_arc_union.kept_fragment_count() + region.boundary_loops().len());
+    for _ in 0..boolean_iterations {
+        let region = partial_arc_first
+            .boolean_region(
+                &partial_arc_second,
+                BooleanOp::Union,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .expect("partial-arc union is exact")
+            .into_value();
+        partial_arc_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_partial_arc_overlap_union: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={partial_arc_checksum}",
-        elapsed / replay_iterations
+        "curve_path_authoritative_partial_arc_overlap_union: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={partial_arc_checksum}",
+        elapsed / boolean_iterations
     );
 
     let nonlinear_source = CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0));
@@ -381,32 +382,25 @@ fn main() {
             .expect("benchmark cubic subcurve is exact"),
         -6,
     );
-    let nonlinear_union = nonlinear_first
-        .boolean_selection(
-            &nonlinear_second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Right,
-            CurveBoundaryInteriorSide2::Right,
-            &policy,
-        )
-        .expect("partial nonlinear-overlap union selection is exact")
-        .into_value();
-    nonlinear_union
-        .region_view()
-        .expect("partial nonlinear-overlap union region is exact");
     let started = Instant::now();
     let mut nonlinear_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let region = nonlinear_union
-            .region_view()
-            .expect("cached partial nonlinear-overlap union remains exact");
-        nonlinear_checksum ^=
-            black_box(nonlinear_union.kept_fragment_count() + region.boundary_loops().len());
+    for _ in 0..boolean_iterations {
+        let region = nonlinear_first
+            .boolean_region(
+                &nonlinear_second,
+                BooleanOp::Union,
+                CurveBoundaryInteriorSide2::Right,
+                CurveBoundaryInteriorSide2::Right,
+                &policy,
+            )
+            .expect("partial nonlinear-overlap union is exact")
+            .into_value();
+        nonlinear_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_partial_nonlinear_overlap_union: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={nonlinear_checksum}",
-        elapsed / replay_iterations
+        "curve_path_authoritative_partial_nonlinear_overlap_union: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={nonlinear_checksum}",
+        elapsed / boolean_iterations
     );
 
     let lineage_source = Curve2::from(CubicBezier2::new(p(0, 0), p(1, 3), p(3, 3), p(4, 0)));
@@ -459,30 +453,24 @@ fn main() {
         CurvePath2::try_new(vec![first_circle]).expect("benchmark circle path is connected");
     let second_circle_path =
         CurvePath2::try_new(vec![second_circle]).expect("benchmark circle path is connected");
-    let circle_union = first_circle_path
-        .boolean_selection(
-            &second_circle_path,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .expect("benchmark circle union is exact")
-        .into_value();
-    circle_union
-        .region_view()
-        .expect("benchmark circle region is retained");
     let started = Instant::now();
     let mut circle_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let region = circle_union
-            .region_view()
-            .expect("cached circle region remains exact");
+    for _ in 0..boolean_iterations {
+        let region = first_circle_path
+            .boolean_region(
+                &second_circle_path,
+                BooleanOp::Union,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .expect("benchmark circle union is exact")
+            .into_value();
         circle_checksum ^= black_box(region.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_circle_union_region: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={circle_checksum}",
-        elapsed / replay_iterations
+        "curve_path_authoritative_circle_union_region: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={circle_checksum}",
+        elapsed / boolean_iterations
     );
 }

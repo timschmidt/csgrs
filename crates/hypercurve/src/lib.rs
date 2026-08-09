@@ -129,14 +129,15 @@ pub use bezier_parameter::{
     BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, CurveRegion2, CurveRegionArrangement2, CurveRegionArrangementStage2,
-    CurveRegionBoundaryLoop2, CurveRegionCertifiedParallelLoopEvidence2,
-    CurveRegionCertifiedParallelOffsetEvidence2, CurveRegionCertifiedParallelOffsetResult2,
-    CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
-    CurveRegionFragmentSource2, CurveRegionLineRoleEvidence2, CurveRegionLoopRole,
-    CurveRegionNativeContourView2, CurveRegionNestingRoleEvidence2, CurveRegionProfile2,
-    CurveRegionSegmentationLoopEvidence2, CurveRegionSegmentedOffsetEvidence2,
-    CurveRegionSegmentedOffsetResult2, CurveRegionSignedAreaRoleEvidence2,
+    BezierBoundaryLoop2, CurveBoundaryInteriorSide2, CurveRegion2, CurveRegionArrangement2,
+    CurveRegionArrangementStage2, CurveRegionBoundaryLoop2,
+    CurveRegionCertifiedParallelLoopEvidence2, CurveRegionCertifiedParallelOffsetEvidence2,
+    CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationEvidence2,
+    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentSource2,
+    CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNativeContourView2,
+    CurveRegionNestingRoleEvidence2, CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
+    CurveRegionSegmentedOffsetEvidence2, CurveRegionSegmentedOffsetResult2,
+    CurveRegionSignedAreaRoleEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -196,16 +197,13 @@ pub use curve_intersection::{
     CurveIntersectionTopology2,
 };
 pub use curve_path_intersection::{
-    CurveBoundaryInteriorSide2, CurvePathBooleanFragment2, CurvePathBooleanFragmentAction2,
-    CurvePathBooleanOperand2, CurvePathBooleanSelection2, CurvePathBooleanSelections2,
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
-    CurvePathIntersectionResult2, CurvePathIntersectionTopology2, CurvePathOverlapAction2,
-    CurvePathOverlapResolution2, CurvePathSplit2,
+    CurvePathIntersectionResult2, CurvePathIntersectionTopology2, CurvePathSplit2,
 };
 pub use curve_region_boolean::{
-    CurveRegionBooleanResults2, CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2,
-    CurveRegionIntersectionContact2, CurveRegionIntersectionOverlap2,
-    CurveRegionIntersectionResult2,
+    CurveRegionBooleanOperand2, CurveRegionBooleanResults2, CurveRegionCarrierRef2,
+    CurveRegionIntersectionBlocker2, CurveRegionIntersectionContact2,
+    CurveRegionIntersectionOverlap2, CurveRegionIntersectionResult2,
 };
 pub use curve_region_trim::{
     CurvePathRegionTrim2, CurvePathRegionTrimFragment2, CurveRegionBoundaryContact2,

@@ -67,10 +67,9 @@ use crate::{
     BezierParameterRange2, BezierRetainedLinearOverlapTraversal2,
     BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveCornerMode2,
-    CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
-    CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
+    CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2, CurveError,
+    CurveFamily2, CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome,
+    CurvePath2, CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
     ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
     RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierPointIncidence2,
     RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
@@ -693,6 +692,15 @@ impl PartialEq for CurveRegion2 {
                 && self.data.certified_regularized_filled_left_topology
                     == other.data.certified_regularized_filled_left_topology)
     }
+}
+
+/// Filled side of an oriented closed curve boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveBoundaryInteriorSide2 {
+    /// Material lies to the left while traversing the boundary.
+    Left,
+    /// Material lies to the right while traversing the boundary.
+    Right,
 }
 
 /// Material/hole role assigned to one retained Bezier boundary loop.
@@ -2060,6 +2068,17 @@ fn native_region_from_curve_paths(
         else {
             return Ok(None);
         };
+        // `Contour2` intentionally rejects a segment whose endpoints are the
+        // same, while `CircularArc2` uses that exact endpoint topology for a
+        // full circle. Such a circle is already represented losslessly by the
+        // canonical rational-conic boundary above; it is merely ineligible
+        // for the private line/arc specialization.
+        if segments.iter().any(|segment| match segment {
+            Segment2::Arc(arc) => arc.start() == arc.end(),
+            Segment2::Line(_) => false,
+        }) {
+            return Ok(None);
+        }
         let contour = Contour2::try_new_with_fill_rule(segments, *fill_rule)?;
         match role {
             CurveRegionLoopRole::Material => material.push(contour),
@@ -6489,7 +6508,7 @@ impl CurveRegion2 {
         })
     }
 
-    fn try_from_boundary_paths_with_loop_semantics_raw(
+    pub(crate) fn try_from_boundary_paths_with_loop_semantics_raw(
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
