@@ -4,11 +4,11 @@ use hypercurve::{
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, Real, RegionPointLocation,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, RealSign, RegionPointLocation,
 };
 #[cfg(feature = "predicates")]
 use hypercurve::{
-    CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2,
+    CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
     RationalBezierIntersectionPointEvidence2,
 };
 
@@ -139,6 +139,259 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
         vec![CurveBoundaryInteriorSide2::Left],
     )
     .unwrap()
+}
+
+#[cfg(feature = "predicates")]
+fn analytic_rational_arc_corner_region(
+    unit_end_weights: bool,
+    reversed: bool,
+    policy: &CurveContext,
+) -> (CurveRegion2, usize) {
+    let analytic = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
+    let analytic =
+        match BezierParallelFragment2::try_new(analytic, range(0, 1, policy), policy).unwrap() {
+            Classification::Decided(fragment) => BezierSplitFragment2::AnalyticParallel(fragment),
+            Classification::Uncertain(reason) => panic!("analytic arc fixture: {reason:?}"),
+        };
+    let arc = if unit_end_weights {
+        let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+        RationalQuadraticBezier2::try_unit_end_weights(
+            point(1, 1),
+            point(2, 1),
+            point(2, 2),
+            half_sqrt_two,
+        )
+        .unwrap()
+    } else {
+        RationalQuadraticBezier2::try_new(
+            point(1, 1),
+            point(2, 1),
+            point(2, 2),
+            Real::one(),
+            Real::one(),
+            Real::from(2_i8),
+        )
+        .unwrap()
+    };
+    let arc = BezierSplitFragment2::Materialized {
+        start: exact_parameter(0, policy),
+        end: exact_parameter(1, policy),
+        curve: BezierSubcurve2::RationalQuadratic(arc),
+    };
+    let lower_right = point(2, -1);
+    let mut fragments = vec![
+        analytic,
+        arc,
+        materialized_line(point(2, 2), lower_right.clone(), policy),
+        materialized_line(lower_right, point(0, 0), policy),
+    ];
+    if reversed {
+        fragments = fragments
+            .into_iter()
+            .rev()
+            .map(|fragment| fragment.reversed().unwrap())
+            .collect();
+    }
+    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+    let region = CurveRegion2::try_new_with_loop_topology(
+        vec![boundary],
+        vec![CurveRegionLoopRole::Material],
+        vec![FillRule::NonZero],
+        vec![if reversed {
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        }],
+    )
+    .unwrap();
+    (region, if reversed { 3 } else { 1 })
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let solved = source
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        vertex_index,
+                        (Real::one() / Real::from(4_i8)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("retained rational-arc/analytic fillet must decide: {error:?}")
+                    });
+                let candidates = match solved.value {
+                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                    CurveCornerSolutions2::Multiple(candidates) => candidates,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("retained rational-arc/analytic fillet has no solution: {reason:?}")
+                    }
+                };
+                assert!(!candidates.is_empty());
+                for candidate in candidates {
+                    assert!(candidate.boundary_loops()[0].fragments().iter().any(
+                        |fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        )
+                    ));
+                    let disjoint = analytic_square(5, 6, &policy);
+                    let replay = candidate
+                        .boolean_regions(&disjoint, &policy)
+                        .expect("the retained mixed fillet must re-enter the Boolean kernel")
+                        .into_value();
+                    assert!(replay.intersection().is_empty());
+                    assert_eq!(replay.union().boundary_loops().len(), 2);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
+    let center = point(1, 2);
+    let source = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1));
+    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let mut contact_count = 0;
+        for distance in [quarter.clone(), -quarter.clone()] {
+            let parallel = source.parallel_left(distance.clone()).unwrap();
+            let radius_scale = Real::one() - distance;
+            let scaled = |point: Point2| {
+                let radial = point.delta_from(&center);
+                center.translated(&radial.0 * &radius_scale, &radial.1 * &radius_scale)
+            };
+            let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
+                scaled(point(1, 1)),
+                scaled(point(2, 1)),
+                scaled(point(2, 2)),
+                half_sqrt_two.clone(),
+            )
+            .unwrap()
+            .into();
+            let intersections = match parallel.intersections(&circle, &policy).unwrap() {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    panic!("analytic/circle intersection remained uncertain: {reason:?}")
+                }
+            };
+            assert!(intersections.is_complete());
+            contact_count += intersections.contacts().len();
+        }
+        assert_eq!(contact_count, 1);
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
+    let source = QuadraticBezier2::new(point(-2, 0), point(0, 0), point(2, 0));
+    let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+    let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
+        point(1, 0),
+        point(1, 1),
+        point(0, 1),
+        half_sqrt_two,
+    )
+    .unwrap()
+    .into();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let intersections = match parallel.intersections(&circle, &policy).unwrap() {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                panic!("analytic/circle tangency remained uncertain: {reason:?}")
+            }
+        };
+        assert!(intersections.is_complete());
+        let [contact] = intersections.contacts() else {
+            panic!("analytic/circle tangency must retain exactly one contact")
+        };
+        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+        assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Negative));
+        assert!(!contact.is_certified_transverse());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_circle_fast_path_excludes_other_support_contacts() {
+    let source = QuadraticBezier2::new(point(-2, -1), point(0, -1), point(2, -1));
+    let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+    let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
+        point(1, 0),
+        point(1, 1),
+        point(0, 1),
+        half_sqrt_two,
+    )
+    .unwrap()
+    .into();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let intersections = match parallel.intersections(&circle, &policy).unwrap() {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                panic!("analytic/circle span filtering remained uncertain: {reason:?}")
+            }
+        };
+        assert!(intersections.is_complete());
+        let [contact] = intersections.contacts() else {
+            panic!("one of two supporting-circle contacts lies on the retained quarter")
+        };
+        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Positive));
+        assert!(contact.is_certified_transverse());
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
+    let radius = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let solved = source
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        vertex_index,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("past-center arc fillet must decide: {error:?}")
+                    });
+                let candidates = match solved.value {
+                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                    CurveCornerSolutions2::Multiple(candidates) => candidates,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("past-center arc fillet has no solution: {reason:?}")
+                    }
+                };
+                assert!(candidates.iter().all(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                        })
+                }));
+            }
+        }
+    }
 }
 
 #[cfg(feature = "predicates")]

@@ -1449,7 +1449,10 @@ fn retain_rational_contact_tangent_cross_signs(
                 None => None,
             };
             let mut contact = contact.clone();
-            contact.certified_transverse |= tangent_cross_sign.is_some();
+            contact.certified_transverse |= matches!(
+                tangent_cross_sign,
+                Some(RealSign::Positive | RealSign::Negative)
+            );
             contact.tangent_cross_sign = tangent_cross_sign;
             retained.push(contact);
         }
@@ -7984,7 +7987,17 @@ impl RationalParameterImageMap2 {
         &mut self,
         source: &BezierParameter2,
     ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        let strict_policy = self.policy.strict_counterpart();
         if let Some(source) = source.as_exact() {
+            let strict = exact_rational_parameter_image(
+                source,
+                &self.coefficients.0,
+                &self.coefficients.1,
+                &strict_policy,
+            )?;
+            if strict.is_decided() || !self.policy.permits_approximate_512() {
+                return Ok(strict);
+            }
             return exact_rational_parameter_image(
                 source,
                 &self.coefficients.0,
@@ -8006,17 +8019,35 @@ impl RationalParameterImageMap2 {
             let candidate = match conic_parameter_candidate(
                 source_polynomial,
                 &self.coefficients,
-                &self.policy,
+                &strict_policy,
             )? {
                 Classification::Decided(candidate) => candidate,
-                Classification::Uncertain(reason) => {
+                Classification::Uncertain(reason) if !self.policy.permits_approximate_512() => {
                     return Ok(Classification::Uncertain(reason));
                 }
+                Classification::Uncertain(_) => match conic_parameter_candidate(
+                    source_polynomial,
+                    &self.coefficients,
+                    &self.policy,
+                )? {
+                    Classification::Decided(candidate) => candidate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
             };
             self.candidates
                 .push((source_polynomial.to_vec(), candidate));
             self.candidates.len() - 1
         };
+        let strict = real_coefficient_rational_image_parameter(
+            &BezierParameter2::Algebraic(source.clone()),
+            &self.candidates[candidate_index].1,
+            &strict_policy,
+        )?;
+        if strict.is_decided() || !self.policy.permits_approximate_512() {
+            return Ok(strict);
+        }
         real_coefficient_rational_image_parameter(
             &BezierParameter2::Algebraic(source.clone()),
             &self.candidates[candidate_index].1,
