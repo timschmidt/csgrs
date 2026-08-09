@@ -1756,12 +1756,19 @@ impl RationalBezier2 {
         if let Some(line) = self.retained_exact_line_image() {
             return Some(line.clone());
         }
-        if self.degree() != 2 || self.weights().iter().any(|weight| weight != &Real::one()) {
+        if self.weights().iter().any(|weight| weight != &Real::one()) {
             return None;
         }
-        let half = (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
         let line = LineSeg2::try_new(self.start().clone(), self.end().clone()).ok()?;
-        (self.control_points()[1] == line.point_at(half)).then_some(line)
+        match self.degree() {
+            1 => Some(line),
+            2 => {
+                let half =
+                    (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
+                (self.control_points()[1] == line.point_at(half)).then_some(line)
+            }
+            _ => None,
+        }
     }
 
     /// Returns exact homogeneous weights in Bernstein order.
@@ -8864,6 +8871,22 @@ mod tests {
     #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    fn unit_weight_degree_one_curve_exposes_its_exact_line_parameterization() {
+        let start = Point2::new(Real::from(-2_i8), Real::from(3_i8));
+        let end = Point2::new(Real::from(5_i8), Real::from(-7_i8));
+        let curve = RationalBezier2::try_new(
+            vec![start.clone(), end.clone()],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+
+        assert_eq!(
+            curve.exact_linear_parameterization_line(),
+            Some(LineSeg2::try_new(start, end).unwrap())
+        );
     }
 
     #[test]

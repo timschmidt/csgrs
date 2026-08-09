@@ -2034,6 +2034,13 @@ impl CurvePath2 {
                 && solution.previous.placement == CornerPlacement2::Trim
                 && solution.next.placement == CornerPlacement2::Trim
             {
+                let center = solution.center.as_exact().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous.family(),
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?;
                 self.fillet_vertex_by_parameters_raw(
                     vertex_index,
                     solution
@@ -2046,7 +2053,7 @@ impl CurvePath2 {
                         .exact_parameter()
                         .cloned()
                         .expect("line fillet cuts retain affine parameters"),
-                    &solution.center,
+                    center,
                     solution.clockwise,
                     policy,
                 )
@@ -2079,10 +2086,17 @@ impl CurvePath2 {
                         crate::UncertaintyReason::Unsupported,
                     )
                 })?;
+                let center = solution.center.as_exact().cloned().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous.family(),
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?;
                 let fillet = Curve2::from(CircularArc2::new_with_certified_radius(
                     previous_point,
                     next_point,
-                    solution.center,
+                    center,
                     &radius * &radius,
                     solution.clockwise,
                     None,
@@ -3423,19 +3437,35 @@ impl ChamferCorner2 {
 pub(crate) struct FilletCorner2 {
     previous: CornerCut2,
     next: CornerCut2,
-    center: Point2,
+    center: RationalBezierIntersectionPointEvidence2,
     clockwise: bool,
+    retained_frame: Option<RetainedFilletFrame2>,
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(not(feature = "predicates"), allow(dead_code))]
+pub(crate) struct RetainedFilletFrame2 {
+    pub(crate) anchor_is_previous: bool,
+    pub(crate) unit_normal: (Real, Real),
+    pub(crate) radial_distance: Real,
 }
 
 impl FilletCorner2 {
     pub(crate) fn into_retained_cut_evidence(
         self,
-    ) -> Option<(CornerTrimCut2, CornerTrimCut2, Point2, bool)> {
+    ) -> Option<(
+        CornerTrimCut2,
+        CornerTrimCut2,
+        RationalBezierIntersectionPointEvidence2,
+        bool,
+        Option<RetainedFilletFrame2>,
+    )> {
         Some((
             self.previous.into_retained_evidence()?,
             self.next.into_retained_evidence()?,
             self.center,
             self.clockwise,
+            self.retained_frame,
         ))
     }
 }
@@ -3922,6 +3952,17 @@ enum PreparedFilletCarrier2<'a> {
     Bezier {
         source: ExactCornerBezier2<'a>,
     },
+    #[cfg(feature = "predicates")]
+    AlgebraicCusp {
+        source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
+    },
+    #[cfg(feature = "predicates")]
+    AlgebraicChordLine {
+        source: &'a crate::BezierAlgebraicChord2,
+        support: LineSeg2,
+        unit_x: Real,
+        unit_y: Real,
+    },
 }
 
 impl<'a> PreparedFilletCarrier2<'a> {
@@ -3966,9 +4007,36 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 source: ExactCornerBezier2::NativeSpan(fragment),
             }),
             #[cfg(feature = "predicates")]
-            ExactCornerCarrier2::AlgebraicChord(_)
-            | ExactCornerCarrier2::AnalyticParallel(_)
-            | ExactCornerCarrier2::AlgebraicCusp(_) => Err(ExactCurveError::blocked(
+            ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
+            #[cfg(feature = "predicates")]
+            ExactCornerCarrier2::AlgebraicChord(source) => {
+                let support = source
+                    .exact_line()
+                    .or_else(|| source.strict_provenance_support_line(policy))
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            crate::UncertaintyReason::Unsupported,
+                        )
+                    })?;
+                let (unit_x, unit_y) = if let Some(unit) = source.certified_unit_tangent() {
+                    unit
+                } else {
+                    let (dx, dy) = support.delta();
+                    let (unit_x, unit_y, _) =
+                        line_unit_direction(&dx, &dy, CurveOperation2::Fillet, family, policy)?;
+                    (unit_x, unit_y)
+                };
+                Ok(Self::AlgebraicChordLine {
+                    source,
+                    support,
+                    unit_x,
+                    unit_y,
+                })
+            }
+            #[cfg(feature = "predicates")]
+            ExactCornerCarrier2::AnalyticParallel(_) => Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 family,
                 crate::UncertaintyReason::Unsupported,
@@ -3999,7 +4067,13 @@ impl<'a> PreparedFilletCarrier2<'a> {
                         .translated(offset_x.clone(), offset_y.clone()),
                     source.end().translated(offset_x, offset_y),
                 );
-                Ok(FilletOffsetCarrier2::Line { source, support })
+                Ok(FilletOffsetCarrier2::Line {
+                    source,
+                    support,
+                    unit_x,
+                    unit_y,
+                    signed_distance: signed_distance.clone(),
+                })
             }
             Self::Arc { source, radius } => {
                 let support = source.support();
@@ -4035,6 +4109,55 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     family,
                 )?,
             }),
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicCusp { source } => {
+                let support =
+                    match source
+                        .offset_left(signed_distance, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })? {
+                        Classification::Decided(Some(support)) => support,
+                        Classification::Decided(None) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                family,
+                                crate::UncertaintyReason::Boundary,
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                family,
+                                reason,
+                            ));
+                        }
+                    };
+                Ok(FilletOffsetCarrier2::AlgebraicCusp { source, support })
+            }
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordLine {
+                source,
+                support,
+                unit_x,
+                unit_y,
+            } => {
+                let offset_x = -unit_y * signed_distance;
+                let offset_y = unit_x * signed_distance;
+                let support = LineSeg2::new_unchecked(
+                    support
+                        .start()
+                        .translated(offset_x.clone(), offset_y.clone()),
+                    support.end().translated(offset_x, offset_y),
+                );
+                Ok(FilletOffsetCarrier2::AlgebraicChordLine {
+                    source,
+                    support,
+                    unit_x,
+                    unit_y,
+                    signed_distance: signed_distance.clone(),
+                })
+            }
         }
     }
 }
@@ -4043,6 +4166,9 @@ enum FilletOffsetCarrier2<'a, 'b> {
     Line {
         source: &'a LineSeg2,
         support: LineSeg2,
+        unit_x: &'b Real,
+        unit_y: &'b Real,
+        signed_distance: Real,
     },
     Arc {
         source: &'b ExactCornerArc2<'a>,
@@ -4056,16 +4182,55 @@ enum FilletOffsetCarrier2<'a, 'b> {
         source: ExactCornerBezier2<'a>,
         support: BezierParallel2,
     },
+    #[cfg(feature = "predicates")]
+    AlgebraicCusp {
+        source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
+        support: crate::BezierAlgebraicCuspSemicircleFragment2,
+    },
+    #[cfg(feature = "predicates")]
+    AlgebraicChordLine {
+        source: &'a crate::BezierAlgebraicChord2,
+        support: LineSeg2,
+        unit_x: &'b Real,
+        unit_y: &'b Real,
+        signed_distance: Real,
+    },
+}
+
+impl FilletOffsetCarrier2<'_, '_> {
+    fn retained_arc_frame(&self, anchor_is_previous: bool) -> Option<RetainedFilletFrame2> {
+        let (unit_x, unit_y, signed_distance) = match self {
+            Self::Line {
+                unit_x,
+                unit_y,
+                signed_distance,
+                ..
+            } => (*unit_x, *unit_y, signed_distance),
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChordLine {
+                unit_x,
+                unit_y,
+                signed_distance,
+                ..
+            } => (*unit_x, *unit_y, signed_distance),
+            _ => return None,
+        };
+        Some(RetainedFilletFrame2 {
+            anchor_is_previous,
+            unit_normal: (-unit_y.clone(), unit_x.clone()),
+            radial_distance: -signed_distance.clone(),
+        })
+    }
 }
 
 struct FilletCenterWitness2 {
-    point: Point2,
-    previous_parameter: Option<Real>,
-    next_parameter: Option<Real>,
+    point: RationalBezierIntersectionPointEvidence2,
+    previous_parameter: Option<CurveRegionParameter2>,
+    next_parameter: Option<CurveRegionParameter2>,
 }
 
 impl FilletCenterWitness2 {
-    fn parameter(&self, previous: bool) -> Option<&Real> {
+    fn parameter(&self, previous: bool) -> Option<&CurveRegionParameter2> {
         if previous {
             self.previous_parameter.as_ref()
         } else {
@@ -4165,33 +4330,22 @@ fn solve_carrier_fillet_corner(
                 saw_outside_domain = true;
                 continue;
             };
-            let previous_point = previous_cut.exact_point().ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                )
-            })?;
-            let next_point = next_cut.exact_point().ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    next_family,
-                    crate::UncertaintyReason::Unsupported,
-                )
-            })?;
-            match crate::classify::is_zero(&previous_point.distance_squared(next_point), policy) {
-                Some(true) => saw_degenerate = true,
-                Some(false) => candidates.push(FilletCorner2 {
+            match previous_cut.point.same_point(&next_cut.point, policy) {
+                Classification::Decided(true) => saw_degenerate = true,
+                Classification::Decided(false) => candidates.push(FilletCorner2 {
                     previous: previous_cut,
                     next: next_cut,
                     center: center.point.clone(),
                     clockwise,
+                    retained_frame: previous_offset
+                        .retained_arc_frame(true)
+                        .or_else(|| next_offset.retained_arc_frame(false)),
                 }),
-                None => {
+                Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
                         previous_family,
-                        crate::UncertaintyReason::RealSign,
+                        reason,
                     ));
                 }
             }
@@ -4215,6 +4369,8 @@ fn fillet_offset_centers(
     next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCenters2> {
+    let exact_parameter =
+        |parameter| CurveRegionParameter2::from_bezier(BezierParameter2::Exact(parameter));
     let mut centers = FilletCenters2::default();
     match (previous, next) {
         (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
@@ -4265,14 +4421,15 @@ fn fillet_offset_centers(
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
             })?;
-            let mut push = |point, parameter| {
+            let mut push = |point: Point2, parameter: Real| {
+                let parameter = exact_parameter(parameter);
                 let (previous_parameter, next_parameter) = if line_is_previous {
                     (Some(parameter), None)
                 } else {
                     (None, Some(parameter))
                 };
                 centers.push(FilletCenterWitness2 {
-                    point,
+                    point: point.into(),
                     previous_parameter,
                     next_parameter,
                 });
@@ -4324,7 +4481,7 @@ fn fillet_offset_centers(
             crate::CircleCircleRelation::Disjoint => {}
             crate::CircleCircleRelation::Tangent { point } => {
                 centers.push(FilletCenterWitness2 {
-                    point,
+                    point: point.into(),
                     previous_parameter: None,
                     next_parameter: None,
                 });
@@ -4334,12 +4491,12 @@ fn fillet_offset_centers(
                 second_point,
             } => {
                 centers.push(FilletCenterWitness2 {
-                    point: first_point,
+                    point: first_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
                 });
                 centers.push(FilletCenterWitness2 {
-                    point: second_point,
+                    point: second_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
                 });
@@ -4425,12 +4582,18 @@ fn fillet_offset_centers(
                     },
                 )?;
                 let (previous_parameter, next_parameter) = if bezier_is_previous {
-                    (Some(parameter), Some(line_parameter))
+                    (
+                        Some(exact_parameter(parameter)),
+                        Some(exact_parameter(line_parameter)),
+                    )
                 } else {
-                    (Some(line_parameter), Some(parameter))
+                    (
+                        Some(exact_parameter(line_parameter)),
+                        Some(exact_parameter(parameter)),
+                    )
                 };
                 centers.push(FilletCenterWitness2 {
-                    point,
+                    point: point.into(),
                     previous_parameter,
                     next_parameter,
                 });
@@ -4504,9 +4667,10 @@ fn fillet_offset_centers(
                     policy,
                 )?;
                 centers.push(FilletCenterWitness2 {
-                    point,
-                    previous_parameter: bezier_is_previous.then_some(parameter.clone()),
-                    next_parameter: (!bezier_is_previous).then_some(parameter),
+                    point: point.into(),
+                    previous_parameter: bezier_is_previous
+                        .then(|| exact_parameter(parameter.clone())),
+                    next_parameter: (!bezier_is_previous).then(|| exact_parameter(parameter)),
                 });
             }
         }
@@ -4574,11 +4738,153 @@ fn fillet_offset_centers(
                     policy,
                 )?;
                 centers.push(FilletCenterWitness2 {
-                    point,
-                    previous_parameter: Some(previous_parameter),
-                    next_parameter: Some(next_parameter),
+                    point: point.into(),
+                    previous_parameter: Some(exact_parameter(previous_parameter)),
+                    next_parameter: Some(exact_parameter(next_parameter)),
                 });
             }
+        }
+        #[cfg(feature = "predicates")]
+        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
+        | (
+            FilletOffsetCarrier2::AlgebraicChordLine { .. },
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+        )
+        | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Line { .. })
+        | (
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+            FilletOffsetCarrier2::AlgebraicChordLine { .. },
+        ) => {
+            let (line, cusp, line_is_previous, retained_chord) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::Line { support, .. },
+                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
+                ) => (support, cusp, true, false),
+                (
+                    FilletOffsetCarrier2::AlgebraicChordLine { support, .. },
+                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
+                ) => (support, cusp, true, true),
+                (
+                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
+                    FilletOffsetCarrier2::Line { support, .. },
+                ) => (support, cusp, false, false),
+                (
+                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
+                    FilletOffsetCarrier2::AlgebraicChordLine { support, .. },
+                ) => (support, cusp, false, true),
+                _ => unreachable!(),
+            };
+            let rational_line = RationalBezier2::try_new(
+                vec![line.start().clone(), line.end().clone()],
+                vec![Real::one(), Real::one()],
+            )
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+            })?;
+            let result = cusp
+                .semicircle()
+                .rational_intersections_with_parameter_map(&rational_line, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })?;
+            let (intersections, parameter_map) = match result {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    ));
+                }
+            };
+            let crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                contacts,
+            ) = intersections
+            else {
+                return match intersections {
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
+                        Err(ExactCurveError::invalid(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            CurveError::Topology(
+                                "a nonzero selected fillet offset circle overlapped a line".into(),
+                            ),
+                        ))
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                        Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            crate::UncertaintyReason::Unsupported,
+                        ))
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => unreachable!(),
+                };
+            };
+            for contact in contacts {
+                let cusp_parameter = match contact.location {
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                            Real::zero(),
+                        )
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                            Real::one(),
+                        )
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior => parameter_map
+                        .as_ref()
+                        .expect("an interior selected-circle contact retains its parameter map")
+                        .contact_parameter(&contact),
+                };
+                match cusp
+                    .contains_parameter(&cusp_parameter, true, true, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                    })? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                }
+                let line_parameter = (!retained_chord)
+                    .then(|| CurveRegionParameter2::from_bezier(contact.other_parameter.clone()));
+                let cusp_parameter = CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
+                let (previous_parameter, next_parameter) = if line_is_previous {
+                    (line_parameter, Some(cusp_parameter))
+                } else {
+                    (Some(cusp_parameter), line_parameter)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point,
+                    previous_parameter,
+                    next_parameter,
+                });
+            }
+        }
+        #[cfg(feature = "predicates")]
+        (FilletOffsetCarrier2::AlgebraicCusp { .. }, _)
+        | (_, FilletOffsetCarrier2::AlgebraicCusp { .. }) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                previous_family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+        #[cfg(feature = "predicates")]
+        (FilletOffsetCarrier2::AlgebraicChordLine { .. }, _)
+        | (_, FilletOffsetCarrier2::AlgebraicChordLine { .. }) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                previous_family,
+                crate::UncertaintyReason::Unsupported,
+            ));
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Line { .. }) => {
             unreachable!("line/line fillets use the specialized exact fast path")
@@ -4606,8 +4912,22 @@ fn point_on_fillet_offset(
             )),
         };
     }
+    #[cfg(feature = "predicates")]
+    if matches!(support, FilletOffsetCarrier2::AlgebraicCusp { .. }) {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
     let residual = match support {
         FilletOffsetCarrier2::Line { support, .. } => {
+            let (dx, dy) = support.delta();
+            let from_start = point.delta_from(support.start());
+            &dx * &from_start.1 - &dy * &from_start.0
+        }
+        #[cfg(feature = "predicates")]
+        FilletOffsetCarrier2::AlgebraicChordLine { support, .. } => {
             let (dx, dy) = support.delta();
             let from_start = point.delta_from(support.start());
             &dx * &from_start.1 - &dy * &from_start.0
@@ -4619,6 +4939,8 @@ fn point_on_fillet_offset(
         } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
         FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
         FilletOffsetCarrier2::Bezier { .. } => unreachable!(),
+        #[cfg(feature = "predicates")]
+        FilletOffsetCarrier2::AlgebraicCusp { .. } => unreachable!(),
     };
     crate::classify::is_zero(&residual, policy).ok_or_else(|| {
         ExactCurveError::blocked(
@@ -4630,31 +4952,94 @@ fn point_on_fillet_offset(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg_attr(not(feature = "predicates"), allow(unused_variables))]
 fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
-    center: &Point2,
-    retained_parameter: Option<&Real>,
+    center: &RationalBezierIntersectionPointEvidence2,
+    retained_parameter: Option<&CurveRegionParameter2>,
     previous: bool,
     mode: CurveCornerMode2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
     match offset {
-        FilletOffsetCarrier2::Line { source, .. } => {
+        FilletOffsetCarrier2::Line {
+            source,
+            unit_x,
+            unit_y,
+            signed_distance,
+            ..
+        } => {
             let parameter = retained_parameter
                 .expect("a line offset intersection retains its affine parameter")
                 .clone();
-            Ok(corner_parameter_placement(
-                &parameter,
-                previous,
-                mode,
-                CurveOperation2::Fillet,
-                family,
-                policy,
-            )?
-            .map(|placement| CornerCut2 {
-                point: source.point_at(parameter.clone()).into(),
-                parameter: exact_corner_parameter(parameter),
+            let bezier_parameter = parameter.as_bezier_parameter().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })?;
+            let placement = if let Some(parameter) = bezier_parameter.as_exact() {
+                corner_parameter_placement(
+                    parameter,
+                    previous,
+                    mode,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                )?
+            } else if mode == CurveCornerMode2::TrimOnly
+                && bezier_trim_parameter_is_interior(
+                    bezier_parameter,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                )?
+            {
+                Some(CornerPlacement2::Trim)
+            } else {
+                None
+            };
+            let Some(placement) = placement else {
+                return Ok(None);
+            };
+            let point = if let Some(parameter) = bezier_parameter.as_exact() {
+                source.point_at(parameter.clone()).into()
+            } else {
+                {
+                    #[cfg(feature = "predicates")]
+                    {
+                        match crate::BezierAlgebraicChord2::translated_endpoint(
+                            center,
+                            &(signed_distance * *unit_y),
+                            &(-(signed_distance * *unit_x)),
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })? {
+                            Classification::Decided(point) => point,
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    family,
+                                    reason,
+                                ));
+                            }
+                        }
+                    }
+                    #[cfg(not(feature = "predicates"))]
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    ));
+                }
+            };
+            Ok(Some(CornerCut2 {
+                point,
+                parameter: Some(parameter),
                 placement,
             }))
         }
@@ -4663,6 +5048,13 @@ fn fillet_cut_from_center(
             source_radius,
             signed_radius,
         } => {
+            let center = center.as_exact().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })?;
             let scale = (*source_radius / signed_radius).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
             })?;
@@ -4680,7 +5072,15 @@ fn fillet_cut_from_center(
         FilletOffsetCarrier2::Bezier { source, support } => {
             let parameter = retained_parameter
                 .expect("a represented Bezier offset intersection retains its source parameter")
-                .clone();
+                .as_exact()
+                .cloned()
+                .ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?;
             let Some(placement) = corner_parameter_placement(
                 &parameter,
                 previous,
@@ -4704,6 +5104,142 @@ fn fillet_cut_from_center(
                 point: point.into(),
                 parameter: exact_corner_parameter(source.public_parameter(&parameter)),
                 placement,
+            }))
+        }
+        #[cfg(feature = "predicates")]
+        FilletOffsetCarrier2::AlgebraicCusp { source, support } => {
+            let parameter = retained_parameter
+                .expect("a selected-circle offset contact retains its local parameter")
+                .as_algebraic_cusp()
+                .cloned()
+                .ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?;
+            match source
+                .contains_parameter(&parameter, false, false, policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => return Ok(None),
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            }
+            let point = match parameter
+                .concentric_offset_point_evidence(support.semicircle(), source.semicircle(), policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(Some(point)) => point,
+                Classification::Decided(None) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            Ok(Some(CornerCut2 {
+                point,
+                parameter: Some(CurveRegionParameter2::from_algebraic_cusp(parameter)),
+                placement: CornerPlacement2::Trim,
+            }))
+        }
+        #[cfg(feature = "predicates")]
+        FilletOffsetCarrier2::AlgebraicChordLine {
+            source,
+            unit_x,
+            unit_y,
+            signed_distance,
+            ..
+        } => {
+            if mode != CurveCornerMode2::TrimOnly {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let point = match crate::BezierAlgebraicChord2::translated_endpoint(
+                center,
+                &(signed_distance * *unit_y),
+                &(-(signed_distance * *unit_x)),
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            let parameter = match source
+                .parameter_at_certified_point(point.clone(), policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(None),
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            let start = source.start_parameter();
+            let end = source.end_parameter();
+            let after_start = match parameter
+                .cmp_by_refinement(&start, policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(order) => order == std::cmp::Ordering::Greater,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            let before_end = match parameter
+                .cmp_by_refinement(&end, policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(order) => order == std::cmp::Ordering::Less,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            if !after_start || !before_end {
+                return Ok(None);
+            }
+            Ok(Some(CornerCut2 {
+                point,
+                parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+                placement: CornerPlacement2::Trim,
             }))
         }
     }
@@ -4842,8 +5378,9 @@ fn solve_line_fillet_corner(
                     point: next_point.into(),
                     placement: next_placement,
                 },
-                center,
+                center: center.into(),
                 clockwise,
+                retained_frame: None,
             }),
             None => {
                 return Err(ExactCurveError::blocked(

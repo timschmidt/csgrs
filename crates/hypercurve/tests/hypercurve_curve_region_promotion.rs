@@ -3044,6 +3044,147 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
+    let clipping_region = |policy: &CurveContext| {
+        let points = [
+            Point2::new(-Real::one(), -Real::one()),
+            Point2::new(q(3, 4), -Real::one()),
+            Point2::new(q(3, 4), Real::from(2)),
+            Point2::new(-Real::one(), Real::from(2)),
+            Point2::new(-Real::one(), -Real::one()),
+        ];
+        let contour = Contour2::try_new(
+            points
+                .windows(2)
+                .map(|edge| {
+                    Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+                })
+                .collect(),
+        )
+        .unwrap();
+        CurveRegion2::try_from_native_material_contours(vec![contour], policy)
+            .unwrap()
+            .into_value()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let rounded = axis_aligned_algebraic_rectangle(&policy)
+            .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)
+            .expect("the selected-field round source must remain exact")
+            .into_value();
+        let clipped = rounded
+            .boolean_regions(&clipping_region(&policy), &policy)
+            .expect("the native line must clip the selected circle exactly");
+        assert_eq!(clipped.certainty, CurveCertainty::Certified);
+        let clipped = clipped.value.intersection().clone();
+        let fragments = clipped.boundary_loops()[0].fragments();
+        let fragment_count = fragments.len();
+        let fragment_kinds = fragments
+            .iter()
+            .map(|fragment| match fragment {
+                BezierSplitFragment2::Materialized { .. } => "materialized",
+                BezierSplitFragment2::AlgebraicEndpointImages { .. } => "endpoint-images",
+                BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
+                BezierSplitFragment2::AlgebraicChord(_) => "chord",
+                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
+                BezierSplitFragment2::Unresolved { .. } => "unresolved",
+            })
+            .collect::<Vec<_>>();
+        let corners = (0..fragment_count)
+            .filter(|index| {
+                let previous = &fragments[(index + fragment_count - 1) % fragment_count];
+                let next = &fragments[*index];
+                matches!(
+                    (previous, next),
+                    (
+                        BezierSplitFragment2::AlgebraicChord(_),
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                    ) | (
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                        BezierSplitFragment2::AlgebraicChord(_)
+                    )
+                )
+            })
+            .collect::<Vec<_>>();
+        if corners.is_empty() {
+            panic!(
+                "the clipped round boundary must publish a support-chord/circle corner: {fragment_kinds:?}"
+            );
+        }
+        let cusp_count = fragments
+            .iter()
+            .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+            .count();
+
+        let mut outcomes = Vec::new();
+        let mut filleted = Vec::new();
+        for corner in corners {
+            let result = clipped
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    q(1, 100),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "selected-circle/support-chord corner {corner} must retain its exact fillet center: {error:?}"
+                    )
+                });
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidate_count = result.value.candidate_count();
+            let no_solution_reason = result.value.no_solution_reason();
+            match result.value {
+                CurveCornerSolutions2::Unique(region) => {
+                    filleted.push((corner, region));
+                }
+                CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {
+                    outcomes.push((corner, candidate_count, no_solution_reason));
+                }
+            }
+        }
+        assert_eq!(
+            filleted.len(),
+            2,
+            "both transverse selected-circle/support-chord orientations must have one fillet: {outcomes:?}"
+        );
+        for (_, filleted) in filleted {
+            assert_eq!(
+                filleted.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                    })
+                    .count(),
+                cusp_count + 1,
+            );
+            assert_eq!(
+                certified(
+                    filleted
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                        .unwrap(),
+                ),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+
+            let disjoint =
+                CurveRegion2::try_from_native_material_contours(vec![square(2, 2, 3, 3)], &policy)
+                    .unwrap()
+                    .into_value();
+            let replay = filleted
+                .boolean_regions(&disjoint, &policy)
+                .expect("the retained algebraic fillet must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+            assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn exact_support_cutter_reenters_correlated_chord_collinearly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = axis_aligned_algebraic_rectangle(&policy);
