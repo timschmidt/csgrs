@@ -3132,7 +3132,11 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
                         "selected-circle/support-chord corner {corner} must retain its exact fillet center: {error:?}"
                     )
                 });
-            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                result.certainty,
+                CurveCertainty::Certified,
+                "policy={policy:?}, corner={corner}"
+            );
             let candidate_count = result.value.candidate_count();
             let no_solution_reason = result.value.no_solution_reason();
             match result.value {
@@ -3179,6 +3183,261 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert_eq!(replay.value.union().boundary_loops().len(), 2);
             assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+fn analytic_parallel_cap_region(policy: &CurveContext) -> CurveRegion2 {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
+        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+        Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+    ])
+    .unwrap();
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
+    let source = |policy: &CurveContext| {
+        analytic_parallel_cap_region(policy)
+            .offset(q(1, 10), &OffsetCornerStyle2::Bevel, policy)
+            .unwrap()
+            .into_value()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let expected_certainty = if policy == CurveContext::STRICT {
+            CurveCertainty::Certified
+        } else {
+            CurveCertainty::Approximate512Consumed
+        };
+        let region = source(&policy);
+        let fragments = region.boundary_loops()[0].fragments();
+        let fragment_count = fragments.len();
+        let fragment_kinds = fragments
+            .iter()
+            .map(|fragment| match fragment {
+                BezierSplitFragment2::Materialized { .. } => "materialized",
+                BezierSplitFragment2::AlgebraicEndpointImages { .. } => "endpoint-images",
+                BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
+                BezierSplitFragment2::AlgebraicChord(_) => "chord",
+                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
+                BezierSplitFragment2::Unresolved { .. } => "unresolved",
+            })
+            .collect::<Vec<_>>();
+        let corners = (0..fragment_count)
+            .filter(|index| {
+                let previous = &fragments[(index + fragment_count - 1) % fragment_count];
+                let next = &fragments[*index];
+                matches!(
+                    (previous, next),
+                    (
+                        BezierSplitFragment2::AnalyticParallel(_),
+                        BezierSplitFragment2::AlgebraicChord(_)
+                            | BezierSplitFragment2::Materialized { .. }
+                    ) | (
+                        BezierSplitFragment2::AlgebraicChord(_)
+                            | BezierSplitFragment2::Materialized { .. },
+                        BezierSplitFragment2::AnalyticParallel(_)
+                    )
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !corners.is_empty(),
+            "the exact offset must retain analytic/support corners: {fragment_kinds:?}"
+        );
+        let selected_circle_count = fragments
+            .iter()
+            .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+            .count();
+
+        let mut filleted = Vec::new();
+        let mut outcomes = Vec::new();
+        for corner in corners {
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    q(1, 100),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "analytic-parallel/support corner {corner} must fillet exactly: {error:?}; fragments={fragment_kinds:?}"
+                    )
+                });
+            assert_eq!(
+                result.certainty, expected_certainty,
+                "policy={policy:?}, corner={corner}"
+            );
+            match result.value {
+                CurveCornerSolutions2::Unique(candidate) => filleted.push(candidate),
+                other => {
+                    outcomes.push((corner, other.candidate_count(), other.no_solution_reason()))
+                }
+            }
+        }
+        assert_eq!(
+            filleted.len(),
+            2,
+            "both analytic-parallel endpoint orientations must fillet: {outcomes:?}; fragments={fragment_kinds:?}"
+        );
+        for filleted in filleted {
+            assert_eq!(
+                filleted.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                    })
+                    .count(),
+                selected_circle_count + 1,
+            );
+            assert_eq!(
+                certified(filleted.classify_point(&p(10, 10), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+            let disjoint =
+                CurveRegion2::try_from_native_material_contours(vec![square(4, 4, 5, 5)], &policy)
+                    .unwrap()
+                    .into_value();
+            let replay = filleted
+                .boolean_regions(&disjoint, &policy)
+                .expect("the retained analytic fillet must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+            assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let region = analytic_parallel_cap_region(&policy)
+            .offset(
+                q(1, 10),
+                &OffsetCornerStyle2::Miter {
+                    limit: Real::from(100),
+                },
+                &policy,
+            )
+            .expect("the exact analytic miter must retain its tangent construction")
+            .into_value();
+        let assert_tangent_corners = |region: &CurveRegion2| {
+            let fragments = region.boundary_loops()[0].fragments();
+            let corners = (0..fragments.len())
+                .filter(|index| {
+                    matches!(
+                        (
+                            &fragments[(index + fragments.len() - 1) % fragments.len()],
+                            &fragments[*index],
+                        ),
+                        (
+                            BezierSplitFragment2::AnalyticParallel(_),
+                            BezierSplitFragment2::Materialized { .. }
+                        ) | (
+                            BezierSplitFragment2::Materialized { .. },
+                            BezierSplitFragment2::AnalyticParallel(_)
+                        )
+                    )
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(corners.len(), 2);
+            for corner in corners {
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 100),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("a certified tangent miter junction must be classified exactly");
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::NoTangentCircle)
+                );
+            }
+        };
+        assert_tangent_corners(&region);
+
+        let transformed = region
+            .transform_affine(
+                &Real::zero(),
+                &Real::from(2),
+                &Real::from(2),
+                &Real::zero(),
+                &Real::from(3),
+                &Real::from(-1),
+                &policy,
+            )
+            .expect("similarity and loop reversal must preserve exact tangent provenance")
+            .into_value();
+        assert_tangent_corners(&transformed);
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let region = analytic_parallel_cap_region(&policy)
+            .offset(
+                q(1, 10),
+                &OffsetCornerStyle2::Miter { limit: Real::one() },
+                &policy,
+            )
+            .expect("the rejected analytic miter must become an exact bevel")
+            .into_value();
+        let fragments = region.boundary_loops()[0].fragments();
+        let corners = (0..fragments.len())
+            .filter(|index| {
+                matches!(
+                    (
+                        &fragments[(index + fragments.len() - 1) % fragments.len()],
+                        &fragments[*index],
+                    ),
+                    (
+                        BezierSplitFragment2::AnalyticParallel(_),
+                        BezierSplitFragment2::Materialized { .. }
+                    ) | (
+                        BezierSplitFragment2::Materialized { .. },
+                        BezierSplitFragment2::AnalyticParallel(_)
+                    )
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(corners.len(), 2);
+        for corner in corners {
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    q(1, 100),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a rejected miter bevel must remain exactly filletable");
+            assert!(
+                matches!(result.value, CurveCornerSolutions2::Unique(_)),
+                "policy={policy:?}, corner={corner}, result={result:?}"
+            );
         }
     }
 }

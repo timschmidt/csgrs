@@ -17,9 +17,8 @@
 //! represented [`Real`] root, so the same exact subdivision path handles that
 //! materializable algebraic subset without approximating nonlinear roots.
 
-use std::cmp::Ordering;
-
 use hyperreal::{Real, RealSign};
+use std::cmp::Ordering;
 
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
@@ -27,9 +26,10 @@ use crate::bezier_offset::{
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParallel2, BezierParameter2,
-    BezierParameterRange2, Classification, CubicBezier2, CurveContext, CurveError, CurveResult,
-    Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierEndpoint, BezierParallel2,
+    BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, CurveContext,
+    CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    UncertaintyReason,
 };
 
 /// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
@@ -831,23 +831,11 @@ impl BezierSubcurve2 {
     /// Returns the same exact image with traversal direction reversed.
     pub fn reversed(&self) -> Self {
         match self {
-            Self::Quadratic(curve) => {
-                let reversed = if curve.retained_exact_line_image().is_some() {
-                    QuadraticBezier2::with_retained_exact_line_image(
-                        curve.end().clone(),
-                        curve.control().clone(),
-                        curve.start().clone(),
-                    )
-                    .expect("a retained exact line has distinct endpoints")
-                } else {
-                    QuadraticBezier2::new(
-                        curve.end().clone(),
-                        curve.control().clone(),
-                        curve.start().clone(),
-                    )
-                };
-                Self::Quadratic(reversed)
-            }
+            Self::Quadratic(curve) => Self::Quadratic(
+                curve
+                    .reversed_with_retained_provenance()
+                    .expect("a retained exact line has distinct endpoints"),
+            ),
             Self::Cubic(curve) => Self::Cubic(CubicBezier2::new(
                 curve.end().clone(),
                 curve.control2().clone(),
@@ -1326,16 +1314,30 @@ impl QuadraticBezier2 {
             .lerp_with_weights(self.end(), &one_minus_t, &t);
         let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
         if self.retained_exact_line_image().is_some() {
+            let left_contacts = self
+                .retained_parallel_line_tangent_contacts()
+                .iter()
+                .filter(|contact| contact.line_endpoint() == BezierEndpoint::Start)
+                .cloned()
+                .collect::<Vec<_>>();
+            let right_contacts = self
+                .retained_parallel_line_tangent_contacts()
+                .iter()
+                .filter(|contact| contact.line_endpoint() == BezierEndpoint::End)
+                .cloned()
+                .collect::<Vec<_>>();
             let retained = (
-                QuadraticBezier2::with_retained_exact_line_image(
+                QuadraticBezier2::with_retained_exact_line_provenance(
                     self.start().clone(),
                     p01.clone(),
                     p012.clone(),
+                    left_contacts,
                 ),
-                QuadraticBezier2::with_retained_exact_line_image(
+                QuadraticBezier2::with_retained_exact_line_provenance(
                     p012.clone(),
                     p12.clone(),
                     self.end().clone(),
+                    right_contacts,
                 ),
             );
             if let (Ok(left), Ok(right)) = retained {

@@ -9,10 +9,12 @@
 use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 use crate::classify::{compare_reals, is_zero};
 use crate::{
-    Aabb2, Classification, CurveContext, CurveResult, LineSeg2, Point2, UncertaintyReason,
+    Aabb2, Classification, CurveContext, CurveResult, LineSeg2, Point2, Similarity2,
+    UncertaintyReason,
 };
 
 /// An endpoint of a parametric Bezier segment.
@@ -81,7 +83,84 @@ pub struct QuadraticBezier2 {
     start: Point2,
     control: Point2,
     end: Point2,
-    exact_line_image: Option<LineSeg2>,
+    exact_line_image: Option<Arc<ExactQuadraticLineImage2>>,
+}
+
+#[derive(Clone, Debug)]
+struct ExactQuadraticLineImage2 {
+    line: LineSeg2,
+    parallel_tangent_contacts: Option<Arc<[BezierParallelLineTangentContact2]>>,
+}
+
+/// Construction certificate for a promoted line tangent to one retained
+/// analytic parallel at a represented endpoint.
+///
+/// Miter legs are built directly along an offset span's limiting tangent. The
+/// compact certificate keeps that exact fact after the leg is promoted to a
+/// quadratic line image, avoiding later attempts to rediscover a rearranged
+/// radical equality from materialized endpoint coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct BezierParallelLineTangentContact2 {
+    parallel: crate::BezierParallel2,
+    parameter: Real,
+    line_endpoint: BezierEndpoint,
+    parallel_fragment_reversed: bool,
+}
+
+impl BezierParallelLineTangentContact2 {
+    pub(crate) fn new(
+        parallel: crate::BezierParallel2,
+        parameter: Real,
+        line_endpoint: BezierEndpoint,
+        parallel_fragment_reversed: bool,
+    ) -> Self {
+        Self {
+            parallel,
+            parameter,
+            line_endpoint,
+            parallel_fragment_reversed,
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) const fn parallel(&self) -> &crate::BezierParallel2 {
+        &self.parallel
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) const fn parameter(&self) -> &Real {
+        &self.parameter
+    }
+
+    pub(crate) const fn line_endpoint(&self) -> BezierEndpoint {
+        self.line_endpoint
+    }
+
+    #[cfg(feature = "predicates")]
+    pub(crate) const fn parallel_fragment_reversed(&self) -> bool {
+        self.parallel_fragment_reversed
+    }
+
+    fn reversed(&self) -> Self {
+        Self {
+            parallel: self.parallel.clone(),
+            parameter: self.parameter.clone(),
+            line_endpoint: match self.line_endpoint {
+                BezierEndpoint::Start => BezierEndpoint::End,
+                BezierEndpoint::End => BezierEndpoint::Start,
+            },
+            parallel_fragment_reversed: !self.parallel_fragment_reversed,
+        }
+    }
+
+    fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+        Ok(Self {
+            parallel: self.parallel.transform_similarity(transform)?,
+            parameter: self.parameter.clone(),
+            line_endpoint: self.line_endpoint,
+            parallel_fragment_reversed: self.parallel_fragment_reversed,
+        })
+    }
 }
 
 impl QuadraticBezier2 {
@@ -103,7 +182,28 @@ impl QuadraticBezier2 {
             start: line.start().clone(),
             control,
             end: line.end().clone(),
-            exact_line_image: Some(line),
+            exact_line_image: Some(Arc::new(ExactQuadraticLineImage2 {
+                line,
+                parallel_tangent_contacts: None,
+            })),
+        }
+    }
+
+    pub(crate) fn from_line_segment_with_parallel_tangent_contacts(
+        line: LineSeg2,
+        parallel_tangent_contacts: Vec<BezierParallelLineTangentContact2>,
+    ) -> Self {
+        debug_assert!(!parallel_tangent_contacts.is_empty());
+        let half = (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
+        let control = line.point_at(half);
+        Self {
+            start: line.start().clone(),
+            control,
+            end: line.end().clone(),
+            exact_line_image: Some(Arc::new(ExactQuadraticLineImage2 {
+                line,
+                parallel_tangent_contacts: Some(Arc::from(parallel_tangent_contacts)),
+            })),
         }
     }
 
@@ -112,17 +212,93 @@ impl QuadraticBezier2 {
         control: Point2,
         end: Point2,
     ) -> CurveResult<Self> {
+        Self::with_retained_exact_line_provenance(start, control, end, Vec::new())
+    }
+
+    pub(crate) fn with_retained_exact_line_provenance(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+        parallel_tangent_contacts: Vec<BezierParallelLineTangentContact2>,
+    ) -> CurveResult<Self> {
         let line = LineSeg2::try_new(start.clone(), end.clone())?;
         Ok(Self {
             start,
             control,
             end,
-            exact_line_image: Some(line),
+            exact_line_image: Some(Arc::new(ExactQuadraticLineImage2 {
+                line,
+                parallel_tangent_contacts: (!parallel_tangent_contacts.is_empty())
+                    .then(|| Arc::from(parallel_tangent_contacts)),
+            })),
         })
     }
 
-    pub(crate) const fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
-        self.exact_line_image.as_ref()
+    pub(crate) fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
+        self.exact_line_image
+            .as_deref()
+            .map(|evidence| &evidence.line)
+    }
+
+    pub(crate) fn retained_parallel_line_tangent_contacts(
+        &self,
+    ) -> &[BezierParallelLineTangentContact2] {
+        self.exact_line_image
+            .as_deref()
+            .and_then(|evidence| evidence.parallel_tangent_contacts.as_deref())
+            .unwrap_or_default()
+    }
+
+    pub(crate) fn reversed_with_retained_provenance(&self) -> CurveResult<Self> {
+        let Some(evidence) = self.exact_line_image.as_deref() else {
+            return Ok(Self::new(
+                self.end.clone(),
+                self.control.clone(),
+                self.start.clone(),
+            ));
+        };
+        let contacts = evidence
+            .parallel_tangent_contacts
+            .as_deref()
+            .unwrap_or_default()
+            .iter()
+            .map(BezierParallelLineTangentContact2::reversed)
+            .collect::<Vec<_>>();
+        Self::with_retained_exact_line_provenance(
+            self.end.clone(),
+            self.control.clone(),
+            self.start.clone(),
+            contacts,
+        )
+    }
+
+    pub(crate) fn transform_similarity_with_retained_provenance(
+        &self,
+        transform: &Similarity2,
+    ) -> CurveResult<Self> {
+        let points = self
+            .control_points()
+            .map(|point| transform.transform_point(point));
+        let Some(evidence) = self.exact_line_image.as_deref() else {
+            return Ok(Self::new(
+                points[0].clone(),
+                points[1].clone(),
+                points[2].clone(),
+            ));
+        };
+        let contacts = evidence
+            .parallel_tangent_contacts
+            .as_deref()
+            .unwrap_or_default()
+            .iter()
+            .map(|contact| contact.transform_similarity(transform))
+            .collect::<CurveResult<Vec<_>>>()?;
+        Self::with_retained_exact_line_provenance(
+            points[0].clone(),
+            points[1].clone(),
+            points[2].clone(),
+            contacts,
+        )
     }
 
     /// Applies an exact planar affine transform while retaining a certified
@@ -149,7 +325,15 @@ impl QuadraticBezier2 {
         let exact_line_image = self
             .exact_line_image
             .as_ref()
-            .and_then(|_| LineSeg2::try_new(start.clone(), end.clone()).ok());
+            .and_then(|_| LineSeg2::try_new(start.clone(), end.clone()).ok())
+            .map(|line| {
+                Arc::new(ExactQuadraticLineImage2 {
+                    line,
+                    // A general affine transform does not preserve analytic
+                    // parallel distance, so only the line image survives.
+                    parallel_tangent_contacts: None,
+                })
+            });
         Self {
             start,
             control,
