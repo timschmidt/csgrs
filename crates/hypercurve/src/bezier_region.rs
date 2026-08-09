@@ -2356,9 +2356,9 @@ fn wrap_segmented_parallel_fallback(
 
 fn push_native_offset_component(
     role: CurveRegionLoopRole,
-    component: LineArcRegion2,
-    material_components: &mut Vec<LineArcRegion2>,
-    void_components: &mut Vec<LineArcRegion2>,
+    component: CurveRegion2,
+    material_components: &mut Vec<CurveRegion2>,
+    void_components: &mut Vec<CurveRegion2>,
 ) {
     match role {
         CurveRegionLoopRole::Material => material_components.push(component),
@@ -2366,50 +2366,130 @@ fn push_native_offset_component(
     }
 }
 
-fn regularize_native_offset_regions(
-    mut material_components: Vec<LineArcRegion2>,
-    void_components: Vec<LineArcRegion2>,
+fn curve_region_from_native_material_contour(
+    contour: Contour2,
     policy: &CurveContext,
-) -> ExactCurveResult<Classification<LineArcRegion2>> {
-    if material_components.len() == 1 && void_components.is_empty() {
-        return Ok(Classification::Decided(
-            material_components
-                .pop()
-                .expect("single offset component inventory"),
-        ));
+) -> ExactCurveResult<CurveRegion2> {
+    CurveRegion2::try_from_native_contours_raw(vec![contour], Vec::new(), policy)
+}
+
+fn curve_region_from_optional_native_material_contour(
+    contour: Option<Contour2>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    contour.map_or_else(
+        || Ok(CurveRegion2::empty()),
+        |contour| curve_region_from_native_material_contour(contour, policy),
+    )
+}
+
+fn regularize_native_contour_with_curve_region(
+    contour: &Contour2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    let path = curve_path_from_native_contour(contour)?;
+    let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[contour.fill_rule()],
+        policy,
+        None,
+    )?;
+    raw.regularized_region_raw(policy)
+}
+
+fn regularize_native_cycles_with_curve_region(
+    cycles: Vec<Contour2>,
+    fill_rule: FillRule,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    if cycles.is_empty() {
+        return Ok(CurveRegion2::empty());
     }
-    let mut material = LineArcRegion2::empty();
-    for component in material_components {
-        material = match material
-            .boolean_region(&component, BooleanOp::Union, FillRule::NonZero, policy)
+    if fill_rule == FillRule::EvenOdd {
+        let mut result = CurveRegion2::empty();
+        for cycle in cycles {
+            let component = curve_region_from_native_material_contour(cycle, policy)?;
+            result = result
+                .boolean_region_raw(&component, BooleanOp::Xor, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
+        }
+        return Ok(result);
+    }
+
+    let mut paths = Vec::with_capacity(cycles.len());
+    let mut roles = Vec::with_capacity(cycles.len());
+    for cycle in cycles {
+        let Some(area) = cycle
+            .signed_area()
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        else {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Offset,
+                CurveFamily2::Line,
+                UncertaintyReason::Unsupported,
+            ));
+        };
+        let role = match real_sign(&area, policy) {
+            Some(RealSign::Positive) => CurveRegionLoopRole::Material,
+            Some(RealSign::Negative) => CurveRegionLoopRole::Hole,
+            Some(RealSign::Zero) => continue,
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Offset,
+                    CurveFamily2::Line,
+                    UncertaintyReason::RealSign,
+                ));
             }
         };
+        paths.push(curve_path_from_native_contour(&cycle)?);
+        roles.push(role);
+    }
+    if paths.is_empty() {
+        return Ok(CurveRegion2::empty());
+    }
+    let fill_rules = vec![FillRule::NonZero; paths.len()];
+    let mut raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
+        &paths,
+        &roles,
+        &fill_rules,
+        policy,
+        None,
+    )?;
+    raw.data_mut_for_construction().signed_loop_composition = true;
+    raw.regularized_region_raw(policy)
+}
+
+fn regularize_native_offset_regions(
+    mut material_components: Vec<CurveRegion2>,
+    void_components: Vec<CurveRegion2>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    if material_components.len() == 1 && void_components.is_empty() {
+        return Ok(material_components
+            .pop()
+            .expect("single offset component inventory"));
+    }
+    let mut material = CurveRegion2::empty();
+    for component in material_components {
+        material = material
+            .boolean_region_raw(&component, BooleanOp::Union, policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
     }
 
     if material.is_empty() || void_components.is_empty() {
-        return Ok(Classification::Decided(material));
+        return Ok(material);
     }
 
-    let mut voids = LineArcRegion2::empty();
+    let mut voids = CurveRegion2::empty();
     for component in void_components {
-        voids = match voids
-            .boolean_region(&component, BooleanOp::Union, FillRule::NonZero, policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        voids = voids
+            .boolean_region_raw(&component, BooleanOp::Union, policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
     }
     material
-        .boolean_region(&voids, BooleanOp::Difference, FillRule::NonZero, policy)
-        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))
+        .boolean_region_raw(&voids, BooleanOp::Difference, policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Offset))
 }
 
 fn native_region_role_contour(
@@ -6485,16 +6565,8 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
         resolve_certified_operation(policy, |attempt| {
-            match contour
-                .regularize_self_intersections_native(attempt)
-                .map_err(curve_region_promotion_error)?
-            {
-                Classification::Decided(region) => {
-                    Self::try_from_line_arc_region_raw(&region, attempt)
-                        .map(Classification::Decided)
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
+            regularize_native_contour_with_curve_region(contour, attempt)
+                .map(Classification::Decided)
         })
     }
 
@@ -8882,22 +8954,10 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match self.offset_native_raw(distance.clone(), corner_style, policy) {
-            Ok(Classification::Decided(region)) => Ok(Classification::Decided(region)),
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported)) => {
-                self.offset_exact_general_raw(distance, corner_style, policy)
-            }
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::Unsupported =>
-            {
-                self.offset_exact_general_raw(distance, corner_style, policy)
-            }
-            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
-            Err(error) => Err(error),
-        }
+        self.offset_exact_general_raw(distance, corner_style, policy)
     }
 
-    fn offset_native_raw(
+    fn try_offset_native_topology_fast_path(
         &self,
         distance: Real,
         corner_style: &OffsetCornerStyle2,
@@ -8977,7 +9037,7 @@ impl CurveRegion2 {
             if !component_expands && all_line_source {
                 match contour
                     .offset_left_orthogonal_line_erosion(signed_left_distance.clone(), policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                    .map_err(|error| error.with_operation(CurveOperation2::Offset))?
                 {
                     Classification::Decided(region) => {
                         push_native_offset_component(
@@ -9013,9 +9073,9 @@ impl CurveRegion2 {
                             Classification::Decided(contour) => {
                                 push_native_offset_component(
                                     *role,
-                                    contour.map_or_else(LineArcRegion2::empty, |contour| {
-                                        LineArcRegion2::from_material_contours(vec![contour])
-                                    }),
+                                    curve_region_from_optional_native_material_contour(
+                                        contour, policy,
+                                    )?,
                                     &mut material_components,
                                     &mut void_components,
                                 );
@@ -9035,13 +9095,17 @@ impl CurveRegion2 {
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
             if !component_expands && all_line_source {
                 match raw_offset
-                    .regularize_contracting_line_offset_native(policy)
+                    .retained_contracting_line_offset_cycles(policy)
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                 {
-                    Classification::Decided(region) => {
+                    Classification::Decided(cycles) => {
                         push_native_offset_component(
                             *role,
-                            region,
+                            regularize_native_cycles_with_curve_region(
+                                cycles,
+                                raw_offset.fill_rule(),
+                                policy,
+                            )?,
                             &mut material_components,
                             &mut void_components,
                         );
@@ -9069,9 +9133,7 @@ impl CurveRegion2 {
                     Classification::Decided(contour) => {
                         push_native_offset_component(
                             *role,
-                            contour.map_or_else(LineArcRegion2::empty, |contour| {
-                                LineArcRegion2::from_material_contours(vec![contour])
-                            }),
+                            curve_region_from_optional_native_material_contour(contour, policy)?,
                             &mut material_components,
                             &mut void_components,
                         );
@@ -9096,18 +9158,10 @@ impl CurveRegion2 {
             }
             let component = match self_contacts {
                 Classification::Decided(false) => {
-                    LineArcRegion2::from_material_contours(vec![raw_offset])
+                    curve_region_from_native_material_contour(raw_offset, policy)?
                 }
                 Classification::Decided(true) if component_expands => {
-                    match raw_offset
-                        .regularize_self_intersections_native(policy)
-                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                    {
-                        Classification::Decided(region) => region,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    regularize_native_contour_with_curve_region(&raw_offset, policy)?
                 }
                 Classification::Decided(true) => {
                     // Remaining non-orthogonal contracting self-intersections
@@ -9128,13 +9182,8 @@ impl CurveRegion2 {
             );
         }
         let edited =
-            match regularize_native_offset_regions(material_components, void_components, policy)? {
-                Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
+            regularize_native_offset_regions(material_components, void_components, policy)?;
+        Ok(Classification::Decided(edited))
     }
 
     #[cfg(feature = "predicates")]
@@ -9192,6 +9241,21 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
+        }
+        // Native line/arc contraction topology is a private specialization of
+        // this authority.  It may decide exact wavefront collapse and neck
+        // splitting early, but every component is composed through
+        // `CurveRegion2::boolean_region_raw`; an inapplicable specialization
+        // rejoins the general retained-carrier construction below.
+        match self.try_offset_native_topology_fast_path(distance.clone(), corner_style, policy) {
+            Ok(decided @ Classification::Decided(_)) => return Ok(decided),
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported)) => {}
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported => {}
+            Ok(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            Err(error) => return Err(error),
         }
         #[cfg(feature = "predicates")]
         let distance_positive = match real_sign(&distance, policy) {
@@ -9840,42 +9904,22 @@ impl CurveRegion2 {
         let mut material_components = Vec::new();
         let mut void_components = Vec::new();
         for contour in native.material_contours() {
-            let component = match contour
-                .regularize_self_intersections_native(policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(component) => component,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            material_components.push(component);
+            material_components.push(regularize_native_contour_with_curve_region(
+                contour, policy,
+            )?);
         }
         for contour in native.hole_contours() {
-            let component = match contour
-                .regularize_self_intersections_native(policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(component) => component,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            void_components.push(component);
+            void_components.push(regularize_native_contour_with_curve_region(
+                contour, policy,
+            )?);
         }
         let regularized =
-            match regularize_native_offset_regions(material_components, void_components, policy)? {
-                Classification::Decided(regularized) => regularized,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let region = Self::try_from_line_arc_region_raw(&regularized, policy)?;
+            regularize_native_offset_regions(material_components, void_components, policy)?;
         let certified_pre_regularization_boundary_error =
             parallel_options.max_error() + output_flattening.max_error();
         Ok(Classification::Decided(
             CurveRegionCertifiedParallelOffsetResult2 {
-                region,
+                region: regularized,
                 evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
                     used_exact_authoritative_path: false,
                     used_certified_parallel_path: true,

@@ -13,9 +13,13 @@ use crate::contour::{Contour2, FillRule};
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{
-    Classification, CurveContext, CurveError, CurveResult, LineArcRegion2, LineSide, Point2,
-    UncertaintyReason,
+    Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveRegion2,
+    CurveResult, ExactCurveError, ExactCurveResult, LineSide, Point2, UncertaintyReason,
 };
+
+fn exact_offset_error(cause: CurveError) -> ExactCurveError {
+    ExactCurveError::invalid(CurveOperation2::Offset, CurveFamily2::Line, cause)
+}
 
 /// Corner construction for an exact signed region offset.
 ///
@@ -306,8 +310,8 @@ impl Contour2 {
         &self,
         distance: Real,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<LineArcRegion2>> {
-        let Some(area) = self.signed_area()? else {
+    ) -> ExactCurveResult<Classification<CurveRegion2>> {
+        let Some(area) = self.signed_area().map_err(exact_offset_error)? else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let area_sign = match real_sign(&area, policy) {
@@ -320,9 +324,12 @@ impl Contour2 {
         let distance_sign = match real_sign(&distance, policy) {
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Some(RealSign::Zero) => {
-                return Ok(Classification::Decided(
-                    LineArcRegion2::from_material_contours(vec![self.clone()]),
-                ));
+                return CurveRegion2::try_from_native_contours_raw(
+                    vec![self.clone()],
+                    Vec::new(),
+                    policy,
+                )
+                .map(Classification::Decided);
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
@@ -370,7 +377,7 @@ impl Contour2 {
             source_y.first(),
             source_y.last(),
         ) else {
-            return Err(CurveError::EmptyCurveString);
+            return Err(exact_offset_error(CurveError::EmptyCurveString));
         };
         let x_coordinates =
             match orthogonal_erosion_coordinates(&source_x, min_x, max_x, &radius, policy) {
@@ -387,7 +394,8 @@ impl Contour2 {
                 }
             };
 
-        let half = (Real::one() / Real::from(2_u8))?;
+        let half = (Real::one() / Real::from(2_u8))
+            .map_err(|problem| exact_offset_error(problem.into()))?;
         let mut cells = Vec::new();
         for x_pair in x_coordinates.windows(2) {
             for y_pair in y_coordinates.windows(2) {
@@ -413,29 +421,25 @@ impl Contour2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                cells.push(axis_aligned_offset_cell(
-                    x_pair[0].clone(),
-                    y_pair[0].clone(),
-                    x_pair[1].clone(),
-                    y_pair[1].clone(),
-                )?);
+                cells.push(
+                    axis_aligned_offset_cell(
+                        x_pair[0].clone(),
+                        y_pair[0].clone(),
+                        x_pair[1].clone(),
+                        y_pair[1].clone(),
+                    )
+                    .map_err(exact_offset_error)?,
+                );
             }
         }
 
-        let mut result = LineArcRegion2::empty();
+        let mut result = CurveRegion2::empty();
         for cell in cells {
-            let component = LineArcRegion2::from_material_contours(vec![cell]);
-            result = match result.boolean_region(
-                &component,
-                crate::BooleanOp::Union,
-                FillRule::NonZero,
-                policy,
-            )? {
-                Classification::Decided(region) => region,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let component =
+                CurveRegion2::try_from_native_contours_raw(vec![cell], Vec::new(), policy)?;
+            result = result
+                .boolean_region_raw(&component, crate::BooleanOp::Union, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
         }
         Ok(Classification::Decided(result))
     }
