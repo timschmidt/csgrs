@@ -1,12 +1,12 @@
-//! Exact top-level curve clipping against native line/arc regions.
+//! Exact top-level curve clipping against unified curve regions.
 
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
+use crate::policy::resolve_certified_operation;
 use crate::{
     BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
-    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2,
-    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcRegion2,
-    RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveOperation2, CurveOutcome,
+    CurveRegion2, CurveSpanRange2, ExactCurveError, ExactCurveResult,
+    RationalBezierIntersectionPointEvidence2, Real, RegionPointLocation, UncertaintyReason,
 };
 
 /// Which authored region boundary owns one exact trim contact.
@@ -118,8 +118,7 @@ impl CurveRegionTrimFragment2 {
 }
 
 impl Curve2 {
-    /// Retains the positive-length exact fragments of this curve inside a
-    /// native line/arc region.
+    /// Retains the positive-length exact fragments of this curve inside a region.
     ///
     /// Every material and hole boundary is intersected with the curve's
     /// promoted rational-Bézier spans. Certified contacts split the source,
@@ -128,16 +127,18 @@ impl Curve2 {
     /// images remain explicit [`ExactCurveError`] blockers.
     pub fn trim_inside_region(
         &self,
-        region: &LineArcRegion2,
+        region: &CurveRegion2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
-        self.trim_inside_region_with_parameters(region, policy)
-            .map(|fragments| {
-                fragments
-                    .into_iter()
-                    .map(CurveRegionTrimFragment2::into_fragment)
-                    .collect()
-            })
+    ) -> ExactCurveResult<CurveOutcome<Vec<BezierSplitFragment2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.trim_inside_region_with_parameters_raw(region, attempt)
+                .map(|fragments| {
+                    fragments
+                        .into_iter()
+                        .map(CurveRegionTrimFragment2::into_fragment)
+                        .collect()
+                })
+        })
     }
 
     /// Retains positive-length exact fragments together with the top-level
@@ -150,81 +151,122 @@ impl Curve2 {
     /// when both boundaries are materializable as [`Real`].
     pub fn trim_inside_region_with_parameters(
         &self,
-        region: &LineArcRegion2,
+        region: &CurveRegion2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveRegionTrimFragment2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.trim_inside_region_with_parameters_raw(region, attempt)
+        })
+    }
+
+    fn trim_inside_region_with_parameters_raw(
+        &self,
+        region: &CurveRegion2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveRegionTrimFragment2>> {
         if region.is_empty() {
             return Ok(Vec::new());
         }
 
+        let roles = match region.loop_roles_raw(policy).map_err(|cause| {
+            ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
+        })? {
+            Classification::Decided(roles) => roles,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Subdivision,
+                    self.family(),
+                    reason,
+                ));
+            }
+        };
+        if roles.len() != region.boundary_loops().len() {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Subdivision,
+                self.family(),
+                crate::CurveError::Topology(
+                    "curve trim region roles do not match its boundary loops".into(),
+                ),
+            ));
+        }
+
         let mut split_parameters = Vec::new();
         let mut boundary_contacts = Vec::new();
-        let boundaries = [
-            (
-                CurveRegionBoundaryKind2::Material,
-                region.material_contours(),
-            ),
-            (CurveRegionBoundaryKind2::Hole, region.hole_contours()),
-        ];
-        for (kind, contours) in boundaries {
-            for (contour_index, contour) in contours.iter().enumerate() {
-                for (segment_index, segment) in contour.segments().iter().enumerate() {
-                    let boundary = match segment {
-                        Segment2::Line(line) => Curve2::from(line.clone()),
-                        Segment2::Arc(arc) => Curve2::from(arc.clone()),
+        let mut material_contour_index = 0_usize;
+        let mut hole_contour_index = 0_usize;
+        for (boundary_loop, role) in region.boundary_loops().iter().zip(roles) {
+            let (kind, contour_index) = match role {
+                crate::CurveRegionLoopRole::Material => {
+                    let index = material_contour_index;
+                    material_contour_index += 1;
+                    (CurveRegionBoundaryKind2::Material, index)
+                }
+                crate::CurveRegionLoopRole::Hole => {
+                    let index = hole_contour_index;
+                    hole_contour_index += 1;
+                    (CurveRegionBoundaryKind2::Hole, index)
+                }
+            };
+            for (segment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
+                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Subdivision,
+                        self.family(),
+                        UncertaintyReason::Unsupported,
+                    ));
+                };
+                let boundary = Curve2::from(curve.clone());
+                let context = CurveIntersectionContext::try_new(self, &boundary, policy)?;
+                let result = context.result_view()?;
+                if let Some(blocker) = result.blockers().first() {
+                    let reason = match blocker.kind() {
+                        CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
+                        CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                            UncertaintyReason::Predicate
+                        }
+                        CurveIntersectionPairBlockerKind2::SharedComponent => {
+                            UncertaintyReason::Boundary
+                        }
                     };
-                    let context = CurveIntersectionContext::try_new(self, &boundary, policy)?;
-                    let result = context.result_view()?;
-                    if let Some(blocker) = result.blockers().first() {
-                        let reason = match blocker.kind() {
-                            CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                            CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                                UncertaintyReason::Predicate
-                            }
-                            CurveIntersectionPairBlockerKind2::SharedComponent => {
-                                UncertaintyReason::Boundary
-                            }
-                        };
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Arrangement,
-                            self.family(),
-                            reason,
-                        ));
-                    }
-                    if !result.overlaps().is_empty() {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Arrangement,
-                            self.family(),
-                            UncertaintyReason::Boundary,
-                        ));
-                    }
-                    for contact in result.contacts() {
-                        split_parameters.push((
-                            contact.first().promoted_span_index(),
-                            contact.first().local_parameter().clone(),
-                        ));
-                        boundary_contacts.push(PendingBoundaryContact {
-                            promoted_span_index: contact.first().promoted_span_index(),
-                            source_parameter: contact.first().local_parameter().clone(),
-                            contact: CurveRegionBoundaryContact2 {
-                                kind,
-                                contour_index,
-                                segment_index,
-                                boundary_parameter: contact.second().clone(),
-                                point: contact.point().clone(),
-                            },
-                        });
-                    }
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Subdivision,
+                        self.family(),
+                        reason,
+                    ));
+                }
+                if !result.overlaps().is_empty() {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Subdivision,
+                        self.family(),
+                        UncertaintyReason::Boundary,
+                    ));
+                }
+                for contact in result.contacts() {
+                    split_parameters.push((
+                        contact.first().promoted_span_index(),
+                        contact.first().local_parameter().clone(),
+                    ));
+                    boundary_contacts.push(PendingBoundaryContact {
+                        promoted_span_index: contact.first().promoted_span_index(),
+                        source_parameter: contact.first().local_parameter().clone(),
+                        contact: CurveRegionBoundaryContact2 {
+                            kind,
+                            contour_index,
+                            segment_index,
+                            boundary_parameter: contact.second().clone(),
+                            point: contact.point().clone(),
+                        },
+                    });
                 }
             }
         }
 
         let materializations = split_curve_spans(self, split_parameters.into_iter(), policy)?;
         let native_fragments =
-            self.native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?;
+            self.native_bezier_fragments_for_operation(policy, CurveOperation2::Subdivision)?;
         if materializations.len() != native_fragments.len() {
             return Err(ExactCurveError::invalid(
-                CurveOperation2::Arrangement,
+                CurveOperation2::Subdivision,
                 self.family(),
                 crate::CurveError::Topology(
                     "curve trim span materializations do not match promoted native spans".into(),
@@ -238,22 +280,26 @@ impl Curve2 {
             for fragment in materialization.fragments() {
                 let representative =
                     match fragment.representative_point(policy).map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Arrangement, self.family(), cause)
+                        ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
                     })? {
                         Classification::Decided(point) => point,
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
-                                CurveOperation2::Arrangement,
+                                CurveOperation2::Subdivision,
                                 self.family(),
                                 reason,
                             ));
                         }
                     };
-                match region.classify_point(&representative, policy) {
+                match region
+                    .classify_point_raw(&representative, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
+                    })? {
                     Classification::Decided(RegionPointLocation::Inside) => {
                         let Some((start, end)) = fragment.parameter_range() else {
                             return Err(ExactCurveError::blocked(
-                                CurveOperation2::Arrangement,
+                                CurveOperation2::Subdivision,
                                 self.family(),
                                 UncertaintyReason::Unsupported,
                             ));
@@ -281,14 +327,14 @@ impl Curve2 {
                     Classification::Decided(RegionPointLocation::Outside) => {}
                     Classification::Decided(RegionPointLocation::Boundary) => {
                         return Err(ExactCurveError::blocked(
-                            CurveOperation2::Arrangement,
+                            CurveOperation2::Subdivision,
                             self.family(),
                             UncertaintyReason::Boundary,
                         ));
                     }
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
-                            CurveOperation2::Arrangement,
+                            CurveOperation2::Subdivision,
                             self.family(),
                             reason,
                         ));
@@ -316,7 +362,7 @@ fn boundary_contacts_at(
             .source_parameter
             .cmp_by_refinement(parameter, policy)
             .map_err(|cause| {
-                ExactCurveError::invalid(CurveOperation2::Arrangement, source.family(), cause)
+                ExactCurveError::invalid(CurveOperation2::Subdivision, source.family(), cause)
             })? {
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 matched.push(pending.contact.clone());
@@ -324,7 +370,7 @@ fn boundary_contacts_at(
             Classification::Decided(_) => {}
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
+                    CurveOperation2::Subdivision,
                     source.family(),
                     reason,
                 ));
@@ -337,7 +383,11 @@ fn boundary_contacts_at(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CircularArc2, Contour2, CurveContext, LineSeg2, Point2, Real};
+    use crate::{
+        CircularArc2, Contour2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,
+        CurvePath2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
+        Segment2,
+    };
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -370,13 +420,55 @@ mod tests {
         .unwrap()
     }
 
+    fn native_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
+        CurveRegion2::try_from_native_contours(material, holes, &CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+    }
+
+    #[test]
+    fn exact_curve_trim_intersects_materialized_quadratic_region_boundaries() {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(4, 0), p(4, 4)).unwrap()),
+            Curve2::from(QuadraticBezier2::new(p(4, 4), p(2, 6), p(0, 4))),
+            Curve2::from(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+        ])
+        .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[CurveBoundaryInteriorSide2::Left],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
+        let line = Curve2::from(LineSeg2::try_new(p(2, -1), p(2, 6)).unwrap());
+
+        let outcome = line
+            .trim_inside_region_with_parameters(&region, &CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        assert_eq!(outcome.value.len(), 1);
+        assert_eq!(
+            outcome.value[0].start_boundary_contacts()[0].segment_index(),
+            0
+        );
+        assert_eq!(
+            outcome.value[0].end_boundary_contacts()[0].segment_index(),
+            2
+        );
+    }
+
     #[test]
     fn exact_curve_trim_splits_a_line_across_material_and_hole_boundaries() {
-        let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
+        let region = native_region(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
             .trim_inside_region(&region, &CurveContext::STRICT)
-            .unwrap();
+            .unwrap()
+            .into_value();
         assert_eq!(fragments.len(), 2);
         assert_eq!(
             fragments[0]
@@ -394,11 +486,12 @@ mod tests {
 
     #[test]
     fn parameter_retaining_trim_reports_authored_boundary_provenance() {
-        let region = LineArcRegion2::new(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
+        let region = native_region(vec![rectangle(0, 0, 6, 4)], vec![rectangle(2, 1, 4, 3)]);
         let line = Curve2::from(LineSeg2::try_new(p(-1, 2), p(7, 2)).unwrap());
         let fragments = line
             .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
-            .unwrap();
+            .unwrap()
+            .into_value();
 
         assert_eq!(fragments.len(), 2);
         let expected = [
@@ -432,12 +525,13 @@ mod tests {
 
     #[test]
     fn exact_curve_trim_retains_a_full_circles_right_semicircle() {
-        let region = LineArcRegion2::from_material_contours(vec![rectangle(0, -3, 3, 3)]);
+        let region = native_region(vec![rectangle(0, -3, 3, 3)], Vec::new());
         let circle =
             Curve2::from(CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap());
         let fragments = circle
             .trim_inside_region(&region, &CurveContext::STRICT)
-            .unwrap();
+            .unwrap()
+            .into_value();
         assert_eq!(fragments.len(), 2);
         for fragment in fragments {
             let Classification::Decided(point) = fragment
@@ -447,7 +541,10 @@ mod tests {
                 panic!("retained conic fragment must have an exact representative");
             };
             assert!(matches!(
-                region.classify_point(&point, &CurveContext::STRICT),
+                region
+                    .classify_point(&point, &CurveContext::STRICT)
+                    .unwrap()
+                    .into_value(),
                 Classification::Decided(RegionPointLocation::Inside)
             ));
         }
@@ -455,7 +552,7 @@ mod tests {
 
     #[test]
     fn parameter_retaining_trim_maps_nurbs_spans_to_the_public_domain() {
-        let region = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
+        let region = native_region(vec![rectangle(0, 0, 4, 4)], Vec::new());
         let curve = Curve2::try_nurbs(
             1,
             vec![p(-1, 2), p(7, 2)],
@@ -467,7 +564,8 @@ mod tests {
         .into_value();
         let fragments = curve
             .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
-            .unwrap();
+            .unwrap()
+            .into_value();
         assert_eq!(fragments.len(), 1);
         assert_eq!(fragments[0].promoted_span_index(), 0);
         let (start, end) = fragments[0]
