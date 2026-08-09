@@ -1,8 +1,8 @@
 //! Finite profile triangulation adapters for hypercurve regions.
 //!
 //! Triangulation consumes projected boundary vertices, but the ownership of
-//! material and hole rings is decided before projection by [`LineArcRegion2`] and
-//! [`RegionView2`](crate::RegionView2). Keeping the profile grouping in
+//! material and hole rings is decided before projection by [`CurveRegion2`](crate::CurveRegion2).
+//! Keeping the profile grouping in
 //! hypercurve and delegating exact earcut predicates to hypertri follows exact-computation discipline. The ear-removal
 //! basis is ear clipping.
 
@@ -14,7 +14,7 @@ use crate::{
 /// A finite triangle emitted from a projected region profile.
 ///
 /// The coordinates are projection-boundary `f64` values. Exact CAD topology
-/// remains in [`crate::LineArcRegion2`]; this type is intended for mesh generation,
+/// remains in [`crate::CurveRegion2`]; this type is intended for mesh generation,
 /// rendering, and export layers.
 pub type FiniteTriangle2 = [[f64; 2]; 3];
 

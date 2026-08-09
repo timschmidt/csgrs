@@ -2,10 +2,10 @@
 
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierSplitFragment2,
-    Classification, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    Classification, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -169,29 +169,42 @@ fuzz_target!(|data: &[u8]| {
 
     if let Ok(graph) = BezierArrangementGraph2::from_split_materializations(&materializations) {
         if let Classification::Decided(traversal) = graph.traverse_branch_free(&policy) {
-            let _ = BezierRegion2::from_arrangement_traversal(&graph, &traversal, &policy)
-                .map(|region| region.signed_area(&policy));
+            let _ = CurveRegion2::from_retained_arrangement_traversal(
+                &graph,
+                &traversal,
+                &policy,
+            )
+            .into_value()
+            .map(|region| {
+                let _ = region.signed_area(&policy);
+                let _ = region.line_image_role_evidence(&policy);
+                let _ = region.signed_area_role_evidence(&policy);
+                let _ = region.curved_nesting_role_evidence(&policy);
+                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
+            });
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_with_tangent_order(&policy)
         {
-            let _ =
-                CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
-                    .into_value()
-                    .map(|region| {
-                    let _ = region.signed_area(&policy);
-                    let _ = region.line_image_role_evidence(&policy);
-                    let _ = region.signed_area_role_evidence(&policy);
-                    let _ = region.curved_nesting_role_evidence(&policy);
-                    let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
-                    let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                    });
+            let _ = CurveRegion2::from_retained_arrangement_traversal(
+                &graph,
+                &traversal,
+                &policy,
+            )
+            .into_value()
+            .map(|region| {
+                let _ = region.signed_area(&policy);
+                let _ = region.line_image_role_evidence(&policy);
+                let _ = region.signed_area_role_evidence(&policy);
+                let _ = region.curved_nesting_role_evidence(&policy);
+                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
+            });
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_splitting_linear_overlaps(&policy)
         {
-            let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
-                .map(|region| region.signed_area(&policy));
             let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
                 .into_value()
                 .map(|region| {

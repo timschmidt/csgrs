@@ -14,10 +14,10 @@ use crate::bbox::{
 };
 use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
+use crate::region::RegionView2;
 use crate::{
     CircularArc2, Classification, Contour2, ContourPointLocation, CurveContext, CurveString2,
-    FillRule, LineSeg2, LineSide, Point2, RegionPointLocation, RegionView2, Segment2,
-    UncertaintyReason,
+    FillRule, LineSeg2, LineSide, Point2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// Retained point-line classifier for a fixed [`LineSeg2`].

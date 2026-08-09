@@ -11,9 +11,10 @@ use std::cmp::Ordering;
 use hyperreal::Real;
 
 use crate::classify::compare_reals;
+use crate::region::{LineArcRegion2, RegionView2};
 use crate::{
-    CircularArc2, Classification, Contour2, CurveContext, CurveResult, CurveString2,
-    LineArcRegion2, LineSeg2, Point2, RegionView2, Segment2, UncertaintyReason,
+    CircularArc2, Classification, Contour2, CurveContext, CurveResult, CurveString2, LineSeg2,
+    Point2, Segment2, UncertaintyReason,
 };
 
 /// An axis-aligned bounding box for two-dimensional curve geometry.
@@ -260,7 +261,7 @@ impl Aabb2 {
     /// Material and hole contours both contribute because a region-level box is
     /// a broad-phase envelope for boundary topology, not a filled-area
     /// containment proof.
-    pub fn from_region(
+    pub(crate) fn from_region(
         region: &LineArcRegion2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
@@ -272,7 +273,7 @@ impl Aabb2 {
     /// Empty regions evidence unsupported because there is no finite closed box
     /// that represents the absence of geometry. Callers that need empty-region
     /// fast paths should handle emptiness before asking for a box.
-    pub fn from_region_view(
+    pub(crate) fn from_region_view(
         region: &RegionView2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {

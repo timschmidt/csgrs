@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurveContext, CurveString2, FillRule,
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, CurveString2, FillRule,
     LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
 };
 
@@ -111,10 +111,15 @@ fn region_facts_preserve_all_line_exact_grid_shape() {
         FillRule::NonZero,
     )
     .unwrap();
-    let region = hypercurve::LineArcRegion2::from_material_contours(vec![contour]);
-    let facts = hypercurve::LineArcRegion2::structural_facts(&region, &policy());
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy())
+        .unwrap()
+        .into_value();
+    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
+    else {
+        panic!("a native exact region must retain structural facts");
+    };
 
-    assert_eq!(region.material_contours()[0].segments().len(), 4);
+    assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(facts.material_contour_count, 1);
     assert_eq!(facts.hole_contour_count, 0);
     assert_eq!(facts.segment_kinds.lines, 4);
@@ -125,7 +130,10 @@ fn region_facts_preserve_all_line_exact_grid_shape() {
     assert!(facts.has_decided_region_box);
 
     assert_eq!(
-        region.classify_point(&p(1, 1), &policy()),
+        region
+            .classify_point(&p(1, 1), &policy())
+            .unwrap()
+            .into_value(),
         Classification::Decided(hypercurve::RegionPointLocation::Inside)
     );
 }

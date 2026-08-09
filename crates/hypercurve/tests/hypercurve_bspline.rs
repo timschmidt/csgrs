@@ -1,6 +1,6 @@
 use hypercurve::{
-    Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveContext,
-    CurveError, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
+    Aabb2, BezierBoundaryLoop2, BezierSubcurve2, Classification, CurveContext, CurveError,
+    CurveRegion2, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
     RationalBSplineNativeTopologyEvidence2, RationalBezier2, RationalBezierSpanTopologyEvidence2,
     RationalBezierSpanTopologyPath2, RationalQuadraticBSplineCurve2, Real,
     RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
@@ -351,7 +351,7 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
 }
 
 #[test]
-fn extracted_bspline_spans_feed_existing_bezier_region_area() {
+fn extracted_bspline_spans_feed_unified_region_area() {
     let upper = decided(
         PolynomialBSplineCurve2::try_new(
             2,
@@ -381,8 +381,10 @@ fn extracted_bspline_spans_feed_existing_bezier_region_area() {
             .spans()
             .to_vec(),
     );
-    let region = BezierRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT).unwrap(),
+    let region = CurveRegion2::new(vec![
+        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+            .unwrap()
+            .into(),
     ])
     .unwrap();
 
@@ -568,7 +570,7 @@ fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
 }
 
 #[test]
-fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
+fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
     let upper = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -600,8 +602,10 @@ fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
             .native_subcurves(&policy())
             .unwrap(),
     ));
-    let region = BezierRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT).unwrap(),
+    let region = CurveRegion2::new(vec![
+        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+            .unwrap()
+            .into(),
     ])
     .unwrap();
 
@@ -1331,8 +1335,10 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
             .spans()
             .to_vec(),
     );
-    let region = BezierRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT).unwrap(),
+    let region = CurveRegion2::new(vec![
+        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+            .unwrap()
+            .into(),
     ])
     .unwrap();
 

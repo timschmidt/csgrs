@@ -26,10 +26,10 @@ use crate::bezier_offset::{
 };
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
-    BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicEndpointImage2,
-    BezierAlgebraicParameter2, BezierParallel2, BezierParameter2, BezierParameterRange2,
-    Classification, CubicBezier2, CurveContext, CurveError, CurveResult, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
+    Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParallel2, BezierParameter2,
+    BezierParameterRange2, Classification, CubicBezier2, CurveContext, CurveError, CurveResult,
+    Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
@@ -609,6 +609,74 @@ fn parameter_in_range(
 }
 
 impl BezierSubcurve2 {
+    /// Classifies whether one coordinate is a certified injective parameter for
+    /// this complete subcurve image.
+    pub(crate) fn certified_injective_axis(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        match self {
+            Self::Quadratic(curve)
+                if polynomial_control_polygon_has_injective_axis(
+                    curve.control_points(),
+                    policy,
+                ) =>
+            {
+                return Ok(Classification::Decided(true));
+            }
+            Self::Cubic(curve)
+                if polynomial_control_polygon_has_injective_axis(
+                    curve.control_points(),
+                    policy,
+                ) =>
+            {
+                return Ok(Classification::Decided(true));
+            }
+            Self::Quadratic(_)
+            | Self::Cubic(_)
+            | Self::RationalQuadratic(_)
+            | Self::Rational(_) => {}
+        }
+
+        if let Self::Rational(curve) = self {
+            return rational_curve_has_injective_axis(curve, policy);
+        }
+        let curve = RationalBezier2::try_from_subcurve(self)?;
+        rational_curve_has_injective_axis(&curve, policy)
+    }
+
+    pub(crate) fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
+        matches!(
+            self.certified_injective_axis(policy),
+            Ok(Classification::Decided(true))
+        )
+    }
+
+    /// Classifies injectivity of the complete image, including retained conic
+    /// spans whose provenance is stronger than a coordinate-axis certificate.
+    pub(crate) fn certified_injective_image(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if matches!(
+            self,
+            Self::RationalQuadratic(curve) if curve.retained_circular_conic().is_some()
+        ) || matches!(
+            self,
+            Self::Rational(curve) if curve.retained_circular_conic().is_some()
+        ) {
+            return Ok(Classification::Decided(true));
+        }
+        self.certified_injective_axis(policy)
+    }
+
+    pub(crate) fn has_certified_injective_image(&self, policy: &CurveContext) -> bool {
+        matches!(
+            self.certified_injective_image(policy),
+            Ok(Classification::Decided(true))
+        )
+    }
+
     /// Returns the exact local-parameter start point.
     pub fn start(&self) -> &Point2 {
         match self {
@@ -802,6 +870,70 @@ impl BezierSubcurve2 {
             ),
             Self::Rational(curve) => Self::Rational(curve.reversed()),
         }
+    }
+}
+
+fn rational_curve_has_injective_axis(
+    curve: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let mut uncertainty = None;
+    for axis in [Axis2::X, Axis2::Y] {
+        match curve.axis_monotonicity_classified(axis, policy)? {
+            Classification::Decided(true) => {
+                let (start, end) = match axis {
+                    Axis2::X => (curve.start().x(), curve.end().x()),
+                    Axis2::Y => (curve.start().y(), curve.end().y()),
+                };
+                match compare_reals(start, end, policy) {
+                    Some(Ordering::Less | Ordering::Greater) => {
+                        return Ok(Classification::Decided(true));
+                    }
+                    Some(Ordering::Equal) => {}
+                    None => {
+                        uncertainty.get_or_insert(UncertaintyReason::Ordering);
+                    }
+                };
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                uncertainty.get_or_insert(reason);
+            }
+        }
+    }
+    Ok(uncertainty.map_or(Classification::Decided(false), Classification::Uncertain))
+}
+
+fn polynomial_control_polygon_has_injective_axis<const N: usize>(
+    control_points: [&Point2; N],
+    policy: &CurveContext,
+) -> bool {
+    [Axis2::X, Axis2::Y].into_iter().any(|axis| {
+        let Some(direction) = compare_reals(
+            point_coordinate(control_points[0], axis),
+            point_coordinate(control_points[N - 1], axis),
+            policy,
+        ) else {
+            return false;
+        };
+        if direction == Ordering::Equal {
+            return false;
+        }
+        control_points.windows(2).all(|pair| {
+            compare_reals(
+                point_coordinate(pair[0], axis),
+                point_coordinate(pair[1], axis),
+                policy,
+            )
+            .is_some_and(|ordering| ordering == Ordering::Equal || ordering == direction)
+        })
+    })
+}
+
+fn point_coordinate(point: &Point2, axis: Axis2) -> &Real {
+    match axis {
+        Axis2::X => point.x(),
+        Axis2::Y => point.y(),
     }
 }
 

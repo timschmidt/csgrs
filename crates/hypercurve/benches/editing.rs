@@ -3,9 +3,10 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
-    CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult,
-    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineArcRegion2, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionArrangementStage2,
+    CurveRegionLoopRole, CurveResult, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
+    FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    Segment2,
 };
 use hypercurve::{Curve2, CurvePath2};
 
@@ -2234,14 +2235,15 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let mut total_roles = 0_usize;
 
     for _ in 0..iterations {
-        let Classification::Decided(region) = LineArcRegion2::from_boundary_contours(
+        let Classification::Decided(region) = CurveRegion2::try_from_native_boundary_contours(
             vec![material.clone(), hole.clone(), island.clone()],
             &policy,
-        )?
-        else {
+        )
+        .expect("native boundary construction must evaluate")
+        .into_value() else {
             panic!("boundary contour region build benchmark became uncertain");
         };
-        total_roles += black_box(region.material_contours().len() + region.hole_contours().len());
+        total_roles += black_box(region.len());
     }
 
     let elapsed = started.elapsed();
@@ -2268,36 +2270,22 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = LineArcRegion2::arrange_unordered_line_segments_borrowed(
+        let result = CurveRegion2::arrange_unordered_line_segments_borrowed(
             &lines,
             FillRule::NonZero,
             &policy,
-        )?;
-        if !result.status().unwrap().is_native_exact() || result.region().is_none() {
+        )
+        .expect("native line arrangement must evaluate")
+        .into_value();
+        if !result.status().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
         total_request_sources += black_box(result.source_segment_count());
-        total_evidence_counts += black_box(result.decided_source_segment_aabb_count());
-        total_evidence_counts += black_box(result.source_endpoint_bucket_count());
-        total_evidence_counts += black_box(result.split_schedule_candidate_pair_count());
-        total_evidence_counts += black_box(result.split_schedule_decided_disjoint_pair_count());
-        total_retained_outputs += black_box(result.output_boundary_segment_count().unwrap_or(0));
-        total_retained_outputs += black_box(result.output_contour_count().unwrap_or(0));
-        total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
+        total_evidence_counts += black_box(result.status().is_native_exact() as usize);
+        total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
-        total_segments += black_box(result.split_skipped_aabb_pair_count().unwrap_or_default());
         total_endpoint_checks += black_box(
-            result
-                .attempted_endpoint_connection_count()
-                .unwrap_or_default(),
-        );
-        total_endpoint_checks += black_box(result.endpoint_graph_endpoint_count().unwrap_or(0));
-        total_endpoint_checks +=
-            black_box(result.endpoint_graph_structural_bucket_count().unwrap_or(0));
-        total_endpoint_checks += black_box(
-            result
-                .endpoint_graph_max_structural_bucket_size()
-                .unwrap_or(0),
+            (result.stage() == CurveRegionArrangementStage2::RegionRoleAssignment) as usize,
         );
     }
 
@@ -2323,31 +2311,23 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = LineArcRegion2::arrange_unordered_segments_borrowed(
+        let result = CurveRegion2::arrange_unordered_segments_borrowed(
             &segments,
             FillRule::NonZero,
             &policy,
-        )?;
-        if !result.status().unwrap().is_native_exact() || result.region().is_none() {
+        )
+        .expect("native mixed arrangement must evaluate")
+        .into_value();
+        if !result.status().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
         total_request_sources += black_box(result.source_segment_count());
-        total_evidence_counts += black_box(result.decided_source_segment_aabb_count());
-        total_evidence_counts += black_box(result.source_endpoint_bucket_count());
-        total_evidence_counts += black_box(result.split_schedule_candidate_pair_count());
-        total_evidence_counts += black_box(result.split_schedule_predicate_candidate_pair_count());
-        total_retained_outputs += black_box(result.output_boundary_segment_count().unwrap_or(0));
-        total_retained_outputs += black_box(result.output_contour_count().unwrap_or(0));
-        total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
+        total_evidence_counts += black_box(result.status().is_native_exact() as usize);
+        total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
         total_endpoint_checks += black_box(
-            result
-                .attempted_endpoint_connection_count()
-                .unwrap_or_default(),
+            (result.stage() == CurveRegionArrangementStage2::RegionRoleAssignment) as usize,
         );
-        total_endpoint_checks += black_box(result.endpoint_graph_endpoint_count().unwrap_or(0));
-        total_endpoint_checks +=
-            black_box(result.endpoint_graph_structural_bucket_count().unwrap_or(0));
     }
 
     let elapsed = started.elapsed();
@@ -2366,15 +2346,18 @@ fn bench_region_arrangement_immediate_replay(iterations: u32) -> CurveResult<()>
         line(0, 10, 0, 0),
     ];
     let policy = CurveContext::STRICT;
-    let result =
-        LineArcRegion2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)?;
+    let result = CurveRegion2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)
+        .expect("native line arrangement must evaluate")
+        .into_value();
     let started = Instant::now();
     let mut checksum = 0_usize;
 
     for _ in 0..iterations {
         let immediate = black_box(&result);
         checksum = checksum.wrapping_add(black_box(immediate.source_segment_count()));
-        checksum = checksum.wrapping_add(black_box(immediate.output_segment_count().unwrap_or(0)));
+        checksum = checksum.wrapping_add(black_box(
+            immediate.output_boundary_segment_count().unwrap_or(0),
+        ));
     }
 
     let elapsed = started.elapsed();

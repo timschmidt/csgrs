@@ -10,10 +10,11 @@
 
 use hyperreal::{Real, RealSign};
 
+use crate::region::LineArcRegion2;
 use crate::{
     CircularArc2, Classification, Contour2, CurveContext, CurveError, CurveFamily2,
     CurveOperation2, CurveOutcome, CurveRegion2, CurveResult, CurveString2, ExactCurveError,
-    ExactCurveResult, LineArcRegion2, LineSeg2, Point2, Segment2,
+    ExactCurveResult, LineSeg2, Point2, Segment2,
 };
 
 /// A 2D affine transform whose linear part is a nonsingular similarity.

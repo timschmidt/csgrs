@@ -1,12 +1,8 @@
 //! Planar regions assembled from signed closed contours.
 
-use std::cmp::Ordering;
-
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb};
-use crate::classify::compare_reals;
 use crate::{
-    Classification, Contour2, ContourPointLocation, CurveContext, CurveResult, Point2, Real,
-    UncertaintyReason,
+    Classification, Contour2, ContourPointLocation, CurveContext, Point2, UncertaintyReason,
 };
 
 /// Point location relative to a planar region.
@@ -28,22 +24,9 @@ pub enum RegionPointLocation {
 /// is outside. This intentionally supports nested islands by putting the inner
 /// island contour back in the material bin.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct LineArcRegion2 {
+pub(crate) struct LineArcRegion2 {
     material_contours: Vec<Contour2>,
     hole_contours: Vec<Contour2>,
-}
-
-/// A material contour and the hole contours owned by it.
-///
-/// This is a borrowed topology view over [`LineArcRegion2`] / [`RegionView2`]. It
-/// keeps hole ownership in hypercurve rather than forcing downstream crates to
-/// project contours to sampled rings before grouping them.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RegionContourProfile<'a> {
-    /// Filled/material boundary contour.
-    pub material: &'a Contour2,
-    /// Subtractive hole contours classified inside `material`.
-    pub holes: Vec<&'a Contour2>,
 }
 
 impl LineArcRegion2 {
@@ -63,14 +46,6 @@ impl LineArcRegion2 {
         }
     }
 
-    /// Constructs a region from material contours only.
-    pub const fn from_material_contours(material_contours: Vec<Contour2>) -> Self {
-        Self {
-            material_contours,
-            hole_contours: Vec::new(),
-        }
-    }
-
     /// Returns material contours.
     pub fn material_contours(&self) -> &[Contour2] {
         &self.material_contours
@@ -79,11 +54,6 @@ impl LineArcRegion2 {
     /// Returns hole contours.
     pub fn hole_contours(&self) -> &[Contour2] {
         &self.hole_contours
-    }
-
-    /// Returns true when the region has no contours.
-    pub fn is_empty(&self) -> bool {
-        self.material_contours.is_empty() && self.hole_contours.is_empty()
     }
 
     /// Returns a borrowed view over this region.
@@ -118,42 +88,11 @@ impl LineArcRegion2 {
     pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
         self.as_view().signed_depth(point, policy)
     }
-
-    /// Returns the exact filled area implied by the region's material/hole roles.
-    ///
-    /// Unlike [`Contour2::signed_area`], this ignores contour orientation:
-    /// material bins add the absolute contour area and hole bins subtract it.
-    /// This keeps the region role model explicit and avoids treating winding as
-    /// hidden topology state. The area is accumulated from exact
-    /// Green's-theorem contour facts and branches only after the sign of each
-    /// contour contribution is certified, following exact-computation discipline.
-    ///
-    /// Returns `Decided(None)` when a contour contains a segment whose exact
-    /// area contribution is not implemented by the current object model.
-    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
-        self.as_view().filled_area(policy)
-    }
-
-    /// Groups material contours with the hole contours they contain.
-    ///
-    /// Ownership is decided with exact contour point classification before any
-    /// finite export projection exists. This follows boundary-first winding
-    /// classification and keeps finite export outside the topology decision.
-    pub fn contour_profiles(
-        &self,
-        policy: &CurveContext,
-    ) -> Classification<Vec<RegionContourProfile<'_>>> {
-        contour_profiles_from_iter(
-            self.material_contours.iter(),
-            self.hole_contours.iter(),
-            policy,
-        )
-    }
 }
 
 /// Borrowed view over material and hole contours.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionView2<'a> {
+pub(crate) struct RegionView2<'a> {
     material_contours: Vec<&'a Contour2>,
     hole_contours: Vec<&'a Contour2>,
 }
@@ -184,11 +123,6 @@ impl<'a> RegionView2<'a> {
     /// Returns hole contours.
     pub fn hole_contours(&self) -> &[&'a Contour2] {
         &self.hole_contours
-    }
-
-    /// Returns true when the view has no contours.
-    pub fn is_empty(&self) -> bool {
-        self.material_contours.is_empty() && self.hole_contours.is_empty()
     }
 
     /// Classifies a point against this region view.
@@ -282,127 +216,10 @@ impl<'a> RegionView2<'a> {
 
         Classification::Decided(depth)
     }
-
-    /// Returns the exact filled area implied by this borrowed region view.
-    ///
-    /// Material contours add their certified absolute area and hole contours
-    /// subtract theirs. This mirrors [`LineArcRegion2::filled_area`] for borrowed
-    /// region data without cloning contour bins.
-    pub fn filled_area(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
-        let mut material_area = Real::zero();
-        let mut hole_area = Real::zero();
-
-        for contour in &self.material_contours {
-            match contour_role_area(contour, policy)? {
-                Classification::Decided(Some(area)) => material_area = &material_area + &area,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
-        }
-        for contour in &self.hole_contours {
-            match contour_role_area(contour, policy)? {
-                Classification::Decided(Some(area)) => hole_area = &hole_area + &area,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
-        }
-
-        Ok(Classification::Decided(Some(&material_area - &hole_area)))
-    }
-
-    /// Groups material contours with the hole contours they contain.
-    ///
-    /// The representative point is taken from the hole boundary and classified
-    /// against every material contour with the same certified contour
-    /// classifier used by region containment. A boundary result is accepted as
-    /// ownership so shared/degenerate finite projections do not silently switch
-    /// to centroid heuristics. If classification is uncertain, the uncertainty
-    /// is returned to the caller rather than assigning a hole arbitrarily.
-    pub fn contour_profiles(
-        &'a self,
-        policy: &CurveContext,
-    ) -> Classification<Vec<RegionContourProfile<'a>>> {
-        contour_profiles_from_iter(
-            self.material_contours.iter().copied(),
-            self.hole_contours.iter().copied(),
-            policy,
-        )
-    }
 }
 
 fn contour_aabb_misses_point(contour: &Contour2, point: &Point2, policy: &CurveContext) -> bool {
     decided_contour_aabb(contour, policy)
         .as_ref()
         .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-}
-
-fn contour_profiles_from_iter<'a>(
-    material_contours: impl IntoIterator<Item = &'a Contour2>,
-    hole_contours: impl IntoIterator<Item = &'a Contour2>,
-    policy: &CurveContext,
-) -> Classification<Vec<RegionContourProfile<'a>>> {
-    let mut profiles = material_contours
-        .into_iter()
-        .map(|material| RegionContourProfile {
-            material,
-            holes: Vec::new(),
-        })
-        .collect::<Vec<_>>();
-    let holes = hole_contours.into_iter().collect::<Vec<_>>();
-
-    if profiles.is_empty() {
-        return if holes.is_empty() {
-            Classification::Decided(profiles)
-        } else {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        };
-    }
-
-    for hole in holes {
-        let Some(point) = hole.segments().first().map(|segment| segment.start()) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let mut owner = None;
-        for (index, profile) in profiles.iter().enumerate() {
-            match profile.material.classify_point(point, policy) {
-                Classification::Decided(
-                    ContourPointLocation::Inside | ContourPointLocation::Boundary,
-                ) => {
-                    owner = Some(index);
-                    break;
-                }
-                Classification::Decided(ContourPointLocation::Outside) => {}
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            }
-        }
-
-        let Some(owner) = owner else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        profiles[owner].holes.push(hole);
-    }
-
-    Classification::Decided(profiles)
-}
-
-fn contour_role_area(
-    contour: &Contour2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<Real>>> {
-    let Some(area) = contour.signed_area()? else {
-        return Ok(Classification::Decided(None));
-    };
-
-    match certified_absolute_area(area, policy)? {
-        Classification::Decided(area) => Ok(Classification::Decided(Some(area))),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
-}
-
-fn certified_absolute_area(area: Real, policy: &CurveContext) -> CurveResult<Classification<Real>> {
-    match compare_reals(&area, &Real::zero(), policy) {
-        Some(Ordering::Less) => Ok(Classification::Decided(Real::zero() - &area)),
-        Some(Ordering::Equal | Ordering::Greater) => Ok(Classification::Decided(area)),
-        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-    }
 }

@@ -52,6 +52,8 @@ pub mod hershey;
 #[cfg(feature = "hershey")]
 mod hershey_data;
 mod intersect;
+#[cfg(test)]
+mod native_region_tests;
 mod nurbs;
 mod nurbs_interpolation;
 mod offset;
@@ -127,15 +129,14 @@ pub use bezier_parameter::{
     BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionArrangement2,
-    CurveRegionBoundaryContourBuildResult2, CurveRegionBoundaryLoop2,
-    CurveRegionCertifiedParallelLoopEvidence2, CurveRegionCertifiedParallelOffsetEvidence2,
-    CurveRegionCertifiedParallelOffsetResult2, CurveRegionCertifiedSegmentationEvidence2,
-    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentSource2,
-    CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNativeContourView2,
-    CurveRegionNestingRoleEvidence2, CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
-    CurveRegionSegmentedOffsetEvidence2, CurveRegionSegmentedOffsetResult2,
-    CurveRegionSignedAreaRoleEvidence2,
+    BezierBoundaryLoop2, CurveRegion2, CurveRegionArrangement2, CurveRegionArrangementStage2,
+    CurveRegionBoundaryLoop2, CurveRegionCertifiedParallelLoopEvidence2,
+    CurveRegionCertifiedParallelOffsetEvidence2, CurveRegionCertifiedParallelOffsetResult2,
+    CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
+    CurveRegionFragmentSource2, CurveRegionLineRoleEvidence2, CurveRegionLoopRole,
+    CurveRegionNativeContourView2, CurveRegionNestingRoleEvidence2, CurveRegionProfile2,
+    CurveRegionSegmentationLoopEvidence2, CurveRegionSegmentedOffsetEvidence2,
+    CurveRegionSegmentedOffsetResult2, CurveRegionSignedAreaRoleEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -226,7 +227,7 @@ pub use facts::{
     RationalQuadraticBezier2Facts, RegionFacts, Segment2Facts, SegmentKind, SegmentKindCounts,
 };
 pub use finite_projection::{
-    FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2, FiniteRegionProjection2,
+    FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
     finite_polyline_vertex_centroid, finite_ring_signed_area, try_finite_polyline_vertex_centroid,
     try_finite_ring_signed_area,
 };
@@ -254,19 +255,7 @@ pub use rational_bezier_general::{
     RationalBezierOverlapOrientation2, RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
-#[doc(hidden)]
-pub use region::LineArcRegion2;
-pub use region::{RegionContourProfile, RegionPointLocation, RegionView2};
-pub use region_nesting::{
-    RegionArrangement2, RegionArrangementSummary2, RegionBoundaryContourBuildEvidence2,
-    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildResult2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
-    RegionBoundaryContourRoleEvidence2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentArrangedSourceEvidence2, RegionLineSegmentEndpointGraphPredicatePath2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
-    RegionLineSegmentRingSourceEvidence2, RegionLineSegmentSplitIntersectionEvidence2,
-    RegionLineSegmentSplitPredicatePath2,
-};
+pub use region::RegionPointLocation;
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use spline_periodic::SplinePeriodicity2;
@@ -519,10 +508,16 @@ mod tests {
             BulgeVertex2::new(p(3, 1), s(0)),
         ])
         .unwrap();
-        let region = LineArcRegion2::new(vec![material], vec![clockwise_hole]);
+        let region = CurveRegion2::try_from_native_contours(
+            vec![material],
+            vec![clockwise_hole],
+            &topology_policy(),
+        )
+        .unwrap()
+        .into_value();
 
         assert_eq!(
-            region.filled_area(&topology_policy()).unwrap(),
+            region.filled_area(&topology_policy()).unwrap().into_value(),
             Classification::Decided(Some(Real::from(12_i8)))
         );
     }

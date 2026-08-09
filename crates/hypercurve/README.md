@@ -31,8 +31,8 @@ This README describes crate version `0.3.1`.
 | `CurveContext`, `CurvePreviewOptions`, `Classification<T>` | One-byte predicate context, explicit lossy preview adapter, and decided/uncertain result |
 | `CurveError`, `ExactCurveError` | Construction and exact-topology failure information |
 
-`LineArcRegion2` remains available for compatibility, but new mixed-curve code
-should use `CurveRegion2`.
+`CurveRegion2` is the sole public filled-region carrier. Native line/arc
+specializations remain private fast paths inside the unified kernel.
 
 ## Install
 
@@ -239,7 +239,7 @@ exact signatures.
   `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
   finite approximations. `FiniteProjectionOptions` makes arc chord error
   visible at the boundary.
-- With `triangulation`, `FiniteRegionProjection2::triangulate` and
+- With `triangulation`, `FiniteRegionProfile2::triangulate` and
   `triangulate_finite_rings` produce finite triangles through Hypertri.
 - With `svg`, `SvgGeometry2::{from_svg, from_svg_with_options, to_svg,
   to_svg_with_options}`, `parse_svg_path_data`, `import_svg_document`, and

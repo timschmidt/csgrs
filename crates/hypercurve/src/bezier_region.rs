@@ -3,10 +3,9 @@
 //! [`CurveRegion2`] is the top-level higher-order region type. It accepts
 //! closed [`CurvePath2`] boundaries directly and materializes decided Boolean
 //! traversals without flattening their native or algebraic carriers. It
-//! deliberately does not force curved boundaries into line strings or into
-//! [`LineArcRegion2`](crate::LineArcRegion2), because the exactness model's exact geometric-computation
-//! model requires the exact curve objects to remain visible until a certified
-//! adapter exists.
+//! deliberately does not force curved boundaries into line strings or expose
+//! its private line/arc specialization, because the exactness model requires
+//! exact curve objects to remain visible until a certified adapter exists.
 //!
 //! Exact area is exposed for polynomial Bezier loops and rational quadratic
 //! conic loops whose homogeneous denominator is certified away from projective
@@ -57,7 +56,8 @@ use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
     resolve_cached_evaluation, resolve_certified_operation, resolve_certified_value,
 };
-use crate::region_nesting::ExactCurveWorkspace2;
+use crate::region::LineArcRegion2;
+use crate::region_nesting::RegionArrangement2;
 use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
     BezierArrangementTraversal2, BezierEndpointPointImage2, BezierFlatteningOptions,
@@ -71,11 +71,10 @@ use crate::{
     CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
     CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
     CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
-    ExactCurveResult, FillRule, LineArcRegion2, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionArrangement2,
-    RegionArrangementSummary2, RegionPointLocation, RetainedTopologyStatus, Segment2,
-    UncertaintyReason,
+    ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierPointIncidence2,
+    RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -84,16 +83,11 @@ pub struct BezierBoundaryLoop2 {
     fragments: Vec<BezierSubcurve2>,
 }
 
-/// A retained higher-order region with native Bezier/conic boundary loops.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct BezierRegion2 {
-    boundary_loops: Vec<BezierBoundaryLoop2>,
-}
-
 /// A closed retained Bezier/conic boundary loop.
 ///
-/// Unlike [`BezierBoundaryLoop2`], this carrier may contain retained analytic
-/// and algebraic fragments, including endpoint images, chords, and cusp joins.
+/// This carrier may contain retained analytic and algebraic fragments,
+/// including endpoint images, chords, and cusp joins, in addition to native
+/// [`BezierBoundaryLoop2`] fragments.
 /// It is a concrete exact-object region boundary in the exactness model's sense: the algebraic
 /// pieces remain replayable construction evidence, not sampled coordinates.
 #[derive(Clone, Debug, PartialEq)]
@@ -243,11 +237,11 @@ impl Default for CurveRegion2 {
     }
 }
 
-/// Borrowed native line/arc contour acceleration view for a [`CurveRegion2`].
+/// Borrowed exact line/arc output adapter for a [`CurveRegion2`].
 ///
-/// This exposes the useful fast-path geometry without transferring ownership
-/// to the legacy [`LineArcRegion2`] container. Higher-order regions simply do not
-/// produce this view.
+/// This exposes zero-copy specialized geometry without transferring ownership
+/// of the kernel's private native-region carrier or creating another operation
+/// authority. Higher-order regions return explicit `Unsupported` uncertainty.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CurveRegionNativeContourView2<'a> {
     material_contours: &'a [Contour2],
@@ -276,22 +270,27 @@ impl<'a> CurveRegionNativeContourView2<'a> {
     }
 }
 
+/// Furthest exact stage reached by unified native-boundary arrangement.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveRegionArrangementStage2 {
+    /// The unordered endpoint graph was being assembled into closed rings.
+    RingAssembly,
+    /// Checked contours were being assigned material/hole roles.
+    RegionRoleAssignment,
+}
+
 /// Immediate native line/arc arrangement with a unified curved output.
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
-    workspace: Arc<ExactCurveWorkspace2>,
-    summary: RegionArrangementSummary2,
-}
-
-/// Evidence-bearing native contour nesting with authoritative unified output.
-///
-/// The retained evidence is produced by the specialized line/arc nesting engine,
-/// while successful topology is promoted before it crosses this API boundary.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionBoundaryContourBuildResult2 {
-    region: Option<CurveRegion2>,
-    evidence: crate::RegionBoundaryContourBuildEvidence2,
+    fill_rule: FillRule,
+    source_segment_count: usize,
+    stage: CurveRegionArrangementStage2,
+    status: RetainedTopologyStatus,
+    blocker: Option<UncertaintyReason>,
+    output_ring_count: Option<usize>,
+    output_boundary_segment_count: Option<usize>,
+    output_boundary_segment_kind_counts: Option<SegmentKindCounts>,
 }
 
 /// Certified source-segmentation evidence for one region boundary loop used by an offset.
@@ -371,10 +370,6 @@ pub struct CurveRegionCertifiedParallelOffsetResult2 {
 }
 
 impl CurveRegionArrangement2 {
-    fn facts(&self) -> &ExactCurveWorkspace2 {
-        &self.workspace
-    }
-
     /// Returns the materialized unified region, if role assignment succeeded.
     pub const fn region(&self) -> Option<&CurveRegion2> {
         self.region.as_ref()
@@ -391,99 +386,48 @@ impl CurveRegionArrangement2 {
     }
 
     /// Returns the fill rule used by the completed native arrangement.
-    pub fn fill_rule(&self) -> FillRule {
-        self.facts().request().fill_rule()
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
     }
 
     /// Returns the number of exact source segments evaluated by the arrangement.
-    pub fn source_segment_count(&self) -> usize {
-        self.facts().request().source_segment_count()
+    pub const fn source_segment_count(&self) -> usize {
+        self.source_segment_count
     }
 
-    /// Returns final semantic facts from the completed arrangement.
-    pub const fn summary(&self) -> &RegionArrangementSummary2 {
-        &self.summary
+    /// Returns the final exact stage reached by the arrangement.
+    pub const fn stage(&self) -> CurveRegionArrangementStage2 {
+        self.stage
     }
 
-    /// Returns the final retained topology status, when evaluation completed.
-    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.summary.status()
+    /// Returns the final retained topology status.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
     }
 
     /// Returns the blocker when the completed arrangement could not materialize a region.
     pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.summary.blocker()
+        self.blocker
+    }
+
+    /// Returns output ring count when role assignment completed.
+    pub const fn output_ring_count(&self) -> Option<usize> {
+        self.output_ring_count
+    }
+
+    /// Returns output boundary segment count when role assignment completed.
+    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.output_boundary_segment_count
+    }
+
+    /// Returns output native primitive-family counts when role assignment completed.
+    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.output_boundary_segment_kind_counts
     }
 
     /// Consumes the result and returns its unified region, if materialized.
     pub fn into_region(self) -> Option<CurveRegion2> {
         self.region
-    }
-}
-
-impl CurveRegionBoundaryContourBuildResult2 {
-    /// Returns the unified region when exact native nesting succeeded.
-    pub const fn region(&self) -> Option<&CurveRegion2> {
-        self.region.as_ref()
-    }
-
-    /// Returns the retained native nesting and role-assignment evidence.
-    pub const fn evidence(&self) -> &crate::RegionBoundaryContourBuildEvidence2 {
-        &self.evidence
-    }
-
-    /// Returns the retained native construction status.
-    pub const fn status(&self) -> crate::RetainedTopologyStatus {
-        self.evidence.status()
-    }
-
-    /// Returns the exact blocker when no unified region was materialized.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.evidence.blocker()
-    }
-
-    /// Returns the unified result as a classification without consuming evidence.
-    pub fn region_classification(&self) -> Classification<&CurveRegion2> {
-        match self.region() {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(
-                self.evidence
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes the result and returns its unified region, if materialized.
-    pub fn into_region(self) -> Option<CurveRegion2> {
-        self.region
-    }
-
-    /// Consumes the result and returns its retained evidence.
-    pub fn into_evidence(self) -> crate::RegionBoundaryContourBuildEvidence2 {
-        self.evidence
-    }
-
-    /// Consumes the unified output and retained native evidence together.
-    pub fn into_parts(
-        self,
-    ) -> (
-        Option<CurveRegion2>,
-        crate::RegionBoundaryContourBuildEvidence2,
-    ) {
-        (self.region, self.evidence)
-    }
-
-    /// Consumes the unified output as a classification.
-    pub fn into_region_classification(self) -> Classification<CurveRegion2> {
-        let blocker = self
-            .evidence
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.region {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(blocker),
-        }
     }
 }
 
@@ -790,7 +734,6 @@ fn shared_all_material_curve_region_loop_roles(role_count: usize) -> Arc<[CurveR
 
 /// One exact retained material boundary and the hole boundaries it owns.
 ///
-/// This is the mixed-family counterpart to [`crate::RegionContourProfile`].
 /// Ownership is classified against retained curve carriers before finite
 /// projection, so meshing adapters never need to infer topology from samples.
 #[derive(Clone, Debug, PartialEq)]
@@ -1298,145 +1241,20 @@ impl BezierBoundaryLoop2 {
     }
 }
 
-impl BezierRegion2 {
-    /// Constructs a retained region from closed boundary loops.
-    pub fn new(boundary_loops: Vec<BezierBoundaryLoop2>) -> CurveResult<Self> {
-        validate_bezier_region_loops(&boundary_loops)?;
-        Ok(Self { boundary_loops })
-    }
-
-    /// Materializes a retained region from a decided arrangement traversal.
-    ///
-    /// Every traversal chain must be closed and every referenced graph fragment
-    /// must be materialized. Open chains and algebraic-boundary fragments are
-    /// returned as explicit uncertainty rather than converted to approximate
-    /// boundaries.
-    pub fn from_arrangement_traversal(
-        graph: &BezierArrangementGraph2,
-        traversal: &BezierArrangementTraversal2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        let mut loops = Vec::with_capacity(traversal.chains().len());
-        for chain in traversal.chains() {
-            if !chain.is_closed() {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
-            }
-
-            let mut fragments = Vec::with_capacity(chain.len());
-            for index in chain.fragment_indices() {
-                let Some(fragment) = graph.fragments().get(*index) else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
-                match fragment.fragment() {
-                    BezierSplitFragment2::Materialized { curve, .. } => {
-                        fragments.push(curve.clone());
-                    }
-                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                    | BezierSplitFragment2::AnalyticParallel(_)
-                    | BezierSplitFragment2::AlgebraicChord(_)
-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                    | BezierSplitFragment2::Unresolved { .. } => {
-                        return Classification::Uncertain(UncertaintyReason::Boundary);
-                    }
-                }
-            }
-            let loop_ = match BezierBoundaryLoop2::new(fragments, policy) {
-                Ok(loop_) => loop_,
-                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-            };
-            loops.push(loop_);
+impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
+    fn from(boundary_loop: BezierBoundaryLoop2) -> Self {
+        Self {
+            fragments: boundary_loop
+                .into_fragments()
+                .into_iter()
+                .map(|curve| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve,
+                })
+                .collect(),
+            arrangement_sources: None,
         }
-
-        match Self::new(loops) {
-            Ok(region) => Classification::Decided(region),
-            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-        }
-    }
-
-    /// Materializes a native region from a resolved linear-overlap traversal.
-    ///
-    /// This consumes the refined graph carried by
-    /// [`BezierRetainedLinearOverlapTraversal2`] instead of asking callers to
-    /// manually pair a derived traversal with the derived graph.  It remains a
-    /// native-region constructor: if any accepted refined fragment is only an
-    /// algebraic endpoint-image carrier, the result is explicit boundary
-    /// uncertainty.  The split/refine/traverse evidence stays separate from
-    /// region materialization in the exactness model's exact-computation sense.  The positive-dimensional overlap is consumed
-    /// only after the degenerate-intersection clipping model degeneracy is recorded
-    /// as a resolved span on the refinement evidence.
-    pub fn from_retained_linear_overlap_traversal(
-        traversal: &BezierRetainedLinearOverlapTraversal2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        Self::from_arrangement_traversal(
-            traversal.refinement().graph(),
-            traversal.traversal(),
-            policy,
-        )
-    }
-
-    /// Materializes a native region from a represented rational-overlap traversal.
-    ///
-    /// The traversal retains the exact split ranges and refined graph needed to
-    /// keep region materialization paired with the geometry it references.
-    pub fn from_retained_rational_overlap_traversal(
-        traversal: &BezierRetainedRationalOverlapTraversal2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        Self::from_arrangement_traversal(
-            traversal.refinement().graph(),
-            traversal.traversal(),
-            policy,
-        )
-    }
-
-    /// Returns retained native boundary loops.
-    pub fn boundary_loops(&self) -> &[BezierBoundaryLoop2] {
-        &self.boundary_loops
-    }
-
-    /// Consumes the region and returns retained native boundary loops.
-    pub fn into_boundary_loops(self) -> Vec<BezierBoundaryLoop2> {
-        self.boundary_loops
-    }
-
-    /// Returns true when the region has no boundary loops.
-    pub fn is_empty(&self) -> bool {
-        self.boundary_loops.is_empty()
-    }
-
-    /// Returns the number of boundary loops.
-    pub fn len(&self) -> usize {
-        self.boundary_loops.len()
-    }
-
-    /// Returns the exact signed area when all loops have implemented area integrals.
-    pub fn signed_area(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
-        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
-    }
-
-    pub(crate) fn signed_area_raw(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Real>>> {
-        let mut total = Real::zero();
-        for boundary_loop in &self.boundary_loops {
-            match boundary_loop.signed_area_raw(policy)? {
-                Classification::Decided(Some(area)) => {
-                    total = &total + &area;
-                }
-                Classification::Decided(None) => {
-                    return Ok(Classification::Decided(None));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        }
-        Ok(Classification::Decided(Some(total)))
     }
 }
 
@@ -2259,15 +2077,31 @@ fn promote_native_region_arrangement(
     arrangement: RegionArrangement2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    let (region, workspace, summary) = arrangement.into_region_with_facts();
+    let RegionArrangement2 {
+        region,
+        fill_rule,
+        source_segment_count,
+        stage,
+        status,
+        blocker,
+        output_ring_count,
+        output_boundary_segment_count,
+        output_boundary_segment_kind_counts,
+    } = arrangement;
     let region = region
         .as_ref()
         .map(|region| CurveRegion2::try_from_line_arc_region_raw(region, policy))
         .transpose()?;
     Ok(CurveRegionArrangement2 {
         region,
-        workspace,
-        summary,
+        fill_rule,
+        source_segment_count,
+        stage,
+        status,
+        blocker,
+        output_ring_count,
+        output_boundary_segment_count,
+        output_boundary_segment_kind_counts,
     })
 }
 
@@ -6509,17 +6343,25 @@ impl CurveRegion2 {
 
     /// Nests unordered native boundary contours and promotes their decided roles.
     ///
-    /// Even containment depth becomes material and odd depth becomes a hole,
-    /// matching `LineArcRegion2::from_boundary_contours`. Intersecting, touching, or
-    /// otherwise uncertifiable boundaries remain an explicit uncertainty.
+    /// Even containment depth becomes material and odd depth becomes a hole.
+    /// Intersecting, touching, or otherwise uncertifiable boundaries remain an
+    /// explicit uncertainty.
     pub fn try_from_native_boundary_contours(
         contours: Vec<Contour2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
-        resolve_certified_operation(policy, |attempt| {
-            Self::try_from_native_boundary_contours_with_evidence(contours, attempt)
-                .map(CurveRegionBoundaryContourBuildResult2::into_region_classification)
-        })
+        resolve_certified_operation(
+            policy,
+            |attempt| match LineArcRegion2::from_boundary_contours(contours, attempt)
+                .map_err(curve_region_promotion_error)?
+            {
+                Classification::Decided(region) => {
+                    Self::try_from_line_arc_region_raw(&region, attempt)
+                        .map(Classification::Decided)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            },
+        )
     }
 
     /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
@@ -6528,26 +6370,6 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
         Self::try_from_native_boundary_contours(contours.to_vec(), policy)
-    }
-
-    /// Nests native contours with evidence evidence and returns unified topology.
-    ///
-    /// The specialized line/arc engine performs intersection validation,
-    /// containment-depth assignment, and material/hole binning. Any decided
-    /// output is immediately promoted to `CurveRegion2`; callers never need to
-    /// own or inspect the transient [`LineArcRegion2`] result.
-    pub(crate) fn try_from_native_boundary_contours_with_evidence(
-        contours: Vec<Contour2>,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionBoundaryContourBuildResult2> {
-        let built = LineArcRegion2::from_boundary_contours_with_evidence(contours, policy)
-            .map_err(curve_region_promotion_error)?;
-        let (region, evidence) = built.into_parts();
-        let region = region
-            .as_ref()
-            .map(|region| Self::try_from_line_arc_region_raw(region, policy))
-            .transpose()?;
-        Ok(CurveRegionBoundaryContourBuildResult2 { region, evidence })
     }
 
     /// Constructs unified filled topology from one possibly self-intersecting
@@ -6567,23 +6389,6 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| {
             regularize_native_contour_with_curve_region(contour, attempt)
                 .map(Classification::Decided)
-        })
-    }
-
-    /// Losslessly promotes a native line/arc region into the mixed-family carrier.
-    ///
-    /// Material and hole roles come from the source region rather than being
-    /// inferred again from loop nesting or authored orientation. The original
-    /// native region is retained as the certified line/arc fast path, preserving
-    /// its contour fill rules and query behavior in the canonical mixed-family
-    /// API.
-    #[doc(hidden)]
-    pub fn try_from_line_arc_region(
-        region: &LineArcRegion2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        resolve_certified_operation(policy, |attempt| {
-            Self::try_from_line_arc_region_raw(region, attempt)
         })
     }
 
@@ -7163,8 +6968,8 @@ impl CurveRegion2 {
     /// Every traversal chain must be closed. Materialized native fragments and
     /// algebraic endpoint-image fragments are accepted as exact carriers;
     /// unresolved fragments remain explicit boundary uncertainty. This mirrors
-    /// [`BezierRegion2::from_arrangement_traversal`] but preserves algebraic
-    /// carriers instead of requiring native subcurves.
+    /// Materialized native fragments and retained algebraic carriers enter the
+    /// same authoritative region representation.
     pub fn from_retained_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
@@ -7356,8 +7161,8 @@ impl CurveRegion2 {
     /// Assigns material/hole roles from exact native loop signed-area orientation.
     ///
     /// A negative signed area is treated as a material loop and a positive
-    /// signed area as a hole loop, matching the current Bezier region boundary
-    /// convention used by [`BezierRegion2::signed_area`].  This method is a
+    /// signed area as a hole loop, matching the unified region boundary
+    /// convention used by [`CurveRegion2::signed_area`].  This method is a
     /// evidence-bearing orientation adapter: it does not infer nesting and it
     /// does not sample nonlinear loops.  Use [`Self::line_image_role_evidence`]
     /// when exact line-image nesting is required.
@@ -7637,7 +7442,7 @@ impl CurveRegion2 {
     ///
     /// The tuple is `(material, holes)`. Role classification follows the same
     /// exact retained-curve path as [`CurveRegion2::loop_roles`]; no native
-    /// [`LineArcRegion2`] projection is required.
+    /// projection is required.
     pub fn loop_role_counts(
         &self,
         policy: &CurveContext,
@@ -7905,11 +7710,10 @@ impl CurveRegion2 {
         })
     }
 
-    /// Returns borrowed native line/arc contours without exposing `LineArcRegion2` ownership.
+    /// Borrows an exact line/arc representation when the unified boundary has one.
     ///
-    /// This is the public acceleration boundary for consumers that genuinely
-    /// need native primitives. Higher-order topology
-    /// remains explicit `Unsupported` uncertainty and is never segmented.
+    /// This adapter never segments a higher-order carrier and exposes no
+    /// independent Boolean, offset, or corner-edit engine.
     pub fn native_contours_fast_path(
         &self,
         policy: &CurveContext,
@@ -10100,6 +9904,49 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
     }
 
+    /// Classifies a batch of exact points against the unified region.
+    ///
+    /// Native line/arc topology builds its query indexes once. Retained curved
+    /// topology reuses the same authoritative scalar classifier for every
+    /// point, preserving explicit uncertainty and the operation-wide policy
+    /// terminal.
+    pub fn classify_points(
+        &self,
+        points: &[Point2],
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Vec<Classification<RegionPointLocation>>>> {
+        resolve_certified_operation(policy, |attempt| {
+            if !self.data.signed_loop_composition
+                && let Classification::Decided(native) = self.native_line_arc_region(attempt)?
+            {
+                return Ok(native.classify_points(points, attempt));
+            }
+            points
+                .iter()
+                .map(|point| self.classify_point_raw(point, attempt))
+                .collect()
+        })
+    }
+
+    /// Returns native line/arc structural facts when that exact specialization exists.
+    ///
+    /// Higher-order retained carriers remain explicitly unsupported because
+    /// [`crate::RegionFacts`] describes native segment-family facts and must not
+    /// silently flatten a curved boundary.
+    pub fn structural_facts(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<crate::RegionFacts>>> {
+        resolve_certified_operation(policy, |attempt| {
+            Ok(match self.native_line_arc_region(attempt)? {
+                Classification::Decided(native) => {
+                    Classification::Decided(native.structural_facts(attempt))
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            })
+        })
+    }
+
     /// Classifies an exact algebraic point against the retained region.
     ///
     /// The point remains in its defining local algebraic field. Boundary
@@ -10553,7 +10400,7 @@ impl CurveRegion2 {
     /// classifier derives one role per loop before depth accumulation. Each
     /// loop's own fill rule controls whether it contributes at the query point.
     /// Boundary points return `Uncertain(Boundary)` rather than an arbitrary
-    /// integer, matching [`LineArcRegion2::signed_depth`].
+    /// integer.
     pub fn signed_depth(
         &self,
         point: &Point2,
@@ -10745,7 +10592,7 @@ impl CurveRegion2 {
     ///
     /// Unlike [`Self::signed_area`], this query uses explicit/nesting-derived
     /// loop roles and ignores authored orientation. Nested material islands add
-    /// area while owned holes subtract it, matching [`LineArcRegion2::filled_area`].
+    /// area while owned holes subtract it.
     /// Per-loop fill rules are applied to repeated windings before role
     /// accumulation. A retained algebraic or otherwise unsupported integral
     /// returns `Decided(None)` rather than approximating the boundary. If exact
@@ -10976,7 +10823,7 @@ fn materialized_boundary_loop_is_simple(
         let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        match materialized_subcurve_has_injective_axis(curve, policy)? {
+        match curve.certified_injective_image(policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -11037,47 +10884,6 @@ fn materialized_boundary_loop_is_simple(
         }
     }
     Ok(Classification::Decided(true))
-}
-
-fn materialized_subcurve_has_injective_axis(
-    curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let mut uncertainty = None;
-    for axis in [Axis2::X, Axis2::Y] {
-        let monotone = match curve {
-            BezierSubcurve2::Quadratic(curve) => curve
-                .axis_monotone_parameters(axis, policy)
-                .map(|roots| roots.is_empty()),
-            BezierSubcurve2::Cubic(curve) => curve
-                .axis_monotone_parameters(axis, policy)
-                .map(|roots| roots.is_empty()),
-            BezierSubcurve2::RationalQuadratic(curve) => curve
-                .axis_monotone_parameters(axis, policy)
-                .map(|roots| roots.is_empty()),
-            BezierSubcurve2::Rational(curve) => curve.axis_monotonicity_classified(axis, policy)?,
-        };
-        match monotone {
-            Classification::Decided(true) => {
-                let (start, end) = match axis {
-                    Axis2::X => (curve.start().x(), curve.end().x()),
-                    Axis2::Y => (curve.start().y(), curve.end().y()),
-                };
-                match compare_reals(start, end, policy) {
-                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Some(std::cmp::Ordering::Equal) => {}
-                    None => uncertainty = Some(UncertaintyReason::Ordering),
-                }
-            }
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => uncertainty = Some(reason),
-        }
-    }
-    Ok(Classification::Uncertain(
-        uncertainty.unwrap_or(UncertaintyReason::Unsupported),
-    ))
 }
 
 fn curve_path_contact_is_ordinary_adjacent_endpoint(

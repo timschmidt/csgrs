@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveContext, CurveResult,
-    LineArcRegion2, Point2, Real, RegionPointLocation,
+    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveContext, CurveRegion2,
+    CurveResult, Point2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -28,13 +28,15 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     .unwrap()
 }
 
-fn sparse_region(contour_count: i32) -> LineArcRegion2 {
+fn sparse_region(contour_count: i32) -> CurveRegion2 {
     let mut contours = Vec::with_capacity(contour_count as usize);
     for index in 0..contour_count {
         let x = index * 10;
         contours.push(rectangle(x, 0, x + 4, 4));
     }
-    LineArcRegion2::from_material_contours(contours)
+    CurveRegion2::try_from_native_material_contours(contours, &CurveContext::STRICT)
+        .unwrap()
+        .into_value()
 }
 
 fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
@@ -95,7 +97,7 @@ fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     let mut outside_count = 0_usize;
 
     for _ in 0..iterations {
-        match region.classify_point(&point, &policy) {
+        match region.classify_point(&point, &policy)?.into_value() {
             Classification::Decided(RegionPointLocation::Outside) => {
                 outside_count += black_box(1);
             }
@@ -127,7 +129,10 @@ fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
     let mut decided_count = 0_usize;
 
     for _ in 0..iterations {
-        for result in LineArcRegion2::classify_points(&region, black_box(&points), &policy) {
+        for result in region
+            .classify_points(black_box(&points), &policy)?
+            .into_value()
+        {
             match result {
                 Classification::Decided(
                     RegionPointLocation::Inside | RegionPointLocation::Outside,
@@ -153,7 +158,7 @@ fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let mut inside_count = 0_usize;
 
     for _ in 0..iterations {
-        match region.classify_point(&point, &policy) {
+        match region.classify_point(&point, &policy)?.into_value() {
             Classification::Decided(RegionPointLocation::Inside) => {
                 inside_count += black_box(1);
             }
@@ -176,7 +181,7 @@ fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
     let mut checksum = 0_usize;
 
     for _ in 0..iterations {
-        match region.filled_area(&policy)? {
+        match region.filled_area(&policy)?.into_value() {
             Classification::Decided(Some(area)) => {
                 checksum ^= format!("{area:?}").len();
             }

@@ -4,11 +4,11 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    BulgeVertex2, Classification, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
-    CurveError, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2,
-    LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
+    BezierSplitFragment2, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
+    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveResult, LineSeg2, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -411,9 +411,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(BezierRegion2::from_arrangement_traversal(
-            &graph, &traversal, &policy,
-        ));
+        let region = decided(
+            CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
+                .into_value(),
+        );
         checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
@@ -451,10 +452,10 @@ fn main() -> CurveResult<()> {
         elapsed / classification_iterations
     );
 
-    let native_region = LineArcRegion2::from_material_contours(vec![rectangle(-4, -4, 4, 4)]);
-    let immediate_region = CurveRegion2::try_from_line_arc_region(&native_region, &policy)
-        .unwrap()
-        .into_value();
+    let immediate_region =
+        CurveRegion2::try_from_native_material_contours(vec![rectangle(-4, -4, 4, 4)], &policy)
+            .unwrap()
+            .into_value();
     let depth_point = p(1, 1);
     decided(
         immediate_region
@@ -669,12 +670,6 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut overlap_checksum = 0_usize;
     for _ in 0..iterations {
-        let native = decided(BezierRegion2::from_retained_linear_overlap_traversal(
-            &overlap_traversal,
-            &policy,
-        ));
-        overlap_checksum ^=
-            black_box(format!("{:?}", decided(native.signed_area(&policy)?.into_value())).len());
         let retained = decided(
             CurveRegion2::from_retained_linear_overlap_traversal(&overlap_traversal, &policy)
                 .into_value(),
@@ -723,11 +718,14 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut conic_checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(BezierRegion2::from_arrangement_traversal(
-            &conic_graph,
-            &conic_traversal,
-            &policy,
-        ));
+        let region = decided(
+            CurveRegion2::from_retained_arrangement_traversal(
+                &conic_graph,
+                &conic_traversal,
+                &policy,
+            )
+            .into_value(),
+        );
         conic_checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }

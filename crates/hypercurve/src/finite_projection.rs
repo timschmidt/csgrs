@@ -15,8 +15,7 @@ use crate::bezier_parameter::BezierParameterRefinement2;
 use crate::{
     BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
     Contour2, Curve2, CurveContext, CurveError, CurveOutcome, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, CurveString2, LineArcRegion2,
-    Point2, RegionContourProfile, RegionView2, Segment2,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, CurveString2, Point2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 
@@ -34,20 +33,9 @@ pub struct FinitePolyline2 {
     closed: bool,
 }
 
-/// Finite `f64` projection of a region with material and hole roles retained.
-///
-/// This is an IO/display object. Exact containment, area, and boolean topology
-/// remain on [`LineArcRegion2`] / [`RegionView2`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct FiniteRegionProjection2 {
-    material_rings: Vec<FinitePolyline2>,
-    hole_rings: Vec<FinitePolyline2>,
-}
-
 /// A finite material ring and the finite hole rings owned by it.
 ///
-/// This is the projected counterpart to [`RegionContourProfile`]. Ownership is
-/// still decided in exact hypercurve topology before any finite ring is
+/// Ownership is decided in authoritative [`CurveRegion2`] topology before any finite ring is
 /// emitted; this type only carries the boundary result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FiniteRegionProfile2 {
@@ -105,7 +93,7 @@ impl FinitePolyline2 {
     ///
     /// This is only a boundary/product measurement of projected vertices. Exact
     /// contour area stays on [`Contour2::signed_area`] and
-    /// [`crate::LineArcRegion2::filled_area`].
+    /// [`CurveRegion2::filled_area`].
     pub fn signed_ring_area(&self) -> f64 {
         finite_ring_signed_area(&self.points)
     }
@@ -132,25 +120,6 @@ impl FinitePolyline2 {
     }
 }
 
-impl FiniteRegionProjection2 {
-    fn new(material_rings: Vec<FinitePolyline2>, hole_rings: Vec<FinitePolyline2>) -> Self {
-        Self {
-            material_rings,
-            hole_rings,
-        }
-    }
-
-    /// Returns projected material rings.
-    pub fn material_rings(&self) -> &[FinitePolyline2] {
-        &self.material_rings
-    }
-
-    /// Returns projected hole rings.
-    pub fn hole_rings(&self) -> &[FinitePolyline2] {
-        &self.hole_rings
-    }
-}
-
 impl FiniteRegionProfile2 {
     fn new(material: FinitePolyline2, holes: Vec<FinitePolyline2>) -> Self {
         Self { material, holes }
@@ -171,7 +140,7 @@ impl FiniteRegionProfile2 {
     /// Hole ownership has already been decided by native region topology before
     /// this projected profile exists, so this method does not infer roles from
     /// winding. It only measures the finite output rings with the shoelace
-    /// formula. Exact CAD area should use [`LineArcRegion2::filled_area`]; this helper
+    /// formula. Exact CAD area should use [`CurveRegion2::filled_area`]; this helper
     /// exists for IO, diagnostics, and tests at the projection boundary.
     pub fn projected_filled_area(&self) -> f64 {
         let material = self.material.signed_ring_area().abs();
@@ -807,106 +776,6 @@ impl Contour2 {
     ) -> CurveResult<FinitePolyline2> {
         project_curve_string(self.curve_string(), options, true)
     }
-}
-
-impl LineArcRegion2 {
-    /// Projects this region to finite material/hole rings for IO and display.
-    ///
-    /// Region roles are preserved, but the returned rings are boundary
-    /// products only. Exact point classification and area should continue to
-    /// use [`LineArcRegion2::classify_point`] and [`LineArcRegion2::filled_area`].
-    pub fn project_to_finite_region(
-        &self,
-        options: &FiniteProjectionOptions,
-    ) -> CurveResult<FiniteRegionProjection2> {
-        self.as_view().project_to_finite_region(options)
-    }
-
-    /// Projects exact material/hole ownership profiles to finite rings.
-    ///
-    /// Ownership is classified before projection with
-    /// [`LineArcRegion2::contour_profiles`], so this method does not recover holes
-    /// from sampled centroids or winding heuristics. The returned rings are
-    /// still finite API-boundary products; exact topology remains in the
-    /// region. This follows the exact-object/API-boundary split and the
-    /// boundary-first point-in-polygon structure used by
-    /// [`LineArcRegion2::contour_profiles`].
-    #[inline]
-    pub fn project_to_finite_profiles(
-        &self,
-        options: &FiniteProjectionOptions,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<Vec<FiniteRegionProfile2>>>> {
-        crate::policy::resolve_certified_operation(policy, |attempt| {
-            self.as_view()
-                .project_to_finite_profiles_raw(options, attempt)
-        })
-    }
-}
-
-impl<'a> RegionView2<'a> {
-    /// Projects this borrowed region view to finite material/hole rings.
-    ///
-    /// This method exists for export adapters that already work with borrowed
-    /// topology. It clones only finite output vertices, not exact contours.
-    pub fn project_to_finite_region(
-        &self,
-        options: &FiniteProjectionOptions,
-    ) -> CurveResult<FiniteRegionProjection2> {
-        let material_rings = project_contour_slice(self.material_contours(), options)?;
-        let hole_rings = project_contour_slice(self.hole_contours(), options)?;
-        Ok(FiniteRegionProjection2::new(material_rings, hole_rings))
-    }
-
-    /// Projects exact material/hole ownership profiles to finite rings.
-    #[inline]
-    pub fn project_to_finite_profiles(
-        &self,
-        options: &FiniteProjectionOptions,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<Vec<FiniteRegionProfile2>>>> {
-        crate::policy::resolve_certified_operation(policy, |attempt| {
-            self.project_to_finite_profiles_raw(options, attempt)
-        })
-    }
-
-    pub(crate) fn project_to_finite_profiles_raw(
-        &self,
-        options: &FiniteProjectionOptions,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
-        match self.contour_profiles(policy) {
-            Classification::Decided(profiles) => profiles
-                .iter()
-                .map(|profile| project_region_profile(profile, options))
-                .collect::<CurveResult<Vec<_>>>()
-                .map(Classification::Decided),
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
-}
-
-fn project_region_profile(
-    profile: &RegionContourProfile<'_>,
-    options: &FiniteProjectionOptions,
-) -> CurveResult<FiniteRegionProfile2> {
-    let material = profile.material.project_to_finite_ring(options)?;
-    let holes = profile
-        .holes
-        .iter()
-        .map(|hole| hole.project_to_finite_ring(options))
-        .collect::<CurveResult<Vec<_>>>()?;
-    Ok(FiniteRegionProfile2::new(material, holes))
-}
-
-fn project_contour_slice(
-    contours: &[&Contour2],
-    options: &FiniteProjectionOptions,
-) -> CurveResult<Vec<FinitePolyline2>> {
-    contours
-        .iter()
-        .map(|contour| contour.project_to_finite_ring(options))
-        .collect()
 }
 
 fn project_curve_string(

@@ -1,6 +1,6 @@
 use hypercurve::{
-    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveString2,
-    LineArcRegion2, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
+    Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveRegion2,
+    CurveString2, LineSeg2, Point2, Real, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -167,9 +167,11 @@ fn region_aabb_unions_material_and_hole_boundaries() {
         BulgeVertex2::new(p(20, 6), s(0)),
     ])
     .unwrap();
-    let region = LineArcRegion2::new(vec![material], vec![hole]);
+    let region = CurveRegion2::try_from_native_contours(vec![material], vec![hole], &policy())
+        .unwrap()
+        .into_value();
 
-    let Classification::Decided(bbox) = Aabb2::from_region(&region, &policy()).unwrap() else {
+    let Classification::Decided(bbox) = region.bounds(&policy()).unwrap().into_value() else {
         panic!("region bbox should be decided");
     };
     assert_bbox(&bbox, p(0, 0), p(24, 10));
@@ -178,7 +180,10 @@ fn region_aabb_unions_material_and_hole_boundaries() {
 #[test]
 fn empty_region_aabb_is_explicitly_unsupported() {
     assert_eq!(
-        Aabb2::from_region(&LineArcRegion2::empty(), &policy()).unwrap(),
+        CurveRegion2::empty()
+            .bounds(&policy())
+            .unwrap()
+            .into_value(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

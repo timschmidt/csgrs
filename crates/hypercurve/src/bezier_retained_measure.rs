@@ -34,7 +34,7 @@ use crate::{
 impl CurveRegion2 {
     /// Returns a certified exact boundary envelope for the unified region.
     ///
-    /// Native line/arc topology uses the compact `LineArcRegion2` bounds kernel. All
+    /// Native line/arc topology uses the compact private bounds fast path. All
     /// other retained carriers use derivative-root and algebraic-source
     /// evidence without segmentation. Empty regions and carriers lacking
     /// sufficient exact interior evidence return explicit uncertainty.

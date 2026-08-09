@@ -10,9 +10,10 @@
 
 use hyperreal::{Real, RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
 
+use crate::region::RegionView2;
 use crate::{
     CircularArc2, Contour2, CubicBezier2, CurveString2, LineSeg2, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, RegionView2, Segment2,
+    RationalQuadraticBezier2, Segment2,
 };
 
 /// Structural facts for a [`Point2`].

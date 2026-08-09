@@ -6691,86 +6691,6 @@ fn carrier_refined_bounds_decided_disjoint(
     Ok(false)
 }
 
-fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
-    match curve {
-        BezierSubcurve2::Quadratic(curve)
-            if polynomial_control_polygon_has_certified_injective_axis(
-                curve.control_points(),
-                policy,
-            ) =>
-        {
-            return true;
-        }
-        BezierSubcurve2::Cubic(curve)
-            if polynomial_control_polygon_has_certified_injective_axis(
-                curve.control_points(),
-                policy,
-            ) =>
-        {
-            return true;
-        }
-        BezierSubcurve2::Quadratic(_)
-        | BezierSubcurve2::Cubic(_)
-        | BezierSubcurve2::RationalQuadratic(_)
-        | BezierSubcurve2::Rational(_) => {}
-    }
-    let rational = match curve {
-        BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
-            curve.control_points().into_iter().cloned().collect(),
-            vec![crate::Real::one(); 3],
-        ),
-        BezierSubcurve2::Cubic(curve) => RationalBezier2::try_new(
-            curve.control_points().into_iter().cloned().collect(),
-            vec![crate::Real::one(); 4],
-        ),
-        BezierSubcurve2::RationalQuadratic(curve) => RationalBezier2::try_new(
-            curve.control_points().into_iter().cloned().collect(),
-            curve.weights().into_iter().cloned().collect(),
-        ),
-        BezierSubcurve2::Rational(curve) => return curve.has_certified_injective_axis(policy),
-    };
-    rational.is_ok_and(|curve| curve.has_certified_injective_axis(policy))
-}
-
-fn polynomial_control_polygon_has_certified_injective_axis<const N: usize>(
-    control_points: [&crate::Point2; N],
-    policy: &CurveContext,
-) -> bool {
-    [Axis2::X, Axis2::Y].into_iter().any(|axis| {
-        let Some(direction) = compare_reals(
-            point_coordinate(control_points[0], axis),
-            point_coordinate(control_points[N - 1], axis),
-            policy,
-        ) else {
-            return false;
-        };
-        if direction == Ordering::Equal {
-            return false;
-        }
-        control_points.windows(2).all(|pair| {
-            compare_reals(
-                point_coordinate(pair[0], axis),
-                point_coordinate(pair[1], axis),
-                policy,
-            )
-            .is_some_and(|ordering| ordering == Ordering::Equal || ordering == direction)
-        })
-    })
-}
-
-fn subcurve_has_certified_injective_image(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
-    match curve {
-        BezierSubcurve2::RationalQuadratic(curve) if curve.retained_circular_conic().is_some() => {
-            true
-        }
-        BezierSubcurve2::Rational(curve) if curve.retained_circular_conic().is_some() => true,
-        BezierSubcurve2::Quadratic(_)
-        | BezierSubcurve2::Cubic(_)
-        | BezierSubcurve2::RationalQuadratic(_)
-        | BezierSubcurve2::Rational(_) => subcurve_has_certified_injective_axis(curve, policy),
-    }
-}
-
 fn subcurve_certified_outer_bounds(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
@@ -9686,7 +9606,7 @@ impl RegionCarrierGeometry {
 
     fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
         match self {
-            Self::Bezier(curve) => subcurve_has_certified_injective_axis(curve, policy),
+            Self::Bezier(curve) => curve.has_certified_injective_axis(policy),
             Self::AnalyticParallel(parallel) => {
                 parallel.regular_fragment_has_certified_injective_axis(policy)
                     || matches!(
@@ -9702,7 +9622,7 @@ impl RegionCarrierGeometry {
 
     fn has_certified_injective_image(&self, policy: &CurveContext) -> bool {
         match self {
-            Self::Bezier(curve) => subcurve_has_certified_injective_image(curve, policy),
+            Self::Bezier(curve) => curve.has_certified_injective_image(policy),
             Self::AnalyticParallel(_) => self.has_certified_injective_axis(policy),
             Self::AlgebraicChord(_) => true,
             Self::AlgebraicCuspSemicircle(_) => true,
@@ -13086,8 +13006,8 @@ mod certified_successor_tests {
             Point2::from_values(0, 0),
         ));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert!(subcurve_has_certified_injective_axis(&monotone, &policy));
-            assert!(!subcurve_has_certified_injective_axis(&retraced, &policy));
+            assert!(monotone.has_certified_injective_axis(&policy));
+            assert!(!retraced.has_certified_injective_axis(&policy));
         }
     }
 
