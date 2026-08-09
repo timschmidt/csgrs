@@ -15737,6 +15737,109 @@ mod tests {
     }
 
     #[cfg(feature = "predicates")]
+    fn parallel_pair_fillet_region(
+        previous_retained: bool,
+        next_retained: bool,
+        reversed: bool,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
+        let fragment = |start: Point2, end: Point2, retained: bool| {
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let curve = QuadraticBezier2::new(start.clone(), start.lerp(&end, half), end.clone());
+            if retained {
+                let parallel = curve
+                    .parallel_left(Real::zero())
+                    .expect("the exact-line analytic parallel is valid");
+                let range = BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                );
+                let Classification::Decided(fragment) =
+                    crate::BezierParallelFragment2::try_new(parallel, range, policy)
+                        .expect("the complete analytic range is valid")
+                else {
+                    panic!("the exact analytic range must be decided");
+                };
+                BezierSplitFragment2::AnalyticParallel(fragment)
+            } else {
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(curve),
+                }
+            }
+        };
+        let mut fragments = vec![
+            fragment(p(0, 0), p(4, 0), previous_retained),
+            fragment(p(4, 0), p(4, 4), next_retained),
+            fragment(p(4, 4), p(0, 0), false),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the exact fixture reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the parallel-pair fixture closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the parallel-pair fixture has authored topology")
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (previous_retained, next_retained) in [(false, true), (true, false), (true, true)] {
+                for reversed in [false, true] {
+                    let region = parallel_pair_fillet_region(
+                        previous_retained,
+                        next_retained,
+                        reversed,
+                        &policy,
+                    );
+                    let corner = if reversed { 2 } else { 1 };
+                    let result = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            Real::one(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the unified parallel pair must fillet: policy={policy:?}, previous_retained={previous_retained}, next_retained={next_retained}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                        panic!(
+                            "the unified parallel pair must have one fillet: policy={policy:?}, previous_retained={previous_retained}, next_retained={next_retained}, reversed={reversed}"
+                        );
+                    };
+                    assert_eq!(
+                        filleted
+                            .classify_point(&p(3, 1), &policy)
+                            .expect("the unified parallel-pair fillet remains classifiable")
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Inside),
+                    );
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "predicates")]
     fn sqrt_half_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
         let polynomial = BezierParameterPolynomial::try_new_power_basis(
             vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],

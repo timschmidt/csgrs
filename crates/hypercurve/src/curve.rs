@@ -4107,6 +4107,17 @@ impl FilletParallelSource2<'_> {
     }
 
     #[cfg(feature = "predicates")]
+    fn parameter_range(&self) -> BezierParameterRange2 {
+        match self {
+            Self::Direct(_) => BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            ),
+            Self::Retained(source) => source.range().clone(),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
     fn parameter_is_in_open_range(
         &self,
         parameter: &BezierParameter2,
@@ -5502,6 +5513,7 @@ fn fillet_offset_centers(
                 });
             }
         }
+        #[cfg(not(feature = "predicates"))]
         (
             FilletOffsetCarrier2::Parallel {
                 source: previous_source,
@@ -5512,7 +5524,8 @@ fn fillet_offset_centers(
                 source: next_source,
                 support: next,
             },
-        ) if previous_source.direct().is_some() && next_source.direct().is_some() => {
+        ) => {
+            debug_assert!(previous_source.direct().is_some() && next_source.direct().is_some());
             let intersections = match previous
                 .parallel_intersections_fast_path(next, policy)
                 .map_err(|cause| {
@@ -5578,9 +5591,115 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(not(feature = "predicates"))]
-        (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Parallel { .. }) => {
-            unreachable!("the feature-disabled parallel source is always direct")
+        #[cfg(feature = "predicates")]
+        (
+            FilletOffsetCarrier2::Parallel {
+                source: previous_source,
+                support: previous,
+            },
+            FilletOffsetCarrier2::Parallel {
+                source: next_source,
+                support: next,
+            },
+        ) => {
+            let intersections =
+                match previous
+                    .parallel_intersections(next, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                    })? {
+                    Classification::Decided(intersections) => intersections,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                };
+            if !intersections.is_complete() {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Predicate,
+                ));
+            }
+
+            let previous_range = previous_source.parameter_range();
+            let next_range = next_source.parameter_range();
+            if !intersections.overlaps().is_empty() {
+                let previous_curve = bezier_parallel_rational_source(
+                    previous,
+                    CurveOperation2::Fillet,
+                    previous_family,
+                )?;
+                let next_curve =
+                    bezier_parallel_rational_source(next, CurveOperation2::Fillet, next_family)?;
+                for overlap in intersections.overlaps() {
+                    if retained_fillet_corresponding_overlap_is_positive(
+                        &previous_curve,
+                        &next_curve,
+                        overlap,
+                        &previous_range,
+                        &next_range,
+                        previous_family,
+                        policy,
+                    )? {
+                        centers.coincident = true;
+                        break;
+                    }
+                }
+            }
+            for component in intersections.parameter_components() {
+                let previous_inside = match component.first_parameter() {
+                    Some(parameter) => previous_source.parameter_is_in_open_range(
+                        parameter,
+                        previous_family,
+                        policy,
+                    )?,
+                    None => true,
+                };
+                let next_inside = match component.second_parameter() {
+                    Some(parameter) => {
+                        next_source.parameter_is_in_open_range(parameter, next_family, policy)?
+                    }
+                    None => true,
+                };
+                if previous_inside && next_inside {
+                    centers.coincident = true;
+                    break;
+                }
+            }
+            for contact in intersections.contacts() {
+                if !previous_source.parameter_is_in_open_range(
+                    contact.first_parameter(),
+                    previous_family,
+                    policy,
+                )? || !next_source.parameter_is_in_open_range(
+                    contact.second_parameter(),
+                    next_family,
+                    policy,
+                )? {
+                    continue;
+                }
+                let point = analytic_parallel_point_evidence(
+                    previous,
+                    contact.first_parameter(),
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    policy,
+                )?;
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter: Some(CurveRegionParameter2::from_bezier(
+                        contact.first_parameter().clone(),
+                    )),
+                    next_parameter: Some(CurveRegionParameter2::from_bezier(
+                        contact.second_parameter().clone(),
+                    )),
+                    retained_anchor_evidence: None,
+                });
+            }
         }
         #[cfg(not(feature = "predicates"))]
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
@@ -7532,16 +7651,7 @@ fn bezier_parallel_source_point_evidence(
         return decided_parallel_point(parallel, parameter, true, operation, family, policy)
             .map(Into::into);
     }
-    let rational_source = match parallel.source() {
-        crate::BezierParallelSource2::Quadratic(curve) => {
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(curve.clone()))
-        }
-        crate::BezierParallelSource2::Cubic(curve) => {
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(curve.clone()))
-        }
-        crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
-    }
-    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;
     crate::rational_bezier_general::exact_contact_point_evidence(
         &rational_source,
         parameter,
@@ -7551,6 +7661,23 @@ fn bezier_parallel_source_point_evidence(
     .ok_or_else(|| {
         ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
     })
+}
+
+fn bezier_parallel_rational_source(
+    parallel: &BezierParallel2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+) -> ExactCurveResult<RationalBezier2> {
+    match parallel.source() {
+        crate::BezierParallelSource2::Quadratic(curve) => {
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(curve.clone()))
+        }
+        crate::BezierParallelSource2::Cubic(curve) => {
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(curve.clone()))
+        }
+        crate::BezierParallelSource2::Rational(curve) => Ok(curve.clone()),
+    }
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
 }
 
 #[allow(clippy::too_many_arguments)]
