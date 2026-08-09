@@ -2610,6 +2610,25 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
+    /// Returns the original mapped carrier below every exact
+    /// coincident-circle transport.
+    ///
+    /// `PairOverlapMap` changes only the selected-circle parameterization; it
+    /// does not move the physical point.  Geometry certificates such as a
+    /// common cardinal coordinate must therefore be replayed against this
+    /// base carrier, even when the destination overlap uses a general
+    /// correlated parameter map rather than identity or unit complement.
+    #[cfg(feature = "predicates")]
+    fn coincident_base_data(&self) -> &Self {
+        match self {
+            Self::PairOverlapMap {
+                source: BezierAlgebraicCuspSemicircleParameter2::Mapped(source),
+                ..
+            } => source.coincident_base_data(),
+            _ => self,
+        }
+    }
+
     /// Recovers the rational carrier at the base of any exact coincident-circle
     /// pair-overlap transports.
     ///
@@ -3048,6 +3067,35 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     ) -> CurveResult<Classification<bool>> {
         if self.semicircle_carrier() != other.semicircle_carrier() {
             return Ok(Classification::Decided(false));
+        }
+        if let (
+            Self::PairOverlapMap {
+                overlap: first_overlap,
+                source: first_source,
+                source_first: first_side,
+            },
+            Self::PairOverlapMap {
+                overlap: second_overlap,
+                source: second_source,
+                source_first: second_side,
+            },
+        ) = (self, other)
+            && first_side == second_side
+            && first_overlap.shares_parameter_authority(second_overlap)
+            && first_overlap.has_exact_endpoint_map()
+        {
+            // A full coincident semicircle maps its local parameter by either
+            // identity or unit complement.  Both affine involutions preserve
+            // the relation u+v=1, so replay the distinct source carriers'
+            // exact complement proof rather than comparing two nested fields.
+            let (
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(first_source),
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(second_source),
+            ) = (first_source, second_source)
+            else {
+                return Ok(Classification::Decided(false));
+            };
+            return first_source.is_complementary_to(second_source, policy);
         }
         if let (
             Self::Rational {
@@ -11043,10 +11091,24 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if self.data.radial_scale.zero_status() == ZeroStatus::Zero && !strict_parallel_only {
             return Ok(Some(std::cmp::Ordering::Equal));
         }
-        let tangent_axis = match self
-            .data
-            .source
-            .semicircle()
+        let (
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter: first, ..
+            },
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter: second, ..
+            },
+        ) = (&self.data.source, &other.data.source)
+        else {
+            return Ok(None);
+        };
+        let first = first.coincident_base_data();
+        let second = second.coincident_base_data();
+        if first.semicircle_carrier() != second.semicircle_carrier() {
+            return Ok(None);
+        }
+        let tangent_axis = match first
+            .semicircle_carrier()
             .data
             .frame
             .certified_cardinal_normal()?
@@ -11059,17 +11121,6 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if axis != tangent_axis {
             return Ok(None);
         }
-        let (
-            BezierAlgebraicCuspDerivedPointSource2::Mapped {
-                parameter: first, ..
-            },
-            BezierAlgebraicCuspDerivedPointSource2::Mapped {
-                parameter: second, ..
-            },
-        ) = (&self.data.source, &other.data.source)
-        else {
-            return Ok(None);
-        };
         let complementary = if strict_parallel_only {
             first.parallel_complementary_to(second, policy)?
         } else {
@@ -11530,9 +11581,19 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                     parameter: second, ..
                 },
             ) = (&self.data.source, &other.data.source)
-            && first.shares_coincident_pair_point(second)
         {
-            return Classification::Decided(true);
+            if self.data.source.validate_policy(policy).is_err()
+                || other.data.source.validate_policy(policy).is_err()
+            {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            let first_parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(first.clone());
+            let second_parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(second.clone());
+            if first_parameter.shares_coincident_point_evidence(&second_parameter)
+                || first.shares_coincident_pair_point(second)
+            {
+                return Classification::Decided(true);
+            }
         }
         if self.data.source == other.data.source {
             let same_source = self.same_source_transform(
@@ -12294,6 +12355,13 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 "algebraic cusp cut was replayed under a different predicate policy".into(),
             ));
         }
+        if let Self::Mapped(data) = self
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                source, ..
+            } = data.as_ref()
+        {
+            source.validate_policy(policy)?;
+        }
         Ok(())
     }
 
@@ -12669,6 +12737,40 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 ),
             ),
         )))
+    }
+
+    /// Peels only certified coincident-circle transports from this parameter.
+    ///
+    /// A `PairOverlapMap` changes the selected semicircle and its local
+    /// parameter, but its construction proves that the geometric point is the
+    /// source point.  Retaining the base parameter lets independently nested
+    /// rational, analytic-parallel, pair, and chord cuts share that exact
+    /// identity without flattening either selected field.
+    fn coincident_base_parameter(&self) -> &Self {
+        match self {
+            Self::Mapped(data) => match data.as_ref() {
+                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                    source,
+                    ..
+                } => source.coincident_base_parameter(),
+                _ => self,
+            },
+            Self::Exact(_) => self,
+        }
+    }
+
+    fn shares_coincident_point_evidence(&self, other: &Self) -> bool {
+        let (Self::Mapped(_), Self::Mapped(_)) = (
+            self.coincident_base_parameter(),
+            other.coincident_base_parameter(),
+        ) else {
+            // An inline scalar parameter has no carrier identity. Equal
+            // numbers on independently parameterized circles therefore
+            // cannot certify equal physical points after wrappers are peeled.
+            return false;
+        };
+        self.coincident_base_parameter()
+            .shares_exact_evidence(other.coincident_base_parameter())
     }
 
     pub(crate) fn shares_exact_evidence(&self, other: &Self) -> bool {
@@ -43645,8 +43747,8 @@ mod conversion_tests {
             };
             let Classification::Decided(parallel_mapped_cap_chord) =
                 BezierAlgebraicChord2::try_new(
-                    parallel_mapped_cap_end,
-                    parallel_mapped_cap_start,
+                    parallel_mapped_cap_end.clone(),
+                    parallel_mapped_cap_start.clone(),
                     &policy,
                 )
                 .unwrap()
@@ -43728,6 +43830,260 @@ mod conversion_tests {
                     1,
                 );
             }
+
+            // Transport the two physically identical, but independently
+            // authored rational and analytic-parallel cuts through a third
+            // selected-circle field.  The reversed pair overlap must retain
+            // both distinct source authorities rather than flattening either
+            // point or treating the destination values as one shared map.
+            let nested_parallel_cut =
+                pair_overlap.map_parameter(&algebraic_parallel_cusp_cut, true);
+            let nested_rational_cut = pair_overlap.map_parameter(&reflected_cusp_cut, true);
+            assert!(matches!(
+                (&nested_parallel_cut, &nested_rational_cut),
+                (
+                    BezierAlgebraicCuspSemicircleParameter2::Mapped(first),
+                    BezierAlgebraicCuspSemicircleParameter2::Mapped(second),
+                ) if matches!(
+                    (first.as_ref(), second.as_ref()),
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                            source: BezierAlgebraicCuspSemicircleParameter2::Mapped(source),
+                            ..
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. },
+                    ) if matches!(
+                        source.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
+                    )
+                )
+            ));
+            assert_eq!(
+                nested_rational_cut.cmp_by_refinement(&nested_parallel_cut, &policy),
+                Ok(Classification::Decided(std::cmp::Ordering::Less)),
+            );
+            let Classification::Decided(nested_mixed_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    pair_overlap.semicircle(false).clone(),
+                    nested_rational_cut,
+                    nested_parallel_cut,
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("mixed nested mapped cuts must retain the physical selected-circle cap");
+            };
+            let Classification::Decided(Some(nested_mixed_start)) = nested_mixed_fragment
+                .endpoint_point_evidence(true, &policy)
+                .unwrap()
+            else {
+                panic!("the nested analytic cut must retain exact point evidence");
+            };
+            let Classification::Decided(Some(nested_mixed_end)) = nested_mixed_fragment
+                .endpoint_point_evidence(false, &policy)
+                .unwrap()
+            else {
+                panic!("the nested rational cut must retain exact point evidence");
+            };
+            assert_eq!(
+                nested_mixed_start.same_point(&parallel_mapped_cap_start, &policy),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                nested_mixed_end.same_point(&parallel_mapped_cap_end, &policy),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(nested_mixed_chord) =
+                BezierAlgebraicChord2::try_new(nested_mixed_end, nested_mixed_start, &policy)
+                    .unwrap()
+            else {
+                panic!("the mixed nested mapped cap must retain an exact closing chord");
+            };
+            let nested_mixed_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(nested_mixed_fragment),
+                    BezierSplitFragment2::AlgebraicChord(nested_mixed_chord),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let nested_mixed_cap = CurveRegion2::try_new_with_loop_topology(
+                vec![nested_mixed_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let nested_mixed_offset_work = || {
+                nested_mixed_cap.offset(
+                    (Real::one() / Real::from(8_i8)).unwrap(),
+                    &crate::OffsetCornerStyle2::Bevel,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let nested_mixed_offset =
+                hyperreal::dispatch_trace::with_recording(nested_mixed_offset_work);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let nested_mixed_offset = nested_mixed_offset_work();
+            #[cfg(feature = "dispatch-trace")]
+            let nested_mixed_trace = hyperreal::dispatch_trace::take_trace();
+            let nested_mixed_offset = nested_mixed_offset.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "a mixed nested mapped cap must offset exactly: {error:?}; {nested_mixed_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!("a mixed nested mapped cap must offset exactly: {error:?}");
+            });
+            assert_eq!(
+                nested_mixed_offset.certainty,
+                crate::CurveCertainty::Certified,
+            );
+            assert!(!nested_mixed_offset.value.boundary_loops().is_empty());
+
+            // Repeat the same mixed-source construction through a genuinely
+            // correlated selected-circle overlap.  Its parameter map is not
+            // identity or unit complement, but the physical points are still
+            // exactly the two original carrier cuts.
+            let correlated_target =
+                synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
+                    .transform_similarity(
+                        &Similarity2::try_from_real_affine(
+                            (Real::from(4_i8) / Real::from(5_i8)).unwrap(),
+                            (-Real::from(3_i8) / Real::from(5_i8)).unwrap(),
+                            (Real::from(3_i8) / Real::from(5_i8)).unwrap(),
+                            (Real::from(4_i8) / Real::from(5_i8)).unwrap(),
+                            Real::from(4_i8),
+                            Real::from(3_i8),
+                        )
+                        .unwrap(),
+                    )
+                    .unwrap();
+            let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                correlated_overlap,
+            )) = semicircle
+                .pair_intersections(&correlated_target, &policy)
+                .unwrap()
+            else {
+                panic!("the third selected field must retain its correlated circle overlap");
+            };
+            assert_eq!(
+                correlated_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
+            assert!(!correlated_overlap.has_exact_endpoint_map());
+            let correlated_parallel_cut =
+                correlated_overlap.map_parameter(&algebraic_parallel_cusp_cut, true);
+            let correlated_rational_cut =
+                correlated_overlap.map_parameter(&reflected_cusp_cut, true);
+            assert!(matches!(
+                (&correlated_parallel_cut, &correlated_rational_cut),
+                (
+                    BezierAlgebraicCuspSemicircleParameter2::Mapped(first),
+                    BezierAlgebraicCuspSemicircleParameter2::Mapped(second),
+                ) if matches!(
+                    (first.as_ref(), second.as_ref()),
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. },
+                    )
+                )
+            ));
+            assert_eq!(
+                correlated_parallel_cut.cmp_by_refinement(&correlated_rational_cut, &policy),
+                Ok(Classification::Decided(std::cmp::Ordering::Less)),
+            );
+            let Classification::Decided(correlated_mixed_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    correlated_target,
+                    correlated_parallel_cut,
+                    correlated_rational_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("correlated mixed mapped cuts must retain the physical cap");
+            };
+            let Classification::Decided(Some(correlated_mixed_start)) = correlated_mixed_fragment
+                .endpoint_point_evidence(true, &policy)
+                .unwrap()
+            else {
+                panic!("the correlated analytic cut must retain exact point evidence");
+            };
+            let Classification::Decided(Some(correlated_mixed_end)) = correlated_mixed_fragment
+                .endpoint_point_evidence(false, &policy)
+                .unwrap()
+            else {
+                panic!("the correlated rational cut must retain exact point evidence");
+            };
+            assert_eq!(
+                correlated_mixed_start.same_point(&parallel_mapped_cap_start, &policy),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                correlated_mixed_end.same_point(&parallel_mapped_cap_end, &policy),
+                Classification::Decided(true),
+            );
+            let Classification::Decided(correlated_mixed_chord) = BezierAlgebraicChord2::try_new(
+                correlated_mixed_end,
+                correlated_mixed_start,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the correlated mixed cap must retain an exact closing chord");
+            };
+            assert!(matches!(
+                correlated_mixed_chord.axis_direction(&policy).unwrap(),
+                Classification::Decided(Some(_)),
+            ));
+            let correlated_mixed_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(correlated_mixed_fragment),
+                    BezierSplitFragment2::AlgebraicChord(correlated_mixed_chord),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let correlated_mixed_cap = CurveRegion2::try_new_with_loop_topology(
+                vec![correlated_mixed_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let correlated_mixed_offset = correlated_mixed_cap
+                .offset(
+                    (Real::one() / Real::from(8_i8)).unwrap(),
+                    &crate::OffsetCornerStyle2::Bevel,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!("a correlated mixed mapped cap must offset exactly: {error:?}")
+                });
+            assert_eq!(
+                correlated_mixed_offset.certainty,
+                crate::CurveCertainty::Certified,
+            );
+            let correlated_mixed_reoffset = correlated_mixed_offset
+                .value
+                .offset(
+                    (Real::one() / Real::from(16_i8)).unwrap(),
+                    &crate::OffsetCornerStyle2::Bevel,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!("a correlated mixed mapped cap must re-offset exactly: {error:?}")
+                });
+            assert_eq!(
+                correlated_mixed_reoffset.certainty,
+                crate::CurveCertainty::Certified,
+            );
+            assert!(!correlated_mixed_reoffset.value.boundary_loops().is_empty());
 
             let nonlinear_analytic_source = RationalBezier2::try_new_with_implicit_quadratic_conic(
                 vec![
