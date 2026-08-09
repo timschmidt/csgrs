@@ -1,8 +1,7 @@
 use hypercurve::{
     BezierSplitFragment2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
     CurveError, CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2,
-    CurveStringTrimPoint2, ExactCurveError, LineSeg2, Point2, Real, Segment2, SegmentKindCounts,
-    UncertaintyReason,
+    CurveStringTrimPoint2, LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -1006,14 +1005,33 @@ fn curve_string_trim_inside_region_respects_holes() {
 }
 
 #[test]
-fn curve_string_trim_inside_region_evidence_boundary_overlap_blocker() {
+fn curve_string_trim_inside_region_retains_boundary_overlap() {
     let region = rectangle_region(0, 0, 4, 4);
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
 
-    let error = curve.trim_inside_region(&region, &policy()).unwrap_err();
-    assert!(matches!(
-        error,
-        ExactCurveError::Blocked(blocker)
-            if blocker.reason() == UncertaintyReason::Boundary
-    ));
+    let trimmed = curve
+        .trim_inside_region(&region, &policy())
+        .unwrap()
+        .into_value();
+    let [path] = trimmed.as_slice() else {
+        panic!("the shared bottom edge must remain one exact path");
+    };
+    assert_trim_path_line(path, p(0, 0), p(4, 0));
+    let [fragment] = path.fragments() else {
+        unreachable!("the asserted path has one fragment");
+    };
+    assert!(
+        fragment
+            .trim_fragment()
+            .start_boundary_contacts()
+            .iter()
+            .any(|contact| contact.segment_index() == 0)
+    );
+    assert!(
+        fragment
+            .trim_fragment()
+            .end_boundary_contacts()
+            .iter()
+            .any(|contact| contact.segment_index() == 0)
+    );
 }

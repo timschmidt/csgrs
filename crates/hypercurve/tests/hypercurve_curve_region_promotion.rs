@@ -3894,7 +3894,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
     ));
 }
 #[test]
-fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
+fn unified_region_chamfer_and_fillet_use_authoritative_path_kernel() {
     let policy = CurveContext::STRICT;
     let region = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy)
         .unwrap()

@@ -48,9 +48,8 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::{
-    CornerTrimCut2, CornerTrimParameter2, ExactCornerCarrier2, exact_corner_carrier,
-    solve_exact_chamfer_corner, solve_exact_fillet_corner, try_map_corner_solutions,
-    validate_corner_design_value,
+    CornerTrimCut2, CornerTrimParameter2, exact_corner_carrier, solve_exact_chamfer_corner,
+    try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::policy::{
     PolicyClassificationCache, PolicyEvaluationCache, resolve_cached_classification,
@@ -2166,11 +2165,69 @@ fn retained_materialized_fragment_trim(
             ),
         ));
     }
-    Ok(if keep_before_cut {
+    let selected = if keep_before_cut {
         split.fragments()[0].clone()
     } else {
         split.fragments()[1].clone()
-    })
+    };
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Rational(curve),
+    } = selected
+    else {
+        return Ok(selected);
+    };
+    Ok(
+        match curve.retained_quadratic_representative(&CurveContext::STRICT) {
+            Ok(Classification::Decided(Some(curve))) => BezierSplitFragment2::Materialized {
+                start,
+                end,
+                curve: BezierSubcurve2::RationalQuadratic(curve),
+            },
+            Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
+                BezierSplitFragment2::Materialized {
+                    start,
+                    end,
+                    curve: BezierSubcurve2::Rational(curve),
+                }
+            }
+        },
+    )
+}
+
+fn canonicalize_retained_quadratics_in_corner_path(path: CurvePath2) -> CurvePath2 {
+    if !path
+        .curves()
+        .iter()
+        .any(|curve| matches!(curve.geometry(), CurveGeometry2::RationalBezier(_)))
+    {
+        return path;
+    }
+    let mut changed = false;
+    let curves = path
+        .curves()
+        .iter()
+        .map(|curve| {
+            let CurveGeometry2::RationalBezier(rational) = curve.geometry() else {
+                return curve.clone();
+            };
+            match rational.retained_quadratic_representative(&CurveContext::STRICT) {
+                Ok(Classification::Decided(Some(quadratic))) => {
+                    changed = true;
+                    Curve2::from(quadratic)
+                }
+                Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
+                    curve.clone()
+                }
+            }
+        })
+        .collect();
+    if changed {
+        CurvePath2::from_structurally_closed_curves(curves)
+    } else {
+        path
+    }
 }
 
 fn wrap_segmented_parallel_fallback(
@@ -2353,20 +2410,6 @@ fn native_region_role_contour(
     match role {
         CurveRegionLoopRole::Material => region.material_contours().get(ordinal),
         CurveRegionLoopRole::Hole => region.hole_contours().get(ordinal),
-    }
-}
-
-fn require_decided_corner_region(
-    edit: Classification<CurveRegion2>,
-    operation: CurveOperation2,
-) -> ExactCurveResult<CurveRegion2> {
-    match edit {
-        Classification::Decided(region) => Ok(region),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            operation,
-            CurveFamily2::Line,
-            reason,
-        )),
     }
 }
 
@@ -6120,23 +6163,6 @@ const fn curve_region_role_depth(role: CurveRegionLoopRole) -> i32 {
     }
 }
 
-fn replace_native_region_role_contour(
-    region: LineArcRegion2,
-    role: CurveRegionLoopRole,
-    ordinal: usize,
-    replacement: Contour2,
-) -> CurveResult<LineArcRegion2> {
-    let mut material = region.material_contours().to_vec();
-    let mut holes = region.hole_contours().to_vec();
-    let target = match role {
-        CurveRegionLoopRole::Material => material.get_mut(ordinal),
-        CurveRegionLoopRole::Hole => holes.get_mut(ordinal),
-    }
-    .ok_or(CurveError::InvalidCurveRange)?;
-    *target = replacement;
-    Ok(LineArcRegion2::new(material, holes))
-}
-
 impl CurveRegion2 {
     fn data_mut_for_construction(&mut self) -> &mut CurveRegionData2 {
         if Arc::get_mut(&mut self.data).is_none() {
@@ -7795,97 +7821,16 @@ impl CurveRegion2 {
         mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
-        if mode == CurveCornerMode2::TrimOnly {
-            match self.solve_native_corner(
-                loop_index,
-                vertex_index,
-                CurveOperation2::Chamfer,
-                policy,
-                |previous, next| {
-                    let previous_carrier = ExactCornerCarrier2::from_segment(previous);
-                    let next_carrier = ExactCornerCarrier2::from_segment(next);
-                    let previous_family = previous_carrier.family();
-                    let next_family = next_carrier.family();
-                    let previous_sign = validate_corner_design_value(
-                        &previous_setback,
-                        CurveOperation2::Chamfer,
-                        previous_family,
-                        policy,
-                    )?;
-                    let next_sign = validate_corner_design_value(
-                        &next_setback,
-                        CurveOperation2::Chamfer,
-                        next_family,
-                        policy,
-                    )?;
-                    solve_exact_chamfer_corner(
-                        previous_carrier,
-                        next_carrier,
-                        &previous_setback,
-                        &next_setback,
-                        previous_sign,
-                        next_sign,
-                        mode,
-                        previous_family,
-                        next_family,
-                        policy,
-                    )
-                    .map(Classification::Decided)
-                },
-            )? {
-                Classification::Decided((_, _, _, CurveCornerSolutions2::NoSolution(reason))) => {
-                    return Ok(CurveCornerSolutions2::NoSolution(reason));
-                }
-                Classification::Decided((
-                    region,
-                    role,
-                    ordinal,
-                    CurveCornerSolutions2::Unique(solution),
-                )) => {
-                    if let Some((previous_parameter, previous_point, next_parameter, next_point)) =
-                        solution.into_native_trim_evidence()
-                    {
-                        let edited = Self::rebuild_native_corner_region(
-                            region,
-                            role,
-                            ordinal,
-                            CurveOperation2::Chamfer,
-                            policy,
-                            |contour| {
-                                contour.chamfer_vertex_by_certified_parameters_and_points(
-                                    vertex_index,
-                                    previous_parameter,
-                                    next_parameter,
-                                    previous_point,
-                                    next_point,
-                                    policy,
-                                )
-                            },
-                        )?;
-                        return require_decided_corner_region(edited, CurveOperation2::Chamfer)
-                            .map(CurveCornerSolutions2::Unique);
-                    }
-                }
-                Classification::Decided((_, _, _, CurveCornerSolutions2::Multiple(_)))
-                | Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        CurveFamily2::Line,
-                        reason,
-                    ));
-                }
-            }
-
-            if let Some(solutions) = self.retained_materialized_chamfer_solutions(
+        if mode == CurveCornerMode2::TrimOnly
+            && let Some(solutions) = self.retained_materialized_chamfer_solutions(
                 loop_index,
                 vertex_index,
                 previous_setback.clone(),
                 next_setback.clone(),
                 policy,
-            )? {
-                return Ok(solutions);
-            }
+            )?
+        {
+            return Ok(solutions);
         }
         let paths =
             match self.materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)? {
@@ -8161,9 +8106,8 @@ impl CurveRegion2 {
     ///
     /// Exact candidates come from the same carrier-interaction authority used
     /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
-    /// or fill rule. Native trim-only vertices retain their contour fast path;
-    /// represented direct and canonical spline/NURBS Bezier trims use the
-    /// retained path authority.
+    /// or fill rule. Represented direct and canonical spline/NURBS Bezier trims
+    /// use the retained path authority.
     pub fn fillet_loop_vertex_by_radius(
         &self,
         loop_index: usize,
@@ -8185,81 +8129,6 @@ impl CurveRegion2 {
         mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
-        if mode == CurveCornerMode2::TrimOnly {
-            match self.solve_native_corner(
-                loop_index,
-                vertex_index,
-                CurveOperation2::Fillet,
-                policy,
-                |previous, next| {
-                    let previous_carrier = ExactCornerCarrier2::from_segment(previous);
-                    let next_carrier = ExactCornerCarrier2::from_segment(next);
-                    let previous_family = previous_carrier.family();
-                    let next_family = next_carrier.family();
-                    let radius_sign = validate_corner_design_value(
-                        &radius,
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        policy,
-                    )?;
-                    solve_exact_fillet_corner(
-                        previous_carrier,
-                        next_carrier,
-                        &radius,
-                        radius_sign,
-                        mode,
-                        previous_family,
-                        next_family,
-                        policy,
-                    )
-                    .map(Classification::Decided)
-                },
-            )? {
-                Classification::Decided((_, _, _, CurveCornerSolutions2::NoSolution(reason))) => {
-                    return Ok(CurveCornerSolutions2::NoSolution(reason));
-                }
-                Classification::Decided((
-                    region,
-                    role,
-                    ordinal,
-                    CurveCornerSolutions2::Unique(solution),
-                )) => {
-                    if let Some((previous_point, next_point, center, clockwise)) =
-                        solution.into_native_trim_evidence()
-                    {
-                        let radius_squared = &radius * &radius;
-                        let edited = Self::rebuild_native_corner_region(
-                            region,
-                            role,
-                            ordinal,
-                            CurveOperation2::Fillet,
-                            policy,
-                            |contour| {
-                                contour.fillet_vertex_by_certified_points(
-                                    vertex_index,
-                                    previous_point,
-                                    next_point,
-                                    &center,
-                                    radius_squared,
-                                    clockwise,
-                                )
-                            },
-                        )?;
-                        return require_decided_corner_region(edited, CurveOperation2::Fillet)
-                            .map(CurveCornerSolutions2::Unique);
-                    }
-                }
-                Classification::Decided((_, _, _, CurveCornerSolutions2::Multiple(_)))
-                | Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        CurveFamily2::Line,
-                        reason,
-                    ));
-                }
-            }
-        }
         let paths =
             match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)? {
                 Classification::Decided(paths) => paths,
@@ -8287,9 +8156,8 @@ impl CurveRegion2 {
     /// Chamfers one boundary-loop vertex without leaving the unified carrier.
     ///
     /// `loop_index` addresses this region's retained boundary order. The edited
-    /// Native line/arc topology uses its certified contour fast path. Fully
-    /// materialized higher-order loops use exact `CurvePath2` subdivision and
-    /// are rebuilt with their material/hole and fill semantics intact.
+    /// Fully materialized loops use exact `CurvePath2` subdivision and are
+    /// rebuilt with their material/hole and fill semantics intact.
     /// Algebraic-endpoint fragments that cannot be materialized remain explicit
     /// `Unsupported` uncertainty.
     pub fn chamfer_loop_vertex_by_parameters(
@@ -8319,61 +8187,35 @@ impl CurveRegion2 {
         next_param: Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
-        let (region, role, ordinal) =
-            match self.native_region_loop_for_edit(loop_index, CurveOperation2::Chamfer, policy)? {
-                Classification::Decided(edit) => edit,
-                Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let mut paths = match self
-                        .materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)?
-                    {
-                        Classification::Decided(paths) => paths,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    paths[loop_index] = match paths[loop_index].chamfer_vertex_by_parameters_raw(
-                        vertex_index,
-                        previous_param,
-                        next_param,
-                        policy,
-                    ) {
-                        Ok(path) => path,
-                        Err(ExactCurveError::Blocked(blocker)) => {
-                            return Ok(Classification::Uncertain(blocker.reason()));
-                        }
-                        Err(error) => return Err(error),
-                    };
-                    return self.rebuild_after_materialized_path_edit(
-                        paths,
-                        CurveOperation2::Chamfer,
-                        policy,
-                    );
-                }
+        let mut paths =
+            match self.materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)? {
+                Classification::Decided(paths) => paths,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        Self::rebuild_native_corner_region(
-            region,
-            role,
-            ordinal,
-            CurveOperation2::Chamfer,
+        let path = paths.get(loop_index).ok_or_else(|| {
+            curve_region_edit_error(CurveOperation2::Chamfer, CurveError::InvalidCurveRange)
+        })?;
+        paths[loop_index] = match path.chamfer_vertex_by_parameters_raw(
+            vertex_index,
+            previous_param,
+            next_param,
             policy,
-            |contour| {
-                contour.chamfer_vertex_by_parameters(
-                    vertex_index,
-                    previous_param,
-                    next_param,
-                    policy,
-                )
-            },
-        )
+        ) {
+            Ok(path) => path,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+            Err(error) => return Err(error),
+        };
+        self.rebuild_after_materialized_path_edit(paths, CurveOperation2::Chamfer, policy)
     }
 
     /// Fillets one boundary-loop vertex without leaving the unified carrier.
     ///
     /// The exact trim parameters, center, and sweep direction are validated by
-    /// either the native contour fast path or higher-order `CurvePath2` editing.
+    /// exact `CurvePath2` editing.
     /// Successful output preserves material/hole and fill semantics.
     #[allow(clippy::too_many_arguments)]
     pub fn fillet_loop_vertex_by_parameters(
@@ -8410,115 +8252,31 @@ impl CurveRegion2 {
         clockwise: bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
-        let (region, role, ordinal) =
-            match self.native_region_loop_for_edit(loop_index, CurveOperation2::Fillet, policy)? {
-                Classification::Decided(edit) => edit,
-                Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let mut paths = match self
-                        .materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)?
-                    {
-                        Classification::Decided(paths) => paths,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    paths[loop_index] = match paths[loop_index].fillet_vertex_by_parameters_raw(
-                        vertex_index,
-                        previous_param,
-                        next_param,
-                        center,
-                        clockwise,
-                        policy,
-                    ) {
-                        Ok(path) => path,
-                        Err(ExactCurveError::Blocked(blocker)) => {
-                            return Ok(Classification::Uncertain(blocker.reason()));
-                        }
-                        Err(error) => return Err(error),
-                    };
-                    return self.rebuild_after_materialized_path_edit(
-                        paths,
-                        CurveOperation2::Fillet,
-                        policy,
-                    );
-                }
+        let mut paths =
+            match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)? {
+                Classification::Decided(paths) => paths,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        Self::rebuild_native_corner_region(
-            region,
-            role,
-            ordinal,
-            CurveOperation2::Fillet,
+        let path = paths.get(loop_index).ok_or_else(|| {
+            curve_region_edit_error(CurveOperation2::Fillet, CurveError::InvalidCurveRange)
+        })?;
+        paths[loop_index] = match path.fillet_vertex_by_parameters_raw(
+            vertex_index,
+            previous_param,
+            next_param,
+            center,
+            clockwise,
             policy,
-            |contour| {
-                contour.fillet_vertex_by_parameters(
-                    vertex_index,
-                    previous_param,
-                    next_param,
-                    center,
-                    clockwise,
-                    policy,
-                )
-            },
-        )
-    }
-
-    fn rebuild_native_corner_region(
-        region: LineArcRegion2,
-        role: CurveRegionLoopRole,
-        ordinal: usize,
-        operation: CurveOperation2,
-        policy: &CurveContext,
-        edit: impl FnOnce(&Contour2) -> CurveResult<Classification<Contour2>>,
-    ) -> ExactCurveResult<Classification<Self>> {
-        let contour = native_region_role_contour(&region, role, ordinal)
-            .ok_or_else(|| curve_region_edit_error(operation, CurveError::InvalidCurveRange))?;
-        let contour =
-            match edit(contour).map_err(|cause| curve_region_edit_error(operation, cause))? {
-                Classification::Decided(contour) => contour,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let edited = replace_native_region_role_contour(region, role, ordinal, contour)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?;
-        Self::try_from_line_arc_region_raw(&edited, policy).map(Classification::Decided)
-    }
-
-    fn solve_native_corner<T>(
-        &self,
-        loop_index: usize,
-        vertex_index: usize,
-        operation: CurveOperation2,
-        policy: &CurveContext,
-        solve: impl FnOnce(&Segment2, &Segment2) -> ExactCurveResult<Classification<T>>,
-    ) -> ExactCurveResult<Classification<(LineArcRegion2, CurveRegionLoopRole, usize, T)>> {
-        let (region, role, ordinal) =
-            match self.native_region_loop_for_edit(loop_index, operation, policy)? {
-                Classification::Decided(edit) => edit,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let contour = native_region_role_contour(&region, role, ordinal)
-            .ok_or_else(|| curve_region_edit_error(operation, CurveError::InvalidCurveRange))?;
-        if vertex_index >= contour.segments().len() {
-            return Err(curve_region_edit_error(
-                operation,
-                CurveError::InvalidCurveRange,
-            ));
-        }
-        let previous_index = if vertex_index == 0 {
-            contour.segments().len() - 1
-        } else {
-            vertex_index - 1
+        ) {
+            Ok(path) => path,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+            Err(error) => return Err(error),
         };
-        let previous = &contour.segments()[previous_index];
-        let next = &contour.segments()[vertex_index];
-        solve(previous, next)
-            .map(|solution| solution.map(|solution| (region, role, ordinal, solution)))
+        self.rebuild_after_materialized_path_edit(paths, CurveOperation2::Fillet, policy)
     }
 
     fn materialized_boundary_paths_for_edit(
@@ -8604,6 +8362,10 @@ impl CurveRegion2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
+        let paths = paths
+            .into_iter()
+            .map(canonicalize_retained_quadratics_in_corner_path)
+            .collect::<Vec<_>>();
         let roles = match self
             .loop_roles_raw(policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
@@ -9761,44 +9523,6 @@ impl CurveRegion2 {
                 },
             },
         ))
-    }
-
-    fn native_region_loop_for_edit(
-        &self,
-        loop_index: usize,
-        operation: CurveOperation2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<(LineArcRegion2, CurveRegionLoopRole, usize)>> {
-        if loop_index >= self.data.boundary_loops.len() {
-            return Err(curve_region_edit_error(
-                operation,
-                CurveError::InvalidCurveRange,
-            ));
-        }
-        let region = match self
-            .native_line_arc_region(policy)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?
-        {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let roles = match self
-            .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?
-        {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let role = roles[loop_index];
-        let ordinal = roles[..loop_index]
-            .iter()
-            .filter(|candidate| **candidate == role)
-            .count();
-        Ok(Classification::Decided((region.clone(), role, ordinal)))
     }
 
     fn region_from_line_role_evidence(

@@ -370,6 +370,38 @@ pub(crate) fn rational_bezier_circular_arc(
     curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
+    // Degree elevation and exact subdivision retain the authoritative circle
+    // even when reconstructing a quadratic representative would do needless
+    // projective work. Common-sign weights make the first control edge a
+    // positive multiple of the endpoint tangent, which is sufficient to
+    // recover traversal orientation without changing parameterization.
+    if let Some(circle) = curve.retained_circular_conic() {
+        if let Classification::Uncertain(reason) = curve.common_weight_sign(policy) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let Some(control) = curve.control_points().get(1) else {
+            return Ok(Classification::Decided(None));
+        };
+        let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
+        let (tangent_x, tangent_y) = control.delta_from(curve.start());
+        let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+        let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Negative) => true,
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        return Ok(Classification::Decided(Some(
+            CircularArc2::new_with_certified_radius(
+                curve.start().clone(),
+                curve.end().clone(),
+                circle.center.clone(),
+                circle.radius_squared.clone(),
+                clockwise,
+                None,
+            ),
+        )));
+    }
     let conic = match curve.retained_quadratic_representative(policy)? {
         Classification::Decided(Some(conic)) => conic,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),

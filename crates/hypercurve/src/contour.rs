@@ -428,42 +428,6 @@ impl Contour2 {
         self.classify_edited_curve_string(edit)
     }
 
-    pub(crate) fn chamfer_vertex_by_certified_parameters_and_points(
-        &self,
-        vertex_index: usize,
-        previous_param: Real,
-        next_param: Real,
-        previous_point: Point2,
-        next_point: Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Contour2>> {
-        if vertex_index >= self.segments().len() {
-            return Err(CurveError::InvalidCurveRange);
-        }
-        let edit = if vertex_index == 0 {
-            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
-                .chamfer_vertex_by_certified_parameters_and_points(
-                    1,
-                    previous_param,
-                    next_param,
-                    previous_point,
-                    next_point,
-                    policy,
-                )?
-        } else {
-            self.curve
-                .chamfer_vertex_by_certified_parameters_and_points(
-                    vertex_index,
-                    previous_param,
-                    next_param,
-                    previous_point,
-                    next_point,
-                    policy,
-                )?
-        };
-        self.classify_edited_curve_string(edit)
-    }
-
     /// Chamfers an interior native-segment contour vertex by exact cut points.
     pub fn chamfer_vertex_by_points(
         &self,
@@ -516,41 +480,6 @@ impl Contour2 {
                 center,
                 clockwise,
                 policy,
-            )?
-        };
-        self.classify_edited_curve_string(edit)
-    }
-
-    pub(crate) fn fillet_vertex_by_certified_points(
-        &self,
-        vertex_index: usize,
-        previous_point: Point2,
-        next_point: Point2,
-        center: &Point2,
-        radius_squared: Real,
-        clockwise: bool,
-    ) -> CurveResult<Classification<Contour2>> {
-        if vertex_index >= self.segments().len() {
-            return Err(CurveError::InvalidCurveRange);
-        }
-        let edit = if vertex_index == 0 {
-            CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?
-                .fillet_vertex_by_certified_points(
-                    1,
-                    previous_point,
-                    next_point,
-                    center,
-                    radius_squared,
-                    clockwise,
-                )?
-        } else {
-            self.curve.fillet_vertex_by_certified_points(
-                vertex_index,
-                previous_point,
-                next_point,
-                center,
-                radius_squared,
-                clockwise,
             )?
         };
         self.classify_edited_curve_string(edit)

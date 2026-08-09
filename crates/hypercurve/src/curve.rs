@@ -3415,20 +3415,6 @@ pub(crate) struct ChamferCorner2 {
 }
 
 impl ChamferCorner2 {
-    pub(crate) fn into_native_trim_evidence(self) -> Option<(Real, Point2, Real, Point2)> {
-        if self.previous.placement != CornerPlacement2::Trim
-            || self.next.placement != CornerPlacement2::Trim
-        {
-            return None;
-        }
-        Some((
-            self.previous.parameter?,
-            self.previous.point.as_exact()?.clone(),
-            self.next.parameter?,
-            self.next.point.as_exact()?.clone(),
-        ))
-    }
-
     pub(crate) fn into_retained_trim_evidence(self) -> Option<(CornerTrimCut2, CornerTrimCut2)> {
         Some((
             self.previous.into_trim_evidence()?,
@@ -3443,22 +3429,6 @@ pub(crate) struct FilletCorner2 {
     next: CornerCut2,
     center: Point2,
     clockwise: bool,
-}
-
-impl FilletCorner2 {
-    pub(crate) fn into_native_trim_evidence(self) -> Option<(Point2, Point2, Point2, bool)> {
-        if self.previous.placement != CornerPlacement2::Trim
-            || self.next.placement != CornerPlacement2::Trim
-        {
-            return None;
-        }
-        Some((
-            self.previous.point.as_exact()?.clone(),
-            self.next.point.as_exact()?.clone(),
-            self.center,
-            self.clockwise,
-        ))
-    }
 }
 
 enum CornerSolutionAccumulator<T> {
@@ -3641,28 +3611,6 @@ impl ExactCornerArc2<'_> {
 }
 
 impl<'a> ExactCornerCarrier2<'a> {
-    pub(crate) fn from_segment(segment: &'a crate::Segment2) -> Self {
-        match segment {
-            crate::Segment2::Line(line) => Self::Line(line),
-            crate::Segment2::Arc(arc) => Self::Arc(arc),
-        }
-    }
-
-    pub(crate) fn family(&self) -> CurveFamily2 {
-        match self {
-            Self::Line(_) => CurveFamily2::Line,
-            Self::Arc(_) => CurveFamily2::CircularArc,
-            Self::RetainedRationalArc(retained) => retained.source.family(),
-            Self::Bezier(source) => source.family(),
-            Self::NativeBezierSpan(fragment) => match fragment.curve() {
-                BezierSubcurve2::Quadratic(_) => CurveFamily2::QuadraticBezier,
-                BezierSubcurve2::Cubic(_) => CurveFamily2::CubicBezier,
-                BezierSubcurve2::RationalQuadratic(_) => CurveFamily2::RationalQuadraticBezier,
-                BezierSubcurve2::Rational(_) => CurveFamily2::RationalBezier,
-            },
-        }
-    }
-
     const fn supports_extension(&self) -> bool {
         !matches!(
             self,
