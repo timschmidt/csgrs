@@ -929,6 +929,44 @@ impl RationalBezierAlgebraicPointImage2 {
         ))
     }
 
+    /// Returns one represented coordinate even when the other coordinate
+    /// remains selected algebraic evidence.
+    ///
+    /// Axis-support recovery must not require the complete point to collapse
+    /// to a represented pair: a point such as `(alpha, 0)` carries an exact
+    /// reusable horizontal-line certificate in its second coordinate.
+    #[cfg(feature = "predicates")]
+    pub(crate) fn exact_rational_coordinate(
+        &self,
+        use_x: bool,
+        policy: &CurveContext,
+    ) -> Option<Real> {
+        if let Some(expression) = self.data.retained_expression.as_ref()
+            && let Ok(Classification::Decided(Some(parameter))) =
+                expression.parameter.represented_rational_root(policy)
+        {
+            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
+            let numerator = evaluate_coefficients(
+                if use_x {
+                    &expression.x_numerator
+                } else {
+                    &expression.y_numerator
+                },
+                &parameter,
+            );
+            if let Ok(coordinate) = numerator / denominator {
+                return Some(coordinate);
+            }
+        }
+
+        let point = self.resolved(policy)?;
+        let coordinate = if use_x { point.x()? } else { point.y()? };
+        coordinate
+            .representation()?
+            .exact_rational_witness()
+            .cloned()
+    }
+
     #[cfg(feature = "predicates")]
     pub(crate) fn predicate_evaluator<'a>(
         &'a self,

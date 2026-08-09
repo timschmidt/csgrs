@@ -3044,6 +3044,418 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
 
 #[cfg(feature = "predicates")]
 #[test]
+fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
+    let source = |policy: &CurveContext, reverse: bool| {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-q(1, 2), Real::zero(), Real::one()],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+        let parameter =
+            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let selected = |start: Point2, end: Point2| {
+            RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
+                    .unwrap()
+                    .point_at_algebraic_parameter(&parameter, policy)
+                    .unwrap(),
+            )
+        };
+        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let incoming = selected(p(-5, 0), p(-4, 0));
+        let outgoing = selected(p(0, 4), p(0, 5));
+        let chord = |start, end| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
+            ))
+        };
+        let mut fragments = vec![
+            chord(incoming.clone(), corner.clone()),
+            chord(corner, outgoing.clone()),
+            chord(outgoing, incoming),
+        ];
+        let interior_side = if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].fragments();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    let BezierSplitFragment2::AlgebraicChord(previous) =
+                        &fragments[(index + fragments.len() - 1) % fragments.len()]
+                    else {
+                        return false;
+                    };
+                    let BezierSplitFragment2::AlgebraicChord(next) = &fragments[*index] else {
+                        return false;
+                    };
+                    previous.end().as_exact() == Some(&p(0, 0))
+                        && next.start().as_exact() == Some(&p(0, 0))
+                })
+                .expect("the selected-endpoint triangle retains its represented corner");
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("selected-endpoint support chords must share the linear fillet kernel");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                panic!("the selected-endpoint right angle must have one exact fillet");
+            };
+            let fragments = filleted.boundary_loops()[0].fragments();
+            assert_eq!(fragments.len(), 4);
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .count(),
+                3,
+            );
+            assert!(fragments.iter().any(|fragment| matches!(
+                fragment,
+                BezierSplitFragment2::Materialized {
+                    curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                    ..
+                }
+            )));
+            assert_eq!(
+                certified(filleted.classify_point(&p(-2, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            assert_eq!(
+                certified(filleted.classify_point(&p(1, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
+    let source = |policy: &CurveContext, reverse: bool| {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-q(1, 2), Real::zero(), Real::one()],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+        let parameter =
+            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let selected = |start: Point2, end: Point2| {
+            RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
+                    .unwrap()
+                    .point_at_algebraic_parameter(&parameter, policy)
+                    .unwrap(),
+            )
+        };
+        let lower_left = selected(p(-3, 0), p(-2, 0));
+        let upper_left = selected(p(-3, 1), p(-2, 1));
+        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let upper_right = RationalBezierIntersectionPointEvidence2::Exact(p(1, 1));
+        let chord = |start, end| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
+            ))
+        };
+
+        let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+        let native_path = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-3, 0), p(0, 0)).unwrap()),
+            Curve2::from(native_arc),
+            Curve2::from(LineSeg2::try_new(p(1, 1), p(-3, 1)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-3, 1), p(-3, 0)).unwrap()),
+        ])
+        .unwrap();
+        let native = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[native_path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            policy,
+        )
+        .unwrap()
+        .into_value();
+        let arc = native.boundary_loops()[0]
+            .fragments()
+            .iter()
+            .find(|fragment| {
+                matches!(
+                    fragment,
+                    BezierSplitFragment2::Materialized {
+                        curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                        ..
+                    }
+                )
+            })
+            .expect("the native quarter circle materializes as one rational quadratic")
+            .clone();
+        let mut fragments = vec![
+            chord(lower_left.clone(), corner),
+            arc,
+            chord(upper_right, upper_left.clone()),
+            chord(upper_left, lower_left),
+        ];
+        let interior_side = if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].fragments();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    match (
+                        &fragments[(index + fragments.len() - 1) % fragments.len()],
+                        &fragments[*index],
+                    ) {
+                        (
+                            BezierSplitFragment2::AlgebraicChord(previous),
+                            BezierSplitFragment2::Materialized {
+                                curve: hypercurve::BezierSubcurve2::RationalQuadratic(next),
+                                ..
+                            },
+                        ) => {
+                            previous.end().as_exact() == Some(&p(0, 0)) && next.start() == &p(0, 0)
+                        }
+                        (
+                            BezierSplitFragment2::Materialized {
+                                curve: hypercurve::BezierSubcurve2::RationalQuadratic(previous),
+                                ..
+                            },
+                            BezierSplitFragment2::AlgebraicChord(next),
+                        ) => {
+                            previous.end() == &p(0, 0) && next.start().as_exact() == Some(&p(0, 0))
+                        }
+                        _ => false,
+                    }
+                })
+                .expect("the mixed selected-chord/circular corner remains explicit");
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    q(1, 2),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a represented-support chord must reuse line/circle incidence");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                panic!("the retained chord/circular corner must have one exact fillet");
+            };
+            assert_eq!(
+                certified(
+                    filleted
+                        .classify_point(&Point2::new(-Real::one(), q(1, 2)), &policy)
+                        .unwrap()
+                ),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            assert_eq!(
+                certified(filleted.classify_point(&p(2, 0), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
+fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
+    let source = |policy: &CurveContext, reverse: bool| {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-q(1, 2), Real::zero(), Real::one()],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+        let parameter =
+            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let selected = |start: Point2, end: Point2| {
+            RationalBezierIntersectionPointEvidence2::Algebraic(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
+                    .unwrap()
+                    .point_at_algebraic_parameter(&parameter, policy)
+                    .unwrap(),
+            )
+        };
+        let lower_left = selected(p(-5, 0), p(-4, 0));
+        let upper_left = selected(p(-5, 2), p(-4, 2));
+        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let upper_right = RationalBezierIntersectionPointEvidence2::Exact(p(1, 2));
+        let chord = |start, end| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
+            ))
+        };
+        let quadratic = BezierSplitFragment2::Materialized {
+            start: hypercurve::BezierParameter2::Exact(Real::zero()),
+            end: hypercurve::BezierParameter2::Exact(Real::one()),
+            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(0, 0),
+                p(0, 1),
+                p(1, 2),
+            )),
+        };
+        let mut fragments = vec![
+            chord(lower_left.clone(), corner),
+            quadratic,
+            chord(upper_right, upper_left.clone()),
+            chord(upper_left, lower_left),
+        ];
+        let interior_side = if reverse {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reverse in [false, true] {
+            let region = source(&policy, reverse);
+            let fragments = region.boundary_loops()[0].fragments();
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    match (
+                        &fragments[(index + fragments.len() - 1) % fragments.len()],
+                        &fragments[*index],
+                    ) {
+                        (
+                            BezierSplitFragment2::AlgebraicChord(previous),
+                            BezierSplitFragment2::Materialized {
+                                curve: hypercurve::BezierSubcurve2::Quadratic(next),
+                                ..
+                            },
+                        ) => {
+                            previous.end().as_exact() == Some(&p(0, 0)) && next.start() == &p(0, 0)
+                        }
+                        (
+                            BezierSplitFragment2::Materialized {
+                                curve: hypercurve::BezierSubcurve2::Quadratic(previous),
+                                ..
+                            },
+                            BezierSplitFragment2::AlgebraicChord(next),
+                        ) => {
+                            previous.end() == &p(0, 0) && next.start().as_exact() == Some(&p(0, 0))
+                        }
+                        _ => false,
+                    }
+                })
+                .expect("the mixed selected-chord/quadratic corner remains explicit");
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    corner,
+                    q(15, 4),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("a represented-support chord must reuse line/Bezier incidence");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidates = match result.value {
+                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!(
+                        "the retained chord/quadratic corner lost its exact fillet: policy={policy:?}, reverse={reverse}, reason={reason:?}"
+                    )
+                }
+            };
+            let filleted = candidates
+                .into_iter()
+                .find(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::Materialized {
+                                    curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                                    ..
+                                }
+                            )
+                        })
+                })
+                .expect("one exact candidate must publish the circular fillet span");
+            assert_eq!(
+                certified(filleted.classify_point(&p(-3, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            assert_eq!(
+                certified(filleted.classify_point(&p(2, 1), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+#[test]
 fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
     let clipping_region = |policy: &CurveContext| {
         let points = [

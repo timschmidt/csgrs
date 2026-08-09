@@ -1923,8 +1923,10 @@ impl CurvePath2 {
     /// two incident carriers. The shared kernel handles lines, circular arcs,
     /// retained exact line/circle images, and direct polynomial or rational
     /// Beziers, including the one incident retained native span of a polynomial
-    /// spline or NURBS carrier. Mixed line/Bezier and arc/Bezier pairs use
-    /// complete analytic incidence. Bezier/Bezier pairs currently admit
+    /// spline or NURBS carrier. Retained algebraic chords with a certified
+    /// represented support share the line carrier and preserve their canonical
+    /// finite parameters. Mixed line/Bezier and arc/Bezier pairs use complete
+    /// analytic incidence. Bezier/Bezier pairs currently admit
     /// structural and exact rational-parallel fast paths; a general algebraic
     /// center or trim remains an explicit blocker until its public carrier is
     /// authoritative. General Beziers, spline spans, and retained rational
@@ -4038,13 +4040,56 @@ pub(crate) fn solve_exact_fillet_corner(
     )
 }
 
-enum PreparedFilletCarrier2<'a> {
-    Line {
+#[derive(Clone, Copy)]
+enum FilletLinearSource2<'a> {
+    Native {
         source: &'a LineSeg2,
-        unit_x: Real,
-        unit_y: Real,
         #[cfg(feature = "predicates")]
         parallel_tangent_contacts: &'a [crate::bezier::BezierParallelLineTangentContact2],
+    },
+    #[cfg(feature = "predicates")]
+    AlgebraicChord(&'a crate::BezierAlgebraicChord2),
+}
+
+impl FilletLinearSource2<'_> {
+    const fn native_line(&self) -> Option<&LineSeg2> {
+        match self {
+            Self::Native { source, .. } => Some(source),
+            #[cfg(feature = "predicates")]
+            Self::AlgebraicChord(_) => None,
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    const fn algebraic_chord(&self) -> Option<&crate::BezierAlgebraicChord2> {
+        match self {
+            Self::Native { .. } => None,
+            Self::AlgebraicChord(source) => Some(source),
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    const fn parallel_tangent_contacts(
+        &self,
+    ) -> &[crate::bezier::BezierParallelLineTangentContact2] {
+        match self {
+            Self::Native {
+                parallel_tangent_contacts,
+                ..
+            } => parallel_tangent_contacts,
+            Self::AlgebraicChord(_) => &[],
+        }
+    }
+}
+
+enum PreparedFilletCarrier2<'a> {
+    Line {
+        source: FilletLinearSource2<'a>,
+        /// Only retained algebraic chords need an owned represented support;
+        /// native line sources are already their own support.
+        chord_support: Option<LineSeg2>,
+        unit_x: Real,
+        unit_y: Real,
     },
     Arc {
         source: ExactCornerArc2<'a>,
@@ -4056,13 +4101,6 @@ enum PreparedFilletCarrier2<'a> {
     #[cfg(feature = "predicates")]
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
-    },
-    #[cfg(feature = "predicates")]
-    AlgebraicChordLine {
-        source: &'a crate::BezierAlgebraicChord2,
-        support: LineSeg2,
-        unit_x: Real,
-        unit_y: Real,
     },
     #[cfg(feature = "predicates")]
     AnalyticParallel {
@@ -4082,11 +4120,14 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 let (unit_x, unit_y, _) =
                     line_unit_direction(&dx, &dy, CurveOperation2::Fillet, family, policy)?;
                 Ok(Self::Line {
-                    source,
+                    source: FilletLinearSource2::Native {
+                        source,
+                        #[cfg(feature = "predicates")]
+                        parallel_tangent_contacts: &[],
+                    },
+                    chord_support: None,
                     unit_x,
                     unit_y,
-                    #[cfg(feature = "predicates")]
-                    parallel_tangent_contacts: &[],
                 })
             }
             ExactCornerCarrier2::PromotedLine(curve) => {
@@ -4097,11 +4138,14 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 let (unit_x, unit_y, _) =
                     line_unit_direction(&dx, &dy, CurveOperation2::Fillet, family, policy)?;
                 Ok(Self::Line {
-                    source,
+                    source: FilletLinearSource2::Native {
+                        source,
+                        #[cfg(feature = "predicates")]
+                        parallel_tangent_contacts: curve.retained_parallel_line_tangent_contacts(),
+                    },
+                    chord_support: None,
                     unit_x,
                     unit_y,
-                    #[cfg(feature = "predicates")]
-                    parallel_tangent_contacts: curve.retained_parallel_line_tangent_contacts(),
                 })
             }
             ExactCornerCarrier2::Arc(source) => {
@@ -4150,9 +4194,9 @@ impl<'a> PreparedFilletCarrier2<'a> {
                         line_unit_direction(&dx, &dy, CurveOperation2::Fillet, family, policy)?;
                     (unit_x, unit_y)
                 };
-                Ok(Self::AlgebraicChordLine {
-                    source,
-                    support,
+                Ok(Self::Line {
+                    source: FilletLinearSource2::AlgebraicChord(source),
+                    chord_support: Some(support),
                     unit_x,
                     unit_y,
                 })
@@ -4171,30 +4215,31 @@ impl<'a> PreparedFilletCarrier2<'a> {
         match self {
             Self::Line {
                 source,
+                chord_support,
                 unit_x,
                 unit_y,
-                #[cfg(feature = "predicates")]
-                parallel_tangent_contacts,
             } => {
+                let source_support = source
+                    .native_line()
+                    .or(chord_support.as_ref())
+                    .expect("a prepared linear fillet carrier retains one support");
                 let offset_x = -unit_y * signed_distance;
                 let offset_y = unit_x * signed_distance;
                 // Translation preserves the already-validated nonzero source
                 // direction, so rebuilding an endpoint-distance proof would
                 // only allocate an algebraically identical norm.
                 let support = LineSeg2::new_unchecked(
-                    source
+                    source_support
                         .start()
                         .translated(offset_x.clone(), offset_y.clone()),
-                    source.end().translated(offset_x, offset_y),
+                    source_support.end().translated(offset_x, offset_y),
                 );
                 Ok(FilletOffsetCarrier2::Line {
-                    source,
+                    source: *source,
                     support,
                     unit_x,
                     unit_y,
                     signed_distance: signed_distance.clone(),
-                    #[cfg(feature = "predicates")]
-                    parallel_tangent_contacts,
                 })
             }
             Self::Arc { source, radius } => {
@@ -4258,29 +4303,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 Ok(FilletOffsetCarrier2::AlgebraicCusp { source, support })
             }
             #[cfg(feature = "predicates")]
-            Self::AlgebraicChordLine {
-                source,
-                support,
-                unit_x,
-                unit_y,
-            } => {
-                let offset_x = -unit_y * signed_distance;
-                let offset_y = unit_x * signed_distance;
-                let support = LineSeg2::new_unchecked(
-                    support
-                        .start()
-                        .translated(offset_x.clone(), offset_y.clone()),
-                    support.end().translated(offset_x, offset_y),
-                );
-                Ok(FilletOffsetCarrier2::AlgebraicChordLine {
-                    source,
-                    support,
-                    unit_x,
-                    unit_y,
-                    signed_distance: signed_distance.clone(),
-                })
-            }
-            #[cfg(feature = "predicates")]
             Self::AnalyticParallel { source } => {
                 let source_scale = match source
                     .parallel()
@@ -4324,13 +4346,11 @@ impl<'a> PreparedFilletCarrier2<'a> {
 
 enum FilletOffsetCarrier2<'a, 'b> {
     Line {
-        source: &'a LineSeg2,
+        source: FilletLinearSource2<'a>,
         support: LineSeg2,
         unit_x: &'b Real,
         unit_y: &'b Real,
         signed_distance: Real,
-        #[cfg(feature = "predicates")]
-        parallel_tangent_contacts: &'a [crate::bezier::BezierParallelLineTangentContact2],
     },
     Arc {
         source: &'b ExactCornerArc2<'a>,
@@ -4350,14 +4370,6 @@ enum FilletOffsetCarrier2<'a, 'b> {
         support: crate::BezierAlgebraicCuspSemicircleFragment2,
     },
     #[cfg(feature = "predicates")]
-    AlgebraicChordLine {
-        source: &'a crate::BezierAlgebraicChord2,
-        support: LineSeg2,
-        unit_x: &'b Real,
-        unit_y: &'b Real,
-        signed_distance: Real,
-    },
-    #[cfg(feature = "predicates")]
     AnalyticParallel {
         source: &'a crate::BezierParallelFragment2,
         support: BezierParallel2,
@@ -4375,19 +4387,6 @@ impl FilletOffsetCarrier2<'_, '_> {
     ) -> ExactCurveResult<Option<RetainedFilletFrame2>> {
         let (radial_frame, radial_distance) = match self {
             Self::Line {
-                unit_x,
-                unit_y,
-                signed_distance,
-                ..
-            } => (
-                RetainedFilletRadialFrame2::RepresentedUnitNormal((
-                    -(*unit_y).clone(),
-                    (*unit_x).clone(),
-                )),
-                -signed_distance.clone(),
-            ),
-            #[cfg(feature = "predicates")]
-            Self::AlgebraicChordLine {
                 unit_x,
                 unit_y,
                 signed_distance,
@@ -5168,6 +5167,7 @@ fn retained_fillet_parameter_is_in_open_range(
     }
 }
 
+#[cfg_attr(not(feature = "predicates"), allow(unused_variables))]
 fn fillet_offset_centers(
     previous: &FilletOffsetCarrier2<'_, '_>,
     next: &FilletOffsetCarrier2<'_, '_>,
@@ -5199,25 +5199,34 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Arc { .. })
         | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (support, source, signed_radius, line_is_previous) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Line { support, .. },
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        signed_radius,
-                        ..
-                    },
-                ) => (support, source, signed_radius, true),
-                (
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        signed_radius,
-                        ..
-                    },
-                    FilletOffsetCarrier2::Line { support, .. },
-                ) => (support, source, signed_radius, false),
-                _ => unreachable!(),
-            };
+            let (support, line_source, source, signed_radius, line_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::Line {
+                            source: line_source,
+                            support,
+                            ..
+                        },
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            signed_radius,
+                            ..
+                        },
+                    ) => (support, line_source, source, signed_radius, true),
+                    (
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            signed_radius,
+                            ..
+                        },
+                        FilletOffsetCarrier2::Line {
+                            source: line_source,
+                            support,
+                            ..
+                        },
+                    ) => (support, line_source, source, signed_radius, false),
+                    _ => unreachable!(),
+                };
             let relation = crate::intersect::line_circle_relation_from_supports(
                 support,
                 source.support().center(),
@@ -5228,11 +5237,14 @@ fn fillet_offset_centers(
                 ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
             })?;
             let mut push = |point: Point2, parameter: Real| {
-                let parameter = exact_parameter(parameter);
+                let parameter = line_source
+                    .native_line()
+                    .is_some()
+                    .then(|| exact_parameter(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
-                    (Some(parameter), None)
+                    (parameter, None)
                 } else {
-                    (None, Some(parameter))
+                    (None, parameter)
                 };
                 centers.push(FilletCenterWitness2 {
                     point: point.into(),
@@ -5322,19 +5334,23 @@ fn fillet_offset_centers(
         },
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Bezier { .. })
         | (FilletOffsetCarrier2::Bezier { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, bezier, bezier_is_previous) = match (previous, next) {
+            let (line, line_source, bezier, bezier_is_previous) = match (previous, next) {
                 (
-                    FilletOffsetCarrier2::Line { support, .. },
+                    FilletOffsetCarrier2::Line {
+                        source, support, ..
+                    },
                     FilletOffsetCarrier2::Bezier {
                         support: bezier, ..
                     },
-                ) => (support, bezier, false),
+                ) => (support, source, bezier, false),
                 (
                     FilletOffsetCarrier2::Bezier {
                         support: bezier, ..
                     },
-                    FilletOffsetCarrier2::Line { support, .. },
-                ) => (support, bezier, true),
+                    FilletOffsetCarrier2::Line {
+                        source, support, ..
+                    },
+                ) => (support, source, bezier, true),
                 _ => unreachable!(),
             };
             let bezier_family = if bezier_is_previous {
@@ -5381,26 +5397,27 @@ fn fillet_offset_centers(
                     bezier_family,
                     policy,
                 )?;
-                let line_parameter = line_parameter_at_point(
-                    line,
-                    &point,
-                    CurveOperation2::Fillet,
-                    if bezier_is_previous {
-                        next_family
-                    } else {
-                        previous_family
-                    },
-                )?;
+                let line_parameter = line_source
+                    .native_line()
+                    .map(|_| {
+                        line_parameter_at_point(
+                            line,
+                            &point,
+                            CurveOperation2::Fillet,
+                            if bezier_is_previous {
+                                next_family
+                            } else {
+                                previous_family
+                            },
+                        )
+                        .map(exact_parameter)
+                    })
+                    .transpose()?;
+                let bezier_parameter = Some(exact_parameter(parameter));
                 let (previous_parameter, next_parameter) = if bezier_is_previous {
-                    (
-                        Some(exact_parameter(parameter)),
-                        Some(exact_parameter(line_parameter)),
-                    )
+                    (bezier_parameter, line_parameter)
                 } else {
-                    (
-                        Some(exact_parameter(line_parameter)),
-                        Some(exact_parameter(parameter)),
-                    )
+                    (line_parameter, bezier_parameter)
                 };
                 centers.push(FilletCenterWitness2 {
                     point: point.into(),
@@ -5559,80 +5576,31 @@ fn fillet_offset_centers(
         }
         #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AnalyticParallel { .. })
-        | (
-            FilletOffsetCarrier2::AlgebraicChordLine { .. },
-            FilletOffsetCarrier2::AnalyticParallel { .. },
-        )
-        | (FilletOffsetCarrier2::AnalyticParallel { .. }, FilletOffsetCarrier2::Line { .. })
-        | (
-            FilletOffsetCarrier2::AnalyticParallel { .. },
-            FilletOffsetCarrier2::AlgebraicChordLine { .. },
-        ) => {
-            let (
-                line,
-                line_unit_x,
-                line_unit_y,
-                parallel_tangent_contacts,
-                analytic,
-                line_is_previous,
-                retained_chord,
-            ) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Line {
-                        support,
-                        unit_x,
-                        unit_y,
-                        parallel_tangent_contacts,
-                        ..
-                    },
-                    analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
-                ) => (
-                    support,
-                    *unit_x,
-                    *unit_y,
-                    *parallel_tangent_contacts,
-                    analytic,
-                    true,
-                    false,
-                ),
-                (
-                    FilletOffsetCarrier2::AlgebraicChordLine {
-                        support,
-                        unit_x,
-                        unit_y,
-                        ..
-                    },
-                    analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
-                ) => (support, *unit_x, *unit_y, &[][..], analytic, true, true),
-                (
-                    analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
-                    FilletOffsetCarrier2::Line {
-                        support,
-                        unit_x,
-                        unit_y,
-                        parallel_tangent_contacts,
-                        ..
-                    },
-                ) => (
-                    support,
-                    *unit_x,
-                    *unit_y,
-                    *parallel_tangent_contacts,
-                    analytic,
-                    false,
-                    false,
-                ),
-                (
-                    analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
-                    FilletOffsetCarrier2::AlgebraicChordLine {
-                        support,
-                        unit_x,
-                        unit_y,
-                        ..
-                    },
-                ) => (support, *unit_x, *unit_y, &[][..], analytic, false, true),
-                _ => unreachable!(),
-            };
+        | (FilletOffsetCarrier2::AnalyticParallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (line, line_source, line_unit_x, line_unit_y, analytic, line_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::Line {
+                            source,
+                            support,
+                            unit_x,
+                            unit_y,
+                            ..
+                        },
+                        analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
+                    ) => (support, source, *unit_x, *unit_y, analytic, true),
+                    (
+                        analytic @ FilletOffsetCarrier2::AnalyticParallel { .. },
+                        FilletOffsetCarrier2::Line {
+                            source,
+                            support,
+                            unit_x,
+                            unit_y,
+                            ..
+                        },
+                    ) => (support, source, *unit_x, *unit_y, analytic, false),
+                    _ => unreachable!(),
+                };
             let FilletOffsetCarrier2::AnalyticParallel { source, support } = analytic else {
                 unreachable!()
             };
@@ -5652,12 +5620,15 @@ fn fillet_offset_centers(
                 source.range().start()
             };
             let certified_tangency = analytic_corner_parameter.as_exact().and_then(|parameter| {
-                parallel_tangent_contacts.iter().find(|contact| {
-                    contact.line_endpoint() == line_endpoint
-                        && contact.parallel() == source.parallel()
-                        && contact.parallel_fragment_reversed() == source.is_reversed()
-                        && contact.parameter() == parameter
-                })
+                line_source
+                    .parallel_tangent_contacts()
+                    .iter()
+                    .find(|contact| {
+                        contact.line_endpoint() == line_endpoint
+                            && contact.parallel() == source.parallel()
+                            && contact.parallel_fragment_reversed() == source.is_reversed()
+                            && contact.parameter() == parameter
+                    })
             });
             let certified_tangencies = certified_tangency
                 .map(|contact| std::slice::from_ref(contact.parameter()))
@@ -5722,7 +5693,7 @@ fn fillet_offset_centers(
                         ));
                     }
                 };
-                let line_parameter = if retained_chord {
+                let line_parameter = if line_source.algebraic_chord().is_some() {
                     None
                 } else {
                     let Some(parameter) = line_parameter else {
@@ -6348,32 +6319,20 @@ fn fillet_offset_centers(
         }
         #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
-        | (
-            FilletOffsetCarrier2::AlgebraicChordLine { .. },
-            FilletOffsetCarrier2::AlgebraicCusp { .. },
-        )
-        | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Line { .. })
-        | (
-            FilletOffsetCarrier2::AlgebraicCusp { .. },
-            FilletOffsetCarrier2::AlgebraicChordLine { .. },
-        ) => {
-            let (line, cusp, line_is_previous, retained_chord) = match (previous, next) {
+        | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Line { .. }) => {
+            let (line, line_source, cusp, line_is_previous) = match (previous, next) {
                 (
-                    FilletOffsetCarrier2::Line { support, .. },
+                    FilletOffsetCarrier2::Line {
+                        source, support, ..
+                    },
                     FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
-                ) => (support, cusp, true, false),
-                (
-                    FilletOffsetCarrier2::AlgebraicChordLine { support, .. },
-                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
-                ) => (support, cusp, true, true),
+                ) => (support, source, cusp, true),
                 (
                     FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
-                    FilletOffsetCarrier2::Line { support, .. },
-                ) => (support, cusp, false, false),
-                (
-                    FilletOffsetCarrier2::AlgebraicCusp { support: cusp, .. },
-                    FilletOffsetCarrier2::AlgebraicChordLine { support, .. },
-                ) => (support, cusp, false, true),
+                    FilletOffsetCarrier2::Line {
+                        source, support, ..
+                    },
+                ) => (support, source, cusp, false),
                 _ => unreachable!(),
             };
             let rational_line = RationalBezier2::try_new(
@@ -6401,7 +6360,9 @@ fn fillet_offset_centers(
                 ));
             }
             for contact in contacts.contacts {
-                let line_parameter = (!retained_chord)
+                let line_parameter = line_source
+                    .native_line()
+                    .is_some()
                     .then(|| CurveRegionParameter2::from_bezier(contact.other_parameter));
                 let cusp_parameter =
                     CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter);
@@ -6583,15 +6544,6 @@ fn fillet_offset_centers(
             ));
         }
         #[cfg(feature = "predicates")]
-        (FilletOffsetCarrier2::AlgebraicChordLine { .. }, _)
-        | (_, FilletOffsetCarrier2::AlgebraicChordLine { .. }) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                previous_family,
-                crate::UncertaintyReason::Unsupported,
-            ));
-        }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::AnalyticParallel { .. }, _)
         | (_, FilletOffsetCarrier2::AnalyticParallel { .. }) => {
             return Err(ExactCurveError::blocked(
@@ -6600,8 +6552,74 @@ fn fillet_offset_centers(
                 crate::UncertaintyReason::Unsupported,
             ));
         }
-        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            unreachable!("line/line fillets use the specialized exact fast path")
+        (
+            FilletOffsetCarrier2::Line {
+                source: previous_source,
+                support: previous_support,
+                ..
+            },
+            FilletOffsetCarrier2::Line {
+                source: next_source,
+                support: next_support,
+                ..
+            },
+        ) => {
+            #[cfg(not(feature = "predicates"))]
+            unreachable!("native line/line fillets use the specialized exact fast path");
+            #[cfg(feature = "predicates")]
+            {
+                if previous_source.algebraic_chord().is_none()
+                    && next_source.algebraic_chord().is_none()
+                {
+                    unreachable!("native line/line fillets use the specialized exact fast path");
+                }
+                let point = match crate::offset::line_support_intersection(
+                    previous_support,
+                    next_support,
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })? {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => return Ok(centers),
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                };
+                let retained_parameter =
+                    |source: &FilletLinearSource2<'_>,
+                     support: &LineSeg2,
+                     family: CurveFamily2|
+                     -> ExactCurveResult<Option<CurveRegionParameter2>> {
+                        source
+                            .native_line()
+                            .map(|_| {
+                                line_parameter_at_point(
+                                    support,
+                                    &point,
+                                    CurveOperation2::Fillet,
+                                    family,
+                                )
+                                .map(exact_parameter)
+                            })
+                            .transpose()
+                    };
+                centers.push(FilletCenterWitness2 {
+                    previous_parameter: retained_parameter(
+                        previous_source,
+                        previous_support,
+                        previous_family,
+                    )?,
+                    next_parameter: retained_parameter(next_source, next_support, next_family)?,
+                    point: point.into(),
+                    retained_anchor_evidence: None,
+                });
+            }
         }
     }
     Ok(centers)
@@ -6639,12 +6657,6 @@ fn point_on_fillet_offset(
     }
     let residual = match support {
         FilletOffsetCarrier2::Line { support, .. } => {
-            let (dx, dy) = support.delta();
-            let from_start = point.delta_from(support.start());
-            &dx * &from_start.1 - &dy * &from_start.0
-        }
-        #[cfg(feature = "predicates")]
-        FilletOffsetCarrier2::AlgebraicChordLine { support, .. } => {
             let (dx, dy) = support.delta();
             let from_start = point.delta_from(support.start());
             &dx * &from_start.1 - &dy * &from_start.0
@@ -6688,6 +6700,22 @@ fn fillet_cut_from_center(
             signed_distance,
             ..
         } => {
+            #[cfg(feature = "predicates")]
+            if let Some(source) = source.algebraic_chord() {
+                return algebraic_chord_fillet_cut_from_center(
+                    source,
+                    center,
+                    unit_x,
+                    unit_y,
+                    signed_distance,
+                    mode,
+                    family,
+                    policy,
+                );
+            }
+            let source = source
+                .native_line()
+                .expect("a non-chord linear fillet carrier retains its native line");
             let parameter = retained_parameter
                 .expect("a line offset intersection retains its affine parameter")
                 .clone();
@@ -6940,89 +6968,6 @@ fn fillet_cut_from_center(
             }))
         }
         #[cfg(feature = "predicates")]
-        FilletOffsetCarrier2::AlgebraicChordLine {
-            source,
-            unit_x,
-            unit_y,
-            signed_distance,
-            ..
-        } => {
-            if mode != CurveCornerMode2::TrimOnly {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
-            let point = match crate::BezierAlgebraicChord2::translated_endpoint(
-                center,
-                &(signed_distance * *unit_y),
-                &(-(signed_distance * *unit_x)),
-                policy,
-            )
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
-                }
-            };
-            let parameter = match source
-                .parameter_at_certified_point(point.clone(), policy)
-                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(None),
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
-                }
-            };
-            let start = source.start_parameter();
-            let end = source.end_parameter();
-            let after_start = match parameter
-                .cmp_by_refinement(&start, policy)
-                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(order) => order == std::cmp::Ordering::Greater,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
-                }
-            };
-            let before_end = match parameter
-                .cmp_by_refinement(&end, policy)
-                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(order) => order == std::cmp::Ordering::Less,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
-                }
-            };
-            if !after_start || !before_end {
-                return Ok(None);
-            }
-            Ok(Some(CornerCut2 {
-                point,
-                parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
-                placement: CornerPlacement2::Trim,
-            }))
-        }
-        #[cfg(feature = "predicates")]
         FilletOffsetCarrier2::AnalyticParallel { source, .. } => {
             if mode != CurveCornerMode2::TrimOnly {
                 return Err(ExactCurveError::blocked(
@@ -7073,6 +7018,94 @@ fn fillet_cut_from_center(
             }))
         }
     }
+}
+
+#[cfg(feature = "predicates")]
+#[allow(clippy::too_many_arguments)]
+fn algebraic_chord_fillet_cut_from_center(
+    source: &crate::BezierAlgebraicChord2,
+    center: &RationalBezierIntersectionPointEvidence2,
+    unit_x: &Real,
+    unit_y: &Real,
+    signed_distance: &Real,
+    mode: CurveCornerMode2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerCut2>> {
+    if mode != CurveCornerMode2::TrimOnly {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
+    let point = match crate::BezierAlgebraicChord2::translated_endpoint(
+        center,
+        &(signed_distance * unit_y),
+        &(-(signed_distance * unit_x)),
+        policy,
+    )
+    .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    let parameter = match source
+        .parameter_at_certified_point(point.clone(), policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(Some(parameter)) => parameter,
+        Classification::Decided(None) => return Ok(None),
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    let start = source.start_parameter();
+    let end = source.end_parameter();
+    let after_start = match parameter
+        .cmp_by_refinement(&start, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(order) => order == std::cmp::Ordering::Greater,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    let before_end = match parameter
+        .cmp_by_refinement(&end, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(order) => order == std::cmp::Ordering::Less,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            ));
+        }
+    };
+    if !after_start || !before_end {
+        return Ok(None);
+    }
+    Ok(Some(CornerCut2 {
+        point,
+        parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+        placement: CornerPlacement2::Trim,
+    }))
 }
 
 fn line_parameter_at_point(

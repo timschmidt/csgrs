@@ -1547,7 +1547,7 @@ fn round_join(previous: &Segment2, next: &Segment2) -> OffsetJoin {
     }
 }
 
-fn line_support_intersection(
+pub(crate) fn line_support_intersection(
     previous: &LineSeg2,
     next: &LineSeg2,
     policy: &CurveContext,

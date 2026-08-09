@@ -3704,7 +3704,43 @@ fn strict_common_retained_line_unit_tangent(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
     parameter_axis: BezierAlgebraicChordParameterAxis2,
+    policy: &CurveContext,
 ) -> Option<(Real, Real)> {
+    let exact_coordinate =
+        |point: &RationalBezierIntersectionPointEvidence2, axis: Axis2| match point {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Some(match axis {
+                Axis2::X => point.x().clone(),
+                Axis2::Y => point.y().clone(),
+            }),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                point.exact_rational_coordinate(axis == Axis2::X, policy)
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
+        };
+    let constant_axis = match parameter_axis.axis {
+        Axis2::X => Axis2::Y,
+        Axis2::Y => Axis2::X,
+    };
+    if let (Some(first), Some(second)) = (
+        exact_coordinate(start, constant_axis),
+        exact_coordinate(end, constant_axis),
+    ) && compare_reals(&first, &second, &CurveContext::STRICT) == Some(std::cmp::Ordering::Equal)
+    {
+        let direction = Real::from(if parameter_axis.coordinate_increases {
+            1_i8
+        } else {
+            -1_i8
+        });
+        return Some(match parameter_axis.axis {
+            Axis2::X => (direction, Real::zero()),
+            Axis2::Y => (Real::zero(), direction),
+        });
+    }
+
     let first = strict_common_retained_line_coefficients(start, end)?;
     let strict = &CurveContext::STRICT;
 
@@ -18028,8 +18064,9 @@ impl BezierAlgebraicChord2 {
             (false, None)
         };
         #[cfg(feature = "predicates")]
-        let pair_unit_tangent = pair_unit_tangent
-            .or_else(|| strict_common_retained_line_unit_tangent(&start, &end, parameter_axis));
+        let pair_unit_tangent = pair_unit_tangent.or_else(|| {
+            strict_common_retained_line_unit_tangent(&start, &end, parameter_axis, policy)
+        });
         #[cfg(feature = "predicates")]
         let pair_axis_aligned = pair_unit_tangent.as_ref().is_some_and(|(x, y)| {
             x.zero_status() == ZeroStatus::Zero || y.zero_status() == ZeroStatus::Zero
