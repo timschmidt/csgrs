@@ -396,11 +396,6 @@ impl<'a> ContourQuery2<'a> {
         }
     }
 
-    /// Returns the borrowed source contour.
-    pub const fn contour(&self) -> &'a Contour2 {
-        self.contour
-    }
-
     /// Returns the cached whole-contour box when every segment box was decided.
     pub const fn contour_box(&self) -> Option<&Aabb2> {
         self.contour_box.as_ref()
@@ -535,50 +530,6 @@ impl<'a> RegionQuery2<'a> {
         } else {
             RegionPointLocation::Outside
         })
-    }
-
-    pub(crate) fn classify_point_assuming_off_boundary(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> Classification<RegionPointLocation> {
-        // Complete split-marker construction can prove that an interior
-        // fragment sample is not on the opposite boundary. Preserve that
-        // proof here by evaluating only fill-rule winding; ordinary public
-        // point queries continue to use the boundary-first classifier above.
-        if self
-            .region_box
-            .as_ref()
-            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-        {
-            return Classification::Decided(RegionPointLocation::Outside);
-        }
-
-        let mut depth = 0;
-        match accumulate_depth_assuming_off_boundary(
-            &mut depth,
-            &self.material_prepared_contours,
-            point,
-            1,
-            policy,
-        ) {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-        match accumulate_depth_assuming_off_boundary(
-            &mut depth,
-            &self.hole_prepared_contours,
-            point,
-            -1,
-            policy,
-        ) {
-            Classification::Decided(()) => Classification::Decided(if depth > 0 {
-                RegionPointLocation::Inside
-            } else {
-                RegionPointLocation::Outside
-            }),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        }
     }
 
     /// Returns signed containment depth for a non-boundary point.
@@ -1139,37 +1090,6 @@ fn accumulate_depth(
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-
-    Classification::Decided(())
-}
-
-fn accumulate_depth_assuming_off_boundary(
-    depth: &mut i32,
-    contours: &[ContourQuery2<'_>],
-    point: &Point2,
-    sign: i32,
-    policy: &CurveContext,
-) -> Classification<()> {
-    for contour in contours {
-        if contour
-            .contour_box()
-            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-        {
-            continue;
-        }
-
-        let winding = match prepared_contour_winding_number_unchecked(contour, point, policy) {
-            Classification::Decided(winding) => winding,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let inside = match contour.contour().fill_rule() {
-            FillRule::NonZero => winding != 0,
-            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
-        };
-        if inside {
-            *depth += sign;
         }
     }
 

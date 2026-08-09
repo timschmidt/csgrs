@@ -1023,22 +1023,6 @@ where
     }
 }
 
-pub(crate) fn certified_line_crossing_winding_delta(
-    first: &LineSeg2,
-    second: &LineSeg2,
-) -> Option<i32> {
-    let start = [first.start().x(), first.start().y()];
-    let end = [first.end().x(), first.end().y()];
-    let second_start = [second.start().x(), second.start().y()];
-    let sign = Real::certified_affine_det2_sign(start, end, second_start)
-        .or_else(|| Real::exact_rational_affine_det2_word_sign(start, end, second_start))?;
-    match sign {
-        RealSign::Positive => Some(1),
-        RealSign::Negative => Some(-1),
-        RealSign::Zero => None,
-    }
-}
-
 fn line_segments_decided_axis_separated(
     first: &LineSeg2,
     second: &LineSeg2,
@@ -2279,14 +2263,6 @@ mod tests {
         assert_eq!(
             certified_line_segment_support_relation(&diagonal, &crossing),
             CertifiedLineSegmentSupportRelation::ProperCrossing(RealSign::Positive),
-        );
-        assert_eq!(
-            certified_line_crossing_winding_delta(&diagonal, &crossing),
-            Some(1),
-        );
-        assert_eq!(
-            certified_line_crossing_winding_delta(&diagonal, &crossing.reversed()),
-            Some(-1),
         );
         assert_eq!(
             certified_line_segment_support_relation(&diagonal, &line((1, 1), (5, 5))),

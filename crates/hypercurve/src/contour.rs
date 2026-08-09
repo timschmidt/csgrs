@@ -631,10 +631,6 @@ impl Contour2 {
             .clone()
     }
 
-    pub(crate) fn cached_signed_area(&self) -> Option<&Real> {
-        self.signed_area_cache.get()?.as_ref().ok()?.as_ref()
-    }
-
     pub(crate) fn exact_dyadic_line_aabbs(
         &self,
         policy: &CurveContext,
@@ -939,25 +935,6 @@ fn contour_winding_number_unchecked_with_cached_aabb(
         winding += delta;
     }
 
-    Classification::Decided(winding)
-}
-
-pub(crate) fn line_contour_winding_assuming_off_boundary(
-    contour: &Contour2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> Classification<i32> {
-    let mut winding = 0;
-    for segment in contour.segments() {
-        let Segment2::Line(line) = segment else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let Some(delta) = process_line_winding(line.start(), line.end(), None, point, policy)
-        else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        winding += delta;
-    }
     Classification::Decided(winding)
 }
 

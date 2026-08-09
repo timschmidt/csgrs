@@ -5,16 +5,12 @@
 //! sweep-line scheduling intersection enumeration work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
-use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
-use hyperreal::Real;
-
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::compare_reals;
 use crate::{
-    ContourIntersection, ContourIntersectionSet, ContourOperand, CurveContext, CurveError,
-    CurveResult, RegionView2, SegmentKind, SegmentKindCounts,
+    ContourIntersectionSet, ContourOperand, CurveContext, CurveError, CurveResult, RegionView2,
+    SegmentKind, SegmentKindCounts,
 };
 
 /// Which region side a contour key belongs to.
@@ -105,103 +101,6 @@ pub struct RegionIntersectionSet {
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
     tested_pair_count: usize,
-}
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct RegionPointEndpointContactIndex {
-    vertex_masks: BTreeMap<(RegionContourKey, usize), u8>,
-}
-
-impl RegionPointEndpointContactIndex {
-    const START: u8 = 1;
-    const END: u8 = 2;
-
-    pub(crate) fn from_intersections(
-        intersections: &RegionIntersectionSet,
-        policy: &CurveContext,
-    ) -> Self {
-        let mut index = Self::default();
-        for pair in intersections.pairs() {
-            if pair
-                .intersections()
-                .retained_certified_line_crossings()
-                .is_some()
-            {
-                continue;
-            }
-            for event in pair.intersections().events() {
-                let ContourIntersection::Point(point) = event else {
-                    continue;
-                };
-                // Normalized crossing and tangent kinds certify interior parameters.
-                if point.kind != crate::IntersectionKind::Endpoint {
-                    continue;
-                }
-                index.record(pair.first(), point.a_segment_index, &point.a_param, policy);
-                index.record(pair.second(), point.b_segment_index, &point.b_param, policy);
-            }
-        }
-        index
-    }
-
-    pub(crate) fn is_empty(&self) -> bool {
-        self.vertex_masks.is_empty()
-    }
-
-    fn record(
-        &mut self,
-        key: RegionContourKey,
-        segment_index: usize,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) {
-        let mask = match compare_reals(parameter, &Real::zero(), policy) {
-            Some(std::cmp::Ordering::Equal) => Self::START,
-            None => Self::START | Self::END,
-            Some(_) => match compare_reals(parameter, &Real::one(), policy) {
-                Some(std::cmp::Ordering::Equal) => Self::END,
-                None => Self::START | Self::END,
-                Some(_) => 0,
-            },
-        };
-        if mask != 0 {
-            *self.vertex_masks.entry((key, segment_index)).or_default() |= mask;
-        }
-    }
-
-    pub(crate) fn parameter_is_contact(
-        &self,
-        key: RegionContourKey,
-        segment_index: usize,
-        segment_count: usize,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> bool {
-        match compare_reals(parameter, &Real::zero(), policy) {
-            Some(std::cmp::Ordering::Equal) => {
-                let previous = (segment_index + segment_count - 1) % segment_count;
-                self.mask(key, segment_index) & Self::START != 0
-                    || self.mask(key, previous) & Self::END != 0
-            }
-            None => true,
-            Some(_) => match compare_reals(parameter, &Real::one(), policy) {
-                Some(std::cmp::Ordering::Equal) => {
-                    let next = (segment_index + 1) % segment_count;
-                    self.mask(key, segment_index) & Self::END != 0
-                        || self.mask(key, next) & Self::START != 0
-                }
-                None => true,
-                Some(_) => true,
-            },
-        }
-    }
-
-    fn mask(&self, key: RegionContourKey, segment_index: usize) -> u8 {
-        self.vertex_masks
-            .get(&(key, segment_index))
-            .copied()
-            .unwrap_or(0)
-    }
 }
 
 impl RegionIntersectionSet {
@@ -357,22 +256,6 @@ pub(crate) fn intersect_region_views(
     second: &RegionView2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<RegionIntersectionSet> {
-    intersect_region_views_impl::<false>(first, second, policy)
-}
-
-pub(crate) fn intersect_region_views_point_only(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<RegionIntersectionSet> {
-    intersect_region_views_impl::<true>(first, second, policy)
-}
-
-fn intersect_region_views_impl<const POINT_ONLY: bool>(
-    first: &RegionView2<'_>,
-    second: &RegionView2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
     let mut workload = RegionIntersectionWorkload::default();
     let first_material_boxes = contour_intersection_aabbs(first.material_contours(), policy);
@@ -380,7 +263,7 @@ fn intersect_region_views_impl<const POINT_ONLY: bool>(
     let second_material_boxes = contour_intersection_aabbs(second.material_contours(), policy);
     let second_hole_boxes = contour_intersection_aabbs(second.hole_contours(), policy);
 
-    collect_role_pairs::<POINT_ONLY>(
+    collect_role_pairs(
         &mut pairs,
         &mut workload,
         first.material_contours(),
@@ -391,7 +274,7 @@ fn intersect_region_views_impl<const POINT_ONLY: bool>(
         RegionContourRole::Material,
         policy,
     )?;
-    collect_role_pairs::<POINT_ONLY>(
+    collect_role_pairs(
         &mut pairs,
         &mut workload,
         first.material_contours(),
@@ -402,7 +285,7 @@ fn intersect_region_views_impl<const POINT_ONLY: bool>(
         RegionContourRole::Hole,
         policy,
     )?;
-    collect_role_pairs::<POINT_ONLY>(
+    collect_role_pairs(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
@@ -413,7 +296,7 @@ fn intersect_region_views_impl<const POINT_ONLY: bool>(
         RegionContourRole::Material,
         policy,
     )?;
-    collect_role_pairs::<POINT_ONLY>(
+    collect_role_pairs(
         &mut pairs,
         &mut workload,
         first.hole_contours(),
@@ -525,10 +408,6 @@ fn region_event_segment_kind_counts(
 ) -> SegmentKindCounts {
     let mut counts = SegmentKindCounts::default();
     for pair in events.pairs() {
-        if let Some(crossings) = pair.intersections().retained_certified_line_crossings() {
-            counts.lines += crossings.len();
-            continue;
-        }
         for event in pair.intersections.events() {
             match event.segment_kind(operand) {
                 SegmentKind::Line => counts.lines += 1,
@@ -539,7 +418,7 @@ fn region_event_segment_kind_counts(
     counts
 }
 
-fn collect_role_pairs<const POINT_ONLY: bool>(
+fn collect_role_pairs(
     pairs: &mut Vec<RegionContourIntersection>,
     workload: &mut RegionIntersectionWorkload,
     first_contours: &[&crate::Contour2],
@@ -567,23 +446,13 @@ fn collect_role_pairs<const POINT_ONLY: bool>(
                 second_boxes[second_index].exact.as_ref(),
             ) {
                 (Some(first), Some(second)) => {
-                    if POINT_ONLY {
-                        crate::events::intersect_contours_with_exact_dyadic_line_aabbs_point_only(
-                            first_contour,
-                            second_contour,
-                            first,
-                            second,
-                            policy,
-                        )?
-                    } else {
-                        crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
-                            first_contour,
-                            second_contour,
-                            first,
-                            second,
-                            policy,
-                        )?
-                    }
+                    crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
+                        first_contour,
+                        second_contour,
+                        first,
+                        second,
+                        policy,
+                    )?
                 }
                 _ => {
                     let first_segment_boxes =
@@ -615,66 +484,4 @@ fn collect_role_pairs<const POINT_ONLY: bool>(
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn endpoint_contact_index_skips_certified_interior_crossings() {
-        let parameter = (Real::one() / Real::from(2_u8)).unwrap();
-        let intersections = ContourIntersectionSet::new(vec![ContourIntersection::Point(
-            crate::ContourPointIntersection {
-                a_segment_index: 0,
-                b_segment_index: 0,
-                a_segment_kind: SegmentKind::Line,
-                b_segment_kind: SegmentKind::Line,
-                point: crate::Point2::new(parameter.clone(), parameter.clone()),
-                a_param: parameter.clone(),
-                b_param: parameter,
-                kind: crate::IntersectionKind::Crossing,
-            },
-        )])
-        .unwrap();
-        let intersections = RegionIntersectionSet::new(vec![RegionContourIntersection {
-            first: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
-            second: RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0),
-            intersections,
-        }])
-        .unwrap();
-
-        assert!(
-            RegionPointEndpointContactIndex::from_intersections(
-                &intersections,
-                &CurveContext::STRICT,
-            )
-            .vertex_masks
-            .is_empty()
-        );
-    }
-
-    #[test]
-    fn endpoint_contact_index_checks_both_incident_segments() {
-        let key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
-        let policy = CurveContext::STRICT;
-        let mut index = RegionPointEndpointContactIndex::default();
-        index
-            .vertex_masks
-            .insert((key, 1), RegionPointEndpointContactIndex::START);
-        index
-            .vertex_masks
-            .insert((key, 2), RegionPointEndpointContactIndex::END);
-
-        assert!(index.parameter_is_contact(key, 0, 4, &Real::one(), &policy));
-        assert!(index.parameter_is_contact(key, 3, 4, &Real::zero(), &policy));
-        assert!(!index.parameter_is_contact(key, 0, 4, &Real::zero(), &policy));
-        assert!(index.parameter_is_contact(
-            key,
-            0,
-            4,
-            &(Real::one() / Real::from(2_u8)).unwrap(),
-            &policy,
-        ));
-    }
 }

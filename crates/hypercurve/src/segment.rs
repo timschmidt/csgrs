@@ -126,16 +126,6 @@ impl LineSeg2 {
         )
     }
 
-    /// Returns a support vector oriented with this segment's traversal.
-    pub(crate) fn directed_support_delta(&self) -> (Real, Real) {
-        let (x, y) = self.support_delta();
-        if self.support_direction_reversed {
-            (-x, -y)
-        } else {
-            (x, y)
-        }
-    }
-
     pub(crate) const fn has_retained_support(&self) -> bool {
         self.has_retained_support
     }
@@ -395,6 +385,7 @@ impl LineSeg2 {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn into_reversed(mut self) -> Self {
         if self.offset_provenance.is_some() {
             return self.reversed();
@@ -1412,24 +1403,6 @@ impl CircularArc2 {
             self.bulge().map(|bulge| -bulge.clone()),
         )
     }
-
-    pub(crate) fn into_reversed(self) -> Self {
-        let retained_facts = match Arc::try_unwrap(self.retained_facts) {
-            Ok(retained_facts) => {
-                return Self::from_geometry(
-                    retained_facts.end,
-                    retained_facts.start,
-                    retained_facts.center,
-                    retained_facts.radius_squared,
-                    retained_facts.endpoints_on_stored_circle,
-                    !retained_facts.clockwise,
-                    retained_facts.source_bulge.map(|bulge| -bulge),
-                );
-            }
-            Err(retained_facts) => retained_facts,
-        };
-        Self { retained_facts }.reversed()
-    }
 }
 
 /// A native line or circular-arc segment.
@@ -1541,13 +1514,6 @@ impl Segment2 {
         match self {
             Self::Line(line) => Self::Line(line.reversed()),
             Self::Arc(arc) => Self::Arc(arc.reversed()),
-        }
-    }
-
-    pub(crate) fn into_reversed(self) -> Self {
-        match self {
-            Self::Line(line) => Self::Line(line.into_reversed()),
-            Self::Arc(arc) => Self::Arc(arc.into_reversed()),
         }
     }
 }

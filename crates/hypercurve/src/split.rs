@@ -79,13 +79,6 @@ impl ContourSplitMarkers {
         }
     }
 
-    pub(crate) fn with_implicit_contour_endpoints(contour: &Contour2) -> Self {
-        Self {
-            segment_markers: (0..contour.len()).map(|_| Vec::new()).collect(),
-            source_incidence_certified: true,
-        }
-    }
-
     /// Builds split markers from one contour-pair event set.
     pub fn from_intersections(
         contour: &Contour2,
@@ -157,58 +150,6 @@ impl ContourSplitMarkers {
             }
         }
 
-        Classification::Decided(())
-    }
-
-    pub(crate) fn merge_intersections_for_contour(
-        &mut self,
-        contour: &Contour2,
-        intersections: &ContourIntersectionSet,
-        operand: ContourOperand,
-        policy: &CurveContext,
-    ) -> Classification<()> {
-        let mut marker_counts = vec![0_usize; self.segment_markers.len()];
-        for event in intersections.events() {
-            let event_marker_count = match event {
-                ContourIntersection::Point(_) => 1,
-                ContourIntersection::Overlap(_) => 2,
-                ContourIntersection::Uncertain(_) => continue,
-            };
-            let Some(segment_index) = event.segment_index(operand) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let Some(marker_count) = marker_counts.get_mut(segment_index) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            *marker_count += event_marker_count;
-        }
-        for (segment_index, marker_count) in marker_counts.into_iter().enumerate() {
-            if marker_count == 0 {
-                continue;
-            }
-            let Some(segment) = contour.segments().get(segment_index) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            let markers = &mut self.segment_markers[segment_index];
-            markers.reserve_exact(marker_count + 2 * usize::from(markers.is_empty()));
-            if markers.is_empty() {
-                markers.push(SegmentSplitMarker {
-                    segment_index,
-                    param: Real::zero(),
-                    point: segment.start().clone(),
-                });
-                markers.push(SegmentSplitMarker {
-                    segment_index,
-                    param: Real::one(),
-                    point: segment.end().clone(),
-                });
-            }
-        }
-        for event in intersections.events() {
-            if let Err(reason) = self.merge_event(event, operand, policy) {
-                return Classification::Uncertain(reason);
-            }
-        }
         Classification::Decided(())
     }
 
