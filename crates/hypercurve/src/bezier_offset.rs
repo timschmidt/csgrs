@@ -2708,6 +2708,11 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         &self.data.root
     }
 
+    /// Returns the represented scalar when exact fiber isolation recovered one.
+    pub(crate) fn represented_value(&self) -> Option<&Real> {
+        self.data.root.exact_root.as_ref()
+    }
+
     pub(crate) fn unit_complement(&self) -> Self {
         let policy = self.data.authority.data.policy;
         let authority = BezierAlgebraicSelectedFiberAuthority2::new(
@@ -48346,7 +48351,8 @@ mod conversion_tests {
     use super::*;
     use crate::{
         BezierParallelFragment2, BezierSplitFragment2, BezierSubcurve2, CurveBoundaryInteriorSide2,
-        CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule,
+        CurveCertainty, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule,
+        OffsetCornerStyle2,
     };
 
     fn algebraic_parameters(coefficients: Vec<Real>) -> Vec<BezierParameter2> {
@@ -48380,6 +48386,63 @@ mod conversion_tests {
             panic!("expected one unit-interval algebraic parameter");
         };
         parameter.clone()
+    }
+
+    fn selected_fiber_quartile_parameters(
+        policy: &CurveContext,
+    ) -> (
+        BezierAlgebraicSelectedFiberParameter2,
+        BezierAlgebraicSelectedFiberParameter2,
+        Real,
+    ) {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-half.clone(), Real::zero(), Real::one()],
+            policy,
+        )
+        .unwrap() else {
+            panic!("the retained root polynomial must construct");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(half.clone(), Real::one(), policy).unwrap()
+        else {
+            panic!("the retained root interval must construct");
+        };
+        let Classification::Decided(retained) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap()
+        else {
+            panic!("the retained root must isolate");
+        };
+
+        // (2u-t)(2u-t-1) has roots alpha/2 and (alpha+1)/2 in Q(alpha).
+        let incidence = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(-2_i8), Real::from(4_i8)],
+            vec![Real::one(), Real::from(-4_i8)],
+            vec![Real::one()],
+        ]);
+        let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+            &incidence,
+            CurveResultantParameter::First,
+            &parameter_representation(&retained, policy),
+            &Real::zero(),
+            &Real::one(),
+            AlgebraicFiberRootIsolationConfig {
+                max_subdivision_depth: 128,
+                refinement_steps: 8,
+            },
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+        let authority = BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained, policy);
+        let mut parameters = report
+            .intervals
+            .into_iter()
+            .map(|root| authority.parameter(root))
+            .collect::<Vec<_>>();
+        assert_eq!(parameters.len(), 2);
+        let second = parameters.pop().unwrap();
+        let first = parameters.pop().unwrap();
+        (first, second, half.sqrt().unwrap())
     }
 
     #[test]
@@ -61766,63 +61829,13 @@ mod conversion_tests {
     fn selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let Classification::Decided(polynomial) =
-                BezierParameterPolynomial::try_new_power_basis(
-                    vec![-half.clone(), Real::zero(), Real::one()],
-                    &policy,
-                )
-                .unwrap()
-            else {
-                panic!("the retained root polynomial must construct");
-            };
-            let Classification::Decided(interval) =
-                BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()
-            else {
-                panic!("the retained root interval must construct");
-            };
-            let Classification::Decided(retained) =
-                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
-            else {
-                panic!("the retained root must isolate");
-            };
-
-            // (2u-t)(2u-t-1) has the two selected-fiber roots
-            // alpha/2 and (alpha+1)/2.  Their global norms would duplicate
-            // the retained conjugates; the local authority needs neither.
-            let incidence = BivariatePolynomial::new(vec![
-                vec![Real::zero(), Real::from(-2_i8), Real::from(4_i8)],
-                vec![Real::one(), Real::from(-4_i8)],
-                vec![Real::one()],
-            ]);
-            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-                &incidence,
-                CurveResultantParameter::First,
-                &parameter_representation(&retained, &policy),
-                &Real::zero(),
-                &Real::one(),
-                AlgebraicFiberRootIsolationConfig {
-                    max_subdivision_depth: 128,
-                    refinement_steps: 8,
-                },
-                hypersolve::PredicatePolicy::STRICT,
-            );
-            assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
-            let authority =
-                BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained, &policy);
-            let parameters = report
-                .intervals
-                .into_iter()
-                .map(|root| authority.parameter(root))
-                .collect::<Vec<_>>();
-            let [first, second] = parameters.as_slice() else {
-                panic!("the selected fiber must contain two roots");
-            };
+            let (first, second, _) = selected_fiber_quartile_parameters(&policy);
             assert_eq!(
                 std::mem::size_of::<BezierAlgebraicSelectedFiberParameter2>(),
                 std::mem::size_of::<usize>(),
             );
             assert_eq!(
-                first.cmp_same_authority(second, &policy).unwrap(),
+                first.cmp_same_authority(&second, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
             );
             assert_eq!(
@@ -61833,6 +61846,165 @@ mod conversion_tests {
                 second.order_to_real(&half, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),
             );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel() {
+        let source_curve = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 0),
+        );
+        let rational =
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source_curve.clone()))
+                .unwrap();
+        let analytic = source_curve.parallel_left(Real::zero()).unwrap();
+        let sources = [
+            (
+                crate::bezier_split::BezierSelectedFiberSource2::Rational(rational.clone()),
+                BezierParallel2::from_source(
+                    BezierParallelSource2::Rational(rational),
+                    Real::zero(),
+                ),
+            ),
+            (
+                crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(analytic.clone()),
+                analytic,
+            ),
+        ];
+        let line_fragment = |start: Point2, end: Point2| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(start, end).unwrap(),
+            )),
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (first_cut, second_cut, retained_root) =
+                selected_fiber_quartile_parameters(&policy);
+            let first_value = (&retained_root / Real::from(2_i8)).unwrap();
+            let second_value = ((&retained_root + Real::one()) / Real::from(2_i8)).unwrap();
+            let parameters = [
+                crate::CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                crate::CurveRegionParameter2::from_selected_fiber(first_cut),
+                crate::CurveRegionParameter2::from_selected_fiber(second_cut),
+                crate::CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+            ];
+            let points = [
+                Point2::from_values(0, 0),
+                Point2::new(&first_value * Real::from(2_i8), Real::zero()),
+                Point2::new(&second_value * Real::from(2_i8), Real::zero()),
+                Point2::from_values(2, 0),
+            ];
+
+            for (source, parallel) in sources.iter().cloned() {
+                let mut split_fragments = parameters
+                    .windows(2)
+                    .zip(points.windows(2))
+                    .map(|(range, endpoints)| {
+                        BezierSplitFragment2::SelectedFiber(
+                            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                                source.clone(),
+                                crate::CurveRegionParameterRange2::new_validated(
+                                    range[0].clone(),
+                                    range[1].clone(),
+                                ),
+                                RationalBezierIntersectionPointEvidence2::Exact(
+                                    endpoints[0].clone(),
+                                ),
+                                RationalBezierIntersectionPointEvidence2::Exact(
+                                    endpoints[1].clone(),
+                                ),
+                            ),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                split_fragments.extend([
+                    line_fragment(Point2::from_values(2, 0), Point2::from_values(2, 2)),
+                    line_fragment(Point2::from_values(2, 2), Point2::from_values(0, 2)),
+                    line_fragment(Point2::from_values(0, 2), Point2::from_values(0, 0)),
+                ]);
+                split_fragments.rotate_left(1);
+                let split_region = CurveRegion2::try_new_with_loop_topology(
+                    vec![CurveRegionBoundaryLoop2::new(split_fragments, &policy).unwrap()],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![CurveBoundaryInteriorSide2::Left],
+                )
+                .unwrap();
+
+                let unsplit = BezierSplitFragment2::AnalyticParallel(
+                    BezierParallelFragment2::from_certified_range(
+                        parallel,
+                        BezierParameterRange2::new_validated(
+                            BezierParameter2::Exact(Real::zero()),
+                            BezierParameter2::Exact(Real::one()),
+                        ),
+                        false,
+                    ),
+                );
+                let unsplit_region = CurveRegion2::try_new_with_loop_topology(
+                    vec![
+                        CurveRegionBoundaryLoop2::new(
+                            vec![
+                                unsplit,
+                                line_fragment(Point2::from_values(2, 0), Point2::from_values(2, 2)),
+                                line_fragment(Point2::from_values(2, 2), Point2::from_values(0, 2)),
+                                line_fragment(Point2::from_values(0, 2), Point2::from_values(0, 0)),
+                            ],
+                            &policy,
+                        )
+                        .unwrap(),
+                    ],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![CurveBoundaryInteriorSide2::Left],
+                )
+                .unwrap();
+
+                let distance = (Real::one() / Real::from(10_i8)).unwrap();
+                let split_offset = split_region
+                    .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
+                    .expect("selected Boolean-only cuts must offset through the retained carrier");
+                let unsplit_offset = unsplit_region
+                    .offset(distance, &OffsetCornerStyle2::Round, &policy)
+                    .expect("the equivalent unsplit retained carrier must offset");
+                assert_eq!(split_offset.certainty, CurveCertainty::Certified);
+                assert_eq!(split_offset.certainty, unsplit_offset.certainty);
+                for point in [
+                    Point2::from_values(1, 1),
+                    Point2::from_values(3, 1),
+                    Point2::from_values(-1, 1),
+                    Point2::from_values(1, 3),
+                    Point2::from_values(1, -1),
+                ] {
+                    assert_eq!(
+                        split_offset
+                            .value
+                            .classify_point(&point, &policy)
+                            .unwrap()
+                            .value,
+                        unsplit_offset
+                            .value
+                            .classify_point(&point, &policy)
+                            .unwrap()
+                            .value,
+                    );
+                }
+                assert!(
+                    split_offset
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .flat_map(CurveRegionBoundaryLoop2::fragments)
+                        .all(|fragment| !matches!(
+                            fragment,
+                            BezierSplitFragment2::SelectedFiber(_)
+                        ))
+                );
+            }
         }
     }
 
