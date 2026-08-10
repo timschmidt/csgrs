@@ -42,7 +42,7 @@ use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
     algebraic_chord_point_linear_order_to_exact, algebraic_selected_correlated_predicate_sign,
     algebraic_selected_fiber_parameters, bivariate_fiber_strict_sign_on_parameter_range,
-    signed_bivariate_at_parameter_pair,
+    retained_point_linear_difference_to_algebraic_sign,
 };
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 #[cfg(feature = "predicates")]
@@ -13064,11 +13064,13 @@ struct AlgebraicRayRationalFragment2 {
     curve: RationalBezier2,
     retained_range: Option<CurveRegionParameterRange2>,
     reversed: bool,
+    endpoints: [RationalBezierIntersectionPointEvidence2; 2],
 }
 
 #[cfg(feature = "predicates")]
 enum AlgebraicRayRetainedFragment2 {
     Rational(AlgebraicRayRationalFragment2),
+    AnalyticParallel(crate::bezier_offset::BezierParallelAlgebraicRay2),
     AlgebraicChord(crate::bezier_offset::BezierAlgebraicChordAlgebraicRay2),
     AlgebraicCusp(crate::bezier_offset::BezierAlgebraicCuspSemicircleAlgebraicRay2),
 }
@@ -13077,6 +13079,7 @@ enum AlgebraicRayRetainedFragment2 {
 #[derive(Default)]
 struct AlgebraicRaySignHull2 {
     negative: bool,
+    zero: bool,
     positive: bool,
     first_nonzero: Option<RealSign>,
     last_nonzero: Option<RealSign>,
@@ -13087,7 +13090,10 @@ impl AlgebraicRaySignHull2 {
     fn include(&mut self, sign: RealSign) {
         match sign {
             RealSign::Negative => self.negative = true,
-            RealSign::Zero => return,
+            RealSign::Zero => {
+                self.zero = true;
+                return;
+            }
             RealSign::Positive => self.positive = true,
         }
         self.first_nonzero.get_or_insert(sign);
@@ -13109,73 +13115,13 @@ fn classify_algebraic_point_against_retained_loop(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    if boundary_loop.fragments().iter().any(|fragment| {
-        matches!(
-            fragment,
-            BezierSplitFragment2::AlgebraicChord(_)
-                | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-        )
-    }) {
-        return classify_algebraic_point_against_retained_loop_with_cusps(
-            boundary_loop,
-            point,
-            fill_rule,
-            certify_boundary,
-            policy,
-        );
-    }
-
-    let mut fragments = Vec::with_capacity(boundary_loop.fragments().len());
-    for fragment in boundary_loop.fragments() {
-        match retained_fragment_algebraic_ray_curve(fragment, policy)? {
-            Classification::Decided(fragment) => fragments.push(fragment),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    let (direction_x, direction_y) = match algebraic_ray_direction(&fragments, point, policy)? {
-        Classification::Decided(Some(direction)) => direction,
-        Classification::Decided(None) => {
-            return Ok(Classification::Decided(ContourPointLocation::Boundary));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-
-    let mut winding = 0_i32;
-    for fragment in &fragments {
-        if certify_boundary {
-            match algebraic_point_on_rational_fragment(fragment, point, policy)? {
-                Classification::Decided(true) => {
-                    return Ok(Classification::Decided(ContourPointLocation::Boundary));
-                }
-                Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        let delta = match algebraic_point_rational_curve_ray_winding(
-            fragment,
-            point,
-            &direction_x,
-            &direction_y,
-            policy,
-        )? {
-            Classification::Decided(delta) => delta,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        winding = winding.checked_add(delta).ok_or_else(|| {
-            CurveError::Topology("algebraic ray winding exceeds the region counter".into())
-        })?;
-    }
-    Ok(Classification::Decided(winding_location(
-        winding, fill_rule,
-    )))
+    classify_algebraic_point_against_retained_loop_with_cusps(
+        boundary_loop,
+        point,
+        fill_rule,
+        certify_boundary,
+        policy,
+    )
 }
 
 #[cfg(feature = "predicates")]
@@ -13198,6 +13144,9 @@ fn classify_algebraic_point_against_retained_loop_with_cusps(
             let contains = match fragment {
                 AlgebraicRayRetainedFragment2::Rational(fragment) => {
                     algebraic_point_on_rational_fragment(fragment, point, policy)?
+                }
+                AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
+                    fragment.contains_point(point, policy)?
                 }
                 AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => {
                     fragment.contains_point(point, policy)?
@@ -13305,15 +13254,24 @@ fn prepare_algebraic_ray_retained_fragments(
                 };
                 fragments.push(AlgebraicRayRetainedFragment2::AlgebraicCusp(evaluator));
             }
-            _ => {
-                let fragment = match retained_fragment_algebraic_ray_curve(fragment, policy)? {
-                    Classification::Decided(fragment) => fragment,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
-            }
+            _ => match retained_fragment_algebraic_ray_curve(fragment, policy)? {
+                Classification::Decided(fragment) => {
+                    fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
+                }
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                    let fragment =
+                        match retained_fragment_analytic_algebraic_ray_curve(fragment, policy)? {
+                            Classification::Decided(fragment) => fragment,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                    fragments.push(AlgebraicRayRetainedFragment2::AnalyticParallel(fragment));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
         }
     }
     Ok(Classification::Decided(fragments))
@@ -13333,6 +13291,16 @@ fn algebraic_ray_retained_fragments_admit_direction(
                 match algebraic_ray_rational_fragment_endpoint_side_signs(
                     fragment, point, side_x, side_y, policy,
                 )? {
+                    Classification::Decided(signs)
+                        if signs.into_iter().all(|sign| sign != RealSign::Zero) => {}
+                    Classification::Decided(_) => return Ok(Classification::Decided(false)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
+                match fragment.endpoint_side_signs(point, side_x, side_y, policy)? {
                     Classification::Decided(signs)
                         if signs.into_iter().all(|sign| sign != RealSign::Zero) => {}
                     Classification::Decided(_) => return Ok(Classification::Decided(false)),
@@ -13379,7 +13347,10 @@ fn algebraic_ray_retained_fragments_winding(
         match fragments.get(fragment_index) {
             Some(AlgebraicRayRetainedFragment2::AlgebraicCusp(fragment)) => Some(fragment),
             Some(AlgebraicRayRetainedFragment2::AlgebraicChord(_)) => None,
-            Some(AlgebraicRayRetainedFragment2::Rational(_)) => {
+            Some(
+                AlgebraicRayRetainedFragment2::Rational(_)
+                | AlgebraicRayRetainedFragment2::AnalyticParallel(_),
+            ) => {
                 return Err(CurveError::Topology(
                     "an algebraic side ray can skip only a retained algebraic source".into(),
                 ));
@@ -13413,6 +13384,9 @@ fn algebraic_ray_retained_fragments_winding(
                     policy,
                 )?
             }
+            AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
+                fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
+            }
             AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => {
                 fragment.forward_ray_winding_delta(point, direction_x, direction_y, policy)?
             }
@@ -13442,10 +13416,66 @@ fn algebraic_ray_retained_fragments_winding(
 }
 
 #[cfg(feature = "predicates")]
+fn retained_fragment_algebraic_ray_endpoints(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<[RationalBezierIntersectionPointEvidence2; 2]> {
+    let endpoint = |start_endpoint| -> CurveResult<_> {
+        let evidence = retained_fragment_endpoint_evidence(fragment, start_endpoint, policy)?;
+        evidence
+            .retained_point
+            .or_else(|| {
+                evidence
+                    .point
+                    .map(RationalBezierIntersectionPointEvidence2::Exact)
+            })
+            .ok_or_else(|| {
+                CurveError::Topology(
+                    "a retained algebraic-ray fragment lost exact endpoint evidence".into(),
+                )
+            })
+    };
+    Ok([endpoint(true)?, endpoint(false)?])
+}
+
+#[cfg(feature = "predicates")]
+fn retained_fragment_analytic_algebraic_ray_curve(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::bezier_offset::BezierParallelAlgebraicRay2>> {
+    let (parallel, range, reversed) = match fragment {
+        BezierSplitFragment2::AnalyticParallel(fragment) => (
+            fragment.parallel().clone(),
+            CurveRegionParameterRange2::from_bezier_range(fragment.range().clone()),
+            fragment.is_reversed(),
+        ),
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let Some(parallel) = fragment.analytic_parallel() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            (
+                parallel.clone(),
+                fragment.range().clone(),
+                fragment.is_reversed(),
+            )
+        }
+        _ => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+    };
+    crate::bezier_offset::BezierParallelAlgebraicRay2::try_new(
+        parallel,
+        range,
+        reversed,
+        retained_fragment_algebraic_ray_endpoints(fragment, policy)?,
+        policy,
+    )
+}
+
+#[cfg(feature = "predicates")]
 fn retained_fragment_algebraic_ray_curve(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<AlgebraicRayRationalFragment2>> {
+    let endpoints = retained_fragment_algebraic_ray_endpoints(fragment, policy)?;
     match retained_line_fragment_segment(fragment, policy)? {
         Classification::Decided(line) => {
             return Ok(Classification::Decided(AlgebraicRayRationalFragment2 {
@@ -13454,6 +13484,7 @@ fn retained_fragment_algebraic_ray_curve(
                 ))?,
                 retained_range: None,
                 reversed: false,
+                endpoints,
             }));
         }
         Classification::Uncertain(UncertaintyReason::Unsupported) => {}
@@ -13539,6 +13570,7 @@ fn retained_fragment_algebraic_ray_curve(
         curve,
         retained_range,
         reversed,
+        endpoints,
     }))
 }
 
@@ -13610,41 +13642,10 @@ fn algebraic_ray_rational_fragment_endpoint_side_signs(
     side_y: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<[RealSign; 2]>> {
-    let Some(range) = fragment.retained_range.as_ref() else {
-        let mut signs = [RealSign::Zero; 2];
-        for (index, endpoint) in [fragment.curve.start(), fragment.curve.end()]
-            .into_iter()
-            .enumerate()
-        {
-            signs[index] = match point.homogeneous_linear_difference_sign(
-                endpoint.x(),
-                endpoint.y(),
-                &Real::one(),
-                side_x,
-                side_y,
-                RealSign::Positive,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        }
-        return Ok(Classification::Decided(signs));
-    };
-    let equation =
-        algebraic_point_rational_curve_linear_equation(&fragment.curve, point, side_x, side_y)?;
-    let Some((start, end)) = range.as_bezier_parameters() else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-    };
     let mut signs = [RealSign::Zero; 2];
-    for (index, parameter) in [start, end].into_iter().enumerate() {
-        signs[index] = match signed_bivariate_at_parameter_pair(
-            &equation,
-            point.retained_parameter(),
-            parameter,
-            policy,
+    for (index, endpoint) in fragment.endpoints.iter().enumerate() {
+        signs[index] = match retained_point_linear_difference_to_algebraic_sign(
+            endpoint, point, side_x, side_y, policy,
         )? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
@@ -13656,85 +13657,41 @@ fn algebraic_ray_rational_fragment_endpoint_side_signs(
 }
 
 #[cfg(feature = "predicates")]
-fn algebraic_ray_direction(
-    fragments: &[AlgebraicRayRationalFragment2],
-    point: &RationalBezierAlgebraicPointPredicate2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<(Real, Real)>>> {
-    for fragment in fragments {
-        let x = match algebraic_ray_rational_fragment_endpoint_side_signs(
-            fragment,
-            point,
-            &Real::one(),
-            &Real::zero(),
-            policy,
-        )? {
-            Classification::Decided(signs) => signs,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let y = match algebraic_ray_rational_fragment_endpoint_side_signs(
-            fragment,
-            point,
-            &Real::zero(),
-            &Real::one(),
-            policy,
-        )? {
-            Classification::Decided(signs) => signs,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if x.into_iter()
-            .zip(y)
-            .any(|(x, y)| x == RealSign::Zero && y == RealSign::Zero)
-        {
-            return Ok(Classification::Decided(None));
-        }
-    }
-
-    let direction_x = Real::one();
-    let candidate_count = fragments.len().saturating_mul(2).saturating_add(1);
-    let mut last_reason = UncertaintyReason::Predicate;
-    for slope in 0..candidate_count {
-        let Ok(slope) = u64::try_from(slope) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let direction_y = Real::from(slope);
-        let side_x = -direction_y.clone();
-        let side_y = direction_x.clone();
-        let mut admissible = true;
-        for fragment in fragments {
-            match algebraic_ray_rational_fragment_endpoint_side_signs(
-                fragment, point, &side_x, &side_y, policy,
-            )? {
-                Classification::Decided(signs)
-                    if signs.into_iter().all(|sign| sign != RealSign::Zero) => {}
-                Classification::Decided(_) => {
-                    admissible = false;
-                    break;
-                }
-                Classification::Uncertain(reason) => {
-                    last_reason = reason;
-                    admissible = false;
-                    break;
-                }
-            }
-        }
-        if admissible {
-            return Ok(Classification::Decided(Some((direction_x, direction_y))));
-        }
-    }
-    Ok(Classification::Uncertain(last_reason))
-}
-
-#[cfg(feature = "predicates")]
 fn algebraic_point_on_rational_curve(
     curve: &RationalBezier2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
+    let weight_sign = match algebraic_ray_curve_weight_sign(curve, policy) {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(_) => RealSign::Zero,
+    };
+    if weight_sign != RealSign::Zero {
+        let controls = curve
+            .control_points()
+            .iter()
+            .zip(curve.weights())
+            .map(|(control, weight)| AlgebraicRayHomogeneousControl2 {
+                x: control.x() * weight,
+                y: control.y() * weight,
+                weight: weight.clone(),
+            })
+            .collect::<Vec<_>>();
+        for (factor_x, factor_y) in [(Real::one(), Real::zero()), (Real::zero(), Real::one())] {
+            if let Classification::Decided(hull) = algebraic_ray_control_sign_hull(
+                &controls,
+                point,
+                &factor_x,
+                &factor_y,
+                weight_sign,
+                policy,
+            )? && !hull.zero
+                && (hull.negative ^ hull.positive)
+            {
+                return Ok(Classification::Decided(false));
+            }
+        }
+    }
     let x =
         algebraic_point_rational_curve_linear_equation(curve, point, &Real::one(), &Real::zero())?;
     let y =
@@ -16750,6 +16707,128 @@ mod tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    fn algebraic_query_winding_mixes_genuine_parallel_and_native_fragments() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let source = QuadraticBezier2::new(p(0, 0), Point2::new(half, Real::zero()), p(1, 1));
+        let parallel = source.parallel_left(quarter).unwrap();
+        let query_curve =
+            RationalBezier2::try_new(vec![p(0, 0), p(0, 1)], vec![Real::one(), Real::one()])
+                .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parallel.exact_rational_parallel_component(&policy).unwrap(),
+                Classification::Decided(None)
+            ));
+            let parameter = sqrt_half_algebraic_parameter(&policy);
+            let BezierParameter2::Algebraic(parameter) = parameter else {
+                panic!("sqrt(1/2) must remain algebraic");
+            };
+            let query = query_curve
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap();
+            let Classification::Decided(query) = query.predicate_evaluator(&policy).unwrap() else {
+                panic!("the algebraic query predicate must construct");
+            };
+            let zero = Real::zero();
+            let one = Real::one();
+            let Classification::Decided(start) = parallel.point_at(&zero, &policy).unwrap() else {
+                panic!("the genuine parallel start must evaluate");
+            };
+            let Classification::Decided(end) = parallel.point_at(&one, &policy).unwrap() else {
+                panic!("the genuine parallel end must evaluate");
+            };
+            let range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(zero.clone()),
+                BezierParameter2::Exact(one.clone()),
+            );
+            let Classification::Decided(analytic) =
+                crate::BezierParallelFragment2::try_new(parallel.clone(), range, &policy).unwrap()
+            else {
+                panic!("the genuine parallel fragment must construct");
+            };
+            let corner = p(2, 0);
+            let closure = |start: Point2, end: Point2| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(zero.clone()),
+                end: BezierParameter2::Exact(one.clone()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(start, end).unwrap(),
+                )),
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AnalyticParallel(analytic),
+                    closure(end, corner.clone()),
+                    closure(corner, start),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let Classification::Decided(fragments) =
+                prepare_algebraic_ray_retained_fragments(&boundary, &policy).unwrap()
+            else {
+                panic!("the mixed algebraic ray fragments must prepare");
+            };
+            let [
+                AlgebraicRayRetainedFragment2::AnalyticParallel(analytic),
+                AlgebraicRayRetainedFragment2::Rational(first_closure),
+                AlgebraicRayRetainedFragment2::Rational(second_closure),
+            ] = fragments.as_slice()
+            else {
+                panic!("the mixed loop must retain analytic and rational evaluators");
+            };
+            assert_eq!(
+                analytic.contains_point(&query, &policy).unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                algebraic_point_on_rational_fragment(first_closure, &query, &policy).unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                algebraic_point_on_rational_fragment(second_closure, &query, &policy).unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_admit_direction(
+                    &fragments,
+                    &query,
+                    &Real::zero(),
+                    &Real::one(),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                algebraic_ray_retained_fragments_winding(
+                    &fragments,
+                    &query,
+                    &Real::one(),
+                    &Real::zero(),
+                    None,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(0),
+            );
+            assert_eq!(
+                classify_algebraic_point_against_retained_loop(
+                    &boundary,
+                    &query,
+                    FillRule::NonZero,
+                    true,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(ContourPointLocation::Outside),
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn algebraic_retained_range_ray_winding_handles_crossing_multiplicity() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let alpha = sqrt_half_algebraic_parameter(&policy);
@@ -16799,13 +16878,18 @@ mod tests {
                 Point2::new(x.clone(), Real::from(2_i8) * &eighth),
                 Point2::new(x, Real::from(10_i8) * &eighth),
             ]);
-            let winding = |curve, reversed| {
+            let winding = |curve: RationalBezier2, reversed: bool| {
+                let endpoints = [
+                    RationalBezierIntersectionPointEvidence2::Exact(curve.start().clone()),
+                    RationalBezierIntersectionPointEvidence2::Exact(curve.end().clone()),
+                ];
                 let fragment = AlgebraicRayRationalFragment2 {
                     curve,
                     retained_range: Some(CurveRegionParameterRange2::from_bezier_range(
                         range.clone(),
                     )),
                     reversed,
+                    endpoints,
                 };
                 algebraic_point_rational_curve_ray_winding(
                     &fragment,

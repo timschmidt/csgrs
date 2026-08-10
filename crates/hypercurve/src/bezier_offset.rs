@@ -46,12 +46,13 @@ use crate::{
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, CertifiedBezierLineImageOffset2,
     Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
+    CurveGeometry2, CurveOperation2, CurvePath2, CurveRegionParameter2, CurveRegionParameterRange2,
+    CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
+    UncertaintyReason,
 };
 use hyperreal::{RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
@@ -4742,6 +4743,27 @@ struct BezierAlgebraicChordIndependentParameterMap2 {
 pub(crate) struct BezierAlgebraicChordAlgebraicRay2 {
     start: RationalBezierAlgebraicPointImage2,
     end: RationalBezierAlgebraicPointImage2,
+}
+
+/// Exact algebraic-query ray evaluator for one retained analytic parallel.
+///
+/// The source parameter range remains in its native selected/Bezier domain.
+/// Line incidence uses a squared projection only to enumerate candidates; all
+/// topology decisions replay the authored `A*sqrt(S)+B` normal branch.
+#[cfg(feature = "predicates")]
+#[derive(Debug)]
+pub(crate) struct BezierParallelAlgebraicRay2 {
+    parallel: BezierParallel2,
+    range: CurveRegionParameterRange2,
+    reversed: bool,
+    endpoints: [RationalBezierIntersectionPointEvidence2; 2],
+}
+
+#[cfg(feature = "predicates")]
+struct BezierParallelAlgebraicRaySystem2 {
+    incidence: BivariatePolynomial,
+    expression: BezierAlgebraicCuspTwoTermExpression2,
+    speed_squared: BivariatePolynomial,
 }
 
 /// Prepared supporting-line predicate for one retained chord.
@@ -27960,6 +27982,542 @@ fn algebraic_chord_endpoint_bounds_refined(
         Point2::new(x.lower, y.lower),
         Point2::new(x.upper, y.upper),
     ))
+}
+
+/// Signs one exact retained point projection relative to an algebraic query
+/// point without forcing their independent scalar fields into a compositum.
+///
+/// Disjoint interval projections decide the strict result.  Only the explicit
+/// `APPROXIMATE_512` policy may collapse an overlap remaining after the
+/// 512-step terminal to equality.
+#[cfg(feature = "predicates")]
+pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
+    endpoint: &RationalBezierIntersectionPointEvidence2,
+    query: &RationalBezierAlgebraicPointPredicate2<'_>,
+    coefficient_x: &Real,
+    coefficient_y: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    if let RationalBezierIntersectionPointEvidence2::Exact(point) = endpoint {
+        return query.homogeneous_linear_difference_sign(
+            point.x(),
+            point.y(),
+            &Real::one(),
+            coefficient_x,
+            coefficient_y,
+            RealSign::Positive,
+            policy,
+        );
+    }
+
+    let coefficient_x = BezierAlgebraicChordRealInterval2::from_values(
+        [coefficient_x.clone()],
+        &CurveContext::STRICT,
+    )
+    .expect("one exact coefficient defines an interval");
+    let coefficient_y = BezierAlgebraicChordRealInterval2::from_values(
+        [coefficient_y.clone()],
+        &CurveContext::STRICT,
+    )
+    .expect("one exact coefficient defines an interval");
+    let mut terminal_refined = false;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let Classification::Decided(bounds) =
+            algebraic_chord_endpoint_bounds_refined(endpoint, refinement_steps, policy)
+        else {
+            continue;
+        };
+        terminal_refined |= refinement_steps == 512;
+        let Some(projection) = BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::X)
+            .multiply(&coefficient_x, &CurveContext::STRICT)
+            .and_then(|x| {
+                BezierAlgebraicChordRealInterval2::from_axis(&bounds, Axis2::Y)
+                    .multiply(&coefficient_y, &CurveContext::STRICT)
+                    .map(|y| x.add(&y))
+            })
+        else {
+            continue;
+        };
+        match query.linear_order_to_real(
+            &coefficient_x.lower,
+            &coefficient_y.lower,
+            &projection.lower,
+            &CurveContext::STRICT,
+        )? {
+            Classification::Decided(std::cmp::Ordering::Less) => {
+                return Ok(Classification::Decided(RealSign::Positive));
+            }
+            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {}
+            Classification::Uncertain(_) => {}
+        }
+        match query.linear_order_to_real(
+            &coefficient_x.lower,
+            &coefficient_y.lower,
+            &projection.upper,
+            &CurveContext::STRICT,
+        )? {
+            Classification::Decided(std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(RealSign::Negative));
+            }
+            Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {}
+            Classification::Uncertain(_) => {}
+        }
+        if projection.lower == projection.upper {
+            match query.linear_order_to_real(
+                &coefficient_x.lower,
+                &coefficient_y.lower,
+                &projection.lower,
+                &CurveContext::STRICT,
+            )? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                | Classification::Uncertain(_) => {}
+            }
+        }
+    }
+    if terminal_refined && policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        Ok(Classification::Decided(RealSign::Zero))
+    } else {
+        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    }
+}
+
+#[cfg(feature = "predicates")]
+impl BezierParallelAlgebraicRay2 {
+    pub(crate) fn try_new(
+        parallel: BezierParallel2,
+        range: CurveRegionParameterRange2,
+        reversed: bool,
+        endpoints: [RationalBezierIntersectionPointEvidence2; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let source = parallel.source_power_basis()?;
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_finite_source(&source, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_regular_differential(parallel.differential()?, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Ok(Classification::Decided(Self {
+            parallel,
+            range,
+            reversed,
+            endpoints,
+        }))
+    }
+
+    pub(crate) fn endpoint_side_signs(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        side_x: &Real,
+        side_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[RealSign; 2]>> {
+        let mut signs = [RealSign::Zero; 2];
+        for (index, endpoint) in self.endpoints.iter().enumerate() {
+            signs[index] = match retained_point_linear_difference_to_algebraic_sign(
+                endpoint, point, side_x, side_y, policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        }
+        Ok(Classification::Decided(signs))
+    }
+
+    fn system(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        factor_x: &Real,
+        factor_y: &Real,
+    ) -> CurveResult<BezierParallelAlgebraicRaySystem2> {
+        let source = self.parallel.source_power_basis()?;
+        let differential = self.parallel.differential()?;
+        let weight = source
+            .weight
+            .map_or_else(|| vec![Real::one()], <[Real]>::to_vec);
+        let (query_x, query_y, query_weight) = point.coordinate_polynomials();
+        let query_linear = polynomial_add(
+            &polynomial_scale(query_x, factor_x),
+            &polynomial_scale(query_y, factor_y),
+        );
+        let source_linear = polynomial_add(
+            &polynomial_scale(source.x_numerator, factor_x),
+            &polynomial_scale(source.y_numerator, factor_y),
+        );
+        // `source_term = qW*W*f·(P-query)`.
+        let source_term = bivariate_subtract(
+            &bivariate_outer_product(query_weight, &source_linear),
+            &bivariate_outer_product(&query_linear, &weight),
+        );
+        let normal_projection = polynomial_add(
+            &polynomial_scale(&differential.tangent_y, &(-factor_x.clone())),
+            &polynomial_scale(&differential.tangent_x, factor_y),
+        );
+        // The common qW*W denominator gives
+        // `source_term*sqrt(S) + normal_term`.
+        let normal_term = bivariate_scale(
+            bivariate_outer_product(
+                query_weight,
+                &polynomial_multiply(&weight, &normal_projection),
+            ),
+            self.parallel.distance(),
+        );
+        let speed_squared = bivariate_outer_product(
+            &[Real::one()],
+            &parallel_speed_squared_polynomial(differential),
+        );
+        let incidence = bivariate_subtract(
+            &bivariate_multiply(&normal_term, &normal_term),
+            &bivariate_multiply(
+                &bivariate_multiply(&source_term, &source_term),
+                &speed_squared,
+            ),
+        );
+        Ok(BezierParallelAlgebraicRaySystem2 {
+            incidence,
+            expression: BezierAlgebraicCuspTwoTermExpression2 {
+                rational: normal_term,
+                radical: source_term,
+            },
+            speed_squared,
+        })
+    }
+
+    fn projected_parameters(
+        system: &BezierParallelAlgebraicRaySystem2,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        match point.retained_parameter() {
+            BezierParameter2::Exact(_) => selected_parameter_fiber_parameters(
+                &system.incidence,
+                point.retained_parameter(),
+                MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+                policy,
+            ),
+            BezierParameter2::Algebraic(parameter) => {
+                algebraic_selected_fiber_parameters(&system.incidence, parameter, policy)
+            }
+        }
+    }
+
+    fn expression_sign_at_candidate(
+        &self,
+        authority: &BezierParallelAlgebraicRaySystem2,
+        expression: &BezierParallelAlgebraicRaySystem2,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let expression_sign = match algebraic_cusp_selected_square_root_sum_sign(
+            &authority.incidence,
+            &expression.expression,
+            &expression.speed_squared,
+            point.retained_parameter(),
+            parameter,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source = self.parallel.source_power_basis()?;
+        let weight = source
+            .weight
+            .map_or_else(|| vec![Real::one()], <[Real]>::to_vec);
+        let weight_sign = match signed_coefficients_at_parameter(weight, parameter, policy)? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(product_sign(
+            expression_sign,
+            product_sign(point.denominator_sign(), weight_sign),
+        )))
+    }
+
+    fn parameter_orders(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(std::cmp::Ordering, std::cmp::Ordering)>> {
+        let parameter = CurveRegionParameter2::from_bezier(parameter.clone());
+        let start = match parameter.cmp_by_refinement(self.range.start(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match parameter.cmp_by_refinement(self.range.end(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided((start, end)))
+    }
+
+    fn contains_parameter(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        Ok(self
+            .parameter_orders(parameter, policy)?
+            .map(|(start, end)| !start.is_lt() && !end.is_gt()))
+    }
+
+    fn contains_point_from_systems(
+        &self,
+        authority: &BezierParallelAlgebraicRaySystem2,
+        other: &BezierParallelAlgebraicRaySystem2,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<bool>>> {
+        let parameters = match Self::projected_parameters(authority, point, policy)? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+                parameters
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for parameter in parameters {
+            match self
+                .expression_sign_at_candidate(authority, authority, point, &parameter, policy)?
+            {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            match self.contains_parameter(&parameter, policy)? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            match self.expression_sign_at_candidate(authority, other, point, &parameter, policy)? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Decided(Some(true)));
+                }
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(Some(false)))
+    }
+
+    pub(crate) fn contains_point(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let zero = Real::zero();
+        let one = Real::one();
+        let x = self.system(point, &one, &zero)?;
+        let y = self.system(point, &zero, &one)?;
+        match self.contains_point_from_systems(&x, &y, point, policy)? {
+            Classification::Decided(Some(contains)) => {
+                return Ok(Classification::Decided(contains));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match self.contains_point_from_systems(&y, &x, point, policy)? {
+            Classification::Decided(Some(contains)) => Ok(Classification::Decided(contains)),
+            Classification::Decided(None) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    fn neighbor_sample(
+        &self,
+        parameters: &[BezierParameter2],
+        index: usize,
+        after: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Real>> {
+        let root = CurveRegionParameter2::from_bezier(parameters[index].clone());
+        let mut boundary = if after {
+            self.range.end().clone()
+        } else {
+            self.range.start().clone()
+        };
+        let neighbor = if after {
+            parameters.get(index + 1)
+        } else {
+            index.checked_sub(1).and_then(|index| parameters.get(index))
+        };
+        if let Some(neighbor) = neighbor {
+            let neighbor = CurveRegionParameter2::from_bezier(neighbor.clone());
+            let order = match neighbor.cmp_by_refinement(&boundary, policy)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if after && order.is_lt() || !after && order.is_gt() {
+                boundary = neighbor;
+            }
+        }
+        if after {
+            root.strict_rational_between_ordered(&boundary, policy)
+        } else {
+            boundary.strict_rational_between_ordered(&root, policy)
+        }
+    }
+
+    fn exact_sample_sign(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        parameter: &Real,
+        factor_x: &Real,
+        factor_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let sample = match self.parallel.point_at(parameter, policy)? {
+            Classification::Decided(sample) => sample,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        point.homogeneous_linear_difference_sign(
+            sample.x(),
+            sample.y(),
+            &Real::one(),
+            factor_x,
+            factor_y,
+            RealSign::Positive,
+            policy,
+        )
+    }
+
+    pub(crate) fn forward_ray_winding_delta(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        direction_x: &Real,
+        direction_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<i32>> {
+        let side_x = -direction_y.clone();
+        let side_y = direction_x.clone();
+        let side = self.system(point, &side_x, &side_y)?;
+        let ahead = self.system(point, direction_x, direction_y)?;
+        let parameters = match Self::projected_parameters(&side, point, policy)? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+                parameters
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut winding = 0_i32;
+        for (index, parameter) in parameters.iter().enumerate() {
+            match self.expression_sign_at_candidate(&side, &side, point, parameter, policy)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let (start_order, end_order) = match self.parameter_orders(parameter, policy)? {
+                Classification::Decided(orders) => orders,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if start_order.is_lt() || end_order.is_gt() {
+                continue;
+            }
+            if start_order.is_eq() || end_order.is_eq() {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            match self.expression_sign_at_candidate(&side, &ahead, point, parameter, policy)? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Negative) => continue,
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let before = match self.neighbor_sample(&parameters, index, false, policy)? {
+                Classification::Decided(sample) => {
+                    match self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)? {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let after = match self.neighbor_sample(&parameters, index, true, policy)? {
+                Classification::Decided(sample) => {
+                    match self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)? {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let delta = match (before, after) {
+                (RealSign::Negative, RealSign::Positive) => 1_i32,
+                (RealSign::Positive, RealSign::Negative) => -1_i32,
+                (RealSign::Negative, RealSign::Negative)
+                | (RealSign::Positive, RealSign::Positive) => 0_i32,
+                (RealSign::Zero, _) | (_, RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+            };
+            winding = winding
+                .checked_add(if self.reversed { -delta } else { delta })
+                .ok_or_else(|| {
+                    CurveError::Topology("analytic-parallel ray winding overflow".into())
+                })?;
+        }
+        Ok(Classification::Decided(winding))
+    }
 }
 
 #[cfg(feature = "predicates")]
@@ -62484,6 +63042,114 @@ mod conversion_tests {
                 BezierAlgebraicCuspSemicircleContactLocation2::Start,
             );
             assert_eq!(opposite_contact.tangent_cross_sign(), RealSign::Zero);
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
+    fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        let parallel = source.parallel_left(quarter).unwrap();
+        let query_curve = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(0, 1)],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parallel.exact_rational_parallel_component(&policy).unwrap(),
+                Classification::Decided(None)
+            ));
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the algebraic query polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the algebraic query interval must construct");
+            };
+            let Classification::Decided(parameter) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the algebraic query parameter must isolate");
+            };
+            let query = query_curve
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap();
+            let Classification::Decided(query) = query.predicate_evaluator(&policy).unwrap() else {
+                panic!("the algebraic query predicate must construct");
+            };
+            let range = CurveRegionParameterRange2::from_bezier_range(
+                BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+            );
+            let endpoint = |parameter: Real| {
+                let Classification::Decided(point) =
+                    parallel.point_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("the represented parallel endpoint must evaluate");
+                };
+                RationalBezierIntersectionPointEvidence2::Exact(point)
+            };
+            let endpoints = [endpoint(Real::zero()), endpoint(Real::one())];
+            let Classification::Decided(forward) = BezierParallelAlgebraicRay2::try_new(
+                parallel.clone(),
+                range.clone(),
+                false,
+                endpoints.clone(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the genuine parallel ray evaluator must construct");
+            };
+            assert_eq!(
+                forward
+                    .endpoint_side_signs(&query, &Real::zero(), &Real::one(), &policy,)
+                    .unwrap(),
+                Classification::Decided([RealSign::Negative, RealSign::Positive]),
+            );
+            assert_eq!(
+                forward.contains_point(&query, &policy).unwrap(),
+                Classification::Decided(false),
+            );
+            assert_eq!(
+                forward
+                    .forward_ray_winding_delta(&query, &Real::one(), &Real::zero(), &policy,)
+                    .unwrap(),
+                Classification::Decided(1),
+            );
+
+            let Classification::Decided(reversed) = BezierParallelAlgebraicRay2::try_new(
+                parallel.clone(),
+                range.clone(),
+                true,
+                endpoints.clone(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the reversed genuine parallel ray evaluator must construct");
+            };
+            assert_eq!(
+                reversed
+                    .forward_ray_winding_delta(&query, &Real::one(), &Real::zero(), &policy,)
+                    .unwrap(),
+                Classification::Decided(-1),
+            );
         }
     }
 

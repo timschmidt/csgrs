@@ -1072,15 +1072,42 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
         value: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
-        let numerator = if use_x {
-            self.x_numerator
-        } else {
-            self.y_numerator
-        };
-        let length = numerator.len().max(self.denominator.len());
+        let zero = Real::zero();
+        let one = Real::one();
+        self.linear_order_to_real(
+            if use_x { &one } else { &zero },
+            if use_x { &zero } else { &one },
+            value,
+            policy,
+        )
+    }
+
+    pub(crate) fn linear_order_to_real(
+        &self,
+        x_factor: &Real,
+        y_factor: &Real,
+        value: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Ordering>> {
+        let length = self
+            .x_numerator
+            .len()
+            .max(self.y_numerator.len())
+            .max(self.denominator.len());
         let difference = (0..length)
             .map(|index| {
-                numerator.get(index).cloned().unwrap_or_else(Real::zero)
+                x_factor
+                    * self
+                        .x_numerator
+                        .get(index)
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                    + y_factor
+                        * self
+                            .y_numerator
+                            .get(index)
+                            .cloned()
+                            .unwrap_or_else(Real::zero)
                     - value
                         * self
                             .denominator
