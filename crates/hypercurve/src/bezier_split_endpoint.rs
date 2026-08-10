@@ -122,6 +122,32 @@ impl BezierAlgebraicEndpointImage2 {
         }
     }
 
+    /// Retains replayable point/tangent evidence against one owned source.
+    ///
+    /// Region transforms need first-order endpoint evidence for connectivity
+    /// and tangent ordering, but eagerly materializing higher derivatives can
+    /// turn a valid high-degree rational image into an unnecessary algebraic
+    /// tower.  This compact form evaluates the exact transformed source lazily
+    /// and is therefore the authoritative transport path.
+    pub(crate) fn from_source_curve_first_order(
+        source_curve: &BezierSubcurve2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        match source_curve {
+            BezierSubcurve2::Quadratic(curve) => {
+                Self::quadratic_first_order(curve, parameter, policy)
+            }
+            BezierSubcurve2::Cubic(curve) => Self::cubic_first_order(curve, parameter, policy),
+            BezierSubcurve2::RationalQuadratic(curve) => {
+                Self::rational_quadratic_first_order(curve, parameter, policy)
+            }
+            BezierSubcurve2::Rational(curve) => {
+                Self::rational_first_order(curve, parameter, policy)
+            }
+        }
+    }
+
     /// Constructs endpoint evidence for a polynomial quadratic Bezier.
     pub fn quadratic(
         curve: &QuadraticBezier2,

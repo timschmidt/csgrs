@@ -1,35 +1,39 @@
 //! Finite polyline projection adapters for native hyper curves.
 //!
 //! Projection is an IO/rendering boundary, not a topology kernel. The methods
-//! in this module preserve line segments exactly, approximate circular arcs by
-//! a chord-error budget, and return primitive `f64` coordinates only after the
-//! source [`Real`](hyperreal::Real) coordinates can be exported finitely. This
-//! follows exact-computation discipline:
+//! in this module preserve line segments exactly, approximate curved carriers
+//! by a chord-error budget, and return primitive `f64` coordinates only after
+//! the source [`Real`](hyperreal::Real) coordinates can be exported finitely.
+//! This follows exact-computation discipline:
 //! exact objects own CAD/topology; finite samples are boundary products.
 //! Boundary and containment decisions should continue to use the exact
 //! contour/region APIs surveyed by boundary-first winding classification.
 
 use std::f64::consts::PI;
 
+use crate::bezier_offset::algebraic_chord_endpoint_bounds_refined;
 use crate::bezier_parameter::BezierParameterRefinement2;
+use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::{
-    BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
-    Contour2, Curve2, CurveContext, CurveError, CurveOutcome, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, CurveString2, Point2, Segment2,
+    BezierParallel2, BezierParallelSource2, BezierParameter2, BezierSplitFragment2,
+    BezierSubcurve2, CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveError,
+    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole,
+    CurveRegionParameter2, CurveResult, CurveString2, Point2,
+    RationalBezierIntersectionPointEvidence2, Segment2,
 };
 use hyperreal::{Real, RealSign};
 
 /// Options for projecting native curves to finite `f64` polylines.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FiniteProjectionOptions {
-    arc_chord_error: f64,
+    chord_error: f64,
 }
 
 /// Finite `f64` polyline emitted from a native curve object.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FinitePolyline2 {
     points: Vec<[f64; 2]>,
-    arc_chord_error: f64,
+    chord_error: f64,
     closed: bool,
 }
 
@@ -44,26 +48,26 @@ pub struct FiniteRegionProfile2 {
 }
 
 impl FiniteProjectionOptions {
-    /// Constructs projection options with a positive finite arc chord-error budget.
-    pub fn try_new(arc_chord_error: f64) -> CurveResult<Self> {
-        if arc_chord_error.is_finite() && arc_chord_error > 0.0 {
-            Ok(Self { arc_chord_error })
+    /// Constructs projection options with a positive finite chord-error budget.
+    pub fn try_new(chord_error: f64) -> CurveResult<Self> {
+        if chord_error.is_finite() && chord_error > 0.0 {
+            Ok(Self { chord_error })
         } else {
             Err(CurveError::InvalidFiniteProjectionOptions)
         }
     }
 
-    /// Returns the maximum requested circular-arc chord error.
-    pub const fn arc_chord_error(&self) -> f64 {
-        self.arc_chord_error
+    /// Returns the maximum requested chord error.
+    pub const fn chord_error(&self) -> f64 {
+        self.chord_error
     }
 }
 
 impl FinitePolyline2 {
-    fn new(points: Vec<[f64; 2]>, arc_chord_error: f64, closed: bool) -> Self {
+    fn new(points: Vec<[f64; 2]>, chord_error: f64, closed: bool) -> Self {
         Self {
             points,
-            arc_chord_error,
+            chord_error,
             closed,
         }
     }
@@ -78,9 +82,9 @@ impl FinitePolyline2 {
         self.points
     }
 
-    /// Returns the arc chord-error budget requested for this projection.
-    pub const fn arc_chord_error(&self) -> f64 {
-        self.arc_chord_error
+    /// Returns the chord-error budget requested for this projection.
+    pub const fn chord_error(&self) -> f64 {
+        self.chord_error
     }
 
     /// Returns true when this polyline was explicitly closed for a contour.
@@ -360,11 +364,7 @@ impl CurvePath2 {
         if closed {
             close_ring(&mut points);
         }
-        Ok(FinitePolyline2::new(
-            points,
-            options.arc_chord_error,
-            closed,
-        ))
+        Ok(FinitePolyline2::new(points, options.chord_error, closed))
     }
 }
 
@@ -794,7 +794,7 @@ fn project_curve_string(
                 push_if_new(&mut points, finite_point(line.end())?);
             }
             Segment2::Arc(arc) => {
-                append_arc_samples(&mut points, arc, options.arc_chord_error)?;
+                append_arc_samples(&mut points, arc, options.chord_error)?;
             }
         }
     }
@@ -803,7 +803,7 @@ fn project_curve_string(
         close_ring(&mut points);
     }
 
-    Ok(FinitePolyline2::new(points, options.arc_chord_error, close))
+    Ok(FinitePolyline2::new(points, options.chord_error, close))
 }
 
 fn project_curve_region_loop(
@@ -850,31 +850,573 @@ fn project_curve_region_loop(
                         .into(),
                 ));
             }
-            BezierSplitFragment2::AnalyticParallel(_) => {
-                return Err(CurveError::Topology(
-                    "finite projection of exact analytic parallel fragments is not implemented"
-                        .into(),
-                ));
+            BezierSplitFragment2::AnalyticParallel(fragment) => {
+                append_analytic_parallel_samples(&mut points, fragment, options, policy)?;
             }
-            BezierSplitFragment2::AlgebraicChord(_) => {
-                return Err(CurveError::Topology(
-                    "finite projection of algebraic chords is not implemented".into(),
-                ));
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                push_if_new(
+                    &mut points,
+                    finite_retained_point(chord.start(), options.chord_error, policy)?,
+                );
+                push_if_new(
+                    &mut points,
+                    finite_retained_point(chord.end(), options.chord_error, policy)?,
+                );
             }
-            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-                return Err(CurveError::Topology(
-                    "finite projection of algebraic cusp semicircles is not implemented".into(),
-                ));
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                append_algebraic_cusp_semicircle_samples(&mut points, fragment, options, policy)?;
             }
-            BezierSplitFragment2::SelectedFiber(_) => {
-                return Err(CurveError::Topology(
-                    "finite projection of selected-fiber fragments is not implemented".into(),
-                ));
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                append_selected_fiber_samples(&mut points, fragment, options, policy)?;
             }
         }
     }
     close_ring(&mut points);
-    Ok(FinitePolyline2::new(points, options.arc_chord_error, true))
+    Ok(FinitePolyline2::new(points, options.chord_error, true))
+}
+
+struct FiniteParameterProjection2 {
+    lower: Real,
+    value: Real,
+    upper: Real,
+}
+
+fn finite_region_parameter_projection(
+    parameter: &CurveRegionParameter2,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> CurveResult<FiniteParameterProjection2> {
+    if let Some(parameter) = parameter.as_bezier_parameter() {
+        return Ok(
+            match parameter
+                .clone()
+                .refined_isolating_interval(refinement_steps, policy)
+            {
+                BezierParameter2::Exact(value) => FiniteParameterProjection2 {
+                    lower: value.clone(),
+                    value: value.clone(),
+                    upper: value,
+                },
+                BezierParameter2::Algebraic(parameter) => {
+                    let lower = parameter.interval().start().clone();
+                    let upper = parameter.interval().end().clone();
+                    FiniteParameterProjection2 {
+                        value: ((&lower + &upper) / Real::from(2_u8))?,
+                        lower,
+                        upper,
+                    }
+                }
+            },
+        );
+    }
+    let selected = parameter.as_selected_fiber().ok_or_else(|| {
+        CurveError::Topology(
+            "finite projection encountered a non-source selected parameter domain".into(),
+        )
+    })?;
+    match selected.finite_projection_interval(refinement_steps, policy)? {
+        Classification::Decided((lower, value, upper)) => Ok(FiniteParameterProjection2 {
+            lower,
+            value,
+            upper,
+        }),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "finite projection could not refine a selected-fiber parameter: {reason:?}"
+        ))),
+    }
+}
+
+fn finite_retained_point(
+    point: &RationalBezierIntersectionPointEvidence2,
+    chord_error: f64,
+    policy: &CurveContext,
+) -> CurveResult<[f64; 2]> {
+    if let Some(point) = point.as_exact() {
+        return finite_point(point);
+    }
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let Classification::Decided(bounds) =
+            algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
+        else {
+            continue;
+        };
+        let minimum = finite_point(bounds.min())?;
+        let maximum = finite_point(bounds.max())?;
+        let projected = [
+            (minimum[0] + maximum[0]) * 0.5,
+            (minimum[1] + maximum[1]) * 0.5,
+        ];
+        let finite_resolution =
+            f64::EPSILON * projected[0].abs().max(projected[1].abs()).max(1.0) * 8.0;
+        let allowed = (chord_error * 0.125).max(finite_resolution);
+        if maximum[0] - minimum[0] <= allowed && maximum[1] - minimum[1] <= allowed {
+            return Ok(projected);
+        }
+    }
+    Err(CurveError::Topology(
+        "finite projection could not resolve a retained endpoint within its chord-error budget"
+            .into(),
+    ))
+}
+
+fn append_analytic_parallel_samples(
+    points: &mut Vec<[f64; 2]>,
+    fragment: &crate::BezierParallelFragment2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> CurveResult<()> {
+    let endpoint = |parameter: &BezierParameter2| -> CurveResult<_> {
+        if let Some(parameter) = parameter.as_exact() {
+            return match fragment.parallel().point_at(parameter, policy)? {
+                Classification::Decided(point) => {
+                    Ok(RationalBezierIntersectionPointEvidence2::Exact(point))
+                }
+                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                    "finite analytic-parallel endpoint evaluation remained uncertain: {reason:?}"
+                ))),
+            };
+        }
+        Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            crate::BezierAnalyticParallelPoint2::new(
+                fragment.parallel().clone(),
+                parameter.clone(),
+                policy,
+            ),
+        ))
+    };
+    let source_start = endpoint(fragment.range().start())?;
+    let source_end = endpoint(fragment.range().end())?;
+    let (start, end) = if fragment.is_reversed() {
+        (&source_end, &source_start)
+    } else {
+        (&source_start, &source_end)
+    };
+    let start = finite_retained_point(start, options.chord_error, policy)?;
+    let end = finite_retained_point(end, options.chord_error, policy)?;
+    let range_start = CurveRegionParameter2::from_bezier(fragment.range().start().clone());
+    let range_end = CurveRegionParameter2::from_bezier(fragment.range().end().clone());
+    append_retained_parallel_range_samples(
+        points,
+        fragment.parallel(),
+        &range_start,
+        &range_end,
+        fragment.is_reversed(),
+        start,
+        end,
+        options.chord_error,
+        policy,
+    )
+}
+
+fn finite_cusp_parameter_projection(
+    parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> CurveResult<FiniteParameterProjection2> {
+    match parameter.finite_projection_interval(refinement_steps, policy)? {
+        Classification::Decided((lower, value, upper)) => Ok(FiniteParameterProjection2 {
+            lower,
+            value,
+            upper,
+        }),
+        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+            "finite projection could not refine a selected-circle parameter: {reason:?}"
+        ))),
+    }
+}
+
+fn append_algebraic_cusp_semicircle_samples(
+    points: &mut Vec<[f64; 2]>,
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> CurveResult<()> {
+    let finite_endpoint = |start_endpoint| -> CurveResult<Option<[f64; 2]>> {
+        Ok(
+            match fragment.endpoint_point_evidence(start_endpoint, policy)? {
+                Classification::Decided(Some(point)) => {
+                    Some(finite_retained_point(&point, options.chord_error, policy)?)
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => None,
+            },
+        )
+    };
+    let retained_start = finite_endpoint(true)?;
+    let retained_end = finite_endpoint(false)?;
+    let radius = finite_real(&fragment.semicircle().radial_distance().abs())?;
+    let mut last_error = None;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let range_start =
+            finite_cusp_parameter_projection(fragment.start_parameter(), refinement_steps, policy)?;
+        let range_end =
+            finite_cusp_parameter_projection(fragment.end_parameter(), refinement_steps, policy)?;
+        if crate::classify::compare_reals(
+            &range_start.upper,
+            &range_end.lower,
+            &CurveContext::STRICT,
+        ) != Some(std::cmp::Ordering::Less)
+        {
+            continue;
+        }
+        let (start_range, end_range) = if fragment.is_reversed() {
+            (&range_end, &range_start)
+        } else {
+            (&range_start, &range_end)
+        };
+        let projected_endpoint = |range: &FiniteParameterProjection2| -> CurveResult<Option<_>> {
+            let angle = |parameter: &Real| {
+                let parameter = finite_real(parameter)?;
+                Ok::<_, CurveError>(
+                    (2.0 * parameter * (1.0 - parameter)).atan2(1.0 - 2.0 * parameter),
+                )
+            };
+            let angular_width = angle(&range.upper)? - angle(&range.lower)?;
+            if 2.0 * radius * (angular_width * 0.5).sin().abs() > options.chord_error * 0.125 {
+                return Ok(None);
+            }
+            let point = match fragment
+                .semicircle()
+                .point_evidence_at(&range.value, policy)?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            finite_retained_point(&point, options.chord_error, policy).map(Some)
+        };
+        let start = match retained_start {
+            Some(start) => start,
+            None => match projected_endpoint(start_range)? {
+                Some(start) => start,
+                None => continue,
+            },
+        };
+        let end = match retained_end {
+            Some(end) => end,
+            None => match projected_endpoint(end_range)? {
+                Some(end) => end,
+                None => continue,
+            },
+        };
+        let mut projected = vec![start];
+        match append_cusp_parameter_samples(
+            &mut projected,
+            fragment,
+            &start_range.value,
+            &end_range.value,
+            &range_start.lower,
+            &range_end.upper,
+            end,
+            radius,
+            options.chord_error,
+            policy,
+            0,
+        ) {
+            Ok(()) => {
+                for point in projected {
+                    push_if_new(points, point);
+                }
+                return Ok(());
+            }
+            Err(error @ CurveError::Topology(_)) => last_error = Some(error),
+            Err(error) => return Err(error),
+        }
+    }
+    Err(last_error.unwrap_or_else(|| {
+        CurveError::Topology(
+            "finite selected-circle projection could not separate its exact parameter endpoints"
+                .into(),
+        )
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn append_cusp_parameter_samples(
+    points: &mut Vec<[f64; 2]>,
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    start_parameter: &Real,
+    end_parameter: &Real,
+    bounds_lower: &Real,
+    bounds_upper: &Real,
+    end_point: [f64; 2],
+    radius: f64,
+    chord_error: f64,
+    policy: &CurveContext,
+    depth: usize,
+) -> CurveResult<()> {
+    const MAX_DEPTH: usize = 32;
+    let half_circle_angle = |parameter: f64| {
+        let radial = 1.0 - 2.0 * parameter;
+        let tangent = 2.0 * parameter * (1.0 - parameter);
+        tangent.atan2(radial)
+    };
+    let angular_span = half_circle_angle(finite_real(bounds_upper)?)
+        - half_circle_angle(finite_real(bounds_lower)?);
+    let sagitta = radius * (1.0 - (angular_span * 0.5).cos());
+    if sagitta <= chord_error * 0.75 {
+        push_if_new(points, end_point);
+        return Ok(());
+    }
+    if depth >= MAX_DEPTH {
+        return Err(CurveError::Topology(
+            "finite selected-circle projection exceeded its subdivision depth".into(),
+        ));
+    }
+    let midpoint = ((start_parameter + end_parameter) / Real::from(2_u8))?;
+    let midpoint_evidence = match fragment.semicircle().point_evidence_at(&midpoint, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite selected-circle midpoint remained uncertain: {reason:?}"
+            )));
+        }
+    };
+    let midpoint_point = finite_retained_point(&midpoint_evidence, chord_error, policy)?;
+    let increasing =
+        match crate::classify::compare_reals(start_parameter, end_parameter, &CurveContext::STRICT)
+        {
+            Some(std::cmp::Ordering::Less) => true,
+            Some(std::cmp::Ordering::Greater) => false,
+            Some(std::cmp::Ordering::Equal) | None => {
+                return Err(CurveError::Topology(
+                    "finite selected-circle projection lost parameter ordering".into(),
+                ));
+            }
+        };
+    let (first_lower, first_upper, second_lower, second_upper) = if increasing {
+        (bounds_lower, &midpoint, &midpoint, bounds_upper)
+    } else {
+        (&midpoint, bounds_upper, bounds_lower, &midpoint)
+    };
+    append_cusp_parameter_samples(
+        points,
+        fragment,
+        start_parameter,
+        &midpoint,
+        first_lower,
+        first_upper,
+        midpoint_point,
+        radius,
+        chord_error,
+        policy,
+        depth + 1,
+    )?;
+    append_cusp_parameter_samples(
+        points,
+        fragment,
+        &midpoint,
+        end_parameter,
+        second_lower,
+        second_upper,
+        end_point,
+        radius,
+        chord_error,
+        policy,
+        depth + 1,
+    )
+}
+
+fn append_selected_fiber_samples(
+    points: &mut Vec<[f64; 2]>,
+    fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
+    options: &FiniteProjectionOptions,
+    policy: &CurveContext,
+) -> CurveResult<()> {
+    let parallel = match fragment.source() {
+        BezierSelectedFiberSource2::Rational(curve) => BezierParallel2::from_source(
+            BezierParallelSource2::Rational(curve.clone()),
+            Real::zero(),
+        ),
+        BezierSelectedFiberSource2::AnalyticParallel(parallel) => parallel.clone(),
+    };
+    let start_point = finite_retained_point(fragment.start_point(), options.chord_error, policy)?;
+    let end_point = finite_retained_point(fragment.end_point(), options.chord_error, policy)?;
+    append_retained_parallel_range_samples(
+        points,
+        &parallel,
+        fragment.range().start(),
+        fragment.range().end(),
+        fragment.is_reversed(),
+        start_point,
+        end_point,
+        options.chord_error,
+        policy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn append_retained_parallel_range_samples(
+    points: &mut Vec<[f64; 2]>,
+    parallel: &BezierParallel2,
+    range_start_parameter: &CurveRegionParameter2,
+    range_end_parameter: &CurveRegionParameter2,
+    reversed: bool,
+    start_point: [f64; 2],
+    end_point: [f64; 2],
+    chord_error: f64,
+    policy: &CurveContext,
+) -> CurveResult<()> {
+    let mut last_error = None;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let range_start =
+            finite_region_parameter_projection(range_start_parameter, refinement_steps, policy)?;
+        let range_end =
+            finite_region_parameter_projection(range_end_parameter, refinement_steps, policy)?;
+        if crate::classify::compare_reals(
+            &range_start.upper,
+            &range_end.lower,
+            &CurveContext::STRICT,
+        ) != Some(std::cmp::Ordering::Less)
+        {
+            continue;
+        }
+        let (start_parameter, end_parameter) = if reversed {
+            (&range_end.value, &range_start.value)
+        } else {
+            (&range_start.value, &range_end.value)
+        };
+        let mut projected = vec![start_point];
+        match append_parallel_parameter_samples(
+            &mut projected,
+            parallel,
+            start_parameter,
+            end_parameter,
+            &range_start.lower,
+            &range_end.upper,
+            start_point,
+            end_point,
+            chord_error,
+            policy,
+            0,
+        ) {
+            Ok(()) => {
+                for point in projected {
+                    push_if_new(points, point);
+                }
+                return Ok(());
+            }
+            Err(error @ CurveError::Topology(_)) => last_error = Some(error),
+            Err(error) => return Err(error),
+        }
+    }
+    Err(last_error.unwrap_or_else(|| {
+        CurveError::Topology(
+            "finite retained-parallel projection could not separate its exact parameter endpoints"
+                .into(),
+        )
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn append_parallel_parameter_samples(
+    points: &mut Vec<[f64; 2]>,
+    parallel: &BezierParallel2,
+    start_parameter: &Real,
+    end_parameter: &Real,
+    bounds_lower: &Real,
+    bounds_upper: &Real,
+    start_point: [f64; 2],
+    end_point: [f64; 2],
+    chord_error: f64,
+    policy: &CurveContext,
+    depth: usize,
+) -> CurveResult<()> {
+    const MAX_DEPTH: usize = 32;
+    let bounds = match parallel.finite_projection_bounds_over_parameter_interval(
+        bounds_lower,
+        bounds_upper,
+        policy,
+    ) {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite retained-parallel projection could not bound its analytic carrier: {reason:?}"
+            )));
+        }
+    };
+    let corners = [
+        [
+            finite_real(bounds.min().x())?,
+            finite_real(bounds.min().y())?,
+        ],
+        [
+            finite_real(bounds.min().x())?,
+            finite_real(bounds.max().y())?,
+        ],
+        [
+            finite_real(bounds.max().x())?,
+            finite_real(bounds.min().y())?,
+        ],
+        [
+            finite_real(bounds.max().x())?,
+            finite_real(bounds.max().y())?,
+        ],
+    ];
+    if corners
+        .into_iter()
+        .map(|point| point_segment_distance(point, start_point, end_point))
+        .fold(0.0, f64::max)
+        <= chord_error
+    {
+        push_if_new(points, end_point);
+        return Ok(());
+    }
+    if depth >= MAX_DEPTH {
+        return Err(CurveError::Topology(
+            "finite retained-parallel projection exceeded its subdivision depth".into(),
+        ));
+    }
+
+    let midpoint = ((start_parameter + end_parameter) / Real::from(2_u8))?;
+    let midpoint_point = match parallel.point_at(&midpoint, policy)? {
+        Classification::Decided(point) => finite_point(&point)?,
+        Classification::Uncertain(reason) => {
+            return Err(CurveError::Topology(format!(
+                "finite retained-parallel projection could not evaluate its analytic carrier: {reason:?}"
+            )));
+        }
+    };
+    let increasing =
+        match crate::classify::compare_reals(start_parameter, end_parameter, &CurveContext::STRICT)
+        {
+            Some(std::cmp::Ordering::Less) => true,
+            Some(std::cmp::Ordering::Greater) => false,
+            Some(std::cmp::Ordering::Equal) | None => {
+                return Err(CurveError::Topology(
+                    "finite retained-parallel projection lost parameter ordering".into(),
+                ));
+            }
+        };
+    let (first_lower, first_upper, second_lower, second_upper) = if increasing {
+        (bounds_lower, &midpoint, &midpoint, bounds_upper)
+    } else {
+        (&midpoint, bounds_upper, bounds_lower, &midpoint)
+    };
+    append_parallel_parameter_samples(
+        points,
+        parallel,
+        start_parameter,
+        &midpoint,
+        first_lower,
+        first_upper,
+        start_point,
+        midpoint_point,
+        chord_error,
+        policy,
+        depth + 1,
+    )?;
+    append_parallel_parameter_samples(
+        points,
+        parallel,
+        &midpoint,
+        end_parameter,
+        second_lower,
+        second_upper,
+        midpoint_point,
+        end_point,
+        chord_error,
+        policy,
+        depth + 1,
+    )
 }
 
 fn finite_parameter_representative(
@@ -905,8 +1447,7 @@ fn append_bezier_subcurve_samples(
     const MAX_DEPTH: usize = 32;
     let controls = finite_subcurve_controls(curve)?;
     let common_weight_sign = subcurve_has_common_weight_sign(curve, policy);
-    let flat =
-        common_weight_sign && control_polygon_chord_error(&controls) <= options.arc_chord_error;
+    let flat = common_weight_sign && control_polygon_chord_error(&controls) <= options.chord_error;
     if flat {
         push_if_new(points, controls[0]);
         push_if_new(
@@ -1028,17 +1569,14 @@ fn finite_ring_contains_point(ring: &[[f64; 2]], point: [f64; 2]) -> bool {
 }
 
 fn finite_point(point: &Point2) -> CurveResult<[f64; 2]> {
-    let x = point
-        .x()
+    Ok([finite_real(point.x())?, finite_real(point.y())?])
+}
+
+fn finite_real(value: &Real) -> CurveResult<f64> {
+    value
         .to_f64_lossy()
         .filter(|value| value.is_finite())
-        .ok_or(CurveError::NonFiniteProjectionPoint)?;
-    let y = point
-        .y()
-        .to_f64_lossy()
-        .filter(|value| value.is_finite())
-        .ok_or(CurveError::NonFiniteProjectionPoint)?;
-    Ok([x, y])
+        .ok_or(CurveError::NonFiniteProjectionPoint)
 }
 
 fn append_arc_samples(

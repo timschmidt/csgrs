@@ -6135,7 +6135,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     _,
                                 )
                                 | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_),
+                                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                                | RationalBezierIntersectionPointEvidence2::Similarity(_),
                             ) => Classification::Uncertain(UncertaintyReason::Unsupported),
                             Classification::Uncertain(reason) => Classification::Uncertain(reason),
                         },
@@ -6267,7 +6268,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
             };
             if let Some(classification) = direct {
                 match classification {
@@ -6296,6 +6298,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+                        point.conservative_bounds_refined(refinement_steps, &self.data.policy)
+                    }
+                    RationalBezierIntersectionPointEvidence2::Similarity(point) => {
                         point.conservative_bounds_refined(refinement_steps, &self.data.policy)
                     }
                     RationalBezierIntersectionPointEvidence2::Exact(_)

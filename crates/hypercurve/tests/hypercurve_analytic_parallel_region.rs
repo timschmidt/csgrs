@@ -3,8 +3,8 @@ use hypercurve::{
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, Real, RegionPointLocation,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
@@ -443,6 +443,16 @@ fn check_policy(policy: CurveContext) {
 
     let region = analytic_square(0, 4, &policy);
     let boundary = &region.boundary_loops()[0];
+
+    let projected = region
+        .project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-2).unwrap(), &policy)
+        .expect("analytic-parallel loops must cross the explicit finite-output boundary")
+        .into_value();
+    let Classification::Decided(projected) = projected else {
+        panic!("analytic-parallel finite projection must retain decided loop ownership");
+    };
+    assert_eq!(projected.len(), 1);
+    assert_eq!(projected[0].material().points().len(), 5);
 
     let endpoint_envelope = match BezierRetainedEndpointEnvelope2::from_loop(boundary, &policy) {
         Classification::Decided(envelope) => envelope,

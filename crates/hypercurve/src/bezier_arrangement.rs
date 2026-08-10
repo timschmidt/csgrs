@@ -1267,7 +1267,8 @@ fn retained_endpoint_data(
                         _,
                     )
                     | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                    | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => None,
+                    | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                    | crate::RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
                 };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);
             data.start = endpoint_key(chord.start());

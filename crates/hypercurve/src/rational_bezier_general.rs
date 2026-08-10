@@ -178,6 +178,11 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     /// One exact point on an analytic Bezier parallel at a retained source
     /// parameter. The normalized direction is evaluated only by predicates.
     AnalyticParallel(crate::BezierAnalyticParallelPoint2),
+    /// One exact retained point transported by a certified planar similarity.
+    ///
+    /// The source evidence remains correlated and is evaluated lazily rather
+    /// than flattened into independently reconstructed coordinates.
+    Similarity(crate::BezierSimilarityPoint2),
 }
 
 impl RationalBezierIntersectionPointEvidence2 {
@@ -191,6 +196,7 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChordDerived(_) => None,
             Self::AlgebraicChordParallel(_) => None,
             Self::AnalyticParallel(_) => None,
+            Self::Similarity(_) => None,
         }
     }
 
@@ -214,6 +220,7 @@ impl RationalBezierIntersectionPointEvidence2 {
             (Self::AnalyticParallel(first), Self::AnalyticParallel(second)) => {
                 first.shares_storage(second)
             }
+            (Self::Similarity(first), Self::Similarity(second)) => first.shares_storage(second),
             _ => false,
         }
     }
@@ -228,6 +235,7 @@ impl RationalBezierIntersectionPointEvidence2 {
             Self::AlgebraicCuspChordDerived(_) => None,
             Self::AlgebraicChordParallel(_) => None,
             Self::AnalyticParallel(_) => None,
+            Self::Similarity(_) => None,
         }
     }
 
@@ -240,7 +248,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::AlgebraicCuspChord(_)
             | Self::AlgebraicCuspChordDerived(_)
             | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_) => None,
+            | Self::AnalyticParallel(_)
+            | Self::Similarity(_) => None,
         }
     }
 
@@ -253,7 +262,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChordDerived(_)
             | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_) => None,
+            | Self::AnalyticParallel(_)
+            | Self::Similarity(_) => None,
         }
     }
 
@@ -268,7 +278,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChord(_)
             | Self::AlgebraicChordParallel(_)
-            | Self::AnalyticParallel(_) => None,
+            | Self::AnalyticParallel(_)
+            | Self::Similarity(_) => None,
         }
     }
 
@@ -283,7 +294,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChord(_)
             | Self::AlgebraicCuspChordDerived(_)
-            | Self::AnalyticParallel(_) => None,
+            | Self::AnalyticParallel(_)
+            | Self::Similarity(_) => None,
         }
     }
 
@@ -296,7 +308,8 @@ impl RationalBezierIntersectionPointEvidence2 {
             | Self::AlgebraicChordPair(_)
             | Self::AlgebraicCuspChord(_)
             | Self::AlgebraicCuspChordDerived(_)
-            | Self::AlgebraicChordParallel(_) => None,
+            | Self::AlgebraicChordParallel(_)
+            | Self::Similarity(_) => None,
         }
     }
 
@@ -440,6 +453,9 @@ impl RationalBezierIntersectionPointEvidence2 {
                 point.same_point_evidence(other, policy)
             }
             (Self::AnalyticParallel(point), other) | (other, Self::AnalyticParallel(point)) => {
+                point.same_point_evidence(other, policy)
+            }
+            (Self::Similarity(point), other) | (other, Self::Similarity(point)) => {
                 point.same_point_evidence(other, policy)
             }
         }

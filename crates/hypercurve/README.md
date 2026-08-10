@@ -236,8 +236,8 @@ exact signatures.
   distance tolerance.
 - `project_to_finite_polyline`, `project_to_finite_curve_paths`,
   `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
-  finite approximations. `FiniteProjectionOptions` makes arc chord error
-  visible at the boundary.
+  finite approximations. `FiniteProjectionOptions` makes the curve chord-error
+  budget visible at the boundary.
 - With `triangulation`, `FiniteRegionProfile2::triangulate` and
   `triangulate_finite_rings` produce finite triangles through Hypertri.
 - With `svg`, `SvgGeometry2::{from_svg, from_svg_with_options, to_svg,

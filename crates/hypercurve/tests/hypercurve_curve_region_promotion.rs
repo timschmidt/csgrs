@@ -3820,6 +3820,50 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         assert!(!curved_crossing.intersection().is_empty());
         assert!(!curved_crossing.difference().is_empty());
         assert!(!curved_crossing.xor().is_empty());
+
+        let selected = [
+            curved_crossing.intersection(),
+            curved_crossing.difference(),
+            curved_crossing.xor(),
+            curved_crossing.union(),
+        ]
+        .into_iter()
+        .find(|region| {
+            region.boundary_loops().iter().any(|boundary| {
+                boundary
+                    .fragments()
+                    .iter()
+                    .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)))
+            })
+        })
+        .expect("the general retained-parameter Boolean must publish a selected-fiber fragment");
+        let transform = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1),
+            Real::one(),
+            Real::zero(),
+            Real::from(7),
+            Real::from(-3),
+        )
+        .unwrap();
+        let transformed = selected
+            .transform_similarity(&transform, &policy)
+            .expect("selected-fiber contacts must survive one retained similarity")
+            .into_value();
+        assert!(transformed.boundary_loops().iter().any(|boundary| {
+            boundary
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)))
+        }));
+        let projected = selected
+            .project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-1).unwrap(), &policy)
+            .expect("selected-fiber loops must cross the explicit finite-output boundary")
+            .into_value();
+        let Classification::Decided(projected) = projected else {
+            panic!("selected-fiber finite projection must retain decided loop ownership");
+        };
+        assert!(!projected.is_empty());
     }
 }
 

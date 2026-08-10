@@ -119,7 +119,7 @@ pub use bezier_offset::{
 };
 pub use bezier_offset::{
     BezierAlgebraicChordParallelPoint2, BezierAlgebraicCuspChordDerivedPoint2,
-    BezierAlgebraicCuspChordPoint2, BezierAnalyticParallelPoint2,
+    BezierAlgebraicCuspChordPoint2, BezierAnalyticParallelPoint2, BezierSimilarityPoint2,
 };
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,

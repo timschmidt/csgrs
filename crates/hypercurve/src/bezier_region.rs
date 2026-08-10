@@ -37,6 +37,7 @@ use crate::bezier_offset::{
     algebraic_selected_fiber_parameters, bivariate_fiber_strict_sign_on_parameter_range,
     retained_point_linear_difference_to_algebraic_sign,
 };
+use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
@@ -1909,9 +1910,8 @@ fn retained_fragment_endpoint_evidence(
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_) => {
-                    (None, None)
-                }
+                | crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                | crate::RationalBezierIntersectionPointEvidence2::Similarity(_) => (None, None),
             };
             Ok(RetainedEndpointEvidence {
                 point,
@@ -11863,11 +11863,55 @@ fn transform_retained_region_fragment(
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
         )),
-        BezierSplitFragment2::SelectedFiber(_) => Err(ExactCurveError::blocked(
-            CurveOperation2::Transformation,
-            CurveFamily2::RationalBezier,
-            UncertaintyReason::Unsupported,
-        )),
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let transform = retained_similarity()?;
+            let source = match fragment.source() {
+                BezierSelectedFiberSource2::Rational(curve) => {
+                    BezierSelectedFiberSource2::Rational(
+                        RationalBezier2::try_new(
+                            curve
+                                .control_points()
+                                .iter()
+                                .map(|point| transform.transform_point(point))
+                                .collect(),
+                            curve.weights().to_vec(),
+                        )
+                        .map_err(affine_region_error)?,
+                    )
+                }
+                BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+                    BezierSelectedFiberSource2::AnalyticParallel(
+                        parallel
+                            .transform_similarity(transform)
+                            .map_err(affine_region_error)?,
+                    )
+                }
+            };
+            let (source_start, source_end) = if fragment.is_reversed() {
+                (fragment.end_point(), fragment.start_point())
+            } else {
+                (fragment.start_point(), fragment.end_point())
+            };
+            let transformed_start = RationalBezierIntersectionPointEvidence2::Similarity(
+                crate::BezierSimilarityPoint2::new(source_start.clone(), transform.clone(), policy),
+            );
+            let transformed_end = RationalBezierIntersectionPointEvidence2::Similarity(
+                crate::BezierSimilarityPoint2::new(source_end.clone(), transform.clone(), policy),
+            );
+            let transformed = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    source,
+                    fragment.range().clone(),
+                    transformed_start,
+                    transformed_end,
+                ),
+            );
+            if fragment.is_reversed() {
+                transformed.reversed().map_err(affine_region_error)
+            } else {
+                Ok(transformed)
+            }
+        }
     }
 }
 
@@ -11879,7 +11923,7 @@ fn transform_region_endpoint_image(
     match parameter {
         BezierParameter2::Exact(_) => Ok(None),
         BezierParameter2::Algebraic(parameter) => {
-            BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy)
+            BezierAlgebraicEndpointImage2::from_source_curve_first_order(source, parameter, policy)
                 .map(Some)
                 .map_err(affine_region_error)
         }
