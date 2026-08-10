@@ -263,6 +263,20 @@ impl CurveContext {
         APPROXIMATE_512_CONSUMED.with(|consumed| consumed.set(true));
     }
 
+    /// Returns the weakest policy actually consumed by retained construction
+    /// up to this point in the active composite operation.
+    ///
+    /// Requesting `APPROXIMATE_512` does not by itself weaken an exact object.
+    /// Only a terminal decision observed before the object is published binds
+    /// that object to the approximate policy.
+    pub(crate) fn retained_object_policy(&self) -> Self {
+        if self.permits_approximate_512() && !APPROXIMATE_512_CONSUMED.with(Cell::get) {
+            self.strict_counterpart()
+        } else {
+            *self
+        }
+    }
+
     pub(crate) fn consume_predicate<T>(
         &self,
         outcome: hypersolve::PredicateOutcome<T>,

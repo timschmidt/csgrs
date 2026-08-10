@@ -4,7 +4,7 @@ use hypercurve::{
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
@@ -530,6 +530,7 @@ fn check_policy(policy: CurveContext) {
     assert_eq!(contacts.len(), 1);
     assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
     assert_eq!(contacts[0].crossing_direction(), None);
+    assert_eq!(contacts[0].tangent_side(), Some(LineSide::Left));
 
     let shifted = analytic_square(2, 6, &policy);
     let evidence = region.intersect_region(&shifted, &policy).unwrap().value;

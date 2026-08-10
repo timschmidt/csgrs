@@ -1972,6 +1972,75 @@ fn strict_polynomial_sign_on_refined_parameter_interval(
     Ok(None)
 }
 
+/// Cold exact sign fallback for algebraic predicates whose Real coefficients
+/// share deep computable cancellations.
+///
+/// Every accepted result is a certified nonzero enclosure: refinement may go
+/// beyond the ordinary topology budget, but no finite-precision equality or
+/// approximate sign is accepted. This is reserved for residual replay after
+/// the cheaper algebraic GCD and ordinary Bernstein paths are exhausted.
+pub(crate) fn deep_exact_coefficients_sign_at_parameter(
+    coefficients: &[Real],
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let strict = policy.strict_counterpart();
+    let mut refinement = BezierParameterRefinement2::new(parameter, &strict);
+    for (target_steps, min_precision) in [
+        (8, -64),
+        (16, -64),
+        (32, -64),
+        (32, -128),
+        (64, -128),
+        (64, -256),
+        (128, -512),
+        (128, -1024),
+        (128, -2048),
+        (128, -4096),
+    ] {
+        let parameter = refinement.refine_to(target_steps);
+        let restricted = match parameter {
+            BezierParameter2::Exact(parameter) => {
+                vec![evaluate_coefficients(coefficients, parameter)]
+            }
+            BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
+                coefficients,
+                parameter.interval().start(),
+                parameter.interval().end(),
+            ),
+        };
+        let controls =
+            power_to_bernstein_coefficients(&restricted, restricted.len().saturating_sub(1))?;
+        let mut common_sign = None;
+        let mut certified = true;
+        for control in controls {
+            let sign = match control.certified_sign_until(min_precision) {
+                CertifiedRealSign::Known {
+                    sign: sign @ (RealSign::Positive | RealSign::Negative),
+                    ..
+                } => sign,
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                } => continue,
+                CertifiedRealSign::Unknown { .. } => {
+                    certified = false;
+                    break;
+                }
+            };
+            if common_sign.is_some_and(|common| common != sign) {
+                certified = false;
+                break;
+            }
+            common_sign = Some(sign);
+        }
+        if certified && common_sign.is_some() {
+            return Ok(common_sign);
+        }
+    }
+    Ok(None)
+}
+
 /// Attempts a nonzero sign proof over one already-selected parameter bracket.
 ///
 /// This is the allocation-bounded front end for callers that reuse a refined

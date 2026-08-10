@@ -2092,14 +2092,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
         let past_collapse = rounded
             .offset(-q(3, 20), &OffsetCornerStyle2::Round, &policy)
             .expect("a selected-circle parallel past its local collapse must regularize exactly");
-        assert_eq!(
-            past_collapse.certainty,
-            if policy == CurveContext::STRICT {
-                CurveCertainty::Certified
-            } else {
-                CurveCertainty::Approximate512Consumed
-            },
-        );
+        assert_eq!(past_collapse.certainty, CurveCertainty::Certified);
         for (point, expected) in [
             (
                 Point2::new(q(1, 4), q(1, 20)),
@@ -3605,11 +3598,6 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let expected_certainty = if policy == CurveContext::STRICT {
-            CurveCertainty::Certified
-        } else {
-            CurveCertainty::Approximate512Consumed
-        };
         let region = source(&policy);
         let fragments = region.boundary_loops()[0].fragments();
         let fragment_count = fragments.len();
@@ -3668,10 +3656,7 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
                         "analytic-parallel/support corner {corner} must fillet exactly: {error:?}; fragments={fragment_kinds:?}"
                     )
                 });
-            assert_eq!(
-                result.certainty, expected_certainty,
-                "policy={policy:?}, corner={corner}"
-            );
+            assert_eq!(result.certainty, CurveCertainty::Certified);
             match result.value {
                 CurveCornerSolutions2::Unique(candidate) => filleted.push(candidate),
                 other => {

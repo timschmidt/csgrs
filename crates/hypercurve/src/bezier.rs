@@ -138,7 +138,7 @@ impl BezierParallelLineTangentContact2 {
         self.parallel_fragment_reversed
     }
 
-    fn reversed(&self) -> Self {
+    pub(crate) fn reversed(&self) -> Self {
         Self {
             parallel: self.parallel.clone(),
             parameter: self.parameter.clone(),

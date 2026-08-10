@@ -2436,6 +2436,7 @@ impl RationalBezier2 {
                             kind,
                             crossing_direction,
                             line_parameter.clone(),
+                            policy,
                         )
                     else {
                         return Classification::Uncertain(UncertaintyReason::Ordering);

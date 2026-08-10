@@ -267,6 +267,7 @@ pub struct BezierLineContact {
     parameter: BezierParameter2,
     kind: BezierLineContactKind,
     crossing_direction: Option<BezierLineCrossingDirection>,
+    tangent_side: Option<LineSide>,
     supporting_line_parameter: Option<Real>,
 }
 
@@ -292,11 +293,20 @@ pub enum BezierLineContactRelation {
 impl BezierLineContact {
     /// Constructs an exact Bezier/supporting-line contact.
     pub fn new(parameter: BezierParameter2, kind: BezierLineContactKind) -> CurveResult<Self> {
-        match parameter.known_interval(&CurveContext::STRICT) {
+        Self::new_with_policy(parameter, kind, &CurveContext::STRICT)
+    }
+
+    fn new_with_policy(
+        parameter: BezierParameter2,
+        kind: BezierLineContactKind,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        match parameter.known_interval(policy) {
             Ok(Classification::Decided(_)) => Ok(Self {
                 parameter,
                 kind,
                 crossing_direction: None,
+                tangent_side: None,
                 supporting_line_parameter: None,
             }),
             Ok(Classification::Uncertain(_)) | Err(_) => Err(CurveError::Topology(
@@ -324,6 +334,11 @@ impl BezierLineContact {
         self.crossing_direction
     }
 
+    /// Returns the strict oriented-line side occupied on both sides of a tangency.
+    pub const fn tangent_side(&self) -> Option<LineSide> {
+        self.tangent_side
+    }
+
     pub(crate) const fn supporting_line_parameter(&self) -> Option<&Real> {
         self.supporting_line_parameter.as_ref()
     }
@@ -332,14 +347,30 @@ impl BezierLineContact {
         parameter: BezierParameter2,
         kind: BezierLineContactKind,
         crossing_direction: Option<BezierLineCrossingDirection>,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
         if (kind == BezierLineContactKind::Crossing) != crossing_direction.is_some() {
             return Err(CurveError::Topology(
                 "Bezier line crossing direction must match crossing contact kind".into(),
             ));
         }
-        let mut contact = Self::new(parameter, kind)?;
+        let mut contact = Self::new_with_policy(parameter, kind, policy)?;
         contact.crossing_direction = crossing_direction;
+        Ok(contact)
+    }
+
+    pub(crate) fn with_tangent_side(
+        parameter: BezierParameter2,
+        side: LineSide,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        if side == LineSide::On {
+            return Err(CurveError::Topology(
+                "Bezier line tangency requires a strict neighboring side".into(),
+            ));
+        }
+        let mut contact = Self::new_with_policy(parameter, BezierLineContactKind::Tangent, policy)?;
+        contact.tangent_side = Some(side);
         Ok(contact)
     }
 
@@ -348,8 +379,10 @@ impl BezierLineContact {
         kind: BezierLineContactKind,
         crossing_direction: Option<BezierLineCrossingDirection>,
         supporting_line_parameter: Real,
+        policy: &CurveContext,
     ) -> CurveResult<Self> {
-        let mut contact = Self::with_crossing_direction(parameter, kind, crossing_direction)?;
+        let mut contact =
+            Self::with_crossing_direction(parameter, kind, crossing_direction, policy)?;
         contact.supporting_line_parameter = Some(supporting_line_parameter);
         Ok(contact)
     }
@@ -558,6 +591,7 @@ impl QuadraticBezier2 {
                 BezierLineContactKind::Crossing,
                 crossing_direction,
                 line_parameter,
+                policy,
             ) {
                 Ok(contact) => contact,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
@@ -3087,6 +3121,7 @@ pub(crate) fn exact_quadratic_line_contact_relation_with_certified_crossing(
         BezierParameter2::Exact(parameter.clone()),
         BezierLineContactKind::Crossing,
         Some(crossing_direction),
+        policy,
     ) {
         Ok(contact) => contact,
         Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
@@ -3137,6 +3172,7 @@ pub(crate) fn exact_quadratic_line_contact_relation_with_certified_crossing(
                 BezierParameter2::Exact(other_parameter),
                 BezierLineContactKind::Crossing,
                 Some(other_direction),
+                policy,
             ) {
                 Ok(contact) => contact,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
@@ -3244,11 +3280,15 @@ fn exact_line_contact_relation_from_polynomial(
             RealSign::Negative => BezierLineCrossingDirection::PositiveToNegative,
             RealSign::Zero => unreachable!("crossing residual sign is nonzero"),
         });
-        let contact =
-            match BezierLineContact::with_crossing_direction(parameter, kind, crossing_direction) {
-                Ok(contact) => contact,
-                Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
-            };
+        let contact = match BezierLineContact::with_crossing_direction(
+            parameter,
+            kind,
+            crossing_direction,
+            policy,
+        ) {
+            Ok(contact) => contact,
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+        };
         contacts.push(contact);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
@@ -3291,6 +3331,7 @@ fn exact_low_degree_power_line_contact_relation(
             BezierParameter2::Exact(parameter),
             kind,
             crossing_direction,
+            policy,
         ) {
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
@@ -3335,6 +3376,7 @@ fn exact_quadratic_line_contact_relation(
             BezierParameter2::Exact(parameter),
             kind,
             crossing_direction,
+            policy,
         ) {
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
