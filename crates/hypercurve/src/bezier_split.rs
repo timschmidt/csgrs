@@ -241,6 +241,20 @@ impl CurveRegionParameter2 {
             .map(|ordering| ordering == Ordering::Equal))
     }
 
+    pub(crate) fn unit_complement(&self) -> Option<Self> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => {
+                Some(Self::from_bezier(parameter.unit_complement()))
+            }
+            #[cfg(feature = "predicates")]
+            CurveRegionParameterData2::SelectedFiber(parameter) => {
+                Some(Self::from_selected_fiber(parameter.unit_complement()))
+            }
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_) => None,
+        }
+    }
+
     pub(crate) fn strict_rational_between_ordered(
         &self,
         other: &Self,

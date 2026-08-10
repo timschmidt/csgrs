@@ -2836,6 +2836,26 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         &self.data.root
     }
 
+    pub(crate) fn unit_complement(&self) -> Self {
+        let policy = self.data.authority.data.policy;
+        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+            bivariate_complement_second_parameter(&self.data.authority.data.incidence),
+            self.data.authority.data.retained_parameter.clone(),
+            &policy,
+        );
+        authority.parameter(IsolatedRootInterval {
+            lower: Real::one() - &self.data.root.upper,
+            upper: Real::one() - &self.data.root.lower,
+            exact_root: self
+                .data
+                .root
+                .exact_root
+                .as_ref()
+                .map(|root| Real::one() - root),
+            distinct_root_count: self.data.root.distinct_root_count,
+        })
+    }
+
     fn refined(
         &self,
         refinement_steps: usize,
@@ -3515,7 +3535,7 @@ fn analytic_parallel_point_bounds_over_interval(
 ) -> Classification<Aabb2> {
     let strict = &CurveContext::STRICT;
     let evaluate = |polynomial: &[Real]| {
-        BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, &parameter, strict)
+        BezierAlgebraicChordRealInterval2::evaluate_power_basis(polynomial, parameter, strict)
     };
     let differential = match parallel.differential() {
         Ok(differential) => differential,
@@ -62594,6 +62614,267 @@ mod conversion_tests {
                 RationalBezierOverlapOrientation2::Reversed,
             );
 
+            let cusp_overlap_start = overlap.cusp_start_parameter();
+            let cusp_overlap_end = overlap.cusp_end_parameter();
+            let Classification::Decided(first_cut) = cusp_overlap_start
+                .strict_rational_between(&cusp_overlap_end, &policy)
+                .unwrap()
+            else {
+                panic!("the cusp overlap must expose a represented interior cut");
+            };
+            let first_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(first_cut);
+            let Classification::Decided(second_cut) = first_cut
+                .strict_rational_between(&cusp_overlap_end, &policy)
+                .unwrap()
+            else {
+                panic!("the cusp overlap must expose a second represented interior cut");
+            };
+            let second_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(second_cut);
+            let Classification::Decided(selected_start) = overlap
+                .other_parameter_for_cusp(&first_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the first selected analytic cut must map exactly");
+            };
+            let Classification::Decided(selected_end) = overlap
+                .other_parameter_for_cusp(&second_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the second selected analytic cut must map exactly");
+            };
+            let selected_carrier_range = crate::CurveRegionParameterRange2::new_validated(
+                crate::CurveRegionParameter2::from_selected_fiber(selected_start.clone()),
+                crate::CurveRegionParameter2::from_selected_fiber(selected_end.clone()),
+            );
+            let unit = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            let ordinary_carrier_range =
+                crate::CurveRegionParameterRange2::from_bezier_range(unit.clone());
+            let (same_first, same_second) =
+                crate::curve_region_boolean::clip_aligned_parameter_overlap_for_test(
+                    &unit,
+                    &unit,
+                    false,
+                    &selected_carrier_range,
+                    &ordinary_carrier_range,
+                    &policy,
+                )
+                .expect("same-oriented selected analytic overlap clipping must complete")
+                .expect("the selected analytic carrier lies inside the complete overlap");
+            assert_eq!(same_first, selected_carrier_range);
+            assert_eq!(same_second, selected_carrier_range);
+
+            let reversed_unit = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::one()),
+                BezierParameter2::Exact(Real::zero()),
+            );
+            let (reversed_first, reversed_second) =
+                crate::curve_region_boolean::clip_aligned_parameter_overlap_for_test(
+                    &unit,
+                    &reversed_unit,
+                    true,
+                    &selected_carrier_range,
+                    &ordinary_carrier_range,
+                    &policy,
+                )
+                .expect("reversed selected analytic overlap clipping must complete")
+                .expect("the selected analytic carrier lies inside the reversed overlap");
+            assert_eq!(reversed_first, selected_carrier_range);
+            assert_eq!(
+                reversed_second,
+                crate::CurveRegionParameterRange2::new_validated(
+                    crate::CurveRegionParameter2::from_selected_fiber(
+                        selected_start.unit_complement(),
+                    ),
+                    crate::CurveRegionParameter2::from_selected_fiber(
+                        selected_end.unit_complement(),
+                    ),
+                )
+            );
+            assert_eq!(
+                reversed_second
+                    .start()
+                    .as_selected_fiber()
+                    .unwrap()
+                    .unit_complement()
+                    .cmp_same_authority(
+                        selected_carrier_range.start().as_selected_fiber().unwrap(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+
+            let cusp_fragment =
+                |start: BezierAlgebraicCuspSemicircleParameter2,
+                 end: BezierAlgebraicCuspSemicircleParameter2| {
+                    match start.cmp_by_refinement(&end, &policy).unwrap() {
+                        Classification::Decided(std::cmp::Ordering::Less) => {
+                            let Classification::Decided(fragment) =
+                                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                                    circle.clone(),
+                                    start,
+                                    end,
+                                    false,
+                                    &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("the retained cusp complement must construct");
+                            };
+                            Some(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment))
+                        }
+                        Classification::Decided(std::cmp::Ordering::Equal) => None,
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                        | Classification::Uncertain(_) => {
+                            panic!("the retained cusp complement must be ordered")
+                        }
+                    }
+                };
+            let selected_before = cusp_fragment(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                first_cut.clone(),
+            )
+            .expect("the first selected cut is strictly interior");
+            let selected_after = cusp_fragment(
+                second_cut.clone(),
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+            )
+            .expect("the second selected cut is strictly interior");
+            let selected_endpoint = |fragment: &BezierSplitFragment2, start_endpoint| {
+                let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment else {
+                    unreachable!("the selected complement retained its cusp carrier")
+                };
+                let Classification::Decided(Some(point)) = fragment
+                    .endpoint_point_evidence(start_endpoint, &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected complement must retain endpoint point evidence");
+                };
+                point
+            };
+            let selected_start_point = selected_endpoint(&selected_before, false);
+            let selected_end_point = selected_endpoint(&selected_after, true);
+            let selected_fragments = vec![
+                selected_before,
+                BezierSplitFragment2::SelectedFiber(
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(
+                            analytic_quarter.clone(),
+                        ),
+                        selected_carrier_range.clone(),
+                        selected_start_point,
+                        selected_end_point,
+                    ),
+                ),
+                selected_after,
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(
+                        circle.complementary_half(),
+                        &policy,
+                    ),
+                ),
+            ];
+            let selected_boundary = CurveRegionBoundaryLoop2::new(selected_fragments, &policy)
+                .expect("the selected analytic boundary must close exactly");
+            let selected_region = CurveRegion2::try_new_with_loop_topology(
+                vec![selected_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+
+            let Classification::Decided(wide_start_cut) = cusp_overlap_start
+                .strict_rational_between(&first_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic overlap must expose a wider first cut");
+            };
+            let wide_start_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(wide_start_cut);
+            let Classification::Decided(wide_end_cut) = second_cut
+                .strict_rational_between(&cusp_overlap_end, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic overlap must expose a wider second cut");
+            };
+            let wide_end_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(wide_end_cut);
+            let Classification::Decided(wide_selected_start) = overlap
+                .other_parameter_for_cusp(&wide_start_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the wider first analytic cut must map exactly");
+            };
+            let Classification::Decided(wide_selected_end) = overlap
+                .other_parameter_for_cusp(&wide_end_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the wider second analytic cut must map exactly");
+            };
+            let analytic_before = cusp_fragment(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                wide_start_cut,
+            )
+            .expect("the wider first selected cut is strictly interior");
+            let analytic_after = cusp_fragment(
+                wide_end_cut,
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+            )
+            .expect("the wider second selected cut is strictly interior");
+            let analytic_start_point = selected_endpoint(&analytic_before, false);
+            let analytic_end_point = selected_endpoint(&analytic_after, true);
+            let analytic_fragments = vec![
+                analytic_before,
+                BezierSplitFragment2::SelectedFiber(
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(
+                            analytic_quarter.clone(),
+                        ),
+                        crate::CurveRegionParameterRange2::new_validated(
+                            crate::CurveRegionParameter2::from_selected_fiber(wide_selected_start),
+                            crate::CurveRegionParameter2::from_selected_fiber(wide_selected_end),
+                        ),
+                        analytic_start_point,
+                        analytic_end_point,
+                    ),
+                ),
+                analytic_after,
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(
+                        circle.complementary_half(),
+                        &policy,
+                    ),
+                ),
+            ];
+            let analytic_boundary = CurveRegionBoundaryLoop2::new(analytic_fragments, &policy)
+                .expect("the complete analytic overlap boundary must close exactly");
+            let analytic_region = CurveRegion2::try_new_with_loop_topology(
+                vec![analytic_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let evidence = selected_region
+                .intersect_region(&analytic_region, &policy)
+                .expect("a selected analytic carrier must re-enter overlap clipping")
+                .into_value();
+            assert!(evidence.blockers().is_empty());
+            assert!(evidence.overlaps().iter().any(|overlap| {
+                overlap.first_range().start().is_selected_fiber()
+                    || overlap.second_range().start().is_selected_fiber()
+            }));
+            let booleans = selected_region
+                .boolean_regions(&analytic_region, &policy)
+                .expect("a selected analytic carrier must re-enter Boolean topology")
+                .into_value();
+            assert!(!booleans.union().is_empty());
+            assert!(!booleans.intersection().is_empty());
+            assert!(booleans.difference().is_empty());
+            assert!(booleans.xor().is_empty());
+
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
                     contacts,
@@ -63033,7 +63314,7 @@ mod conversion_tests {
             )
             .unwrap()
         };
-        let rational_circle = vec![
+        let rational_circle = [
             rational_quarter(
                 Point2::new(half.clone(), Real::one()),
                 Point2::new(-half.clone(), Real::one()),
@@ -63195,7 +63476,7 @@ mod conversion_tests {
             .parallel_left(Real::one())
             .unwrap()
         };
-        let analytic_circle = vec![
+        let analytic_circle = [
             analytic_quarter(
                 Point2::new(half.clone(), Real::from(2_i8)),
                 Point2::new(half.clone() - Real::from(2_i8), Real::from(2_i8)),

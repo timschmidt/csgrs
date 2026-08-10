@@ -9692,34 +9692,6 @@ fn clip_aligned_parameter_overlap(
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<CarrierOverlapClip> {
-    let Some(first_carrier_start) = first_carrier.start.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            first_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(first_carrier_end) = first_carrier.end.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            first_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(second_carrier_start) = second_carrier.start.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            second_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(second_carrier_end) = second_carrier.end.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            second_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
     let map_to_second = |parameter: &BezierParameter2| {
         if reversed {
             parameter.unit_complement()
@@ -9738,20 +9710,38 @@ fn clip_aligned_parameter_overlap(
     }
 
     let (overlap_start, overlap_end) = ascending_bezier_range(first_range, policy)?;
+    let overlap_start = CurveRegionParameter2::from_bezier(overlap_start.clone());
+    let overlap_end = CurveRegionParameter2::from_bezier(overlap_end.clone());
     let (second_start_in_first, second_end_in_first) = if reversed {
         (
-            second_carrier_end.unit_complement(),
-            second_carrier_start.unit_complement(),
+            second_carrier.end.unit_complement().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Boolean,
+                    second_carrier.family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?,
+            second_carrier.start.unit_complement().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Boolean,
+                    second_carrier.family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?,
         )
     } else {
-        (second_carrier_start.clone(), second_carrier_end.clone())
+        (second_carrier.start.clone(), second_carrier.end.clone())
     };
-    let start = maximum_parameter(
-        [overlap_start, first_carrier_start, &second_start_in_first],
+    let start = extreme_region_parameter(
+        [&overlap_start, &first_carrier.start, &second_start_in_first],
+        Ordering::Less,
+        first_carrier.family,
         policy,
     )?;
-    let end = minimum_parameter(
-        [overlap_end, first_carrier_end, &second_end_in_first],
+    let end = extreme_region_parameter(
+        [&overlap_end, &first_carrier.end, &second_end_in_first],
+        Ordering::Greater,
+        first_carrier.family,
         policy,
     )?;
     match decided_parameter_cmp(&start, &end, policy)? {
@@ -9760,17 +9750,74 @@ fn clip_aligned_parameter_overlap(
             return Ok(CarrierOverlapClip::Matched(None));
         }
     }
-    let second_start = map_to_second(&start);
-    let second_end = map_to_second(&end);
+    let map_region_to_second = |parameter: &CurveRegionParameter2| {
+        if reversed {
+            parameter.unit_complement().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Boolean,
+                    first_carrier.family,
+                    UncertaintyReason::Unsupported,
+                )
+            })
+        } else {
+            Ok(parameter.clone())
+        }
+    };
+    let second_start = map_region_to_second(&start)?;
+    let second_end = map_region_to_second(&end)?;
     Ok(CarrierOverlapClip::Matched(Some((
-        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-            start, end,
-        )),
-        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-            second_start,
-            second_end,
-        )),
+        CurveRegionParameterRange2::new_validated(start, end),
+        CurveRegionParameterRange2::new_validated(second_start, second_end),
     ))))
+}
+
+#[cfg(all(test, feature = "predicates"))]
+pub(crate) fn clip_aligned_parameter_overlap_for_test(
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
+    reversed: bool,
+    first_carrier_range: &CurveRegionParameterRange2,
+    second_carrier_range: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
+    let carrier = |operand, range: &CurveRegionParameterRange2| RegionCarrier {
+        operand,
+        loop_index: 0,
+        fragment_index: 0,
+        family: CurveFamily2::RationalBezier,
+        geometry: RegionCarrierGeometry::Bezier(BezierSubcurve2::Quadratic(
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    crate::Point2::from_values(0, 0),
+                    crate::Point2::from_values(1, 0),
+                )
+                .expect("the test carrier line is nondegenerate"),
+            ),
+        )),
+        start: range.start().clone(),
+        end: range.end().clone(),
+        reversed: false,
+        filled_side_is_left: true,
+        image_is_injective: OnceLock::new(),
+        bounds: OnceLock::new(),
+    };
+    let first_carrier = carrier(CurveRegionBooleanOperand2::First, first_carrier_range);
+    let second_carrier = carrier(CurveRegionBooleanOperand2::Second, second_carrier_range);
+    match clip_aligned_parameter_overlap(
+        first_range,
+        second_range,
+        reversed,
+        &first_carrier,
+        &second_carrier,
+        policy,
+    )? {
+        CarrierOverlapClip::Matched(ranges) => Ok(ranges),
+        CarrierOverlapClip::Unmatched => Err(ExactCurveError::invalid(
+            CurveOperation2::Boolean,
+            CurveFamily2::RationalBezier,
+            CurveError::Topology("the certified test ranges were not parameter-aligned".into()),
+        )),
+    }
 }
 
 fn maximum_parameter<const N: usize>(
