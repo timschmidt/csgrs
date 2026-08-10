@@ -20,11 +20,13 @@
 use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
+#[cfg(feature = "predicates")]
+use crate::RationalBezierIntersectionPointEvidence2;
+#[cfg(feature = "predicates")]
+use crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2;
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
 };
-#[cfg(feature = "predicates")]
-use crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
@@ -33,8 +35,6 @@ use crate::{
     CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
     UncertaintyReason,
 };
-#[cfg(feature = "predicates")]
-use crate::RationalBezierIntersectionPointEvidence2;
 
 /// Exact local parameter on any retained [`CurveRegion2`](crate::CurveRegion2) carrier.
 ///
@@ -95,9 +95,7 @@ impl CurveRegionParameter2 {
     }
 
     #[cfg(feature = "predicates")]
-    pub(crate) fn from_selected_fiber(
-        parameter: BezierAlgebraicSelectedFiberParameter2,
-    ) -> Self {
+    pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
         Self {
             data: CurveRegionParameterData2::SelectedFiber(parameter),
         }
@@ -152,6 +150,16 @@ impl CurveRegionParameter2 {
         matches!(self.data, CurveRegionParameterData2::SelectedFiber(_))
     }
 
+    #[cfg(feature = "predicates")]
+    pub(crate) const fn as_selected_fiber(
+        &self,
+    ) -> Option<&BezierAlgebraicSelectedFiberParameter2> {
+        match &self.data {
+            CurveRegionParameterData2::SelectedFiber(parameter) => Some(parameter),
+            _ => None,
+        }
+    }
+
     /// Returns true when this carrier parameter is represented directly by a
     /// [`Real`] rather than retained algebraic evidence.
     pub const fn is_exact(&self) -> bool {
@@ -161,7 +169,9 @@ impl CurveRegionParameter2 {
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
             CurveRegionParameterData2::AlgebraicCusp(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => None,
+            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
+                None
+            }
             #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
         }
@@ -170,7 +180,9 @@ impl CurveRegionParameter2 {
     pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
         match &self.data {
             CurveRegionParameterData2::AlgebraicChord(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicCusp(_) => None,
+            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicCusp(_) => {
+                None
+            }
             #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
         }
@@ -208,7 +220,9 @@ impl CurveRegionParameter2 {
             (
                 CurveRegionParameterData2::Bezier(first),
                 CurveRegionParameterData2::SelectedFiber(second),
-            ) => Ok(second.cmp_bezier_parameter(first, policy)?.map(Ordering::reverse)),
+            ) => Ok(second
+                .cmp_bezier_parameter(first, policy)?
+                .map(Ordering::reverse)),
             _ => Err(CurveError::Topology(
                 "cannot compare parameters from distinct carrier domains".into(),
             )),

@@ -10,6 +10,7 @@ use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
     BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
     BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
+    BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
 };
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicircleMappedOverlap2,
@@ -17,9 +18,9 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
-use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 #[cfg(feature = "predicates")]
 use crate::bezier_split::BezierSelectedFiberRationalFragment2;
+use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
@@ -213,6 +214,59 @@ enum RegionPairOverlapSource {
     AlgebraicChordRational(BezierAlgebraicChordRationalOverlap2),
     AlgebraicCusp(BezierAlgebraicCuspSemicirclePairOverlap2),
     AlgebraicCuspMapped(BezierAlgebraicCuspSemicircleMappedOverlap2),
+    #[cfg(feature = "predicates")]
+    AlgebraicCuspSelectedFiberMapped(BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2),
+}
+
+#[derive(Clone, Copy)]
+enum RegionCuspMappedOverlapRef<'a> {
+    Bezier(&'a BezierAlgebraicCuspSemicircleMappedOverlap2),
+    #[cfg(feature = "predicates")]
+    Selected(&'a BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2),
+}
+
+impl RegionCuspMappedOverlapRef<'_> {
+    fn other_parameter_for_cusp(
+        self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveRegionParameter2>> {
+        match self {
+            Self::Bezier(source) => Ok(source
+                .other_parameter_for_cusp(parameter, policy)?
+                .map(CurveRegionParameter2::from_bezier)),
+            #[cfg(feature = "predicates")]
+            Self::Selected(source) => Ok(source
+                .other_parameter_for_cusp(parameter, policy)?
+                .map(CurveRegionParameter2::from_selected_fiber)),
+        }
+    }
+
+    fn cusp_parameter_for_other(
+        self,
+        parameter: &CurveRegionParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        match self {
+            Self::Bezier(source) => source.cusp_parameter_for_other(
+                parameter.as_bezier_parameter().ok_or_else(|| {
+                    CurveError::Topology(
+                        "non-Bezier cut reached a Bezier-mapped cusp overlap".into(),
+                    )
+                })?,
+                policy,
+            ),
+            #[cfg(feature = "predicates")]
+            Self::Selected(source) => source.cusp_parameter_for_other(
+                parameter.as_selected_fiber().ok_or_else(|| {
+                    CurveError::Topology(
+                        "non-selected cut reached a selected-fiber cusp overlap".into(),
+                    )
+                })?,
+                policy,
+            ),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1055,6 +1109,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         RegionPairOverlapSource::AlgebraicChordRational(_) => None,
                         RegionPairOverlapSource::AlgebraicCusp(_)
                         | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
+                        #[cfg(feature = "predicates")]
+                        RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_) => None,
                     }),
                     first_range,
                     second_range,
@@ -3236,6 +3292,49 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         })
                     }
+                    #[cfg(feature = "predicates")]
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                        overlaps,
+                    ) => Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: overlaps
+                            .into_iter()
+                            .map(|overlap| {
+                                let cusp_range = CurveRegionParameterRange2::new_validated(
+                                    CurveRegionParameter2::from_algebraic_cusp(
+                                        overlap.cusp_start_parameter(),
+                                    ),
+                                    CurveRegionParameter2::from_algebraic_cusp(
+                                        overlap.cusp_end_parameter(),
+                                    ),
+                                );
+                                let other_range = CurveRegionParameterRange2::new_validated(
+                                    CurveRegionParameter2::from_selected_fiber(
+                                        overlap.other_start_parameter(),
+                                    ),
+                                    CurveRegionParameter2::from_selected_fiber(
+                                        overlap.other_end_parameter(),
+                                    ),
+                                );
+                                let (first_range, second_range) = if *cusp_is_first {
+                                    (cusp_range, other_range)
+                                } else {
+                                    (other_range, cusp_range)
+                                };
+                                RegionPairOverlap {
+                                    source: Some(
+                                        RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(
+                                            overlap.clone(),
+                                        ),
+                                    ),
+                                    first_range,
+                                    second_range,
+                                    orientation: overlap.orientation(),
+                                }
+                            })
+                            .collect(),
+                        blockers: Vec::new(),
+                    }),
                     BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
                         Ok(RegionPairResult {
                             contacts: Vec::new(),
@@ -3702,7 +3801,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if let Some(RegionPairOverlapSource::AlgebraicCuspMapped(source)) = overlap.source.as_ref()
         {
             debug_assert_eq!(source.orientation(), overlap.orientation);
-            return self.clip_cusp_mapped_overlap(pair, overlap, source);
+            return self.clip_cusp_mapped_overlap(
+                pair,
+                overlap,
+                RegionCuspMappedOverlapRef::Bezier(source),
+            );
+        }
+        #[cfg(feature = "predicates")]
+        if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(source)) =
+            overlap.source.as_ref()
+        {
+            debug_assert_eq!(source.orientation(), overlap.orientation);
+            return self.clip_cusp_mapped_overlap(
+                pair,
+                overlap,
+                RegionCuspMappedOverlapRef::Selected(source),
+            );
         }
         #[cfg(feature = "predicates")]
         if let Some(RegionPairOverlapSource::AlgebraicChordRational(source)) =
@@ -3727,6 +3841,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionPairOverlapSource::AlgebraicChordRational(_) => None,
             RegionPairOverlapSource::AlgebraicCusp(_)
             | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
+            #[cfg(feature = "predicates")]
+            RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_) => None,
         });
         if let Some(correspondence) = correspondence {
             if let Some(reversed) = correspondence.projective_reversal() {
@@ -3945,7 +4061,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         pair: &RegionCarrierPair,
         overlap: &RegionPairOverlap,
-        source: &BezierAlgebraicCuspSemicircleMappedOverlap2,
+        source: RegionCuspMappedOverlapRef<'_>,
     ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
         let first_is_cusp = overlap.first_range.start().is_algebraic_cusp();
         let second_is_cusp = overlap.second_range.start().is_algebraic_cusp();
@@ -4011,9 +4127,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .other_parameter_for_cusp(parameter, &self.data.policy)
                 .map_err(|cause| self.invalid(cusp_carrier_index, cause))?
             {
-                Classification::Decided(parameter) => {
-                    Ok(CurveRegionParameter2::from_bezier(parameter))
-                }
+                Classification::Decided(parameter) => Ok(parameter),
                 Classification::Uncertain(reason) => Err(self.blocked(cusp_carrier_index, reason)),
             }
         };
@@ -4053,22 +4167,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
             {
                 (cusp_start, cusp_end)
             } else {
-                let map_to_cusp = |parameter: &CurveRegionParameter2| {
-                    let Some(parameter) = parameter.as_bezier_parameter() else {
-                        return Err(
-                            self.blocked(parallel_carrier_index, UncertaintyReason::Unsupported)
-                        );
-                    };
-                    match source
-                        .cusp_parameter_for_other(parameter, &self.data.policy)
-                        .map_err(|cause| self.invalid(parallel_carrier_index, cause))?
-                    {
-                        Classification::Decided(parameter) => {
-                            Ok(CurveRegionParameter2::from_algebraic_cusp(parameter))
-                        }
-                        Classification::Uncertain(reason) => {
-                            Err(self.blocked(parallel_carrier_index, reason))
-                        }
+                let map_to_cusp = |parameter: &CurveRegionParameter2| match source
+                    .cusp_parameter_for_other(parameter, &self.data.policy)
+                    .map_err(|cause| self.invalid(parallel_carrier_index, cause))?
+                {
+                    Classification::Decided(parameter) => {
+                        Ok(CurveRegionParameter2::from_algebraic_cusp(parameter))
+                    }
+                    Classification::Uncertain(reason) => {
+                        Err(self.blocked(parallel_carrier_index, reason))
                     }
                 };
                 let first = map_to_cusp(&parallel_low)?;
@@ -4384,13 +4491,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 else {
                     continue;
                 };
-                if matches!(
+                let cusp_overlap_topology = matches!(
                     overlap.source,
                     Some(
                         RegionPairOverlapSource::AlgebraicCusp(_)
                             | RegionPairOverlapSource::AlgebraicCuspMapped(_)
                     )
-                ) {
+                ) || {
+                    #[cfg(feature = "predicates")]
+                    {
+                        matches!(
+                            overlap.source,
+                            Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_))
+                        )
+                    }
+                    #[cfg(not(feature = "predicates"))]
+                    {
+                        false
+                    }
+                };
+                if cusp_overlap_topology {
                     let mut first_parameters =
                         [first_range.start().clone(), first_range.end().clone()];
                     let mut second_parameters =
@@ -4465,6 +4585,39 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             .expect("a pushed cusp-overlap event retains its topology vertex")
                             .parameter
                             .clone();
+                        #[cfg(feature = "predicates")]
+                        if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(
+                            source,
+                        )) = overlap.source.as_ref()
+                        {
+                            let selected_parameter = first_parameters[index]
+                                .as_selected_fiber()
+                                .or_else(|| second_parameters[index].as_selected_fiber());
+                            if let Some(selected_parameter) = selected_parameter {
+                                let point = match source
+                                    .point_evidence_for_other(selected_parameter, &self.data.policy)
+                                    .map_err(|cause| {
+                                        self.invalid(pair.first_carrier_index, cause)
+                                    })? {
+                                    Classification::Decided(point) => point,
+                                    Classification::Uncertain(reason) => {
+                                        return Err(self.blocked(pair.first_carrier_index, reason));
+                                    }
+                                };
+                                contact_points.push(ContactVertex {
+                                    point: Some(point),
+                                    topology_vertex,
+                                    carrier_indices: [
+                                        pair.first_carrier_index,
+                                        pair.second_carrier_index,
+                                    ],
+                                    parameters: [
+                                        first_parameters[index].clone(),
+                                        second_parameters[index].clone(),
+                                    ],
+                                });
+                            }
+                        }
                     }
                     first_range = CurveRegionParameterRange2::new_validated(
                         first_parameters[0].clone(),
@@ -5155,8 +5308,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             && start.as_exact().is_some_and(|boundary| {
                 end.as_bezier_parameter()
                     .is_some_and(|end| isolator_touches(end, boundary, true))
-            })
-        {
+            }) {
             start.as_exact().cloned()
         } else if local_circular_curve.is_none()
             && retained_regular_circle
@@ -7012,12 +7164,7 @@ fn split_carrier_with_refinement(
         .iter()
         .any(|event| event.parameter.is_selected_fiber())
     {
-        return split_selected_fiber_rational_carrier(
-            carrier,
-            events,
-            contact_points,
-            policy,
-        );
+        return split_selected_fiber_rational_carrier(carrier, events, contact_points, policy);
     }
     let parameters = events
         .iter()
@@ -7101,8 +7248,8 @@ fn selected_fiber_event_point(
     if let Some(vertex) = event.topology_vertex
         && let Some(point) = contact_points
             .iter()
-            .find(|contact| contact.topology_vertex == vertex)
-            .and_then(|contact| contact.point.clone())
+            .filter(|contact| contact.topology_vertex == vertex)
+            .find_map(|contact| contact.point.clone())
     {
         return Ok(point);
     }
@@ -7179,8 +7326,7 @@ fn split_selected_fiber_rational_carrier(
         {
             continue;
         }
-        let start_point =
-            selected_fiber_event_point(&pair[0], &source, contact_points, policy)?;
+        let start_point = selected_fiber_event_point(&pair[0], &source, contact_points, policy)?;
         let end_point = selected_fiber_event_point(&pair[1], &source, contact_points, policy)?;
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::SelectedFiberRational(
