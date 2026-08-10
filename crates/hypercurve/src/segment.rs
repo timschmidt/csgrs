@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::classify::{
-    LineSide, classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, real_sign,
+    LineSide, classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero,
 };
 use crate::policy::resolve_certified_operation;
 use crate::{
@@ -261,31 +261,6 @@ impl LineSeg2 {
                 None => RetainedLineRelation2::Uncertain,
             },
         )
-    }
-
-    /// Certifies that this retained offset fragment still traverses in the
-    /// direction of its source support.
-    ///
-    /// Inward polygon wavefronts reverse source-parallel edges after local
-    /// collapse. Splitting an offset at self contacts preserves per-line
-    /// provenance, so this predicate lets the arrangement discard those
-    /// post-collapse cycles without using a floating-point distance sample.
-    pub(crate) fn retained_offset_direction_matches_source(
-        &self,
-        policy: &CurveContext,
-    ) -> Classification<bool> {
-        let Some(provenance) = self.offset_provenance.as_ref() else {
-            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
-        };
-        let (offset_x, offset_y) = self.delta();
-        let source_x = provenance.source.end.x() - provenance.source.start.x();
-        let source_y = provenance.source.end.y() - provenance.source.start.y();
-        let direction_dot = &offset_x * &source_x + &offset_y * &source_y;
-        match real_sign(&direction_dot, policy) {
-            Some(RealSign::Positive) => Classification::Decided(true),
-            Some(RealSign::Zero | RealSign::Negative) => Classification::Decided(false),
-            None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
-        }
     }
 
     pub(crate) fn map_points<F>(&self, mut map: F) -> CurveResult<Self>

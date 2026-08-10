@@ -35,7 +35,6 @@ mod bspline;
 mod bulge;
 mod classify;
 mod contour;
-mod contour_regularize;
 mod curve;
 mod curve_intersection;
 mod curve_path_intersection;

@@ -2493,16 +2493,6 @@ fn curve_region_from_native_material_contour(
     CurveRegion2::try_from_native_contours_raw(vec![contour], Vec::new(), policy)
 }
 
-fn curve_region_from_optional_native_material_contour(
-    contour: Option<Contour2>,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    contour.map_or_else(
-        || Ok(CurveRegion2::empty()),
-        |contour| curve_region_from_native_material_contour(contour, policy),
-    )
-}
-
 fn regularize_native_contour_with_curve_region(
     contour: &Contour2,
     policy: &CurveContext,
@@ -2515,68 +2505,6 @@ fn regularize_native_contour_with_curve_region(
         policy,
         None,
     )?;
-    raw.regularized_region_raw(policy)
-}
-
-fn regularize_native_cycles_with_curve_region(
-    cycles: Vec<Contour2>,
-    fill_rule: FillRule,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    if cycles.is_empty() {
-        return Ok(CurveRegion2::empty());
-    }
-    if fill_rule == FillRule::EvenOdd {
-        let mut result = CurveRegion2::empty();
-        for cycle in cycles {
-            let component = curve_region_from_native_material_contour(cycle, policy)?;
-            result = result
-                .boolean_region_raw(&component, BooleanOp::Xor, policy)
-                .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
-        }
-        return Ok(result);
-    }
-
-    let mut paths = Vec::with_capacity(cycles.len());
-    let mut roles = Vec::with_capacity(cycles.len());
-    for cycle in cycles {
-        let Some(area) = cycle
-            .signed_area()
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        else {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Offset,
-                CurveFamily2::Line,
-                UncertaintyReason::Unsupported,
-            ));
-        };
-        let role = match real_sign(&area, policy) {
-            Some(RealSign::Positive) => CurveRegionLoopRole::Material,
-            Some(RealSign::Negative) => CurveRegionLoopRole::Hole,
-            Some(RealSign::Zero) => continue,
-            None => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Offset,
-                    CurveFamily2::Line,
-                    UncertaintyReason::RealSign,
-                ));
-            }
-        };
-        paths.push(curve_path_from_native_contour(&cycle)?);
-        roles.push(role);
-    }
-    if paths.is_empty() {
-        return Ok(CurveRegion2::empty());
-    }
-    let fill_rules = vec![FillRule::NonZero; paths.len()];
-    let mut raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
-        &paths,
-        &roles,
-        &fill_rules,
-        policy,
-        None,
-    )?;
-    raw.data_mut_for_construction().signed_loop_composition = true;
     raw.regularized_region_raw(policy)
 }
 
@@ -11203,26 +11131,41 @@ impl CurveRegion2 {
                 .iter()
                 .all(|segment| matches!(segment, Segment2::Line(_)));
             if !component_expands && all_line_source {
-                match contour
-                    .offset_left_orthogonal_line_erosion(signed_left_distance.clone(), policy)
-                    .map_err(|error| error.with_operation(CurveOperation2::Offset))?
+                let use_line_wavefront = match contour
+                    .offset_left_uses_line_wavefront_joins(
+                        signed_left_distance.clone(),
+                        corner_style,
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                 {
-                    Classification::Decided(region) => {
-                        push_native_offset_component(
-                            *role,
-                            region,
-                            &mut material_components,
-                            &mut void_components,
-                        );
-                        continue;
-                    }
-                    Classification::Uncertain(
-                        UncertaintyReason::Unsupported
-                        | UncertaintyReason::RealSign
-                        | UncertaintyReason::Ordering,
-                    ) => {}
+                    Classification::Decided(use_line_wavefront) => use_line_wavefront,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if use_line_wavefront {
+                    match contour
+                        .offset_left_line_wavefront_contours(signed_left_distance.clone(), policy)
+                        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                    {
+                        Classification::Decided(contours) => {
+                            push_native_offset_component(
+                                *role,
+                                CurveRegion2::try_from_native_contours_raw(
+                                    contours,
+                                    Vec::new(),
+                                    policy,
+                                )?,
+                                &mut material_components,
+                                &mut void_components,
+                            );
+                            continue;
+                        }
+                        Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
                 }
             }
@@ -11232,96 +11175,20 @@ impl CurveRegion2 {
             {
                 Classification::Decided(offset) => offset,
                 Classification::Uncertain(reason) => {
-                    if !component_expands && all_line_source {
-                        match contour
-                            .offset_left_convex_line_erosion(signed_left_distance.clone(), policy)
-                            .map_err(|cause| {
-                                curve_region_edit_error(CurveOperation2::Offset, cause)
-                            })? {
-                            Classification::Decided(contour) => {
-                                push_native_offset_component(
-                                    *role,
-                                    curve_region_from_optional_native_material_contour(
-                                        contour, policy,
-                                    )?,
-                                    &mut material_components,
-                                    &mut void_components,
-                                );
-                                continue;
-                            }
-                            Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
                     return Ok(Classification::Uncertain(reason));
                 }
             };
             let self_contacts = raw_offset
                 .has_self_contacts(policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-            if !component_expands && all_line_source {
-                match raw_offset
-                    .retained_contracting_line_offset_cycles(policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(cycles) => {
-                        push_native_offset_component(
-                            *role,
-                            regularize_native_cycles_with_curve_region(
-                                cycles,
-                                raw_offset.fill_rule(),
-                                policy,
-                            )?,
-                            &mut material_components,
-                            &mut void_components,
-                        );
-                        continue;
-                    }
-                    Classification::Uncertain(
-                        UncertaintyReason::Unsupported
-                        | UncertaintyReason::RealSign
-                        | UncertaintyReason::Ordering,
-                    ) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            if !component_expands
-                && all_line_source
-                && (!raw_offset.has_retained_regular_offset_branch()
-                    || !matches!(self_contacts, Classification::Decided(false)))
-            {
-                match contour
-                    .offset_left_convex_line_erosion(signed_left_distance, policy)
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(contour) => {
-                        push_native_offset_component(
-                            *role,
-                            curve_region_from_optional_native_material_contour(contour, policy)?,
-                            &mut material_components,
-                            &mut void_components,
-                        );
-                        continue;
-                    }
-                    Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
             if !component_expands
                 && all_line_source
                 && !raw_offset.has_retained_regular_offset_branch()
             {
-                // A self-contact-free non-orthogonal polygonal parallel can
-                // reappear after the wavefront has collapsed. Joined offset
-                // construction retains provenance only while every output edge
-                // still follows its source edge. A general straight-skeleton
-                // decision is still required when that evidence is exhausted.
+                // A straight-skeleton blocker may rejoin the raw construction
+                // only while every emitted edge still follows its authored
+                // support. Exhausted provenance cannot certify a contracting
+                // polygonal component.
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
             let component = match self_contacts {
@@ -11332,10 +11199,9 @@ impl CurveRegion2 {
                     regularize_native_contour_with_curve_region(&raw_offset, policy)?
                 }
                 Classification::Decided(true) => {
-                    // Remaining non-orthogonal contracting self-intersections
-                    // need straight-skeleton pruning, not only winding
-                    // regularization. Keep that gap explicit rather than
-                    // retaining inverted collapse loops.
+                    // If exact wavefront construction itself was blocked, raw
+                    // contracting self-intersections cannot be regularized by
+                    // winding alone without risking inverted collapse loops.
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
                 Classification::Uncertain(reason) => {

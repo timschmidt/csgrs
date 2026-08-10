@@ -248,6 +248,36 @@ fn dumbbell_shape() -> Contour2 {
     .unwrap()
 }
 
+fn oblique_dumbbell_shape() -> Contour2 {
+    // Exact affine image `(x, y) -> (2x + y, y)` of `dumbbell_shape`.
+    // Horizontal neck width stays two while every formerly vertical support
+    // becomes oblique, excluding the historical orthogonal erosion route.
+    let points = [
+        p(0, 0),
+        p(8, 0),
+        p(9, 1),
+        p(17, 1),
+        p(16, 0),
+        p(24, 0),
+        p(28, 4),
+        p(20, 4),
+        p(19, 3),
+        p(11, 3),
+        p(12, 4),
+        p(4, 4),
+        p(0, 0),
+    ];
+    Contour2::try_new(
+        points
+            .windows(2)
+            .map(|edge| {
+                Segment2::Line(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
 trait IntoCertifiedClassification<T> {
     fn into_certified_classification(self) -> Classification<T>;
 }
@@ -4599,6 +4629,123 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
         certified(eroded.classify_point(&p(6, 2), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
+}
+
+#[test]
+fn unified_region_contraction_preserves_non_miter_corner_styles() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_material_contours(vec![u_shape()], &policy)
+            .unwrap()
+            .into_value();
+        let round = source
+            .offset(-q(1, 2), &OffsetCornerStyle2::Round, &policy)
+            .expect("round reflex joins must remain exact");
+        let bevel = source
+            .offset(-q(1, 2), &OffsetCornerStyle2::Bevel, &policy)
+            .expect("bevel reflex joins must remain exact");
+        let limited_miter = source
+            .offset(
+                -q(1, 2),
+                &OffsetCornerStyle2::Miter { limit: Real::one() },
+                &policy,
+            )
+            .expect("a limited reflex miter must fall back to an exact bevel");
+        let miter = source
+            .offset(-q(1, 2), &sharp_offset(), &policy)
+            .expect("miter contraction must use the exact wavefront");
+        for outcome in [&round, &bevel, &limited_miter, &miter] {
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+
+        assert_eq!(round.value.boundary_loops().len(), 1);
+        assert_eq!(bevel.value.boundary_loops().len(), 1);
+        assert_eq!(limited_miter.value.boundary_loops().len(), 1);
+        assert_eq!(miter.value.boundary_loops().len(), 1);
+        let round_fragments = round.value.boundary_loops()[0].fragments();
+        let bevel_fragments = bevel.value.boundary_loops()[0].fragments();
+        let limited_miter_fragments = limited_miter.value.boundary_loops()[0].fragments();
+        let miter_fragments = miter.value.boundary_loops()[0].fragments();
+        assert!(round_fragments.iter().any(|fragment| matches!(
+            fragment,
+            BezierSplitFragment2::Materialized {
+                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                ..
+            } | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+        )));
+        assert!(!bevel_fragments.iter().any(|fragment| matches!(
+            fragment,
+            BezierSplitFragment2::Materialized {
+                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
+                ..
+            } | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+        )));
+        assert_eq!(limited_miter_fragments.len(), bevel_fragments.len());
+        assert_eq!(
+            decided(limited_miter.value.filled_area(&policy).unwrap()),
+            decided(bevel.value.filled_area(&policy).unwrap())
+        );
+        assert!(bevel_fragments.len() > miter_fragments.len());
+    }
+}
+
+#[test]
+fn unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_material_contours(
+            vec![oblique_dumbbell_shape()],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let eroded = source
+            .offset(-q(3, 2), &sharp_offset(), &policy)
+            .expect("the nonorthogonal medial split must be exact");
+        assert_eq!(eroded.certainty, CurveCertainty::Certified);
+        let native = decided(eroded.value.native_contours_fast_path(&policy).unwrap());
+        assert_eq!(native.material_contours().len(), 2);
+        assert!(native.hole_contours().is_empty());
+        for point in [p(6, 2), p(22, 2)] {
+            assert_eq!(
+                certified(eroded.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+        }
+        assert_eq!(
+            certified(eroded.value.classify_point(&p(14, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+    }
+}
+
+#[test]
+fn unified_region_exact_neck_event_uses_post_event_topology() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_material_contours(
+            vec![oblique_dumbbell_shape()],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let eroded = source
+            .offset(Real::from(-1), &sharp_offset(), &policy)
+            .expect("the exact split time must select the post-event wavefront");
+        assert_eq!(eroded.certainty, CurveCertainty::Certified);
+        let native = decided(eroded.value.native_contours_fast_path(&policy).unwrap());
+        assert_eq!(native.material_contours().len(), 2);
+        assert!(native.hole_contours().is_empty());
+        for point in [p(6, 2), p(22, 2)] {
+            assert_eq!(
+                certified(eroded.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+        }
+        assert_eq!(
+            certified(eroded.value.classify_point(&p(14, 2), &policy).unwrap()),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+    }
 }
 
 #[test]

@@ -24,7 +24,7 @@ use crate::arc_bezier::{rational_bezier_circular_arc, rational_quadratic_circula
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierLineImageFitRelation, Classification, Contour2, CurveContext, CurveFamily2,
-    CurveGeometry2, CurvePath2, CurveResult, Point2, Segment2,
+    CurveGeometry2, CurvePath2, CurveResult, Point2, Segment2, UncertaintyReason,
 };
 
 /// Native straight-skeleton support advertised for one exact curve family.
@@ -832,6 +832,278 @@ struct MovingSupport2 {
     normal_x: Real,
     normal_y: Real,
     constant: Real,
+}
+
+fn moving_line_supports(
+    lines: &[&crate::LineSeg2],
+    orientation: RealSign,
+) -> CurveResult<Vec<MovingSupport2>> {
+    let mut supports = Vec::with_capacity(lines.len());
+    for (source_edge, line) in lines.iter().enumerate() {
+        let (dx, dy) = line.delta();
+        let length = (&dx * &dx + &dy * &dy).sqrt()?;
+        let (raw_normal_x, raw_normal_y) = match orientation {
+            RealSign::Positive => (-dy, dx),
+            RealSign::Negative => (dy, -dx),
+            RealSign::Zero => unreachable!("a line wavefront has nonzero orientation"),
+        };
+        let normal_x = (raw_normal_x / &length)?;
+        let normal_y = (raw_normal_y / length)?;
+        let constant = &normal_x * line.start().x() + &normal_y * line.start().y();
+        supports.push(MovingSupport2 {
+            source_edge,
+            normal_x,
+            normal_y,
+            constant,
+        });
+    }
+    Ok(supports)
+}
+
+const fn straight_skeleton_uncertainty(blocker: &StraightSkeletonBlocker2) -> UncertaintyReason {
+    match blocker {
+        StraightSkeletonBlocker2::UncertainEventOrdering => UncertaintyReason::Ordering,
+        StraightSkeletonBlocker2::UncertainOrientation
+        | StraightSkeletonBlocker2::UncertainVertexTurn { .. }
+        | StraightSkeletonBlocker2::UncertainWavefrontRelation => UncertaintyReason::RealSign,
+        StraightSkeletonBlocker2::UncertainCurveFamilyReduction { .. }
+        | StraightSkeletonBlocker2::UncertainSelfContact => UncertaintyReason::Predicate,
+        StraightSkeletonBlocker2::SelfContact
+        | StraightSkeletonBlocker2::DegenerateSignedArea
+        | StraightSkeletonBlocker2::DegenerateSimultaneousEvents
+        | StraightSkeletonBlocker2::DegenerateVertex { .. } => UncertaintyReason::Boundary,
+        StraightSkeletonBlocker2::UnsupportedSegment { .. }
+        | StraightSkeletonBlocker2::UnsupportedCurveFamily { .. }
+        | StraightSkeletonBlocker2::UnsupportedSignedArea
+        | StraightSkeletonBlocker2::InvalidSplitTopology
+        | StraightSkeletonBlocker2::ParallelWavefrontSupports { .. }
+        | StraightSkeletonBlocker2::MissingFutureEvent
+        | StraightSkeletonBlocker2::NonAdvancingEvent
+        | StraightSkeletonBlocker2::CircularRadiusCollapseRequired { .. }
+        | StraightSkeletonBlocker2::CurvedTerminalPairRequired { .. } => {
+            UncertaintyReason::Unsupported
+        }
+    }
+}
+
+#[derive(Clone)]
+struct LineWavefrontSupportVertex2 {
+    topology_vertex: usize,
+    coordinate: Real,
+    coordinate_velocity: Real,
+    point: Point2,
+}
+
+struct LineWavefrontBoundaryEdge2 {
+    start_vertex: usize,
+    end_vertex: usize,
+    segment: crate::LineSeg2,
+}
+
+fn line_wavefront_contours_at_time(
+    source: &Contour2,
+    supports: &[MovingSupport2],
+    skeleton: &StraightSkeleton2,
+    time: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<Contour2>>> {
+    let mut vertices_by_support = vec![Vec::<LineWavefrontSupportVertex2>::new(); supports.len()];
+    for (topology_vertex, arc) in skeleton.arcs.iter().enumerate() {
+        let StraightSkeletonArcKind2::VertexBisector {
+            left_source_edge,
+            right_source_edge,
+        } = arc.kind
+        else {
+            continue;
+        };
+        let Some(start) = skeleton.nodes.get(arc.start_node) else {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton arc has an invalid start node".into(),
+            ));
+        };
+        let Some(end) = skeleton.nodes.get(arc.end_node) else {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton arc has an invalid end node".into(),
+            ));
+        };
+        let start_to_end = match compare_reals(&start.time, &end.time, policy) {
+            Some(order) => order,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        if start_to_end == Ordering::Greater {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton bisector runs backward in wavefront time".into(),
+            ));
+        }
+        if start_to_end == Ordering::Equal {
+            continue;
+        }
+        let start_to_time = match compare_reals(&start.time, time, policy) {
+            Some(order) => order,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        let time_to_end = match compare_reals(time, &end.time, policy) {
+            Some(order) => order,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        // The half-open interval selects post-event topology at an exact event
+        // time. In particular, the two vertices created by a split remain
+        // distinct even though both carry the same Cartesian event point.
+        if start_to_time == Ordering::Greater || time_to_end != Ordering::Less {
+            continue;
+        }
+        let Some(left) = supports.get(left_source_edge) else {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton bisector has an invalid left support".into(),
+            ));
+        };
+        let Some(right) = supports.get(right_source_edge) else {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton bisector has an invalid right support".into(),
+            ));
+        };
+        let trajectory = match vertex_trajectory(left, right, policy)? {
+            Ok(trajectory) => trajectory,
+            Err(blocker) => {
+                return Ok(Classification::Uncertain(straight_skeleton_uncertainty(
+                    &blocker,
+                )));
+            }
+        };
+        let point = if start_to_time == Ordering::Equal {
+            start.point.clone()
+        } else {
+            trajectory.point_at(time)
+        };
+        for source_edge in [left_source_edge, right_source_edge] {
+            let Some(line) = source
+                .segments()
+                .get(source_edge)
+                .and_then(|segment| match segment {
+                    Segment2::Line(line) => Some(line),
+                    Segment2::Arc(_) => None,
+                })
+            else {
+                return Err(crate::CurveError::Topology(
+                    "line straight-skeleton bisector references a non-line source".into(),
+                ));
+            };
+            let (dx, dy) = line.delta();
+            let from_start = point.delta_from(line.start());
+            let coordinate = &from_start.0 * &dx + &from_start.1 * &dy;
+            let coordinate_velocity = &trajectory.velocity_x * &dx + &trajectory.velocity_y * &dy;
+            vertices_by_support[source_edge].push(LineWavefrontSupportVertex2 {
+                topology_vertex,
+                coordinate,
+                coordinate_velocity,
+                point: point.clone(),
+            });
+        }
+    }
+
+    let mut boundary_edges = Vec::<LineWavefrontBoundaryEdge2>::new();
+    for vertices in &mut vertices_by_support {
+        for index in 1..vertices.len() {
+            let mut cursor = index;
+            while cursor > 0 {
+                let coordinate_order = match compare_reals(
+                    &vertices[cursor].coordinate,
+                    &vertices[cursor - 1].coordinate,
+                    policy,
+                ) {
+                    Some(order) => order,
+                    None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+                    }
+                };
+                // At an exact event, outgoing vertices may share one point.
+                // Their exact support-coordinate velocities are their order
+                // immediately after the event and therefore select the same
+                // post-event topology as the half-open arc interval above.
+                let order = if coordinate_order == Ordering::Equal {
+                    match compare_reals(
+                        &vertices[cursor].coordinate_velocity,
+                        &vertices[cursor - 1].coordinate_velocity,
+                        policy,
+                    ) {
+                        Some(Ordering::Equal) => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        Some(order) => order,
+                        None => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+                        }
+                    }
+                } else {
+                    coordinate_order
+                };
+                if order != Ordering::Less {
+                    break;
+                }
+                vertices.swap(cursor, cursor - 1);
+                cursor -= 1;
+            }
+        }
+        if vertices.len() % 2 != 0 {
+            return Err(crate::CurveError::Topology(
+                "straight-skeleton wavefront support has an odd endpoint count".into(),
+            ));
+        }
+        for pair in vertices.chunks_exact(2) {
+            match is_zero(&pair[0].point.distance_squared(&pair[1].point), policy) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            boundary_edges.push(LineWavefrontBoundaryEdge2 {
+                start_vertex: pair[0].topology_vertex,
+                end_vertex: pair[1].topology_vertex,
+                segment: crate::LineSeg2::try_new(pair[0].point.clone(), pair[1].point.clone())?,
+            });
+        }
+    }
+    if boundary_edges.is_empty() {
+        return Ok(Classification::Decided(Vec::new()));
+    }
+
+    let mut unused = vec![true; boundary_edges.len()];
+    let mut contours = Vec::new();
+    while let Some(first_index) = unused.iter().position(|unused| *unused) {
+        unused[first_index] = false;
+        let first = &boundary_edges[first_index];
+        let start_vertex = first.start_vertex;
+        let mut end_vertex = first.end_vertex;
+        let mut segments = vec![Segment2::Line(first.segment.clone())];
+        while end_vertex != start_vertex {
+            let mut candidates = unused.iter().enumerate().filter(|(index, unused)| {
+                **unused && boundary_edges[*index].start_vertex == end_vertex
+            });
+            let Some((next_index, _)) = candidates.next() else {
+                return Err(crate::CurveError::Topology(
+                    "straight-skeleton wavefront cycle did not close".into(),
+                ));
+            };
+            if candidates.next().is_some() {
+                return Err(crate::CurveError::Topology(
+                    "straight-skeleton wavefront vertex has multiple successors".into(),
+                ));
+            }
+            unused[next_index] = false;
+            let next = &boundary_edges[next_index];
+            end_vertex = next.end_vertex;
+            segments.push(Segment2::Line(next.segment.clone()));
+            if segments.len() > boundary_edges.len() {
+                return Err(crate::CurveError::Topology(
+                    "straight-skeleton wavefront cycle exceeded its edge inventory".into(),
+                ));
+            }
+        }
+        contours.push(Contour2::try_new_with_fill_rule(
+            segments,
+            source.fill_rule(),
+        )?);
+    }
+    Ok(Classification::Decided(contours))
 }
 
 #[derive(Clone, Debug)]
@@ -1873,25 +2145,7 @@ impl Contour2 {
             }
         }
 
-        let mut supports = Vec::with_capacity(source_edge_count);
-        for (source_edge, line) in lines.iter().enumerate() {
-            let (dx, dy) = line.delta();
-            let length = (&dx * &dx + &dy * &dy).sqrt()?;
-            let (raw_normal_x, raw_normal_y) = match orientation {
-                RealSign::Positive => (-dy, dx),
-                RealSign::Negative => (dy, -dx),
-                RealSign::Zero => unreachable!(),
-            };
-            let normal_x = (raw_normal_x / &length)?;
-            let normal_y = (raw_normal_y / length)?;
-            let constant = &normal_x * line.start().x() + &normal_y * line.start().y();
-            supports.push(MovingSupport2 {
-                source_edge,
-                normal_x,
-                normal_y,
-                constant,
-            });
-        }
+        let supports = moving_line_supports(&lines, orientation)?;
 
         let result = if has_reflex_vertex || has_flat_vertex {
             build_general_line_straight_skeleton(&supports, &lines, orientation, policy)
@@ -1922,6 +2176,75 @@ impl Contour2 {
                 }
             }
         })
+    }
+
+    /// Returns the exact positive-time line wavefront as ordinary closed contours.
+    ///
+    /// The straight-skeleton graph is the sole topology authority: every graph
+    /// bisector that crosses `distance` contributes one live wavefront vertex,
+    /// and vertices are paired on their authored moving supports. Split events
+    /// retain distinct topology vertices even when their exact points coincide,
+    /// so a neck at its event time cannot accidentally reconnect the two output
+    /// cycles by Cartesian equality.
+    pub(crate) fn offset_left_line_wavefront_contours(
+        &self,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
+        let Some(area) = self.signed_area()? else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let orientation = match real_sign(&area, policy) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let distance_sign = match real_sign(&distance, policy) {
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Decided(vec![self.clone()]));
+            }
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        if distance_sign != orientation {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let time = match distance_sign {
+            RealSign::Positive => distance,
+            RealSign::Negative => -distance,
+            RealSign::Zero => unreachable!("zero distance returned above"),
+        };
+
+        let lines = self
+            .segments()
+            .iter()
+            .map(|segment| match segment {
+                Segment2::Line(line) => Some(line),
+                Segment2::Arc(_) => None,
+            })
+            .collect::<Option<Vec<_>>>();
+        let Some(lines) = lines else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let evidence = self.straight_skeleton(policy)?;
+        let Some(skeleton) = evidence.skeleton() else {
+            return Ok(Classification::Uncertain(evidence.blocker().map_or(
+                UncertaintyReason::Unsupported,
+                straight_skeleton_uncertainty,
+            )));
+        };
+        match compare_reals(&time, skeleton.maximum_time(), policy) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => {
+                return Ok(Classification::Decided(Vec::new()));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+
+        let supports = moving_line_supports(&lines, orientation)?;
+        line_wavefront_contours_at_time(self, &supports, skeleton, &time, policy)
     }
 
     fn co_circular_shape_preserving_skeleton(

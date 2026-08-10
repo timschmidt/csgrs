@@ -41837,9 +41837,7 @@ impl BezierParallel2 {
         else {
             return None;
         };
-        let Some(other_derivative) = other_derivatives.first() else {
-            return None;
-        };
+        let other_derivative = other_derivatives.first()?;
         match real_sign(
             &(parallel_derivative.dx() * other_derivative.dy()
                 - parallel_derivative.dy() * other_derivative.dx()),

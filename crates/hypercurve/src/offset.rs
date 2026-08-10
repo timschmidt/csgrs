@@ -8,18 +8,11 @@
 use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
-use crate::classify::{classify_oriented_line, compare_reals, is_zero, real_sign};
+use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::contour::{Contour2, FillRule};
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
-use crate::{
-    Classification, CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveRegion2,
-    CurveResult, ExactCurveError, ExactCurveResult, LineSide, Point2, UncertaintyReason,
-};
-
-fn exact_offset_error(cause: CurveError) -> ExactCurveError {
-    ExactCurveError::invalid(CurveOperation2::Offset, CurveFamily2::Line, cause)
-}
+use crate::{Classification, CurveContext, CurveError, CurveResult, Point2, UncertaintyReason};
 
 /// Corner construction for an exact signed region offset.
 ///
@@ -298,243 +291,6 @@ impl CurveString2 {
 }
 
 impl Contour2 {
-    /// Computes an exact miter erosion of a simple axis-aligned line contour.
-    ///
-    /// The source vertex coordinates and their `distance` translations induce
-    /// a finite rectangular arrangement. On every open cell, both source
-    /// containment and minimum L-infinity distance to the orthogonal boundary
-    /// are constant predicates. Retaining exactly the cells that are inside and
-    /// at least the erosion radius from every boundary segment handles neck
-    /// collapse and component splitting without a medial-axis approximation.
-    pub(crate) fn offset_left_orthogonal_line_erosion(
-        &self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<CurveRegion2>> {
-        let Some(area) = self.signed_area().map_err(exact_offset_error)? else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let area_sign = match real_sign(&area, policy) {
-            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Some(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        let distance_sign = match real_sign(&distance, policy) {
-            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Some(RealSign::Zero) => {
-                return CurveRegion2::try_from_native_contours_raw(
-                    vec![self.clone()],
-                    Vec::new(),
-                    policy,
-                )
-                .map(Classification::Decided);
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        if area_sign != distance_sign {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let radius = match distance_sign {
-            RealSign::Positive => distance,
-            RealSign::Negative => -distance,
-            RealSign::Zero => unreachable!("zero distance returned above"),
-        };
-
-        let mut source_x = Vec::with_capacity(self.len());
-        let mut source_y = Vec::with_capacity(self.len());
-        for segment in self.segments() {
-            let Segment2::Line(line) = segment else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let (dx, dy) = line.delta();
-            match (is_zero(&dx, policy), is_zero(&dy, policy)) {
-                (Some(true), Some(false)) | (Some(false), Some(true)) => {}
-                (Some(_), Some(_)) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-            source_x.push(line.start().x().clone());
-            source_y.push(line.start().y().clone());
-        }
-        let source_x = match sort_dedup_exact_reals(source_x, policy) {
-            Classification::Decided(values) => values,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let source_y = match sort_dedup_exact_reals(source_y, policy) {
-            Classification::Decided(values) => values,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let (Some(min_x), Some(max_x), Some(min_y), Some(max_y)) = (
-            source_x.first(),
-            source_x.last(),
-            source_y.first(),
-            source_y.last(),
-        ) else {
-            return Err(exact_offset_error(CurveError::EmptyCurveString));
-        };
-        let x_coordinates =
-            match orthogonal_erosion_coordinates(&source_x, min_x, max_x, &radius, policy) {
-                Classification::Decided(values) => values,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let y_coordinates =
-            match orthogonal_erosion_coordinates(&source_y, min_y, max_y, &radius, policy) {
-                Classification::Decided(values) => values,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-
-        let half = (Real::one() / Real::from(2_u8))
-            .map_err(|problem| exact_offset_error(problem.into()))?;
-        let mut cells = Vec::new();
-        for x_pair in x_coordinates.windows(2) {
-            for y_pair in y_coordinates.windows(2) {
-                let sample = Point2::new(
-                    (&x_pair[0] + &x_pair[1]) * &half,
-                    (&y_pair[0] + &y_pair[1]) * &half,
-                );
-                match self.classify_point(&sample, policy) {
-                    Classification::Decided(crate::ContourPointLocation::Inside) => {}
-                    Classification::Decided(
-                        crate::ContourPointLocation::Outside
-                        | crate::ContourPointLocation::Boundary,
-                    ) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                match point_is_at_least_orthogonal_boundary_distance(&sample, self, &radius, policy)
-                {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                cells.push(
-                    axis_aligned_offset_cell(
-                        x_pair[0].clone(),
-                        y_pair[0].clone(),
-                        x_pair[1].clone(),
-                        y_pair[1].clone(),
-                    )
-                    .map_err(exact_offset_error)?,
-                );
-            }
-        }
-
-        let mut result = CurveRegion2::empty();
-        for cell in cells {
-            let component =
-                CurveRegion2::try_from_native_contours_raw(vec![cell], Vec::new(), policy)?;
-            result = result
-                .boolean_region_raw(&component, crate::BooleanOp::Union, policy)
-                .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
-        }
-        Ok(Classification::Decided(result))
-    }
-
-    /// Computes the exact erosion of a certified convex line contour.
-    ///
-    /// Every source supporting line is shifted by `distance`, then all pairwise
-    /// shifted-line intersections are filtered against the complete set of
-    /// inward half-planes. The exact convex hull of the feasible vertices is
-    /// the eroded boundary. A point, segment, or infeasible intersection is an
-    /// empty two-dimensional result. Non-line, non-convex, self-contacting, or
-    /// predicate-undecidable sources remain explicit uncertainty so this helper
-    /// cannot silently stand in for general medial-axis pruning.
-    pub(crate) fn offset_left_convex_line_erosion(
-        &self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Self>>> {
-        let orientation = match certified_convex_line_orientation(self, policy)? {
-            Classification::Decided(Some(orientation)) => orientation,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let offset_lines = self
-            .segments()
-            .iter()
-            .map(|segment| match segment {
-                Segment2::Line(line) => line.offset_left(distance.clone()),
-                Segment2::Arc(_) => unreachable!("convex line certificate excludes arcs"),
-            })
-            .collect::<CurveResult<Vec<_>>>()?;
-
-        let mut feasible = Vec::new();
-        for first in 0..offset_lines.len() {
-            for second in first + 1..offset_lines.len() {
-                let candidate = match line_support_intersection(
-                    &offset_lines[first],
-                    &offset_lines[second],
-                    policy,
-                )? {
-                    Classification::Decided(Some(point)) => point,
-                    Classification::Decided(None) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match point_satisfies_convex_half_planes(
-                    &candidate,
-                    &offset_lines,
-                    [first, second],
-                    orientation,
-                    policy,
-                ) {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                match push_distinct_exact_point(&mut feasible, candidate, policy) {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        }
-
-        let mut hull = match exact_convex_hull(feasible, policy) {
-            Classification::Decided(hull) => hull,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if hull.len() < 3 {
-            return Ok(Classification::Decided(None));
-        }
-        if orientation == RealSign::Negative {
-            hull.reverse();
-        }
-        let segments = hull
-            .iter()
-            .zip(hull.iter().cycle().skip(1))
-            .take(hull.len())
-            .map(|(start, end)| LineSeg2::try_new(start.clone(), end.clone()).map(Segment2::Line))
-            .collect::<CurveResult<Vec<_>>>()?;
-        Self::try_new_with_fill_rule(segments, self.fill_rule())
-            .map(Some)
-            .map(Classification::Decided)
-    }
-
     /// Returns a left offset of this closed contour with straight-line joins.
     ///
     /// Line-line corners are mitered at the exact supporting-line intersection
@@ -594,6 +350,48 @@ impl Contour2 {
             .map(|offset| offset.retain_left_offset_from(self, distance, policy)))
     }
 
+    /// Decides whether the requested authored joins are represented exactly by
+    /// the line straight-skeleton wavefront.
+    ///
+    /// Convex contracting corners miter for every style, while a reflex corner
+    /// may request an arc, bevel, or limited-miter fallback. Only connected and
+    /// miter joins share the skeleton's moving-support boundary.
+    pub(crate) fn offset_left_uses_line_wavefront_joins(
+        &self,
+        distance: Real,
+        style: &OffsetCornerStyle2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if self
+            .segments()
+            .iter()
+            .any(|segment| matches!(segment, Segment2::Arc(_)))
+        {
+            return Ok(Classification::Decided(false));
+        }
+        let offsets = match offset_segments_left(self.segments(), &distance, policy)? {
+            Classification::Decided(offsets) => offsets,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        classified_offset_joins(
+            self.segments(),
+            &offsets,
+            true,
+            Some(style),
+            &distance,
+            policy,
+        )
+        .map(|classification| {
+            classification.map(|joins| {
+                joins
+                    .iter()
+                    .all(|join| matches!(join, OffsetJoin::Connected | OffsetJoin::Miter(_)))
+            })
+        })
+    }
+
     /// Returns a raw joined left offset, rejecting self-contacting output.
     ///
     /// This method does not trim self-intersections. It runs the joined offset
@@ -619,304 +417,6 @@ impl Contour2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
-    }
-}
-
-fn sort_dedup_exact_reals(values: Vec<Real>, policy: &CurveContext) -> Classification<Vec<Real>> {
-    let mut sorted = Vec::<Real>::new();
-    for value in values {
-        let mut insertion = sorted.len();
-        for (index, existing) in sorted.iter().enumerate() {
-            match compare_reals(&value, existing, policy) {
-                Some(Ordering::Less) => {
-                    insertion = index;
-                    break;
-                }
-                Some(Ordering::Equal) => {
-                    insertion = usize::MAX;
-                    break;
-                }
-                Some(Ordering::Greater) => {}
-                None => return Classification::Uncertain(UncertaintyReason::Ordering),
-            }
-        }
-        if insertion != usize::MAX {
-            sorted.insert(insertion, value);
-        }
-    }
-    Classification::Decided(sorted)
-}
-
-fn orthogonal_erosion_coordinates(
-    source: &[Real],
-    minimum: &Real,
-    maximum: &Real,
-    radius: &Real,
-    policy: &CurveContext,
-) -> Classification<Vec<Real>> {
-    let mut candidates = Vec::with_capacity(source.len() * 3);
-    for coordinate in source {
-        candidates.push(coordinate.clone());
-        candidates.push(coordinate - radius);
-        candidates.push(coordinate + radius);
-    }
-    let candidates = match sort_dedup_exact_reals(candidates, policy) {
-        Classification::Decided(values) => values,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let mut retained = Vec::new();
-    for candidate in candidates {
-        let above_minimum = compare_reals(&candidate, minimum, policy);
-        let below_maximum = compare_reals(&candidate, maximum, policy);
-        match (above_minimum, below_maximum) {
-            (Some(Ordering::Equal | Ordering::Greater), Some(Ordering::Equal | Ordering::Less)) => {
-                retained.push(candidate);
-            }
-            (Some(_), Some(_)) => {}
-            _ => return Classification::Uncertain(UncertaintyReason::Ordering),
-        }
-    }
-    Classification::Decided(retained)
-}
-
-fn point_is_at_least_orthogonal_boundary_distance(
-    point: &Point2,
-    contour: &Contour2,
-    radius: &Real,
-    policy: &CurveContext,
-) -> Classification<bool> {
-    for segment in contour.segments() {
-        let Segment2::Line(line) = segment else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let dx =
-            match distance_to_exact_interval(point.x(), line.start().x(), line.end().x(), policy) {
-                Classification::Decided(distance) => distance,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
-        let dy =
-            match distance_to_exact_interval(point.y(), line.start().y(), line.end().y(), policy) {
-                Classification::Decided(distance) => distance,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
-        let distance = match compare_reals(&dx, &dy, policy) {
-            Some(Ordering::Less) => dy,
-            Some(Ordering::Equal | Ordering::Greater) => dx,
-            None => return Classification::Uncertain(UncertaintyReason::Ordering),
-        };
-        match compare_reals(&distance, radius, policy) {
-            Some(Ordering::Less) => return Classification::Decided(false),
-            Some(Ordering::Equal | Ordering::Greater) => {}
-            None => return Classification::Uncertain(UncertaintyReason::Ordering),
-        }
-    }
-    Classification::Decided(true)
-}
-
-fn distance_to_exact_interval(
-    value: &Real,
-    first: &Real,
-    second: &Real,
-    policy: &CurveContext,
-) -> Classification<Real> {
-    let (minimum, maximum) = match compare_reals(first, second, policy) {
-        Some(Ordering::Less | Ordering::Equal) => (first, second),
-        Some(Ordering::Greater) => (second, first),
-        None => return Classification::Uncertain(UncertaintyReason::Ordering),
-    };
-    match (
-        compare_reals(value, minimum, policy),
-        compare_reals(value, maximum, policy),
-    ) {
-        (Some(Ordering::Less), Some(_)) => Classification::Decided(minimum - value),
-        (Some(_), Some(Ordering::Greater)) => Classification::Decided(value - maximum),
-        (Some(_), Some(_)) => Classification::Decided(Real::zero()),
-        _ => Classification::Uncertain(UncertaintyReason::Ordering),
-    }
-}
-
-fn axis_aligned_offset_cell(
-    min_x: Real,
-    min_y: Real,
-    max_x: Real,
-    max_y: Real,
-) -> CurveResult<Contour2> {
-    let lower_left = Point2::new(min_x.clone(), min_y.clone());
-    let lower_right = Point2::new(max_x.clone(), min_y);
-    let upper_right = Point2::new(max_x, max_y.clone());
-    let upper_left = Point2::new(min_x, max_y);
-    Contour2::try_new(vec![
-        Segment2::Line(LineSeg2::try_new(lower_left.clone(), lower_right.clone())?),
-        Segment2::Line(LineSeg2::try_new(lower_right, upper_right.clone())?),
-        Segment2::Line(LineSeg2::try_new(upper_right, upper_left.clone())?),
-        Segment2::Line(LineSeg2::try_new(upper_left, lower_left)?),
-    ])
-}
-
-fn certified_convex_line_orientation(
-    contour: &Contour2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<RealSign>>> {
-    if contour
-        .segments()
-        .iter()
-        .any(|segment| !matches!(segment, Segment2::Line(_)))
-    {
-        return Ok(Classification::Decided(None));
-    }
-    match contour.has_self_contacts(policy)? {
-        Classification::Decided(false) => {}
-        Classification::Decided(true) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    let Some(area) = contour.signed_area()? else {
-        return Ok(Classification::Decided(None));
-    };
-    let orientation = match real_sign(&area, policy) {
-        Some(RealSign::Positive) => RealSign::Positive,
-        Some(RealSign::Negative) => RealSign::Negative,
-        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-    for (previous, next) in contour
-        .segments()
-        .iter()
-        .zip(contour.segments().iter().cycle().skip(1))
-        .take(contour.segments().len())
-    {
-        let (Segment2::Line(previous), Segment2::Line(next)) = (previous, next) else {
-            unreachable!("line-family inventory was certified above");
-        };
-        let (previous_x, previous_y) = previous.delta();
-        let (next_x, next_y) = next.delta();
-        match real_sign(&cross(&previous_x, &previous_y, &next_x, &next_y), policy) {
-            Some(RealSign::Zero) => {}
-            Some(turn) if turn == orientation => {}
-            Some(RealSign::Positive | RealSign::Negative) => {
-                return Ok(Classification::Decided(None));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-    }
-    Ok(Classification::Decided(Some(orientation)))
-}
-
-fn point_satisfies_convex_half_planes(
-    point: &Point2,
-    lines: &[LineSeg2],
-    supporting_lines: [usize; 2],
-    orientation: RealSign,
-    policy: &CurveContext,
-) -> Classification<bool> {
-    for (index, line) in lines.iter().enumerate() {
-        // The candidate was constructed as the exact intersection of these
-        // two supports. Re-evaluating their determinants can obscure that
-        // construction behind an algebraically equivalent radical expression
-        // that `Real` conservatively declines to prove zero.
-        if supporting_lines.contains(&index) {
-            continue;
-        }
-        match line.classify_point(point, policy) {
-            Classification::Decided(LineSide::On) => {}
-            Classification::Decided(LineSide::Left) if orientation == RealSign::Positive => {}
-            Classification::Decided(LineSide::Right) if orientation == RealSign::Negative => {}
-            Classification::Decided(LineSide::Left | LineSide::Right) => {
-                return Classification::Decided(false);
-            }
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-    Classification::Decided(true)
-}
-
-fn push_distinct_exact_point(
-    points: &mut Vec<Point2>,
-    candidate: Point2,
-    policy: &CurveContext,
-) -> Classification<()> {
-    for point in points.iter() {
-        match is_zero(&point.distance_squared(&candidate), policy) {
-            Some(true) => return Classification::Decided(()),
-            Some(false) => {}
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
-    }
-    points.push(candidate);
-    Classification::Decided(())
-}
-
-fn exact_convex_hull(
-    mut points: Vec<Point2>,
-    policy: &CurveContext,
-) -> Classification<Vec<Point2>> {
-    for index in 1..points.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let ordering = match compare_points_lexicographically(
-                &points[cursor],
-                &points[cursor - 1],
-                policy,
-            ) {
-                Some(ordering) => ordering,
-                None => return Classification::Uncertain(UncertaintyReason::Ordering),
-            };
-            if ordering != Ordering::Less {
-                break;
-            }
-            points.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    if points.len() < 3 {
-        return Classification::Decided(points);
-    }
-
-    let mut lower = Vec::new();
-    for point in &points {
-        match append_convex_hull_point(&mut lower, point.clone(), policy) {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-    let mut upper = Vec::new();
-    for point in points.iter().rev() {
-        match append_convex_hull_point(&mut upper, point.clone(), policy) {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-    lower.pop();
-    upper.pop();
-    lower.extend(upper);
-    Classification::Decided(lower)
-}
-
-fn append_convex_hull_point(
-    hull: &mut Vec<Point2>,
-    point: Point2,
-    policy: &CurveContext,
-) -> Classification<()> {
-    while hull.len() >= 2 {
-        match classify_oriented_line(&hull[hull.len() - 2], &hull[hull.len() - 1], &point, policy) {
-            Classification::Decided(LineSide::Left) => break,
-            Classification::Decided(LineSide::On | LineSide::Right) => {
-                hull.pop();
-            }
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-    hull.push(point);
-    Classification::Decided(())
-}
-
-fn compare_points_lexicographically(
-    first: &Point2,
-    second: &Point2,
-    policy: &CurveContext,
-) -> Option<Ordering> {
-    match compare_reals(first.x(), second.x(), policy)? {
-        Ordering::Equal => compare_reals(first.y(), second.y(), policy),
-        ordering => Some(ordering),
     }
 }
 
@@ -1315,29 +815,13 @@ fn joined_offset_segments(
         ));
     }
 
-    let join_count = if closed {
-        offsets.len()
-    } else {
-        offsets.len().saturating_sub(1)
-    };
-    let mut joins = Vec::with_capacity(join_count);
-    for index in 0..join_count {
-        let next_index = (index + 1) % offsets.len();
-        match classify_offset_join(
-            &source[index],
-            &source[next_index],
-            &offsets[index],
-            &offsets[next_index],
-            corner_style,
-            distance,
-            policy,
-        )? {
-            Classification::Decided(join) => joins.push(join),
+    let joins =
+        match classified_offset_joins(source, offsets, closed, corner_style, distance, policy)? {
+            Classification::Decided(joins) => joins,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    }
+        };
 
-    let mut joined = Vec::with_capacity(offsets.len() + join_count);
+    let mut joined = Vec::with_capacity(offsets.len() + joins.len());
     for index in 0..offsets.len() {
         let start_override = start_miter_for_segment(index, offsets.len(), closed, &joins);
         let end_override = end_miter_for_segment(index, &joins);
@@ -1376,6 +860,38 @@ fn joined_offset_segments(
     }
 
     Ok(Classification::Decided(joined))
+}
+
+fn classified_offset_joins(
+    source: &[Segment2],
+    offsets: &[Segment2],
+    closed: bool,
+    corner_style: Option<&OffsetCornerStyle2>,
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<OffsetJoin>>> {
+    let join_count = if closed {
+        offsets.len()
+    } else {
+        offsets.len().saturating_sub(1)
+    };
+    let mut joins = Vec::with_capacity(join_count);
+    for index in 0..join_count {
+        let next_index = (index + 1) % offsets.len();
+        match classify_offset_join(
+            &source[index],
+            &source[next_index],
+            &offsets[index],
+            &offsets[next_index],
+            corner_style,
+            distance,
+            policy,
+        )? {
+            Classification::Decided(join) => joins.push(join),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    Ok(Classification::Decided(joins))
 }
 
 fn classify_offset_join(
