@@ -50937,7 +50937,7 @@ mod conversion_tests {
             };
             assert_eq!(chord.start(), &start);
             assert_eq!(chord.end(), &end);
-            assert_eq!(chord.policy(), policy);
+            assert_eq!(chord.policy(), policy.retained_object_policy());
             assert!(matches!(
                 chord.conservative_bounds(&policy).unwrap(),
                 Classification::Decided(_)
