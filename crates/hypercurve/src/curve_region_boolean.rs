@@ -10,7 +10,7 @@ use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
     BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
     BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
-    BezierAlgebraicCuspSemicircleSelectedFiberRationalContact2,
+    BezierAlgebraicCuspSemicircleSelectedFiberContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
 };
 use crate::bezier_offset::{
@@ -9061,7 +9061,7 @@ const fn orient_tangent_cross_sign(sign: RealSign, source_is_first: bool) -> Rea
 
 #[cfg(feature = "predicates")]
 fn selected_fiber_cusp_contacts_result(
-    contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalContact2>,
+    contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
     cusp_is_first: bool,
 ) -> RegionPairResult {
     let contacts = contacts
