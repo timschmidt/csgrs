@@ -663,7 +663,7 @@ fn project_curve_region_loop_to_curve_path(
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::SelectedFiberRational(_) => return Ok(None),
+            BezierSplitFragment2::SelectedFiber(_) => return Ok(None),
         };
         subcurves.push(curve);
     }
@@ -868,10 +868,9 @@ fn project_curve_region_loop(
                 ));
             }
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::SelectedFiberRational(_) => {
+            BezierSplitFragment2::SelectedFiber(_) => {
                 return Err(CurveError::Topology(
-                    "finite projection of selected-fiber rational fragments is not implemented"
-                        .into(),
+                    "finite projection of selected-fiber fragments is not implemented".into(),
                 ));
             }
         }

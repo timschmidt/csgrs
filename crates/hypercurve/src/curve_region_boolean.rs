@@ -20,7 +20,7 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
 #[cfg(feature = "predicates")]
-use crate::bezier_split::BezierSelectedFiberRationalFragment2;
+use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
@@ -3293,25 +3293,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         first,
                     )
                 };
-                let (Some(parallel_start), Some(parallel_end)) = (
+                let intersections = match match (
                     parallel_carrier.start.as_bezier_parameter(),
                     parallel_carrier.end.as_bezier_parameter(),
-                ) else {
-                    return Err(self.invalid(
-                        pair.first_carrier_index,
-                        CurveError::Topology(
-                            "analytic parallel carrier did not retain Bezier parameters".into(),
-                        ),
-                    ));
-                };
-                let parallel_range = BezierParameterRange2::new_validated(
-                    parallel_start.clone(),
-                    parallel_end.clone(),
-                );
-                let intersections = match cusp
-                    .semicircle()
-                    .parallel_intersections_in_range(parallel, &parallel_range, &self.data.policy)
-                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                ) {
+                    (Some(start), Some(end)) => cusp.semicircle().parallel_intersections_in_range(
+                        parallel,
+                        &BezierParameterRange2::new_validated(start.clone(), end.clone()),
+                        &self.data.policy,
+                    ),
+                    // A selected-fiber carrier still uses the analytic
+                    // parallel's authored parameterization. Solve its complete
+                    // support and let the generic carrier-range predicate
+                    // retain only contacts inside the compact local interval.
+                    _ => cusp
+                        .semicircle()
+                        .parallel_intersections(parallel, &self.data.policy),
+                }
+                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
                     Classification::Decided(result) => result,
                     Classification::Uncertain(reason) => {
@@ -5210,7 +5209,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
             #[cfg(feature = "predicates")]
-            BezierSplitFragment2::SelectedFiberRational(_) => None,
+            BezierSplitFragment2::SelectedFiber(_) => None,
         };
         // Retained circular-conic provenance is a construction certificate for
         // a proper rational parametrization of a nondegenerate minor arc.
@@ -7025,12 +7024,22 @@ fn build_region_carrier(
             fragment.is_reversed(),
         ),
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(fragment) => (
-            RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(fragment.curve().clone())),
-            fragment.range().start().clone(),
-            fragment.range().end().clone(),
-            fragment.is_reversed(),
-        ),
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let geometry = match fragment.source() {
+                BezierSelectedFiberSource2::Rational(curve) => {
+                    RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve.clone()))
+                }
+                BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+                    RegionCarrierGeometry::AnalyticParallel(parallel.clone())
+                }
+            };
+            (
+                geometry,
+                fragment.range().start().clone(),
+                fragment.range().end().clone(),
+                fragment.is_reversed(),
+            )
+        }
     };
     if matches!(
         fragment,
@@ -7106,7 +7115,7 @@ fn split_carrier_with_refinement(
         .iter()
         .any(|event| event.parameter.is_selected_fiber())
     {
-        return split_selected_fiber_rational_carrier(carrier, events, contact_points, policy);
+        return split_selected_fiber_carrier(carrier, events, contact_points, policy);
     }
     if let RegionCarrierGeometry::AnalyticParallel(parallel) = &carrier.geometry {
         return split_analytic_carrier(carrier, parallel, events, max_refinement_steps, policy);
@@ -7192,7 +7201,7 @@ fn split_carrier_with_refinement(
 #[cfg(feature = "predicates")]
 fn selected_fiber_event_point(
     event: &CarrierEvent,
-    curve: &RationalBezier2,
+    source: &BezierSelectedFiberSource2,
     contact_points: &[ContactVertex],
     policy: &CurveContext,
 ) -> Result<RationalBezierIntersectionPointEvidence2, CurveError> {
@@ -7204,43 +7213,58 @@ fn selected_fiber_event_point(
     {
         return Ok(point);
     }
-    if let Some(parameter) = event.parameter.as_bezier_parameter()
-        && let Some(exact) = parameter.as_exact()
-    {
-        if compare_reals(exact, &Real::zero(), policy) == Some(Ordering::Equal) {
-            return Ok(RationalBezierIntersectionPointEvidence2::Exact(
-                curve.start().clone(),
-            ));
+    let parameter = event.parameter.as_bezier_parameter().ok_or_else(|| {
+        CurveError::Topology("a selected-fiber boundary lost its exact point evidence".into())
+    })?;
+    match source {
+        BezierSelectedFiberSource2::Rational(curve) => {
+            exact_contact_point_evidence(curve, parameter, policy)?.ok_or_else(|| {
+                CurveError::Topology(
+                    "a selected-fiber rational boundary could not retain its exact point".into(),
+                )
+            })
         }
-        if compare_reals(exact, &Real::one(), policy) == Some(Ordering::Equal) {
-            return Ok(RationalBezierIntersectionPointEvidence2::Exact(
-                curve.end().clone(),
-            ));
+        BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+            if let Some(parameter) = parameter.as_exact() {
+                return match parallel.point_at(parameter, policy)? {
+                    Classification::Decided(point) => {
+                        Ok(RationalBezierIntersectionPointEvidence2::Exact(point))
+                    }
+                    Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                        "selected-fiber analytic endpoint evaluation remained uncertain: {reason:?}"
+                    ))),
+                };
+            }
+            Ok(RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                crate::BezierAnalyticParallelPoint2::new(
+                    parallel.clone(),
+                    parameter.clone(),
+                    policy,
+                ),
+            ))
         }
     }
-    Err(CurveError::Topology(
-        "a selected-fiber rational boundary lost its exact point evidence".into(),
-    ))
 }
 
 #[cfg(feature = "predicates")]
-fn split_selected_fiber_rational_carrier(
+fn split_selected_fiber_carrier(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
     contact_points: &[ContactVertex],
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
-    let source = match carrier.geometry.exact_rational_component(policy)? {
-        Classification::Decided(Some(source)) => source,
-        Classification::Decided(None) => {
-            return Err(CurveError::Topology(
-                "a selected-fiber boundary lost its exact rational component".into(),
-            ));
+    let source = match &carrier.geometry {
+        RegionCarrierGeometry::Bezier(curve) => {
+            BezierSelectedFiberSource2::Rational(RationalBezier2::try_from_subcurve(curve)?)
         }
-        Classification::Uncertain(reason) => {
-            return Err(CurveError::Topology(format!(
-                "selected-fiber boundary rationalization remained uncertain: {reason:?}"
-            )));
+        RegionCarrierGeometry::AnalyticParallel(parallel) => {
+            BezierSelectedFiberSource2::AnalyticParallel(parallel.clone())
+        }
+        RegionCarrierGeometry::AlgebraicChord(_)
+        | RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => {
+            return Err(CurveError::Topology(
+                "a selected-fiber boundary reached an incompatible carrier".into(),
+            ));
         }
     };
     let mut boundaries = events.to_vec();
@@ -7254,7 +7278,7 @@ fn split_selected_fiber_rational_carrier(
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Err(CurveError::Topology(format!(
-                        "selected-fiber rational split ordering remained uncertain: {reason:?}"
+                        "selected-fiber split ordering remained uncertain: {reason:?}"
                     )));
                 }
             };
@@ -7276,12 +7300,12 @@ fn split_selected_fiber_rational_carrier(
             Classification::Decided(Ordering::Equal) => continue,
             Classification::Decided(Ordering::Greater) => {
                 return Err(CurveError::Topology(
-                    "selected-fiber rational split boundaries are not increasing".into(),
+                    "selected-fiber split boundaries are not increasing".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
                 return Err(CurveError::Topology(format!(
-                    "selected-fiber rational split interval remained uncertain: {reason:?}"
+                    "selected-fiber split interval remained uncertain: {reason:?}"
                 )));
             }
         }
@@ -7292,17 +7316,15 @@ fn split_selected_fiber_rational_carrier(
         let start_point = selected_fiber_event_point(&pair[0], &source, contact_points, policy)?;
         let end_point = selected_fiber_event_point(&pair[1], &source, contact_points, policy)?;
         output.push(SplitCarrierFragment {
-            fragment: BezierSplitFragment2::SelectedFiberRational(
-                BezierSelectedFiberRationalFragment2::new(
-                    source.clone(),
-                    CurveRegionParameterRange2::new_validated(
-                        pair[0].parameter.clone(),
-                        pair[1].parameter.clone(),
-                    ),
-                    start_point,
-                    end_point,
+            fragment: BezierSplitFragment2::SelectedFiber(BezierSelectedFiberFragment2::new(
+                source.clone(),
+                CurveRegionParameterRange2::new_validated(
+                    pair[0].parameter.clone(),
+                    pair[1].parameter.clone(),
                 ),
-            ),
+                start_point,
+                end_point,
+            )),
             start_topology_vertex: pair[0].topology_vertex,
             end_topology_vertex: pair[1].topology_vertex,
         });
@@ -9884,7 +9906,7 @@ fn fragment_range(
         BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(_) => None,
+        BezierSplitFragment2::SelectedFiber(_) => None,
     }
 }
 

@@ -21,6 +21,8 @@ use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
 #[cfg(feature = "predicates")]
+use crate::Aabb2;
+#[cfg(feature = "predicates")]
 use crate::RationalBezierIntersectionPointEvidence2;
 #[cfg(feature = "predicates")]
 use crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2;
@@ -358,16 +360,29 @@ pub struct BezierParallelFragment2 {
     reversed: bool,
 }
 
-/// One exact rational-curve fragment bounded by scalar roots retained in a
-/// selected algebraic fiber.
+/// Native carrier retained by a selected-fiber fragment.
+///
+/// Selected roots are a property of the parameter boundary, not of the curve
+/// family. Keeping the source in one compact enum lets rational and genuinely
+/// analytic parallels share one split/traversal owner without rationalizing or
+/// fitting the latter.
+#[cfg(feature = "predicates")]
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum BezierSelectedFiberSource2 {
+    Rational(RationalBezier2),
+    AnalyticParallel(BezierParallel2),
+}
+
+/// One exact curve fragment bounded by scalar roots retained in a selected
+/// algebraic fiber.
 ///
 /// The native curve stays in its authored parameterization. Its compact local
 /// range and endpoint evidence avoid both a global norm polynomial and an
 /// approximate split construction.
 #[cfg(feature = "predicates")]
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierSelectedFiberRationalFragment2 {
-    curve: RationalBezier2,
+pub struct BezierSelectedFiberFragment2 {
+    source: BezierSelectedFiberSource2,
     range: CurveRegionParameterRange2,
     reversed: bool,
     start_point: RationalBezierIntersectionPointEvidence2,
@@ -424,9 +439,9 @@ pub enum BezierSplitFragment2 {
     /// independent selected roots and therefore deliberately remain compact
     /// predicate evidence instead of an artificial primitive-element scalar.
     AlgebraicCuspSemicircle(BezierAlgebraicCuspSemicircleFragment2),
-    /// Exact rational carrier restricted by selected-fiber scalar roots.
+    /// Exact rational or analytic carrier restricted by selected-fiber scalar roots.
     #[cfg(feature = "predicates")]
-    SelectedFiberRational(BezierSelectedFiberRationalFragment2),
+    SelectedFiber(BezierSelectedFiberFragment2),
     /// At least one boundary is algebraic and must be carried forward.
     Unresolved {
         /// Start split boundary in the original parameter space.
@@ -497,7 +512,7 @@ impl BezierSplitFragment2 {
             }
             Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => None,
             #[cfg(feature = "predicates")]
-            Self::SelectedFiberRational(_) => None,
+            Self::SelectedFiber(_) => None,
         }
     }
 
@@ -522,21 +537,21 @@ impl BezierSplitFragment2 {
                 CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             ),
             #[cfg(feature = "predicates")]
-            Self::SelectedFiberRational(fragment) => fragment.range.clone(),
+            Self::SelectedFiber(fragment) => fragment.range.clone(),
         }
     }
 }
 
 #[cfg(feature = "predicates")]
-impl BezierSelectedFiberRationalFragment2 {
+impl BezierSelectedFiberFragment2 {
     pub(crate) fn new(
-        curve: RationalBezier2,
+        source: BezierSelectedFiberSource2,
         range: CurveRegionParameterRange2,
         start_point: RationalBezierIntersectionPointEvidence2,
         end_point: RationalBezierIntersectionPointEvidence2,
     ) -> Self {
         Self {
-            curve,
+            source,
             range,
             reversed: false,
             start_point,
@@ -544,8 +559,22 @@ impl BezierSelectedFiberRationalFragment2 {
         }
     }
 
-    pub(crate) const fn curve(&self) -> &RationalBezier2 {
-        &self.curve
+    pub(crate) const fn source(&self) -> &BezierSelectedFiberSource2 {
+        &self.source
+    }
+
+    pub(crate) const fn rational_curve(&self) -> Option<&RationalBezier2> {
+        match &self.source {
+            BezierSelectedFiberSource2::Rational(curve) => Some(curve),
+            BezierSelectedFiberSource2::AnalyticParallel(_) => None,
+        }
+    }
+
+    pub(crate) const fn analytic_parallel(&self) -> Option<&BezierParallel2> {
+        match &self.source {
+            BezierSelectedFiberSource2::Rational(_) => None,
+            BezierSelectedFiberSource2::AnalyticParallel(parallel) => Some(parallel),
+        }
     }
 
     pub(crate) const fn range(&self) -> &CurveRegionParameterRange2 {
@@ -586,7 +615,28 @@ impl BezierSelectedFiberRationalFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        Ok(self.curve.point_at_classified(&parameter, policy))
+        match &self.source {
+            BezierSelectedFiberSource2::Rational(curve) => {
+                Ok(curve.point_at_classified(&parameter, policy))
+            }
+            BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+                parallel.point_at(&parameter, policy)
+            }
+        }
+    }
+
+    pub(crate) fn conservative_bounds(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Aabb2>> {
+        match &self.source {
+            BezierSelectedFiberSource2::Rational(curve) => {
+                Ok(curve.certified_bounds_classified(policy))
+            }
+            BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+                parallel.conservative_bounds(policy)
+            }
+        }
     }
 
     fn reversed(&self) -> Self {
@@ -1102,7 +1152,7 @@ impl BezierSplitFragment2 {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
             #[cfg(feature = "predicates")]
-            Self::SelectedFiberRational(fragment) => fragment.representative_point(policy),
+            Self::SelectedFiber(fragment) => fragment.representative_point(policy),
             Self::AlgebraicEndpointImages {
                 start,
                 end,
@@ -1160,9 +1210,7 @@ impl BezierSplitFragment2 {
                 Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
             }
             #[cfg(feature = "predicates")]
-            Self::SelectedFiberRational(fragment) => {
-                Ok(Self::SelectedFiberRational(fragment.reversed()))
-            }
+            Self::SelectedFiber(fragment) => Ok(Self::SelectedFiber(fragment.reversed())),
             Self::Unresolved { .. } => Err(CurveError::Topology(
                 "reversing an unresolved Bezier split fragment requires endpoint evidence"
                     .to_owned(),
@@ -1289,9 +1337,9 @@ fn validate_bezier_split_fragment(
             ));
         }
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(_) => {
+        BezierSplitFragment2::SelectedFiber(_) => {
             return Err(CurveError::Topology(
-                "selected-fiber rational fragments are region carriers, not native Bezier split materialization"
+                "selected-fiber fragments are region carriers, not native Bezier split materialization"
                     .into(),
             ));
         }
@@ -1357,7 +1405,7 @@ fn bezier_split_fragment_range(
             "retained region carrier has a distinct local parameter domain".into(),
         )),
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(_) => Err(CurveError::Topology(
+        BezierSplitFragment2::SelectedFiber(_) => Err(CurveError::Topology(
             "retained region carrier has a distinct local parameter domain".into(),
         )),
     }

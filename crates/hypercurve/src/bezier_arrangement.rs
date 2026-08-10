@@ -556,7 +556,7 @@ fn validate_arrangement_fragment_source_range(
             fragment.validate_policy(policy)?;
         }
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+        BezierSplitFragment2::SelectedFiber(fragment) => {
             match fragment
                 .range()
                 .start()
@@ -567,12 +567,12 @@ fn validate_arrangement_fragment_source_range(
                     std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
                 ) => {
                     return Err(CurveError::Topology(
-                        "selected-fiber rational arrangement range was not increasing".into(),
+                        "selected-fiber arrangement range was not increasing".into(),
                     ));
                 }
                 Classification::Uncertain(reason) => {
                     return Err(CurveError::Topology(format!(
-                        "selected-fiber rational arrangement range remained uncertain: {reason:?}"
+                        "selected-fiber arrangement range remained uncertain: {reason:?}"
                     )));
                 }
             }
@@ -823,7 +823,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+        BezierSplitFragment2::SelectedFiber(fragment) => {
             let (
                 crate::RationalBezierIntersectionPointEvidence2::Exact(start),
                 crate::RationalBezierIntersectionPointEvidence2::Exact(end),
@@ -1085,7 +1085,7 @@ fn materialized_endpoint_data(
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(_) => None,
+        BezierSplitFragment2::SelectedFiber(_) => None,
     }
 }
 
@@ -1283,7 +1283,7 @@ fn retained_endpoint_data(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
         #[cfg(feature = "predicates")]
-        BezierSplitFragment2::SelectedFiberRational(_) => Some(Classification::Decided(
+        BezierSplitFragment2::SelectedFiber(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
         BezierSplitFragment2::Unresolved { .. } => None,

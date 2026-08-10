@@ -62832,6 +62832,187 @@ mod conversion_tests {
 
     #[cfg(feature = "predicates")]
     #[test]
+    #[ignore = "long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build"]
+    fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let support = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(2, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let target = QuadraticBezier2::new(
+            Point2::new(
+                (Real::from(-7_i8) / Real::from(10_i8)).unwrap(),
+                (Real::from(-13_i8) / Real::from(5_i8)).unwrap(),
+            ),
+            Point2::new(
+                (Real::from(-1_i8) / Real::from(5_i8)).unwrap(),
+                (Real::from(-3_i8) / Real::from(5_i8)).unwrap(),
+            ),
+            Point2::new(
+                (Real::from(23_i8) / Real::from(10_i8)).unwrap(),
+                (Real::from(7_i8) / Real::from(5_i8)).unwrap(),
+            ),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                target.exact_rational_parallel_component(&policy).unwrap(),
+                Classification::Decided(None),
+            ));
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::one(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected-center polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()
+            else {
+                panic!("the selected-center interval must construct");
+            };
+            let Classification::Decided(center_parameter) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the selected center must isolate");
+            };
+            let Classification::Decided(Some(first_half)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    support.clone(),
+                    BezierParameter2::Algebraic(center_parameter),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected circle must construct");
+            };
+            let selected_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(first_half.clone(), &policy),
+                    ),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(
+                        BezierAlgebraicCuspSemicircleFragment2::full(
+                            first_half.complementary_half(),
+                            &policy,
+                        ),
+                    ),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let selected_region = CurveRegion2::try_new_with_loop_topology(
+                vec![selected_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+
+            // The rational tangent charts u=10/19 and u=9/19 give exact unit
+            // normals at these two nearby parameters. The narrow retained
+            // range discards unrelated full-carrier projection roots before
+            // their expensive selected-branch replay while keeping t=1/2
+            // strictly interior.
+            let target_start_parameter = (Real::from(83_i16) / Real::from(190_i16)).unwrap();
+            let target_end_parameter = (Real::from(389_i16) / Real::from(684_i16)).unwrap();
+            let Classification::Decided(target_fragment) = BezierParallelFragment2::try_new(
+                target.clone(),
+                BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(target_start_parameter.clone()),
+                    BezierParameter2::Exact(target_end_parameter.clone()),
+                ),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the genuinely analytic target must remain regular");
+            };
+            let Classification::Decided(target_start) =
+                target.point_at(&target_start_parameter, &policy).unwrap()
+            else {
+                panic!("the target start must be represented");
+            };
+            let Classification::Decided(target_end) =
+                target.point_at(&target_end_parameter, &policy).unwrap()
+            else {
+                panic!("the target end must be represented");
+            };
+            let line_fragment = |start, end| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(start, end).unwrap(),
+                )),
+            };
+            let upper_right = Point2::from_values(4, 3);
+            let lower_right = Point2::from_values(4, -3);
+            let target_boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AnalyticParallel(target_fragment),
+                    line_fragment(target_end, upper_right.clone()),
+                    line_fragment(upper_right, lower_right.clone()),
+                    line_fragment(lower_right, target_start),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let target_region = CurveRegion2::try_new_with_loop_topology(
+                vec![target_boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Right],
+            )
+            .unwrap();
+
+            let evidence = selected_region
+                .intersect_region(&target_region, &policy)
+                .expect("a selected circle must intersect a genuinely analytic region")
+                .into_value();
+            assert!(evidence.blockers().is_empty());
+            assert!(evidence.contacts().iter().any(|contact| {
+                contact.first_parameter().is_algebraic_cusp()
+                    && contact.second_parameter().is_selected_fiber()
+            }));
+
+            let booleans = selected_region
+                .boolean_regions(&target_region, &policy)
+                .expect("selected-fiber analytic contacts must complete Boolean topology")
+                .into_value();
+            assert!(!booleans.union().is_empty());
+            assert!(!booleans.intersection().is_empty());
+            assert!(!booleans.difference().is_empty());
+            assert!(!booleans.xor().is_empty());
+            assert!(
+                [
+                    booleans.union(),
+                    booleans.intersection(),
+                    booleans.difference(),
+                    booleans.xor(),
+                ]
+                .into_iter()
+                .flat_map(|region| region.boundary_loops())
+                .flat_map(CurveRegionBoundaryLoop2::fragments)
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::SelectedFiber(fragment)
+                        if fragment.analytic_parallel().is_some()
+                )),
+                "Boolean output must retain the authored analytic selected-fiber carrier"
+            );
+        }
+    }
+
+    #[cfg(feature = "predicates")]
+    #[test]
     fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let support = QuadraticBezier2::new(

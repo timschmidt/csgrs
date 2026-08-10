@@ -3499,7 +3499,7 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
-                BezierSplitFragment2::SelectedFiberRational(_) => "selected-rational",
+                BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
                 BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
@@ -3646,7 +3646,7 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
-                BezierSplitFragment2::SelectedFiberRational(_) => "selected-rational",
+                BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
                 BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
