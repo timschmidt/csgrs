@@ -2475,7 +2475,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
         else {
             return Ok(blocker(UncertaintyReason::Unsupported));
         };
-        let Some((direction_x, direction_y)) = chord.certified_unit_tangent() else {
+        let mut authored_direction = None;
+        for contact in chord.parallel_tangent_contacts() {
+            let tangent = match contact
+                .parallel()
+                .source_tangent_at(contact.parameter(), &self.data.policy)
+                .map_err(|cause| self.invalid(chord_index, cause))?
+            {
+                Classification::Decided(tangent) => tangent,
+                Classification::Uncertain(_) => continue,
+            };
+            authored_direction = Some(if contact.parallel_fragment_reversed() {
+                (-tangent.0, -tangent.1)
+            } else {
+                tangent
+            });
+            break;
+        }
+        let Some((direction_x, direction_y)) =
+            authored_direction.or_else(|| chord.certified_unit_tangent())
+        else {
             return Ok(blocker(UncertaintyReason::Unsupported));
         };
         let directed_line = LineSeg2::try_new(
@@ -3356,7 +3375,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                         axis_chord.start(),
                                         endpoint,
                                         constant_axis,
-                                        &self.data.policy,
+                                        &self.data.policy.strict_counterpart(),
                                     )
                                     .map_err(|cause| self.invalid(chord_index, cause))?
                                     {
@@ -5510,16 +5529,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
             contact_candidates: _,
             transverse_contacts: all_transverse_contacts,
             transverse_vertices: all_transverse_vertices,
-            reclassification_vertices,
+            mut reclassification_vertices,
         } = self.build_split_topology()?;
         let mut transverse_vertices = vec![false; all_transverse_vertices.len()];
         let transverse_contacts = all_transverse_contacts
             .into_iter()
             .filter_map(|(vertex, contact)| {
-                contact.interior_on_both_carriers.then(|| {
+                if contact.interior_on_both_carriers {
                     transverse_vertices[vertex] = true;
-                    (vertex, contact)
-                })
+                    Some((vertex, contact))
+                } else {
+                    // At a carrier endpoint the adjacent authored branch, not
+                    // this individual carrier tangent, determines which side
+                    // crosses. Stop run propagation and classify the next
+                    // open fragment directly instead of silently carrying the
+                    // pre-contact face label through a certified crossing.
+                    reclassification_vertices[vertex] = true;
+                    None
+                }
             })
             .collect();
         let mut classified_split_fragments = split_fragments
@@ -8156,13 +8183,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     return Ok(None);
                 }
-                match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                    first.start().clone(),
-                    second.end().clone(),
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(0, cause))?
+                let merged = if let Some(chord) = first
+                    .merge_certified_collinear_forward(second, &self.data.policy)
+                    .map_err(|cause| self.invalid(0, cause))?
                 {
+                    Classification::Decided(chord)
+                } else {
+                    crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                        first.start().clone(),
+                        second.end().clone(),
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(0, cause))?
+                };
+                match merged {
                     Classification::Decided(chord) => {
                         Ok(Some(BezierSplitFragment2::AlgebraicChord(chord)))
                     }
@@ -8350,6 +8384,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     holes.push(contour);
                 }
                 Some(Ordering::Equal) => {
+                    if affine_contour_is_exact_zero_chain(&contour) {
+                        reduced_fragment_count = true;
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-boolean",
+                            "discard-exact-zero-affine-chain",
+                        );
+                        continue;
+                    }
                     return Err(self.invalid(
                         0,
                         CurveError::Topology(
@@ -8391,65 +8435,43 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let classification = if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
             {
                 // Complete pair replay guarantees that an open split fragment
-                // cannot change faces. Exact and single-field endpoints are
-                // the cheapest witnesses. Correlated endpoints instead prefer
-                // an interior support point: refining an endpoint and then
-                // classifying the center of its tiny box manufactures a
-                // near-boundary query whose cost grows with the refinement.
+                // cannot change faces. Its interior support point is the
+                // authoritative face witness; endpoints can coincide with
+                // contacts or retained overlaps and are only a fallback when
+                // that interior representation is unavailable.
                 let classify_interior = || {
-                    Ok(
-                        match chord
-                            .representative_point(&self.data.policy)
-                            .map_err(|cause| self.invalid(carrier_index, cause))?
-                        {
-                            Classification::Decided(
-                                RationalBezierIntersectionPointEvidence2::Exact(point),
-                            ) => other
-                                .classify_point_raw(&point, &self.data.policy)
-                                .map_err(|cause| self.invalid(carrier_index, cause))?,
-                            Classification::Decided(
-                                RationalBezierIntersectionPointEvidence2::Algebraic(point),
-                            ) => other
-                                .classify_algebraic_point_off_boundary_raw(
-                                    &point,
-                                    &self.data.policy,
-                                )
-                                .map_err(|cause| self.invalid(carrier_index, cause))?,
-                            Classification::Decided(
-                                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
-                                    _,
-                                )
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                                | RationalBezierIntersectionPointEvidence2::Similarity(_),
-                            ) => Classification::Uncertain(UncertaintyReason::Unsupported),
-                            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                        },
-                    )
-                };
-                let has_correlated_endpoint =
-                    [chord.start(), chord.end()].into_iter().any(|point| {
-                        matches!(
-                            point,
+                    let representative = chord
+                        .representative_point(&self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    let classification = match representative {
+                        Classification::Decided(
+                            RationalBezierIntersectionPointEvidence2::Exact(point),
+                        ) => other
+                            .classify_point_raw(&point, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?,
+                        Classification::Decided(
+                            RationalBezierIntersectionPointEvidence2::Algebraic(point),
+                        ) => other
+                            .classify_algebraic_point_off_boundary_raw(&point, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?,
+                        Classification::Decided(
                             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                        )
-                    });
-                let mut interior_classification = None;
-                if has_correlated_endpoint {
-                    let classification = classify_interior()?;
-                    if let Classification::Decided(
-                        location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
-                    ) = classification
-                    {
-                        return Ok(location);
-                    }
-                    interior_classification = Some(classification);
+                            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                            | RationalBezierIntersectionPointEvidence2::Similarity(_),
+                        ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    };
+                    Ok(classification)
+                };
+                let interior_classification = classify_interior()?;
+                if let Classification::Decided(
+                    location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
+                ) = interior_classification
+                {
+                    return Ok(location);
                 }
                 let endpoint_classification =
                     self.classify_chord_endpoint_off_other_boundary(carrier_index, chord, other)?;
@@ -8468,10 +8490,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             RegionPointLocation::Inside | RegionPointLocation::Outside,
                         ))
                         | None => None,
-                    };
-                    let interior_classification = match interior_classification {
-                        Some(classification) => classification,
-                        None => classify_interior()?,
                     };
                     match interior_classification {
                         Classification::Decided(
@@ -8791,6 +8809,49 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let carrier = &self.data.carriers[carrier_index];
         ExactCurveError::blocked(CurveOperation2::Boolean, carrier.family, reason)
     }
+}
+
+/// Returns true only when every oriented affine segment is cancelled by one
+/// exactly reversed mate.
+///
+/// A regularized arrangement can retain this lower-dimensional zero chain
+/// when two equivalent boundaries use different carrier partitions. Signed
+/// area alone is not a sufficient deletion certificate: a self-intersecting
+/// contour can also have zero area. Pairwise reverse incidence proves the
+/// stronger statement that the complete oriented boundary chain is zero.
+fn affine_contour_is_exact_zero_chain(contour: &crate::Contour2) -> bool {
+    let segments = contour.segments();
+    if segments.len() % 2 != 0 {
+        return false;
+    }
+    let exact_point_equal = |first: &crate::Point2, second: &crate::Point2| {
+        compare_reals(first.x(), second.x(), &CurveContext::STRICT) == Some(Ordering::Equal)
+            && compare_reals(first.y(), second.y(), &CurveContext::STRICT) == Some(Ordering::Equal)
+    };
+    let mut paired = vec![false; segments.len()];
+    for first_index in 0..segments.len() {
+        if paired[first_index] {
+            continue;
+        }
+        let crate::Segment2::Line(first) = &segments[first_index] else {
+            return false;
+        };
+        let Some(second_index) = ((first_index + 1)..segments.len()).find(|second_index| {
+            if paired[*second_index] {
+                return false;
+            }
+            let crate::Segment2::Line(second) = &segments[*second_index] else {
+                return false;
+            };
+            exact_point_equal(first.start(), second.end())
+                && exact_point_equal(first.end(), second.start())
+        }) else {
+            return false;
+        };
+        paired[first_index] = true;
+        paired[second_index] = true;
+    }
+    true
 }
 
 fn region_carrier_count(region: &CurveRegion2) -> usize {
@@ -10501,7 +10562,14 @@ fn seed_transverse_carrier_locations(
         (after, boolean_location(!before_inside)),
     ] {
         match carrier_fragments[fragment_index].location {
-            Some(existing) if existing != location => return false,
+            // Coincident-range ownership is authoritative for an overlap
+            // fragment adjacent to a transverse overlap endpoint.  Seed only
+            // the noncoincident open side; the overlap itself remains a
+            // boundary fragment and is resolved by operation-side semantics.
+            Some(RegionPointLocation::Boundary) => {}
+            Some(existing) if existing != location => {
+                return false;
+            }
             Some(_) => {}
             None => carrier_fragments[fragment_index].location = Some(location),
         }

@@ -416,6 +416,7 @@ struct RetainedRationalPointParametricSource {
 }
 
 pub(crate) struct RationalBezierAlgebraicPointPredicate2<'a> {
+    image: &'a RationalBezierAlgebraicPointImage2,
     root: &'a AlgebraicRootRepresentation,
     x_numerator: &'a [Real],
     y_numerator: &'a [Real],
@@ -848,36 +849,27 @@ impl RationalBezierAlgebraicPointImage2 {
             return Ok(coordinate.compare_to_real(value, policy));
         }
 
-        if let Some(expression) = self.data.retained_expression.as_ref() {
-            let parameter = BezierParameter2::Algebraic(expression.parameter.clone());
-            let denominator_sign = match signed_coefficients_at_parameter(
-                expression.denominator.clone(),
-                &parameter,
-                policy,
-            )? {
-                Classification::Decided(RealSign::Zero) => {
-                    return Err(CurveError::InvalidBezierAlgebraicParameter);
-                }
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let numerator = if use_x {
-                &expression.x_numerator
-            } else {
-                &expression.y_numerator
-            };
-            let difference_length = numerator.len().max(expression.denominator.len());
+        if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
+            self.retained_parameter(),
+            self.retained_coordinate_polynomials(),
+        ) {
+            let parameter = BezierParameter2::Algebraic(parameter.clone());
+            let denominator_sign =
+                match signed_coefficients_at_parameter(denominator.to_vec(), &parameter, policy)? {
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let numerator = if use_x { x_numerator } else { y_numerator };
+            let difference_length = numerator.len().max(denominator.len());
             let difference = (0..difference_length)
                 .map(|index| {
                     numerator.get(index).cloned().unwrap_or_else(Real::zero)
-                        - value
-                            * expression
-                                .denominator
-                                .get(index)
-                                .cloned()
-                                .unwrap_or_else(Real::zero)
+                        - value * denominator.get(index).cloned().unwrap_or_else(Real::zero)
                 })
                 .collect();
             return Ok(
@@ -906,14 +898,16 @@ impl RationalBezierAlgebraicPointImage2 {
     }
 
     pub(crate) fn exact_rational_point(&self, policy: &CurveContext) -> Option<Point2> {
-        if let Some(expression) = self.data.retained_expression.as_ref()
-            && let Ok(Classification::Decided(Some(parameter))) =
-                expression.parameter.represented_rational_root(policy)
+        if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
+            self.retained_parameter(),
+            self.retained_coordinate_polynomials(),
+        ) && let Ok(Classification::Decided(Some(parameter))) =
+            parameter.represented_rational_root(policy)
         {
-            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
+            let denominator = evaluate_coefficients(denominator, &parameter);
             if let (Ok(x), Ok(y)) = (
-                evaluate_coefficients(&expression.x_numerator, &parameter) / &denominator,
-                evaluate_coefficients(&expression.y_numerator, &parameter) / denominator,
+                evaluate_coefficients(x_numerator, &parameter) / &denominator,
+                evaluate_coefficients(y_numerator, &parameter) / denominator,
             ) {
                 return Some(Point2::new(x, y));
             }
@@ -945,19 +939,15 @@ impl RationalBezierAlgebraicPointImage2 {
         use_x: bool,
         policy: &CurveContext,
     ) -> Option<Real> {
-        if let Some(expression) = self.data.retained_expression.as_ref()
-            && let Ok(Classification::Decided(Some(parameter))) =
-                expression.parameter.represented_rational_root(policy)
+        if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
+            self.retained_parameter(),
+            self.retained_coordinate_polynomials(),
+        ) && let Ok(Classification::Decided(Some(parameter))) =
+            parameter.represented_rational_root(policy)
         {
-            let denominator = evaluate_coefficients(&expression.denominator, &parameter);
-            let numerator = evaluate_coefficients(
-                if use_x {
-                    &expression.x_numerator
-                } else {
-                    &expression.y_numerator
-                },
-                &parameter,
-            );
+            let denominator = evaluate_coefficients(denominator, &parameter);
+            let numerator =
+                evaluate_coefficients(if use_x { x_numerator } else { y_numerator }, &parameter);
             if let Ok(coordinate) = numerator / denominator {
                 return Some(coordinate);
             }
@@ -1022,6 +1012,7 @@ impl RationalBezierAlgebraicPointImage2 {
             };
         Ok(Classification::Decided(
             RationalBezierAlgebraicPointPredicate2 {
+                image,
                 root: image.parameter(),
                 x_numerator,
                 y_numerator,
@@ -1121,6 +1112,10 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
 
     pub(crate) const fn retained_root(&self) -> &AlgebraicRootRepresentation {
         self.root
+    }
+
+    pub(crate) const fn point_image(&self) -> &RationalBezierAlgebraicPointImage2 {
+        self.image
     }
 
     pub(crate) const fn retained_parameter(&self) -> &BezierParameter2 {

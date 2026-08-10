@@ -1497,7 +1497,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
 }
 
 #[test]
-fn retained_regions_clip_independent_nonlinear_line_parameters() {
+fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
     let first = CurvePath2::try_new(vec![
         Curve2::from(
             RationalBezier2::try_new(
@@ -1539,9 +1539,23 @@ fn retained_regions_clip_independent_nonlinear_line_parameters() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let narrow_clip = square_path(-1, -1, 2, 5);
+        let narrow_topology = first
+            .intersection_topology(&narrow_clip, &policy)
+            .unwrap()
+            .into_value();
+        assert!(
+            narrow_topology
+                .first()
+                .iter()
+                .chain(narrow_topology.second())
+                .flat_map(|split| split.materializations())
+                .flat_map(|materialization| materialization.fragments())
+                .any(|fragment| fragment.is_algebraic_endpoint_images())
+        );
         let narrow = first
             .boolean_region(
-                &square_path(-1, -1, 2, 5),
+                &narrow_clip,
                 BooleanOp::Intersection,
                 CurveBoundaryInteriorSide2::Left,
                 CurveBoundaryInteriorSide2::Left,
@@ -1549,14 +1563,36 @@ fn retained_regions_clip_independent_nonlinear_line_parameters() {
             )
             .unwrap()
             .into_value();
-        assert!(narrow.has_algebraic_fragments());
+        assert!(!narrow.has_algebraic_fragments());
+        assert_eq!(
+            narrow
+                .boundary_loops()
+                .iter()
+                .map(|boundary| boundary.len())
+                .sum::<usize>(),
+            4
+        );
         for (wide_path, interior_side) in [
             (&second, CurveBoundaryInteriorSide2::Left),
             (&second_reversed, CurveBoundaryInteriorSide2::Right),
         ] {
+            let wide_clip = square_path(-1, -1, 3, 5);
+            let wide_topology = wide_path
+                .intersection_topology(&wide_clip, &policy)
+                .unwrap()
+                .into_value();
+            assert!(
+                wide_topology
+                    .first()
+                    .iter()
+                    .chain(wide_topology.second())
+                    .flat_map(|split| split.materializations())
+                    .flat_map(|materialization| materialization.fragments())
+                    .any(|fragment| fragment.is_algebraic_endpoint_images())
+            );
             let wide = wide_path
                 .boolean_region(
-                    &square_path(-1, -1, 3, 5),
+                    &wide_clip,
                     BooleanOp::Intersection,
                     interior_side,
                     CurveBoundaryInteriorSide2::Left,
@@ -1564,7 +1600,7 @@ fn retained_regions_clip_independent_nonlinear_line_parameters() {
                 )
                 .unwrap()
                 .into_value();
-            assert!(wide.has_algebraic_fragments());
+            assert!(!wide.has_algebraic_fragments());
 
             let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
             assert_eq!(

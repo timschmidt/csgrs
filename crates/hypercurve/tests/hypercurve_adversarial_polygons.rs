@@ -91,13 +91,15 @@ fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
         .into_value()
 }
 
-fn assert_region_finite(region: &CurveRegion2) {
-    let Classification::Decided(native) = region
+fn assert_region_finite(region: &CurveRegion2, operation: BooleanOp) {
+    let classification = region
         .native_contours_fast_path(&policy())
         .unwrap()
-        .into_value()
-    else {
-        panic!("polygon Boolean did not retain exact native contours");
+        .into_value();
+    let Classification::Decided(native) = classification else {
+        panic!(
+            "polygon {operation:?} Boolean did not retain exact native contours: {classification:?}"
+        );
     };
     for contour in native
         .material_contours()
@@ -141,7 +143,7 @@ fn exercise_clipping(a: &CurveRegion2, b: &CurveRegion2) {
         BooleanOp::Xor,
     ] {
         let region = a.boolean_region(b, op, &policy).unwrap().into_value();
-        assert_region_finite(&region);
+        assert_region_finite(&region, op);
     }
 }
 

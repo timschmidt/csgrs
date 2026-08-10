@@ -150,7 +150,7 @@ impl BezierParallelLineTangentContact2 {
         }
     }
 
-    fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
+    pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
         Ok(Self {
             parallel: self.parallel.transform_similarity(transform)?,
             parameter: self.parameter.clone(),

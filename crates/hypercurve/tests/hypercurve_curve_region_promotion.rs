@@ -2140,6 +2140,194 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
 }
 
 #[test]
+fn selected_algebraic_round_join_retains_a_general_minor_cut() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-q(1, 2), Real::zero(), Real::one()],
+                &policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
+        let parameter =
+            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
+        let selected = RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
+                .unwrap()
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        );
+        let origin = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let top = RationalBezierIntersectionPointEvidence2::Exact(p(0, 1));
+        let chord = |start, end| {
+            BezierSplitFragment2::AlgebraicChord(decided(
+                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
+            ))
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                chord(origin.clone(), selected.clone()),
+                chord(selected, top.clone()),
+                chord(top, origin),
+            ],
+            &policy,
+        )
+        .unwrap();
+        let source = CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .unwrap();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset = || source.offset(q(1, 10), &OffsetCornerStyle2::Round, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let rounded = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let rounded = offset();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let rounded = rounded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a non-quadrant selected-field round join must remain exact: {error:?}; {trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("a non-quadrant selected-field round join must remain exact: {error:?}");
+        });
+        #[cfg(feature = "dispatch-trace")]
+        {
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent",
+                    "selected-chord-normal-contact",
+                ) >= 2,
+                "both orientations of the general chord-normal round join must use one authority"
+            );
+            assert!(
+                trace.path_count(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "selected-chord-normal-tangent",
+                ) > 0,
+                "regularization must reuse the authored tangent-line certificate"
+            );
+        }
+        assert_eq!(rounded.certainty, CurveCertainty::Certified);
+        assert!(
+            rounded.value.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .any(|fragment| matches!(
+                    fragment,
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                ))
+        );
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let expand = || {
+            rounded
+                .value
+                .offset(q(1, 100), &OffsetCornerStyle2::Round, &policy)
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let expanded = hyperreal::dispatch_trace::with_recording(expand);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let expanded = expand();
+        #[cfg(feature = "dispatch-trace")]
+        let expanded_trace = hyperreal::dispatch_trace::take_trace();
+        let expanded = expanded.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "a general selected chord-normal cut must re-offset exactly: {error:?}; {expanded_trace:?}"
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("a general selected chord-normal cut must re-offset exactly: {error:?}");
+        });
+        assert_eq!(expanded.certainty, CurveCertainty::Certified);
+        #[cfg(feature = "dispatch-trace")]
+        assert!(
+            expanded_trace.path_count(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-dot",
+                "selected-chord-normal-algebraic-chord",
+            ) > 0,
+            "a general chord-normal re-offset must consume its exact tangent direction",
+        );
+
+        let scaled_quarter_turn = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2),
+            Real::from(2),
+            Real::zero(),
+            Real::from(2),
+            Real::from(3),
+        )
+        .unwrap();
+        let scaled_reflection = Similarity2::try_from_real_affine(
+            Real::from(-3),
+            Real::zero(),
+            Real::zero(),
+            Real::from(3),
+            Real::from(2),
+            Real::from(3),
+        )
+        .unwrap();
+        for (transform_name, transform) in [
+            ("scaled-quarter-turn", &scaled_quarter_turn),
+            ("scaled-reflection", &scaled_reflection),
+        ] {
+            let transformed = rounded
+                .value
+                .transform_similarity(transform, &policy)
+                .expect("a general selected chord-normal cut must survive exact similarity");
+            assert_eq!(transformed.certainty, CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let transformed_expand = || {
+                transformed
+                    .value
+                    .offset(q(1, 100), &OffsetCornerStyle2::Round, &policy)
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let transformed_expanded =
+                hyperreal::dispatch_trace::with_recording(transformed_expand);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let transformed_expanded = transformed_expand();
+            #[cfg(feature = "dispatch-trace")]
+            let transformed_trace = hyperreal::dispatch_trace::take_trace();
+            let transformed_expanded = transformed_expanded.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "a {transform_name} selected chord-normal cut must remain reusable: {error:?}; {transformed_trace:?}"
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!(
+                    "a {transform_name} selected chord-normal cut must remain reusable: {error:?}"
+                );
+            });
+            assert_eq!(transformed_expanded.certainty, CurveCertainty::Certified);
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                transformed_trace.path_count(
+                    "hypercurve",
+                    "curve-region-exact-offset-tangent-dot",
+                    "selected-chord-normal-algebraic-chord",
+                ) > 0,
+                "a transformed chord-normal re-offset must preserve one tangent authority",
+            );
+        }
+    }
+}
+
+#[test]
 fn algebraic_chords_and_round_centers_survive_exact_similarities() {
     let quarter_turn = Similarity2::try_from_real_affine(
         Real::zero(),
@@ -2403,10 +2591,10 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
             assert!(
                 trace.path_count(
                     "hypercurve",
-                    "algebraic-circle-chord-pair",
-                    "adjacent-endpoint-only",
+                    "curve-region-exact-offset-tangent",
+                    "selected-circle-chord-contact",
                 ) > 0,
-                "the derived bevel endpoint proof must survive regularization: {trace:?}",
+                "the bevel must retain its exact circle/chord endpoint tangent: {trace:?}",
             );
         }
     }
@@ -2464,21 +2652,21 @@ fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
         #[cfg(feature = "dispatch-trace")]
         {
             let trace = hyperreal::dispatch_trace::take_trace();
-            assert_eq!(
+            assert!(
                 trace.path_count(
                     "hypercurve",
-                    "algebraic-chord-source-incidence",
-                    "diagonal-deflated",
-                ),
-                1
+                    "curve-region-exact-offset-span",
+                    "axis-algebraic-chord",
+                ) > 0,
+                "the cusp/chord re-offset must retain its exact chord spans: {trace:?}",
             );
-            assert_eq!(
+            assert!(
                 trace.path_count(
                     "hypercurve",
-                    "algebraic-selected-fiber-projection",
-                    "quotient-ring",
-                ),
-                1
+                    "curve-region-exact-offset-tangent",
+                    "selected-circle-chord-contact",
+                ) > 0,
+                "the cusp/chord re-offset must retain its exact endpoint tangent: {trace:?}",
             );
             assert_eq!(
                 trace.path_count(
@@ -3907,8 +4095,10 @@ fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
                         (
                             BezierSplitFragment2::AnalyticParallel(_),
                             BezierSplitFragment2::Materialized { .. }
+                                | BezierSplitFragment2::AlgebraicChord(_)
                         ) | (
-                            BezierSplitFragment2::Materialized { .. },
+                            BezierSplitFragment2::Materialized { .. }
+                                | BezierSplitFragment2::AlgebraicChord(_),
                             BezierSplitFragment2::AnalyticParallel(_)
                         )
                     )
@@ -3972,8 +4162,10 @@ fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
                     (
                         BezierSplitFragment2::AnalyticParallel(_),
                         BezierSplitFragment2::Materialized { .. }
+                            | BezierSplitFragment2::AlgebraicChord(_)
                     ) | (
-                        BezierSplitFragment2::Materialized { .. },
+                        BezierSplitFragment2::Materialized { .. }
+                            | BezierSplitFragment2::AlgebraicChord(_),
                         BezierSplitFragment2::AnalyticParallel(_)
                     )
                 )
@@ -4685,6 +4877,49 @@ fn unified_region_contraction_preserves_non_miter_corner_styles() {
             decided(bevel.value.filled_area(&policy).unwrap())
         );
         assert!(bevel_fragments.len() > miter_fragments.len());
+    }
+}
+
+#[test]
+fn unified_region_non_miter_erosions_split_after_neck_collapse() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source =
+            CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy)
+                .unwrap()
+                .into_value();
+        for (corner_style, approximate_round_predicate) in [
+            (OffsetCornerStyle2::Bevel, false),
+            (OffsetCornerStyle2::Round, true),
+            (OffsetCornerStyle2::Miter { limit: Real::one() }, false),
+        ] {
+            let eroded = source
+                .offset(-q(3, 2), &corner_style, &policy)
+                .unwrap_or_else(|error| {
+                    panic!("{corner_style:?} must regularize through a collapsed neck: {error:?}")
+                });
+            let expected_certainty =
+                if approximate_round_predicate && policy == CurveContext::APPROXIMATE_512 {
+                    CurveCertainty::Approximate512Consumed
+                } else {
+                    CurveCertainty::Certified
+                };
+            assert_eq!(eroded.certainty, expected_certainty);
+            assert_eq!(eroded.value.boundary_loops().len(), 2);
+            for point in [p(2, 2), p(10, 2)] {
+                let location = eroded.value.classify_point(&point, &policy).unwrap();
+                assert_eq!(location.certainty, expected_certainty);
+                assert_eq!(
+                    location.value,
+                    Classification::Decided(RegionPointLocation::Inside)
+                );
+            }
+            let location = eroded.value.classify_point(&p(6, 2), &policy).unwrap();
+            assert_eq!(location.certainty, expected_certainty);
+            assert_eq!(
+                location.value,
+                Classification::Decided(RegionPointLocation::Outside)
+            );
+        }
     }
 }
 

@@ -4060,15 +4060,13 @@ impl FilletLinearSource2<'_> {
         }
     }
 
-    const fn parallel_tangent_contacts(
-        &self,
-    ) -> &[crate::bezier::BezierParallelLineTangentContact2] {
+    fn parallel_tangent_contacts(&self) -> &[crate::bezier::BezierParallelLineTangentContact2] {
         match self {
             Self::Native {
                 parallel_tangent_contacts,
                 ..
             } => parallel_tangent_contacts,
-            Self::AlgebraicChord(_) => &[],
+            Self::AlgebraicChord(source) => source.parallel_tangent_contacts(),
         }
     }
 }

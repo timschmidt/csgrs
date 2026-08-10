@@ -1198,7 +1198,24 @@ fn exact_quarter_turn(translation_x: i8, translation_y: i8) -> Similarity2 {
     .expect("the exact quarter turn is a nonsingular similarity")
 }
 
-fn assert_selected_family_pair_contact(label: &str, first: &CurveRegion2, second: &CurveRegion2) {
+fn promoted_family(family: u8) -> hypercurve::CurveFamily2 {
+    match family % 8 {
+        0 => hypercurve::CurveFamily2::Line,
+        1 | 4 => hypercurve::CurveFamily2::RationalQuadraticBezier,
+        2 => hypercurve::CurveFamily2::QuadraticBezier,
+        3 | 6 => hypercurve::CurveFamily2::CubicBezier,
+        5 | 7 => hypercurve::CurveFamily2::RationalBezier,
+        _ => unreachable!(),
+    }
+}
+
+fn assert_selected_family_pair_contact(
+    label: &str,
+    first: &CurveRegion2,
+    second: &CurveRegion2,
+    first_family: u8,
+    second_family: u8,
+) {
     let evidence = first
         .intersect_region(second, &CurveContext::STRICT)
         .expect("the deterministic family fixture has exact contact evidence")
@@ -1209,12 +1226,16 @@ fn assert_selected_family_pair_contact(label: &str, first: &CurveRegion2, second
         .map(|contact| {
             (
                 contact.first().carrier_index(),
+                contact.first().family(),
                 contact.second().carrier_index(),
+                contact.second().family(),
             )
         })
         .collect::<Vec<_>>();
     assert!(
-        exercised_carrier_pairs.contains(&(0, 4)),
+        exercised_carrier_pairs.iter().any(|(_, first, _, second)| {
+            *first == promoted_family(first_family) && *second == promoted_family(second_family)
+        }),
         "{label} must exercise its selected carrier pair; observed {exercised_carrier_pairs:?}"
     );
 }
@@ -1233,7 +1254,13 @@ fn deterministic_transverse_curve_family_pair_matrix_completes() {
 
             let label =
                 format!("deterministic transverse family pair {first_family}/{second_family}");
-            assert_selected_family_pair_contact(&label, &first, &second);
+            assert_selected_family_pair_contact(
+                &label,
+                &first,
+                &second,
+                first_family,
+                second_family,
+            );
             exact_boolean_results(
                 &label,
                 &first,
@@ -1258,7 +1285,13 @@ fn deterministic_endpoint_curve_family_pair_matrix_completes() {
                 .into_value();
             let label =
                 format!("deterministic endpoint family pair {first_family}/{second_family}");
-            assert_selected_family_pair_contact(&label, &first, &second);
+            assert_selected_family_pair_contact(
+                &label,
+                &first,
+                &second,
+                first_family,
+                second_family,
+            );
             exact_boolean_results(
                 &label,
                 &first,
