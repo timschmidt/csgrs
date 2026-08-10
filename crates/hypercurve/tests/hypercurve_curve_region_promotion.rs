@@ -3499,6 +3499,7 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
+                BezierSplitFragment2::SelectedFiberRational(_) => "selected-rational",
                 BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
@@ -3645,6 +3646,7 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
+                BezierSplitFragment2::SelectedFiberRational(_) => "selected-rational",
                 BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
@@ -3813,6 +3815,37 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         assert!(!crossing.intersection().is_empty());
         assert!(!crossing.difference().is_empty());
         assert!(!crossing.xor().is_empty());
+
+        let curved_cutter_path = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                cutter_points[0].clone(),
+                Point2::new(Real::zero(), q(1, 16)),
+                cutter_points[1].clone(),
+            )),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[1].clone(), cutter_points[2].clone()).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[2].clone(), cutter_points[3].clone()).unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(cutter_points[3].clone(), cutter_points[4].clone()).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let curved_cutter = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&curved_cutter_path),
+            &policy,
+        )
+        .expect("the curved exact cutter must form a region")
+        .into_value();
+        let curved_crossing = filleted
+            .boolean_regions(&curved_cutter, &policy)
+            .expect("general selected-fiber/rational contacts must complete Boolean topology")
+            .into_value();
+        assert!(!curved_crossing.intersection().is_empty());
+        assert!(!curved_crossing.difference().is_empty());
+        assert!(!curved_crossing.xor().is_empty());
     }
 }
 

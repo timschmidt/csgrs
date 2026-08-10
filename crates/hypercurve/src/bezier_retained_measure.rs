@@ -331,6 +331,17 @@ impl CurveEnvelopeAccumulator {
                     }
                 }
             }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::SelectedFiberRational(fragment) => {
+                match fragment.curve().certified_bounds_classified(policy) {
+                    Classification::Decided(curve_box) => {
+                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                }
+            }
             BezierSplitFragment2::Unresolved { .. } => {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             }
@@ -755,6 +766,10 @@ impl EndpointEnvelopeAccumulator {
                 self.include_endpoint(native_endpoint_interval(bounds.max()), policy)
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::SelectedFiberRational(_) => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }
             BezierSplitFragment2::Unresolved { .. } => {

@@ -2808,6 +2808,8 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(_) => None,
     }
 }
 

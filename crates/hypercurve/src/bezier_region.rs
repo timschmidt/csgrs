@@ -71,8 +71,9 @@ use crate::{
     CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
     CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2, CurveError,
     CurveFamily2, CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome,
-    CurvePath2, CurvePathIntersectionContact2, CurveRegionParameter2, CurveResult, ExactCurveError,
-    ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    CurvePath2, CurvePathIntersectionContact2, CurveRegionParameter2,
+    CurveRegionParameterRange2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2,
     RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalBezierPointIncidence2,
     RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
     SegmentKindCounts, UncertaintyReason,
@@ -1564,6 +1565,24 @@ fn validate_retained_fragment_provenance(
             Ok(())
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment.validate_policy(policy),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+            match fragment
+                .range()
+                .start()
+                .cmp_by_refinement(fragment.range().end(), policy)?
+            {
+                Classification::Decided(std::cmp::Ordering::Less) => Ok(()),
+                Classification::Decided(
+                    std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                ) => Err(CurveError::Topology(
+                    "selected-fiber rational fragment range was not increasing".into(),
+                )),
+                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                    "selected-fiber rational fragment range remained uncertain: {reason:?}"
+                ))),
+            }
+        }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
             "retained Bezier region boundary loops must not contain unresolved carriers".into(),
         )),
@@ -1940,6 +1959,28 @@ fn retained_fragment_endpoint_evidence(
                 source: None,
                 analytic_source: fragment.endpoint_analytic_source(start_endpoint),
                 algebraic_cusp_source: Some((fragment.clone(), start_endpoint)),
+            })
+        }
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+            let retained_point = if start_endpoint {
+                fragment.start_point().clone()
+            } else {
+                fragment.end_point().clone()
+            };
+            let point = match &retained_point {
+                crate::RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                    Some(point.clone())
+                }
+                _ => None,
+            };
+            Ok(RetainedEndpointEvidence {
+                point,
+                retained_point: Some(retained_point),
+                algebraic: None,
+                source: None,
+                analytic_source: None,
+                algebraic_cusp_source: None,
             })
         }
         BezierSplitFragment2::Unresolved { .. } => Err(CurveError::Topology(
@@ -3084,6 +3125,7 @@ fn exact_cardinal_convex_fragment(
         }
         BezierSplitFragment2::AnalyticParallel(_)
         | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::SelectedFiberRational(_)
         | BezierSplitFragment2::Unresolved { .. } => Ok(Classification::Decided(None)),
     }
 }
@@ -4077,6 +4119,7 @@ fn exact_axis_aligned_algebraic_source_loop(
             BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::SelectedFiberRational(_)
             | BezierSplitFragment2::Unresolved { .. } => {
                 return Ok(Classification::Decided(None));
             }
@@ -7298,6 +7341,10 @@ impl CurveRegion2 {
                     | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                         fragments.push(fragment.fragment().clone());
                     }
+                    #[cfg(feature = "predicates")]
+                    BezierSplitFragment2::SelectedFiberRational(_) => {
+                        fragments.push(fragment.fragment().clone());
+                    }
                     BezierSplitFragment2::Unresolved { .. } => {
                         return Classification::Uncertain(UncertaintyReason::Boundary);
                     }
@@ -10332,6 +10379,10 @@ impl CurveRegion2 {
                     BezierSplitFragment2::Unresolved { .. } => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
+                    #[cfg(feature = "predicates")]
+                    BezierSplitFragment2::SelectedFiberRational(_) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
                     #[cfg(not(feature = "predicates"))]
                     BezierSplitFragment2::AlgebraicChord(_)
                     | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
@@ -12044,6 +12095,12 @@ fn transform_retained_region_fragment(
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
         )),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(_) => Err(ExactCurveError::blocked(
+            CurveOperation2::Transformation,
+            CurveFamily2::RationalBezier,
+            UncertaintyReason::Unsupported,
+        )),
     }
 }
 
@@ -12580,6 +12637,10 @@ fn retained_line_fragment_endpoints(
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(_) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
         BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Boundary))
         }
@@ -12838,6 +12899,10 @@ fn retained_loop_sample_point(
             ))
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => fragment.representative_point(policy),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+            fragment.representative_point(policy)
+        }
         BezierSplitFragment2::AlgebraicChord(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
@@ -13000,7 +13065,7 @@ struct AlgebraicRayHomogeneousControl2 {
 #[cfg(feature = "predicates")]
 struct AlgebraicRayRationalFragment2 {
     curve: RationalBezier2,
-    retained_range: Option<BezierParameterRange2>,
+    retained_range: Option<CurveRegionParameterRange2>,
     reversed: bool,
 }
 
@@ -13400,7 +13465,7 @@ fn retained_fragment_algebraic_ray_curve(
         }
     }
 
-    let (curve, range, reversed) = match fragment {
+    let (curve, retained_range, reversed) = match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
             (RationalBezier2::try_from_subcurve(curve)?, None, false)
         }
@@ -13412,7 +13477,10 @@ fn retained_fragment_algebraic_ray_curve(
             ..
         } => (
             RationalBezier2::try_from_subcurve(curve)?,
-            Some((start, end)),
+            Some(CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_bezier(start.clone()),
+                CurveRegionParameter2::from_bezier(end.clone()),
+            )),
             *reversed,
         ),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
@@ -13430,10 +13498,17 @@ fn retained_fragment_algebraic_ray_curve(
             };
             (
                 curve,
-                Some((fragment.range().start(), fragment.range().end())),
+                Some(CurveRegionParameterRange2::from_bezier_range(
+                    fragment.range().clone(),
+                )),
                 fragment.is_reversed(),
             )
         }
+        BezierSplitFragment2::SelectedFiberRational(fragment) => (
+            fragment.curve().clone(),
+            Some(fragment.range().clone()),
+            fragment.is_reversed(),
+        ),
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
         }
@@ -13443,8 +13518,8 @@ fn retained_fragment_algebraic_ray_curve(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
-    let (curve, retained_range) = if let Some((start, end)) = range {
-        if let (Some(start), Some(end)) = (start.as_exact(), end.as_exact()) {
+    let (curve, retained_range) = if let Some(range) = retained_range {
+        if let Some((start, end)) = range.exact_endpoints() {
             let curve = match curve.subcurve_between_exact(start, end, policy)? {
                 Classification::Decided(curve) => curve,
                 Classification::Uncertain(reason) => {
@@ -13453,13 +13528,7 @@ fn retained_fragment_algebraic_ray_curve(
             };
             (curve, None)
         } else {
-            (
-                curve,
-                Some(BezierParameterRange2::new_validated(
-                    start.clone(),
-                    end.clone(),
-                )),
-            )
+            (curve, Some(range))
         }
     } else {
         (curve, None)
@@ -13564,8 +13633,11 @@ fn algebraic_ray_rational_fragment_endpoint_side_signs(
     };
     let equation =
         algebraic_point_rational_curve_linear_equation(&fragment.curve, point, side_x, side_y)?;
+    let Some((start, end)) = range.as_bezier_parameters() else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
     let mut signs = [RealSign::Zero; 2];
-    for (index, parameter) in [range.start(), range.end()].into_iter().enumerate() {
+    for (index, parameter) in [start, end].into_iter().enumerate() {
         signs[index] = match signed_bivariate_at_parameter_pair(
             &equation,
             point.retained_parameter(),
@@ -13737,10 +13809,9 @@ fn algebraic_point_on_rational_fragment(
                 }
             };
         for parameter in parameters {
-            match retained_parameter_contains(
+            match retained_curve_region_parameter_contains(
                 &parameter,
-                range.start(),
-                range.end(),
+                range,
                 false,
                 fragment.reversed,
                 policy,
@@ -13972,11 +14043,15 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     let incidence =
         algebraic_point_rational_curve_linear_equation(&fragment.curve, point, &side_x, &side_y)?;
 
-    if let BezierParameter2::Algebraic(retained) = point.retained_parameter()
-        && bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, range, policy)?
-            .is_some()
+    if let (BezierParameter2::Algebraic(retained), Some((start, end))) =
+        (point.retained_parameter(), range.as_bezier_parameters())
     {
-        return Ok(Classification::Decided(0));
+        let range = BezierParameterRange2::new_validated(start.clone(), end.clone());
+        if bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, &range, policy)?
+            .is_some()
+        {
+            return Ok(Classification::Decided(0));
+        }
     }
 
     let parameters =
@@ -14003,10 +14078,9 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     let denominator_sign = multiply_algebraic_ray_signs(point.denominator_sign(), weight_sign);
     let mut winding = 0_i32;
     for parameter in parameters {
-        match retained_parameter_contains(
+        match retained_curve_region_parameter_contains(
             &parameter,
-            range.start(),
-            range.end(),
+            range,
             true,
             fragment.reversed,
             policy,
@@ -14504,6 +14578,38 @@ fn retained_fragment_contains_point(
             }
         }
         #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+            match fragment.curve().point_incidence(point, policy) {
+                Ok(RationalBezierPointIncidence2::EntireCurve) => {
+                    Ok(Classification::Decided(true))
+                }
+                Ok(RationalBezierPointIncidence2::Parameters(parameters)) => {
+                    for parameter in parameters {
+                        match retained_curve_region_parameter_contains(
+                            &parameter,
+                            fragment.range(),
+                            false,
+                            fragment.is_reversed(),
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {
+                                return Ok(Classification::Decided(true));
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    Ok(Classification::Decided(false))
+                }
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    Ok(Classification::Uncertain(blocker.reason()))
+                }
+                Err(ExactCurveError::Invalid { cause, .. }) => Err(cause),
+            }
+        }
+        #[cfg(feature = "predicates")]
         BezierSplitFragment2::AlgebraicChord(chord) => chord.contains_point(point, policy),
         #[cfg(not(feature = "predicates"))]
         BezierSplitFragment2::AlgebraicChord(_) => {
@@ -14549,6 +14655,10 @@ fn retained_circle_tangent_contacts(
             source_curve: Some(BezierSubcurve2::RationalQuadratic(curve)),
             ..
         } => curve.retained_circular_conic(),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => {
+            fragment.curve().retained_circular_conic()
+        }
         BezierSplitFragment2::Materialized { .. }
         | BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::AnalyticParallel(_)
@@ -14602,6 +14712,8 @@ fn classify_point_with_retained_ray_skipping_origin(
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::SelectedFiberRational(_) => None,
         };
         #[cfg(feature = "predicates")]
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
@@ -14838,15 +14950,29 @@ fn classify_point_with_retained_ray_skipping_origin(
             }
             continue;
         }
-        let (curve, range) = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => (curve, None),
+        #[cfg(feature = "predicates")]
+        let selected_curve = match fragment {
+            BezierSplitFragment2::SelectedFiberRational(fragment) => {
+                Some(BezierSubcurve2::Rational(fragment.curve().clone()))
+            }
+            _ => None,
+        };
+        let (curve, range, reversed) = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => (curve, None, false),
             BezierSplitFragment2::AlgebraicEndpointImages {
                 reversed,
                 start,
                 end,
                 source_curve: Some(curve),
                 ..
-            } => (curve, Some((start, end, *reversed))),
+            } => (
+                curve,
+                Some(CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_bezier(start.clone()),
+                    CurveRegionParameter2::from_bezier(end.clone()),
+                )),
+                *reversed,
+            ),
             BezierSplitFragment2::AlgebraicEndpointImages {
                 source_curve: None, ..
             }
@@ -14859,11 +14985,18 @@ fn classify_point_with_retained_ray_skipping_origin(
                 exact_parallel_curve
                     .as_ref()
                     .expect("exact analytic component was selected above"),
-                Some((
-                    fragment.range().start(),
-                    fragment.range().end(),
-                    fragment.is_reversed(),
+                Some(CurveRegionParameterRange2::from_bezier_range(
+                    fragment.range().clone(),
                 )),
+                fragment.is_reversed(),
+            ),
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::SelectedFiberRational(fragment) => (
+                selected_curve
+                    .as_ref()
+                    .expect("a selected-fiber fragment constructed its rational source"),
+                Some(fragment.range().clone()),
+                fragment.is_reversed(),
             ),
         };
         if !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy) {
@@ -14996,11 +15129,10 @@ fn classify_point_with_retained_ray_skipping_origin(
                             }
                         }
                     }
-                    let retained = if let Some((start, end, reversed)) = range {
-                        retained_parameter_contains(
+                    let retained = if let Some(range) = range.as_ref() {
+                        retained_curve_region_parameter_contains(
                             contact.parameter(),
-                            start,
-                            end,
+                            range,
                             true,
                             reversed,
                             policy,
@@ -15069,7 +15201,6 @@ fn classify_point_with_retained_ray_skipping_origin(
                             if contact.kind() != BezierLineContactKind::Crossing {
                                 continue;
                             }
-                            let reversed = range.is_some_and(|(_, _, reversed)| reversed);
                             let Some(delta) = line_contact_winding_delta(&contact, reversed) else {
                                 return Ok(Classification::Uncertain(
                                     UncertaintyReason::Unsupported,
@@ -15127,6 +15258,29 @@ fn retained_parameter_contains(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let end_order = match parameter.cmp_by_refinement(end, policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let after_start = start_order == std::cmp::Ordering::Greater
+        || (start_order == std::cmp::Ordering::Equal && (!half_open || !reversed));
+    let before_end = end_order == std::cmp::Ordering::Less
+        || (end_order == std::cmp::Ordering::Equal && (!half_open || reversed));
+    Ok(Classification::Decided(after_start && before_end))
+}
+
+fn retained_curve_region_parameter_contains(
+    parameter: &BezierParameter2,
+    range: &CurveRegionParameterRange2,
+    half_open: bool,
+    reversed: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let parameter = CurveRegionParameter2::from_bezier(parameter.clone());
+    let start_order = match parameter.cmp_by_refinement(range.start(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_order = match parameter.cmp_by_refinement(range.end(), policy)? {
         Classification::Decided(order) => order,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -15210,6 +15364,10 @@ fn retained_fragment_query_bounds(
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
             .conservative_bounds()
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => fragment
+            .curve()
+            .certified_bounds_classified(policy),
         BezierSplitFragment2::AlgebraicEndpointImages {
             source_curve: None, ..
         }
@@ -16583,7 +16741,9 @@ mod tests {
             let winding = |curve, reversed| {
                 let fragment = AlgebraicRayRationalFragment2 {
                     curve,
-                    retained_range: Some(range.clone()),
+                    retained_range: Some(CurveRegionParameterRange2::from_bezier_range(
+                        range.clone(),
+                    )),
                     reversed,
                 };
                 algebraic_point_rational_curve_ray_winding(

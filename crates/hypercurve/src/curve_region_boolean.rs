@@ -18,6 +18,8 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
+#[cfg(feature = "predicates")]
+use crate::bezier_split::BezierSelectedFiberRationalFragment2;
 use crate::classify::{compare_reals, real_sign};
 use crate::curve_intersection::{CurveIntersectionBatchCache, CurveIntersectionContext};
 use crate::policy::resolve_certified_operation;
@@ -3160,6 +3162,45 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         })
                     }
+                    #[cfg(feature = "predicates")]
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                        contacts,
+                    ) => {
+                        let mut retained = Vec::with_capacity(contacts.len());
+                        for contact in contacts {
+                            let cusp_parameter = contact.cusp_parameter();
+                            let other_parameter = CurveRegionParameter2::from_selected_fiber(
+                                contact.other_parameter().clone(),
+                            );
+                            let tangent_cross_sign = orient_tangent_cross_sign(
+                                contact.tangent_cross_sign(),
+                                *cusp_is_first,
+                            );
+                            let (first_parameter, second_parameter) = if *cusp_is_first {
+                                (
+                                    CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                                    other_parameter,
+                                )
+                            } else {
+                                (
+                                    other_parameter,
+                                    CurveRegionParameter2::from_algebraic_cusp(cusp_parameter),
+                                )
+                            };
+                            retained.push(RegionPairContactEvidence::direct(
+                                first_parameter,
+                                second_parameter,
+                                Some(contact.point_evidence()),
+                                tangent_cross_sign != RealSign::Zero,
+                                Some(tangent_cross_sign),
+                            ));
+                        }
+                        Ok(RegionPairResult {
+                            contacts: retained,
+                            overlaps: Vec::new(),
+                            blockers: Vec::new(),
+                        })
+                    }
                     BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps) => {
                         Ok(RegionPairResult {
                             contacts: Vec::new(),
@@ -5045,9 +5086,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierGeometry::AlgebraicChord(_) => 2,
             RegionCarrierGeometry::AlgebraicCuspSemicircle(_) => 4,
         };
-        let Some((start, end)) = fragment_range(fragment) else {
-            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
-        };
+        let fragment_parameter_range = fragment.curve_region_parameter_range();
+        let (start, end) = (
+            fragment_parameter_range.start(),
+            fragment_parameter_range.end(),
+        );
         let mut upper = end.clone();
         let mut last_reason = UncertaintyReason::Boundary;
         let local_circular_curve = match fragment {
@@ -5062,6 +5105,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
+            #[cfg(feature = "predicates")]
+            BezierSplitFragment2::SelectedFiberRational(_) => None,
         };
         // Retained circular-conic provenance is a construction certificate for
         // a proper rational parametrization of a nondegenerate minor arc.
@@ -5106,18 +5151,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // interior gap is cheaper and avoids an unnecessary boundary ray.
         let source_endpoint_witness = if local_circular_curve.is_none()
             && retained_regular_circle
-            && carrier.start.as_bezier_parameter() == Some(start)
-            && start
-                .as_exact()
-                .is_some_and(|boundary| isolator_touches(end, boundary, true))
+            && carrier.start == *start
+            && start.as_exact().is_some_and(|boundary| {
+                end.as_bezier_parameter()
+                    .is_some_and(|end| isolator_touches(end, boundary, true))
+            })
         {
             start.as_exact().cloned()
         } else if local_circular_curve.is_none()
             && retained_regular_circle
-            && carrier.end.as_bezier_parameter() == Some(end)
-            && end
-                .as_exact()
-                .is_some_and(|boundary| isolator_touches(start, boundary, false))
+            && carrier.end == *end
+            && end.as_exact().is_some_and(|boundary| {
+                start
+                    .as_bezier_parameter()
+                    .is_some_and(|start| isolator_touches(start, boundary, false))
+            })
         {
             end.as_exact().cloned()
         } else {
@@ -5167,7 +5215,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     break;
                                 }
                             };
-                            upper = BezierParameter2::Exact(parameter.clone());
+                            upper = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                parameter.clone(),
+                            ));
                             parameter
                         }
                     };
@@ -6871,6 +6921,13 @@ fn build_region_carrier(
             CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             fragment.is_reversed(),
         ),
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(fragment) => (
+            RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(fragment.curve().clone())),
+            fragment.range().start().clone(),
+            fragment.range().end().clone(),
+            fragment.is_reversed(),
+        ),
     };
     if matches!(
         fragment,
@@ -6950,6 +7007,18 @@ fn split_carrier_with_refinement(
     if let RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment) = &carrier.geometry {
         return split_algebraic_cusp_carrier(carrier, fragment, events, policy);
     }
+    #[cfg(feature = "predicates")]
+    if events
+        .iter()
+        .any(|event| event.parameter.is_selected_fiber())
+    {
+        return split_selected_fiber_rational_carrier(
+            carrier,
+            events,
+            contact_points,
+            policy,
+        );
+    }
     let parameters = events
         .iter()
         .map(|event| {
@@ -7016,6 +7085,126 @@ fn split_carrier_with_refinement(
             std::mem::swap(
                 &mut fragment.start_topology_vertex,
                 &mut fragment.end_topology_vertex,
+            );
+        }
+    }
+    Ok(output)
+}
+
+#[cfg(feature = "predicates")]
+fn selected_fiber_event_point(
+    event: &CarrierEvent,
+    curve: &RationalBezier2,
+    contact_points: &[ContactVertex],
+    policy: &CurveContext,
+) -> Result<RationalBezierIntersectionPointEvidence2, CurveError> {
+    if let Some(vertex) = event.topology_vertex
+        && let Some(point) = contact_points
+            .iter()
+            .find(|contact| contact.topology_vertex == vertex)
+            .and_then(|contact| contact.point.clone())
+    {
+        return Ok(point);
+    }
+    if let Some(parameter) = event.parameter.as_bezier_parameter()
+        && let Some(exact) = parameter.as_exact()
+    {
+        if compare_reals(exact, &Real::zero(), policy) == Some(Ordering::Equal) {
+            return Ok(RationalBezierIntersectionPointEvidence2::Exact(
+                curve.start().clone(),
+            ));
+        }
+        if compare_reals(exact, &Real::one(), policy) == Some(Ordering::Equal) {
+            return Ok(RationalBezierIntersectionPointEvidence2::Exact(
+                curve.end().clone(),
+            ));
+        }
+    }
+    Err(CurveError::Topology(
+        "a selected-fiber rational boundary lost its exact point evidence".into(),
+    ))
+}
+
+#[cfg(feature = "predicates")]
+fn split_selected_fiber_rational_carrier(
+    carrier: &RegionCarrier,
+    events: &[CarrierEvent],
+    contact_points: &[ContactVertex],
+    policy: &CurveContext,
+) -> Result<Vec<SplitCarrierFragment>, CurveError> {
+    let source = RationalBezier2::try_from_subcurve(carrier.geometry.bezier())?;
+    let mut boundaries = events.to_vec();
+    for index in 1..boundaries.len() {
+        let mut cursor = index;
+        while cursor > 0 {
+            let order = match boundaries[cursor]
+                .parameter
+                .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
+            {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Err(CurveError::Topology(format!(
+                        "selected-fiber rational split ordering remained uncertain: {reason:?}"
+                    )));
+                }
+            };
+            if order != Ordering::Less {
+                break;
+            }
+            boundaries.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+
+    let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
+    for pair in boundaries.windows(2) {
+        match pair[0]
+            .parameter
+            .cmp_by_refinement(&pair[1].parameter, policy)?
+        {
+            Classification::Decided(Ordering::Less) => {}
+            Classification::Decided(Ordering::Equal) => continue,
+            Classification::Decided(Ordering::Greater) => {
+                return Err(CurveError::Topology(
+                    "selected-fiber rational split boundaries are not increasing".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "selected-fiber rational split interval remained uncertain: {reason:?}"
+                )));
+            }
+        }
+        if !parameter_range_inside_carrier(&pair[0].parameter, &pair[1].parameter, carrier, policy)?
+        {
+            continue;
+        }
+        let start_point =
+            selected_fiber_event_point(&pair[0], &source, contact_points, policy)?;
+        let end_point = selected_fiber_event_point(&pair[1], &source, contact_points, policy)?;
+        output.push(SplitCarrierFragment {
+            fragment: BezierSplitFragment2::SelectedFiberRational(
+                BezierSelectedFiberRationalFragment2::new(
+                    source.clone(),
+                    CurveRegionParameterRange2::new_validated(
+                        pair[0].parameter.clone(),
+                        pair[1].parameter.clone(),
+                    ),
+                    start_point,
+                    end_point,
+                ),
+            ),
+            start_topology_vertex: pair[0].topology_vertex,
+            end_topology_vertex: pair[1].topology_vertex,
+        });
+    }
+    if carrier.reversed {
+        output.reverse();
+        for split in &mut output {
+            split.fragment = split.fragment.reversed()?;
+            std::mem::swap(
+                &mut split.start_topology_vertex,
+                &mut split.end_topology_vertex,
             );
         }
     }
@@ -9511,6 +9700,8 @@ fn fragment_range(
         }
         BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+        #[cfg(feature = "predicates")]
+        BezierSplitFragment2::SelectedFiberRational(_) => None,
     }
 }
 

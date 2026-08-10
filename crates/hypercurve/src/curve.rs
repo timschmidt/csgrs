@@ -5088,6 +5088,15 @@ fn retained_fillet_cusp_rational_contacts(
         crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
             contacts,
         ) => contacts,
+        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+            _,
+        ) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
         crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
             overlaps,
         ) => {

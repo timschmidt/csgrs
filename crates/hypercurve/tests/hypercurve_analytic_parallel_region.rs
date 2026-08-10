@@ -997,6 +997,7 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
                         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => 6,
                         BezierSplitFragment2::Unresolved { .. } => 7,
                         BezierSplitFragment2::AlgebraicChord(_) => 8,
+                        BezierSplitFragment2::SelectedFiberRational(_) => 9,
                     })
                     .collect::<Vec<_>>()
             })
