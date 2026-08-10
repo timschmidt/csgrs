@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
     Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
@@ -560,7 +559,6 @@ fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
     let policy = CurveContext::STRICT;
     let conic =
@@ -609,7 +607,6 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
     let policy = CurveContext::STRICT;
     let conic = RationalBezier2::try_new(
@@ -660,7 +657,6 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
     let policy = CurveContext::STRICT;
     let conic = RationalBezier2::try_new(vec![p(5, 6), p(14, 5), p(23, 6)], vec![r(1), r(2), r(1)])
@@ -687,7 +683,6 @@ fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
     let policy = CurveContext::STRICT;
     let first = RationalBezier2::try_new(
@@ -714,7 +709,6 @@ fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
     let policy = CurveContext::STRICT;
     let first = RationalBezier2::try_new(
@@ -741,7 +735,6 @@ fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
     let policy = CurveContext::STRICT;
     let conic =
@@ -805,7 +798,6 @@ fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_resultant_retains_algebraic_parameter_projections() {
     let policy = CurveContext::STRICT;
     let parabola = RationalBezier2::try_new(

@@ -103,7 +103,6 @@ pub use bezier_flatten::{
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
-#[cfg(feature = "predicates")]
 pub use bezier_offset::BezierAlgebraicChordPairPoint2;
 pub use bezier_offset::{
     BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierOffsetCandidate2,
@@ -118,7 +117,6 @@ pub use bezier_offset::{
     CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
 };
-#[cfg(feature = "predicates")]
 pub use bezier_offset::{
     BezierAlgebraicChordParallelPoint2, BezierAlgebraicCuspChordDerivedPoint2,
     BezierAlgebraicCuspChordPoint2, BezierAnalyticParallelPoint2,
@@ -287,7 +285,6 @@ pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
 pub use hyperreal::Rational;
 pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge as ZeroStatus};
 
-#[cfg(feature = "predicates")]
 pub use hyperlimit::PredicatePolicy;
 
 #[cfg(test)]

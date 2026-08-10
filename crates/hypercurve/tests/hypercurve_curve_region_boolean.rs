@@ -2,7 +2,6 @@ use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
     CurvePath2, CurveRegion2, LineSeg2, Point2, Real, RegionPointLocation, Segment2,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
     OffsetCornerStyle2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
@@ -13,7 +12,6 @@ fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-#[cfg(feature = "predicates")]
 fn sharp_offset() -> OffsetCornerStyle2 {
     OffsetCornerStyle2::Miter {
         limit: Real::from(1_000),
@@ -99,7 +97,6 @@ fn capsule_at(center_x: i64, center_y: i64) -> CurveRegion2 {
         .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     let points = [
         Point2::new(Real::zero(), Real::zero()),
@@ -126,7 +123,6 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
@@ -148,7 +144,6 @@ fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> CurveRegion2 {
     let bottom = RationalBezier2::try_new(
         vec![
@@ -178,7 +173,6 @@ fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> Curve
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegion2 {
     let left = Point2::new(&center_x - Real::from(2_i8), Real::zero());
     let right = Point2::new(center_x + Real::from(2_i8), Real::zero());
@@ -694,7 +688,6 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
     let region = symbolic_quadratic_cap(Real::from(-4_i8), &CurveContext::STRICT);
     let union = region
@@ -711,7 +704,6 @@ fn noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn elevated_circular_boolean_outputs_publish_native_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = circle_with_policy(Real::zero(), &policy);
@@ -808,7 +800,6 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
     let disk = circle_with_policy(undecidable_zero, &CurveContext::APPROXIMATE_512);
@@ -852,7 +843,6 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn circular_conic_batch_obeys_the_approximate_512_terminal() {
     let first = circle_with_policy(Real::pi() + Real::e(), &CurveContext::APPROXIMATE_512);
     let second = circle_with_policy(Real::e() + Real::pi(), &CurveContext::APPROXIMATE_512);
@@ -875,7 +865,6 @@ fn circular_conic_batch_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact() {
     let first = symbolic_rectangle(Real::pi() + Real::e());
     let second = symbolic_rectangle(Real::e() + Real::pi());
@@ -910,7 +899,6 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn curve_path_construction_obeys_the_approximate_512_terminal() {
     let first_end = Point2::new(Real::pi() + Real::e(), Real::zero());
     let second_start = Point2::new(Real::e() + Real::pi(), Real::zero());
@@ -930,7 +918,6 @@ fn curve_path_construction_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn general_curve_batch_obeys_the_approximate_512_terminal() {
     let first = symbolic_quadratic_cap(-(Real::pi() + Real::e()), &CurveContext::APPROXIMATE_512);
     let second = symbolic_quadratic_cap(-(Real::e() + Real::pi()), &CurveContext::APPROXIMATE_512);
@@ -965,7 +952,6 @@ fn general_curve_batch_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn line_general_batch_obeys_the_approximate_512_terminal() {
     let first = square(0, 0, 4, 4);
     let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -994,7 +980,6 @@ fn line_general_batch_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn conic_general_batch_obeys_the_approximate_512_terminal() {
     let first_center = Real::pi() + Real::e();
     let second_center = Real::e() + Real::pi();
@@ -1024,7 +1009,6 @@ fn conic_general_batch_obeys_the_approximate_512_terminal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
     let region = symbolic_rectangle(Real::pi() + Real::e());
     let point = Point2::new(
@@ -1052,7 +1036,6 @@ fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
     let source = square(0, 0, 4, 4);
     let distance = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -1095,7 +1078,6 @@ fn curved_region_boolean_respects_nested_hole_roles() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn algebraic_curved_region_output_can_feed_another_boolean() {
     let curved = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
@@ -1158,7 +1140,6 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     let curved = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
@@ -1211,7 +1192,6 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
     let quadratic_start = point(-2, 4);
     let quadratic_control = point(0, -4);
@@ -1296,7 +1276,6 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
     let start = point(-2, 4);
     let control = point(0, -4);
@@ -1381,7 +1360,6 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
     // In the affine frame u = (x + y) / 2 and v = (x - y) / 2, this cubic has
     // u(t) = 3t and v(t) = 18t(1-t). It is therefore image-injective, but both
@@ -1519,7 +1497,6 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_regions_clip_independent_nonlinear_line_parameters() {
     let first = CurvePath2::try_new(vec![
         Curve2::from(

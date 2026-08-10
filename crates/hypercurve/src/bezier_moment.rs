@@ -2604,10 +2604,7 @@ mod tests {
 
     fn assert_approximate_equality(actual: &Real, expected: &Real) {
         let ordering = compare_reals(actual, expected, &CurveContext::APPROXIMATE_512);
-        #[cfg(feature = "predicates")]
         assert_eq!(ordering, Some(std::cmp::Ordering::Equal));
-        #[cfg(not(feature = "predicates"))]
-        assert!(matches!(ordering, None | Some(std::cmp::Ordering::Equal)));
     }
 
     fn assert_rational_moments_are_exactly_additive(curve: &RationalBezier2) {

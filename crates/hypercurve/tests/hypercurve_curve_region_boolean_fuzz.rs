@@ -1,5 +1,3 @@
-#![cfg(feature = "predicates")]
-
 #[path = "../benches/common/pathological.rs"]
 mod pathological_fixture;
 

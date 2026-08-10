@@ -765,7 +765,6 @@ impl BezierAlgebraicParameter2 {
     /// local certificate proves that the retained leading coefficient is
     /// nonzero and that the polynomial has exactly one simple root, so no
     /// second global degree/sign pass is needed.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_certified_simple_power_basis(
         mut coefficients: Vec<Real>,
         interval: BezierParameterInterval,
@@ -1432,7 +1431,6 @@ fn strict_rational_between_known_order(
 }
 
 impl BezierParameter2 {
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_algebraic_root_representation(
         representation: &AlgebraicRootRepresentation,
         policy: &CurveContext,
@@ -4545,7 +4543,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
         let policy = CurveContext::STRICT;

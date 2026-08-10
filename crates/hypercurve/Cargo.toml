@@ -16,7 +16,7 @@ all-features = true
 [dependencies]
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
 hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
-hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
 hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
 cavalier_contours = { version = "0.7.0", optional = true }
@@ -30,10 +30,9 @@ geo = "0.33.1"
 proptest = "1"
 
 [features]
-default = ["predicates"]
-predicates = ["dep:hyperlimit"]
-dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit?/dispatch-trace"]
-triangulation = ["dep:hypertri", "predicates"]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
+triangulation = ["dep:hypertri"]
 svg = ["dep:svg", "dep:svgtypes", "hyperreal/serde"]
 hershey = []
 comparative-benchmarks = [
@@ -122,7 +121,7 @@ harness = false
 [[bench]]
 name = "dispatch_trace"
 harness = false
-required-features = ["dispatch-trace", "predicates"]
+required-features = ["dispatch-trace"]
 
 [[bench]]
 name = "api_surface"

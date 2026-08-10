@@ -295,7 +295,6 @@ fn through_origin_with_horizontal_midpoint_tangent_and_third_order(third_y: i32)
     )
 }
 
-#[cfg(feature = "predicates")]
 fn rational_through_origin_with_horizontal_midpoint_tangent(
     curvature: i32,
 ) -> RationalQuadraticBezier2 {
@@ -324,7 +323,6 @@ fn algebraic_cubic_endpoint_image(
     BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap()
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_rational_endpoint_image(
     curve: &RationalQuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
@@ -823,7 +821,6 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors() {
     let parameter = algebraic_midpoint_parameter();
     let algebraic = BezierParameter2::algebraic(parameter.clone());

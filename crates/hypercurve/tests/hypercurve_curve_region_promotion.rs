@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurveRegionBoundaryLoop2,
@@ -278,7 +277,6 @@ fn certified<T>(outcome: CurveOutcome<T>) -> T {
     outcome.value
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(
@@ -337,7 +335,6 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -436,7 +433,6 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(
@@ -494,7 +490,6 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_dumbbell_region(
     policy: &CurveContext,
     fill_rule: FillRule,
@@ -1235,7 +1230,6 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
             decided(chamfered.loop_roles(&policy).unwrap()),
             vec![CurveRegionLoopRole::Material]
         );
-        #[cfg(feature = "predicates")]
         {
             assert_eq!(
                 certified(chamfered.classify_point(&p(-2, 1), &policy).unwrap()),
@@ -1253,7 +1247,6 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn unified_region_chamfer_reenters_general_algebraic_chords() {
     let bottom = Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap());
@@ -1499,7 +1492,6 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
             assert!(batch.intersection().is_empty());
             assert_eq!(batch.union().boundary_loops().len(), 2);
             assert_eq!(batch.difference().boundary_loops().len(), 1);
-            #[cfg(feature = "predicates")]
             {
                 assert_eq!(
                     certified(chamfered.classify_point(&p(0, 1), &policy).unwrap()),
@@ -1575,7 +1567,6 @@ fn algebraic_chamfer_participates_in_a_disjoint_boolean_batch() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
     let path = CurvePath2::try_new(vec![
@@ -1734,7 +1725,6 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn unified_region_corner_solver_obeys_terminal_policy_once() {
     let source = CurveRegion2::try_from_native_material_contours(
@@ -1825,7 +1815,6 @@ fn unified_region_offset_corner_options_obey_the_terminal_policy() {
     );
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
     let distance = q(1, 10);
@@ -2013,7 +2002,6 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -2128,7 +2116,6 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn algebraic_chords_and_round_centers_survive_exact_similarities() {
     let quarter_turn = Similarity2::try_from_real_affine(
@@ -2219,7 +2206,6 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
     let radius = q(1, 20);
@@ -2288,7 +2274,6 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts() {
     let radius = q(1, 20);
@@ -2404,7 +2389,6 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
     let radius = q(1, 20);
@@ -2487,7 +2471,6 @@ fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn one_chord_orders_contacts_from_two_selected_round_corners() {
     let radius = q(1, 20);
@@ -2693,7 +2676,6 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
     let setback = q(1, 100);
@@ -2892,7 +2874,6 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn canonical_exact_chord_regions_fillet_without_line_demotion() {
     let exact_chord_rectangle = |policy: &CurveContext, x_offset: i64| {
@@ -3042,7 +3023,6 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
     let source = |policy: &CurveContext, reverse: bool| {
@@ -3157,7 +3137,6 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
     let source = |policy: &CurveContext, reverse: bool| {
@@ -3307,7 +3286,6 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
     let source = |policy: &CurveContext, reverse: bool| {
@@ -3454,7 +3432,6 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
     let clipping_region = |policy: &CurveContext| {
@@ -3600,7 +3577,6 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn analytic_parallel_cap_region(policy: &CurveContext) -> CurveRegion2 {
     let path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 4), p(2, 0))),
@@ -3619,7 +3595,6 @@ fn analytic_parallel_cap_region(policy: &CurveContext) -> CurveRegion2 {
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
     let source = |policy: &CurveContext| {
@@ -3738,7 +3713,6 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
     let path = CurvePath2::try_new(vec![
@@ -3849,7 +3823,6 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -3918,7 +3891,6 @@ fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -3967,7 +3939,6 @@ fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn exact_support_cutter_reenters_correlated_chord_collinearly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -4252,7 +4223,6 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
     let distance = q(1, 20);
@@ -4298,7 +4268,6 @@ fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit() {
     let miter = OffsetCornerStyle2::Miter {
@@ -4377,7 +4346,6 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
     let miter = OffsetCornerStyle2::Miter {
@@ -5486,7 +5454,6 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn materialized_boundary_paths_obey_terminal_policy_once() {
     let start = Point2::new(Real::pi() + Real::e(), Real::zero());
@@ -5548,7 +5515,6 @@ fn materialized_boundary_paths_obey_terminal_policy_once() {
     );
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn higher_order_region_fillet_obeys_terminal_policy_once() {
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(

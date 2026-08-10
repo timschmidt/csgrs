@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use hypercurve::Similarity2;
 use hypercurve::{
     BezierSubcurve2, Curve2, CurveContext, CurveError, CurveFamily2, CurveOperation2,
@@ -29,7 +28,6 @@ fn quadratic_nurbs() -> NurbsCurve2 {
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn terminal_nurbs() -> (NurbsCurve2, Real) {
     let half = q(1, 2);
     let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
@@ -54,7 +52,6 @@ fn terminal_nurbs() -> (NurbsCurve2, Real) {
     (curve, symbolic_half)
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -243,7 +240,6 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     let curve = quadratic_nurbs();
@@ -309,7 +305,6 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
     ));
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
     let (curve, symbolic_half) = terminal_nurbs();
@@ -1711,7 +1706,6 @@ fn periodic_nurbs_wraps_exact_points_derivatives_and_retains_source() {
     );
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn periodic_nurbs_wrapping_obeys_terminal_policy() {
     let curve = NurbsCurve2::try_new_periodic(

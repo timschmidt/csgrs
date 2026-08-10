@@ -343,15 +343,7 @@ fn solve_interpolation_coordinates_bareiss(
 }
 
 fn interpolation_predicate_policy(policy: &CurveContext) -> PredicatePolicy {
-    #[cfg(feature = "predicates")]
-    {
-        policy.predicate_policy()
-    }
-    #[cfg(not(feature = "predicates"))]
-    {
-        let _ = policy;
-        PredicatePolicy::STRICT
-    }
+    policy.predicate_policy()
 }
 
 fn interpolate_distance_parameterized(

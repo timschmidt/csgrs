@@ -41,9 +41,8 @@ specializations remain private fast paths inside the unified kernel.
 hypercurve = "0.3.1"
 ```
 
-The default `predicates` feature enables Hyperlimit-backed certified predicate
-policy. See [Feature flags](#feature-flags) before disabling defaults or
-enabling adapters.
+Hyperreal, Hypersolve, and Hyperlimit are mandatory parts of the exact kernel;
+feature flags select only optional adapters and instrumentation.
 
 ## Quick start
 
@@ -282,17 +281,16 @@ uncertainty as empty geometry.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `predicates` | yes | Hyperlimit-backed certified predicate policy |
 | `dispatch-trace` | no | Hyperreal/Hyperlimit dispatch instrumentation |
 | `triangulation` | no | Finite-region triangulation through Hypertri |
 | `svg` | no | SVG import/export and exact round-trip extension |
 | `hershey` | no | Compiled Hershey stroke fonts and native curve-string text |
 | `comparative-benchmarks` | no | Third-party benchmark adapters only |
 
-Minimal and common configurations:
+Common configurations:
 
 ```sh
-cargo check --no-default-features
+cargo check
 cargo test --all-features
 cargo run --example arrangement
 cargo check --features svg

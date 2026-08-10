@@ -4,7 +4,6 @@ use hypercurve::{
     CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{ContourPointLocation, CurveCertainty};
 use hyperreal::CertifiedRealEquality;
 use proptest::prelude::*;
@@ -195,7 +194,6 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn curve_path_boundary_and_classification_report_terminal_closure() {
     let start = Point2::new(Real::pi() + Real::e(), Real::zero());
     let end = Point2::new(Real::e() + Real::pi(), Real::zero());
@@ -530,7 +528,6 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn higher_order_curve_path_fillet_obeys_terminal_policy_once() {
     let path = CurvePath2::try_new(vec![
@@ -1454,7 +1451,6 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn retained_circular_corner_recognition_uses_the_shared_approximate_terminal() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
@@ -1578,7 +1574,6 @@ fn exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets() 
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn exact_native_arc_fillet_uses_only_the_shared_approximate_terminal() {
     let path = CurvePath2::try_new(vec![
@@ -2461,7 +2456,6 @@ fn represented_bezier_chamfer_retains_more_than_two_exact_cuts() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -2501,7 +2495,6 @@ fn represented_bezier_corner_incidence_uses_the_shared_approximate_terminal() {
     assert_ne!(approximate.value.candidate_count(), 0);
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -2560,7 +2553,6 @@ fn spline_corner_incidence_uses_the_shared_approximate_terminal() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
     let path = right_angle_line_path(4);

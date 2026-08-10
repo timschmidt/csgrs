@@ -693,7 +693,7 @@ mod layout_tests {
     }
 }
 
-#[cfg(all(test, feature = "predicates"))]
+#[cfg(test)]
 mod tests {
     use std::cell::Cell;
 

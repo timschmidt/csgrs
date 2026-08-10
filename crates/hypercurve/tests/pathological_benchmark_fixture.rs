@@ -5,7 +5,6 @@ use std::collections::HashSet;
 
 use hypercurve::{BooleanOp, CurveContext, CurveFamily2};
 use pathological_fixture::build_native_cell;
-#[cfg(feature = "predicates")]
 use pathological_fixture::{MemoryTier, NativeDataset};
 
 #[test]
@@ -77,7 +76,6 @@ fn pathological_cell_covers_every_curve_and_real_representation_family() {
 fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans() {
     let cell = build_native_cell(0);
     let policy = CurveContext::STRICT;
-    #[cfg(feature = "predicates")]
     {
         let evidence = cell
             .source
@@ -121,7 +119,6 @@ fn pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
     // Cell two assigns the exact transcendental value pi to both authored
     // rational-quadratic weights. Its conic/cubic contacts formerly reached
@@ -152,7 +149,6 @@ fn pathological_pi_weight_conic_decides_native_booleans_without_projection() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn full_pathological_native_workload_decides_all_268_exact_booleans() {
     let dataset = NativeDataset::build(MemoryTier::Mib100);
     let policy = CurveContext::STRICT;

@@ -331,7 +331,6 @@ impl CurveEnvelopeAccumulator {
                     }
                 }
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(fragment) => {
                 match fragment.conservative_bounds(policy) {
                     Ok(Classification::Decided(curve_box)) => {
@@ -771,7 +770,6 @@ impl EndpointEnvelopeAccumulator {
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(_) => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }

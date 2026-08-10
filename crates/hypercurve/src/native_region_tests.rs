@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use crate::CurveCertainty;
 use crate::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurveRegion2,
@@ -576,7 +575,6 @@ fn strict_and_approximate_512_share_the_unified_policy_terminal() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     let first_sum = Real::pi() + Real::e();

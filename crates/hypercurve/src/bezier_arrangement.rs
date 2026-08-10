@@ -555,7 +555,6 @@ fn validate_arrangement_fragment_source_range(
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             fragment.validate_policy(policy)?;
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             match fragment
                 .range()
@@ -822,7 +821,6 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let (
                 crate::RationalBezierIntersectionPointEvidence2::Exact(start),
@@ -1084,7 +1082,6 @@ fn materialized_endpoint_data(
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => None,
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => None,
     }
 }
@@ -1264,9 +1261,7 @@ fn retained_endpoint_data(
                             y: Box::new(point.y()?.representation()?.clone()),
                         })
                     }
-                    #[cfg(feature = "predicates")]
                     crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_) => None,
-                    #[cfg(feature = "predicates")]
                     crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                     | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                         _,
@@ -1282,7 +1277,6 @@ fn retained_endpoint_data(
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
@@ -1868,7 +1862,6 @@ mod endpoint_adjacency_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn sqrt_half_parameter() -> crate::BezierAlgebraicParameter2 {
         let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
             vec![Real::from(-1), Real::zero(), Real::from(2)],
@@ -1908,7 +1901,6 @@ mod endpoint_adjacency_tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn lazy_polynomial_endpoint_derivatives_match_eager_images() {
         let policy = CurveContext::STRICT;
         let parameter = sqrt_half_parameter();

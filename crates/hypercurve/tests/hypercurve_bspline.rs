@@ -978,7 +978,6 @@ fn retained_rational_span_topology_evidence_reject_forged_native_evidence() {
     ]));
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn retained_bspline_evidence_constructors_obey_terminal_policy() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());

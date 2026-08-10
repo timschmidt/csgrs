@@ -13,7 +13,6 @@ use curvo::prelude::{
     NurbsCurve2D as CurvoNurbsCurve2D, Offset as CurvoOffset, Split as _,
 };
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
-#[cfg(feature = "predicates")]
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2,
@@ -544,7 +543,6 @@ fn benchmark_contour_offset(runner: &Runner) {
     });
 }
 
-#[cfg(feature = "predicates")]
 fn benchmark_algebraic_round_offset(runner: &Runner) {
     let offset_name = "algebraic_round_offset/rectangle";
     let reoffset_name = "algebraic_round_offset/retained_circle_reentry";
@@ -2280,7 +2278,6 @@ fn main() {
     benchmark_polygon_booleans(&runner);
     benchmark_line_arc_boolean(&runner);
     benchmark_contour_offset(&runner);
-    #[cfg(feature = "predicates")]
     benchmark_algebraic_round_offset(&runner);
     benchmark_orthogonal_neck_split(&runner);
     benchmark_bezier_offset(&runner);

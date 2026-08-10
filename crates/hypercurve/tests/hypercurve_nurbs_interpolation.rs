@@ -13,7 +13,6 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn symbolic_interpolation_solve_and_replay_obey_terminal_policy() {
     let pi = Real::pi();
@@ -70,7 +69,6 @@ fn symbolic_interpolation_solve_and_replay_obey_terminal_policy() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());

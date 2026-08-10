@@ -6,7 +6,6 @@ use hypercurve::{
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
     QuadraticBezier2, Real, RegionPointLocation,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
     RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, RealSign,
@@ -141,7 +140,6 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
-#[cfg(feature = "predicates")]
 fn analytic_rational_arc_corner_region(
     unit_end_weights: bool,
     reversed: bool,
@@ -209,7 +207,6 @@ fn analytic_rational_arc_corner_region(
     (region, if reversed { 3 } else { 1 })
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -256,7 +253,6 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
     let center = point(1, 2);
@@ -293,7 +289,6 @@ fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
     let source = QuadraticBezier2::new(point(-2, 0), point(0, 0), point(2, 0));
@@ -324,7 +319,6 @@ fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_circle_fast_path_excludes_other_support_contacts() {
     let source = QuadraticBezier2::new(point(-2, -1), point(0, -1), point(2, -1));
@@ -354,7 +348,6 @@ fn analytic_parallel_circle_fast_path_excludes_other_support_contacts() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
     let radius = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
@@ -394,7 +387,6 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), point(0, 2), point(4, 2))
         .parallel_left(Real::one())
@@ -711,7 +703,6 @@ fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies(
     check_policy(CurveContext::APPROXIMATE_512);
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn analytic_parallel_chamfers_retain_normalized_cut_points() {
     let setback = (Real::one() / Real::from(4_u8)).unwrap();
@@ -851,7 +842,6 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
     let first_setback = (Real::one() / Real::from(4_u8)).unwrap();

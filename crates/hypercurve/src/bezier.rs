@@ -122,12 +122,10 @@ impl BezierParallelLineTangentContact2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn parallel(&self) -> &crate::BezierParallel2 {
         &self.parallel
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn parameter(&self) -> &Real {
         &self.parameter
     }
@@ -136,7 +134,6 @@ impl BezierParallelLineTangentContact2 {
         self.line_endpoint
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn parallel_fragment_reversed(&self) -> bool {
         self.parallel_fragment_reversed
     }

@@ -1660,7 +1660,7 @@ fn sweep_kind_from_directed_angle(
     })
 }
 
-#[cfg(all(test, feature = "predicates"))]
+#[cfg(test)]
 mod policy_cache_tests {
     use super::*;
 

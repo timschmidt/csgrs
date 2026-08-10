@@ -1199,16 +1199,7 @@ mod tests {
                 contact.point(),
                 Some(&RationalBezierIntersectionPointEvidence2::Exact(point))
             );
-            #[cfg(feature = "predicates")]
             assert!(contact.boundary_parameter().as_algebraic_chord().is_some());
-            #[cfg(not(feature = "predicates"))]
-            assert!(
-                contact
-                    .boundary_parameter()
-                    .as_bezier_parameter()
-                    .and_then(BezierParameter2::as_exact)
-                    .is_some()
-            );
         }
     }
 

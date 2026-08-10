@@ -384,7 +384,6 @@ impl Aabb2 {
 
     /// Classifies whether this closed box contains `point`.
     pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        #[cfg(feature = "predicates")]
         if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::point_in_ordered_aabb2_coordinates(
                 [self.min_x(), self.min_y()],
@@ -415,7 +414,6 @@ impl Aabb2 {
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
     pub fn overlaps(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
-        #[cfg(feature = "predicates")]
         if !policy.is_edge_preview() {
             return match policy.consume_predicate(hyperlimit::ordered_aabb2s_intersect_coordinates(
                 [self.min_x(), self.min_y()],

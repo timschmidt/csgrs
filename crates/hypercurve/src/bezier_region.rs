@@ -19,25 +19,18 @@ use std::sync::OnceLock;
 
 use hyperreal::{Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
-#[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicFiberRootCountStatus, BivariatePolynomial, CurveResultantParameter,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
 };
 
-#[cfg(feature = "predicates")]
 use crate::BezierParameterPolynomial;
-#[cfg(feature = "predicates")]
 use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier::BezierParallelLineTangentContact2;
-#[cfg(feature = "predicates")]
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::BezierAlgebraicCuspSemicircleSimilarityCache2;
-#[cfg(not(feature = "predicates"))]
-use crate::bezier_offset::algebraic_chord_point_coordinate_order;
-#[cfg(feature = "predicates")]
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
     algebraic_chord_point_linear_order_to_exact, algebraic_selected_correlated_predicate_sign,
@@ -45,10 +38,8 @@ use crate::bezier_offset::{
     retained_point_linear_difference_to_algebraic_sign,
 };
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
-#[cfg(feature = "predicates")]
 use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
-#[cfg(feature = "predicates")]
 use crate::curve::RetainedFilletRadialFrame2;
 use crate::curve::{
     CornerTrimCut2, RetainedFilletFrame2, exact_corner_carrier, solve_exact_chamfer_corner,
@@ -160,7 +151,6 @@ struct CurveRegionData2 {
     line_image_region: PolicyClassificationCache<Option<LineArcRegion2>>,
     retained_rational_evaluators: OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>,
     signed_area_cache: PolicyEvaluationCache<Option<Real>>,
-    #[cfg(feature = "predicates")]
     axis_aligned_algebraic_source_loops: OnceLock<(
         CurveContext,
         CurveCertainty,
@@ -185,7 +175,6 @@ impl CurveRegionData2 {
             line_image_region: PolicyClassificationCache::new(),
             retained_rational_evaluators: OnceLock::new(),
             signed_area_cache: PolicyEvaluationCache::new(),
-            #[cfg(feature = "predicates")]
             axis_aligned_algebraic_source_loops: OnceLock::new(),
         }
     }
@@ -1564,7 +1553,6 @@ fn validate_retained_fragment_provenance(
             Ok(())
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment.validate_policy(policy),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             match fragment
                 .range()
@@ -1844,7 +1832,6 @@ fn retained_fragment_endpoint_evidence(
                 }
                 None => None,
             };
-            #[cfg(feature = "predicates")]
             let analytic_source = source_curve
                 .as_ref()
                 .map(|source_curve| {
@@ -1859,8 +1846,6 @@ fn retained_fragment_endpoint_evidence(
                     .map(|parallel| (parallel, parameter.clone()))
                 })
                 .transpose()?;
-            #[cfg(not(feature = "predicates"))]
-            let analytic_source = None;
             Ok(RetainedEndpointEvidence {
                 point,
                 retained_point,
@@ -1883,7 +1868,6 @@ fn retained_fragment_endpoint_evidence(
                 },
                 None => None,
             };
-            #[cfg(feature = "predicates")]
             let retained_point = point.is_none().then(|| {
                 crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                     crate::BezierAnalyticParallelPoint2::new(
@@ -1893,8 +1877,6 @@ fn retained_fragment_endpoint_evidence(
                     ),
                 )
             });
-            #[cfg(not(feature = "predicates"))]
-            let retained_point = None;
             Ok(RetainedEndpointEvidence {
                 point,
                 retained_point,
@@ -1923,7 +1905,6 @@ fn retained_fragment_endpoint_evidence(
                         ))
                     }),
                 ),
-                #[cfg(feature = "predicates")]
                 crate::RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | crate::RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
@@ -1942,15 +1923,10 @@ fn retained_fragment_endpoint_evidence(
             })
         }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-            #[cfg(feature = "predicates")]
             let retained_point = match fragment.endpoint_point_evidence(start_endpoint, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(_) => None,
             };
-            #[cfg(not(feature = "predicates"))]
-            let retained_point = fragment
-                .endpoint_point_image(start_endpoint, policy)?
-                .map(crate::RationalBezierIntersectionPointEvidence2::Algebraic);
             Ok(RetainedEndpointEvidence {
                 point: fragment.endpoint_exact_point(start_endpoint, policy)?,
                 retained_point,
@@ -1960,7 +1936,6 @@ fn retained_fragment_endpoint_evidence(
                 algebraic_cusp_source: Some((fragment.clone(), start_endpoint)),
             })
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let retained_point = if start_endpoint {
                 fragment.start_point().clone()
@@ -2059,7 +2034,6 @@ fn retained_endpoint_equality(
         return RetainedEndpointEquality::Equal;
     }
 
-    #[cfg(feature = "predicates")]
     {
         let cusp_chord_matches =
             |cusp: &Option<(crate::BezierAlgebraicCuspSemicircleFragment2, bool)>,
@@ -2219,9 +2193,6 @@ fn retained_corner_fragment_trim(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
-    #[cfg(not(feature = "predicates"))]
-    let _ = cut_point;
-    #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
         let parameter = parameter.as_algebraic_cusp().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
@@ -2255,7 +2226,6 @@ fn retained_corner_fragment_trim(
             )),
         };
     }
-    #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AnalyticParallel(fragment) = fragment {
         let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
@@ -2278,7 +2248,6 @@ fn retained_corner_fragment_trim(
             ),
         ));
     }
-    #[cfg(feature = "predicates")]
     if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
         let parameter = parameter.as_algebraic_chord().ok_or_else(|| {
             ExactCurveError::blocked(
@@ -2311,7 +2280,6 @@ fn retained_corner_fragment_trim(
         .cloned()
         .map(BezierSubcurve2::Rational);
     let curve = replacement_curve.as_ref().unwrap_or(curve);
-    #[cfg(feature = "predicates")]
     if let BezierSubcurve2::Quadratic(line_curve) = curve
         && matches!(
             parameter.as_bezier_parameter(),
@@ -2630,19 +2598,16 @@ struct ExactOffsetSpan2 {
 
 enum ExactOffsetTangent2 {
     Vector((Real, Real)),
-    #[cfg(feature = "predicates")]
     AlgebraicChord(crate::BezierAlgebraicChord2),
     CircularPoint {
         point: RationalBezierIntersectionPointEvidence2,
         circle: Arc<crate::rational_bezier::RationalQuadraticCircle2>,
         clockwise: bool,
     },
-    #[cfg(feature = "predicates")]
     SelectedCircularEndpoint {
         fragment: crate::BezierAlgebraicCuspSemicircleFragment2,
         at_start: bool,
     },
-    #[cfg(feature = "predicates")]
     ChordContact {
         fragment: crate::BezierAlgebraicCuspSemicircleFragment2,
         at_start: bool,
@@ -2651,7 +2616,6 @@ enum ExactOffsetTangent2 {
     },
 }
 
-#[cfg(feature = "predicates")]
 fn exact_offset_tangent_is_selected_circle(tangent: &ExactOffsetTangent2) -> bool {
     matches!(
         tangent,
@@ -2660,7 +2624,6 @@ fn exact_offset_tangent_is_selected_circle(tangent: &ExactOffsetTangent2) -> boo
     )
 }
 
-#[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicOffsetSpan2 {
     source: crate::BezierAlgebraicChord2,
     offset_start: crate::RationalBezierIntersectionPointEvidence2,
@@ -2669,14 +2632,12 @@ struct ExactAxisAlignedAlgebraicOffsetSpan2 {
     normal_offset: (Real, Real),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone)]
 struct ExactAxisAlignedAlgebraicFiber2 {
     chord: crate::BezierAlgebraicChord2,
     direction: BezierAlgebraicChordAxisDirection2,
 }
 
-#[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicSourceLoop2 {
     spans: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
     erosion_source: OnceLock<(
@@ -2686,14 +2647,12 @@ struct ExactAxisAlignedAlgebraicSourceLoop2 {
     )>,
 }
 
-#[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicErosionSource2 {
     source_x_fibers: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
     source_y_fibers: Arc<[ExactAxisAlignedAlgebraicFiber2]>,
     source_bounds: Aabb2,
 }
 
-#[cfg(feature = "predicates")]
 fn retained_chord_or_exact_line_fragment(
     chord: crate::BezierAlgebraicChord2,
 ) -> CurveResult<BezierSplitFragment2> {
@@ -2705,7 +2664,6 @@ fn retained_chord_or_exact_line_fragment(
     )))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_offset_span(
     chord: &crate::BezierAlgebraicChord2,
     direction: BezierAlgebraicChordAxisDirection2,
@@ -2742,7 +2700,6 @@ fn exact_axis_aligned_algebraic_offset_span(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn append_exact_algebraic_line_join(
     fragments: &mut Vec<BezierSplitFragment2>,
     from: &crate::RationalBezierIntersectionPointEvidence2,
@@ -2785,7 +2742,6 @@ fn append_exact_algebraic_line_join(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn append_exact_axis_aligned_algebraic_round_join(
     fragments: &mut Vec<BezierSplitFragment2>,
     previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
@@ -2887,7 +2843,6 @@ fn append_exact_axis_aligned_algebraic_round_join(
     Ok(Classification::Decided(()))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_miter_point(
     previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
     next: &ExactAxisAlignedAlgebraicOffsetSpan2,
@@ -2935,7 +2890,6 @@ fn exact_axis_aligned_algebraic_miter_point(
     Ok(Classification::Decided(Some(miter)))
 }
 
-#[cfg(feature = "predicates")]
 enum ExactAxisAlignedAlgebraicJoin2 {
     Shared,
     Miter(crate::RationalBezierIntersectionPointEvidence2),
@@ -2943,7 +2897,6 @@ enum ExactAxisAlignedAlgebraicJoin2 {
     Round(crate::arc_bezier::ArcSweepKind),
 }
 
-#[cfg(feature = "predicates")]
 enum ExactAxisAlignedAlgebraicOffsetLoop2 {
     Inapplicable,
     Removed,
@@ -2951,7 +2904,6 @@ enum ExactAxisAlignedAlgebraicOffsetLoop2 {
     ErodedBoundaries(Vec<(CurveRegionBoundaryLoop2, bool)>),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Copy)]
 struct ExactCardinalConvexFragment2 {
     start_tangent: BezierAlgebraicChordAxisDirection2,
@@ -2959,7 +2911,6 @@ struct ExactCardinalConvexFragment2 {
     quarter_turns: u8,
 }
 
-#[cfg(feature = "predicates")]
 const fn cardinal_direction_index(direction: BezierAlgebraicChordAxisDirection2) -> u8 {
     match direction {
         BezierAlgebraicChordAxisDirection2::PositiveX => 0,
@@ -2969,7 +2920,6 @@ const fn cardinal_direction_index(direction: BezierAlgebraicChordAxisDirection2)
     }
 }
 
-#[cfg(feature = "predicates")]
 fn cardinal_direction_from_delta(
     x: &Real,
     y: &Real,
@@ -2993,7 +2943,6 @@ fn cardinal_direction_from_delta(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn exact_cardinal_convex_fragment(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
@@ -3134,7 +3083,6 @@ fn exact_cardinal_convex_fragment(
 /// quarter turns, every join contributes at most one, and exactly one full
 /// positive turn is required. No coordinate sampling or approximate tangent
 /// construction participates in the certificate.
-#[cfg(feature = "predicates")]
 fn exact_cardinal_convex_filled_left_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
@@ -3169,7 +3117,6 @@ fn exact_cardinal_convex_filled_left_loop(
     Ok(Classification::Decided(quarter_turns == 4))
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_loop_is_convex_inward(
     spans: &[ExactAxisAlignedAlgebraicFiber2],
     distance: &Real,
@@ -3206,7 +3153,6 @@ fn axis_aligned_loop_is_convex_inward(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_offset_has_reversed_span(
     spans: &[ExactAxisAlignedAlgebraicOffsetSpan2],
     policy: &CurveContext,
@@ -3243,7 +3189,6 @@ fn axis_aligned_offset_has_reversed_span(
     Ok(Classification::Decided(false))
 }
 
-#[cfg(feature = "predicates")]
 struct ExactAxisAlignedAlgebraicExpandedBox2 {
     minimum_x: crate::RationalBezierIntersectionPointEvidence2,
     maximum_x: crate::RationalBezierIntersectionPointEvidence2,
@@ -3251,7 +3196,6 @@ struct ExactAxisAlignedAlgebraicExpandedBox2 {
     maximum_y: crate::RationalBezierIntersectionPointEvidence2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Copy)]
 struct ExactAxisAlignedAlgebraicGridEdge2 {
     start: usize,
@@ -3259,7 +3203,6 @@ struct ExactAxisAlignedAlgebraicGridEdge2 {
     direction: usize,
 }
 
-#[cfg(feature = "predicates")]
 fn translated_algebraic_offset_endpoint(
     endpoint: &crate::RationalBezierIntersectionPointEvidence2,
     delta_x: &Real,
@@ -3269,7 +3212,6 @@ fn translated_algebraic_offset_endpoint(
     crate::BezierAlgebraicChord2::translated_endpoint(endpoint, delta_x, delta_y, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_expanded_source_box(
     span: &ExactAxisAlignedAlgebraicFiber2,
     radius: &Real,
@@ -3330,7 +3272,6 @@ fn exact_axis_aligned_expanded_source_box(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn extend_axis_aligned_algebraic_chord(
     chord: &crate::BezierAlgebraicChord2,
     direction: BezierAlgebraicChordAxisDirection2,
@@ -3394,7 +3335,6 @@ fn extend_axis_aligned_algebraic_chord(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn sort_dedup_axis_aligned_algebraic_fibers(
     fibers: Vec<ExactAxisAlignedAlgebraicFiber2>,
     axis: Axis2,
@@ -3433,7 +3373,6 @@ fn sort_dedup_axis_aligned_algebraic_fibers(
     Ok(Classification::Decided(sorted))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_erosion_coordinates(
     sources: &[ExactAxisAlignedAlgebraicFiber2],
     axis: Axis2,
@@ -3499,7 +3438,6 @@ fn exact_axis_aligned_algebraic_erosion_coordinates(
     Ok(Classification::Decided(retained))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_grid_coordinate_position(
     point: &crate::RationalBezierIntersectionPointEvidence2,
     axis: Axis2,
@@ -3529,7 +3467,6 @@ fn exact_axis_aligned_grid_coordinate_position(
     Ok(Classification::Decided((lower, false)))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_grid_coordinate_index(
     point: &crate::RationalBezierIntersectionPointEvidence2,
     axis: Axis2,
@@ -3545,7 +3482,6 @@ fn exact_axis_aligned_grid_coordinate_index(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_grid_cell_interval(
     minimum: &crate::RationalBezierIntersectionPointEvidence2,
     maximum: &crate::RationalBezierIntersectionPointEvidence2,
@@ -3585,7 +3521,6 @@ fn exact_axis_aligned_grid_cell_interval(
     Ok(Classification::Decided(minimum..maximum))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_grid_point(
     cache: &mut [Option<crate::RationalBezierIntersectionPointEvidence2>],
     vertex: usize,
@@ -3609,7 +3544,6 @@ fn exact_axis_aligned_grid_point(
     Ok(Classification::Decided(point))
 }
 
-#[cfg(feature = "predicates")]
 fn push_exact_axis_aligned_grid_edge(
     edges: &mut Vec<ExactAxisAlignedAlgebraicGridEdge2>,
     outgoing: &mut [[Option<usize>; 4]],
@@ -3632,7 +3566,6 @@ fn push_exact_axis_aligned_grid_edge(
     Ok(())
 }
 
-#[cfg(feature = "predicates")]
 /// Erodes one orthogonal retained loop through its exact finite cell arrangement.
 ///
 /// Source coordinates and their `radius` translations partition the plane into
@@ -3990,7 +3923,6 @@ fn exact_axis_aligned_algebraic_erosion(
     Ok(Classification::Decided(boundaries))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_join(
     previous: &ExactAxisAlignedAlgebraicOffsetSpan2,
     next: &ExactAxisAlignedAlgebraicOffsetSpan2,
@@ -4077,7 +4009,6 @@ fn exact_axis_aligned_algebraic_join(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_source_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
@@ -4143,7 +4074,6 @@ fn exact_axis_aligned_algebraic_source_loop(
     ))))
 }
 
-#[cfg(feature = "predicates")]
 impl ExactAxisAlignedAlgebraicSourceLoop2 {
     fn erosion_source(
         &self,
@@ -4237,7 +4167,6 @@ impl ExactAxisAlignedAlgebraicSourceLoop2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_algebraic_offset_loop(
     source_loop: Option<&ExactAxisAlignedAlgebraicSourceLoop2>,
     distance: &Real,
@@ -4751,7 +4680,6 @@ fn exact_offset_span_from_native_arc(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_offset_span_from_algebraic_chord(
     chord: &crate::BezierAlgebraicChord2,
     distance: &Real,
@@ -4838,7 +4766,6 @@ fn exact_offset_span_from_algebraic_chord(
     }))
 }
 
-#[cfg(feature = "predicates")]
 fn exact_algebraic_cusp_semicircle_endpoint(
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     at_start: bool,
@@ -4853,7 +4780,6 @@ fn exact_algebraic_cusp_semicircle_endpoint(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_offset_algebraic_cusp_semicircle_endpoint(
     source: &crate::BezierAlgebraicCuspSemicircleFragment2,
     offset: &crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -4876,7 +4802,6 @@ fn exact_offset_algebraic_cusp_semicircle_endpoint(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_offset_algebraic_cusp_semicircle_tangent(
     offset: &crate::BezierAlgebraicCuspSemicircleFragment2,
     at_start: bool,
@@ -4933,7 +4858,6 @@ fn exact_offset_algebraic_cusp_semicircle_tangent(
     Ok(tangent)
 }
 
-#[cfg(feature = "predicates")]
 fn exact_offset_span_from_algebraic_cusp_semicircle(
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     distance: &Real,
@@ -5328,7 +5252,6 @@ fn coalesced_analytic_parallel_offset_run(
 /// identical concentric carriers. The fragment authority accepts only the
 /// same carrier, traversal, and an exactly shared/equal cut; every other case
 /// falls back to the ordinary per-fragment path.
-#[cfg(feature = "predicates")]
 fn coalesced_algebraic_circle_offset_run(
     fragments: &[BezierSplitFragment2],
     first_index: usize,
@@ -5566,7 +5489,6 @@ fn append_exact_offset_join(
                 policy,
             )
         }
-        #[cfg(feature = "predicates")]
         OffsetCornerStyle2::Bevel if !inward => append_exact_algebraic_line_join(
             fragments,
             &previous.offset_end,
@@ -5586,15 +5508,6 @@ fn append_exact_offset_join(
             },
             policy,
         ),
-        #[cfg(not(feature = "predicates"))]
-        OffsetCornerStyle2::Bevel if !inward => {
-            let (Some(from), Some(to)) =
-                (previous.offset_end.as_exact(), next.offset_start.as_exact())
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            append_exact_line_join_with_parallel_tangencies(fragments, from, to, Vec::new(), policy)
-        }
         OffsetCornerStyle2::Miter { limit } if !inward => {
             append_exact_miter_join(fragments, previous, next, distance, Some(limit), policy)
         }
@@ -5947,7 +5860,6 @@ fn exact_circular_tangent_cross_vector(
     vector: &(Real, Real),
     policy: &CurveContext,
 ) -> Classification<RealSign> {
-    #[cfg(feature = "predicates")]
     {
         match algebraic_chord_point_linear_order_to_exact(
             point,
@@ -5973,45 +5885,8 @@ fn exact_circular_tangent_cross_vector(
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         }
     }
-    #[cfg(not(feature = "predicates"))]
-    {
-        let (axis, factor) = match (real_sign(&vector.0, policy), real_sign(&vector.1, policy)) {
-            (Some(sign @ (RealSign::Negative | RealSign::Positive)), Some(RealSign::Zero)) => {
-                (Axis2::X, sign)
-            }
-            (Some(RealSign::Zero), Some(sign @ (RealSign::Negative | RealSign::Positive))) => {
-                (Axis2::Y, sign)
-            }
-            (Some(_), Some(_)) => {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            }
-            _ => return Classification::Uncertain(UncertaintyReason::RealSign),
-        };
-        let center = RationalBezierIntersectionPointEvidence2::Exact(circle.center.clone());
-        match algebraic_chord_point_coordinate_order(point, &center, axis, policy) {
-            Ok(Classification::Decided(order)) => {
-                let radial_sign = match order {
-                    std::cmp::Ordering::Less => RealSign::Negative,
-                    std::cmp::Ordering::Equal => RealSign::Zero,
-                    std::cmp::Ordering::Greater => RealSign::Positive,
-                };
-                let orientation = if clockwise {
-                    RealSign::Positive
-                } else {
-                    RealSign::Negative
-                };
-                Classification::Decided(exact_sign_product(
-                    exact_sign_product(radial_sign, orientation),
-                    factor,
-                ))
-            }
-            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
-            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-        }
-    }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_algebraic_chord_parallel_factor(
     reference: &crate::BezierAlgebraicChord2,
     candidate: &crate::BezierAlgebraicChord2,
@@ -6037,7 +5912,6 @@ fn exact_algebraic_chord_parallel_factor(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn exact_algebraic_chord_vector_factor(
     reference: &crate::BezierAlgebraicChord2,
     candidate: &(Real, Real),
@@ -6081,7 +5955,6 @@ fn exact_offset_tangent_cross_sign(
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::AlgebraicChord(second),
@@ -6097,14 +5970,12 @@ fn exact_offset_tangent_cross_sign(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::AlgebraicChord(first), ExactOffsetTangent2::Vector(second)) => {
             match first.tangent_cross_vector_sign(second, policy) {
                 Ok(sign) => sign,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::Vector(first), ExactOffsetTangent2::AlgebraicChord(second)) => {
             match second.tangent_cross_vector_sign(first, policy) {
                 Ok(sign) => sign.map(exact_sign_reverse),
@@ -6128,7 +5999,6 @@ fn exact_offset_tangent_cross_sign(
             },
         ) => exact_circular_tangent_cross_vector(point, circle, *clockwise, first, policy)
             .map(exact_sign_reverse),
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
             ExactOffsetTangent2::Vector(second),
@@ -6144,7 +6014,6 @@ fn exact_offset_tangent_cross_sign(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::Vector(first),
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
@@ -6160,7 +6029,6 @@ fn exact_offset_tangent_cross_sign(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::ChordContact {
                 fragment,
@@ -6185,7 +6053,6 @@ fn exact_offset_tangent_cross_sign(
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::Vector(first),
             ExactOffsetTangent2::ChordContact {
@@ -6211,7 +6078,6 @@ fn exact_offset_tangent_cross_sign(
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::ChordContact {
                 fragment,
@@ -6236,7 +6102,6 @@ fn exact_offset_tangent_cross_sign(
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::ChordContact {
@@ -6262,14 +6127,12 @@ fn exact_offset_tangent_cross_sign(
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
             ExactOffsetTangent2::AlgebraicChord(second),
         ) => fragment
             .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
@@ -6277,7 +6140,6 @@ fn exact_offset_tangent_cross_sign(
             .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
             .map(|cross| cross.map(exact_sign_reverse))
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment: first_fragment,
@@ -6308,11 +6170,9 @@ fn exact_offset_tangent_cross_sign(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::CircularPoint { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. })
@@ -6326,10 +6186,6 @@ fn exact_offset_tangent_cross_sign(
         )
         | (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::CircularPoint { .. })
         | (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::AlgebraicChord(_)) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        }
-        #[cfg(not(feature = "predicates"))]
-        (ExactOffsetTangent2::CircularPoint { .. }, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
     }
@@ -6360,7 +6216,6 @@ fn exact_offset_tangents_are_opposite(
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::AlgebraicChord(second),
@@ -6373,7 +6228,6 @@ fn exact_offset_tangents_are_opposite(
             Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         },
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::AlgebraicChord(chord), ExactOffsetTangent2::Vector(vector))
         | (ExactOffsetTangent2::Vector(vector), ExactOffsetTangent2::AlgebraicChord(chord)) => {
             match chord.tangent_dot_vector_sign(vector, policy) {
@@ -6386,7 +6240,6 @@ fn exact_offset_tangents_are_opposite(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
-        #[cfg(feature = "predicates")]
         (
             ExactOffsetTangent2::SelectedCircularEndpoint { fragment, at_start },
             ExactOffsetTangent2::Vector(vector),
@@ -6410,12 +6263,10 @@ fn exact_offset_tangents_are_opposite(
         | (_, ExactOffsetTangent2::CircularPoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::SelectedCircularEndpoint { .. }, _)
         | (_, ExactOffsetTangent2::SelectedCircularEndpoint { .. }) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        #[cfg(feature = "predicates")]
         (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_))
         | (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. })
         | (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::ChordContact { .. })
@@ -7340,7 +7191,6 @@ impl CurveRegion2 {
                     | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                         fragments.push(fragment.fragment().clone());
                     }
-                    #[cfg(feature = "predicates")]
                     BezierSplitFragment2::SelectedFiber(_) => {
                         fragments.push(fragment.fragment().clone());
                     }
@@ -8178,7 +8028,6 @@ impl CurveRegion2 {
         let next_fragment = &boundary_loop.fragments()[next_index];
         let previous_top_level = match previous_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -8186,7 +8035,6 @@ impl CurveRegion2 {
         };
         let next_top_level = match next_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -8226,15 +8074,12 @@ impl CurveRegion2 {
                     UncertaintyReason::Unsupported,
                 )
             })?,
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
             }
@@ -8256,15 +8101,12 @@ impl CurveRegion2 {
                     UncertaintyReason::Unsupported,
                 )
             })?,
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicChord(chord)
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
             }
@@ -8544,7 +8386,6 @@ impl CurveRegion2 {
         let next_index = vertex_index;
         let operation_curve = |fragment: &BezierSplitFragment2| match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().map(Curve2::from),
             _ => None,
         };
@@ -8603,7 +8444,6 @@ impl CurveRegion2 {
                     )
                 })?
         } else {
-            #[cfg(feature = "predicates")]
             {
                 match previous_fragment {
                     BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
@@ -8618,8 +8458,6 @@ impl CurveRegion2 {
                     _ => unreachable!("the supported retained fillet carrier is closed"),
                 }
             }
-            #[cfg(not(feature = "predicates"))]
-            return Ok(None);
         };
         let next_carrier = if let Some(next_curve) = &next_curve {
             exact_corner_carrier(next_curve, false, CurveOperation2::Fillet, policy)?.ok_or_else(
@@ -8632,7 +8470,6 @@ impl CurveRegion2 {
                 },
             )?
         } else {
-            #[cfg(feature = "predicates")]
             {
                 match next_fragment {
                     BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
@@ -8647,8 +8484,6 @@ impl CurveRegion2 {
                     _ => unreachable!("the supported retained fillet carrier is closed"),
                 }
             }
-            #[cfg(not(feature = "predicates"))]
-            return Ok(None);
         };
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
@@ -8703,7 +8538,6 @@ impl CurveRegion2 {
         .map(Some)
     }
 
-    #[cfg(feature = "predicates")]
     fn retained_fillet_sweep(
         frame: &RetainedFilletFrame2,
         other_parallel: &BezierParallel2,
@@ -8783,7 +8617,6 @@ impl CurveRegion2 {
         Ok((sweep_halves, tangent_cross, tangent_dot))
     }
 
-    #[cfg(feature = "predicates")]
     #[allow(clippy::too_many_arguments)]
     fn retained_parallel_fillet_fragments(
         frame: &RetainedFilletFrame2,
@@ -9012,23 +8845,6 @@ impl CurveRegion2 {
                 .collect());
         }
 
-        #[cfg(not(feature = "predicates"))]
-        {
-            let _ = (
-                previous_fragment,
-                next_fragment,
-                previous_cut,
-                next_cut,
-                retained_frame,
-            );
-            Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                CurveFamily2::RationalBezier,
-                UncertaintyReason::Unsupported,
-            ))
-        }
-
-        #[cfg(feature = "predicates")]
         {
             let frame = retained_frame.ok_or_else(|| {
                 ExactCurveError::blocked(
@@ -9393,7 +9209,6 @@ impl CurveRegion2 {
         cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<()> {
-        #[cfg(feature = "predicates")]
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
             cut.parameter = match chord
                 .parameter_at_certified_point(cut.point.clone(), policy)
@@ -9419,8 +9234,6 @@ impl CurveRegion2 {
                 }
             };
         }
-        #[cfg(not(feature = "predicates"))]
-        let _ = (fragment, cut, policy);
         Ok(())
     }
 
@@ -10045,7 +9858,6 @@ impl CurveRegion2 {
         Ok(Classification::Decided(edited))
     }
 
-    #[cfg(feature = "predicates")]
     fn exact_axis_aligned_algebraic_source_loops(
         &self,
         policy: &CurveContext,
@@ -10116,7 +9928,6 @@ impl CurveRegion2 {
             }
             Err(error) => return Err(error),
         }
-        #[cfg(feature = "predicates")]
         let distance_positive = match real_sign(&distance, policy) {
             Some(RealSign::Positive) => true,
             Some(RealSign::Negative) => false,
@@ -10145,7 +9956,6 @@ impl CurveRegion2 {
             || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
             <[_]>::to_vec,
         );
-        #[cfg(feature = "predicates")]
         let axis_aligned_algebraic_source_loops = match self
             .exact_axis_aligned_algebraic_source_loops(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -10155,7 +9965,6 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        #[cfg(feature = "predicates")]
         if axis_aligned_algebraic_source_loops.len() != self.data.boundary_loops.len() {
             return Err(curve_region_edit_error(
                 CurveOperation2::Offset,
@@ -10176,7 +9985,6 @@ impl CurveRegion2 {
             ));
         }
 
-        #[cfg(feature = "predicates")]
         let certify_cardinal_convex_outward_topology = distance_positive
             && self.data.boundary_loops.len() == 1
             && roles[0] == CurveRegionLoopRole::Material
@@ -10193,7 +10001,6 @@ impl CurveRegion2 {
         let mut offset_roles = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_fill_rules = Vec::with_capacity(self.data.boundary_loops.len());
         let mut offset_filled_sides = Vec::with_capacity(self.data.boundary_loops.len());
-        #[cfg(feature = "predicates")]
         let mut certified_regularized_filled_left_topology = false;
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let signed_left_distance = if filled_sides[loop_index] {
@@ -10201,10 +10008,8 @@ impl CurveRegion2 {
             } else {
                 distance.clone()
             };
-            #[cfg(feature = "predicates")]
             let component_contracts =
                 (roles[loop_index] == CurveRegionLoopRole::Material) != distance_positive;
-            #[cfg(feature = "predicates")]
             match exact_axis_aligned_algebraic_offset_loop(
                 axis_aligned_algebraic_source_loops[loop_index].as_deref(),
                 &signed_left_distance,
@@ -10273,7 +10078,6 @@ impl CurveRegion2 {
                         })
                         .unwrap_or(0)
                 }
-                #[cfg(feature = "predicates")]
                 Some(BezierSplitFragment2::AlgebraicCuspSemicircle(first))
                     if !first.traversal_start_parameter_is_exact() =>
                 {
@@ -10332,11 +10136,9 @@ impl CurveRegion2 {
                             }
                         }
                     }
-                    #[cfg(feature = "predicates")]
                     BezierSplitFragment2::AlgebraicChord(chord) => {
                         exact_offset_span_from_algebraic_chord(chord, &signed_left_distance, policy)
                     }
-                    #[cfg(feature = "predicates")]
                     BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                         match coalesced_algebraic_circle_offset_run(
                             source_fragments,
@@ -10378,13 +10180,7 @@ impl CurveRegion2 {
                     BezierSplitFragment2::Unresolved { .. } => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
-                    #[cfg(feature = "predicates")]
                     BezierSplitFragment2::SelectedFiber(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    #[cfg(not(feature = "predicates"))]
-                    BezierSplitFragment2::AlgebraicChord(_)
-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
                 };
@@ -10441,11 +10237,8 @@ impl CurveRegion2 {
                     }
                 }
             }
-            #[cfg(feature = "predicates")]
             let retain_convex_arrangement_sources =
                 certify_cardinal_convex_outward_topology && loop_index == 0;
-            #[cfg(not(feature = "predicates"))]
-            let retain_convex_arrangement_sources = false;
             let offset_loop = if retain_convex_arrangement_sources {
                 let arrangement_sources = (0..fragments.len())
                     .map(|fragment_index| {
@@ -10461,7 +10254,6 @@ impl CurveRegion2 {
                 CurveRegionBoundaryLoop2::new(fragments, policy)
             }
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-            #[cfg(feature = "predicates")]
             if retain_convex_arrangement_sources {
                 // The outward parallel of a convex set is convex. The source
                 // face walk already proves simplicity, while the cardinal
@@ -10487,7 +10279,6 @@ impl CurveRegion2 {
         raw = raw
             .with_certified_filled_side_is_left(offset_filled_sides)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-        #[cfg(feature = "predicates")]
         if certified_regularized_filled_left_topology {
             raw = raw
                 .with_certified_regularized_filled_left_topology()
@@ -10970,7 +10761,6 @@ impl CurveRegion2 {
     /// The point remains in its defining local algebraic field. Boundary
     /// incidence and ray winding therefore consume the same `STRICT` or
     /// `APPROXIMATE_512` predicate policy as the rest of the curve kernel.
-    #[cfg(feature = "predicates")]
     pub fn classify_algebraic_point(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
@@ -10981,7 +10771,6 @@ impl CurveRegion2 {
         })
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn classify_algebraic_point_raw(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
@@ -10990,7 +10779,6 @@ impl CurveRegion2 {
         self.classify_algebraic_point_with_boundary_contract(point, policy, true)
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn classify_algebraic_point_off_boundary_raw(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
@@ -10999,7 +10787,6 @@ impl CurveRegion2 {
         self.classify_algebraic_point_with_boundary_contract(point, policy, false)
     }
 
-    #[cfg(feature = "predicates")]
     fn classify_algebraic_point_with_boundary_contract(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
@@ -11291,7 +11078,6 @@ impl CurveRegion2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn classify_algebraic_point_from_boundary_side_ray(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
@@ -11850,7 +11636,6 @@ fn represented_boundary_loop_is_simple(
                 }
                 curves.push(Curve2::from(curve.clone()));
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 let Some(line) = chord.exact_line() else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -12049,33 +11834,17 @@ fn transform_retained_region_fragment(
                 ),
             ))
         }
-        BezierSplitFragment2::AlgebraicChord(chord) => {
-            #[cfg(feature = "predicates")]
-            {
-                match chord
-                    .transform_affine(m00, m01, m10, m11, tx, ty, policy)
-                    .map_err(affine_region_error)?
-                {
-                    Classification::Decided(chord) => {
-                        Ok(BezierSplitFragment2::AlgebraicChord(chord))
-                    }
-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                        CurveOperation2::Transformation,
-                        CurveFamily2::RationalBezier,
-                        reason,
-                    )),
-                }
-            }
-            #[cfg(not(feature = "predicates"))]
-            {
-                let _ = chord;
-                Err(ExactCurveError::blocked(
-                    CurveOperation2::Transformation,
-                    CurveFamily2::RationalBezier,
-                    UncertaintyReason::Unsupported,
-                ))
-            }
-        }
+        BezierSplitFragment2::AlgebraicChord(chord) => match chord
+            .transform_affine(m00, m01, m10, m11, tx, ty, policy)
+            .map_err(affine_region_error)?
+        {
+            Classification::Decided(chord) => Ok(BezierSplitFragment2::AlgebraicChord(chord)),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Transformation,
+                CurveFamily2::RationalBezier,
+                reason,
+            )),
+        },
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             Ok(BezierSplitFragment2::AlgebraicCuspSemicircle(
                 fragment
@@ -12094,7 +11863,6 @@ fn transform_retained_region_fragment(
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
         )),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => Err(ExactCurveError::blocked(
             CurveOperation2::Transformation,
             CurveFamily2::RationalBezier,
@@ -12636,7 +12404,6 @@ fn retained_line_fragment_endpoints(
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
@@ -12898,7 +12665,6 @@ fn retained_loop_sample_point(
             ))
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => fragment.representative_point(policy),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => fragment.representative_point(policy),
         BezierSplitFragment2::AlgebraicChord(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
@@ -12949,7 +12715,6 @@ fn classify_point_against_native_loop(
     classify_point_against_native_loop_after_bounds(boundary_loop, point, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_is_decided_outside_bounds(
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     bounds: &Aabb2,
@@ -12972,7 +12737,6 @@ fn algebraic_point_is_decided_outside_bounds(
     Ok(false)
 }
 
-#[cfg(feature = "predicates")]
 fn classify_algebraic_point_against_line_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13051,7 +12815,6 @@ fn classify_algebraic_point_against_line_loop(
     )))
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone)]
 struct AlgebraicRayHomogeneousControl2 {
     x: Real,
@@ -13059,7 +12822,6 @@ struct AlgebraicRayHomogeneousControl2 {
     weight: Real,
 }
 
-#[cfg(feature = "predicates")]
 struct AlgebraicRayRationalFragment2 {
     curve: RationalBezier2,
     retained_range: Option<CurveRegionParameterRange2>,
@@ -13067,7 +12829,6 @@ struct AlgebraicRayRationalFragment2 {
     endpoints: [RationalBezierIntersectionPointEvidence2; 2],
 }
 
-#[cfg(feature = "predicates")]
 enum AlgebraicRayRetainedFragment2 {
     Rational(AlgebraicRayRationalFragment2),
     AnalyticParallel(crate::bezier_offset::BezierParallelAlgebraicRay2),
@@ -13075,7 +12836,6 @@ enum AlgebraicRayRetainedFragment2 {
     AlgebraicCusp(crate::bezier_offset::BezierAlgebraicCuspSemicircleAlgebraicRay2),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Default)]
 struct AlgebraicRaySignHull2 {
     negative: bool,
@@ -13085,7 +12845,6 @@ struct AlgebraicRaySignHull2 {
     last_nonzero: Option<RealSign>,
 }
 
-#[cfg(feature = "predicates")]
 impl AlgebraicRaySignHull2 {
     fn include(&mut self, sign: RealSign) {
         match sign {
@@ -13101,7 +12860,6 @@ impl AlgebraicRaySignHull2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn classify_algebraic_point_against_retained_loop(
     boundary_loop: &CurveRegionBoundaryLoop2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13124,7 +12882,6 @@ fn classify_algebraic_point_against_retained_loop(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn classify_algebraic_point_against_retained_loop_with_cusps(
     boundary_loop: &CurveRegionBoundaryLoop2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13218,7 +12975,6 @@ fn classify_algebraic_point_against_retained_loop_with_cusps(
     Ok(Classification::Uncertain(last_reason))
 }
 
-#[cfg(feature = "predicates")]
 fn prepare_algebraic_ray_retained_fragments(
     boundary_loop: &CurveRegionBoundaryLoop2,
     policy: &CurveContext,
@@ -13277,7 +13033,6 @@ fn prepare_algebraic_ray_retained_fragments(
     Ok(Classification::Decided(fragments))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_retained_fragments_admit_direction(
     fragments: &[AlgebraicRayRetainedFragment2],
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13334,7 +13089,6 @@ fn algebraic_ray_retained_fragments_admit_direction(
     Ok(Classification::Decided(true))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_retained_fragments_winding(
     fragments: &[AlgebraicRayRetainedFragment2],
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13415,7 +13169,6 @@ fn algebraic_ray_retained_fragments_winding(
     Ok(Classification::Decided(winding))
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fragment_algebraic_ray_endpoints(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
@@ -13438,7 +13191,6 @@ fn retained_fragment_algebraic_ray_endpoints(
     Ok([endpoint(true)?, endpoint(false)?])
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fragment_analytic_algebraic_ray_curve(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
@@ -13470,7 +13222,6 @@ fn retained_fragment_analytic_algebraic_ray_curve(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fragment_algebraic_ray_curve(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
@@ -13574,7 +13325,6 @@ fn retained_fragment_algebraic_ray_curve(
     }))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_rational_curve_linear_equation(
     curve: &RationalBezier2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13634,7 +13384,6 @@ fn algebraic_point_rational_curve_linear_equation(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_rational_fragment_endpoint_side_signs(
     fragment: &AlgebraicRayRationalFragment2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13656,7 +13405,6 @@ fn algebraic_ray_rational_fragment_endpoint_side_signs(
     Ok(Classification::Decided(signs))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_on_rational_curve(
     curve: &RationalBezier2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13728,7 +13476,6 @@ fn algebraic_point_on_rational_curve(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_on_rational_fragment(
     fragment: &AlgebraicRayRationalFragment2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13806,7 +13553,6 @@ fn algebraic_point_on_rational_fragment(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_rational_curve_ray_winding(
     fragment: &AlgebraicRayRationalFragment2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -13979,7 +13725,6 @@ fn algebraic_point_rational_curve_ray_winding(
     }))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_retained_rational_curve_ray_winding(
     fragment: &AlgebraicRayRationalFragment2,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -14117,7 +13862,6 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     }))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_project_selected_fiber_parameters(
     incidence: &BivariatePolynomial,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -14170,7 +13914,6 @@ fn algebraic_ray_project_selected_fiber_parameters(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_bivariate_second_derivative(
     polynomial: &BivariatePolynomial,
 ) -> BivariatePolynomial {
@@ -14192,7 +13935,6 @@ fn algebraic_ray_bivariate_second_derivative(
     )
 }
 
-#[cfg(feature = "predicates")]
 const fn multiply_algebraic_ray_signs(first: RealSign, second: RealSign) -> RealSign {
     match (first, second) {
         (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
@@ -14205,7 +13947,6 @@ const fn multiply_algebraic_ray_signs(first: RealSign, second: RealSign) -> Real
     }
 }
 
-#[cfg(feature = "predicates")]
 const fn algebraic_ray_crossing_delta(start: RealSign, end: RealSign) -> i32 {
     match (start, end) {
         (RealSign::Negative, RealSign::Positive) => 1,
@@ -14215,7 +13956,6 @@ const fn algebraic_ray_crossing_delta(start: RealSign, end: RealSign) -> i32 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_curve_weight_sign(
     curve: &RationalBezier2,
     policy: &CurveContext,
@@ -14236,7 +13976,6 @@ fn algebraic_ray_curve_weight_sign(
     Classification::Decided(first)
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_ray_control_sign_hull(
     controls: &[AlgebraicRayHomogeneousControl2],
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -14265,7 +14004,6 @@ fn algebraic_ray_control_sign_hull(
     Ok(Classification::Decided(hull))
 }
 
-#[cfg(feature = "predicates")]
 fn split_algebraic_ray_controls_at_half(
     controls: &[AlgebraicRayHomogeneousControl2],
     half: &Real,
@@ -14536,7 +14274,6 @@ fn retained_fragment_contains_point(
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             }
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let parameters = if let Some(curve) = fragment.rational_curve() {
                 match curve.point_incidence(point, policy) {
@@ -14584,12 +14321,7 @@ fn retained_fragment_contains_point(
             }
             Ok(Classification::Decided(false))
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::AlgebraicChord(chord) => chord.contains_point(point, policy),
-        #[cfg(not(feature = "predicates"))]
-        BezierSplitFragment2::AlgebraicChord(_) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-        }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             fragment.contains_point(point, policy)
         }
@@ -14630,7 +14362,6 @@ fn retained_circle_tangent_contacts(
             source_curve: Some(BezierSubcurve2::RationalQuadratic(curve)),
             ..
         } => curve.retained_circular_conic(),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
             .rational_curve()
             .and_then(RationalBezier2::retained_circular_conic),
@@ -14687,10 +14418,8 @@ fn classify_point_with_retained_ray_skipping_origin(
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(_) => None,
         };
-        #[cfg(feature = "predicates")]
         if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
             let source_contact = skipped_origin.and_then(|origin| {
                 (origin.fragment_index == Some(fragment_index))
@@ -14780,7 +14509,6 @@ fn classify_point_with_retained_ray_skipping_origin(
                     None,
                 ))
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(fragment) => {
                 fragment.analytic_parallel().map(|parallel| {
                     (
@@ -14968,7 +14696,6 @@ fn classify_point_with_retained_ray_skipping_origin(
             }
             continue;
         }
-        #[cfg(feature = "predicates")]
         let selected_curve = match fragment {
             BezierSplitFragment2::SelectedFiber(fragment) => fragment
                 .rational_curve()
@@ -15008,7 +14735,6 @@ fn classify_point_with_retained_ray_skipping_origin(
                 )),
                 fragment.is_reversed(),
             ),
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(fragment) => (
                 selected_curve
                     .as_ref()
@@ -15382,7 +15108,6 @@ fn retained_fragment_query_bounds(
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
             .conservative_bounds()
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
             .conservative_bounds(policy)
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -16008,7 +15733,6 @@ mod tests {
     use super::*;
     use std::cmp::Ordering;
 
-    #[cfg(feature = "predicates")]
     use crate::{
         BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial,
         CurveCertainty,
@@ -16021,7 +15745,6 @@ mod tests {
         Point2::new(Real::from(x), Real::from(y))
     }
 
-    #[cfg(feature = "predicates")]
     fn parallel_pair_fillet_region(
         previous_retained: bool,
         next_retained: bool,
@@ -16080,7 +15803,6 @@ mod tests {
         .expect("the parallel-pair fixture has authored topology")
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16124,7 +15846,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn sqrt_half_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
         let polynomial = BezierParameterPolynomial::try_new_power_basis(
             vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
@@ -16151,7 +15872,6 @@ mod tests {
         BezierParameter2::algebraic(parameter)
     }
 
-    #[cfg(feature = "predicates")]
     #[derive(Clone, Copy)]
     enum SelectedCircleFilletNeighbor2 {
         RationalArc(i8),
@@ -16160,7 +15880,6 @@ mod tests {
         DirectBezier,
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_circle_neighbor_region(
         policy: &CurveContext,
         neighbor: SelectedCircleFilletNeighbor2,
@@ -16338,7 +16057,6 @@ mod tests {
         .expect("the mixed exact loop has authored topology")
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_fillet_disjoint_square(policy: &CurveContext) -> CurveRegion2 {
         CurveRegion2::new(vec![
             CurveRegionBoundaryLoop2::new(
@@ -16355,7 +16073,6 @@ mod tests {
         .expect("one disjoint exact loop")
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_and_retained_rational_arc_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16441,7 +16158,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_pair_with_rationalizable_support_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16514,7 +16230,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_and_analytic_parallel_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16600,7 +16315,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16684,7 +16398,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn positive_inverse_sqrt_parameter(denominator: i8, policy: &CurveContext) -> BezierParameter2 {
         let polynomial = match BezierParameterPolynomial::try_new_power_basis(
             vec![-Real::one(), Real::zero(), Real::from(denominator)],
@@ -16705,7 +16418,6 @@ mod tests {
         parameter.clone()
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_query_winding_mixes_genuine_parallel_and_native_fragments() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -16827,7 +16539,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_retained_range_ray_winding_handles_crossing_multiplicity() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16907,7 +16618,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -17089,7 +16799,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions() {
         let construction_policy = CurveContext::STRICT;
@@ -17263,7 +16972,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn retained_parallel_offset_preserves_algebraic_cusp_partition() {
         let construction_policy = CurveContext::STRICT;
@@ -17418,7 +17126,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn exact_line_fragment_lowering_rejects_nonlinear_algebraic_source() {
         let policy = CurveContext::STRICT;
@@ -17495,7 +17202,6 @@ mod tests {
         assert!(first.clone().into_boundary_loops().is_empty());
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn boundary_path_construction_obeys_selected_terminal_policy() {
         let start = Point2::new(Real::pi() + Real::e(), Real::zero());
@@ -17549,7 +17255,6 @@ mod tests {
         assert!(exact.data.strict_materialized_connectivity_certified);
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_line_measurements_obey_policy_and_isolate_cached_certainty() {
         let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -17656,7 +17361,6 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_region_mutations_report_selected_terminal_policy() {
         let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());

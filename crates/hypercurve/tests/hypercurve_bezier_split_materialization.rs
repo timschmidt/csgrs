@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointPointImage2,
     BezierEndpointTangentImage2,
@@ -115,7 +114,6 @@ fn algebraic_cubic_midpoint_interval() -> BezierParameter2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     let image = image
         .as_ref()
@@ -143,7 +141,6 @@ fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2
     }
 }
 
-#[cfg(feature = "predicates")]
 fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     let image = image
         .as_ref()
@@ -192,7 +189,6 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
     }
 }
 
-#[cfg(feature = "predicates")]
 fn assert_rational_second_derivative_endpoint_image(image: &BezierAlgebraicEndpointImage2) {
     match image
         .second_derivative()
@@ -376,7 +372,6 @@ fn split_materialization_constructor_rejects_materialized_algebraic_range() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -505,7 +500,6 @@ fn linear_algebraic_boundary_materializes_native_subcurves() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn algebraic_boundary_carries_endpoint_images_without_approximate_materialization() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -558,7 +552,6 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let materialization = match curve
@@ -605,7 +598,6 @@ fn algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn algebraic_endpoint_image_is_a_clone_shared_handle() {
     assert_eq!(
         std::mem::size_of::<BezierAlgebraicEndpointImage2>(),
@@ -614,7 +606,6 @@ fn algebraic_endpoint_image_is_a_clone_shared_handle() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();
@@ -650,7 +641,6 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
     let curve =
         RationalQuadraticBezier2::try_new(p(-1, 1), p(0, -1), p(1, 1), r(1), r(1), r(1)).unwrap();
@@ -686,7 +676,6 @@ fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn broad_singleton_isolator_materializes_exact_endpoint_images() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

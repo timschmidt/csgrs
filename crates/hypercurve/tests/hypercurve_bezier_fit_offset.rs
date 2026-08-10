@@ -551,7 +551,6 @@ fn cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn approximate_ph_materialization_never_populates_the_certified_cache() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -1040,7 +1039,6 @@ fn exact_parallel_point_incidence_rejects_the_opposite_normal_branch() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -1284,7 +1282,6 @@ fn zero_distance_supporting_line_incidence_keeps_stationary_source_contact() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn supporting_line_incidence_uses_approximate_512_only_as_a_terminal_decision() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -1834,7 +1831,6 @@ fn parallel_rational_axis_saturation_retains_in_domain_projective_base_points() 
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_candidates_use_approximate_512_only_as_a_terminal_decision() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -2045,7 +2041,6 @@ fn parallel_rational_contacts_replay_one_algebraic_parameter_exactly() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_contacts_replay_identical_algebraic_parameters() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(2, 0))
@@ -2078,7 +2073,6 @@ fn parallel_rational_contacts_replay_identical_algebraic_parameters() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_contacts_lift_coupled_distinct_algebraic_parameters() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
@@ -2109,7 +2103,6 @@ fn parallel_rational_contacts_lift_coupled_distinct_algebraic_parameters() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_lift_pairs_multiple_algebraic_projections_without_cross_product() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
@@ -2133,7 +2126,6 @@ fn parallel_rational_lift_pairs_multiple_algebraic_projections_without_cross_pro
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_contacts_replay_selected_branch_at_a_coupled_algebraic_pair() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
@@ -2686,7 +2678,6 @@ fn parallel_rational_contacts_retain_an_isolated_component_domain_touch() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_component_can_yield_overlaps_and_an_isolated_contact() {
     let parallel = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 0))
@@ -2858,7 +2849,6 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn parallel_rational_contacts_inherit_the_approximate_512_terminal() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());

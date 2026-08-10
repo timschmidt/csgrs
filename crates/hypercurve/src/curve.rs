@@ -11,7 +11,6 @@ use crate::arc_bezier::{
 use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
 };
-#[cfg(feature = "predicates")]
 use crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2;
 use crate::{
     Aabb2, BezierBoundaryLoop2, BezierParallel2, BezierParameter2, BezierSubcurve2, CircularArc2,
@@ -20,7 +19,6 @@ use crate::{
     NurbsCurve2, ParamRange, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
     RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real, Similarity2,
 };
-#[cfg(feature = "predicates")]
 use crate::{BezierEndpoint, BezierParameterRange2};
 
 /// Exact planar curve family.
@@ -3423,7 +3421,6 @@ pub(crate) struct FilletCorner2 {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(not(feature = "predicates"), allow(dead_code))]
 pub(crate) struct RetainedFilletFrame2 {
     pub(crate) anchor_is_previous: bool,
     pub(crate) radial_frame: RetainedFilletRadialFrame2,
@@ -3432,7 +3429,6 @@ pub(crate) struct RetainedFilletFrame2 {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(not(feature = "predicates"), allow(dead_code))]
 pub(crate) enum RetainedFilletRadialFrame2 {
     RepresentedUnitNormal((Real, Real)),
     ConcentricArc {
@@ -3450,7 +3446,6 @@ pub(crate) enum RetainedFilletRadialFrame2 {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(not(feature = "predicates"), allow(dead_code))]
 pub(crate) struct RetainedFilletAnchorEvidence2 {
     pub(crate) cross: Option<RealSign>,
     pub(crate) dot: Option<RealSign>,
@@ -3554,11 +3549,8 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     RetainedRationalArc(Box<RetainedRationalCornerArc2<'a>>),
     Bezier(&'a Curve2),
     NativeBezierSpan(&'a NativeBezierFragment2),
-    #[cfg(feature = "predicates")]
     AlgebraicChord(&'a crate::BezierAlgebraicChord2),
-    #[cfg(feature = "predicates")]
     AnalyticParallel(&'a crate::BezierParallelFragment2),
-    #[cfg(feature = "predicates")]
     AlgebraicCusp(&'a crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
@@ -3578,7 +3570,6 @@ pub(crate) struct RetainedRationalCornerArc2<'a> {
     support: CircularArc2,
 }
 
-#[cfg(feature = "predicates")]
 struct RetainedRationalOffsetEvaluator2 {
     offset: RationalBezier2,
     canonical_source: RationalBezier2,
@@ -3668,7 +3659,6 @@ impl ExactCornerArc2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn retained_rational_evaluator(
         &self,
         operation: CurveOperation2,
@@ -3699,7 +3689,6 @@ impl ExactCornerArc2<'_> {
     /// preserving its homogeneous weight and local parameter. This gives the
     /// analytic-parallel/rational intersection authority a finite exact arc
     /// offset carrier without adding a separate arc/parallel solver.
-    #[cfg(feature = "predicates")]
     fn retained_rational_offset_evaluator(
         &self,
         source_radius: &Real,
@@ -3767,7 +3756,6 @@ impl<'a> ExactCornerCarrier2<'a> {
         match self {
             Self::Line(_) | Self::PromotedLine(_) | Self::Arc(_) => true,
             Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChord(_) | Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
         }
     }
@@ -4052,10 +4040,8 @@ pub(crate) fn solve_exact_fillet_corner(
 enum FilletLinearSource2<'a> {
     Native {
         source: &'a LineSeg2,
-        #[cfg(feature = "predicates")]
         parallel_tangent_contacts: &'a [crate::bezier::BezierParallelLineTangentContact2],
     },
-    #[cfg(feature = "predicates")]
     AlgebraicChord(&'a crate::BezierAlgebraicChord2),
 }
 
@@ -4063,12 +4049,10 @@ impl FilletLinearSource2<'_> {
     const fn native_line(&self) -> Option<&LineSeg2> {
         match self {
             Self::Native { source, .. } => Some(source),
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChord(_) => None,
         }
     }
 
-    #[cfg(feature = "predicates")]
     const fn algebraic_chord(&self) -> Option<&crate::BezierAlgebraicChord2> {
         match self {
             Self::Native { .. } => None,
@@ -4076,7 +4060,6 @@ impl FilletLinearSource2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     const fn parallel_tangent_contacts(
         &self,
     ) -> &[crate::bezier::BezierParallelLineTangentContact2] {
@@ -4093,7 +4076,6 @@ impl FilletLinearSource2<'_> {
 #[derive(Clone, Copy)]
 enum FilletParallelSource2<'a> {
     Direct(ExactCornerBezier2<'a>),
-    #[cfg(feature = "predicates")]
     Retained(&'a crate::BezierParallelFragment2),
 }
 
@@ -4101,12 +4083,10 @@ impl FilletParallelSource2<'_> {
     const fn direct(&self) -> Option<ExactCornerBezier2<'_>> {
         match self {
             Self::Direct(source) => Some(*source),
-            #[cfg(feature = "predicates")]
             Self::Retained(_) => None,
         }
     }
 
-    #[cfg(feature = "predicates")]
     const fn retained(&self) -> Option<&crate::BezierParallelFragment2> {
         match self {
             Self::Direct(_) => None,
@@ -4114,7 +4094,6 @@ impl FilletParallelSource2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn parameter_range(&self) -> BezierParameterRange2 {
         match self {
             Self::Direct(_) => BezierParameterRange2::new_validated(
@@ -4125,7 +4104,6 @@ impl FilletParallelSource2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn parameter_is_in_open_range(
         &self,
         parameter: &BezierParameter2,
@@ -4148,7 +4126,6 @@ impl FilletParallelSource2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn support_reverses_source(
         &self,
         support: &BezierParallel2,
@@ -4187,7 +4164,6 @@ impl FilletParallelSource2<'_> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn parallel_distance(&self) -> Real {
         match self {
             Self::Direct(_) => Real::zero(),
@@ -4212,11 +4188,9 @@ enum PreparedFilletCarrier2<'a> {
     Bezier {
         source: ExactCornerBezier2<'a>,
     },
-    #[cfg(feature = "predicates")]
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
     },
-    #[cfg(feature = "predicates")]
     AnalyticParallel {
         source: &'a crate::BezierParallelFragment2,
     },
@@ -4236,7 +4210,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 Ok(Self::Line {
                     source: FilletLinearSource2::Native {
                         source,
-                        #[cfg(feature = "predicates")]
                         parallel_tangent_contacts: &[],
                     },
                     chord_support: None,
@@ -4254,7 +4227,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 Ok(Self::Line {
                     source: FilletLinearSource2::Native {
                         source,
-                        #[cfg(feature = "predicates")]
                         parallel_tangent_contacts: curve.retained_parallel_line_tangent_contacts(),
                     },
                     chord_support: None,
@@ -4286,9 +4258,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
             ExactCornerCarrier2::NativeBezierSpan(fragment) => Ok(Self::Bezier {
                 source: ExactCornerBezier2::NativeSpan(fragment),
             }),
-            #[cfg(feature = "predicates")]
             ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
-            #[cfg(feature = "predicates")]
             ExactCornerCarrier2::AlgebraicChord(source) => {
                 let support = source
                     .exact_line()
@@ -4315,7 +4285,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     unit_y,
                 })
             }
-            #[cfg(feature = "predicates")]
             ExactCornerCarrier2::AnalyticParallel(source) => Ok(Self::AnalyticParallel { source }),
         }
     }
@@ -4390,7 +4359,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     family,
                 )?,
             }),
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCusp { source } => {
                 let support =
                     match source
@@ -4416,7 +4384,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     };
                 Ok(FilletOffsetCarrier2::AlgebraicCusp { source, support })
             }
-            #[cfg(feature = "predicates")]
             Self::AnalyticParallel { source } => {
                 let source_scale = match source
                     .parallel()
@@ -4478,7 +4445,6 @@ enum FilletOffsetCarrier2<'a, 'b> {
         source: FilletParallelSource2<'a>,
         support: BezierParallel2,
     },
-    #[cfg(feature = "predicates")]
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
         support: crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -4486,7 +4452,6 @@ enum FilletOffsetCarrier2<'a, 'b> {
 }
 
 impl FilletOffsetCarrier2<'_, '_> {
-    #[cfg_attr(not(feature = "predicates"), allow(unused_variables))]
     fn retained_fillet_frame(
         &self,
         anchor_is_previous: bool,
@@ -4508,7 +4473,6 @@ impl FilletOffsetCarrier2<'_, '_> {
                 )),
                 -signed_distance.clone(),
             ),
-            #[cfg(feature = "predicates")]
             Self::Arc {
                 source,
                 source_radius,
@@ -4528,7 +4492,6 @@ impl FilletOffsetCarrier2<'_, '_> {
                     radial_distance,
                 )
             }
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCusp { source, support } => {
                 let center = support
                     .semicircle()
@@ -4556,7 +4519,6 @@ impl FilletOffsetCarrier2<'_, '_> {
                     radial_distance,
                 )
             }
-            #[cfg(feature = "predicates")]
             Self::Parallel { source, support } => {
                 let center_parameter = anchor_parameter
                     .and_then(CurveRegionParameter2::as_bezier_parameter)
@@ -4595,7 +4557,6 @@ struct FilletCenterWitness2 {
     retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
 }
 
-#[cfg(feature = "predicates")]
 const fn reverse_fillet_sign(sign: RealSign) -> RealSign {
     match sign {
         RealSign::Positive => RealSign::Negative,
@@ -4708,16 +4669,10 @@ fn solve_carrier_fillet_corner(
             match previous_cut.point.same_point(&next_cut.point, policy) {
                 Classification::Decided(true) => saw_degenerate = true,
                 Classification::Decided(false) => {
-                    #[cfg(feature = "predicates")]
                     let previous_is_cusp =
                         matches!(previous_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
-                    #[cfg(not(feature = "predicates"))]
-                    let previous_is_cusp = false;
-                    #[cfg(feature = "predicates")]
                     let next_is_cusp =
                         matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
-                    #[cfg(not(feature = "predicates"))]
-                    let next_is_cusp = false;
                     let (first, first_is_previous, first_family, second, second_family) =
                         if previous_is_cusp && !next_is_cusp {
                             (
@@ -4802,26 +4757,22 @@ fn solve_carrier_fillet_corner(
     Ok(candidates.finish(empty_reason))
 }
 
-#[cfg(feature = "predicates")]
 struct RetainedFilletCuspRationalContact2 {
     other_parameter: BezierParameter2,
     cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
     point: RationalBezierIntersectionPointEvidence2,
 }
 
-#[cfg(feature = "predicates")]
 struct RetainedFilletCuspRationalContacts2 {
     contacts: Vec<RetainedFilletCuspRationalContact2>,
     overlap_ranges: Vec<BezierParameterRange2>,
 }
 
-#[cfg(feature = "predicates")]
 struct RetainedFilletRationalizedCuspSpan2 {
     curve: RationalBezier2,
     parameter_map: crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2,
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_cusp_overlap_range(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2,
@@ -4897,7 +4848,6 @@ fn retained_fillet_cusp_overlap_range(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_ranges_overlap(
     first: &BezierParameterRange2,
     second: &BezierParameterRange2,
@@ -4912,7 +4862,6 @@ fn retained_fillet_ranges_overlap(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_bezier_parameter_order(
     first: &BezierParameter2,
     second: &BezierParameter2,
@@ -4932,7 +4881,6 @@ fn retained_fillet_bezier_parameter_order(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_corresponding_overlap_is_positive(
     first_curve: &RationalBezier2,
     second_curve: &RationalBezier2,
@@ -5061,7 +5009,6 @@ fn retained_fillet_corresponding_overlap_is_positive(
     Ok(retained_fillet_bezier_parameter_order(&second_start, &second_end, family, policy)?.is_lt())
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_cusp_rational_contacts(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     rational: &RationalBezier2,
@@ -5177,7 +5124,6 @@ fn retained_fillet_cusp_rational_contacts(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_rationalized_cusp_spans(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     family: CurveFamily2,
@@ -5299,7 +5245,6 @@ fn retained_fillet_rationalized_cusp_spans(
     Ok(Some(spans))
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_parallel_support_reverses_source(
     source: &crate::BezierParallelFragment2,
     support: &BezierParallel2,
@@ -5328,7 +5273,6 @@ fn retained_fillet_parallel_support_reverses_source(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn retained_fillet_parameter_is_in_open_range(
     parameter: &BezierParameter2,
     range: &BezierParameterRange2,
@@ -5347,7 +5291,6 @@ fn retained_fillet_parameter_is_in_open_range(
     }
 }
 
-#[cfg_attr(not(feature = "predicates"), allow(unused_variables))]
 fn fillet_offset_centers(
     previous: &FilletOffsetCarrier2<'_, '_>,
     next: &FilletOffsetCarrier2<'_, '_>,
@@ -5600,85 +5543,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(not(feature = "predicates"))]
-        (
-            FilletOffsetCarrier2::Parallel {
-                source: previous_source,
-                support: previous,
-                ..
-            },
-            FilletOffsetCarrier2::Parallel {
-                source: next_source,
-                support: next,
-            },
-        ) => {
-            debug_assert!(previous_source.direct().is_some() && next_source.direct().is_some());
-            let intersections = match previous
-                .parallel_intersections_fast_path(next, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-                })? {
-                Classification::Decided(Some(intersections)) => intersections,
-                Classification::Decided(None) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        crate::UncertaintyReason::Unsupported,
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        reason,
-                    ));
-                }
-            };
-            if !intersections.is_complete() {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Predicate,
-                ));
-            }
-            centers.coincident = !intersections.overlaps().is_empty()
-                || !intersections.parameter_components().is_empty();
-            for contact in intersections.contacts() {
-                let Some(previous_parameter) = represented_bezier_trim_parameter(
-                    contact.first_parameter(),
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let Some(next_parameter) = represented_bezier_trim_parameter(
-                    contact.second_parameter(),
-                    CurveOperation2::Fillet,
-                    next_family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point = decided_parallel_point(
-                    previous,
-                    &previous_parameter,
-                    false,
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    policy,
-                )?;
-                centers.push(FilletCenterWitness2 {
-                    point: point.into(),
-                    previous_parameter: Some(exact_parameter(previous_parameter)),
-                    next_parameter: Some(exact_parameter(next_parameter)),
-                    retained_anchor_evidence: None,
-                });
-            }
-        }
-        #[cfg(feature = "predicates")]
         (
             FilletOffsetCarrier2::Parallel {
                 source: previous_source,
@@ -5810,109 +5674,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(not(feature = "predicates"))]
-        (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
-        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, line_source, parallel, parallel_is_previous) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Line {
-                        source,
-                        support: line_support,
-                        ..
-                    },
-                    FilletOffsetCarrier2::Parallel {
-                        support: parallel_support,
-                        ..
-                    },
-                ) => (line_support, source, parallel_support, false),
-                (
-                    FilletOffsetCarrier2::Parallel {
-                        support: parallel_support,
-                        ..
-                    },
-                    FilletOffsetCarrier2::Line {
-                        source,
-                        support: line_support,
-                        ..
-                    },
-                ) => (line_support, source, parallel_support, true),
-                _ => unreachable!(),
-            };
-            let parallel_family = if parallel_is_previous {
-                previous_family
-            } else {
-                next_family
-            };
-            let parameters =
-                match parallel
-                    .supporting_line_incidence(line, policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
-                    })? {
-                    Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                        centers.coincident = true;
-                        Vec::new()
-                    }
-                    Classification::Decided(crate::BezierParallelIncidence2::Parameters(
-                        parameters,
-                    )) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            parallel_family,
-                            reason,
-                        ));
-                    }
-                };
-            for parameter in parameters {
-                let Some(parameter) = represented_bezier_trim_parameter(
-                    &parameter,
-                    CurveOperation2::Fillet,
-                    parallel_family,
-                    policy,
-                )?
-                else {
-                    continue;
-                };
-                let point = decided_parallel_point(
-                    parallel,
-                    &parameter,
-                    false,
-                    CurveOperation2::Fillet,
-                    parallel_family,
-                    policy,
-                )?;
-                let line_parameter = line_source
-                    .native_line()
-                    .map(|_| {
-                        line_parameter_at_point(
-                            line,
-                            &point,
-                            CurveOperation2::Fillet,
-                            if parallel_is_previous {
-                                next_family
-                            } else {
-                                previous_family
-                            },
-                        )
-                        .map(exact_parameter)
-                    })
-                    .transpose()?;
-                let parallel_parameter = Some(exact_parameter(parameter));
-                let (previous_parameter, next_parameter) = if parallel_is_previous {
-                    (parallel_parameter, line_parameter)
-                } else {
-                    (line_parameter, parallel_parameter)
-                };
-                centers.push(FilletCenterWitness2 {
-                    point: point.into(),
-                    previous_parameter,
-                    next_parameter,
-                    retained_anchor_evidence: None,
-                });
-            }
-        }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
         | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Line { .. }) => {
             let (line, line_source, line_unit_x, line_unit_y, parallel, line_is_previous) =
@@ -6039,7 +5800,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(feature = "predicates")]
         (
             FilletOffsetCarrier2::Arc { .. },
             FilletOffsetCarrier2::Parallel {
@@ -6293,12 +6053,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(not(feature = "predicates"))]
-        (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Parallel { .. })
-        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::Arc { .. }) => {
-            unreachable!("the feature-disabled parallel source is always direct")
-        }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Parallel { .. })
         | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. }) => {
             let (cusp_source, cusp_support, parallel_source, analytic_support, cusp_is_previous) =
@@ -6585,7 +6339,6 @@ fn fillet_offset_centers(
                 }
             }
         }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
         | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Arc { .. }) => {
             let (arc, source_radius, signed_radius, cusp, arc_is_previous) = match (previous, next)
@@ -6662,7 +6415,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
         | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Line { .. }) => {
             let (line, line_source, cusp, line_is_previous) = match (previous, next) {
@@ -6724,7 +6476,6 @@ fn fillet_offset_centers(
                 });
             }
         }
-        #[cfg(feature = "predicates")]
         (
             FilletOffsetCarrier2::AlgebraicCusp {
                 support: previous_support,
@@ -6879,7 +6630,6 @@ fn fillet_offset_centers(
                 }
             }
         }
-        #[cfg(feature = "predicates")]
         (FilletOffsetCarrier2::Parallel { .. }, _) | (_, FilletOffsetCarrier2::Parallel { .. }) => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
@@ -6899,62 +6649,57 @@ fn fillet_offset_centers(
                 ..
             },
         ) => {
-            #[cfg(not(feature = "predicates"))]
-            unreachable!("native line/line fillets use the specialized exact fast path");
-            #[cfg(feature = "predicates")]
+            if previous_source.algebraic_chord().is_none()
+                && next_source.algebraic_chord().is_none()
             {
-                if previous_source.algebraic_chord().is_none()
-                    && next_source.algebraic_chord().is_none()
-                {
-                    unreachable!("native line/line fillets use the specialized exact fast path");
-                }
-                let point = match crate::offset::line_support_intersection(
-                    previous_support,
-                    next_support,
-                    policy,
-                )
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-                })? {
-                    Classification::Decided(Some(point)) => point,
-                    Classification::Decided(None) => return Ok(centers),
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            previous_family,
-                            reason,
-                        ));
-                    }
-                };
-                let retained_parameter =
-                    |source: &FilletLinearSource2<'_>,
-                     support: &LineSeg2,
-                     family: CurveFamily2|
-                     -> ExactCurveResult<Option<CurveRegionParameter2>> {
-                        source
-                            .native_line()
-                            .map(|_| {
-                                line_parameter_at_point(
-                                    support,
-                                    &point,
-                                    CurveOperation2::Fillet,
-                                    family,
-                                )
-                                .map(exact_parameter)
-                            })
-                            .transpose()
-                    };
-                centers.push(FilletCenterWitness2 {
-                    previous_parameter: retained_parameter(
-                        previous_source,
-                        previous_support,
-                        previous_family,
-                    )?,
-                    next_parameter: retained_parameter(next_source, next_support, next_family)?,
-                    point: point.into(),
-                    retained_anchor_evidence: None,
-                });
+                unreachable!("native line/line fillets use the specialized exact fast path");
             }
+            let point = match crate::offset::line_support_intersection(
+                previous_support,
+                next_support,
+                policy,
+            )
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+            })? {
+                Classification::Decided(Some(point)) => point,
+                Classification::Decided(None) => return Ok(centers),
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    ));
+                }
+            };
+            let retained_parameter =
+                |source: &FilletLinearSource2<'_>,
+                 support: &LineSeg2,
+                 family: CurveFamily2|
+                 -> ExactCurveResult<Option<CurveRegionParameter2>> {
+                    source
+                        .native_line()
+                        .map(|_| {
+                            line_parameter_at_point(
+                                support,
+                                &point,
+                                CurveOperation2::Fillet,
+                                family,
+                            )
+                            .map(exact_parameter)
+                        })
+                        .transpose()
+                };
+            centers.push(FilletCenterWitness2 {
+                previous_parameter: retained_parameter(
+                    previous_source,
+                    previous_support,
+                    previous_family,
+                )?,
+                next_parameter: retained_parameter(next_source, next_support, next_family)?,
+                point: point.into(),
+                retained_anchor_evidence: None,
+            });
         }
     }
     Ok(centers)
@@ -6979,7 +6724,6 @@ fn point_on_fillet_offset(
             )),
         };
     }
-    #[cfg(feature = "predicates")]
     if matches!(support, FilletOffsetCarrier2::AlgebraicCusp { .. }) {
         return Err(ExactCurveError::blocked(
             CurveOperation2::Fillet,
@@ -7000,7 +6744,6 @@ fn point_on_fillet_offset(
         } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
         FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
         FilletOffsetCarrier2::Parallel { .. } => unreachable!(),
-        #[cfg(feature = "predicates")]
         FilletOffsetCarrier2::AlgebraicCusp { .. } => unreachable!(),
     };
     crate::classify::is_zero(&residual, policy).ok_or_else(|| {
@@ -7013,7 +6756,6 @@ fn point_on_fillet_offset(
 }
 
 #[allow(clippy::too_many_arguments)]
-#[cfg_attr(not(feature = "predicates"), allow(unused_variables))]
 fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
     center: &RationalBezierIntersectionPointEvidence2,
@@ -7031,7 +6773,6 @@ fn fillet_cut_from_center(
             signed_distance,
             ..
         } => {
-            #[cfg(feature = "predicates")]
             if let Some(source) = source.algebraic_chord() {
                 return algebraic_chord_fillet_cut_from_center(
                     source,
@@ -7085,7 +6826,6 @@ fn fillet_cut_from_center(
                 source.point_at(parameter.clone()).into()
             } else {
                 {
-                    #[cfg(feature = "predicates")]
                     {
                         match crate::BezierAlgebraicChord2::translated_endpoint(
                             center,
@@ -7106,12 +6846,6 @@ fn fillet_cut_from_center(
                             }
                         }
                     }
-                    #[cfg(not(feature = "predicates"))]
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        crate::UncertaintyReason::Unsupported,
-                    ));
                 }
             };
             Ok(Some(CornerCut2 {
@@ -7126,7 +6860,6 @@ fn fillet_cut_from_center(
             signed_radius,
         } => {
             let Some(center) = center.as_exact() else {
-                #[cfg(feature = "predicates")]
                 {
                     if mode != CurveCornerMode2::TrimOnly {
                         return Err(ExactCurveError::blocked(
@@ -7187,12 +6920,6 @@ fn fillet_cut_from_center(
                         placement: CornerPlacement2::Trim,
                     }));
                 }
-                #[cfg(not(feature = "predicates"))]
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
             };
             let scale = (*source_radius / signed_radius).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
@@ -7277,7 +7004,6 @@ fn fillet_cut_from_center(
                         placement,
                     }))
                 }
-                #[cfg(feature = "predicates")]
                 FilletParallelSource2::Retained(source) => {
                     if mode != CurveCornerMode2::TrimOnly {
                         return Err(ExactCurveError::blocked(
@@ -7308,7 +7034,6 @@ fn fillet_cut_from_center(
                 }
             }
         }
-        #[cfg(feature = "predicates")]
         FilletOffsetCarrier2::AlgebraicCusp { source, support } => {
             let parameter = retained_parameter
                 .expect("a selected-circle offset contact retains its local parameter")
@@ -7364,7 +7089,6 @@ fn fillet_cut_from_center(
     }
 }
 
-#[cfg(feature = "predicates")]
 #[allow(clippy::too_many_arguments)]
 fn algebraic_chord_fillet_cut_from_center(
     source: &crate::BezierAlgebraicChord2,
@@ -7770,7 +7494,6 @@ fn bezier_parallel_source_point_evidence(
     {
         return Ok(point);
     }
-    #[cfg(feature = "predicates")]
     {
         // A selected fiber can have non-rational coefficients even though the
         // source curve is rational. Keep the source point in the same procedural
@@ -7785,12 +7508,6 @@ fn bezier_parallel_source_point_evidence(
             ),
         ))
     }
-    #[cfg(not(feature = "predicates"))]
-    Err(ExactCurveError::blocked(
-        operation,
-        family,
-        crate::UncertaintyReason::Unsupported,
-    ))
 }
 
 fn bezier_parallel_rational_source(
@@ -7882,7 +7599,6 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
-        #[cfg(feature = "predicates")]
         ExactCornerCarrier2::AlgebraicChord(chord) => algebraic_chord_chamfer_cuts(
             chord,
             setback,
@@ -7893,7 +7609,6 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
-        #[cfg(feature = "predicates")]
         ExactCornerCarrier2::AnalyticParallel(fragment) => analytic_parallel_chamfer_cuts(
             fragment,
             setback,
@@ -7904,7 +7619,6 @@ fn corner_chamfer_cuts(
             family,
             policy,
         ),
-        #[cfg(feature = "predicates")]
         ExactCornerCarrier2::AlgebraicCusp(fragment) => algebraic_cusp_chamfer_cuts(
             fragment,
             setback,
@@ -7918,7 +7632,6 @@ fn corner_chamfer_cuts(
     }
 }
 
-#[cfg(feature = "predicates")]
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_chamfer_cuts(
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -7992,7 +7705,6 @@ fn algebraic_cusp_chamfer_cuts(
     })
 }
 
-#[cfg(feature = "predicates")]
 #[allow(clippy::too_many_arguments)]
 fn algebraic_chord_chamfer_cuts(
     chord: &crate::BezierAlgebraicChord2,
@@ -8088,7 +7800,6 @@ fn algebraic_chord_chamfer_cuts(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn analytic_parallel_point_evidence(
     parallel: &BezierParallel2,
     parameter: &BezierParameter2,
@@ -8105,7 +7816,6 @@ fn analytic_parallel_point_evidence(
     ))
 }
 
-#[cfg(feature = "predicates")]
 #[allow(clippy::too_many_arguments)]
 fn analytic_parallel_chamfer_cuts(
     fragment: &crate::BezierParallelFragment2,
@@ -9043,7 +8753,6 @@ fn validate_subcurve_range(
 mod tests {
     use super::*;
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn parallel_fillet_frame_retains_selected_normal_and_radial_distance() {
         let source = QuadraticBezier2::new(
@@ -9094,7 +8803,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn rationalizable_selected_semicircle(
         policy: &CurveContext,
     ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
@@ -9159,7 +8867,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn selected_circular_fillet_overlap_is_clipped_to_the_finite_fragment() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let support = rationalizable_selected_semicircle(&policy);
@@ -9210,7 +8917,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn boundary_cache_revalidates_approximate_internal_path_joins() {
         let left_x = Real::pi() + Real::e();
         let right_x = Real::e() + Real::pi();

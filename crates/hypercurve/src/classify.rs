@@ -80,7 +80,6 @@ impl LineSide {
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn from_predicate_sign(sign: hypersolve::PredicateSign) -> Self {
         match sign {
             hypersolve::PredicateSign::Positive => Self::Left,
@@ -109,7 +108,6 @@ pub(crate) fn classify_oriented_line(
             .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign));
     }
 
-    #[cfg(feature = "predicates")]
     {
         // This is the orientation determinant used throughout planar
         // computational geometry. When available, route it through hyperlimit's
@@ -132,15 +130,6 @@ pub(crate) fn classify_oriented_line(
                     .unwrap_or(Classification::Uncertain(UncertaintyReason::Predicate))
             }
         }
-    }
-
-    #[cfg(not(feature = "predicates"))]
-    {
-        let det = orient2_real_expr(from, to, point);
-        real_sign(&det, policy)
-            .map(LineSide::from_real_sign)
-            .map(Classification::Decided)
-            .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
     }
 }
 
@@ -327,7 +316,6 @@ pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurveContext) -> 
     })
 }
 
-#[cfg(feature = "predicates")]
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x().clone(), point.y().clone())
 }

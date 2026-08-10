@@ -3,9 +3,7 @@ use hypercurve::{
     BezierParameterPolynomial, Classification, CurveContext, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{CubicBezier2, RationalBezier2};
-#[cfg(feature = "predicates")]
 use hypersolve::AlgebraicRootKind;
 use proptest::prelude::*;
 
@@ -52,7 +50,6 @@ fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
     let curve = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
     let parameter = sqrt_half_parameter();
@@ -88,7 +85,6 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn cubic_point_and_tangent_images_use_power_basis_resultants() {
     let curve = CubicBezier2::new(p(0, 0), p(0, 1), p(0, 2), p(1, 3));
     let parameter = sqrt_half_parameter();
@@ -141,7 +137,6 @@ fn nonmonotone_coordinate_image_is_certified_without_sampling() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
     let conic =
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
@@ -214,7 +209,6 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_point_image_retains_real_coefficient_root_expression() {
     let conic =
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
@@ -250,7 +244,6 @@ fn rational_point_image_retains_real_coefficient_root_expression() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
     let controls = vec![p(0, 0), p(2, 4), p(6, 0)];
     let weights = vec![r(1), r(2), r(3)];
@@ -337,7 +330,6 @@ proptest! {
         prop_assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_line_image_matches_exact_midpoint_values(
         x0 in -8_i32..=8,

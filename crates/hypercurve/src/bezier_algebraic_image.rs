@@ -28,7 +28,6 @@ use hypersolve::{
     transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
-#[cfg(feature = "predicates")]
 use crate::bezier_parameter::strict_coefficients_sign_on_parameter_interval;
 use crate::bezier_parameter::{evaluate_coefficients, signed_coefficients_at_parameter};
 use crate::classify::{compare_reals, real_sign};
@@ -416,7 +415,6 @@ struct RetainedRationalPointParametricSource {
     resolved: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
 }
 
-#[cfg(feature = "predicates")]
 pub(crate) struct RationalBezierAlgebraicPointPredicate2<'a> {
     root: &'a AlgebraicRootRepresentation,
     x_numerator: &'a [Real],
@@ -676,7 +674,6 @@ impl RationalBezierAlgebraicPointImage2 {
     /// deliberately sufficient structural certificate: every residual and
     /// every nondegeneracy decision is made under [`CurveContext::STRICT`], so
     /// an approximate terminal can never create geometry.
-    #[cfg(feature = "predicates")]
     pub(crate) fn strict_retained_affine_line_coefficients(&self) -> Option<[Real; 3]> {
         let (x, y, weight) = self.retained_coordinate_polynomials()?;
         let coefficient_count = x.len().max(y.len()).max(weight.len());
@@ -943,7 +940,6 @@ impl RationalBezierAlgebraicPointImage2 {
     /// Axis-support recovery must not require the complete point to collapse
     /// to a represented pair: a point such as `(alpha, 0)` carries an exact
     /// reusable horizontal-line certificate in its second coordinate.
-    #[cfg(feature = "predicates")]
     pub(crate) fn exact_rational_coordinate(
         &self,
         use_x: bool,
@@ -975,7 +971,6 @@ impl RationalBezierAlgebraicPointImage2 {
             .cloned()
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn predicate_evaluator<'a>(
         &'a self,
         policy: &CurveContext,
@@ -1043,7 +1038,6 @@ impl RationalBezierAlgebraicPointImage2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl RationalBezierAlgebraicPointPredicate2<'_> {
     fn geometric_sign(
         &self,
@@ -1349,7 +1343,6 @@ impl RationalBezierAlgebraicTangentImage2 {
         })
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn coordinate_sign(
         &self,
         use_x: bool,

@@ -2,7 +2,6 @@ use hypercurve::{
     BezierSubcurve2, CurveContext, CurveError, CurveFamily2, CurveOperation2, ExactCurveError,
     Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{Curve2, CurveParameterSide2, Similarity2};
 
 fn r(value: i32) -> Real {
@@ -28,7 +27,6 @@ fn two_span_cubic() -> PolynomialSplineCurve2 {
     .into_value()
 }
 
-#[cfg(feature = "predicates")]
 fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
     let half = q(1, 2);
     let symbolic_half = &half + ((Real::pi() + Real::e()) - (Real::e() + Real::pi()));
@@ -52,7 +50,6 @@ fn terminal_polynomial_spline() -> (PolynomialSplineCurve2, Real) {
     (curve, symbolic_half)
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
@@ -178,7 +175,6 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
     ));
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     let curve = two_span_cubic();
@@ -221,7 +217,6 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
     ));
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
     let (curve, symbolic_half) = terminal_polynomial_spline();
@@ -767,7 +762,6 @@ fn periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation() {
     );
 }
 
-#[cfg(feature = "predicates")]
 #[test]
 fn periodic_polynomial_wrapping_obeys_terminal_policy() {
     let curve = PolynomialSplineCurve2::try_new_periodic(

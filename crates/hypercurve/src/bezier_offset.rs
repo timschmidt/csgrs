@@ -17,7 +17,6 @@
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex, OnceLock};
 
-#[cfg(feature = "predicates")]
 use crate::bezier_algebraic_image::{
     RationalBezierAlgebraicPointPredicate2, exact_real_algebraic_representation,
 };
@@ -25,7 +24,6 @@ use crate::bezier_algebraic_image::{
     parameter_representation, rational_point_image_from_power_basis,
     rational_tangent_image_from_power_basis,
 };
-#[cfg(feature = "predicates")]
 use crate::bezier_moment::exact_rational_polynomial_root;
 #[cfg(test)]
 use crate::bezier_parameter::signed_polynomial_on_isolating_interval;
@@ -67,7 +65,6 @@ use hypersolve::{
     isolate_bivariate_fiber_roots_at_algebraic_parameter,
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
 };
-#[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig, IsolatedRootInterval,
     compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
@@ -85,7 +82,6 @@ use hypersolve::{
     refine_isolated_univariate_polynomial_interval, resultant_bivariate_polynomial_system,
     subresultant_chain_univariate_polynomials,
 };
-#[cfg(feature = "predicates")]
 use hypersolve::{
     TrivariateConstraintResultantStatus, TrivariatePolynomial as SolverTrivariatePolynomial,
     TrivariatePolynomialAxis, resultant_trivariate_polynomial_univariate_constraint,
@@ -306,11 +302,9 @@ pub(crate) struct BezierParallelAlgebraicCuspFrame2 {
 #[derive(Clone, Debug)]
 enum BezierSelectedCircleFrame2 {
     Rational(BezierParallelAlgebraicCuspFrame2),
-    #[cfg(feature = "predicates")]
     ParallelNormal(Arc<BezierSelectedParallelNormalFrameData2>),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug, PartialEq)]
 struct BezierSelectedParallelNormalFrameData2 {
     center_support: BezierParallel2,
@@ -358,11 +352,9 @@ impl PartialEq for BezierSelectedCircleFrame2 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Rational(first), Self::Rational(second)) => first == second,
-            #[cfg(feature = "predicates")]
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second) || first == second
             }
-            #[cfg(feature = "predicates")]
             (Self::Rational(_), Self::ParallelNormal(_))
             | (Self::ParallelNormal(_), Self::Rational(_)) => false,
         }
@@ -435,13 +427,11 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalParameterMap2 {
 
 /// Shared exact map for a rational-curve contact whose source parameter stays
 /// in the selected circle-center fiber rather than a global norm field.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMapData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMapData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
@@ -455,13 +445,11 @@ struct BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMapData2 {
 /// Shared local-field map for a genuinely analytic parallel contact with a
 /// general selected circle. The target parameter remains in `Q(alpha)` and
 /// both source-speed radicals are replayed from the pair-owned expressions.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMapData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMapData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
@@ -478,7 +466,6 @@ struct BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMapData2 {
 struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
     /// Stable exact carrier identity for comparisons against contacts replayed
     /// through a correlated retained chord.
-    #[cfg(feature = "predicates")]
     semicircle: BezierAlgebraicCuspSemicircle2,
     curve: RationalBezier2,
     cusp_parameter: BezierParameter2,
@@ -509,13 +496,11 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalContact2 {
 /// One exact general selected-circle/rational contact retained wholly in the
 /// selected center fiber. The contact and both carrier parameters share one
 /// mapped-data allocation.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
     data: Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
@@ -525,7 +510,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
 /// One positive-length rational-circle component interval retained in the
 /// selected center field. Both rational endpoints are one-word local scalars;
 /// no norm polynomial or algebraic subcurve is constructed.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     other_start: BezierAlgebraicSelectedFiberParameter2,
@@ -536,7 +520,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     map: BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2,
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     fn eq(&self, other: &Self) -> bool {
         self.other_start == other.other_start
@@ -555,7 +538,6 @@ enum BezierAlgebraicCuspSemicircleRationalCorrelation2 {
     /// The represented line map is only a compact kernel for this retained
     /// chord. Preserve its tangent authority without enlarging every mapped
     /// contact with a second optional payload.
-    #[cfg(feature = "predicates")]
     MapWithChordTangent {
         chord: BezierAlgebraicChord2,
         circle_cross_chord: RealSign,
@@ -583,9 +565,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalMapContact2 {
 #[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
     Contacts(Vec<BezierAlgebraicCuspSemicircleRationalContact2>),
-    #[cfg(feature = "predicates")]
     SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
-    #[cfg(feature = "predicates")]
     SelectedFiberOverlaps(Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>),
     Overlaps(Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>),
     DegenerateProjection,
@@ -627,7 +607,6 @@ struct BezierAlgebraicCuspTwoTermExpression2 {
 #[derive(Clone, Debug, PartialEq)]
 enum BezierAlgebraicCuspSemicircleRationalDiameter2 {
     Rational(BivariatePolynomial),
-    #[cfg(feature = "predicates")]
     ParallelNormal {
         coordinate: BezierAlgebraicCuspTwoTermExpression2,
         speed_squared: BivariatePolynomial,
@@ -640,7 +619,6 @@ impl BezierAlgebraicCuspSemicircleRationalDiameter2 {
             (Self::Rational(first), Self::Rational(second)) => {
                 first == &bivariate_complement_second_parameter(second)
             }
-            #[cfg(feature = "predicates")]
             (
                 Self::ParallelNormal {
                     coordinate: first,
@@ -655,7 +633,6 @@ impl BezierAlgebraicCuspSemicircleRationalDiameter2 {
                     && first.radical == bivariate_complement_second_parameter(&second.radical)
                     && first_speed == &bivariate_complement_second_parameter(second_speed)
             }
-            #[cfg(feature = "predicates")]
             (Self::Rational(_), Self::ParallelNormal { .. })
             | (Self::ParallelNormal { .. }, Self::Rational(_)) => false,
         }
@@ -665,7 +642,6 @@ impl BezierAlgebraicCuspSemicircleRationalDiameter2 {
 /// Exact one-radical incidence between a general selected circle and a finite
 /// rational Bezier. The first parameter selects the circle center on its
 /// source parallel and the second parameter selects the rational point.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierSelectedParallelNormalCircleRationalSystem2 {
     incidence: BivariatePolynomial,
@@ -708,7 +684,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleParallelParameterMap2 {
 struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
     /// Stable exact carrier identity for rejecting mapped point evidence that
     /// was retained across a transform without transforming this correlation.
-    #[cfg(feature = "predicates")]
     semicircle: BezierAlgebraicCuspSemicircle2,
     parallel: BezierParallel2,
     cusp_parameter: BezierParameter2,
@@ -1240,7 +1215,6 @@ fn rational_overlap_parameter_for_exact_cusp(
                 &radial_coefficient,
             )
         }
-        #[cfg(feature = "predicates")]
         BezierAlgebraicCuspSemicircleRationalDiameter2::ParallelNormal {
             coordinate,
             speed_squared,
@@ -1417,7 +1391,6 @@ fn rational_mapped_cusp_represented_rational(
                 &bivariate_tensor_product(&radius_squared_denominator, &radial),
             )
         }
-        #[cfg(feature = "predicates")]
         BezierAlgebraicCuspSemicircleRationalDiameter2::ParallelNormal {
             coordinate,
             speed_squared,
@@ -1654,7 +1627,6 @@ fn rational_parallel_parameters_match_at_cut(
 /// directed diameter coordinates. The selected semicircle parameterization
 /// has the odd radial coefficient `A(1-u) = -A(u)` and an even positive
 /// denominator, so this is exactly the relation `v = 1-u`.
-#[cfg(feature = "predicates")]
 fn rational_parallel_parameters_are_complementary_at_cut(
     rational: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     parallel: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
@@ -1671,7 +1643,6 @@ fn rational_parallel_parameters_are_complementary_at_cut(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_cusp_independent_two_radical_sum_is_zero(
     rational: &BivariatePolynomial,
     first_radical: &BivariatePolynomial,
@@ -1827,7 +1798,6 @@ fn algebraic_cusp_independent_two_radical_sum_is_zero(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn parallel_parameters_are_complementary_at_cut(
     first: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     second: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
@@ -1956,7 +1926,6 @@ fn parallel_parameters_are_complementary_at_cut(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn scaled_oriented_rational_diameter(
     diameter: &BezierAlgebraicCuspSemicircleRationalDiameter2,
     scale: &BivariatePolynomial,
@@ -1997,7 +1966,6 @@ fn scaled_oriented_rational_diameter(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn independent_diameter_sum_is_zero(
     rational: BivariatePolynomial,
     first_radical: Option<(BivariatePolynomial, BivariatePolynomial)>,
@@ -2070,7 +2038,6 @@ fn independent_diameter_sum_is_zero(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn rational_parameters_are_complementary_at_cut(
     first: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     second: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
@@ -2115,7 +2082,6 @@ fn rational_parameters_are_complementary_at_cut(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn rational_parallel_diameter_relation_at_cut(
     rational: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     parallel: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
@@ -2165,80 +2131,6 @@ fn rational_parallel_diameter_relation_at_cut(
         &rational.data.cusp_parameter,
         rational_parameter,
         policy,
-    )
-}
-
-#[cfg(not(feature = "predicates"))]
-fn rational_parallel_diameter_relation_at_cut(
-    rational: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
-    parallel: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
-    rational_parameter: &BezierParameter2,
-    orientation: RationalBezierOverlapOrientation2,
-    opposite: bool,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    if rational.data.policy != *policy || parallel.data.policy != *policy {
-        return Err(CurveError::Topology(
-            "cross-map cusp diameter comparison used a different predicate policy".into(),
-        ));
-    }
-    match rational
-        .data
-        .cusp_parameter
-        .same_value(&parallel.data.cusp_parameter, policy)?
-    {
-        Classification::Decided(true) => {}
-        Classification::Decided(false) => return Ok(Classification::Decided(false)),
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    }
-    let parallel_diameter_rational =
-        bivariate_orient_second_parameter(&parallel.data.diameter_side.rational, orientation);
-    let parallel_diameter_radical =
-        bivariate_orient_second_parameter(&parallel.data.diameter_side.radical, orientation);
-    let parallel_radius_squared_denominator =
-        bivariate_orient_second_parameter(&parallel.data.radius_squared_denominator, orientation);
-    let parallel_speed_squared =
-        bivariate_orient_second_parameter(&parallel.data.speed_squared, orientation);
-    let BezierAlgebraicCuspSemicircleRationalDiameter2::Rational(rational_diameter) =
-        &rational.data.diameter;
-
-    let parallel_term = bivariate_multiply(
-        parallel_diameter_rational.as_ref(),
-        &rational.data.radius_squared_denominator,
-    );
-    let rational_term = bivariate_multiply(
-        rational_diameter,
-        parallel_radius_squared_denominator.as_ref(),
-    );
-    let rational_term = if opposite {
-        bivariate_add(&parallel_term, &rational_term)
-    } else {
-        bivariate_subtract(&parallel_term, &rational_term)
-    };
-    let radical_term = bivariate_multiply(
-        parallel_diameter_radical.as_ref(),
-        &rational.data.radius_squared_denominator,
-    );
-    let expression = BezierAlgebraicCuspTwoTermExpression2 {
-        rational: rational_term,
-        radical: radical_term,
-    };
-    Ok(
-        match algebraic_cusp_independent_radical_sum_sign(
-            &expression,
-            parallel_speed_squared.as_ref(),
-            &rational.data.cusp_parameter,
-            rational_parameter,
-            policy,
-        )? {
-            Classification::Decided(RealSign::Zero) => Classification::Decided(true),
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                Classification::Decided(false)
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
     )
 }
 
@@ -2461,13 +2353,11 @@ fn rational_parameters_for_cusp_endpoint(
         )) => Err(CurveError::Topology(
             "a coincident cusp endpoint replayed against a noncoincident rational carrier".into(),
         )),
-        #[cfg(feature = "predicates")]
         Classification::Decided(
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_),
         ) => Err(CurveError::Topology(
             "a coincident cusp endpoint replayed against a noncoincident rational carrier".into(),
         )),
-        #[cfg(feature = "predicates")]
         Classification::Decided(
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_),
         ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -2493,13 +2383,11 @@ fn parallel_parameters_for_cusp_endpoint(
         )) => Err(CurveError::Topology(
             "a coincident cusp endpoint replayed against a noncoincident analytic carrier".into(),
         )),
-        #[cfg(feature = "predicates")]
         Classification::Decided(
             BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(_),
         ) => Err(CurveError::Topology(
             "a coincident cusp endpoint replayed against a noncoincident analytic carrier".into(),
         )),
-        #[cfg(feature = "predicates")]
         Classification::Decided(
             BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(_),
         ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -2570,9 +2458,7 @@ fn mapped_circle_tangent_parameter_candidates(
 #[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
     Contacts(Vec<BezierAlgebraicCuspSemicircleParallelContact2>),
-    #[cfg(feature = "predicates")]
     SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
-    #[cfg(feature = "predicates")]
     SelectedFiberOverlaps(Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>),
     Overlaps(Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>),
     DegenerateProjection,
@@ -2651,7 +2537,6 @@ pub(crate) struct BezierAlgebraicCuspSemicirclePairContact2 {
 /// Reduced exact line-circle system for one certified axis-aligned retained
 /// chord.  The first parameter is the selected circle-center field and the
 /// second is one selected point on the chord's stable supporting line.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleChordSystem2 {
     incidence: BivariatePolynomial,
@@ -2670,7 +2555,6 @@ struct BezierAlgebraicCuspSemicircleChordSystem2 {
     direction: BezierAlgebraicChordAxisDirection2,
 }
 
-#[cfg(feature = "predicates")]
 struct BezierAlgebraicCuspNormalizedCircleFrame2 {
     center_x: Vec<Real>,
     center_y: Vec<Real>,
@@ -2680,7 +2564,6 @@ struct BezierAlgebraicCuspNormalizedCircleFrame2 {
     cusp_parameter: BezierParameter2,
 }
 
-#[cfg(feature = "predicates")]
 struct BezierAlgebraicCuspPositivePointField2 {
     x: Vec<Real>,
     y: Vec<Real>,
@@ -2690,13 +2573,11 @@ struct BezierAlgebraicCuspPositivePointField2 {
 
 /// Pair-shared exact map from a selected circle/axis-chord contact to the
 /// semicircle parameter and correlated affine point.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleChordParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicircleChordParameterMapData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleChordParameterMapData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
@@ -2705,7 +2586,6 @@ struct BezierAlgebraicCuspSemicircleChordParameterMapData2 {
     policy: CurveContext,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
     Axis(BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2),
@@ -2716,7 +2596,6 @@ enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
 /// Compact local-field map for a line contact with a general selected
 /// parallel-normal circle. The line parameter remains a root in `Q(alpha)`;
 /// no degree-multiplied global norm is constructed merely to name it.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
     diameter_side: BezierAlgebraicCuspTwoTermExpression2,
@@ -2733,13 +2612,11 @@ struct BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2 {
 /// incidence once, while each scalar stores only its isolating interval and a
 /// pointer to this authority.  It deliberately does not construct the global
 /// norm of `u`.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 struct BezierAlgebraicSelectedFiberAuthority2 {
     data: Arc<BezierAlgebraicSelectedFiberAuthorityData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug, PartialEq)]
 struct BezierAlgebraicSelectedFiberAuthorityData2 {
     incidence: BivariatePolynomial,
@@ -2747,7 +2624,6 @@ struct BezierAlgebraicSelectedFiberAuthorityData2 {
     policy: CurveContext,
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicSelectedFiberAuthority2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
@@ -2758,27 +2634,23 @@ impl PartialEq for BezierAlgebraicSelectedFiberAuthority2 {
 ///
 /// Clones are one word and share all polynomial evidence.  The interval is a
 /// certified singleton in `Q(alpha)`, not an approximate coordinate.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicSelectedFiberParameter2 {
     data: Arc<BezierAlgebraicSelectedFiberParameterData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug, PartialEq)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
     root: IsolatedRootInterval,
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicSelectedFiberParameter2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicSelectedFiberAuthority2 {
     fn new(
         incidence: BivariatePolynomial,
@@ -2822,7 +2694,6 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicSelectedFiberParameter2 {
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if self.data.authority.data.policy != *policy {
@@ -3164,7 +3035,6 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn selected_fiber_root_intervals_overlap(
     first: &BezierAlgebraicSelectedFiberParameter2,
     second: &BezierAlgebraicSelectedFiberParameter2,
@@ -3181,7 +3051,6 @@ fn selected_fiber_root_intervals_overlap(
         ) != Some(std::cmp::Ordering::Less)
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
     incidence: BivariatePolynomial,
@@ -3198,7 +3067,6 @@ struct BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
     direction: BezierAlgebraicChordAxisDirection2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
     rational: TrivariatePolynomial2,
@@ -3210,7 +3078,6 @@ struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
 /// The endpoint roots and circle-center root occupy the three tensor axes; the
 /// line parameter is eliminated analytically, leaving only one selected square
 /// root and at most two finite contacts.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleObliqueChordSystem2 {
     retained: BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2,
@@ -3219,7 +3086,6 @@ struct BezierAlgebraicCuspSemicircleObliqueChordSystem2 {
     point_minus_end: BezierAlgebraicCuspTrivariateSquareRootExpression2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2 {
     discriminant: TrivariatePolynomial2,
@@ -3237,7 +3103,6 @@ struct BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2 {
 
 /// One finite contact between a selected algebraic semicircle and a
 /// certified axis-aligned retained chord.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct BezierAlgebraicCuspSemicircleChordContact2 {
     /// `-1` and `+1` select the two transverse support contacts; zero is the
@@ -3252,7 +3117,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleChordContact2 {
     pub(crate) tangent_cross_sign: RealSign,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicCuspSemicircleChordIntersections2 {
     NoContacts,
@@ -3266,7 +3130,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleChordIntersections2 {
 /// semicircle/chord kernel.  Fast paths may use different local elimination
 /// systems, but callers receive the same exact carrier parameters and point
 /// evidence.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleRetainedChordContact2 {
     pub(crate) cusp_parameter: BezierAlgebraicCuspSemicircleParameter2,
@@ -3275,7 +3138,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRetainedChordContact2 {
     pub(crate) tangent_cross_sign: RealSign,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicCuspSemicircleRetainedChordIntersections2 {
     NoContacts,
@@ -3285,7 +3147,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleRetainedChordIntersections2 {
 /// Exact affine point retained by a selected algebraic-circle/axis-chord
 /// contact.  The one-word carrier shares the same map/contact allocation as
 /// the corresponding mapped semicircle parameter.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicCuspChordPoint2 {
     data: Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
@@ -3298,13 +3159,11 @@ pub struct BezierAlgebraicCuspChordPoint2 {
 /// retain their exact source point and selected-circle parameter proof, then
 /// refine those two existing fields independently for nonstructural queries.
 /// No primitive element or approximate construction coordinate is introduced.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicCuspChordDerivedPoint2 {
     data: Arc<BezierAlgebraicCuspChordDerivedPointData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicCuspChordDerivedPointData2 {
     source: BezierAlgebraicCuspDerivedPointSource2,
@@ -3317,7 +3176,6 @@ struct BezierAlgebraicCuspChordDerivedPointData2 {
     translation_y: Real,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 enum BezierAlgebraicCuspDerivedPointSource2 {
     Chord(BezierAlgebraicCuspChordPoint2),
@@ -3330,7 +3188,6 @@ enum BezierAlgebraicCuspDerivedPointSource2 {
     },
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicCuspDerivedPointSource2 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -3387,14 +3244,12 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         map: BezierAlgebraicCuspSemicircleRationalParameterMap2,
         contact: BezierAlgebraicCuspSemicircleRationalMapContact2,
     },
-    #[cfg(feature = "predicates")]
     SelectedFiberRational {
         map: BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2,
         other_parameter: BezierAlgebraicSelectedFiberParameter2,
         location: BezierAlgebraicCuspSemicircleContactLocation2,
         tangent_cross_sign: RealSign,
     },
-    #[cfg(feature = "predicates")]
     SelectedFiberParallel {
         map: BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2,
         other_parameter: BezierAlgebraicSelectedFiberParameter2,
@@ -3413,7 +3268,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// product plus the two unnormalized source tangents orders the contact
     /// against every represented circle parameter without a square root,
     /// resultant, or primitive element.
-    #[cfg(feature = "predicates")]
     SelectedParallelContact {
         semicircle: BezierAlgebraicCuspSemicircle2,
         parallel: BezierParallel2,
@@ -3428,7 +3282,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         contact: BezierAlgebraicCuspSemicirclePairContact2,
         first: bool,
     },
-    #[cfg(feature = "predicates")]
     Chord {
         map: BezierAlgebraicCuspSemicircleChordParameterMap2,
         contact: BezierAlgebraicCuspSemicircleChordContact2,
@@ -3449,7 +3302,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// parameter direction. The target parameter is the corresponding
     /// Mobius transform of `source`; `point` retains the same construction as
     /// a center-relative rotation of the source point.
-    #[cfg(feature = "predicates")]
     Chamfer {
         semicircle: BezierAlgebraicCuspSemicircle2,
         source: BezierAlgebraicCuspSemicircleParameter2,
@@ -3503,7 +3355,6 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
 
 /// Encloses one exact analytic-parallel point without adjoining its normalized
 /// tangent field to the retained source parameter.
-#[cfg(feature = "predicates")]
 fn analytic_parallel_point_bounds_refined(
     parallel: &BezierParallel2,
     parameter: &BezierParameter2,
@@ -3526,7 +3377,6 @@ fn analytic_parallel_point_bounds_refined(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn analytic_parallel_point_bounds_over_interval(
     parallel: &BezierParallel2,
     parameter: &BezierAlgebraicChordRealInterval2,
@@ -3636,7 +3486,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// authored. This identity prevents a genuinely mapped point from being
     /// replayed after its fragment was transformed without transforming the
     /// correlation itself.
-    #[cfg(feature = "predicates")]
     fn semicircle_carrier(&self) -> &BezierAlgebraicCuspSemicircle2 {
         match self {
             Self::Rational { map, .. } => &map.data.semicircle,
@@ -3662,7 +3511,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_contact_order_to_real(
         &self,
         represented: &Real,
@@ -3769,7 +3617,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_contact_parameter_bracket(
         &self,
         refinement_steps: usize,
@@ -3795,7 +3642,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// common cardinal coordinate must therefore be replayed against this
     /// base carrier, even when the destination overlap uses a general
     /// correlated parameter map rather than identity or unit complement.
-    #[cfg(feature = "predicates")]
     fn coincident_base_data(&self) -> &Self {
         match self {
             Self::PairOverlapMap {
@@ -3830,7 +3676,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source.coincident_rational_source()
             }
             Self::Parallel { .. } | Self::Pair { .. } | Self::PairOverlap { .. } => None,
-            #[cfg(feature = "predicates")]
             Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
@@ -3871,7 +3716,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 ))
             }
             Self::Rational { .. } | Self::Parallel { .. } | Self::PairOverlap { .. } => None,
-            #[cfg(feature = "predicates")]
             Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
@@ -3884,7 +3728,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// coincident-circle transports. The Boolean overlap orientation records
     /// whether the destination traversal tangent is reversed relative to the
     /// circle that authored the chord contact.
-    #[cfg(feature = "predicates")]
     fn coincident_chord_source(
         &self,
     ) -> Option<(
@@ -3923,7 +3766,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// tangent. A represented support-line fast path deliberately keeps its
     /// point in the smaller rational map, so it carries this authority without
     /// pretending to own the full multi-field chord point system.
-    #[cfg(feature = "predicates")]
     fn coincident_chord_tangent_source(
         &self,
     ) -> Option<(
@@ -3990,7 +3832,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// coincident-circle wrappers. Keeping that allocation beside the current
     /// mapped parameter preserves both the original point system and the
     /// destination selected-circle center without constructing a compositum.
-    #[cfg(feature = "predicates")]
     fn coincident_chord_parameter(self: &Arc<Self>) -> Option<Arc<Self>> {
         match self.as_ref() {
             Self::Chord { .. } => Some(self.clone()),
@@ -4016,7 +3857,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// owns the local parameter or how many coincident-circle transports wrap
     /// it. This identity is valid for the original contact point only; radial
     /// offsets about the two different circle centers must not reuse it.
-    #[cfg(feature = "predicates")]
     fn shares_coincident_pair_point(&self, other: &Self) -> bool {
         let (Some((first_map, first_contact, _, _)), Some((second_map, second_contact, _, _))) = (
             self.coincident_pair_source(),
@@ -4061,7 +3901,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source.coincident_pair_endpoint_source()
             }
             Self::Rational { .. } | Self::Parallel { .. } | Self::Pair { .. } => None,
-            #[cfg(feature = "predicates")]
             Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
@@ -4092,7 +3931,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     policy: map.data.policy,
                 },
             ),
-            #[cfg(feature = "predicates")]
             Self::SelectedParallelContact {
                 parallel,
                 parameter,
@@ -4112,7 +3950,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source.coincident_tangent_source()
             }
             Self::Pair { .. } | Self::PairOverlap { .. } => None,
-            #[cfg(feature = "predicates")]
             Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
             | Self::Chord { .. }
@@ -4124,7 +3961,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// selected algebraic fiber. The curve parameter and its complete reduced
     /// incidence are refined together; Cartesian evaluation then uses exact
     /// interval arithmetic and never materializes a global norm polynomial.
-    #[cfg(feature = "predicates")]
     fn selected_fiber_point_bounds_refined(
         &self,
         refinement_steps: usize,
@@ -4153,7 +3989,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// therefore yields a conservative point box even when the parameter and
     /// selected circle center inhabit different fields. Refinement can prove
     /// every strict downstream order; equality remains policy-terminal.
-    #[cfg(feature = "predicates")]
     fn coincident_parallel_point_bounds_refined(
         &self,
         refinement_steps: usize,
@@ -4186,7 +4021,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// The ignored correlation only widens the box; every bound remains exact
     /// and converges to the retained pair contact without constructing a
     /// primitive element for the two cusp roots and circle-circle radical.
-    #[cfg(feature = "predicates")]
     fn coincident_pair_point_bounds_refined(
         &self,
         refinement_steps: usize,
@@ -4218,7 +4052,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// Restricts the general complement predicate to analytic-parallel maps.
     /// That branch proves every equality under STRICT even when the retained
     /// construction policy is APPROXIMATE_512.
-    #[cfg(feature = "predicates")]
     fn parallel_complementary_to(
         &self,
         other: &Self,
@@ -4235,7 +4068,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
 
     /// Proves that two mapped cuts are complementary parameters on the same
     /// selected semicircle without adjoining their carrier fields.
-    #[cfg(feature = "predicates")]
     fn is_complementary_to(
         &self,
         other: &Self,
@@ -4429,7 +4261,6 @@ pub struct BezierAlgebraicChord2 {
 /// `P + d*(dx, dy)/sqrt(dx^2 + dy^2)`. This is the general counterpart of the
 /// represented-unit-tangent fast path: no primitive element, rounded
 /// coordinate, or approximate construction fact is introduced.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicChordParallelPoint2 {
     data: Arc<BezierAlgebraicChordParallelData2>,
@@ -4441,13 +4272,11 @@ pub struct BezierAlgebraicChordParallelPoint2 {
 /// The point evaluates `P(t) + d*(-H_y,H_x)/sqrt(H dot H)` lazily. Its one-word
 /// handle keeps the selected parameter and normalized source expression
 /// together without adjoining the speed square root or rounding coordinates.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub struct BezierAnalyticParallelPoint2 {
     data: Arc<BezierAnalyticParallelPointData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAnalyticParallelPointData2 {
     parallel: BezierParallel2,
@@ -4460,7 +4289,6 @@ struct BezierAnalyticParallelPointData2 {
     policy: CurveContext,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordParallelData2 {
     source: BezierAlgebraicChord2,
@@ -4473,7 +4301,6 @@ struct BezierAlgebraicChordParallelData2 {
     policy: CurveContext,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BezierAlgebraicChordUnitDisplacement2 {
     LeftNormal,
@@ -4487,7 +4314,6 @@ enum BezierAlgebraicChordUnitDisplacement2 {
 /// selected field. Certified similarities may retain the corresponding exact
 /// unit tangent for an oblique image; an uncertified general direction remains
 /// on the algebraic parallel-carrier boundary.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum BezierAlgebraicChordAxisDirection2 {
     PositiveX,
@@ -4496,7 +4322,6 @@ pub(crate) enum BezierAlgebraicChordAxisDirection2 {
     NegativeY,
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordAxisDirection2 {
     const fn from_cardinal_components(x: i8, y: i8) -> Option<Self> {
         match (x, y) {
@@ -4569,7 +4394,6 @@ enum BezierAlgebraicChordParameterStorage2 {
     Interior(Arc<BezierAlgebraicChordParameterData2>),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordRationalContact2 {
     chord_parameter: BezierAlgebraicChordParameter2,
@@ -4586,7 +4410,6 @@ pub(crate) struct BezierAlgebraicChordRationalContact2 {
 /// descending when the source runs in the opposite direction.  Retaining the
 /// source and chord once also supplies exact endpoint transport when a
 /// CurveRegion carrier clips the overlap to an authored subrange.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordRationalOverlap2 {
     chord: BezierAlgebraicChord2,
@@ -4596,7 +4419,6 @@ pub(crate) struct BezierAlgebraicChordRationalOverlap2 {
     orientation: RationalBezierOverlapOrientation2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
     Contacts(Vec<BezierAlgebraicChordRationalContact2>),
@@ -4609,7 +4431,6 @@ pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
     NotSourceRelated,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordPairContact2 {
     first_parameter: BezierAlgebraicChordParameter2,
@@ -4624,13 +4445,11 @@ pub(crate) struct BezierAlgebraicChordPairContact2 {
 /// The point keeps the four endpoint fields separate.  Exact predicates use
 /// the certified side relations and refine only the coordinate boxes needed
 /// by a consumer; no primitive-element tower or rounded coordinate is stored.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicChordPairPoint2 {
     data: Arc<BezierAlgebraicChordPairPointData2>,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordPairPointData2 {
     first: BezierAlgebraicChord2,
@@ -4640,7 +4459,6 @@ struct BezierAlgebraicChordPairPointData2 {
     policy: CurveContext,
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicChordPairPoint2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
@@ -4651,7 +4469,6 @@ impl PartialEq for BezierAlgebraicChordPairPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordPairOverlap2 {
     first_range: [BezierAlgebraicChordParameter2; 2],
@@ -4659,14 +4476,12 @@ pub(crate) struct BezierAlgebraicChordPairOverlap2 {
     orientation: RationalBezierOverlapOrientation2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 pub(crate) enum BezierAlgebraicChordPairIntersections2 {
     Contacts(Vec<BezierAlgebraicChordPairContact2>),
     Overlaps(Vec<BezierAlgebraicChordPairOverlap2>),
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordRationalBoundary2 {
     chord_parameter: BezierAlgebraicChordParameter2,
@@ -4680,7 +4495,6 @@ struct BezierAlgebraicChordRationalBoundary2 {
 /// endpoint supplied it.  Reusing that selected-root evidence avoids asking a
 /// later independent point comparison to rediscover an equality that the
 /// fiber projection has already proved.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordRationalPartitionBoundary2 {
     source_parameter: BezierParameter2,
@@ -4700,7 +4514,6 @@ struct BezierAlgebraicChordParameterData2 {
     axis: BezierAlgebraicChordParameterAxis2,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordSourceIncidence2 {
     incidence: BivariatePolynomial,
@@ -4709,7 +4522,6 @@ struct BezierAlgebraicChordSourceIncidence2 {
     chord_denominator_sign: RealSign,
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordIndependentIncidence2 {
     incidence: TrivariatePolynomial2,
@@ -4728,7 +4540,6 @@ struct BezierAlgebraicChordIndependentIncidence2 {
 /// point images discards that correlation. These trivariate differences keep
 /// the endpoint fields and source parameter coupled so containment can reuse
 /// the same exact selected-triple proof as incidence replay.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicChordIndependentParameterMap2 {
     source_minus_start_axis: TrivariatePolynomial2,
@@ -4738,7 +4549,6 @@ struct BezierAlgebraicChordIndependentParameterMap2 {
 }
 
 /// Prepared independent-field predicate data for one retained chord.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicChordAlgebraicRay2 {
     start: RationalBezierAlgebraicPointImage2,
@@ -4750,7 +4560,6 @@ pub(crate) struct BezierAlgebraicChordAlgebraicRay2 {
 /// The source parameter range remains in its native selected/Bezier domain.
 /// Line incidence uses a squared projection only to enumerate candidates; all
 /// topology decisions replay the authored `A*sqrt(S)+B` normal branch.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierParallelAlgebraicRay2 {
     parallel: BezierParallel2,
@@ -4759,7 +4568,6 @@ pub(crate) struct BezierParallelAlgebraicRay2 {
     endpoints: [RationalBezierIntersectionPointEvidence2; 2],
 }
 
-#[cfg(feature = "predicates")]
 struct BezierParallelAlgebraicRaySystem2 {
     incidence: BivariatePolynomial,
     expression: BezierAlgebraicCuspTwoTermExpression2,
@@ -4772,7 +4580,6 @@ struct BezierParallelAlgebraicRaySystem2 {
 /// algebraic pairs normalize only the queried point into the selected field
 /// already retained by the algebraic support, avoiding an artificial field
 /// (and an unsupported exact/exact normalization) for represented chords.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 enum BezierAlgebraicChordSupportPredicate2 {
     Exact {
@@ -4811,7 +4618,6 @@ impl PartialEq for BezierAlgebraicChord2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicChordParallelPoint2 {
     fn eq(&self, other: &Self) -> bool {
         self.at_end == other.at_end
@@ -4825,7 +4631,6 @@ impl PartialEq for BezierAlgebraicChordParallelPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAnalyticParallelPoint2 {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
@@ -4844,7 +4649,6 @@ impl PartialEq for BezierAnalyticParallelPoint2 {
 /// Each endpoint certificate is coefficientwise and STRICT-only.  Exact
 /// proportionality of the two line equations then proves the chord direction
 /// without adjoining the selected fields merely to normalize their delta.
-#[cfg(feature = "predicates")]
 fn strict_common_retained_line_coefficients(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
@@ -4868,7 +4672,6 @@ fn strict_common_retained_line_coefficients(
     Some(first)
 }
 
-#[cfg(feature = "predicates")]
 fn strict_common_retained_line_unit_tangent(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
@@ -4951,7 +4754,6 @@ struct BezierAlgebraicChordData2 {
     /// the retained circle tangent carried by that endpoint. The two bits fit
     /// existing alignment padding and avoid replaying a multi-field predicate
     /// when a later parallel uses the fact only to make Cauchy strict.
-    #[cfg(feature = "predicates")]
     certified_circle_transverse_endpoints: u8,
     source: Option<BezierAlgebraicChord2>,
     reversed: bool,
@@ -5018,7 +4820,6 @@ fn cloned_once_lock<T: Clone>(source: &OnceLock<T>) -> OnceLock<T> {
 /// cut can instead lend its carrier field to an exactly rational companion.
 /// Distinct endpoint fields stay separate and use the cold three-field chord
 /// predicate, so no path constructs a primitive element.
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
     frame: BezierParallelAlgebraicCuspFrame2,
@@ -5233,7 +5034,6 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                         ))
                     })
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                 map,
                 other_parameter,
@@ -5278,7 +5078,6 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                     },
                 )))
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                 map,
                 other_parameter,
@@ -5315,7 +5114,6 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                     },
                 )))
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 semicircle,
                 parallel,
@@ -5347,7 +5145,6 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. } => None,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. }
@@ -5381,11 +5178,9 @@ impl BezierSelectedCircleFrame2 {
             (Self::Rational(first), Self::Rational(second)) => {
                 Arc::ptr_eq(&first.data, &second.data)
             }
-            #[cfg(feature = "predicates")]
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second)
             }
-            #[cfg(feature = "predicates")]
             (Self::Rational(_), Self::ParallelNormal(_))
             | (Self::ParallelNormal(_), Self::Rational(_)) => false,
         }
@@ -5394,12 +5189,10 @@ impl BezierSelectedCircleFrame2 {
     fn rational(&self) -> Option<&BezierParallelAlgebraicCuspFrame2> {
         match self {
             Self::Rational(frame) => Some(frame),
-            #[cfg(feature = "predicates")]
             Self::ParallelNormal(_) => None,
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn parallel_normal(&self) -> Option<&BezierSelectedParallelNormalFrameData2> {
         match self {
             Self::Rational(_) => None,
@@ -5418,7 +5211,6 @@ impl BezierSelectedCircleFrame2 {
     fn center_parallel_distance(&self) -> Real {
         match self {
             Self::Rational(frame) => frame.center_parallel_distance(),
-            #[cfg(feature = "predicates")]
             Self::ParallelNormal(frame) => frame.center_support.distance().clone(),
         }
     }
@@ -5426,7 +5218,6 @@ impl BezierSelectedCircleFrame2 {
     fn source_parallel(&self) -> Option<&BezierParallel2> {
         match self {
             Self::Rational(frame) => frame.data.parallel.as_ref(),
-            #[cfg(feature = "predicates")]
             Self::ParallelNormal(frame) => Some(&frame.center_support),
         }
     }
@@ -5434,7 +5225,6 @@ impl BezierSelectedCircleFrame2 {
     fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
         match self {
             Self::Rational(frame) => Ok(Self::Rational(frame.transform_similarity(transform)?)),
-            #[cfg(feature = "predicates")]
             Self::ParallelNormal(frame) => Ok(Self::ParallelNormal(Arc::new(
                 BezierSelectedParallelNormalFrameData2 {
                     center_support: frame.center_support.transform_similarity(transform)?,
@@ -5493,7 +5283,6 @@ impl BezierSelectedCircleFrame2 {
             .point_image_at_parallel_distance(distance, policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn certified_cardinal_normal(&self) -> CurveResult<Option<(i8, i8)>> {
         match self.rational() {
             Some(frame) => frame.certified_cardinal_normal(),
@@ -5522,7 +5311,6 @@ impl BezierParallelAlgebraicCuspFrame2 {
     /// Recovers an exact cardinal frame certificate from the retained
     /// polynomial normal when construction did not cache one. Only STRICT
     /// zero proofs are accepted because this certificate is reusable.
-    #[cfg(feature = "predicates")]
     fn certified_cardinal_normal(&self) -> CurveResult<Option<(i8, i8)>> {
         if let Some(normal) = self.data.cardinal_normal {
             return Ok(Some(normal));
@@ -5793,12 +5581,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierSelectedCircleFrame2::Rational(frame) => {
                 BezierParameter2::Algebraic(frame.data.parameter.clone())
             }
-            #[cfg(feature = "predicates")]
             BezierSelectedCircleFrame2::ParallelNormal(frame) => frame.center_parameter.clone(),
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn uses_selected_parallel_normal_frame(&self) -> bool {
         self.data.frame.parallel_normal().is_some()
     }
@@ -5812,7 +5598,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// speed square root to the selected parameter field.  The construction
     /// policy is retained because an APPROXIMATE_512 root selection must never
     /// be replayed later as STRICT evidence.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_selected_parallel_normal(
         center_support: BezierParallel2,
         center_parameter: BezierParameter2,
@@ -5858,7 +5643,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// axis-aligned round join therefore reuses that authority by supplying a
     /// fixed cardinal normal. `radial_distance` remains signed so the same
     /// rational half-circle parameterization covers expansion and erosion.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_retained_axis_aligned_center(
         center: &RationalBezierIntersectionPointEvidence2,
         cardinal_normal: (i8, i8),
@@ -5922,7 +5706,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// oblique frame. The unit certificate is proved under STRICT before it is
     /// retained, so APPROXIMATE_512 can never turn an approximate construction
     /// direction into persistent circle evidence.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_retained_center_and_certified_unit_normal(
         center: &RationalBezierIntersectionPointEvidence2,
         unit_normal: (Real, Real),
@@ -5950,7 +5733,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     ///
     /// - center: `(X * normal_denominator, Y * normal_denominator)`;
     /// - normal: `(X - center_x * W, Y - center_y * W)`.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_retained_center_and_certified_concentric_normal(
         center: &RationalBezierIntersectionPointEvidence2,
         support_center: &Point2,
@@ -6021,7 +5803,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         })))
     }
 
-    #[cfg(feature = "predicates")]
     fn from_retained_center_frame(
         center: &RationalBezierIntersectionPointEvidence2,
         unit_normal: (Real, Real),
@@ -6282,7 +6063,6 @@ impl BezierAlgebraicCuspSemicircle2 {
 
     /// Evaluates a represented circle parameter without requiring the center
     /// and source speed radical to share one algebraic-number field.
-    #[cfg(feature = "predicates")]
     pub(crate) fn point_evidence_at(
         &self,
         parameter: &Real,
@@ -6372,7 +6152,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn start_point_evidence(
         &self,
         policy: &CurveContext,
@@ -6380,7 +6159,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.point_evidence_at(&Real::zero(), policy)
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn end_point_evidence(
         &self,
         policy: &CurveContext,
@@ -6388,7 +6166,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.point_evidence_at(&Real::one(), policy)
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn center_point_evidence(
         &self,
         policy: &CurveContext,
@@ -6429,7 +6206,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// incidence and supplies that orientation from the authored offset; this
     /// method independently certifies that the resulting angular parameter is
     /// strictly inside this selected half.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certified_selected_parallel_contact_parameter(
         &self,
         other: BezierParallel2,
@@ -6680,7 +6456,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// exact radius.  Every returned box remains conservative; refinement is
     /// therefore useful for proving separation but never manufactures a
     /// contact or equality decision.
-    #[cfg(feature = "predicates")]
     pub(crate) fn conservative_bounds_refined(
         &self,
         refinement_steps: usize,
@@ -6711,7 +6486,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Dependency loss can only widen the result. This supplies compact
     /// multi-field contacts with convergent exact point bounds without
     /// adjoining their fields or manufacturing a coordinate approximation.
-    #[cfg(feature = "predicates")]
     fn parameter_bracket_point_bounds_refined(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameterBracket2,
@@ -6838,7 +6612,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// center, and the interval for `|P-C|^2-r^2` is refined until its sign is
     /// strict. An unresolved terminal interval is equality only under
     /// APPROXIMATE_512; STRICT keeps it explicit.
-    #[cfg(feature = "predicates")]
     pub(crate) fn retained_point_incidence_sign(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -6861,7 +6634,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.retained_point_incidence_sign_by_refinement(point, policy, 512, true)
     }
 
-    #[cfg(feature = "predicates")]
     fn retained_point_incidence_sign_by_refinement(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -6952,7 +6724,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// remains uncertain even when the carrier was constructed under
     /// APPROXIMATE_512; any approximation consumed while recovering its
     /// conservative endpoint bounds remains observed by the outer operation.
-    #[cfg(feature = "predicates")]
     pub(crate) fn strict_point_incidence_sign(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -7014,7 +6785,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             return Ok(false);
         }
-        #[cfg(feature = "predicates")]
         {
             let center = match self.center_point_evidence(policy)? {
                 Classification::Decided(center) => center,
@@ -7057,7 +6827,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        #[cfg(feature = "predicates")]
         if let Some(frame) = self.data.frame.parallel_normal() {
             if frame.policy != *policy {
                 return Err(CurveError::Topology(
@@ -7205,14 +6974,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .into_iter()
                 .map(|contact| contribution(contact.location, contact.tangent_cross_sign))
                 .sum(),
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
                 contacts,
             ) => contacts
                 .into_iter()
                 .map(|contact| contribution(contact.location(), contact.tangent_cross_sign()))
                 .sum(),
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
                 return Err(CurveError::Topology(
                     "a nonzero rational line was classified as the cusp circle".into(),
@@ -7294,7 +7061,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Builds the exact equations needed to intersect this selected half circle
     /// with one finite rational Bezier. The first variable is the retained cusp
     /// parameter; the second is the rational curve parameter.
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_rational_system(
         &self,
         other: &RationalBezier2,
@@ -7462,7 +7228,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// additional expressions select this finite semicircle, distinguish its
     /// diameter endpoints, and orient target tangency without flattening
     /// either positive source-speed radical.
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_parallel_system(
         &self,
         other: &BezierParallel2,
@@ -7844,7 +7609,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_parallel_intersections(
         &self,
         other: &BezierParallel2,
@@ -8206,10 +7970,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let frame_parallel = self.source_parallel();
         let same_source =
             frame_parallel.is_some_and(|parallel| other.source() == parallel.source());
-        #[cfg(feature = "predicates")]
         let normalize_source_reversal = !self.uses_selected_parallel_normal_frame();
-        #[cfg(not(feature = "predicates"))]
-        let normalize_source_reversal = true;
         if normalize_source_reversal
             && let Some(frame_parallel) = frame_parallel
             && !same_source
@@ -8274,7 +8035,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                                 .collect(),
                         )
                     }
-                    #[cfg(feature = "predicates")]
                     BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
                         _,
                     )
@@ -8319,7 +8079,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                         BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_)
                         | BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
                     ) => {}
-                    #[cfg(feature = "predicates")]
                     Classification::Decided(
                         BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
                             contacts,
@@ -8331,7 +8090,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                             ),
                         ));
                     }
-                    #[cfg(feature = "predicates")]
                     Classification::Decided(
                         BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
                             overlaps,
@@ -8363,7 +8121,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
 
-        #[cfg(feature = "predicates")]
         if self.uses_selected_parallel_normal_frame() {
             return self.selected_parallel_normal_parallel_intersections(other, range, policy);
         }
@@ -9273,7 +9030,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
-                #[cfg(feature = "predicates")]
                 semicircle: self.clone(),
                 parallel: other.clone(),
                 cusp_parameter: BezierParameter2::Algebraic(self.cusp_parameter().clone()),
@@ -9287,7 +9043,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn normalized_circle_frame(
         &self,
         policy: &CurveContext,
@@ -9336,7 +9091,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn axis_chord_system_for_support_point(
         &self,
         support_point: &RationalBezierIntersectionPointEvidence2,
@@ -9489,7 +9243,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn oblique_chord_system(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -9647,7 +9400,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn axis_chord_system_contact_minus_support_sign(
         system: &BezierAlgebraicCuspSemicircleChordSystem2,
         branch: i8,
@@ -9663,7 +9415,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn axis_chord_contact_minus_point_sign(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -9680,7 +9431,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         Self::axis_chord_system_contact_minus_support_sign(&system, branch, policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn axis_chord_contact_minus_point_sign_cached(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -9799,7 +9549,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Intersects this selected semicircle with a finite structurally
     /// axis-aligned algebraic chord. Every support branch is filtered through
     /// the oriented half-circle and both finite chord endpoints exactly.
-    #[cfg(feature = "predicates")]
     pub(crate) fn axis_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -9981,7 +9730,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn oblique_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -10136,7 +9884,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// incidence that creates a degree-224 representation solely to name at
     /// most two circle/line contacts. This kernel instead isolates and replays
     /// those local roots in `Q(alpha)`.
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_line_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -10382,7 +10129,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn retain_selected_fiber_line_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -10451,7 +10197,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn retain_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -10521,7 +10266,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// kernel. Remaining chords use the three-selected-field analytic support
     /// kernel. Every path retains identical cusp/chord parameter evidence for
     /// the region Boolean engine.
-    #[cfg(feature = "predicates")]
     pub(crate) fn chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -10615,7 +10359,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                         "a nonzero selected circle overlapped an exact line component".into(),
                     ))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
                     Err(CurveError::Topology(
                         "a nonzero selected circle overlapped an exact line component".into(),
@@ -10624,7 +10367,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
                     Err(CurveError::Topology(
                         "the dedicated selected-fiber line kernel was bypassed".into(),
@@ -11355,7 +11097,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.rational_intersections_internal(other, true, policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_rational_selected_fiber_intersections(
         &self,
         other: &RationalBezier2,
@@ -11503,7 +11244,6 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// Replays a rational carrier whose complete image lies on this selected
     /// supporting circle. Diameter and angular-stationary roots partition the
     /// source into regular monotone cells, all retained in one selected field.
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_replay_rational_circle_component(
         &self,
         other: &RationalBezier2,
@@ -11820,7 +11560,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_rational_intersections_internal(
         &self,
         other: &RationalBezier2,
@@ -12087,7 +11826,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
-        #[cfg(feature = "predicates")]
         if self.uses_selected_parallel_normal_frame() {
             return self.selected_parallel_normal_rational_intersections_internal(
                 other,
@@ -12332,7 +12070,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             Some(BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
-                    #[cfg(feature = "predicates")]
                     semicircle: self.clone(),
                     curve: other.clone(),
                     cusp_parameter,
@@ -12497,7 +12234,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
         let parameter_map = BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             data: Arc::new(BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
-                #[cfg(feature = "predicates")]
                 semicircle: self.clone(),
                 curve: other.clone(),
                 cusp_parameter: cusp_parameter.clone(),
@@ -12524,7 +12260,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                         policy,
                     )
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent {
                     ..
                 } => algebraic_selected_correlated_predicate_sign(
@@ -12838,7 +12573,6 @@ fn algebraic_cusp_semicircle_contact_parameter_bracket(
     )
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
     fn retained(
         &self,
@@ -12915,7 +12649,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     pub(crate) fn other_start_parameter(&self) -> BezierAlgebraicSelectedFiberParameter2 {
         self.other_start.clone()
@@ -13197,7 +12930,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
     fn mapped_data(
         &self,
@@ -13403,7 +13135,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     fn mapped_data(
         &self,
@@ -13617,7 +13348,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
         let correlated_incidence = match &contact.correlation {
             BezierAlgebraicCuspSemicircleRationalCorrelation2::Map => Some(&self.data.incidence),
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent { .. } => {
                 Some(&self.data.incidence)
             }
@@ -13651,7 +13381,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                     )?
                 }
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalDiameter2::ParallelNormal {
                 coordinate,
                 speed_squared,
@@ -13740,7 +13469,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         })
     }
 
-    #[cfg(feature = "predicates")]
     fn contact_parameter_with_chord_tangent(
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalContact2,
@@ -13986,11 +13714,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                             .into(),
                     ))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
@@ -14048,7 +13774,6 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                             .into(),
                     ))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(_)
                 | BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
@@ -14227,7 +13952,6 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     fn axis_system(&self) -> Option<&BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2> {
         match &self.data.system {
@@ -15205,7 +14929,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspChordPoint2 {
     fn map_contact(
         &self,
@@ -15688,7 +15411,6 @@ impl BezierAlgebraicCuspChordPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspDerivedPointSource2 {
     fn chord_map_contact(
         &self,
@@ -15832,7 +15554,6 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspChordDerivedPoint2 {
     fn from_mapped_source(
         parameter: Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
@@ -16919,7 +16640,6 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicCuspChordPoint2 {
     fn eq(&self, other: &Self) -> bool {
         if self.shares_storage(other) {
@@ -16931,7 +16651,6 @@ impl PartialEq for BezierAlgebraicCuspChordPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl PartialEq for BezierAlgebraicCuspChordDerivedPoint2 {
     fn eq(&self, other: &Self) -> bool {
         self.shares_storage(other)
@@ -17555,12 +17274,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, .. } => {
                 map.data.policy
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                 map,
                 ..
             } => map.data.policy,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                 map,
                 ..
@@ -17569,7 +17286,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 map.data.policy
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { map, .. } => map.data.policy,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, .. } => map.data.policy,
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { overlap, .. } => {
                 overlap.data.policy
@@ -17577,9 +17293,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
                 overlap, ..
             } => overlap.data.policy,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { policy, .. } => *policy,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 policy,
                 ..
@@ -17603,7 +17317,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         {
             source.validate_policy(policy)?;
         }
-        #[cfg(feature = "predicates")]
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { source, .. } =
                 data.as_ref()
@@ -17652,7 +17365,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. } => {
                     Ok(Classification::Decided(None))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                     ..
                 }
@@ -17662,11 +17374,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { .. } => {
                     Ok(Classification::Decided(None))
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                     ..
                 } => Ok(Classification::Decided(None)),
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
@@ -17690,7 +17400,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     /// similarly reuse the endpoint field of the participating semicircle.
     /// This keeps each returned point in one local field; callers may align a
     /// rational companion endpoint to that field without a primitive element.
-    #[cfg(feature = "predicates")]
     fn coincident_point_image(
         &self,
         semicircle: &BezierAlgebraicCuspSemicircle2,
@@ -17783,7 +17492,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     /// selected circle/axis-chord contact deliberately remains a correlated
     /// two-field radical point, so return its existing one-word point handle
     /// instead of trying to flatten it into a local algebraic image.
-    #[cfg(feature = "predicates")]
     pub(crate) fn coincident_point_evidence(
         &self,
         semicircle: &BezierAlgebraicCuspSemicircle2,
@@ -17916,7 +17624,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     /// circle on which that point is structurally parameter 0 or 1, scaling
     /// its signed radius by the same target/source ratio. Other genuinely
     /// multi-field cuts remain explicit and decline this path.
-    #[cfg(feature = "predicates")]
     fn concentric_offset_point_image(
         &self,
         source: &BezierAlgebraicCuspSemicircle2,
@@ -17982,7 +17689,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     /// mapped cuts whose coincident source point already has exact evidence
     /// keep that point beside the selected-center proof and reuse the same
     /// affine derived carrier.
-    #[cfg(feature = "predicates")]
     pub(crate) fn concentric_offset_point_evidence(
         &self,
         source: &BezierAlgebraicCuspSemicircle2,
@@ -18158,7 +17864,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                                 && first_contact == second_contact
                                 && first_side == second_side
                         }
-                        #[cfg(feature = "predicates")]
                         (
                             BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
                                 map: first_map,
@@ -18204,7 +17909,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                                 && first_source.shares_exact_evidence(second_source)
                                 && first_side == second_side
                         }
-                        #[cfg(feature = "predicates")]
                         (
                             BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                                 semicircle: first_semicircle,
@@ -18230,7 +17934,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn correlated_chord_same_value(
         &self,
         other: &Self,
@@ -18308,7 +18011,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         )))
     }
 
-    #[cfg(feature = "predicates")]
     fn correlated_chord_rational_same_value(
         &self,
         other: &Self,
@@ -18400,7 +18102,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                         ) => Ok(Some(Classification::Uncertain(
                             UncertaintyReason::Unsupported,
                         ))),
-                        #[cfg(feature = "predicates")]
                         BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
                             _,
                         ) => Ok(Some(Classification::Uncertain(
@@ -18459,7 +18160,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     /// Returns the exact unit-complement relation for two independently
     /// mapped analytic parallel cuts. Other parameter representations do not
     /// participate in this specialized certificate.
-    #[cfg(feature = "predicates")]
     fn parallel_complementary_to(
         &self,
         other: &Self,
@@ -18487,14 +18187,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
                     map.mapped_contact_order_to_real(contact, parameter)
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                     map,
                     other_parameter,
                     location,
                     ..
                 } => map.contact_order_to_real(other_parameter, *location, parameter),
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                     map,
                     other_parameter,
@@ -18515,7 +18213,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                         map.second_contact_order_to_real(contact, parameter)
                     }
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
                     map.contact_order_to_real(contact, parameter)
                 }
@@ -18529,13 +18226,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     source,
                     source_first,
                 } => overlap.mapped_parameter_order_to_real(source, *source_first, parameter),
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
                     ..
                 } => cusp_chamfer_parameter_order_to_real(source, half_angle, parameter, policy),
-                #[cfg(feature = "predicates")]
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                     ..
                 } => selected.selected_parallel_contact_order_to_real(parameter),
@@ -18557,14 +18252,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
                     map.mapped_contact_parameter_bracket(contact, refinement_steps)
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                     map,
                     other_parameter,
                     location,
                     ..
                 } => map.parameter_bracket(other_parameter, *location, refinement_steps),
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                     map,
                     other_parameter,
@@ -18585,7 +18278,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                         map.second_contact_parameter_bracket(contact, refinement_steps)
                     }
                 }
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
                     map.contact_parameter_bracket(contact, refinement_steps)
                 }
@@ -18599,13 +18291,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     source,
                     source_first,
                 } => overlap.mapped_parameter_bracket(source, *source_first, refinement_steps),
-                #[cfg(feature = "predicates")]
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
                     ..
                 } => cusp_chamfer_parameter_bracket(source, half_angle, refinement_steps, policy),
-                #[cfg(feature = "predicates")]
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                     ..
                 } => selected.selected_parallel_contact_parameter_bracket(refinement_steps),
@@ -18623,7 +18313,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if self.shares_exact_evidence(other) {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
-        #[cfg(feature = "predicates")]
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                 source,
@@ -18642,7 +18331,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 })
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)));
         }
-        #[cfg(feature = "predicates")]
         if let Self::Mapped(data) = other
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                 source,
@@ -18661,7 +18349,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 })
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign)));
         }
-        #[cfg(feature = "predicates")]
         if let (Self::Mapped(first), Self::Mapped(second)) = (self, other)
             && let (
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
@@ -18714,19 +18401,16 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     }
                 }));
         }
-        #[cfg(feature = "predicates")]
         if let Some(Classification::Decided(true)) =
             self.correlated_chord_same_value(other, policy)?
         {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
-        #[cfg(feature = "predicates")]
         if let Some(Classification::Decided(true)) =
             self.correlated_chord_rational_same_value(other, policy)?
         {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
-        #[cfg(feature = "predicates")]
         if let Some(Classification::Decided(true)) =
             self.parallel_complementary_to(other, policy)?
         {
@@ -18845,7 +18529,6 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_constant_point_image(
     point: &Point2,
     parameter: &BezierAlgebraicParameter2,
@@ -18872,12 +18555,10 @@ fn cusp_semicircle_parameter_bracket_bounds(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn cusp_chamfer_parameter_denominator(source: &Real, half_angle: &Real) -> Real {
     Real::one() + half_angle * (Real::one() - Real::from(2_i8) * source)
 }
 
-#[cfg(feature = "predicates")]
 fn cusp_chamfer_parameter_value(
     source: &Real,
     half_angle: &Real,
@@ -18893,7 +18574,6 @@ fn cusp_chamfer_parameter_value(
     Ok(Classification::Decided((numerator / denominator)?))
 }
 
-#[cfg(feature = "predicates")]
 fn cusp_chamfer_parameter_bracket(
     source: &BezierAlgebraicCuspSemicircleParameter2,
     half_angle: &Real,
@@ -18965,7 +18645,6 @@ fn cusp_chamfer_parameter_bracket(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn cusp_parameter_affine_expression_sign(
     parameter: &BezierAlgebraicCuspSemicircleParameter2,
     coefficient: &Real,
@@ -19009,7 +18688,6 @@ fn cusp_parameter_affine_expression_sign(
     }))
 }
 
-#[cfg(feature = "predicates")]
 fn cusp_chamfer_parameter_order_to_real(
     source: &BezierAlgebraicCuspSemicircleParameter2,
     half_angle: &Real,
@@ -19089,7 +18767,6 @@ fn complement_cusp_parameter_bracket(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn positive_algebraic_point_field(
     point: &RationalBezierAlgebraicPointImage2,
     policy: &CurveContext,
@@ -19120,7 +18797,6 @@ fn positive_algebraic_point_field(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_linear_numerator(
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     x_factor: &Real,
@@ -19133,7 +18809,6 @@ fn algebraic_point_linear_numerator(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn selected_bivariate_parameter_pair_sign(
     polynomial: &BivariatePolynomial,
     first: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -19167,7 +18842,6 @@ fn selected_bivariate_parameter_pair_sign(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn signed_algebraic_point_linear_difference(
     first: &RationalBezierAlgebraicPointPredicate2<'_>,
     second: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -19193,7 +18867,6 @@ fn signed_algebraic_point_linear_difference(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_linear_order(
     first: &RationalBezierAlgebraicPointPredicate2<'_>,
     second: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -19212,41 +18885,32 @@ fn algebraic_point_linear_order(
     )
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 struct TrivariatePolynomial2 {
     coefficients: Vec<Vec<Vec<Real>>>,
 }
 
-#[cfg(feature = "predicates")]
 const MAX_TRIVARIATE_BERNSTEIN_CONTROLS: usize = 16_384;
 
 /// A balanced product of 24 multi-affine factors occupies 25^3 controls,
 /// while degree 25 would exceed `MAX_TRIVARIATE_BERNSTEIN_CONTROLS`. The same
 /// ceiling also bounds recursion for unbalanced tensors whose raw control
 /// count alone would permit a much higher single-axis degree.
-#[cfg(feature = "predicates")]
 const MAX_TRIVARIATE_EXACT_FACTOR_SPLITS: usize = 24;
 
-#[cfg(feature = "predicates")]
 const MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS + 1;
 
-#[cfg(feature = "predicates")]
 const MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS: usize = 9;
 
-#[cfg(feature = "predicates")]
 const MAX_BOUNDED_BILINEAR_FACTORIZATIONS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS;
 
-#[cfg(feature = "predicates")]
 const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 
 /// Higher-degree slices receive a bounded proposal pass. A proposal can only
 /// be accepted by exact division, so exhaustion loses capability rather than
 /// exactness.
-#[cfg(feature = "predicates")]
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
 
-#[cfg(feature = "predicates")]
 impl TrivariatePolynomial2 {
     fn ab_ac_determinant(
         positive_ab: &BivariatePolynomial,
@@ -19554,7 +19218,6 @@ impl TrivariatePolynomial2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn selected_trivariate_third_axis_is_identically_zero(
     polynomial: &TrivariatePolynomial2,
     first_parameter: &BezierParameter2,
@@ -19605,7 +19268,6 @@ fn selected_trivariate_third_axis_is_identically_zero(
     Ok(Classification::Decided(true))
 }
 
-#[cfg(feature = "predicates")]
 #[inline]
 fn trivariate_structurally_zero(polynomial: &TrivariatePolynomial2, policy: &CurveContext) -> bool {
     for rows in &polynomial.coefficients {
@@ -19625,7 +19287,6 @@ fn trivariate_structurally_zero(polynomial: &TrivariatePolynomial2, policy: &Cur
 /// The source tensor is rectangularized once, then high powers are consumed
 /// in descending order. Each source slice is moved rather than cloned, keeping
 /// the cold quotient-ring simplification bounded by the tensor itself.
-#[cfg(feature = "predicates")]
 fn trivariate_reduce_axis_mod_defining(
     mut polynomial: TrivariatePolynomial2,
     axis: usize,
@@ -19707,7 +19368,6 @@ fn trivariate_reduce_axis_mod_defining(
 
 /// Returns a smaller tensor only when at least one selected-root relation
 /// removes powers. Sequential reductions commute at the selected root tuple.
-#[cfg(feature = "predicates")]
 fn trivariate_reduce_selected_root_relations(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -19747,7 +19407,6 @@ fn trivariate_reduce_selected_root_relations(
     Some(reduced)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_axis_fiber(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
@@ -19794,7 +19453,6 @@ fn trivariate_axis_fiber(
 
 /// Returns the nonconstant univariate content shared by every tensor fiber
 /// along one axis.
-#[cfg(feature = "predicates")]
 fn trivariate_axis_content(polynomial: &TrivariatePolynomial2, axis: usize) -> Option<Vec<Real>> {
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1, dimensions.2];
@@ -19825,7 +19483,6 @@ fn trivariate_axis_content(polynomial: &TrivariatePolynomial2, axis: usize) -> O
     content.filter(|content| content.len() > 1)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_divide_axis_content(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
@@ -19872,7 +19529,6 @@ fn trivariate_divide_axis_content(
 
 /// Removes separable univariate tensor content and returns its selected sign.
 /// A zero content factor proves the original tensor zero immediately.
-#[cfg(feature = "predicates")]
 fn trivariate_strip_axis_contents(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -19905,7 +19561,6 @@ fn trivariate_strip_axis_contents(
     Ok(changed.then_some((reduced, factor_sign)))
 }
 
-#[cfg(feature = "predicates")]
 fn polynomial_restrict_to_interval(coefficients: &[Real], start: &Real, end: &Real) -> Vec<Real> {
     let degree = coefficients.len().saturating_sub(1);
     let powers = polynomial_powers(&[start.clone(), end - start], degree);
@@ -19918,7 +19573,6 @@ fn polynomial_restrict_to_interval(coefficients: &[Real], start: &Real, end: &Re
     restricted
 }
 
-#[cfg(feature = "predicates")]
 fn parameter_bounds(parameter: &BezierParameter2) -> (&Real, &Real) {
     match parameter {
         BezierParameter2::Exact(parameter) => (parameter, parameter),
@@ -19965,7 +19619,6 @@ fn exact_parameter_affine_relation(
 /// Hypersolve constructs the arithmetic image as an exact represented root;
 /// the separate difference comparison then proves that the image is the
 /// selected result root rather than a foreign conjugate.
-#[cfg(feature = "predicates")]
 fn exact_parameter_binary_relation(
     left: &BezierParameter2,
     right: &BezierParameter2,
@@ -20018,14 +19671,12 @@ fn exact_parameter_binary_relation(
     ) && comparison.ordering == Some(std::cmp::Ordering::Equal)
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone, Copy)]
 enum TrivariateParameterBinaryRelation2 {
     Sum,
     Product,
 }
 
-#[cfg(feature = "predicates")]
 impl TrivariateParameterBinaryRelation2 {
     const fn operation(self) -> hypersolve::AlgebraicRootArithmeticOp {
         match self {
@@ -20038,7 +19689,6 @@ impl TrivariateParameterBinaryRelation2 {
 /// Exact interval rejection keeps unrelated root triples out of resultant
 /// construction. Bezier parameters lie in `[0, 1]`, so endpoint products are
 /// ordered without a four-corner enclosure.
-#[cfg(feature = "predicates")]
 fn parameter_binary_relation_may_overlap(
     left: &BezierParameter2,
     right: &BezierParameter2,
@@ -20076,7 +19726,6 @@ fn parameter_binary_relation_may_overlap(
 
 /// Substitutes `sum = left + right`, leaving a bivariate polynomial in
 /// `(left, right)`.
-#[cfg(feature = "predicates")]
 fn trivariate_substitute_sum_axis(
     polynomial: &TrivariatePolynomial2,
     left_axis: usize,
@@ -20129,7 +19778,6 @@ fn trivariate_substitute_sum_axis(
 
 /// Substitutes `product = left * right`, leaving a bivariate polynomial in
 /// `(left, right)`.
-#[cfg(feature = "predicates")]
 fn trivariate_substitute_product_axis(
     polynomial: &TrivariatePolynomial2,
     left_axis: usize,
@@ -20168,7 +19816,6 @@ fn trivariate_substitute_product_axis(
     Some(BivariatePolynomial::new(reduced))
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_binary_related_parameter_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -20235,7 +19882,6 @@ fn trivariate_binary_related_parameter_sign(
     Ok(None)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_substitute_affine_axis(
     polynomial: &TrivariatePolynomial2,
     retained_axis: usize,
@@ -20284,7 +19930,6 @@ fn trivariate_substitute_affine_axis(
     Some(BivariatePolynomial::new(reduced))
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_affinely_related_parameter_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -20322,7 +19967,6 @@ fn trivariate_affinely_related_parameter_sign(
     Ok(None)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_axis_bivariate_coefficients(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
@@ -20365,7 +20009,6 @@ fn trivariate_axis_bivariate_coefficients(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_linear_axis_coefficients(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
@@ -20375,7 +20018,6 @@ fn trivariate_linear_axis_coefficients(
     Some((constant, linear, remaining))
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_exact_nonzero_metadata(
@@ -20405,7 +20047,6 @@ fn bivariate_exact_nonzero_metadata(
     }))
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_square_root_add_term(
@@ -20439,7 +20080,6 @@ fn bivariate_square_root_add_term(
 }
 
 /// Recovers an exact bivariate square by descending lexicographic terms.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_exact_square_root(polynomial: &BivariatePolynomial) -> Option<BivariatePolynomial> {
@@ -20520,7 +20160,6 @@ fn bivariate_exact_square_root(polynomial: &BivariatePolynomial) -> Option<Bivar
         .then_some(root)
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_remove_common_factors(
@@ -20574,7 +20213,6 @@ fn bivariate_remove_common_factors(
     }
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_from_axis_bivariate_coefficients(
@@ -20621,7 +20259,6 @@ fn trivariate_from_axis_bivariate_coefficients(
     })
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_divide_linear_axis_factor(
@@ -20664,7 +20301,6 @@ fn trivariate_divide_linear_axis_factor(
 /// Removes coefficient content only when the raw rational-function factor is
 /// not already an exact polynomial divisor. Whole-tensor division remains the
 /// authority in either case.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_normalize_and_divide_linear_axis_factor(
@@ -20682,7 +20318,6 @@ fn trivariate_normalize_and_divide_linear_axis_factor(
 
 /// Splits a quadratic tensor axis when its bivariate discriminant is an exact
 /// square, then verifies each recovered factor by exact tensor division.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_quadratic_axis_factorizations(
@@ -20726,7 +20361,6 @@ fn trivariate_quadratic_axis_factorizations(
     (!factorizations.is_empty()).then_some(factorizations)
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_evaluate_exact(polynomial: &BivariatePolynomial, first: &Real, second: &Real) -> Real {
@@ -20743,7 +20377,6 @@ fn bivariate_evaluate_exact(polynomial: &BivariatePolynomial, first: &Real, seco
 /// cubic factor. A genuine repeated factor makes the discriminant relation
 /// vanish identically at every probe. Multiple cheap probes avoid constructing
 /// the full bivariate invariants when one accidental specialization vanishes.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn cubic_specialization_rejects_repeated_factor(coefficients: [&BivariatePolynomial; 4]) -> bool {
@@ -20777,7 +20410,6 @@ fn cubic_specialization_rejects_repeated_factor(coefficients: [&BivariatePolynom
 /// bivariate content is removed when necessary, and exact division of the full
 /// tensor is the final authority, so neither a vanishing invariant nor a
 /// rational-function candidate can create a false factor.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_repeated_cubic_axis_factorizations(
@@ -20905,7 +20537,6 @@ fn trivariate_repeated_cubic_axis_factorizations(
 /// Extracts every exact-rational linear factor that the bounded rational-root
 /// theorem finds. An irreducible remainder is retained implicitly; factors
 /// already recovered before that boundary remain valid candidates.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn exact_rational_univariate_roots(mut polynomial: Vec<Real>) -> Option<Vec<Real>> {
@@ -20938,7 +20569,6 @@ fn exact_rational_univariate_roots(mut polynomial: Vec<Real>) -> Option<Vec<Real
     (!roots.is_empty()).then_some(roots)
 }
 
-#[cfg(feature = "predicates")]
 fn three_by_three_minor(rows: &[[Real; 4]; 3], omitted: usize) -> Real {
     let [first, second, third] = match omitted {
         0 => [1, 2, 3],
@@ -20953,7 +20583,6 @@ fn three_by_three_minor(rows: &[[Real; 4]; 3], omitted: usize) -> Real {
             * (&rows[1][first] * &rows[2][second] - &rows[1][second] * &rows[2][first])
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_trim_exact(mut polynomial: BivariatePolynomial) -> Option<BivariatePolynomial> {
     for row in &mut polynomial.coefficients {
         while row.len() > 1 && real_sign(row.last()?, &CurveContext::STRICT)? == RealSign::Zero {
@@ -20973,7 +20602,6 @@ fn bivariate_trim_exact(mut polynomial: BivariatePolynomial) -> Option<Bivariate
 /// Reconstructs the bilinear factor `u0+u1*y+x*(v0+v1*y)` from three exact
 /// specialized roots. Signed maximal minors give the one-dimensional nullspace;
 /// exact bivariate division remains the authority for the proposed factor.
-#[cfg(feature = "predicates")]
 fn bivariate_bilinear_factor_from_roots(
     samples: [&Real; 3],
     roots: [&Real; 3],
@@ -21032,7 +20660,6 @@ fn bivariate_bilinear_factor_from_roots(
 /// A nonzero specialized axis coefficient fixes one rational root; if that
 /// root is absent from a nonempty exact root set, full bivariate division
 /// cannot succeed. Empty or undecidable root sets make no negative claim.
-#[cfg(feature = "predicates")]
 fn bivariate_bilinear_factor_matches_roots_at_sample(
     factor: &BivariatePolynomial,
     sample: &Real,
@@ -21062,7 +20689,6 @@ fn bivariate_bilinear_factor_matches_roots_at_sample(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_second_parameter_content(polynomial: &BivariatePolynomial) -> Option<Vec<Real>> {
     let mut content: Option<Vec<Real>> = None;
     for row in &polynomial.coefficients {
@@ -21088,7 +20714,6 @@ fn bivariate_second_parameter_content(polynomial: &BivariatePolynomial) -> Optio
     content.filter(|content| content.len() > 1)
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_attach_second_parameter_content(
     polynomial: &BivariatePolynomial,
     factor: &BivariatePolynomial,
@@ -21125,7 +20750,6 @@ fn bivariate_attach_second_parameter_content(
 /// `maximum_proposals` root triples. Four choose three sample triples tolerate
 /// one degree drop without making a sampled value part of the proof. An unused
 /// fourth specialization rejects mismatched proposals before exact division.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn bivariate_bilinear_factorizations_bounded(
@@ -21210,7 +20834,7 @@ fn bivariate_bilinear_factorizations_bounded(
     factorizations
 }
 
-#[cfg(all(feature = "predicates", test))]
+#[cfg(test)]
 fn bivariate_bilinear_factorizations(
     polynomial: &BivariatePolynomial,
 ) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
@@ -21219,7 +20843,6 @@ fn bivariate_bilinear_factorizations(
 
 /// Returns one `(axis, retained)` bivariate coefficient slice at a fixed power
 /// of the other coefficient coordinate.
-#[cfg(feature = "predicates")]
 fn trivariate_axis_lift_power_slice(
     coefficients: &[BivariatePolynomial],
     lift_coordinate: usize,
@@ -21262,7 +20885,6 @@ fn trivariate_axis_lift_power_slice(
     Some(BivariatePolynomial::new(slice))
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_axis_lift_degree(
     coefficients: &[BivariatePolynomial],
     lift_coordinate: usize,
@@ -21288,7 +20910,6 @@ fn trivariate_axis_lift_degree(
 
 /// Returns the constant or first-order Taylor slice after translating the lift
 /// coordinate by `anchor`.
-#[cfg(feature = "predicates")]
 fn trivariate_axis_lift_taylor_slice(
     coefficients: &[BivariatePolynomial],
     lift_coordinate: usize,
@@ -21353,7 +20974,6 @@ fn trivariate_axis_lift_taylor_slice(
     Some(BivariatePolynomial::new(slice))
 }
 
-#[cfg(feature = "predicates")]
 fn rational_multi_affine_lift_scale(
     first_taylor_slice: &BivariatePolynomial,
     anchor_factor: &BivariatePolynomial,
@@ -21398,7 +21018,6 @@ fn rational_multi_affine_lift_scale(
     None
 }
 
-#[cfg(feature = "predicates")]
 fn rational_multi_affine_lift_factor_coefficients(
     anchor_factor: &BivariatePolynomial,
     top_factor: &BivariatePolynomial,
@@ -21438,7 +21057,6 @@ fn rational_multi_affine_lift_factor_coefficients(
     Some(result)
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_bilinear_coefficients(polynomial: &BivariatePolynomial) -> Option<[Real; 4]> {
     if polynomial.coefficients.len() > 2
         || polynomial
@@ -21462,7 +21080,6 @@ fn bivariate_bilinear_coefficients(polynomial: &BivariatePolynomial) -> Option<[
 /// factors at two lift anchors and at the highest lift coefficient, then
 /// `s_b*B-s_a*A-(b-a)*s_t*T=0`. A nonzero right null vector gives the exact
 /// lift scale `s_t/s_a`; complete tensor division remains the authority.
-#[cfg(feature = "predicates")]
 fn rational_multi_affine_lift_scale_from_anchor_pair(
     anchor_factor: &BivariatePolynomial,
     other_factor: &BivariatePolynomial,
@@ -21516,7 +21133,6 @@ fn rational_multi_affine_lift_scale_from_anchor_pair(
     None
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_rational_multi_affine_factor_from_scale(
     polynomial: &TrivariatePolynomial2,
     axis: usize,
@@ -21550,7 +21166,6 @@ fn trivariate_rational_multi_affine_factor_from_scale(
 /// enumeration; higher degrees receive bounded first-factor passes. Unsupported
 /// coefficient towers, exhausted proposal budgets, or degenerate slices make
 /// no claim.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_rational_multi_affine_axis_factorizations(
@@ -21691,7 +21306,6 @@ fn trivariate_rational_multi_affine_axis_factorizations(
     None
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_add_scaled_assign(
     target: &mut BivariatePolynomial,
     source: &BivariatePolynomial,
@@ -21720,7 +21334,6 @@ fn bivariate_add_scaled_assign(
 
 /// Returns `linear^degree * defining(-constant / linear)`, whose zero set is
 /// the resultant of the defining polynomial and `constant + axis * linear`.
-#[cfg(feature = "predicates")]
 fn bivariate_linear_root_resultant(
     constant: &BivariatePolynomial,
     linear: &BivariatePolynomial,
@@ -21764,7 +21377,6 @@ fn bivariate_linear_root_resultant(
     Some(result)
 }
 
-#[cfg(feature = "predicates")]
 fn signed_bivariate_at_parameter_pair_exact_first(
     polynomial: &BivariatePolynomial,
     first: &BezierParameter2,
@@ -21789,7 +21401,6 @@ fn signed_bivariate_at_parameter_pair_exact_first(
     Ok(direct)
 }
 
-#[cfg(feature = "predicates")]
 fn signed_bivariate_at_parameter_pair_refinement_first(
     polynomial: &BivariatePolynomial,
     first: &BezierParameter2,
@@ -21804,7 +21415,6 @@ fn signed_bivariate_at_parameter_pair_refinement_first(
     signed_bivariate_at_parameter_pair(polynomial, first, second, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_linear_axis_resultant_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -21906,7 +21516,6 @@ fn trivariate_linear_axis_resultant_sign(
     Ok(None)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_restrict_to_parameter_box(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -21957,7 +21566,6 @@ fn trivariate_restrict_to_parameter_box(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_unit_cube_strict_bernstein_sign(
     polynomial: TrivariatePolynomial2,
     policy: &CurveContext,
@@ -22007,7 +21615,6 @@ fn trivariate_unit_cube_strict_bernstein_sign(
     Ok(strict_sign)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_multi_affine_parameter_box_strict_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -22084,7 +21691,6 @@ fn trivariate_multi_affine_parameter_box_strict_sign(
     strict_sign
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_existing_symbolic_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -22114,7 +21720,6 @@ fn trivariate_existing_symbolic_sign(
     trivariate_binary_related_parameter_sign(polynomial, first, second, third)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_factored_component_sign(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -22131,7 +21736,6 @@ fn trivariate_factored_component_sign(
     trivariate_bounded_factor_sign_with_budget(polynomial, first, second, third, remaining_splits)
 }
 
-#[cfg(feature = "predicates")]
 fn trivariate_bounded_factor_sign_with_budget(
     polynomial: &TrivariatePolynomial2,
     first: &BezierParameter2,
@@ -22211,7 +21815,6 @@ fn trivariate_bounded_factor_sign_with_budget(
 /// multi-affine factor authorities. The tensor degree supplies the useful
 /// split budget, capped at the largest balanced multi-affine product admitted
 /// by the existing control-count ceiling.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_bounded_factor_sign(
@@ -22239,7 +21842,6 @@ fn trivariate_bounded_factor_sign(
 /// a defining-polynomial boundary. Separable contents and bounded coupled
 /// factors are both replayed on the original tensor before this path makes an
 /// exact claim.
-#[cfg(feature = "predicates")]
 #[cold]
 #[inline(never)]
 fn trivariate_content_and_bounded_factor_sign(
@@ -22270,7 +21872,6 @@ fn trivariate_content_and_bounded_factor_sign(
     Ok(factor_sign.map(|factor_sign| product_sign(factor_sign, sign)))
 }
 
-#[cfg(feature = "predicates")]
 #[cold]
 fn trivariate_parameter_triple_sign_by_refinement(
     polynomial: &TrivariatePolynomial2,
@@ -22473,7 +22074,6 @@ fn trivariate_parameter_triple_sign_by_refinement(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_oriented_line_side_distinct_fields(
     start: &RationalBezierAlgebraicPointPredicate2<'_>,
     end: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -22527,7 +22127,6 @@ fn algebraic_point_oriented_line_side_distinct_fields(
     .map(|sign| crate::classify::LineSide::from_real_sign(product_sign(sign, denominator_sign))))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_oriented_line_side(
     start: &RationalBezierAlgebraicPointPredicate2<'_>,
     end: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -22572,7 +22171,6 @@ fn algebraic_point_oriented_line_side(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_point_circle_residual_sign(
     center: &RationalBezierAlgebraicPointPredicate2<'_>,
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -22605,7 +22203,6 @@ fn algebraic_point_circle_residual_sign(
     selected_bivariate_parameter_pair_sign(&residual, center, point, policy)
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
     pub(crate) fn has_same_structural_support(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.frame.data, &other.frame.data)
@@ -22823,7 +22420,6 @@ impl BezierAlgebraicChord2 {
                 }));
             }
         };
-        #[cfg(feature = "predicates")]
         let (parallel_axis_aligned, pair_unit_tangent) = if let (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(second),
@@ -22844,26 +22440,18 @@ impl BezierAlgebraicChord2 {
         } else {
             (false, None)
         };
-        #[cfg(feature = "predicates")]
         let pair_unit_tangent = pair_unit_tangent.or_else(|| {
             strict_common_retained_line_unit_tangent(&start, &end, parameter_axis, policy)
         });
-        #[cfg(feature = "predicates")]
         let pair_axis_aligned = pair_unit_tangent.as_ref().is_some_and(|(x, y)| {
             x.zero_status() == ZeroStatus::Zero || y.zero_status() == ZeroStatus::Zero
         });
-        #[cfg(feature = "predicates")]
         let certified_axis_aligned = parallel_axis_aligned || pair_axis_aligned;
-        #[cfg(feature = "predicates")]
         let certified_unit_tangent = if pair_axis_aligned {
             None
         } else {
             pair_unit_tangent.map(|(x, y)| Arc::new([x, y]))
         };
-        #[cfg(not(feature = "predicates"))]
-        let certified_axis_aligned = false;
-        #[cfg(not(feature = "predicates"))]
-        let certified_unit_tangent = None;
         // A strict coordinate order is itself a complete noncoincidence proof.
         // This matters when endpoints inhabit independent selected fields: a
         // generic two-coordinate equality predicate may be unavailable even
@@ -22875,7 +22463,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis,
                 certified_axis_aligned,
                 certified_unit_tangent,
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: None,
                 reversed: false,
@@ -22890,7 +22477,6 @@ impl BezierAlgebraicChord2 {
     /// supplied direction, and belong to `policy`. This is reserved for exact
     /// translations of an already-certified axis-aligned chord, where replaying
     /// selected-field equality and direction predicates would duplicate proof.
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_certified_axis_aligned_endpoints(
         start: RationalBezierIntersectionPointEvidence2,
         end: RationalBezierIntersectionPointEvidence2,
@@ -22904,7 +22490,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis: direction.parameter_axis(),
                 certified_axis_aligned: true,
                 certified_unit_tangent: None,
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: None,
                 reversed: false,
@@ -22957,7 +22542,6 @@ impl BezierAlgebraicChord2 {
                     .certified_unit_tangent
                     .as_ref()
                     .map(|tangent| Arc::new([-tangent[0].clone(), -tangent[1].clone()])),
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: ((self
                     .data
                     .certified_circle_transverse_endpoints
@@ -22986,7 +22570,6 @@ impl BezierAlgebraicChord2 {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn support_collinearity(
         &self,
         other: &Self,
@@ -23029,7 +22612,6 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
 
-    #[cfg(feature = "predicates")]
     fn retained_support_orientation_is_reversed(&self) -> bool {
         self.data.parameter_axis.coordinate_increases
             != self
@@ -23076,7 +22658,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis: source.data.parameter_axis,
                 certified_axis_aligned: source.data.certified_axis_aligned,
                 certified_unit_tangent: source.data.certified_unit_tangent.clone(),
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: Some(source.retained_support().clone()),
                 reversed: false,
@@ -23103,7 +22684,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg_attr(not(feature = "predicates"), allow(dead_code))]
     fn parameter_on_retained_support(
         &self,
         point: RationalBezierIntersectionPointEvidence2,
@@ -23119,7 +22699,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg_attr(not(feature = "predicates"), allow(dead_code))]
     pub(crate) fn parameter_at_certified_point(
         &self,
         point: RationalBezierIntersectionPointEvidence2,
@@ -23149,7 +22728,6 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     fn exact_axis_support_coordinate(&self, policy: &CurveContext) -> CurveResult<Option<Real>> {
         let constant_axis = match self.data.parameter_axis.axis {
             Axis2::X => Axis2::Y,
@@ -23187,7 +22765,6 @@ impl BezierAlgebraicChord2 {
         Ok(None)
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn representative_point(
         &self,
         policy: &CurveContext,
@@ -23387,7 +22964,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn tangent_coordinate_signs(
         &self,
         policy: &CurveContext,
@@ -23409,7 +22985,6 @@ impl BezierAlgebraicChord2 {
 
     /// Returns a cardinal direction only from reusable structural evidence.
     /// Approximate equality is never allowed to create an axis certificate.
-    #[cfg(feature = "predicates")]
     fn certified_axis_direction(&self) -> Option<BezierAlgebraicChordAxisDirection2> {
         if !self.data.certified_axis_aligned
             && !self
@@ -23436,7 +23011,6 @@ impl BezierAlgebraicChord2 {
     /// Returns reusable exact unit-tangent evidence for this traversal.
     /// Cardinal chords synthesize it without storage; transformed certified
     /// chords retain one shared two-scalar allocation.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certified_unit_tangent(&self) -> Option<(Real, Real)> {
         if let Some(tangent) = &self.data.certified_unit_tangent {
             return Some((tangent[0].clone(), tangent[1].clone()));
@@ -23451,7 +23025,6 @@ impl BezierAlgebraicChord2 {
     /// Represented unit tangents keep the existing translated-endpoint fast
     /// path. General independently selected endpoints retain the normalized
     /// tangent expression lazily, without adjoining their fields or rounding.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_at_signed_tangent_distance(
         &self,
         at_end: bool,
@@ -23483,7 +23056,6 @@ impl BezierAlgebraicChord2 {
     /// Classifies a point against this support from a retained traversal
     /// tangent and exact endpoint enclosures. This preserves the compact
     /// transformed-chord certificate without adjoining the endpoint fields.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certified_tangent_side(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
@@ -23549,7 +23121,6 @@ impl BezierAlgebraicChord2 {
     /// comparison remains explicit. The zero/zero case is impossible for a
     /// validated chord and is treated as a topology failure rather than an
     /// offset direction.
-    #[cfg(feature = "predicates")]
     pub(crate) fn axis_direction(
         &self,
         policy: &CurveContext,
@@ -23617,7 +23188,6 @@ impl BezierAlgebraicChord2 {
 
     /// Compares the constant `axis` coordinates of two certified axis-aligned
     /// supports without materializing either selected endpoint field.
-    #[cfg(feature = "predicates")]
     pub(crate) fn axis_coordinate_order(
         &self,
         other: &Self,
@@ -23630,7 +23200,6 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Compares one coordinate of two retained affine point carriers.
-    #[cfg(feature = "predicates")]
     pub(crate) fn point_axis_order(
         first: &RationalBezierIntersectionPointEvidence2,
         second: &RationalBezierIntersectionPointEvidence2,
@@ -23641,7 +23210,6 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Compares one retained point coordinate with a represented scalar.
-    #[cfg(feature = "predicates")]
     pub(crate) fn point_axis_order_to_real(
         point: &RationalBezierIntersectionPointEvidence2,
         axis: Axis2,
@@ -23658,7 +23226,6 @@ impl BezierAlgebraicChord2 {
     /// Proves finite-chord separation from the exact axis-aligned bounds of a
     /// retained circle.  This remains useful when correlated endpoint evidence
     /// makes construction of a conventional chord AABB unnecessarily hard.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certifiably_disjoint_from_circle_bounds(
         &self,
         center: &Point2,
@@ -23729,7 +23296,6 @@ impl BezierAlgebraicChord2 {
     /// Those construction facts determine all four endpoint sides, so replaying
     /// the general algebraic side predicates here would add work without adding
     /// evidence. The retained pair remains the authoritative exact point carrier.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certified_axis_aligned_crossing_point(
         &self,
         other: &Self,
@@ -23818,7 +23384,6 @@ impl BezierAlgebraicChord2 {
 
     /// Trims this retained support between two already-certified incident
     /// points and orients the result from `start` to `end`.
-    #[cfg(feature = "predicates")]
     pub(crate) fn subchord_between_certified_points(
         &self,
         start: RationalBezierIntersectionPointEvidence2,
@@ -23863,7 +23428,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis: self.data.parameter_axis,
                 certified_axis_aligned: self.data.certified_axis_aligned,
                 certified_unit_tangent: self.data.certified_unit_tangent.clone(),
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: Some(self.retained_support().clone()),
                 reversed: false,
@@ -23883,7 +23447,6 @@ impl BezierAlgebraicChord2 {
     /// selected root: `N + delta*D` over its original denominator. Correlated
     /// chord-pair intersections need a distinct translated-support carrier and
     /// therefore stay explicit instead of being flattened.
-    #[cfg(feature = "predicates")]
     pub(crate) fn translated(
         &self,
         delta_x: &Real,
@@ -23923,7 +23486,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis: self.data.parameter_axis,
                 certified_axis_aligned: self.data.certified_axis_aligned,
                 certified_unit_tangent: self.data.certified_unit_tangent.clone(),
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source,
                 reversed: self.data.reversed,
@@ -23932,7 +23494,6 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn translated_endpoint(
         endpoint: &RationalBezierIntersectionPointEvidence2,
         delta_x: &Real,
@@ -24005,7 +23566,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn scaled_about_point_endpoint(
         endpoint: &RationalBezierIntersectionPointEvidence2,
         origin: &Point2,
@@ -24065,7 +23625,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn affine_transformed_endpoint(
         endpoint: &RationalBezierIntersectionPointEvidence2,
         m00: &Real,
@@ -24131,7 +23690,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn affine_transformed_axis_direction(
         &self,
         m00: &Real,
@@ -24174,7 +23732,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn affine_transformed_unit_tangent(
         &self,
         m00: &Real,
@@ -24194,7 +23751,6 @@ impl BezierAlgebraicChord2 {
         ])))
     }
 
-    #[cfg(feature = "predicates")]
     fn transform_affine_root(
         &self,
         m00: &Real,
@@ -24258,7 +23814,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis,
                 certified_axis_aligned: certified_direction.is_some(),
                 certified_unit_tangent,
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: None,
                 reversed: self.data.reversed,
@@ -24269,7 +23824,6 @@ impl BezierAlgebraicChord2 {
 
     /// Applies a certified nonsingular affine transform while retaining every
     /// independently selected endpoint field and any root support identity.
-    #[cfg(feature = "predicates")]
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn transform_affine(
         &self,
@@ -24344,7 +23898,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis,
                 certified_axis_aligned: transformed_support.data.certified_axis_aligned,
                 certified_unit_tangent,
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: Some(transformed_support),
                 reversed: self.data.reversed,
@@ -24365,7 +23918,6 @@ impl BezierAlgebraicChord2 {
     /// Retains construction-time transversality for a newly authored bevel.
     /// The flags refer to traversal start/end and survive only transformations
     /// that preserve the same endpoint tangent relationship.
-    #[cfg(feature = "predicates")]
     pub(crate) fn with_certified_circle_transverse_endpoints(
         mut self,
         endpoints: [bool; 2],
@@ -24375,7 +23927,6 @@ impl BezierAlgebraicChord2 {
         self
     }
 
-    #[cfg(feature = "predicates")]
     fn certified_circle_transverse_endpoint(&self, at_end: bool) -> bool {
         self.data.certified_circle_transverse_endpoints & if at_end { 2 } else { 1 } != 0
     }
@@ -24398,7 +23949,6 @@ impl BezierAlgebraicChord2 {
     /// This lets line/circle and line-side kernels use their compact exact
     /// support path while finite containment remains owned by this chord's
     /// retained endpoint parameters.
-    #[cfg(feature = "predicates")]
     pub(crate) fn strict_retained_support_line(&self, policy: &CurveContext) -> Option<LineSeg2> {
         self.validate_policy(policy).ok()?;
         let [a, b, c] = strict_common_retained_line_coefficients(self.start(), self.end())?;
@@ -24463,7 +24013,6 @@ impl BezierAlgebraicChord2 {
     /// source provenance for algorithms whose finite-domain checks remain on
     /// this chord. Existing Boolean paths deliberately keep the narrower
     /// endpoint-coefficient authority above.
-    #[cfg(feature = "predicates")]
     pub(crate) fn strict_provenance_support_line(&self, policy: &CurveContext) -> Option<LineSeg2> {
         if let Some(line) = self.strict_retained_support_line(policy) {
             return Some(line);
@@ -24542,7 +24091,6 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Prepares exact independent-field endpoint predicates for this chord.
-    #[cfg(feature = "predicates")]
     pub(crate) fn algebraic_ray_evaluator(
         &self,
         policy: &CurveContext,
@@ -24561,7 +24109,6 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     fn has_composite_endpoint(&self) -> bool {
         [self.start(), self.end()].into_iter().any(|point| {
             matches!(
@@ -24576,7 +24123,6 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Classifies incidence of one represented affine point on this chord.
-    #[cfg(feature = "predicates")]
     pub(crate) fn contains_point(
         &self,
         point: &Point2,
@@ -24613,7 +24159,6 @@ impl BezierAlgebraicChord2 {
     }
 
     /// Returns this chord's half-open winding contribution to a forward ray.
-    #[cfg(feature = "predicates")]
     pub(crate) fn forward_ray_winding_delta(
         &self,
         origin: &Point2,
@@ -24776,7 +24321,6 @@ impl BezierAlgebraicChord2 {
     /// A straight support and a nonparallel ray have exactly one contact, so
     /// incidence plus the certified crossing orientation proves that the
     /// residual contribution is zero without materializing either endpoint.
-    #[cfg(feature = "predicates")]
     pub(crate) fn forward_ray_winding_delta_skipping_origin(
         &self,
         origin: &Point2,
@@ -24825,7 +24369,6 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(0))
     }
 
-    #[cfg(feature = "predicates")]
     fn forward_ray_winding_delta_general(
         &self,
         origin: &Point2,
@@ -24925,7 +24468,6 @@ impl BezierAlgebraicChord2 {
     /// The authored endpoint is removed as an exact diagonal fiber factor.
     /// Remaining source parameters are projected and replayed in that selected
     /// field, then represented on the chord by their exact point evidence.
-    #[cfg(feature = "predicates")]
     pub(crate) fn source_related_intersections(
         &self,
         source: &RationalBezier2,
@@ -25106,7 +24648,6 @@ impl BezierAlgebraicChord2 {
     /// replayed against the selected root triple before the current finite
     /// boundary admits it as topology evidence. One optional source parameter
     /// may be omitted when authored adjacency already owns it.
-    #[cfg(feature = "predicates")]
     pub(crate) fn rational_intersections(
         &self,
         source: &RationalBezier2,
@@ -25422,7 +24963,6 @@ impl BezierAlgebraicChord2 {
     /// endpoint field. Endpoint-side predicates need at most three selected
     /// roots at once; strict interior contacts retain the two nonparallel
     /// supports as compact correlated point evidence.
-    #[cfg(feature = "predicates")]
     pub(crate) fn chord_intersections(
         &self,
         other: &Self,
@@ -25627,7 +25167,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_chord_intersections(
         &self,
         other: &Self,
@@ -25802,7 +25341,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_rational_intersections(
         &self,
         source: &RationalBezier2,
@@ -26046,7 +25584,6 @@ impl BezierAlgebraicChord2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_noninjective_rational_intersections(
         &self,
         source: &RationalBezier2,
@@ -26250,7 +25787,6 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_point_contact(
         &self,
         chord_parameter: BezierAlgebraicChordParameter2,
@@ -26284,7 +25820,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn point_parameter_order(
         &self,
         first: &RationalBezierIntersectionPointEvidence2,
@@ -26304,7 +25839,6 @@ impl BezierAlgebraicChord2 {
         })
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_boundary_from_source_endpoint(
         &self,
         source_parameter: BezierParameter2,
@@ -26329,7 +25863,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_boundary_from_partition_boundary(
         &self,
         source: &RationalBezier2,
@@ -26360,7 +25893,6 @@ impl BezierAlgebraicChord2 {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_boundary_from_source_parameter(
         &self,
         source: &RationalBezier2,
@@ -26388,7 +25920,6 @@ impl BezierAlgebraicChord2 {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_boundary_from_chord_endpoint(
         &self,
         source: &RationalBezier2,
@@ -26415,7 +25946,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_source_parameters_at_chord_endpoint(
         &self,
         source: &RationalBezier2,
@@ -26509,7 +26039,6 @@ impl BezierAlgebraicChord2 {
         self.collinear_source_parameters_at_chord_endpoint_image(source, &point_image, policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn collinear_source_parameters_at_chord_endpoint_image(
         &self,
         source: &RationalBezier2,
@@ -26560,7 +26089,6 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(candidates))
     }
 
-    #[cfg(feature = "predicates")]
     fn independent_incidence_system(
         &self,
         source: &RationalBezier2,
@@ -26648,7 +26176,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn independent_parameter_map(
         &self,
         source: &RationalBezier2,
@@ -26712,7 +26239,6 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn parameter_at_independent_incidence_candidate(
         &self,
         point: RationalBezierIntersectionPointEvidence2,
@@ -26783,7 +26309,6 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
-    #[cfg(feature = "predicates")]
     fn source_incidence_system(
         &self,
         source: &RationalBezier2,
@@ -26901,7 +26426,6 @@ impl BezierAlgebraicChord2 {
     /// Adjacent authored segments on distinct supports can share only their
     /// already-seeded loop endpoint, so no additional intersection event is
     /// required.
-    #[cfg(feature = "predicates")]
     pub(crate) fn has_non_collinear_support_with_exact_line(
         &self,
         line: &LineSeg2,
@@ -26958,7 +26482,6 @@ impl BezierAlgebraicChord2 {
     /// an exact supporting line.  This is a constant-size rejection path for
     /// replayed correlated cuts whose local endpoint fields must not be
     /// materialized merely to reject a distant line carrier.
-    #[cfg(feature = "predicates")]
     pub(crate) fn is_strictly_one_sided_of_exact_line(
         &self,
         line: &LineSeg2,
@@ -27052,7 +26575,6 @@ impl BezierAlgebraicChordParameter2 {
         {
             return Ok(Classification::Decided(first_at_end.cmp(second_at_end)));
         }
-        #[cfg(feature = "predicates")]
         {
             if let (
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(first),
@@ -27103,7 +26625,6 @@ impl BezierAlgebraicChordParameter2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn rational_point_evidence_at_parameter(
     source: &RationalBezier2,
     parameter: &BezierParameter2,
@@ -27126,7 +26647,6 @@ fn rational_point_evidence_at_parameter(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn sort_and_dedup_collinear_partition_boundaries(
     mut boundaries: Vec<BezierAlgebraicChordRationalPartitionBoundary2>,
     policy: &CurveContext,
@@ -27190,7 +26710,6 @@ fn sort_and_dedup_collinear_partition_boundaries(
     Ok(Classification::Decided(unique))
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordRationalContact2 {
     pub(crate) fn chord_parameter(&self) -> &BezierAlgebraicChordParameter2 {
         &self.chord_parameter
@@ -27209,7 +26728,6 @@ impl BezierAlgebraicChordRationalContact2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordPairContact2 {
     pub(crate) fn first_parameter(&self) -> &BezierAlgebraicChordParameter2 {
         &self.first_parameter
@@ -27228,7 +26746,6 @@ impl BezierAlgebraicChordPairContact2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordPairOverlap2 {
     pub(crate) fn first_range(&self) -> [&BezierAlgebraicChordParameter2; 2] {
         [&self.first_range[0], &self.first_range[1]]
@@ -27243,7 +26760,6 @@ impl BezierAlgebraicChordPairOverlap2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordRationalOverlap2 {
     pub(crate) fn chord_range(&self) -> [&BezierAlgebraicChordParameter2; 2] {
         [&self.chord_range[0], &self.chord_range[1]]
@@ -27363,7 +26879,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if first == second {
                 return Ok(Classification::Decided(std::cmp::Ordering::Equal));
             }
-            #[cfg(feature = "predicates")]
             {
                 let first = match first.predicate_evaluator(policy)? {
                     Classification::Decided(point) => point,
@@ -27387,17 +26902,11 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                     policy,
                 )
             }
-            #[cfg(not(feature = "predicates"))]
-            {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
         }
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
@@ -27406,31 +26915,26 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if use_x { second.x() } else { second.y() },
             policy,
         ),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
         ) => Ok(second
             .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)?
             .map(std::cmp::Ordering::reverse)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(first),
             RationalBezierIntersectionPointEvidence2::Algebraic(_),
         ) => first.axis_coordinate_order_to_evidence(axis, second, policy),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Algebraic(_),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
         ) => Ok(second
             .axis_coordinate_order_to_evidence(axis, first, policy)?
             .map(std::cmp::Ordering::reverse)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(second),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
@@ -27455,7 +26959,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 policy,
             )
         }
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(second),
@@ -27489,12 +26992,10 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 )?
                 .map(std::cmp::Ordering::reverse))
         }
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(second),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(second),
@@ -27510,7 +27011,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 &first, &second, axis, policy,
             ))
         }
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
@@ -27519,14 +27019,12 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if use_x { second.x() } else { second.y() },
             policy,
         ),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(second),
         ) => Ok(second
             .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)?
             .map(std::cmp::Ordering::reverse)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(second),
@@ -27541,7 +27039,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 policy,
             )
         }
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
@@ -27550,19 +27047,16 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if use_x { second.x() } else { second.y() },
             policy,
         )),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(second),
         ) => Ok(second
             .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)
             .map(std::cmp::Ordering::reverse)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(first),
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(second),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
@@ -27571,14 +27065,12 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             if use_x { second.x() } else { second.y() },
             policy,
         )),
-        #[cfg(feature = "predicates")]
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(second),
         ) => Ok(second
             .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)
             .map(std::cmp::Ordering::reverse)),
-        #[cfg(feature = "predicates")]
         (RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_), _)
         | (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_))
         | (RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_), _)
@@ -27594,7 +27086,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_point_coordinate_order_by_refinement(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
@@ -27652,7 +27143,6 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_owned_coordinate_polynomials(
     point: &RationalBezierAlgebraicPointImage2,
     policy: &CurveContext,
@@ -27678,7 +27168,6 @@ fn algebraic_chord_owned_coordinate_polynomials(
     ]))
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Debug)]
 struct BezierAlgebraicAxisPointCoordinates2 {
     parameter: BezierParameter2,
@@ -27690,7 +27179,6 @@ struct BezierAlgebraicAxisPointCoordinates2 {
 /// Normalizes one represented or singly-selected point to a positive affine
 /// denominator. Correlated multi-carrier points deliberately stay outside this
 /// two-field construction.
-#[cfg(feature = "predicates")]
 fn algebraic_axis_point_coordinates(
     point: &RationalBezierIntersectionPointEvidence2,
     policy: &CurveContext,
@@ -27756,7 +27244,6 @@ fn algebraic_axis_point_coordinates(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_point_coordinate_representation(
     point: &RationalBezierIntersectionPointEvidence2,
     axis: Axis2,
@@ -27786,7 +27273,6 @@ fn algebraic_chord_point_coordinate_representation(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_strict_rational_coordinate_between(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
@@ -27880,7 +27366,6 @@ fn algebraic_chord_endpoint_bounds_refined(
     refinement_steps: usize,
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
-    #[cfg(feature = "predicates")]
     {
         if let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) = endpoint {
             return point.conservative_bounds_refined(refinement_steps, policy);
@@ -27911,7 +27396,6 @@ fn algebraic_chord_endpoint_bounds_refined(
     if let Some(bounds) = image.parametric_source_bounds_refined(refinement_steps, policy) {
         return bounds;
     }
-    #[cfg(feature = "predicates")]
     {
         if let Some((x, y, denominator)) = image.retained_coordinate_polynomials() {
             let parameter = match image.retained_parameter() {
@@ -27990,7 +27474,6 @@ fn algebraic_chord_endpoint_bounds_refined(
 /// Disjoint interval projections decide the strict result.  Only the explicit
 /// `APPROXIMATE_512` policy may collapse an overlap remaining after the
 /// 512-step terminal to equality.
-#[cfg(feature = "predicates")]
 pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
     endpoint: &RationalBezierIntersectionPointEvidence2,
     query: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -28085,7 +27568,6 @@ pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierParallelAlgebraicRay2 {
     pub(crate) fn try_new(
         parallel: BezierParallel2,
@@ -28520,7 +28002,6 @@ impl BezierParallelAlgebraicRay2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn retained_point_evidence_equality_by_refinement(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
@@ -28547,7 +28028,6 @@ fn retained_point_evidence_equality_by_refinement(
     }
 }
 
-#[cfg(feature = "predicates")]
 pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     point: &RationalBezierIntersectionPointEvidence2,
     origin: &Point2,
@@ -28631,7 +28111,6 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     }
 }
 
-#[cfg(feature = "predicates")]
 pub(crate) fn algebraic_chord_points_linear_order(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
@@ -28723,7 +28202,6 @@ pub(crate) fn algebraic_chord_points_linear_order(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_image_parameter(
     image: &RationalBezierAlgebraicPointImage2,
     policy: &CurveContext,
@@ -28744,7 +28222,6 @@ fn algebraic_chord_image_parameter(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_chord_endpoint_images(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
@@ -28817,7 +28294,6 @@ fn algebraic_chord_endpoint_images(
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordAlgebraicRay2 {
     fn exact_point_image(
         &self,
@@ -29046,7 +28522,6 @@ impl BezierAlgebraicChordAlgebraicRay2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChord2 {
     /// Returns the original direction authority and whether this traversal is
     /// reversed relative to it. Exact parallel construction preserves this
@@ -29551,7 +29026,6 @@ impl BezierAlgebraicChord2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordSupportPredicate2 {
     fn try_new(
         chord: &BezierAlgebraicChord2,
@@ -29721,14 +29195,12 @@ impl BezierAlgebraicChordSupportPredicate2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone)]
 struct BezierAlgebraicChordRealInterval2 {
     lower: Real,
     upper: Real,
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordRealInterval2 {
     fn from_parameter(parameter: &BezierParameter2) -> Self {
         match parameter {
@@ -29924,7 +29396,6 @@ impl BezierAlgebraicChordRealInterval2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn retained_bounds_axis_order_to_real(
     mut bounds_at: impl FnMut(usize) -> Classification<Aabb2>,
     axis: Axis2,
@@ -29964,7 +29435,6 @@ fn retained_bounds_axis_order_to_real(
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordParallelPoint2 {
     fn new_pair(
         source: BezierAlgebraicChord2,
@@ -30317,7 +29787,6 @@ impl BezierAlgebraicChordParallelPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAnalyticParallelPoint2 {
     pub(crate) fn new(
         parallel: BezierParallel2,
@@ -30550,7 +30019,6 @@ impl BezierAnalyticParallelPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChord2 {
     /// Constructs the exact left parallel without materializing a multi-field
     /// unit tangent.  The represented tangent path remains the hot fast path;
@@ -30604,7 +30072,6 @@ impl BezierAlgebraicChord2 {
                 parameter_axis: self.data.parameter_axis,
                 certified_axis_aligned: self.data.certified_axis_aligned,
                 certified_unit_tangent: self.data.certified_unit_tangent.clone(),
-                #[cfg(feature = "predicates")]
                 certified_circle_transverse_endpoints: 0,
                 source: None,
                 reversed: false,
@@ -30614,7 +30081,6 @@ impl BezierAlgebraicChord2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierAlgebraicChordPairPoint2 {
     fn new(
         first: BezierAlgebraicChord2,
@@ -31308,7 +30774,6 @@ impl BezierAlgebraicChordPairPoint2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn selected_circle_endpoint_chord_side(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
@@ -31365,10 +30830,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         reversed: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        #[cfg(feature = "predicates")]
         let parallel_complement = start.parallel_complementary_to(&end, policy)?;
-        #[cfg(not(feature = "predicates"))]
-        let parallel_complement = None::<Classification<bool>>;
         let parameter_order = if matches!(parallel_complement, Some(Classification::Decided(true)))
         {
             // For end=1-start, start<end is exactly start<1/2. Retain the
@@ -31475,7 +30937,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// This deliberately inspects only authored `Real` identities. In
     /// particular, a mapped cut or an APPROXIMATE_512 terminal equality can
     /// never promote a general endpoint into the cardinal fast path.
-    #[cfg(feature = "predicates")]
     fn cardinal_endpoint_radial_components(&self, start_endpoint: bool) -> Option<(i8, i8)> {
         let (normal_x, normal_y) = self
             .data
@@ -31521,7 +30982,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// mapped/nonrational cut therefore cannot become a convex-topology fast
     /// path merely because APPROXIMATE_512 rounded its parameter to a cardinal
     /// value.
-    #[cfg(feature = "predicates")]
     pub(crate) fn cardinal_endpoint_tangent_direction(
         &self,
         start_endpoint: bool,
@@ -31559,7 +31019,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// or quarter-turn endpoint whenever the retained frame has a constant
     /// represented unit normal. Rational rotations of direct round joins use
     /// this path even though their tangent is no longer cardinal.
-    #[cfg(feature = "predicates")]
     pub(crate) fn represented_endpoint_tangent(
         &self,
         start_endpoint: bool,
@@ -31621,7 +31080,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// Returns the exact traversal-tangent cross sign against the retained
     /// chord that created a mapped endpoint. A concentric offset changes that
     /// tangent only by the sign of its signed-radius scale.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_chord_tangent_cross(
         &self,
         start_endpoint: bool,
@@ -31683,7 +31141,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// scale; fragment reversal contributes the remaining sign. This avoids
     /// materializing either multi-field tangent vector while keeping the
     /// original exact pair branch authoritative.
-    #[cfg(feature = "predicates")]
     fn endpoint_direct_pair_map_contact(
         &self,
         start: bool,
@@ -31707,7 +31164,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         Some((map, contact, *first))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_pair_tangent_cross(
         &self,
         self_start: bool,
@@ -31792,7 +31248,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// linear-order authority refines their existing bounds without creating
     /// a primitive element. Only APPROXIMATE_512 may terminate an unresolved
     /// equality at the 512-bit policy boundary.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_tangent_cross_vector(
         &self,
         start_endpoint: bool,
@@ -31846,7 +31301,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// refinement only when the caller permits it. Speculative fast proofs
     /// disable that terminal so they cannot consume certainty before a later
     /// exact certificate is tried.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_tangent_cross_algebraic_chord(
         &self,
         start_endpoint: bool,
@@ -31964,7 +31418,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// General frames, mapped cuts, and noncardinal exact parameters decline
     /// this path. Their endpoints remain owned by `endpoint_point_image`, so
     /// this optimization cannot alter STRICT/APPROXIMATE_512 decisions.
-    #[cfg(feature = "predicates")]
     pub(crate) fn translated_cardinal_offset_endpoint(
         &self,
         offset: &Self,
@@ -32020,7 +31473,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Replays a noncardinal endpoint on an exact concentric offset whenever
     /// its retained parameter already owns a one-field target construction.
-    #[cfg(feature = "predicates")]
     pub(crate) fn concentric_offset_endpoint_point_image(
         &self,
         offset: &Self,
@@ -32059,7 +31511,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Replays an endpoint on an exact concentric offset using the general
     /// point authority, including correlated selected-circle/chord cuts.
-    #[cfg(feature = "predicates")]
     pub(crate) fn concentric_offset_endpoint_point_evidence(
         &self,
         offset: &Self,
@@ -32085,7 +31536,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Returns whether this traversal endpoint and one retained circle/chord
     /// point are the two carriers created from the same mapped contact.
-    #[cfg(feature = "predicates")]
     pub(crate) fn shares_endpoint_point_evidence(
         &self,
         start_endpoint: bool,
@@ -32217,7 +31667,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// value, or when its geometric point has one selected carrier field and
     /// the companion endpoint is exactly rational. Genuinely distinct endpoint
     /// fields retain separate images for the cold multi-field chord predicate.
-    #[cfg(feature = "predicates")]
     pub(crate) fn algebraic_ray_evaluator(
         &self,
         policy: &CurveContext,
@@ -32321,7 +31770,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 };
                 Some((parallel, self.data.semicircle.selected_frame_parameter()))
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleParameter2::Mapped(data) => {
                 let BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
                     parallel,
@@ -32334,8 +31782,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 (policy == self.data.policy && data.semicircle_carrier() == &self.data.semicircle)
                     .then(|| (parallel.clone(), parameter.clone()))
             }
-            #[cfg(not(feature = "predicates"))]
-            BezierAlgebraicCuspSemicircleParameter2::Mapped(_) => None,
         }
     }
 
@@ -32367,20 +31813,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         } else {
             &self.data.end
         };
-        #[cfg(feature = "predicates")]
         let point = match parameter.coincident_point_image(&self.data.semicircle, policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(_) => None,
-        };
-        #[cfg(not(feature = "predicates"))]
-        let point = match parameter.represented_rational_value(policy)? {
-            Classification::Decided(Some(parameter)) => {
-                match self.data.semicircle.point_at(&parameter, policy)? {
-                    Classification::Decided(point) => Some(point),
-                    Classification::Uncertain(_) => None,
-                }
-            }
-            Classification::Decided(None) | Classification::Uncertain(_) => None,
         };
         let _ = cache.set(point.clone());
         Ok(point)
@@ -32388,7 +31823,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
 
     /// Returns exact endpoint evidence without forcing correlated selected
     /// fields into a single coordinate tower.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_point_evidence(
         &self,
         start_endpoint: bool,
@@ -32462,7 +31896,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// fixes `q^2 = s^2 / (4 r^2-s^2)`, so no resultant or root allocation is
     /// needed. Represented endpoints stay represented; mapped endpoints keep
     /// their original point field and one exact center-relative rotation.
-    #[cfg(feature = "predicates")]
     pub(crate) fn endpoint_chord_setback_cut(
         &self,
         start_endpoint: bool,
@@ -32642,7 +32075,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// circle and a line through one of those points in the certified tangent
     /// direction have exactly one support contact, so no general selected-field
     /// circle/chord resultant is needed for authored adjacency.
-    #[cfg(feature = "predicates")]
     pub(crate) fn certified_adjacent_chord_is_endpoint_only(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -33008,7 +32440,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_parallel_normal_forward_ray_winding_delta(
         &self,
         origin: &Point2,
@@ -33254,7 +32685,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         self.validate_policy(policy)?;
-        #[cfg(feature = "predicates")]
         if self.data.semicircle.uses_selected_parallel_normal_frame() {
             return self.selected_parallel_normal_forward_ray_winding_delta(
                 origin,
@@ -33276,13 +32706,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         };
         let contacts = match intersections {
             BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => contacts,
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
                 return Err(CurveError::Topology(
                     "a rational-frame cusp ray produced selected-fiber contacts".into(),
                 ));
             }
-            #[cfg(feature = "predicates")]
             BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
                 return Err(CurveError::Topology(
                     "a rational-frame cusp ray produced selected-fiber overlap".into(),
@@ -33388,7 +32816,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn reduce_bivariate_in_selected_parameter(
     polynomial: BivariatePolynomial,
     parameter: &BezierParameter2,
@@ -33402,7 +32829,6 @@ fn reduce_bivariate_in_selected_parameter(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn reduce_radical_expression_in_selected_parameter(
     expression: BezierAlgebraicCuspTwoTermExpression2,
     parameter: &BezierParameter2,
@@ -33416,7 +32842,6 @@ fn reduce_radical_expression_in_selected_parameter(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn reduce_two_normal_expression_in_selected_parameter(
     expression: BezierParallelTwoNormalExpression2,
     parameter: &BezierParameter2,
@@ -33457,7 +32882,6 @@ fn reduce_two_normal_expression_in_selected_parameter(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn selected_parameter_fiber_parameters(
     incidence: &BivariatePolynomial,
     parameter: &BezierParameter2,
@@ -34186,7 +33610,6 @@ pub(crate) fn algebraic_selected_correlated_predicate_sign(
 /// The returned interval continues to name a root of `incidence(t, u)` over
 /// the already selected `t = alpha`; it is deliberately not converted into a
 /// univariate norm whose degree multiplies by the degree of `alpha`.
-#[cfg(feature = "predicates")]
 fn selected_fiber_parameter_at_exact_retained(
     incidence: &BivariatePolynomial,
     retained: &Real,
@@ -34226,7 +33649,6 @@ fn selected_fiber_parameter_at_exact_retained(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_selected_fiber_root_interval_refined(
     incidence: &BivariatePolynomial,
     retained: &BezierAlgebraicParameter2,
@@ -34322,7 +33744,6 @@ fn algebraic_selected_fiber_root_interval_refined(
 /// Strict Bernstein boxes decide every separated nonzero value. Exact
 /// common-fiber counting decides zero without a primitive element. Only the
 /// final 512-step equality query may consume APPROXIMATE_512.
-#[cfg(feature = "predicates")]
 fn algebraic_selected_fiber_root_predicate_sign(
     incidence: &BivariatePolynomial,
     predicate: &BivariatePolynomial,
@@ -34460,7 +33881,6 @@ fn algebraic_selected_fiber_root_predicate_sign(
     Ok(Classification::Uncertain(UncertaintyReason::Predicate))
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_selected_fiber_root_radical_sum_sign(
     incidence: &BivariatePolynomial,
     expression: &BezierAlgebraicCuspTwoTermExpression2,
@@ -34528,7 +33948,6 @@ fn algebraic_selected_fiber_root_radical_sum_sign(
 /// [`algebraic_selected_fiber_root_radical_sum_sign`], whose expression uses
 /// `B/sqrt(S)`. Both keep equality on the local selected-fiber authority and
 /// therefore share the same STRICT/APPROXIMATE_512 terminal.
-#[cfg(feature = "predicates")]
 fn algebraic_selected_fiber_root_square_root_sum_sign(
     incidence: &BivariatePolynomial,
     expression: &BezierAlgebraicCuspTwoTermExpression2,
@@ -34596,7 +34015,6 @@ fn algebraic_selected_fiber_root_square_root_sum_sign(
 /// `L=E+B*sqrt(S)` and `M=C+A*sqrt(S)`, needs only three calls to the
 /// one-radical signer. Opposite term signs are distinguished by the exact
 /// local predicate `L^2-M^2*T`; no primitive element or global norm is built.
-#[cfg(feature = "predicates")]
 fn algebraic_selected_fiber_root_two_normal_sum_sign(
     incidence: &BivariatePolynomial,
     expression: &BezierParallelTwoNormalExpression2,
@@ -34859,7 +34277,6 @@ fn algebraic_cusp_correlated_square_root_sum_sign(
 /// certified on `incidence`. This is the construction-owning counterpart to
 /// the generic correlated replay and avoids recounting the selected fiber when
 /// the squared magnitude reduces back to the relation that produced the pair.
-#[cfg(feature = "predicates")]
 fn algebraic_cusp_selected_square_root_sum_sign(
     incidence: &BivariatePolynomial,
     expression: &BezierAlgebraicCuspTwoTermExpression2,
@@ -34960,7 +34377,6 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
 /// primitive element. Opposite term signs reduce to the exact trivariate
 /// predicate `A^2 - B^2 K`; the shared three-root predicate engine owns the
 /// STRICT/APPROXIMATE_512 terminal decision.
-#[cfg(feature = "predicates")]
 fn algebraic_cusp_trivariate_square_root_sum_sign(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
     radicand: &TrivariatePolynomial2,
@@ -34982,7 +34398,6 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
     )
 }
 
-#[cfg(feature = "predicates")]
 fn algebraic_cusp_trivariate_square_root_components_sign(
     rational_term: &TrivariatePolynomial2,
     radical_term: &TrivariatePolynomial2,
@@ -36689,7 +36104,6 @@ impl BezierParallel2 {
     /// The source tangent numerator supplies both linear forms; the exact
     /// parallel/source derivative-scale certificate then applies the common
     /// orientation factor. No normalized algebraic tangent is constructed.
-    #[cfg(feature = "predicates")]
     pub(crate) fn vector_tangent_cross_and_dot_signs(
         &self,
         parameter: &BezierParameter2,
@@ -37168,7 +36582,6 @@ impl BezierParallel2 {
     /// lost radical signs are replayed exactly at every correlated parameter
     /// pair. This avoids materializing the center coordinates or adjoining the
     /// two speed square roots to [`Real`].
-    #[cfg(feature = "predicates")]
     pub(crate) fn fixed_distance_incidence_from_parameter(
         &self,
         center_parameter: &BezierParameter2,
@@ -37427,7 +36840,6 @@ impl BezierParallel2 {
     /// Scaling a line direction does not change incidence. Retained line and
     /// chord carriers already own an exact unit tangent, and reusing it avoids
     /// carrying a large endpoint-difference scale through the Sturm sequence.
-    #[cfg(feature = "predicates")]
     pub(crate) fn supporting_line_incidence_with_direction(
         &self,
         line: &LineSeg2,
@@ -37464,7 +36876,6 @@ impl BezierParallel2 {
     /// remain rational images of the selected source parameter.  The returned
     /// line parameter is absent exactly when the contact lies outside the
     /// finite segment domain `[0,1]`.
-    #[cfg(feature = "predicates")]
     pub(crate) fn supporting_line_contact_evidence(
         &self,
         line: &LineSeg2,
@@ -38502,7 +37913,6 @@ impl BezierParallel2 {
         self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn parallel_derivative_scale_sign_selected_fiber(
         &self,
         parameter: &BezierAlgebraicSelectedFiberParameter2,
@@ -39191,10 +38601,7 @@ impl BezierParallel2 {
             let mut mapped = None;
             let mut unresolved = false;
             for (map_index, parameter_map) in parameter_maps.iter_mut().enumerate() {
-                #[cfg(not(feature = "predicates"))]
-                let _ = map_index;
                 let image = {
-                    #[cfg(feature = "predicates")]
                     {
                         let (numerator, denominator) = &parameter_map_coefficients[map_index];
                         match selected_rational_parameter_image(
@@ -39206,10 +38613,6 @@ impl BezierParallel2 {
                             Some(image) => image,
                             None => parameter_map.image(&parallel_parameter)?,
                         }
-                    }
-                    #[cfg(not(feature = "predicates"))]
-                    {
-                        parameter_map.image(&parallel_parameter)?
                     }
                 };
                 match image {
@@ -42221,7 +41624,6 @@ fn reduce_exact_rational_parameter_map(
     numerator: Vec<Real>,
     denominator: Vec<Real>,
 ) -> (Vec<Real>, Vec<Real>) {
-    #[cfg(feature = "predicates")]
     if let Some(gcd) =
         greatest_common_divisor_univariate_polynomials_exact(&numerator, &denominator)
         && gcd.len() > 1
@@ -42235,7 +41637,6 @@ fn reduce_exact_rational_parameter_map(
     (numerator, denominator)
 }
 
-#[cfg(feature = "predicates")]
 fn selected_rational_parameter_image(
     numerator: &[Real],
     denominator: &[Real],
@@ -42613,10 +42014,8 @@ fn polynomial_from_coefficients(
 }
 
 const MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
-#[cfg(feature = "predicates")]
 const MAX_FIXED_DISTANCE_RESULTANT_DEGREE: usize = 256;
 const MAX_SELECTED_FIBER_QUOTIENT_DEGREE: usize = 8;
-#[cfg(feature = "predicates")]
 const MAX_FIXED_DISTANCE_QUOTIENT_DEGREE: usize = 10;
 const MAX_DIRECT_SELECTED_NORM_ISOLATION_DEGREE: usize = 64;
 const PARALLEL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
@@ -46255,7 +45654,6 @@ struct BezierParallelPairEquationSystem2 {
     weight_sign: RealSign,
 }
 
-#[cfg(feature = "predicates")]
 struct BezierParallelFixedDistanceSystem2 {
     incidence: BivariatePolynomial,
     center_speed_squared: BivariatePolynomial,
@@ -46270,7 +45668,6 @@ struct BezierParallelFixedDistanceSystem2 {
 /// With `x=sqrt(center_speed_squared)` and
 /// `y=sqrt(candidate_speed_squared)`, the represented value is
 /// `product*x*y + center*x + candidate*y + rational`.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug)]
 struct BezierParallelTwoNormalExpression2 {
     product: BivariatePolynomial,
@@ -46279,7 +45676,6 @@ struct BezierParallelTwoNormalExpression2 {
     rational: BivariatePolynomial,
 }
 
-#[cfg(feature = "predicates")]
 struct BezierSelectedParallelNormalCircleParallelSystem2 {
     incidence: BivariatePolynomial,
     circle: BezierParallelTwoNormalExpression2,
@@ -46564,7 +45960,6 @@ fn project_parallel_pair_intersection_system(
 /// Squaring first in `sqrt(St)` gives `F0 + F1 sqrt(Su) = 0`; squaring once
 /// more gives the projected incidence `F0^2-Su F1^2=0`. The returned radical
 /// expressions retain both unsquared relations for selected-branch replay.
-#[cfg(feature = "predicates")]
 fn parallel_fixed_distance_system(
     center: &BezierParallel2,
     candidate: &BezierParallel2,
@@ -47669,7 +47064,6 @@ fn polynomial_powers(polynomial: &[Real], maximum: usize) -> Vec<Vec<Real>> {
     powers
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_parameter_pair_is_exact_common_root(
     polynomial: &BivariatePolynomial,
     first: &BezierAlgebraicParameter2,
@@ -48408,7 +47802,6 @@ fn bivariate_multiply(
     BivariatePolynomial::new(coefficients)
 }
 
-#[cfg(feature = "predicates")]
 fn bivariate_multiply_bounded(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -48732,13 +48125,11 @@ fn parameter_matches_any(
 #[cfg(test)]
 mod conversion_tests {
     use super::*;
-    #[cfg(feature = "predicates")]
     use crate::{
         BezierParallelFragment2, BezierSplitFragment2, BezierSubcurve2, CurveBoundaryInteriorSide2,
         CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule,
     };
 
-    #[cfg(feature = "predicates")]
     fn algebraic_parameters(coefficients: Vec<Real>) -> Vec<BezierParameter2> {
         let polynomial = match BezierParameterPolynomial::try_new_power_basis(
             coefficients,
@@ -48764,7 +48155,6 @@ mod conversion_tests {
         parameters
     }
 
-    #[cfg(feature = "predicates")]
     fn algebraic_parameter(coefficients: Vec<Real>) -> BezierParameter2 {
         let parameters = algebraic_parameters(coefficients);
         let [parameter] = parameters.as_slice() else {
@@ -48823,7 +48213,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -48924,7 +48313,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_algebraic_chord_intersects_rational_curve_under_both_policies() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -49208,7 +48596,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_chord_retains_both_noninjective_endpoint_preimages() {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
@@ -49334,7 +48721,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
         let fraction = |numerator: i8, denominator: i8| {
@@ -49640,7 +49026,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -49851,7 +49236,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_chord_certifies_a_third_algebraic_contact_field() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -49940,7 +49324,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -50074,7 +49457,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn rational_image_coordinates(
         image: &RationalBezierAlgebraicPointImage2,
     ) -> [(&[Real], &[Real]); 2] {
@@ -50091,7 +49473,6 @@ mod conversion_tests {
         ]
     }
 
-    #[cfg(feature = "predicates")]
     fn rational_tangent_coordinates(
         image: &RationalBezierAlgebraicTangentImage2,
     ) -> [(&[Real], &[Real]); 2] {
@@ -50108,7 +49489,6 @@ mod conversion_tests {
         ]
     }
 
-    #[cfg(feature = "predicates")]
     fn rational_coordinate_difference(
         first: (&[Real], &[Real]),
         second: (&[Real], &[Real]),
@@ -50122,7 +49502,6 @@ mod conversion_tests {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn assert_algebraic_polynomial_sign(
         coefficients: Vec<Real>,
         parameter: &BezierParameter2,
@@ -50135,7 +49514,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     fn assert_rational_image_distance(
         first: &RationalBezierAlgebraicPointImage2,
         second: &RationalBezierAlgebraicPointImage2,
@@ -50174,7 +49552,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     fn assert_rational_image_midpoint(
         first: &RationalBezierAlgebraicPointImage2,
         second: &RationalBezierAlgebraicPointImage2,
@@ -50207,7 +49584,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn assert_rational_radius_tangent_relation(
         point: &RationalBezierAlgebraicPointImage2,
         center: &RationalBezierAlgebraicPointImage2,
@@ -50258,7 +49634,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     fn general_algebraic_cusp_semicircle(
         radial_distance: Real,
         clockwise: bool,
@@ -50293,7 +49668,6 @@ mod conversion_tests {
         (parallel, parameter.clone(), semicircle)
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn general_algebraic_cusp_semicircle_is_exact_shared_and_oriented() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
@@ -50380,7 +49754,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn retained_rational_image_coordinate_order_uses_the_shared_root_field() {
         let BezierParameter2::Algebraic(parameter) =
@@ -50422,7 +49795,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -50459,7 +49831,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_certifies_exact_circle_support_relations() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -50504,7 +49875,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -50581,7 +49951,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn direct_algebraic_circle_similarities_retain_center_and_cardinal_evidence() {
         let preserving = Similarity2::try_from_real_affine(
@@ -50660,7 +50029,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn direct_algebraic_circle_left_offsets_cover_collapse_crossing_and_reversal() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -50767,7 +50135,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn direct_algebraic_circle_cardinal_offsets_translate_cached_endpoint_fields() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -50913,7 +50280,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
         assert_eq!(
@@ -51495,7 +50861,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -51588,7 +50953,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly() {
         let selected_parameter = |denominator: i8| {
@@ -51840,7 +51204,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_cusp_chord_contacts_order_on_the_shared_axis() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -51975,7 +51338,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints() {
         let diameter = RationalBezier2::try_new(
@@ -52019,7 +51381,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_rational_parameter_map_brackets_an_interior_contact() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -52095,7 +51456,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn non_ph_parallel_touching_upper_unit_circle(at_top: bool) -> BezierParallel2 {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -52119,7 +51479,6 @@ mod conversion_tests {
             .unwrap()
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
@@ -52200,7 +51559,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -54186,7 +53544,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_two_radical_zero_rejects_squared_conjugate() {
         let constant = |numerator: i8, denominator: i8| {
@@ -54226,7 +53583,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -54482,7 +53838,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_parallel_endpoint_respects_reversal() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -54523,7 +53878,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_pair_replays_independent_selected_roots() {
         let translate_second = Similarity2::try_from_real_affine(
@@ -54924,7 +54278,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_reoffsets_pair_mapped_lens() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -55188,7 +54541,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_reoffsets_nested_chord_mapped_cap() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -55554,7 +54906,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -55956,7 +55307,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_pair_handles_tangent_disjoint_and_coincident_supports() {
         let transform = |translation_x, reflect_y| {
@@ -56038,7 +55388,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() {
         let quarter_turn_to_origin = Similarity2::try_from_real_affine(
@@ -56875,7 +56224,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
         let quarter_turn_to_origin = Similarity2::try_from_real_affine(
@@ -57150,7 +56498,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_circle_partition_coalescing_obeys_terminal_policy() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -57203,7 +56550,7 @@ mod conversion_tests {
     /// `cavalier`, `cavalier_transform`, `cavalier_transformed_offset`, or
     /// `cavalier_transform_offset` through
     /// `HYPERCURVE_MAPPED_CIRCLE_BENCH_MODE`.
-    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[cfg(feature = "comparative-benchmarks")]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
     fn benchmark_correlated_circle_partition_offset_driver() {
@@ -57451,7 +56798,7 @@ mod conversion_tests {
     /// `two_parallel_prebuilt_exact_offset`, their `disabled` controls, or
     /// `cavalier_f64_offset` through
     /// `HYPERCURVE_RATIONAL_MAPPED_CAP_BENCH_MODE`.
-    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[cfg(feature = "comparative-benchmarks")]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
     fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
@@ -57812,7 +57159,7 @@ mod conversion_tests {
     /// `construct`, `exact_offset`, `prebuilt_exact_offset`, their `disabled`
     /// controls, or `cavalier_f64_offset` through
     /// `HYPERCURVE_PAIR_MAPPED_LENS_BENCH_MODE`.
-    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[cfg(feature = "comparative-benchmarks")]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
     fn benchmark_pair_mapped_lens_offset_driver() {
@@ -57999,7 +57346,7 @@ mod conversion_tests {
     /// the `mapped_*`, `direct_*`, corresponding `*_disabled`, or
     /// `cavalier_f64_offset` lane through
     /// `HYPERCURVE_NESTED_CHORD_CAP_BENCH_MODE`.
-    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[cfg(feature = "comparative-benchmarks")]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
     fn benchmark_nested_chord_mapped_cap_offset_driver() {
@@ -58234,7 +57581,7 @@ mod conversion_tests {
     /// Run with `--release --all-features -- --ignored --nocapture` and select
     /// construction, first-offset, re-offset, matched disabled, or Cavalier
     /// binary64 context through `HYPERCURVE_OBLIQUE_CHORD_CAP_BENCH_MODE`.
-    #[cfg(all(feature = "predicates", feature = "comparative-benchmarks"))]
+    #[cfg(feature = "comparative-benchmarks")]
     #[test]
     #[ignore = "manual performance checkpoint driver"]
     fn benchmark_independent_oblique_chord_cap_offset_driver() {
@@ -58457,7 +57804,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -58497,7 +57843,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
@@ -58545,7 +57890,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_circle_rational_system_replays_shared_source_endpoint() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -58609,14 +57953,12 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn synthetic_independent_unit_cusp_semicircle(
         policy: &CurveContext,
     ) -> BezierAlgebraicCuspSemicircle2 {
         synthetic_independent_unit_cusp_semicircle_with_center_x(vec![Real::zero()], policy)
     }
 
-    #[cfg(feature = "predicates")]
     fn synthetic_independent_unit_cusp_semicircle_with_center_x(
         source_x_numerator: Vec<Real>,
         policy: &CurveContext,
@@ -58632,7 +57974,6 @@ mod conversion_tests {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn synthetic_selected_cusp_semicircle(
         source_x_numerator: Vec<Real>,
         root_square: Real,
@@ -58686,7 +58027,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn synthetic_reducible_cusp_semicircle(
         selected_root: (i64, i64),
         interval: ((i64, i64), (i64, i64)),
@@ -58750,7 +58090,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -58924,7 +58263,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_region_boolean_clips_correlated_partial_cusp_overlaps() {
         let quarter_turn_to_origin = Similarity2::try_from_real_affine(
@@ -59035,7 +58373,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
@@ -59218,7 +58555,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -59311,7 +58647,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -59497,7 +58832,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn independent_field_collinear_chord_side(
         root_coefficients: [Vec<Real>; 3],
         policy: &CurveContext,
@@ -59543,7 +58877,6 @@ mod conversion_tests {
             .unwrap()
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_affine_axis_substitution_preserves_all_axis_orders() {
         let polynomial = TrivariatePolynomial2 {
@@ -59602,7 +58935,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_binary_axis_substitutions_preserve_all_axis_orders() {
         let polynomial = TrivariatePolynomial2 {
@@ -59670,7 +59002,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
         let parameters = [
@@ -59742,7 +59073,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
@@ -59765,7 +59095,6 @@ mod conversion_tests {
         (parameters, TrivariatePolynomial2 { coefficients })
     }
 
-    #[cfg(feature = "predicates")]
     fn trivariate_multiply_axis_linear(
         polynomial: TrivariatePolynomial2,
         axis: usize,
@@ -59791,7 +59120,6 @@ mod conversion_tests {
         TrivariatePolynomial2 { coefficients }
     }
 
-    #[cfg(feature = "predicates")]
     fn trivariate_multiply(
         left: &TrivariatePolynomial2,
         right: &TrivariatePolynomial2,
@@ -59822,7 +59150,6 @@ mod conversion_tests {
         TrivariatePolynomial2 { coefficients }
     }
 
-    #[cfg(feature = "predicates")]
     fn trivariate_multi_affine(coefficients: [i8; 8]) -> TrivariatePolynomial2 {
         TrivariatePolynomial2 {
             coefficients: (0..2)
@@ -59841,7 +59168,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn trivariate_multi_affine_product<const N: usize>(
         factors: [[i8; 8]; N],
     ) -> TrivariatePolynomial2 {
@@ -59852,7 +59178,6 @@ mod conversion_tests {
             .expect("a test factor product must not be empty")
     }
 
-    #[cfg(feature = "predicates")]
     fn assert_rational_multi_affine_factor_on_every_axis(
         product: &TrivariatePolynomial2,
         message: &str,
@@ -59867,7 +59192,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quadratic_axis_factorization_replays_dense_multi_affine_products() {
         for (left, right) in [
@@ -59888,7 +59212,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn repeated_cubic_axis_factorization_replays_double_and_triple_factors() {
         let repeated = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -59908,7 +59231,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
         let mut polynomial = TrivariatePolynomial2 {
@@ -59934,7 +59256,6 @@ mod conversion_tests {
         assert!(trivariate_repeated_cubic_axis_factorizations(&delta_zero_only, 0).is_none());
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_three_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -59948,7 +59269,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_four_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -59963,7 +59283,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_five_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -59979,7 +59298,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_six_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -59996,7 +59314,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_seven_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -60014,7 +59331,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_eight_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -60033,7 +59349,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_nine_distinct_factors() {
         let product = trivariate_multi_affine_product([
@@ -60053,7 +59368,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_quartic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60065,7 +59379,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_quintic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60078,7 +59391,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_sextic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60091,7 +59403,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_septic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60105,7 +59416,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_octic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60121,7 +59431,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_replays_bounded_nonic_multiplicity() {
         let first = [1, 2, -1, 3, 2, -2, 4, 1];
@@ -60137,7 +59446,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_reaches_the_balanced_resource_boundary() {
         let repeated = [1, 1, 1, 0, 1, 0, 0, 1];
@@ -60151,7 +59459,6 @@ mod conversion_tests {
         }));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn bilinear_factorization_retains_linear_specialization_content() {
         let factor = BivariatePolynomial::new(vec![
@@ -60170,7 +59477,6 @@ mod conversion_tests {
         }));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn bilinear_factorization_recovers_a_constant_specialized_root() {
         let samples = [Real::zero(), Real::one(), Real::from(2_i8)];
@@ -60186,7 +59492,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn bilinear_factorization_tolerates_one_specialization_degree_drop() {
         let factor = BivariatePolynomial::new(vec![
@@ -60206,7 +59511,6 @@ mod conversion_tests {
         }));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_cubic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60231,7 +59535,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_quartic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60256,7 +59559,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_quintic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60281,7 +59583,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_sextic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60306,7 +59607,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_septic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60331,7 +59631,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_recovers_one_octic_factor() {
         let factor = trivariate_multi_affine([1, 2, -1, 3, 2, -2, 4, 1]);
@@ -60352,7 +59651,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 4]; 4]; 4];
@@ -60369,7 +59667,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quartic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 5]; 5]; 5];
@@ -60386,7 +59683,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quintic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 6]; 6]; 6];
@@ -60403,7 +59699,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_sextic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 7]; 7]; 7];
@@ -60420,7 +59715,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_septic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 8]; 8]; 8];
@@ -60437,7 +59731,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_octic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 9]; 9]; 9];
@@ -60454,7 +59747,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic() {
         let mut coefficients = vec![vec![vec![Real::zero(); 10]; 10]; 10];
@@ -60471,7 +59763,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quadratic_axis_factorization_rejects_a_nonsquare_discriminant() {
         let polynomial = TrivariatePolynomial2 {
@@ -60484,7 +59775,6 @@ mod conversion_tests {
         assert!(trivariate_quadratic_axis_factorizations(&polynomial, 0).is_none());
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
         let negative = TrivariatePolynomial2 {
@@ -60521,7 +59811,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_linear_resultant_certifies_every_axis_order() {
         let (parameters, base) = nonaffine_three_field_chord_fixture();
@@ -60552,7 +59841,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_linear_resultant_rejects_a_foreign_conjugate() {
         let (mut parameters, polynomial) = nonaffine_three_field_chord_fixture();
@@ -60619,7 +59907,6 @@ mod conversion_tests {
         );
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn trivariate_quotient_reduction_preserves_every_axis() {
         let polynomial = TrivariatePolynomial2 {
@@ -60669,7 +59956,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn defining_polynomial_reduction_certifies_nonlinear_three_field_zero() {
         let (parameters, mut polynomial) = nonaffine_three_field_chord_fixture();
@@ -60693,7 +59979,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn multiplicative_cubic_three_field_zero_is_exact_in_every_axis_order() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -60761,7 +60046,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn multiplicative_root_relation_rejects_a_different_selected_root() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -60779,7 +60063,6 @@ mod conversion_tests {
         ));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn square_free_cubic_lift_retains_top_slice_content() {
         let factor = trivariate_multi_affine([1, 0, 0, 1, 2, 0, 0, 1]);
@@ -60801,7 +60084,6 @@ mod conversion_tests {
         }));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn additive_cubic_three_field_zero_is_exact_in_every_axis_order() {
         let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
@@ -60886,7 +60168,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn nonlinear_rational_three_field_parameters() -> [BezierParameter2; 3] {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
@@ -60910,7 +60191,6 @@ mod conversion_tests {
         ]
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn separable_axis_content_exposes_rational_three_field_zero_exactly() {
         let parameters = nonlinear_rational_three_field_parameters();
@@ -60969,7 +60249,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quadratic_coupled_factor_rational_three_field_zero_is_exact() {
         let parameters = nonlinear_rational_three_field_parameters();
@@ -61029,7 +60308,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
         let parameters = nonlinear_rational_three_field_parameters();
@@ -61086,7 +60364,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn square_free_cubic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let parameters = nonlinear_rational_three_field_parameters();
         let mut primitive_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
@@ -61121,7 +60398,6 @@ mod conversion_tests {
         (parameters, polynomial)
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn square_free_cubic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, polynomial) = square_free_cubic_coupled_fixture();
@@ -61151,14 +60427,12 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn quartic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let (parameters, cubic) = square_free_cubic_coupled_fixture();
         let positive = trivariate_multi_affine([3, 1, 2, 1, 2, 1, 1, 1]);
         (parameters, trivariate_multiply(&cubic, &positive))
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quartic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, polynomial) = quartic_coupled_fixture();
@@ -61188,7 +60462,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn quintic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, quartic) = quartic_coupled_fixture();
@@ -61220,7 +60493,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn sextic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let (parameters, quartic) = quartic_coupled_fixture();
         let first = trivariate_multi_affine([4, 2, 1, 1, 1, 2, 1, 1]);
@@ -61231,7 +60503,6 @@ mod conversion_tests {
         )
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn sextic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, polynomial) = sextic_coupled_fixture();
@@ -61261,14 +60532,12 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn septic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let (parameters, sextic) = sextic_coupled_fixture();
         let positive = trivariate_multi_affine([6, 1, 1, 2, 1, 2, 1, 1]);
         (parameters, trivariate_multiply(&sextic, &positive))
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn septic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, polynomial) = septic_coupled_fixture();
@@ -61298,14 +60567,12 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn octic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
         let (parameters, septic) = septic_coupled_fixture();
         let positive = trivariate_multi_affine([7, 1, 2, 1, 2, 1, 1, 2]);
         (parameters, trivariate_multiply(&septic, &positive))
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn octic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, polynomial) = octic_coupled_fixture();
@@ -61335,7 +60602,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn bounded_nonic_coupled_factor_rational_three_field_zero_is_exact() {
         let (parameters, cubic) = square_free_cubic_coupled_fixture();
@@ -61374,7 +60640,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn translated_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -61403,7 +60668,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn scaled_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -61432,7 +60696,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn nonaffine_distinct_field_chord_zero_is_exact_in_strict() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -61466,7 +60729,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn nested_independent_cusp_disks_complete_all_region_booleans() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -61523,7 +60785,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root() {
         // This rational reparameterization has homogeneous Bernstein controls
@@ -61852,7 +61113,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn general_algebraic_cusp_points_are_exact_rational_images() {
         let point = |x, y| Point2::new(Real::from(x), Real::from(y));
@@ -62073,7 +61333,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn analytic_parallel_point_retains_tangent_displacement_in_one_frame() {
         let source = QuadraticBezier2::new(
@@ -62101,7 +61360,6 @@ mod conversion_tests {
         assert_eq!(bounds.max(), &expected);
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_retains_every_represented_point_exactly() {
         let source = QuadraticBezier2::new(
@@ -62223,7 +61481,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_pair_decides_every_concentric_case() {
         let source = QuadraticBezier2::new(
@@ -62286,7 +61543,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -62361,7 +61617,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_rejects_cross_policy_replay() {
         let source = QuadraticBezier2::new(
@@ -62389,7 +61644,6 @@ mod conversion_tests {
         ));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_uses_direct_exact_winding() {
         let support = QuadraticBezier2::from_line_segment(
@@ -62480,7 +61734,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_contact_map_orders_the_exact_angular_parameter() {
         let anchor = QuadraticBezier2::from_line_segment(
@@ -62565,7 +61818,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
         let source = QuadraticBezier2::new(
@@ -62653,7 +61905,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber() {
         let support = QuadraticBezier2::from_line_segment(
@@ -62771,7 +62022,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -63045,7 +62295,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -63153,7 +62402,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -63562,7 +62810,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -63777,7 +63024,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     #[ignore = "long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build"]
     fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
@@ -63958,7 +63204,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -64116,7 +63361,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -65982,7 +65226,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn regular_implicit_parameter_cells_partition_an_algebraic_oval() {
         // H(t,u)=(t-1/2)^2+(u-1/2)^2-1/8 has irrational retained
@@ -66059,7 +65302,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn regular_implicit_parameter_cells_partition_a_nonrational_coefficient_oval() {
         let alpha = (Real::one() / Real::from(8_i8)).unwrap().sqrt().unwrap();
@@ -66730,7 +65972,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn regular_implicit_parameter_component_ranks_algebraic_multi_graph_turns() {
         // H(t,u)=u^2-u+1/16+(t^3-t)/64 has two regular graphs whose
@@ -66797,7 +66038,6 @@ mod conversion_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn regular_implicit_parameter_component_pairs_coupled_algebraic_turning_event() {
         // H(t,u)=u^2+u-t^3+t-2 has one turning event at t=1/sqrt(3).
@@ -66948,10 +66188,7 @@ mod conversion_tests {
         let zero = Real::zero();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let one = Real::one();
-        #[cfg(feature = "predicates")]
         let regular_retained_parameter = CurveResultantParameter::First;
-        #[cfg(not(feature = "predicates"))]
-        let regular_retained_parameter = CurveResultantParameter::Second;
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let punctured = match certify_regular_implicit_parameter_component(
@@ -67564,7 +66801,6 @@ mod conversion_tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system() {
         // alpha = cbrt(1/2), beta = alpha^2 = cbrt(1/4). The two equations
         // differ by A(alpha)=2*alpha^3-1 and specialize to
@@ -67619,7 +66855,6 @@ mod conversion_tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn specialized_common_fiber_replays_degree_drops_in_either_orientation() {
         let alpha = algebraic_parameter(vec![
             Real::from(-1_i8),

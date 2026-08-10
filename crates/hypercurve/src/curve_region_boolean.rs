@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
-#[cfg(feature = "predicates")]
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
     BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
@@ -19,7 +18,6 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     BezierAlgebraicCuspSemicircleRationalIntersections2,
 };
-#[cfg(feature = "predicates")]
 use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
 use crate::bezier_tangent_order::algebraic_endpoint_tangent_cross_sign;
 use crate::classify::{compare_reals, real_sign};
@@ -211,18 +209,15 @@ struct RegionPairOverlap {
 #[derive(Clone, Debug)]
 enum RegionPairOverlapSource {
     Bezier(CurveIntersectionOverlap2),
-    #[cfg(feature = "predicates")]
     AlgebraicChordRational(BezierAlgebraicChordRationalOverlap2),
     AlgebraicCusp(BezierAlgebraicCuspSemicirclePairOverlap2),
     AlgebraicCuspMapped(BezierAlgebraicCuspSemicircleMappedOverlap2),
-    #[cfg(feature = "predicates")]
     AlgebraicCuspSelectedFiberMapped(BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2),
 }
 
 #[derive(Clone, Copy)]
 enum RegionCuspMappedOverlapRef<'a> {
     Bezier(&'a BezierAlgebraicCuspSemicircleMappedOverlap2),
-    #[cfg(feature = "predicates")]
     Selected(&'a BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2),
 }
 
@@ -236,7 +231,6 @@ impl RegionCuspMappedOverlapRef<'_> {
             Self::Bezier(source) => Ok(source
                 .other_parameter_for_cusp(parameter, policy)?
                 .map(CurveRegionParameter2::from_bezier)),
-            #[cfg(feature = "predicates")]
             Self::Selected(source) => Ok(source
                 .other_parameter_for_cusp(parameter, policy)?
                 .map(CurveRegionParameter2::from_selected_fiber)),
@@ -257,7 +251,6 @@ impl RegionCuspMappedOverlapRef<'_> {
                 })?,
                 policy,
             ),
-            #[cfg(feature = "predicates")]
             Self::Selected(source) => source.cusp_parameter_for_other(
                 parameter.as_selected_fiber().ok_or_else(|| {
                     CurveError::Topology(
@@ -1106,11 +1099,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second: second.clone(),
                     source: overlap.source.and_then(|source| match source {
                         RegionPairOverlapSource::Bezier(source) => Some(source),
-                        #[cfg(feature = "predicates")]
                         RegionPairOverlapSource::AlgebraicChordRational(_) => None,
                         RegionPairOverlapSource::AlgebraicCusp(_)
                         | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
-                        #[cfg(feature = "predicates")]
                         RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_) => None,
                     }),
                     first_range,
@@ -1603,7 +1594,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })))
     }
 
-    #[cfg(feature = "predicates")]
     fn authored_carriers_are_adjacent(&self, pair: &RegionCarrierPair) -> bool {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -1629,7 +1619,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 && first.fragment_index.checked_add(1) == Some(fragment_count))
     }
 
-    #[cfg(feature = "predicates")]
     fn algebraic_chord_linear_bezier_pair_result(
         &self,
         pair: &RegionCarrierPair,
@@ -1776,7 +1765,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Ok(Some(result))
     }
 
-    #[cfg(feature = "predicates")]
     fn algebraic_chord_parallel_pair_result(
         &self,
         pair: &RegionCarrierPair,
@@ -2253,9 +2241,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::CuspChord { cusp_is_first } => {
-                #[cfg(not(feature = "predicates"))]
-                let _ = cusp_is_first;
-                #[cfg(feature = "predicates")]
                 {
                     let (cusp, cusp_index, chord, chord_index) = if *cusp_is_first {
                         (
@@ -2460,19 +2445,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         blockers: Vec::new(),
                     })
                 }
-                #[cfg(not(feature = "predicates"))]
-                {
-                    Ok(RegionPairResult {
-                        contacts: Vec::new(),
-                        overlaps: Vec::new(),
-                        blockers: vec![RegionPairBlocker::Uncertain(
-                            UncertaintyReason::Unsupported,
-                        )],
-                    })
-                }
             }
             RegionCarrierPairContext::AlgebraicChordPair => {
-                #[cfg(feature = "predicates")]
                 {
                     let (chord, chord_index, other, other_index) =
                         match (&first.geometry, &second.geometry) {
@@ -3219,7 +3193,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         })
                     }
-                    #[cfg(feature = "predicates")]
                     BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
                         contacts,
                     ) => Ok(selected_fiber_cusp_contacts_result(
@@ -3261,7 +3234,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         })
                     }
-                    #[cfg(feature = "predicates")]
                     BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
                         overlaps,
                     ) => Ok(selected_fiber_cusp_overlaps_result(
@@ -3325,7 +3297,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
                         contacts
                     }
-                    #[cfg(feature = "predicates")]
                     BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
                         contacts,
                     ) => {
@@ -3334,7 +3305,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             *cusp_is_first,
                         ));
                     }
-                    #[cfg(feature = "predicates")]
                     BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
                         overlaps,
                     ) => {
@@ -3757,7 +3727,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 RegionCuspMappedOverlapRef::Bezier(source),
             );
         }
-        #[cfg(feature = "predicates")]
         if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(source)) =
             overlap.source.as_ref()
         {
@@ -3768,7 +3737,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 RegionCuspMappedOverlapRef::Selected(source),
             );
         }
-        #[cfg(feature = "predicates")]
         if let Some(RegionPairOverlapSource::AlgebraicChordRational(source)) =
             overlap.source.as_ref()
         {
@@ -3787,11 +3755,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierParameterRange2::new_validated(second_start.clone(), second_end.clone());
         let correspondence = overlap.source.as_ref().and_then(|source| match source {
             RegionPairOverlapSource::Bezier(source) => source.parameter_correspondence(),
-            #[cfg(feature = "predicates")]
             RegionPairOverlapSource::AlgebraicChordRational(_) => None,
             RegionPairOverlapSource::AlgebraicCusp(_)
             | RegionPairOverlapSource::AlgebraicCuspMapped(_) => None,
-            #[cfg(feature = "predicates")]
             RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_) => None,
         });
         if let Some(correspondence) = correspondence {
@@ -3888,7 +3854,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn clip_algebraic_chord_rational_overlap(
         &self,
         pair: &RegionCarrierPair,
@@ -4448,16 +4413,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             | RegionPairOverlapSource::AlgebraicCuspMapped(_)
                     )
                 ) || {
-                    #[cfg(feature = "predicates")]
                     {
                         matches!(
                             overlap.source,
                             Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_))
                         )
-                    }
-                    #[cfg(not(feature = "predicates"))]
-                    {
-                        false
                     }
                 };
                 if cusp_overlap_topology {
@@ -4535,7 +4495,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             .expect("a pushed cusp-overlap event retains its topology vertex")
                             .parameter
                             .clone();
-                        #[cfg(feature = "predicates")]
                         if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(
                             source,
                         )) = overlap.source.as_ref()
@@ -5208,7 +5167,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => None,
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(_) => None,
         };
         // Retained circular-conic provenance is a construction certificate for
@@ -5486,7 +5444,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             representative.exact_rational_point(&self.data.policy),
             tangent.exact_rational_vector(&self.data.policy),
         ) else {
-            #[cfg(feature = "predicates")]
             {
                 return self.regularized_algebraic_cusp_fragment_action_in_selected_field(
                     carrier_index,
@@ -5494,10 +5451,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     &representative,
                     &tangent,
                 );
-            }
-            #[cfg(not(feature = "predicates"))]
-            {
-                return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
             }
         };
         if fragment.is_reversed() {
@@ -5529,7 +5482,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn regularized_algebraic_chord_fragment_action(
         &self,
         carrier_index: usize,
@@ -5620,16 +5572,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         ))
     }
 
-    #[cfg(not(feature = "predicates"))]
-    fn regularized_algebraic_chord_fragment_action(
-        &self,
-        carrier_index: usize,
-        _chord: &crate::BezierAlgebraicChord2,
-    ) -> ExactCurveResult<RegionFragmentAction> {
-        Err(self.blocked(carrier_index, UncertaintyReason::Unsupported))
-    }
-
-    #[cfg(feature = "predicates")]
     fn regularized_algebraic_cusp_fragment_action_in_selected_field(
         &self,
         carrier_index: usize,
@@ -5682,7 +5624,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         ))
     }
 
-    #[cfg(feature = "predicates")]
     fn algebraic_fragment_side_location(
         &self,
         carrier_index: usize,
@@ -6161,7 +6102,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(RegionPointLocation::Outside);
         }
         let classification = if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
-            #[cfg(feature = "predicates")]
             {
                 // Complete pair replay guarantees that an open split fragment
                 // cannot change faces. Exact and single-field endpoints are
@@ -6261,11 +6201,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                 }
             }
-            #[cfg(not(feature = "predicates"))]
-            {
-                let _ = chord;
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
         } else if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
             let parameter = match fragment
                 .representative_parameter()
@@ -6291,15 +6226,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .classify_point_raw(&point, &self.data.policy)
                     .map_err(|cause| self.invalid(carrier_index, cause))?
             } else {
-                #[cfg(feature = "predicates")]
                 {
                     other
                         .classify_algebraic_point_off_boundary_raw(&point, &self.data.policy)
                         .map_err(|cause| self.invalid(carrier_index, cause))?
-                }
-                #[cfg(not(feature = "predicates"))]
-                {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
                 }
             }
         } else {
@@ -6314,7 +6244,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn classify_chord_endpoint_off_other_boundary(
         &self,
         carrier_index: usize,
@@ -6719,7 +6648,6 @@ fn build_bezier_self_intersection_caches(
 fn split_fragment_is_affine_line(fragment: &BezierSplitFragment2) -> bool {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => subcurve_is_strict_line_image(curve),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().is_some(),
         _ => false,
     }
@@ -6740,7 +6668,6 @@ fn subcurve_is_strict_line_image(curve: &BezierSubcurve2) -> bool {
     )
 }
 
-#[cfg(feature = "predicates")]
 fn exact_axis_aligned_line_direction(
     line: &LineSeg2,
 ) -> Option<BezierAlgebraicChordAxisDirection2> {
@@ -6756,7 +6683,6 @@ fn exact_axis_aligned_line_direction(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn retained_axis_aligned_line_chord(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
@@ -6810,7 +6736,6 @@ fn carrier_bounds_decided_disjoint(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn carrier_bounds_refined(
     carrier: &RegionCarrier,
     refinement_steps: usize,
@@ -6863,7 +6788,6 @@ fn carrier_bounds_refined(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn carrier_refined_bounds_decided_disjoint(
     first: &RegionCarrier,
     second: &RegionCarrier,
@@ -6951,7 +6875,6 @@ fn build_region_carrier(
 ) -> ExactCurveResult<RegionCarrier> {
     let (mut geometry, mut start, mut end, mut reversed) = match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
-            #[cfg(feature = "predicates")]
             if let Some(chord) = retained_axis_aligned_line_chord(curve, policy) {
                 let start = chord.start_parameter();
                 let end = chord.end_parameter();
@@ -6962,17 +6885,6 @@ fn build_region_carrier(
                     false,
                 )
             } else {
-                (
-                    RegionCarrierGeometry::Bezier(curve.clone()),
-                    CurveRegionParameter2::from_bezier(
-                        BezierParameter2::Exact(crate::Real::zero()),
-                    ),
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(crate::Real::one())),
-                    false,
-                )
-            }
-            #[cfg(not(feature = "predicates"))]
-            {
                 (
                     RegionCarrierGeometry::Bezier(curve.clone()),
                     CurveRegionParameter2::from_bezier(
@@ -7023,7 +6935,6 @@ fn build_region_carrier(
             CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             fragment.is_reversed(),
         ),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let geometry = match fragment.source() {
                 BezierSelectedFiberSource2::Rational(curve) => {
@@ -7110,7 +7021,6 @@ fn split_carrier_with_refinement(
     max_refinement_steps: usize,
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
-    #[cfg(feature = "predicates")]
     if events
         .iter()
         .any(|event| event.parameter.is_selected_fiber())
@@ -7198,7 +7108,6 @@ fn split_carrier_with_refinement(
     Ok(output)
 }
 
-#[cfg(feature = "predicates")]
 fn selected_fiber_event_point(
     event: &CarrierEvent,
     source: &BezierSelectedFiberSource2,
@@ -7246,7 +7155,6 @@ fn selected_fiber_event_point(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn split_selected_fiber_carrier(
     carrier: &RegionCarrier,
     events: &[CarrierEvent],
@@ -7746,7 +7654,6 @@ fn retained_circular_support(
     Some((implicit?, circular?))
 }
 
-#[cfg(feature = "predicates")]
 fn adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
     chord: &crate::BezierAlgebraicChord2,
     chord_carrier: &RegionCarrier,
@@ -9081,7 +8988,6 @@ const fn orient_tangent_cross_sign(sign: RealSign, source_is_first: bool) -> Rea
     }
 }
 
-#[cfg(feature = "predicates")]
 fn selected_fiber_cusp_contacts_result(
     contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
     cusp_is_first: bool,
@@ -9116,7 +9022,6 @@ fn selected_fiber_cusp_contacts_result(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn selected_fiber_cusp_overlaps_result(
     overlaps: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>,
     cusp_is_first: bool,
@@ -9382,7 +9287,7 @@ fn clip_cusp_parameter_overlap(
     )))
 }
 
-#[cfg(all(test, feature = "predicates"))]
+#[cfg(test)]
 pub(crate) fn clip_cusp_overlap_for_test(
     correspondence: &BezierAlgebraicCuspSemicirclePairOverlap2,
     first_fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -9771,7 +9676,7 @@ fn clip_aligned_parameter_overlap(
     ))))
 }
 
-#[cfg(all(test, feature = "predicates"))]
+#[cfg(test)]
 pub(crate) fn clip_aligned_parameter_overlap_for_test(
     first_range: &BezierParameterRange2,
     second_range: &BezierParameterRange2,
@@ -9952,7 +9857,6 @@ fn fragment_range(
         }
         BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => None,
     }
 }
@@ -10159,13 +10063,11 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
 #[cfg(test)]
 mod certified_successor_tests {
     use super::*;
-    #[cfg(feature = "predicates")]
     use crate::bezier_offset::{
         BezierAlgebraicChordAxisDirection2, BezierAlgebraicCuspSemicircle2,
         BezierAlgebraicCuspSemicircleChordIntersections2,
         BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     };
-    #[cfg(feature = "predicates")]
     use crate::{BezierAlgebraicCuspSemicircleFragment2, CubicBezier2};
     use crate::{
         BezierAlgebraicParameter2, BezierParallelFragment2, CurvePath2, CurveRegionBoundaryLoop2,
@@ -10213,7 +10115,6 @@ mod certified_successor_tests {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let polynomial = decided(
             crate::BezierParameterPolynomial::try_new_power_basis(
@@ -10236,7 +10137,6 @@ mod certified_successor_tests {
         )
     }
 
-    #[cfg(feature = "predicates")]
     fn sqrt_reciprocal_parameter(
         denominator: i8,
         policy: &CurveContext,
@@ -10273,7 +10173,6 @@ mod certified_successor_tests {
         .expect("valid rational line")
     }
 
-    #[cfg(feature = "predicates")]
     fn algebraic_chord_carrier(
         operand: CurveRegionBooleanOperand2,
         chord: crate::BezierAlgebraicChord2,
@@ -10293,7 +10192,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn selected_field_algebraic_chord_rectangle(policy: &CurveContext) -> CurveRegion2 {
         let parameter = sqrt_half_parameter(policy);
         let point = |positive: bool, height: i32| {
@@ -10340,7 +10238,6 @@ mod certified_successor_tests {
         .expect("valid selected-field region")
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn cusp_chord_pair_retains_an_interior_axis_contact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10456,7 +10353,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn cusp_chord_pair_retains_an_interior_exact_oblique_contact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10560,7 +10456,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn cusp_chord_pair_retains_an_independent_field_oblique_contact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10686,7 +10581,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn shared_chord_splits_contacts_from_independent_selected_circles_in_order() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10847,7 +10741,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn exact_retained_chord_uses_the_canonical_boolean_carrier() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10898,7 +10791,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn exact_subfragment_of_algebraic_chord_retains_selected_field_witness() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10939,7 +10831,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_trim_retains_selected_field_algebraic_chord_boundaries() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -10982,7 +10873,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn curve_trim_retains_selected_field_algebraic_chord_overlaps() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11053,7 +10943,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn source_related_algebraic_chord_contact_enters_split_topology() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11201,7 +11090,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11326,7 +11214,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_algebraic_chord_uses_general_boolean_pair_engine() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11482,7 +11369,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11702,7 +11588,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11785,7 +11670,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -11910,7 +11794,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12030,7 +11913,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12375,7 +12257,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn noninjective_endpoint_preimages_complete_public_region_intersection() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12475,7 +12356,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12580,7 +12460,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn adjacent_general_chord_fallback_excludes_the_authored_endpoint() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12778,7 +12657,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     fn cusp_test_semicircle(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2 {
         let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
         let parallel = CubicBezier2::new(
@@ -12805,7 +12683,6 @@ mod certified_successor_tests {
         .expect("the nonzero cusp radius must produce a semicircle")
     }
 
-    #[cfg(feature = "predicates")]
     fn cusp_test_carrier(
         semicircle: BezierAlgebraicCuspSemicircle2,
         start: Real,
@@ -12839,7 +12716,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn unary_cusp_regularization_samples_sides_in_the_selected_field() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -12898,7 +12774,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {
         let local_start = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
@@ -12996,7 +12871,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -13241,7 +13115,6 @@ mod certified_successor_tests {
         }
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn cusp_overlap_clipping_maps_partial_carriers_in_both_orientations() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
@@ -14071,7 +13944,6 @@ mod certified_successor_tests {
             first.same_point(&second, &policy),
             Classification::Decided(true)
         );
-        #[cfg(feature = "predicates")]
         assert!(
             parameter
                 .cached_rational_bezier_point_image(&curve)

@@ -4,10 +4,8 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
-#[cfg(feature = "predicates")]
 use hyperreal::Rational as HyperRational;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
-#[cfg(feature = "predicates")]
 use hypersolve::{
     AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
     resultant_univariate_polynomials,
@@ -44,7 +42,6 @@ use crate::{
     ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
-#[cfg(feature = "predicates")]
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
 
 /// Exact planar rational Bezier curve with an arbitrary positive degree.
@@ -166,25 +163,20 @@ pub enum RationalBezierIntersectionPointEvidence2 {
     ///
     /// The four endpoint fields remain separate and are refined only when a
     /// coordinate comparison or enclosure is requested.
-    #[cfg(feature = "predicates")]
     AlgebraicChordPair(crate::BezierAlgebraicChordPairPoint2),
     /// A selected algebraic-circle contact with a certified axis-aligned
     /// retained chord.  Both selected fields and the square-root branch remain
     /// exact until a terminal predicate policy permits approximation.
-    #[cfg(feature = "predicates")]
     AlgebraicCuspChord(crate::BezierAlgebraicCuspChordPoint2),
     /// An exact affine derivative of a retained selected-circle/axis-chord
     /// contact, such as one endpoint of an axis-aligned parallel.
-    #[cfg(feature = "predicates")]
     AlgebraicCuspChordDerived(crate::BezierAlgebraicCuspChordDerivedPoint2),
     /// One endpoint displaced along an exact unit normal or tangent of a
     /// retained algebraic chord whose normalized direction spans selected
     /// endpoint fields.
-    #[cfg(feature = "predicates")]
     AlgebraicChordParallel(crate::BezierAlgebraicChordParallelPoint2),
     /// One exact point on an analytic Bezier parallel at a retained source
     /// parameter. The normalized direction is evaluated only by predicates.
-    #[cfg(feature = "predicates")]
     AnalyticParallel(crate::BezierAnalyticParallelPoint2),
 }
 
@@ -194,15 +186,10 @@ impl RationalBezierIntersectionPointEvidence2 {
         match self {
             Self::Exact(point) => Some(point),
             Self::Algebraic(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChordPair(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChord(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChordDerived(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChordParallel(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AnalyticParallel(_) => None,
         }
     }
@@ -214,21 +201,16 @@ impl RationalBezierIntersectionPointEvidence2 {
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => first.shares_storage(second),
             (Self::Algebraic(first), Self::Algebraic(second)) => first.shares_storage(second),
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicChordPair(_), Self::AlgebraicChordPair(_)) => false,
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
                 first.shares_storage(second)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChordDerived(first), Self::AlgebraicCuspChordDerived(second)) => {
                 first.shares_storage(second)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicChordParallel(first), Self::AlgebraicChordParallel(second)) => {
                 first.shares_storage(second)
             }
-            #[cfg(feature = "predicates")]
             (Self::AnalyticParallel(first), Self::AnalyticParallel(second)) => {
                 first.shares_storage(second)
             }
@@ -241,21 +223,15 @@ impl RationalBezierIntersectionPointEvidence2 {
         match self {
             Self::Exact(_) => None,
             Self::Algebraic(point) => Some(point),
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChordPair(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChord(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicCuspChordDerived(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AlgebraicChordParallel(_) => None,
-            #[cfg(feature = "predicates")]
             Self::AnalyticParallel(_) => None,
         }
     }
 
     /// Returns retained correlated chord-pair point evidence, when present.
-    #[cfg(feature = "predicates")]
     pub const fn as_algebraic_chord_pair(&self) -> Option<&crate::BezierAlgebraicChordPairPoint2> {
         match self {
             Self::AlgebraicChordPair(point) => Some(point),
@@ -269,7 +245,6 @@ impl RationalBezierIntersectionPointEvidence2 {
     }
 
     /// Returns retained correlated cusp/chord point evidence, when present.
-    #[cfg(feature = "predicates")]
     pub const fn as_algebraic_cusp_chord(&self) -> Option<&crate::BezierAlgebraicCuspChordPoint2> {
         match self {
             Self::AlgebraicCuspChord(point) => Some(point),
@@ -283,7 +258,6 @@ impl RationalBezierIntersectionPointEvidence2 {
     }
 
     /// Returns a derived correlated cusp/chord point, when present.
-    #[cfg(feature = "predicates")]
     pub const fn as_algebraic_cusp_chord_derived(
         &self,
     ) -> Option<&crate::BezierAlgebraicCuspChordDerivedPoint2> {
@@ -299,7 +273,6 @@ impl RationalBezierIntersectionPointEvidence2 {
     }
 
     /// Returns a retained algebraic-chord parallel endpoint, when present.
-    #[cfg(feature = "predicates")]
     pub const fn as_algebraic_chord_parallel(
         &self,
     ) -> Option<&crate::BezierAlgebraicChordParallelPoint2> {
@@ -315,7 +288,6 @@ impl RationalBezierIntersectionPointEvidence2 {
     }
 
     /// Returns a retained analytic-parallel point, when present.
-    #[cfg(feature = "predicates")]
     pub const fn as_analytic_parallel(&self) -> Option<&crate::BezierAnalyticParallelPoint2> {
         match self {
             Self::AnalyticParallel(point) => Some(point),
@@ -444,37 +416,29 @@ impl RationalBezierIntersectionPointEvidence2 {
                     _ => Classification::Uncertain(UncertaintyReason::RealSign),
                 }
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicChordPair(first), Self::AlgebraicChordPair(second)) => {
                 first.same_point(second, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicChordPair(point), other) | (other, Self::AlgebraicChordPair(point)) => {
                 point.same_point_evidence(other, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChord(first), Self::AlgebraicCuspChord(second)) => {
                 first.same_point_evidence(&Self::AlgebraicCuspChord(second.clone()), policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChord(point), other) | (other, Self::AlgebraicCuspChord(point)) => {
                 point.same_point_evidence(other, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChordDerived(first), Self::AlgebraicCuspChordDerived(second)) => {
                 first.same_point(second, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicCuspChordDerived(point), other)
             | (other, Self::AlgebraicCuspChordDerived(point)) => {
                 point.same_point_evidence(other, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AlgebraicChordParallel(point), other)
             | (other, Self::AlgebraicChordParallel(point)) => {
                 point.same_point_evidence(other, policy)
             }
-            #[cfg(feature = "predicates")]
             (Self::AnalyticParallel(point), other) | (other, Self::AnalyticParallel(point)) => {
                 point.same_point_evidence(other, policy)
             }
@@ -1177,7 +1141,6 @@ pub(crate) enum ResultantParameterProjection {
 
 const MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
-#[cfg(feature = "predicates")]
 const MAX_QUOTIENT_RING_RATIONAL_IMAGE_DEGREE: usize = 12;
 const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
 
@@ -6670,7 +6633,6 @@ fn overlap_parameter_on_curve(
             Classification::Uncertain(reason) => unresolved = Some(reason),
         }
     }
-    #[cfg(feature = "predicates")]
     for axis in [Axis2::X, Axis2::Y] {
         if !target.has_certified_injective_axis_on(axis, policy) {
             continue;
@@ -6693,7 +6655,6 @@ fn overlap_parameter_on_curve(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn overlap_parameter_through_injective_axis(
     source: &RationalBezier2,
     target: &RationalBezier2,
@@ -6781,7 +6742,6 @@ fn overlap_parameter_through_injective_axis(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn rational_map_preimage_polynomial(
     image_polynomial: &[Real],
     numerator: &[Real],
@@ -6809,19 +6769,12 @@ struct ConicParameterMap2 {
 }
 
 struct ConicParameterCandidate2 {
-    #[cfg(feature = "predicates")]
     map: AlgebraicRootRationalMap,
-    #[cfg(feature = "predicates")]
     numerator: Vec<Real>,
-    #[cfg(feature = "predicates")]
     denominator: Vec<Real>,
-    #[cfg(feature = "predicates")]
     image_polynomial: OnceLock<Option<BezierParameterPolynomial>>,
-    #[cfg(feature = "predicates")]
     image_parameters: OnceLock<CurveResult<Classification<Vec<BezierParameter2>>>>,
-    #[cfg(feature = "predicates")]
     quotient_matrices: OnceLock<Option<QuotientRingRationalMapMatrices>>,
-    #[cfg(feature = "predicates")]
     quotient_power: OnceLock<Option<Vec<Real>>>,
 }
 
@@ -6876,7 +6829,6 @@ fn conic_parameter_from_curve_parameter(
     prefer_exact_image_polynomial: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    #[cfg(feature = "predicates")]
     if prefer_exact_image_polynomial {
         match real_coefficient_rational_image_parameter(curve_parameter, primary_candidate, policy)?
         {
@@ -6886,8 +6838,6 @@ fn conic_parameter_from_curve_parameter(
             Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
     }
-    #[cfg(not(feature = "predicates"))]
-    let _ = prefer_exact_image_polynomial;
     let primary = conic_parameter_from_candidates(
         std::slice::from_ref(primary_candidate),
         curve_parameter,
@@ -6965,7 +6915,6 @@ fn conic_parameter_from_candidates(
     curve_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    #[cfg(feature = "predicates")]
     if curve_parameter.as_exact().is_some() {
         // An implicit conic can meet the other curve's projective extension at
         // a parameter where one rational chart has a zero denominator. Try
@@ -7010,9 +6959,7 @@ fn conic_parameter_from_candidates(
             return Ok(Classification::Decided(None));
         }
     }
-    #[cfg(feature = "predicates")]
     let mut refinement = BezierParameterRefinement2::new(curve_parameter, policy);
-    #[cfg(feature = "predicates")]
     for &max_refinement_steps in refinement_steps {
         let refined_curve_parameter = refinement.refine_to(max_refinement_steps);
         for (candidate_index, candidate) in candidates.iter().enumerate() {
@@ -7038,7 +6985,6 @@ fn conic_parameter_from_candidates(
     Ok(Classification::Uncertain(UncertaintyReason::Predicate))
 }
 
-#[cfg(feature = "predicates")]
 fn rational_map_image_polynomial(
     source_polynomial: &[Real],
     numerator: &[Real],
@@ -7089,7 +7035,6 @@ fn rational_map_image_polynomial(
     }
 }
 
-#[cfg(feature = "predicates")]
 fn quotient_ring_rational_map_image_coefficients(
     source: &[Real],
     numerator: &[Real],
@@ -7099,7 +7044,6 @@ fn quotient_ring_rational_map_image_coefficients(
     determinant_linear_power_polynomial(&matrices.numerator, &matrices.denominator, matrices.degree)
 }
 
-#[cfg(feature = "predicates")]
 fn quotient_ring_rational_map_image_polynomial(
     source: &[Real],
     numerator: &[Real],
@@ -7115,14 +7059,12 @@ fn quotient_ring_rational_map_image_polynomial(
     }
 }
 
-#[cfg(feature = "predicates")]
 struct QuotientRingRationalMapMatrices {
     degree: usize,
     numerator: Vec<Real>,
     denominator: Vec<Real>,
 }
 
-#[cfg(feature = "predicates")]
 fn quotient_ring_rational_map_matrices(
     source: &[Real],
     numerator: &[Real],
@@ -7152,7 +7094,6 @@ fn quotient_ring_rational_map_matrices(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn determinant_linear_power_polynomial(
     constants: &[Real],
     negative_linear_coefficients: &[Real],
@@ -7202,7 +7143,6 @@ fn determinant_linear_power_polynomial(
     partials.pop()?
 }
 
-#[cfg(feature = "predicates")]
 #[derive(Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq))]
 struct CertifiedRationalInterval {
@@ -7210,7 +7150,6 @@ struct CertifiedRationalInterval {
     upper: HyperRational,
 }
 
-#[cfg(feature = "predicates")]
 impl CertifiedRationalInterval {
     fn zero() -> Self {
         Self::point(HyperRational::zero())
@@ -7333,7 +7272,6 @@ impl CertifiedRationalInterval {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn determinant_local_bernstein_signs_from_enclosures(
     matrices: &QuotientRingRationalMapMatrices,
     lower: &HyperRational,
@@ -7423,7 +7361,6 @@ fn determinant_local_bernstein_signs_from_enclosures(
     Some((signs, leading_power_sign))
 }
 
-#[cfg(feature = "predicates")]
 fn quotient_multiplication_matrix(
     source: &[Real],
     relation: &[Real],
@@ -7455,7 +7392,6 @@ fn quotient_multiplication_matrix(
     Some(matrix)
 }
 
-#[cfg(feature = "predicates")]
 fn interpolate_exact_real_samples(samples: &[Real]) -> Option<Vec<Real>> {
     let mut polynomial = vec![Real::zero(); samples.len()];
     for (sample_index, sample) in samples.iter().enumerate() {
@@ -7476,7 +7412,6 @@ fn interpolate_exact_real_samples(samples: &[Real]) -> Option<Vec<Real>> {
     Some(polynomial)
 }
 
-#[cfg(feature = "predicates")]
 fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real> {
     let mut product = vec![Real::zero(); polynomial.len() + 1];
     for (index, coefficient) in polynomial.into_iter().enumerate() {
@@ -7486,7 +7421,6 @@ fn multiply_power_polynomial_by_linear_factor(polynomial: Vec<Real>, constant: R
     product
 }
 
-#[cfg(feature = "predicates")]
 fn locally_certified_rational_image_parameter(
     source_parameter: &BezierParameter2,
     candidate: &ConicParameterCandidate2,
@@ -7649,7 +7583,6 @@ fn locally_certified_rational_image_parameter(
     Ok(None)
 }
 
-#[cfg(feature = "predicates")]
 fn real_coefficient_rational_image_parameter(
     source_parameter: &BezierParameter2,
     candidate: &ConicParameterCandidate2,
@@ -7758,23 +7691,12 @@ fn real_coefficient_rational_image_parameter(
     Ok(Classification::Uncertain(UncertaintyReason::Predicate))
 }
 
-#[cfg(not(feature = "predicates"))]
-fn real_coefficient_rational_image_parameter(
-    _source_parameter: &BezierParameter2,
-    _candidate: &ConicParameterCandidate2,
-    _policy: &CurveContext,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-}
-
-#[cfg(feature = "predicates")]
 #[derive(Clone)]
 struct ExactRealInterval {
     lower: Real,
     upper: Real,
 }
 
-#[cfg(feature = "predicates")]
 fn evaluate_rational_map_interval(
     numerator: &[Real],
     denominator: &[Real],
@@ -7787,7 +7709,6 @@ fn evaluate_rational_map_interval(
     multiply_intervals(&numerator, &reciprocal, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn evaluate_power_polynomial_interval(
     coefficients: &[Real],
     parameter: &ExactRealInterval,
@@ -7805,7 +7726,6 @@ fn evaluate_power_polynomial_interval(
     Some(value)
 }
 
-#[cfg(feature = "predicates")]
 fn reciprocal_interval(
     interval: &ExactRealInterval,
     policy: &CurveContext,
@@ -7826,7 +7746,6 @@ fn reciprocal_interval(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn multiply_intervals(
     left: &ExactRealInterval,
     right: &ExactRealInterval,
@@ -7845,7 +7764,6 @@ fn multiply_intervals(
     })
 }
 
-#[cfg(feature = "predicates")]
 fn sort_reals(values: &mut [Real], policy: &CurveContext) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
@@ -7924,7 +7842,6 @@ pub(crate) fn rational_parameter_image_matches(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            #[cfg(feature = "predicates")]
             {
                 let target_interval = match target.known_interval(policy)? {
                     Classification::Decided(interval) => interval,
@@ -7957,11 +7874,6 @@ pub(crate) fn rational_parameter_image_matches(
                     Classification::Uncertain(UncertaintyReason::Predicate),
                     Classification::Decided,
                 ))
-            }
-            #[cfg(not(feature = "predicates"))]
-            {
-                let _ = (target, candidate);
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
     }
@@ -8121,7 +8033,6 @@ fn conic_parameter_candidate(
             denominator = normalized_denominator;
         }
     }
-    #[cfg(feature = "predicates")]
     {
         Ok(Classification::Decided(ConicParameterCandidate2 {
             map: AlgebraicRootRationalMap::new(
@@ -8138,14 +8049,8 @@ fn conic_parameter_candidate(
             quotient_power: OnceLock::new(),
         }))
     }
-    #[cfg(not(feature = "predicates"))]
-    {
-        let _ = (source_polynomial, numerator, denominator);
-        Ok(Classification::Decided(ConicParameterCandidate2 {}))
-    }
 }
 
-#[cfg(feature = "predicates")]
 fn rational_image_parameter(
     source: &AlgebraicRootRepresentation,
     candidate: &ConicParameterCandidate2,
@@ -8217,15 +8122,6 @@ fn rational_image_parameter(
         }
         Err(error) => Err(error),
     }
-}
-
-#[cfg(not(feature = "predicates"))]
-fn rational_image_parameter(
-    _source: &AlgebraicRootRepresentation,
-    _candidate: &ConicParameterCandidate2,
-    _policy: &CurveContext,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
 }
 
 fn reverse_rational_intersection_contacts(
@@ -8899,7 +8795,6 @@ fn from_homogeneous(
 mod tests {
     use super::*;
 
-    #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
     }
@@ -8921,7 +8816,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn deferred_parametric_point_reuses_source_polynomials_for_exact_equality() {
         let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -8969,7 +8863,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn certified_rational_interval_sign_products_match_four_corner_enclosure() {
         for first_lower in -3_i64..=3 {
             for first_upper in first_lower..=3 {
@@ -9207,7 +9100,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn exact_degree_elevated_line_recovers_linear_parameter_transport() {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -9362,7 +9254,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn shared_demo_conic_cubic_contacts_are_complete() {
         let conic = RationalBezier2::try_new(
             vec![
@@ -9401,7 +9292,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn shared_demo_cubic_pair_contacts_are_complete() {
         let first = RationalBezier2::try_new(
             vec![
@@ -9432,7 +9322,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn implicit_conic_route_replays_quadratic_line_contact() {
         let conic = RationalBezier2::try_new(
             vec![
@@ -9475,7 +9364,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn exact_line_image_route_replays_algebraic_conic_contact() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let conic = RationalBezier2::try_new(
@@ -9584,7 +9472,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn conic_parameter_primary_map_defers_fallback_image_polynomial() {
         let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -9632,7 +9519,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn rational_parameter_image_map_reuses_quotient_authority_across_isolators() {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let two_thirds = Real::from(2_i8) * &third;
@@ -9700,7 +9586,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn conic_parameter_refines_primary_map_before_constructing_fallback() {
         let policy = CurveContext::STRICT;
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -9748,7 +9633,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_retains_nonrational_source_coefficients() {
         let policy = CurveContext::STRICT;
         let pi = Real::pi();
@@ -9771,7 +9655,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_reuses_nonrational_source_scale() {
         let policy = CurveContext::STRICT;
         let pi = Real::pi();
@@ -9803,7 +9686,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn quotient_ring_rational_image_matches_exact_resultant_samples() {
         let policy = CurveContext::STRICT;
         let source = [Real::from(-2_i8), Real::zero(), Real::zero(), Real::one()];
@@ -9838,7 +9720,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "predicates")]
     fn implicit_conic_contacts_retain_source_parameter_point_image_first() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();

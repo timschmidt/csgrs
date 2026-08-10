@@ -1133,16 +1133,26 @@ impl Shape {
                 .map_or_else(
                     || error.to_string(),
                     |blocker| {
-                        let kind = match blocker.blocker().kind() {
-                            CurveIntersectionPairBlockerKind2::Uncertain(_) => {
-                                "uncertain predicate"
+                        let kind = if let Some(native) = blocker.native_blocker() {
+                            match native.kind() {
+                                CurveIntersectionPairBlockerKind2::Uncertain(_) => {
+                                    "uncertain predicate"
+                                }
+                                CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                                    "incomplete contact replay"
+                                }
+                                CurveIntersectionPairBlockerKind2::SharedComponent => {
+                                    "shared algebraic component"
+                                }
                             }
-                            CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                                "incomplete contact replay"
-                            }
-                            CurveIntersectionPairBlockerKind2::SharedComponent => {
-                                "shared algebraic component"
-                            }
+                        } else if blocker.uncertainty_reason().is_some() {
+                            "uncertain predicate"
+                        } else if blocker.is_incomplete_replay() {
+                            "incomplete contact replay"
+                        } else if blocker.is_point_image_parameter_component() {
+                            "point-image parameter component"
+                        } else {
+                            "incomplete curve-region evidence"
                         };
                         format!(
                             "{error}; {kind} between {:?} loop {} fragment {} and {:?} loop {} fragment {}",

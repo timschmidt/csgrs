@@ -10,7 +10,6 @@ use hypercurve::{
 };
 use hypercurve::{Curve2, CurvePath2};
 
-#[cfg(feature = "predicates")]
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, CubicBezier2,
@@ -1048,7 +1047,6 @@ fn bench_represented_bezier_fillet_lane(
     );
 }
 
-#[cfg(feature = "predicates")]
 fn positive_sqrt_ratio_parameter(
     numerator: i32,
     denominator: i32,
@@ -1075,7 +1073,6 @@ fn positive_sqrt_ratio_parameter(
     ))
 }
 
-#[cfg(feature = "predicates")]
 fn positive_reciprocal_sqrt_parameter(
     denominator: i32,
     policy: &CurveContext,
@@ -1083,7 +1080,6 @@ fn positive_reciprocal_sqrt_parameter(
     positive_sqrt_ratio_parameter(1, denominator, policy)
 }
 
-#[cfg(feature = "predicates")]
 fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
     let policy = CurveContext::STRICT;
     let third = q(1, 3);
@@ -1142,7 +1138,6 @@ fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
     )
 }
 
-#[cfg(feature = "predicates")]
 fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     let policy = CurveContext::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
@@ -1218,7 +1213,6 @@ fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]>
     Ok([chord_region, source_region])
 }
 
-#[cfg(feature = "predicates")]
 fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     let policy = CurveContext::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
@@ -1266,7 +1260,6 @@ fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2
     Ok([chord_region, source_region])
 }
 
-#[cfg(feature = "predicates")]
 fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     let policy = CurveContext::STRICT;
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
@@ -1324,7 +1317,6 @@ fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     Ok([region(first_loop)?, region(second_loop)?])
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
     let policy = CurveContext::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
@@ -1370,7 +1362,6 @@ fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
     )
 }
 
-#[cfg(feature = "predicates")]
 fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> {
     let policy = CurveContext::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
@@ -1503,7 +1494,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_line_quadratic_algebraic_regularize") {
         let CurveCornerSolutions2::Unique(chamfered) = region
             .chamfer_loop_vertex_by_setbacks(0, 1, s(1), s(1), CurveCornerMode2::TrimOnly, &policy)
@@ -1530,7 +1520,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_source_related_algebraic_chord_regularize") {
         let retained = source_related_algebraic_chord_region()
             .expect("source-related algebraic chord benchmark fixture must remain exact");
@@ -1554,7 +1543,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_independent_field_algebraic_chord_boolean") {
         let [chord_region, source_region] = independent_field_algebraic_chord_regions()
             .expect("independent-field Boolean benchmark fixture must remain exact");
@@ -1574,7 +1562,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_noninjective_collinear_algebraic_chord_intersection") {
         let [chord_region, source_region] = noninjective_collinear_algebraic_chord_regions()
             .expect("noninjective collinear intersection fixture must remain exact");
@@ -1595,7 +1582,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_strict_interior_algebraic_chord_boolean") {
         let [first, second] = strict_interior_algebraic_chord_regions()
             .expect("strict-interior algebraic chord benchmark fixture must remain exact");
@@ -1615,7 +1601,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_axis_algebraic_miter_offset") {
         let source = axis_aligned_algebraic_offset_region()
             .expect("axis-aligned offset benchmark fixture must remain exact");
@@ -1638,7 +1623,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_axis_algebraic_round_offset") {
         let source = axis_aligned_algebraic_offset_region()
             .expect("axis-aligned round-offset benchmark fixture must remain exact");
@@ -1659,7 +1643,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_axis_algebraic_repeated_miter_offset") {
         let source = axis_aligned_algebraic_offset_region()
             .expect("axis-aligned repeated-offset benchmark fixture must remain exact");
@@ -1686,7 +1669,6 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    #[cfg(feature = "predicates")]
     if corner_lane_enabled("curve_region_axis_algebraic_neck_split") {
         let source = axis_aligned_algebraic_dumbbell_offset_region()
             .expect("algebraic dumbbell benchmark fixture must remain exact");

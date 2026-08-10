@@ -1,4 +1,3 @@
-#[cfg(feature = "predicates")]
 use hypercurve::{
     BezierParameter2, BezierSplitFragment2, CurveCertainty, CurveFamily2, CurveOperation2,
     ExactCurveError, QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation,
@@ -22,7 +21,6 @@ fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
 }
 
-#[cfg(feature = "predicates")]
 fn symbolic_rectangle_path(width: Real) -> CurvePath2 {
     let points = [
         Point2::new(Real::zero(), Real::zero()),
@@ -132,7 +130,6 @@ fn top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn top_level_intersection_retains_implicit_conic_transversality() {
     let conic = Curve2::from(
         RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap(),
@@ -290,7 +287,6 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
     let first = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
@@ -345,7 +341,6 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
     let parameterized_bottom = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
@@ -396,7 +391,6 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
     let partial_parabola = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
@@ -466,7 +460,6 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn path_boolean_surfaces_report_terminal_use_and_preserve_strict_rejection() {
     let first = symbolic_rectangle_path(Real::pi() + Real::e());
     let second = symbolic_rectangle_path(Real::e() + Real::pi());
@@ -589,7 +582,6 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
     let arc = Curve2::from(
@@ -1265,7 +1257,6 @@ fn path_boolean_traverses_overlapping_circles_with_exact_radical_splits() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     let first = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4))),
@@ -1356,7 +1347,6 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     }
 }
 
-#[cfg(feature = "predicates")]
 fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
     let controls = [p(-2, 4), p(0, -4), p(2, 4)];
     let elevated_controls = [
@@ -1428,7 +1418,6 @@ fn equivalent_parabola_curves() -> Vec<(CurveFamily2, Curve2)> {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn equivalent_top_level_families_complete_independent_region_booleans() {
     let cutter = rectangle(-3, 2, 3, 5);
     let policy = CurveContext::STRICT;

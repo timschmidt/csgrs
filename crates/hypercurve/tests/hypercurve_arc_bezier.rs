@@ -2,7 +2,6 @@ use hypercurve::{
     BezierSubcurve2, CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2,
     CurvePath2, LineSeg2, Point2, Real, UncertaintyReason,
 };
-#[cfg(feature = "predicates")]
 use hypercurve::{CurveCertainty, CurveOperation2, ExactCurveError};
 use hyperreal::RealSign;
 use std::cmp::Ordering;
@@ -24,13 +23,7 @@ fn q(numerator: i32, denominator: i32) -> Real {
 }
 
 fn assert_replayed_containment(classification: Classification<bool>) {
-    #[cfg(feature = "predicates")]
     assert_eq!(classification, Classification::Decided(true));
-    #[cfg(not(feature = "predicates"))]
-    assert!(matches!(
-        classification,
-        Classification::Decided(true) | Classification::Uncertain(UncertaintyReason::Predicate)
-    ));
 }
 
 #[test]
@@ -407,7 +400,6 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
 }
 
 #[test]
-#[cfg(feature = "predicates")]
 fn public_arc_native_topology_obeys_terminal_policy_once() {
     let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
     let center = Point2::new(Real::from(3) + &undecidable_zero, Real::one());

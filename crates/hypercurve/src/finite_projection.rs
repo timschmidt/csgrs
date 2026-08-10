@@ -662,7 +662,6 @@ fn project_curve_region_loop_to_curve_path(
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(_) => return Ok(None),
         };
         subcurves.push(curve);
@@ -867,7 +866,6 @@ fn project_curve_region_loop(
                     "finite projection of algebraic cusp semicircles is not implemented".into(),
                 ));
             }
-            #[cfg(feature = "predicates")]
             BezierSplitFragment2::SelectedFiber(_) => {
                 return Err(CurveError::Topology(
                     "finite projection of selected-fiber fragments is not implemented".into(),
@@ -1101,7 +1099,6 @@ fn push_if_new(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(feature = "predicates")]
     use crate::QuadraticBezier2;
     use crate::{CubicBezier2, Curve2, LineSeg2};
 
@@ -1143,7 +1140,6 @@ mod tests {
         ));
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn path_projection_obeys_terminal_policy_and_reports_consumption() {
         let start = Point2::new(Real::pi() + Real::e(), Real::zero());
@@ -1171,7 +1167,6 @@ mod tests {
         assert!(approximate.value.is_closed());
     }
 
-    #[cfg(feature = "predicates")]
     #[test]
     fn region_curve_path_projection_rechecks_symbolic_materialized_joins() {
         let start = Point2::new(Real::pi() + Real::e(), Real::zero());

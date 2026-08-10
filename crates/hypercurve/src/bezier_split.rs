@@ -20,11 +20,8 @@
 use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
-#[cfg(feature = "predicates")]
 use crate::Aabb2;
-#[cfg(feature = "predicates")]
 use crate::RationalBezierIntersectionPointEvidence2;
-#[cfg(feature = "predicates")]
 use crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2;
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
@@ -52,7 +49,6 @@ pub struct CurveRegionParameter2 {
 #[derive(Clone, Debug)]
 enum CurveRegionParameterData2 {
     Bezier(BezierParameter2),
-    #[cfg(feature = "predicates")]
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
     AlgebraicChord(BezierAlgebraicChordParameter2),
     AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
@@ -73,7 +69,6 @@ impl PartialEq for CurveRegionParameter2 {
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.shares_exact_evidence(second),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
@@ -96,7 +91,6 @@ impl CurveRegionParameter2 {
         }
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
         Self {
             data: CurveRegionParameterData2::SelectedFiber(parameter),
@@ -114,7 +108,6 @@ impl CurveRegionParameter2 {
     pub const fn as_bezier_parameter(&self) -> Option<&BezierParameter2> {
         match &self.data {
             CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
-            #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
             CurveRegionParameterData2::AlgebraicChord(_)
             | CurveRegionParameterData2::AlgebraicCusp(_) => None,
@@ -125,7 +118,6 @@ impl CurveRegionParameter2 {
     pub const fn as_exact(&self) -> Option<&Real> {
         match &self.data {
             CurveRegionParameterData2::Bezier(parameter) => parameter.as_exact(),
-            #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
             CurveRegionParameterData2::AlgebraicChord(_) => None,
             CurveRegionParameterData2::AlgebraicCusp(
@@ -147,12 +139,10 @@ impl CurveRegionParameter2 {
         matches!(self.data, CurveRegionParameterData2::AlgebraicChord(_))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn is_selected_fiber(&self) -> bool {
         matches!(self.data, CurveRegionParameterData2::SelectedFiber(_))
     }
 
-    #[cfg(feature = "predicates")]
     pub(crate) const fn as_selected_fiber(
         &self,
     ) -> Option<&BezierAlgebraicSelectedFiberParameter2> {
@@ -174,7 +164,6 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
                 None
             }
-            #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
         }
     }
@@ -185,7 +174,6 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicCusp(_) => {
                 None
             }
-            #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(_) => None,
         }
     }
@@ -208,17 +196,14 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.cmp_by_refinement(second, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
             ) => first.cmp_same_authority(second, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::Bezier(second),
             ) => first.cmp_bezier_parameter(second, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::Bezier(first),
                 CurveRegionParameterData2::SelectedFiber(second),
@@ -246,7 +231,6 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(parameter) => {
                 Some(Self::from_bezier(parameter.unit_complement()))
             }
-            #[cfg(feature = "predicates")]
             CurveRegionParameterData2::SelectedFiber(parameter) => {
                 Some(Self::from_selected_fiber(parameter.unit_complement()))
             }
@@ -269,17 +253,14 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.strict_rational_between(second, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
             ) => first.strict_rational_between_ordered(second, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::Bezier(second),
             ) => first.strict_rational_between_bezier_ordered(second, true, policy),
-            #[cfg(feature = "predicates")]
             (
                 CurveRegionParameterData2::Bezier(first),
                 CurveRegionParameterData2::SelectedFiber(second),
@@ -294,7 +275,6 @@ impl CurveRegionParameter2 {
                     "cannot separate parameters from distinct carrier domains".into(),
                 ))
             }
-            #[cfg(feature = "predicates")]
             (CurveRegionParameterData2::SelectedFiber(_), _)
             | (_, CurveRegionParameterData2::SelectedFiber(_)) => Err(CurveError::Topology(
                 "selected-fiber separation requires a shared local authority".into(),
@@ -380,7 +360,6 @@ pub struct BezierParallelFragment2 {
 /// family. Keeping the source in one compact enum lets rational and genuinely
 /// analytic parallels share one split/traversal owner without rationalizing or
 /// fitting the latter.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum BezierSelectedFiberSource2 {
     Rational(RationalBezier2),
@@ -393,7 +372,6 @@ pub(crate) enum BezierSelectedFiberSource2 {
 /// The native curve stays in its authored parameterization. Its compact local
 /// range and endpoint evidence avoid both a global norm polynomial and an
 /// approximate split construction.
-#[cfg(feature = "predicates")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierSelectedFiberFragment2 {
     source: BezierSelectedFiberSource2,
@@ -454,7 +432,6 @@ pub enum BezierSplitFragment2 {
     /// predicate evidence instead of an artificial primitive-element scalar.
     AlgebraicCuspSemicircle(BezierAlgebraicCuspSemicircleFragment2),
     /// Exact rational or analytic carrier restricted by selected-fiber scalar roots.
-    #[cfg(feature = "predicates")]
     SelectedFiber(BezierSelectedFiberFragment2),
     /// At least one boundary is algebraic and must be carried forward.
     Unresolved {
@@ -525,7 +502,6 @@ impl BezierSplitFragment2 {
                 Some((fragment.range.start(), fragment.range.end()))
             }
             Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => None,
-            #[cfg(feature = "predicates")]
             Self::SelectedFiber(_) => None,
         }
     }
@@ -550,13 +526,11 @@ impl BezierSplitFragment2 {
                 CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
                 CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             ),
-            #[cfg(feature = "predicates")]
             Self::SelectedFiber(fragment) => fragment.range.clone(),
         }
     }
 }
 
-#[cfg(feature = "predicates")]
 impl BezierSelectedFiberFragment2 {
     pub(crate) fn new(
         source: BezierSelectedFiberSource2,
@@ -1165,7 +1139,6 @@ impl BezierSplitFragment2 {
             Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
-            #[cfg(feature = "predicates")]
             Self::SelectedFiber(fragment) => fragment.representative_point(policy),
             Self::AlgebraicEndpointImages {
                 start,
@@ -1223,7 +1196,6 @@ impl BezierSplitFragment2 {
             Self::AlgebraicCuspSemicircle(fragment) => {
                 Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
             }
-            #[cfg(feature = "predicates")]
             Self::SelectedFiber(fragment) => Ok(Self::SelectedFiber(fragment.reversed())),
             Self::Unresolved { .. } => Err(CurveError::Topology(
                 "reversing an unresolved Bezier split fragment requires endpoint evidence"
@@ -1350,7 +1322,6 @@ fn validate_bezier_split_fragment(
                     .into(),
             ));
         }
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => {
             return Err(CurveError::Topology(
                 "selected-fiber fragments are region carriers, not native Bezier split materialization"
@@ -1418,7 +1389,6 @@ fn bezier_split_fragment_range(
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Err(CurveError::Topology(
             "retained region carrier has a distinct local parameter domain".into(),
         )),
-        #[cfg(feature = "predicates")]
         BezierSplitFragment2::SelectedFiber(_) => Err(CurveError::Topology(
             "retained region carrier has a distinct local parameter domain".into(),
         )),
