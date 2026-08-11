@@ -79097,6 +79097,17 @@ mod conversion_tests {
                 assert_tangent(second_half, first_half, tangent_dot);
             }
 
+            let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+            let Classification::Decided(Some(internal_parent)) = support
+                .scaled_radial_distance(&three_halves, &policy)
+                .unwrap()
+            else {
+                panic!("the internal parent must retain its three-quarter radius");
+            };
+            let internal_nested = nested.complementary_half();
+            assert_tangent(&internal_parent, &internal_nested, RealSign::Positive);
+            assert_tangent(&internal_nested, &internal_parent, RealSign::Positive);
+
             let parent_complement = parent.complementary_half();
             let nested_complement = nested.complementary_half();
             for (first_half, second_half) in [
