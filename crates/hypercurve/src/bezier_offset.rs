@@ -79045,6 +79045,78 @@ mod conversion_tests {
     }
 
     #[test]
+    fn nonstructural_recursive_centers_handle_exact_tangency() {
+        let translate = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::one(),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // These centers are exactly (1,0) and (1/2,-sqrt(3)/2), but the
+            // first is an independently authored recursive frame rather than
+            // either source frame that certified the second center.
+            let first = recursively_pair_radial_rational_center_half(&policy)
+                .transform_similarity(&translate)
+                .unwrap()
+                .complementary_half();
+            let second = recursively_pair_radial_half(&policy);
+            assert!(
+                first
+                    .represented_structural_center_relation(&second, &policy)
+                    .unwrap()
+                    .is_none(),
+                "the equal-distance tangency must exercise the generic quotient path",
+            );
+            for (left, right) in [(&first, &second), (&second, &first)] {
+                let result = left.pair_intersections(right, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    },
+                ) = result
+                else {
+                    panic!("the nonstructural recursive tangency must complete: {result:?}");
+                };
+                assert!(matches!(
+                    parameter_map.data.system,
+                    BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_),
+                ));
+                let [contact] = contacts.as_slice() else {
+                    panic!("the nonstructural recursive tangency must retain one contact");
+                };
+                assert_eq!(contact.branch, 0);
+                assert_eq!(
+                    contact.first_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(
+                    contact.second_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+                assert_eq!(
+                    parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                    Classification::Decided(RealSign::Negative),
+                );
+                for parameter in [
+                    parameter_map.first_contact_parameter(contact),
+                    parameter_map.second_contact_parameter(contact),
+                ] {
+                    assert!(matches!(
+                        parameter.parameter_bracket(16, &policy).unwrap(),
+                        Classification::Decided(_),
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
     fn independently_encoded_recursive_circles_map_all_coincident_half_relations() {
         // Counterclockwise quarter turn about the retained rational center
         // (0,-1): translation is C-RC=(-1,-1).
