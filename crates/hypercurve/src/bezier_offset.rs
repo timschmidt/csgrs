@@ -20370,9 +20370,93 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         self.tangent_cross_dot_linear_combination_sign(contact, &Real::zero(), &Real::one(), policy)
     }
 
-    fn selected_radial_ordinary_contact_bounds_refined(
+    #[allow(clippy::too_many_arguments)]
+    fn selected_radial_ordinary_derived_expressions(
+        system: &BezierSelectedRadialOrdinaryCirclePairParameterMapSystem2,
+        first: bool,
+        radial_scale: &Real,
+        perpendicular_scale: &Real,
+        translation_x: &Real,
+        translation_y: &Real,
+    ) -> Option<[BezierSelectedRadialCirclePairNestedExpression2; 2]> {
+        let (center_x, center_y) = if first {
+            (&system.first_center_x, &system.first_center_y)
+        } else {
+            (&system.second_center_x, &system.second_center_y)
+        };
+        let center_x =
+            BezierSelectedRadialCirclePairNestedExpression2::from_retained(center_x.clone())?;
+        let center_y =
+            BezierSelectedRadialCirclePairNestedExpression2::from_retained(center_y.clone())?;
+        let denominator = BezierSelectedRadialCirclePairNestedExpression2::from_retained(
+            system.common_denominator.clone(),
+        )?;
+        let one_minus_radial = Real::one() - radial_scale;
+        let negative_perpendicular = -perpendicular_scale.clone();
+        Some([
+            BezierSelectedRadialCirclePairNestedExpression2::linear_combination(&[
+                (&system.point_x, radial_scale),
+                (&system.point_y, &negative_perpendicular),
+                (&center_x, &one_minus_radial),
+                (&center_y, perpendicular_scale),
+                (&denominator, translation_x),
+            ])?,
+            BezierSelectedRadialCirclePairNestedExpression2::linear_combination(&[
+                (&system.point_x, perpendicular_scale),
+                (&system.point_y, radial_scale),
+                (&center_x, &negative_perpendicular),
+                (&center_y, &one_minus_radial),
+                (&denominator, translation_y),
+            ])?,
+        ])
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn selected_radial_selected_derived_expressions(
+        system: &BezierSelectedRadialSelectedCirclePairParameterMapSystem2,
+        first: bool,
+        radial_scale: &Real,
+        perpendicular_scale: &Real,
+        translation_x: &Real,
+        translation_y: &Real,
+    ) -> Option<[BezierSelectedRadialSelectedCircleNestedExpression2; 2]> {
+        let (center_x, center_y) = if first {
+            (&system.first_center_x, &system.first_center_y)
+        } else {
+            (&system.second_center_x, &system.second_center_y)
+        };
+        let center_x =
+            BezierSelectedRadialSelectedCircleNestedExpression2::from_retained(center_x.clone())?;
+        let center_y =
+            BezierSelectedRadialSelectedCircleNestedExpression2::from_retained(center_y.clone())?;
+        let denominator = BezierSelectedRadialSelectedCircleNestedExpression2::from_retained(
+            system.common_denominator.clone(),
+        )?;
+        let one_minus_radial = Real::one() - radial_scale;
+        let negative_perpendicular = -perpendicular_scale.clone();
+        Some([
+            BezierSelectedRadialSelectedCircleNestedExpression2::linear_combination(&[
+                (&system.point_x, radial_scale),
+                (&system.point_y, &negative_perpendicular),
+                (&center_x, &one_minus_radial),
+                (&center_y, perpendicular_scale),
+                (&denominator, translation_x),
+            ])?,
+            BezierSelectedRadialSelectedCircleNestedExpression2::linear_combination(&[
+                (&system.point_x, perpendicular_scale),
+                (&system.point_y, radial_scale),
+                (&center_x, &negative_perpendicular),
+                (&center_y, &one_minus_radial),
+                (&denominator, translation_y),
+            ])?,
+        ])
+    }
+
+    fn selected_radial_ordinary_expression_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        x_expression: &BezierSelectedRadialCirclePairNestedExpression2,
+        y_expression: &BezierSelectedRadialCirclePairNestedExpression2,
         refinement_steps: usize,
     ) -> Option<Classification<Aabb2>> {
         let system = self.selected_radial_ordinary_system()?;
@@ -20437,17 +20521,19 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 .add(&branch_interval(candidate, contact.branch))
                 .divide(&common_denominator, strict)
         };
-        let x = coordinate(&system.point_x)?;
-        let y = coordinate(&system.point_y)?;
+        let x = coordinate(x_expression)?;
+        let y = coordinate(y_expression)?;
         Some(Classification::Decided(Aabb2::new_unchecked(
             Point2::new(x.lower, y.lower),
             Point2::new(x.upper, y.upper),
         )))
     }
 
-    fn selected_radial_selected_contact_bounds_refined(
+    fn selected_radial_selected_expression_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        x_expression: &BezierSelectedRadialSelectedCircleNestedExpression2,
+        y_expression: &BezierSelectedRadialSelectedCircleNestedExpression2,
         refinement_steps: usize,
     ) -> Option<Classification<Aabb2>> {
         let system = self.selected_radial_selected_system()?;
@@ -20526,12 +20612,40 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 .add(&candidate)
                 .divide(&common_denominator, strict)
         };
-        let x = coordinate(&system.point_x)?;
-        let y = coordinate(&system.point_y)?;
+        let x = coordinate(x_expression)?;
+        let y = coordinate(y_expression)?;
         Some(Classification::Decided(Aabb2::new_unchecked(
             Point2::new(x.lower, y.lower),
             Point2::new(x.upper, y.upper),
         )))
+    }
+
+    fn selected_radial_ordinary_contact_bounds_refined(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        refinement_steps: usize,
+    ) -> Option<Classification<Aabb2>> {
+        let system = self.selected_radial_ordinary_system()?;
+        self.selected_radial_ordinary_expression_bounds_refined(
+            contact,
+            &system.point_x,
+            &system.point_y,
+            refinement_steps,
+        )
+    }
+
+    fn selected_radial_selected_contact_bounds_refined(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        refinement_steps: usize,
+    ) -> Option<Classification<Aabb2>> {
+        let system = self.selected_radial_selected_system()?;
+        self.selected_radial_selected_expression_bounds_refined(
+            contact,
+            &system.point_x,
+            &system.point_y,
+            refinement_steps,
+        )
     }
 
     /// Materializes one recursively authored circle contact as two exact
@@ -20543,6 +20657,37 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        self.represented_selected_radial_derived_point(
+            contact,
+            true,
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::zero(),
+            &self.data.policy,
+        )
+    }
+
+    /// Materializes `C + a(P-C) + b*J(P-C) + T` for one retained pair
+    /// contact `P` and either participating support center `C`. Every selected
+    /// root and nested radical remains correlated until the final coordinate
+    /// norm, after which a STRICT interval selects the authored real root.
+    #[allow(clippy::too_many_arguments)]
+    fn represented_selected_radial_derived_point(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+        radial_scale: &Real,
+        perpendicular_scale: &Real,
+        translation_x: &Real,
+        translation_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "a represented selected-radial point crossed predicate policies".into(),
+            ));
+        }
         if !(-1..=1).contains(&contact.branch) {
             return Err(CurveError::Topology(
                 "a represented selected-radial contact retained an invalid branch".into(),
@@ -20556,6 +20701,18 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialOrdinary(
                 system,
             ) => {
+                let Some([x_expression, y_expression]) =
+                    Self::selected_radial_ordinary_derived_expressions(
+                        system,
+                        first,
+                        radial_scale,
+                        perpendicular_scale,
+                        translation_x,
+                        translation_y,
+                    )
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
                 let Some([first, second]) = system.authority.source_pair_map.ordinary_parameters()
                 else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -20569,7 +20726,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     ),
                 ];
                 let Some(x_relation) = selected_radial_ordinary_coordinate_relation(
-                    &system.point_x,
+                    &x_expression,
                     &system.common_denominator,
                     &system.contact_discriminant,
                     &system.authority.pair_discriminant,
@@ -20578,7 +20735,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 let Some(y_relation) = selected_radial_ordinary_coordinate_relation(
-                    &system.point_y,
+                    &y_expression,
                     &system.common_denominator,
                     &system.contact_discriminant,
                     &system.authority.pair_discriminant,
@@ -20586,9 +20743,21 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 ) else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                let Some(bounds) =
-                    self.selected_radial_ordinary_contact_bounds_refined(contact, 64)
-                else {
+                let mut bounds = None;
+                for refinement_steps in [64, 32, 16, 8, 4, 2, 0] {
+                    if let Some(Classification::Decided(refined)) = self
+                        .selected_radial_ordinary_expression_bounds_refined(
+                            contact,
+                            &x_expression,
+                            &y_expression,
+                            refinement_steps,
+                        )
+                    {
+                        bounds = Some(refined);
+                        break;
+                    }
+                }
+                let Some(bounds) = bounds else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 (sources, x_relation, y_relation, bounds)
@@ -20596,6 +20765,18 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(
                 system,
             ) => {
+                let Some([x_expression, y_expression]) =
+                    Self::selected_radial_selected_derived_expressions(
+                        system,
+                        first,
+                        radial_scale,
+                        perpendicular_scale,
+                        translation_x,
+                        translation_y,
+                    )
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
                 let Some(parameters) = selected_radial_selected_parameters(&system.authority)
                 else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -20605,7 +20786,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     .into_iter()
                     .collect::<Vec<_>>();
                 let Some(x_relation) = selected_radial_selected_coordinate_relation(
-                    &system.point_x,
+                    &x_expression,
                     &system.common_denominator,
                     &system.contact_discriminant,
                     &system.authority.first_pair_discriminant,
@@ -20615,7 +20796,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 let Some(y_relation) = selected_radial_selected_coordinate_relation(
-                    &system.point_y,
+                    &y_expression,
                     &system.common_denominator,
                     &system.contact_discriminant,
                     &system.authority.first_pair_discriminant,
@@ -20624,16 +20805,25 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 ) else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                let Some(bounds) =
-                    self.selected_radial_selected_contact_bounds_refined(contact, 64)
-                else {
+                let mut bounds = None;
+                for refinement_steps in [64, 32, 16, 8, 4, 2, 0] {
+                    if let Some(Classification::Decided(refined)) = self
+                        .selected_radial_selected_expression_bounds_refined(
+                            contact,
+                            &x_expression,
+                            &y_expression,
+                            refinement_steps,
+                        )
+                    {
+                        bounds = Some(refined);
+                        break;
+                    }
+                }
+                let Some(bounds) = bounds else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 (sources, x_relation, y_relation, bounds)
             }
-        };
-        let Classification::Decided(bounds) = bounds else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
         let x =
             represented_tensor_coordinate(&x_relation, &sources, bounds.min_x(), bounds.max_x());
@@ -23537,6 +23727,31 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
 
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
+    }
+
+    /// Returns exact standalone coordinate representations for a derived
+    /// point backed directly by a selected-radial pair map. The pair map owns
+    /// the correlation and STRICT sheet selection; callers receive ordinary
+    /// algebraic numbers only after that proof is complete.
+    fn represented_coordinates(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<[AlgebraicRootRepresentation; 2]>>> {
+        self.data.source.validate_policy(policy)?;
+        let Some((map, contact, first)) = self.data.source.direct_pair_map_contact() else {
+            return Ok(Classification::Decided(None));
+        };
+        Ok(map
+            .represented_selected_radial_derived_point(
+                contact,
+                first,
+                &self.data.radial_scale,
+                &self.data.perpendicular_scale,
+                &self.data.translation_x,
+                &self.data.translation_y,
+                policy,
+            )?
+            .map(Some))
     }
 
     fn affine_bounds_refined(
@@ -38660,9 +38875,19 @@ fn algebraic_chord_point_coordinate_representation(
             .representation()
             .cloned()
         }
+        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) => {
+            let Classification::Decided(Some(coordinates)) =
+                point.represented_coordinates(policy).ok()?
+            else {
+                return None;
+            };
+            Some(match axis {
+                Axis2::X => coordinates[0].clone(),
+                Axis2::Y => coordinates[1].clone(),
+            })
+        }
         RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
         | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
         | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
         | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
@@ -74786,7 +75011,8 @@ mod conversion_tests {
                         Classification::Decided(std::cmp::Ordering::Less),
                     );
                 }
-                let pair_parameter = if first.uses_selected_radial_frame() {
+                let pair_first = first.uses_selected_radial_frame();
+                let pair_parameter = if pair_first {
                     parameter_map.first_contact_parameter(contact)
                 } else {
                     parameter_map.second_contact_parameter(contact)
@@ -74823,6 +75049,39 @@ mod conversion_tests {
                             )
                             .unwrap(),
                         Classification::Decided(std::cmp::Ordering::Equal),
+                    );
+                }
+                if pair_first {
+                    let BezierAlgebraicCuspSemicircleParameter2::Mapped(mapped_parameter) =
+                        pair_parameter
+                    else {
+                        panic!("the selected-radial contact parameter must remain mapped");
+                    };
+                    let rotated = BezierAlgebraicCuspChordDerivedPoint2::rotated_from_mapped_source(
+                        mapped_parameter,
+                        RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point),
+                        Real::zero(),
+                        Real::one(),
+                    );
+                    let represented = rotated.represented_coordinates(&policy).unwrap();
+                    let Classification::Decided(Some([rotated_x, rotated_y])) = represented else {
+                        panic!("the perpendicular pair image must materialize: {represented:?}");
+                    };
+                    assert_eq!(
+                        compare_reals(
+                            &rotated_x.interval.lower,
+                            &Real::zero(),
+                            &CurveContext::STRICT,
+                        ),
+                        Some(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        compare_reals(&rotated_y.interval.lower, &half, &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Less),
+                    );
+                    assert_eq!(
+                        compare_reals(&rotated_y.interval.upper, &half, &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Greater),
                     );
                 }
             }
