@@ -289,11 +289,18 @@ pub fn represent_algebraic_tensor_image(
     } else {
         None
     };
-    let interval = if let Some(root) = exact_linear_root {
+    // Tensor elimination often leaves extraneous conjugate factors even when
+    // the selected image is a small rational CAD coordinate. A floating-point
+    // enclosure is used only to propose bounded-denominator candidates; exact
+    // polynomial evaluation and exact interval containment are the authority.
+    let exact_rational_root = exact_linear_root.or_else(|| {
+        exact_small_denominator_root_in_interval(&polynomial_coefficients, image_interval)
+    });
+    let interval = if let Some(root) = &exact_rational_root {
         IsolatedRootInterval {
             lower: root.clone(),
             upper: root.clone(),
-            exact_root: Some(root),
+            exact_root: Some(root.clone()),
             distinct_root_count: 1,
         }
     } else {
@@ -330,6 +337,8 @@ pub fn represent_algebraic_tensor_image(
         interval
     };
     let first_source = &source_roots[0];
+    let polynomial_coefficients =
+        exact_rational_root.map_or(polynomial_coefficients, |root| vec![-root, Real::one()]);
     let mut representation = AlgebraicRootRepresentation {
         constraint_index: first_source.constraint_index,
         symbol: first_source.symbol,
@@ -364,6 +373,53 @@ pub fn represent_algebraic_tensor_image(
         representation: Some(representation),
         message: None,
     }
+}
+
+/// Recovers a selected rational image without using approximation as proof.
+/// Small denominators cover the overwhelmingly common authored CAD grid while
+/// leaving every other algebraic image on the unchanged exact isolator path.
+fn exact_small_denominator_root_in_interval(
+    polynomial_coefficients: &[Real],
+    interval: &IsolatedRootInterval,
+) -> Option<Real> {
+    const MAX_DENOMINATOR: i64 = 64;
+
+    let lower = interval.lower.to_f64_lossy()?;
+    let upper = interval.upper.to_f64_lossy()?;
+    if !lower.is_finite() || !upper.is_finite() {
+        return None;
+    }
+    let midpoint = lower / 2.0 + upper / 2.0;
+    for denominator in 1..=MAX_DENOMINATOR {
+        let numerator = (midpoint * denominator as f64).round();
+        if !numerator.is_finite() || numerator < i64::MIN as f64 || numerator > i64::MAX as f64 {
+            continue;
+        }
+        let rational = hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
+        let candidate = Real::new(rational);
+        if !matches!(
+            compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) || !matches!(
+            compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
+            continue;
+        }
+        let value = polynomial_coefficients
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &candidate + coefficient
+            });
+        if value
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
+            return Some(candidate);
+        }
+    }
+    None
 }
 
 fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
@@ -444,6 +500,34 @@ mod tests {
             .fold(0, |index, (dimension, exponent)| {
                 index * dimension + exponent
             })
+    }
+
+    #[test]
+    fn exact_small_rational_image_candidates_require_exact_replay() {
+        let tenth = (Real::one() / real(10)).unwrap();
+        let interval = IsolatedRootInterval {
+            lower: -tenth.clone(),
+            upper: tenth,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        // z(z^2-2) has the selected rational root zero inside the isolator.
+        assert_eq!(
+            exact_small_denominator_root_in_interval(
+                &[Real::zero(), real(-2), Real::zero(), Real::one()],
+                &interval,
+            ),
+            Some(Real::zero()),
+        );
+        // The same candidate hint must not be accepted without exact
+        // polynomial incidence.
+        assert_eq!(
+            exact_small_denominator_root_in_interval(
+                &[Real::one(), real(-2), Real::zero(), Real::one()],
+                &interval,
+            ),
+            None,
+        );
     }
 
     fn sum_relation(count: usize, constant: Real) -> DenseTensorPolynomial {
