@@ -4036,7 +4036,11 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     "a selected parallel contact lost its source-normal frame".into(),
                 )
             })?;
-            let anchor_parameter = semicircle.selected_frame_parameter();
+            let anchor_parameter = semicircle.selected_frame_parameter().ok_or_else(|| {
+                CurveError::Topology(
+                    "a selected parallel contact had no single center parameter".into(),
+                )
+            })?;
             let anchor_tangent = anchor.differential()?;
             let contact_tangent = parallel.differential()?;
             let tangent_cross = bivariate_subtract(
@@ -6548,15 +6552,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             .parameter
     }
 
-    fn selected_frame_parameter(&self) -> BezierParameter2 {
+    fn selected_frame_parameter(&self) -> Option<BezierParameter2> {
         match &self.data.frame {
             BezierSelectedCircleFrame2::Rational(frame) => {
-                BezierParameter2::Algebraic(frame.data.parameter.clone())
+                Some(BezierParameter2::Algebraic(frame.data.parameter.clone()))
             }
-            BezierSelectedCircleFrame2::ParallelNormal(frame) => frame.center_parameter.clone(),
-            BezierSelectedCircleFrame2::SelectedRadial(_) => {
-                unreachable!("a pair-radial circle has no single selected center parameter")
+            BezierSelectedCircleFrame2::ParallelNormal(frame) => {
+                Some(frame.center_parameter.clone())
             }
+            BezierSelectedCircleFrame2::SelectedRadial(_) => None,
         }
     }
 
@@ -9505,7 +9509,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         range: Option<&BezierParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
-        let center_parameter = match self.selected_frame_parameter() {
+        let frame_parameter = self.selected_frame_parameter().ok_or_else(|| {
+            CurveError::Topology(
+                "the parallel-normal kernel received a frame without one center parameter".into(),
+            )
+        })?;
+        let center_parameter = match frame_parameter {
             BezierParameter2::Algebraic(parameter) => parameter,
             BezierParameter2::Exact(parameter) => {
                 let polynomial = match BezierParameterPolynomial::try_new_power_basis(
@@ -12112,7 +12121,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
-        let BezierParameter2::Algebraic(center_parameter) = self.selected_frame_parameter() else {
+        let Some(BezierParameter2::Algebraic(center_parameter)) = self.selected_frame_parameter()
+        else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let rational_line = RationalBezier2::try_new(
@@ -12540,7 +12550,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             },
         );
         if self.uses_selected_parallel_normal_frame()
-            && self.selected_frame_parameter().as_exact().is_some()
+            && self
+                .selected_frame_parameter()
+                .as_ref()
+                .and_then(|parameter| parameter.as_exact())
+                .is_some()
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -12564,7 +12578,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         if self.uses_selected_parallel_normal_frame()
             && matches!(
                 self.selected_frame_parameter(),
-                BezierParameter2::Algebraic(_)
+                Some(BezierParameter2::Algebraic(_))
             )
         {
             #[cfg(feature = "dispatch-trace")]
@@ -13965,7 +13979,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center_parameter = self.selected_frame_parameter();
+        let center_parameter = self.selected_frame_parameter().ok_or_else(|| {
+            CurveError::Topology(
+                "the selected parallel-normal rational kernel lost its center parameter".into(),
+            )
+        })?;
         let incidence = match reduce_bivariate_in_selected_parameter(
             system.incidence,
             &center_parameter,
@@ -15587,7 +15605,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             ),
             &bivariate_multiply(&predicate.radical, &predicate.radical),
         );
-        let BezierParameter2::Algebraic(center_parameter) =
+        let Some(BezierParameter2::Algebraic(center_parameter)) =
             self.map.data.semicircle.selected_frame_parameter()
         else {
             return Err(CurveError::Topology(
@@ -37878,7 +37896,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 } else {
                     return None;
                 };
-                Some((parallel, self.data.semicircle.selected_frame_parameter()))
+                Some((parallel, self.data.semicircle.selected_frame_parameter()?))
             }
             BezierAlgebraicCuspSemicircleParameter2::Mapped(data) => {
                 let BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
@@ -69045,7 +69063,10 @@ mod conversion_tests {
                 std::mem::size_of::<BezierAlgebraicCuspSemicircle2>(),
                 std::mem::size_of::<usize>(),
             );
-            assert_eq!(circle.selected_frame_parameter(), center_parameter);
+            assert_eq!(
+                circle.selected_frame_parameter(),
+                Some(center_parameter.clone())
+            );
 
             let expected = |normal_distance: Real, tangent_distance: Real| {
                 RationalBezierIntersectionPointEvidence2::AnalyticParallel(
