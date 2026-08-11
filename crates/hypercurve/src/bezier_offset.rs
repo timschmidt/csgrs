@@ -67,11 +67,14 @@ use hypersolve::{
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
 };
 use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
-    AlgebraicRootRepresentation, AlgebraicTensorImageStatus, DenseTensorPolynomial,
-    IsolatedRootInterval, compare_algebraic_root_representations_with_refinement,
-    divide_univariate_polynomial_exact, greatest_common_divisor_univariate_polynomials_exact,
-    represent_algebraic_tensor_image,
+    AlgebraicRootAffineTransformStatus, AlgebraicRootComparisonStatus, AlgebraicRootKind,
+    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicRootSquareRootStatus, AlgebraicTensorImageStatus, DenseTensorPolynomial,
+    IsolatedRootInterval, algebraic_root_affine_relation,
+    compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
+    greatest_common_divisor_univariate_polynomials_exact, represent_algebraic_tensor_image,
+    square_root_algebraic_root_representation, transform_algebraic_root_affine,
+    validate_algebraic_root_representation,
 };
 use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
@@ -2773,6 +2776,30 @@ enum BezierAlgebraicCuspSemicirclePairParameterMapSystem2 {
     Ordinary(BezierAlgebraicCuspSemicircleOrdinaryPairParameterMapSystem2),
     SelectedRadialOrdinary(BezierSelectedRadialOrdinaryCirclePairParameterMapSystem2),
     SelectedRadialSelected(BezierSelectedRadialSelectedCirclePairParameterMapSystem2),
+    Represented(BezierRepresentedCirclePairParameterMapSystem2),
+}
+
+#[derive(Debug)]
+struct BezierRepresentedCirclePairParameterMapSystem2 {
+    first_center: [AlgebraicRootRepresentation; 2],
+    second_center: [AlgebraicRootRepresentation; 2],
+    contacts: Vec<BezierRepresentedCirclePairContactData2>,
+}
+
+#[derive(Debug)]
+struct BezierRepresentedCirclePairContactData2 {
+    branch: i8,
+    point: [AlgebraicRootRepresentation; 2],
+    first_parameter: BezierRepresentedCircleContactParameterData2,
+    second_parameter: BezierRepresentedCircleContactParameterData2,
+    tangent_cross: AlgebraicRootRepresentation,
+    tangent_dot: AlgebraicRootRepresentation,
+}
+
+#[derive(Debug)]
+enum BezierRepresentedCircleContactParameterData2 {
+    Materialized(BezierParameter2),
+    ExactContactRadial([Real; 2]),
 }
 
 #[derive(Debug)]
@@ -3865,6 +3892,25 @@ struct BezierSelectedRadialCircleFrameSystem2 {
     normal_denominator: Real,
 }
 
+/// Generic exact frame for a recursively authored selected-radial circle.
+/// `center` and `radial` are independently isolated algebraic coordinates of
+/// the authored center and parameter-zero radius. Together with the retained
+/// turn on the owning semicircle they define every circle predicate without a
+/// fixed source-field rank.
+#[derive(Clone, Debug)]
+struct BezierRepresentedSelectedRadialCircleFrame2 {
+    center: [AlgebraicRootRepresentation; 2],
+    radial: [AlgebraicRootRepresentation; 2],
+}
+
+struct BezierSelectedRadialCircleFrameSource2<'a> {
+    frame: &'a BezierSelectedRadialFrameData2,
+    pair_map: &'a BezierAlgebraicCuspSemicirclePairParameterMap2,
+    pair_contact: &'a BezierAlgebraicCuspSemicirclePairContact2,
+    support_first: bool,
+    similarity: Option<Similarity2>,
+}
+
 /// Three-axis exact incidence for a rational curve against a circle whose
 /// center and start radial are one retained contact of two selected circles.
 /// The first two axes are the original circle-center roots and the third is
@@ -4628,6 +4674,631 @@ fn represented_tensor_coordinate(
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
     }
+}
+
+/// Constructs one exact affine image of already selected algebraic numbers.
+/// Rational witnesses and certified affine-related sources collapse before
+/// elimination. Any remaining selected roots retain their exact isolators as
+/// tensor axes; no rounded coordinate or approximate sheet choice is used.
+fn represented_affine_coordinate(
+    terms: &[(&AlgebraicRootRepresentation, &Real)],
+    offset: &Real,
+) -> Classification<AlgebraicRootRepresentation> {
+    let mut affine_offset = offset.clone();
+    let active = terms
+        .iter()
+        .filter_map(|(source, scale)| {
+            if scale.zero_status() == ZeroStatus::Zero {
+                return None;
+            }
+            if let Some(value) = source.exact_rational_witness() {
+                affine_offset = affine_offset.clone() + *scale * value;
+                return None;
+            }
+            Some((*source, *scale))
+        })
+        .collect::<Vec<_>>();
+    if active.is_empty() {
+        return Classification::Decided(exact_real_algebraic_representation(&affine_offset));
+    }
+    let affine_image = |source: &AlgebraicRootRepresentation, scale: &Real, offset: &Real| {
+        if scale.zero_status() == ZeroStatus::Zero {
+            return Classification::Decided(exact_real_algebraic_representation(offset));
+        }
+        if scale == &Real::one() && offset.zero_status() == ZeroStatus::Zero {
+            return Classification::Decided(source.clone());
+        }
+        let report = transform_algebraic_root_affine(
+            source,
+            scale.clone(),
+            offset.clone(),
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        match report.status {
+            AlgebraicRootAffineTransformStatus::Transformed => Classification::Decided(
+                report
+                    .representation
+                    .expect("a transformed affine root retains its representation"),
+            ),
+            AlgebraicRootAffineTransformStatus::Undecided => {
+                Classification::Uncertain(UncertaintyReason::Predicate)
+            }
+            AlgebraicRootAffineTransformStatus::InvalidEvidence
+            | AlgebraicRootAffineTransformStatus::ZeroScale
+            | AlgebraicRootAffineTransformStatus::InvalidTransformedEvidence => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+        }
+    };
+    if active.len() == 1 {
+        return affine_image(active[0].0, active[0].1, &affine_offset);
+    }
+    let base = active[0].0;
+    let mut combined_scale = active[0].1.clone();
+    let mut combined_offset = affine_offset.clone();
+    let mut all_affine = true;
+    for (source, coefficient) in active.iter().skip(1) {
+        let relation = if *source == base {
+            Some(hypersolve::AlgebraicRootAffineRelation {
+                scale: Real::one(),
+                offset: Real::zero(),
+            })
+        } else {
+            algebraic_root_affine_relation(base, source, hypersolve::PredicatePolicy::STRICT)
+        };
+        let Some(relation) = relation else {
+            all_affine = false;
+            break;
+        };
+        combined_scale += *coefficient * relation.scale;
+        combined_offset += *coefficient * relation.offset;
+    }
+    if all_affine {
+        return affine_image(base, &combined_scale, &combined_offset);
+    }
+    let rank = active.len() + 1;
+    let output_axis = rank - 1;
+    let Some(mut relation) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        output_axis,
+        &[(-affine_offset.clone()), Real::one()],
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let mut interval = BezierAlgebraicChordRealInterval2 {
+        lower: affine_offset.clone(),
+        upper: affine_offset,
+    };
+    let mut sources = Vec::with_capacity(active.len());
+    for (axis, (source, scale)) in active.into_iter().enumerate() {
+        let Some(term) =
+            DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), scale.clone()])
+        else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let Some(next_relation) = relation.subtract(&term) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        relation = next_relation;
+        let source_interval = BezierAlgebraicChordRealInterval2 {
+            lower: source.interval.lower.clone(),
+            upper: source.interval.upper.clone(),
+        };
+        let scale_interval = BezierAlgebraicChordRealInterval2 {
+            lower: scale.clone(),
+            upper: scale.clone(),
+        };
+        let Some(term_interval) = source_interval.multiply(&scale_interval, &CurveContext::STRICT)
+        else {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        };
+        interval = interval.add(&term_interval);
+        sources.push(source.clone());
+    }
+    represented_tensor_coordinate(&relation, &sources, &interval.lower, &interval.upper)
+}
+
+fn represented_similarity_point(
+    point: &[AlgebraicRootRepresentation; 2],
+    transform: &Similarity2,
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let (a, b, d, e, xoff, yoff) = transform.affine_components();
+    let x = represented_affine_coordinate(&[(&point[0], a), (&point[1], b)], xoff);
+    let y = represented_affine_coordinate(&[(&point[0], d), (&point[1], e)], yoff);
+    match (x, y) {
+        (Classification::Decided(x), Classification::Decided(y)) => Classification::Decided([x, y]),
+        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
+    }
+}
+
+fn represented_similarity_vector(
+    vector: &[AlgebraicRootRepresentation; 2],
+    transform: &Similarity2,
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let (a, b, d, e, _, _) = transform.affine_components();
+    let x = represented_affine_coordinate(&[(&vector[0], a), (&vector[1], b)], &Real::zero());
+    let y = represented_affine_coordinate(&[(&vector[0], d), (&vector[1], e)], &Real::zero());
+    match (x, y) {
+        (Classification::Decided(x), Classification::Decided(y)) => Classification::Decided([x, y]),
+        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
+    }
+}
+
+fn dense_tensor_interval(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<BezierAlgebraicChordRealInterval2> {
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
+        return None;
+    }
+    let one = BezierAlgebraicChordRealInterval2 {
+        lower: Real::one(),
+        upper: Real::one(),
+    };
+    let powers = sources
+        .iter()
+        .zip(dimensions)
+        .map(|(source, dimension)| {
+            let value = BezierAlgebraicChordRealInterval2 {
+                lower: source.interval.lower.clone(),
+                upper: source.interval.upper.clone(),
+            };
+            let mut powers = Vec::with_capacity(*dimension);
+            powers.push(one.clone());
+            for power in 1..*dimension {
+                powers.push(powers[power - 1].multiply(&value, &CurveContext::STRICT)?);
+            }
+            Some(powers)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut sum = BezierAlgebraicChordRealInterval2 {
+        lower: Real::zero(),
+        upper: Real::zero(),
+    };
+    for (flat_index, coefficient) in polynomial.coefficients().iter().enumerate() {
+        if coefficient.zero_status() == ZeroStatus::Zero {
+            continue;
+        }
+        let mut remaining = flat_index;
+        let mut exponents = vec![0; dimensions.len()];
+        for axis in (0..dimensions.len()).rev() {
+            exponents[axis] = remaining % dimensions[axis];
+            remaining /= dimensions[axis];
+        }
+        let mut term = BezierAlgebraicChordRealInterval2 {
+            lower: coefficient.clone(),
+            upper: coefficient.clone(),
+        };
+        for axis in 0..sources.len() {
+            term = term.multiply(&powers[axis][exponents[axis]], &CurveContext::STRICT)?;
+        }
+        sum = sum.add(&term);
+    }
+    Some(sum)
+}
+
+fn refined_represented_root(
+    source: &AlgebraicRootRepresentation,
+    refinement_steps: usize,
+) -> AlgebraicRootRepresentation {
+    if refinement_steps == 0 || source.interval.exact_root.is_some() {
+        return source.clone();
+    }
+    let report = refine_isolated_univariate_polynomial_interval(
+        &source.polynomial_coefficients,
+        &source.interval,
+        RootIsolationConfig {
+            policy: hypersolve::PredicatePolicy::STRICT,
+            max_interval_width: None,
+            max_refinement_steps: refinement_steps,
+        },
+    );
+    let Some(interval) = report.refined_interval else {
+        return source.clone();
+    };
+    let mut refined = source.clone();
+    refined.kind = if interval.exact_root.is_some() {
+        AlgebraicRootKind::ExactRationalWitness
+    } else {
+        AlgebraicRootKind::IsolatingInterval
+    };
+    refined.interval = interval;
+    refined.validation =
+        validate_algebraic_root_representation(&refined, hypersolve::PredicatePolicy::STRICT);
+    if refined.is_valid() {
+        refined
+    } else {
+        source.clone()
+    }
+}
+
+fn represented_dense_value(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Classification<AlgebraicRootRepresentation> {
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+    let output_axis = dimensions.len() - 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        dimensions.len(),
+        output_axis,
+        &[Real::zero(), Real::one()],
+    ) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(relation) = output.subtract(polynomial) else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(interval) = dense_tensor_interval(polynomial, sources) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    represented_tensor_coordinate(&relation, sources, &interval.lower, &interval.upper)
+}
+
+fn represented_strict_sign(value: &AlgebraicRootRepresentation) -> Option<RealSign> {
+    if compare_reals(&value.interval.upper, &Real::zero(), &CurveContext::STRICT)
+        == Some(std::cmp::Ordering::Less)
+    {
+        return Some(RealSign::Negative);
+    }
+    if compare_reals(&value.interval.lower, &Real::zero(), &CurveContext::STRICT)
+        == Some(std::cmp::Ordering::Greater)
+    {
+        return Some(RealSign::Positive);
+    }
+    let zero = exact_real_algebraic_representation(&Real::zero());
+    let report = compare_algebraic_root_representations_with_refinement(
+        value,
+        &zero,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: hypersolve::PredicatePolicy::STRICT,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    matches!(
+        report.comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
+    .then_some(report.comparison.ordering)
+    .flatten()
+    .map(|order| match order {
+        std::cmp::Ordering::Less => RealSign::Negative,
+        std::cmp::Ordering::Equal => RealSign::Zero,
+        std::cmp::Ordering::Greater => RealSign::Positive,
+    })
+}
+
+fn represented_policy_sign(
+    value: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Classification<RealSign> {
+    if let Some(sign) = represented_strict_sign(value) {
+        return Classification::Decided(sign);
+    }
+    if !policy.permits_approximate_512() {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    }
+    let zero = exact_real_algebraic_representation(&Real::zero());
+    let report = compare_algebraic_root_representations_with_refinement(
+        value,
+        &zero,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: hypersolve::PredicatePolicy::APPROXIMATE_512,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    let Some(order) = matches!(
+        report.comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
+    .then_some(report.comparison.ordering)
+    .flatten() else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    policy.observe_approximate_512();
+    Classification::Decided(match order {
+        std::cmp::Ordering::Less => RealSign::Negative,
+        std::cmp::Ordering::Equal => RealSign::Zero,
+        std::cmp::Ordering::Greater => RealSign::Positive,
+    })
+}
+
+fn represented_ratio(
+    numerator: &AlgebraicRootRepresentation,
+    denominator: &AlgebraicRootRepresentation,
+) -> Classification<AlgebraicRootRepresentation> {
+    let numerator_interval = BezierAlgebraicChordRealInterval2 {
+        lower: numerator.interval.lower.clone(),
+        upper: numerator.interval.upper.clone(),
+    };
+    let denominator_interval = BezierAlgebraicChordRealInterval2 {
+        lower: denominator.interval.lower.clone(),
+        upper: denominator.interval.upper.clone(),
+    };
+    let Some(interval) = numerator_interval.divide(&denominator_interval, &CurveContext::STRICT)
+    else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let Some(numerator_axis) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(denominator_axis) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(output) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 2, &[Real::zero(), Real::one()])
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let Some(relation) = denominator_axis
+        .multiply(&output)
+        .and_then(|product| product.subtract(&numerator_axis))
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    represented_tensor_coordinate(
+        &relation,
+        &[numerator.clone(), denominator.clone()],
+        &interval.lower,
+        &interval.upper,
+    )
+}
+
+fn represented_circle_contact_location_parameter_from_dot_cross(
+    dot: AlgebraicRootRepresentation,
+    oriented_cross: AlgebraicRootRepresentation,
+    radius_squared: &Real,
+) -> CurveResult<
+    Classification<
+        Option<(
+            BezierAlgebraicCuspSemicircleContactLocation2,
+            BezierParameter2,
+        )>,
+    >,
+> {
+    let Some(cross_sign) = represented_strict_sign(&oriented_cross) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    if cross_sign == RealSign::Negative {
+        return Ok(Classification::Decided(None));
+    }
+    if cross_sign == RealSign::Zero {
+        let Some(dot_sign) = represented_strict_sign(&dot) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        return match dot_sign {
+            RealSign::Positive => Ok(Classification::Decided(Some((
+                BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                BezierParameter2::Exact(Real::zero()),
+            )))),
+            RealSign::Negative => Ok(Classification::Decided(Some((
+                BezierAlgebraicCuspSemicircleContactLocation2::End,
+                BezierParameter2::Exact(Real::one()),
+            )))),
+            RealSign::Zero => Err(CurveError::Topology(
+                "a represented nonzero circle contact had zero diameter coordinates".into(),
+            )),
+        };
+    }
+    let denominator = match represented_affine_coordinate(
+        &[(&dot, &Real::one()), (&oriented_cross, &Real::one())],
+        radius_squared,
+    ) {
+        Classification::Decided(denominator) => denominator,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if represented_strict_sign(&denominator) != Some(RealSign::Positive) {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    let parameter = match represented_ratio(&oriented_cross, &denominator) {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let parameter = match BezierParameter2::from_algebraic_root_representation(
+        &parameter,
+        &CurveContext::STRICT,
+    )? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(Some((
+        BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+        parameter,
+    ))))
+}
+
+fn represented_circle_dot_cross_from_exact_radial(
+    frame: &BezierRepresentedSelectedRadialCircleFrame2,
+    contact_radial: &[Real; 2],
+    turn: &Real,
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let dot = represented_affine_coordinate(
+        &[
+            (&frame.radial[0], &contact_radial[0]),
+            (&frame.radial[1], &contact_radial[1]),
+        ],
+        &Real::zero(),
+    );
+    let cross = represented_affine_coordinate(
+        &[
+            (&frame.radial[0], &contact_radial[1]),
+            (&frame.radial[1], &(-contact_radial[0].clone())),
+        ],
+        &Real::zero(),
+    );
+    let (Classification::Decided(dot), Classification::Decided(cross)) = (dot, cross) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let oriented_cross = match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
+        Classification::Decided(cross) => cross,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    Classification::Decided([dot, oriented_cross])
+}
+
+fn represented_exact_radial_linear_sign(
+    frame: &BezierRepresentedSelectedRadialCircleFrame2,
+    x_scale: &Real,
+    y_scale: &Real,
+    offset: &Real,
+) -> Option<RealSign> {
+    for refinement_steps in [0, 2, 4, 8] {
+        let x = refined_represented_root(&frame.radial[0], refinement_steps);
+        let y = refined_represented_root(&frame.radial[1], refinement_steps);
+        let interval = |source: &AlgebraicRootRepresentation, scale: &Real| {
+            BezierAlgebraicChordRealInterval2 {
+                lower: source.interval.lower.clone(),
+                upper: source.interval.upper.clone(),
+            }
+            .multiply(
+                &BezierAlgebraicChordRealInterval2 {
+                    lower: scale.clone(),
+                    upper: scale.clone(),
+                },
+                &CurveContext::STRICT,
+            )
+        };
+        let value = BezierAlgebraicChordRealInterval2 {
+            lower: offset.clone(),
+            upper: offset.clone(),
+        }
+        .add(&interval(&x, x_scale)?)
+        .add(&interval(&y, y_scale)?);
+        if compare_reals(&value.upper, &Real::zero(), &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Less)
+        {
+            return Some(RealSign::Negative);
+        }
+        if compare_reals(&value.lower, &Real::zero(), &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Greater)
+        {
+            return Some(RealSign::Positive);
+        }
+        if value.lower == Real::zero() && value.upper == Real::zero() {
+            return Some(RealSign::Zero);
+        }
+    }
+    None
+}
+
+fn represented_circle_contact_location_from_exact_radial(
+    frame: &BezierRepresentedSelectedRadialCircleFrame2,
+    contact_radial: &[Real; 2],
+    radius_squared: &Real,
+    turn: &Real,
+) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleContactLocation2>>> {
+    let cross_x = &contact_radial[1] * turn;
+    let cross_y = -(&contact_radial[0] * turn);
+    match represented_exact_radial_linear_sign(frame, &cross_x, &cross_y, &Real::zero()) {
+        Some(RealSign::Positive) => {
+            return Ok(Classification::Decided(Some(
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            )));
+        }
+        Some(RealSign::Negative) => return Ok(Classification::Decided(None)),
+        Some(RealSign::Zero) | None => {}
+    }
+    let [dot, cross] =
+        match represented_circle_dot_cross_from_exact_radial(frame, contact_radial, turn) {
+            Classification::Decided(values) => values,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    Ok(
+        represented_circle_contact_location_parameter_from_dot_cross(dot, cross, radius_squared)?
+            .map(|contact| contact.map(|(location, _)| location)),
+    )
+}
+
+fn represented_circle_contact_location_parameter(
+    frame: &BezierRepresentedSelectedRadialCircleFrame2,
+    point: &[AlgebraicRootRepresentation; 2],
+    radius_squared: &Real,
+    turn: &Real,
+) -> CurveResult<
+    Classification<
+        Option<(
+            BezierAlgebraicCuspSemicircleContactLocation2,
+            BezierParameter2,
+        )>,
+    >,
+> {
+    let rank = 7;
+    let axis = |axis| {
+        DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), Real::one()])
+    };
+    let Some((dot, cross)) = (|| {
+        let center_x = axis(0)?;
+        let center_y = axis(1)?;
+        let radial_x = axis(2)?;
+        let radial_y = axis(3)?;
+        let point_x = axis(4)?;
+        let point_y = axis(5)?;
+        let point_dx = point_x.subtract(&center_x)?;
+        let point_dy = point_y.subtract(&center_y)?;
+        Some((
+            radial_x
+                .multiply(&point_dx)?
+                .add(&radial_y.multiply(&point_dy)?)?,
+            radial_x
+                .multiply(&point_dy)?
+                .subtract(&radial_y.multiply(&point_dx)?)?,
+        ))
+    })() else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let sources = [
+        frame.center[0].clone(),
+        frame.center[1].clone(),
+        frame.radial[0].clone(),
+        frame.radial[1].clone(),
+        point[0].clone(),
+        point[1].clone(),
+    ];
+    let dot = match represented_dense_value(&dot, &sources) {
+        Classification::Decided(dot) => dot,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let oriented_cross = match represented_dense_value(&cross, &sources) {
+        Classification::Decided(cross) => {
+            match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
+                Classification::Decided(cross) => cross,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    represented_circle_contact_location_parameter_from_dot_cross(
+        dot,
+        oriented_cross,
+        radius_squared,
+    )
 }
 
 /// One nested value `X + branch*Y*sqrt(S)` where `X`, `Y`, and the
@@ -9706,12 +10377,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Classification::Decided((ray, intersections, parameter_map)))
     }
 
-    /// Resolves the single authoritative pair-field frame behind a
-    /// selected-radial circle, including exact similarity transport.
-    fn selected_radial_frame_system(
-        &self,
+    fn selected_radial_frame_source<'a>(
+        &'a self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierSelectedRadialCircleFrameSystem2>> {
+    ) -> CurveResult<Classification<BezierSelectedRadialCircleFrameSource2<'a>>> {
         let frame = self.data.frame.selected_radial().ok_or_else(|| {
             CurveError::Topology(
                 "a non-radial selected circle entered the pair-radial frame system".into(),
@@ -9768,9 +10437,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a pair-radial frame lost its authored pair policy or branch".into(),
             ));
         }
-        let Some(pair_system) = pair_map.ordinary_system() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
         let expected_support = if support_first {
             &pair_map.data.first_semicircle
         } else {
@@ -9781,6 +10447,46 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a pair-radial frame lost its source-circle identity".into(),
             ));
         }
+        let mut similarity: Option<Similarity2> = None;
+        for transform in similarity_transports.into_iter().rev() {
+            similarity = Some(match similarity {
+                Some(current) => current.then(transform),
+                None => transform.clone(),
+            });
+        }
+        Ok(Classification::Decided(
+            BezierSelectedRadialCircleFrameSource2 {
+                frame,
+                pair_map,
+                pair_contact,
+                support_first,
+                similarity,
+            },
+        ))
+    }
+
+    /// Resolves the compact pair-field frame behind a selected-radial circle,
+    /// including exact similarity transport. Recursively authored source maps
+    /// deliberately fall through to the represented frame authority.
+    fn selected_radial_frame_system(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierSelectedRadialCircleFrameSystem2>> {
+        let BezierSelectedRadialCircleFrameSource2 {
+            frame,
+            pair_map,
+            pair_contact,
+            support_first,
+            similarity: combined_similarity,
+        } = match self.selected_radial_frame_source(policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(pair_system) = pair_map.ordinary_system() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
         let mut first_frame = match pair_map
             .data
             .first_semicircle
@@ -9810,13 +10516,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
 
         let mut branch = pair_contact.branch;
-        let mut combined_similarity: Option<Similarity2> = None;
-        for transform in similarity_transports.into_iter().rev() {
-            combined_similarity = Some(match combined_similarity {
-                Some(current) => current.then(transform),
-                None => transform.clone(),
-            });
-        }
         let pair_scale_squared = if let Some(transform) = &combined_similarity {
             first_frame.transform_center_similarity(transform);
             second_frame.transform_center_similarity(transform);
@@ -9923,6 +10622,126 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(system.map_or(
             Classification::Uncertain(UncertaintyReason::Unsupported),
             Classification::Decided,
+        ))
+    }
+
+    /// Materializes the rank-independent frame used only when the compact
+    /// two-root source-pair frame cannot represent a recursive construction.
+    /// The authored center and parameter-zero radial are each selected under
+    /// STRICT before any enclosing operation may use APPROXIMATE_512.
+    fn represented_selected_radial_frame(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierRepresentedSelectedRadialCircleFrame2>> {
+        let BezierSelectedRadialCircleFrameSource2 {
+            frame,
+            pair_map,
+            pair_contact,
+            support_first,
+            similarity,
+        } = match self.selected_radial_frame_source(policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if pair_map.ordinary_system().is_some() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let center = match pair_map.represented_selected_radial_contact_point(pair_contact)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_scale = (self.radial_distance() / &frame.normal_denominator)?;
+        let radial = match pair_map.represented_selected_radial_vector(
+            pair_contact,
+            support_first,
+            &radial_scale,
+            &Real::zero(),
+            policy,
+        )? {
+            Classification::Decided(radial) => radial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let Some(similarity) = similarity else {
+            return Ok(Classification::Decided(
+                BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
+            ));
+        };
+        let center = match represented_similarity_point(&center, &similarity) {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial = match represented_similarity_vector(&radial, &similarity) {
+            Classification::Decided(radial) => radial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
+        ))
+    }
+
+    fn represented_circle_frame(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierRepresentedSelectedRadialCircleFrame2>> {
+        if self.uses_selected_radial_frame() {
+            return self.represented_selected_radial_frame(policy);
+        }
+        let center = match self.center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match self.point_evidence_at(&Real::zero(), policy)? {
+            Classification::Decided(start) => start,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let center = match represented_point_evidence_coordinates(&center, policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match represented_point_evidence_coordinates(&start, policy)? {
+            Classification::Decided(start) => start,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial = [
+            match represented_affine_coordinate(
+                &[(&start[0], &Real::one()), (&center[0], &Real::from(-1_i8))],
+                &Real::zero(),
+            ) {
+                Classification::Decided(radial) => radial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+            match represented_affine_coordinate(
+                &[(&start[1], &Real::one()), (&center[1], &Real::from(-1_i8))],
+                &Real::zero(),
+            ) {
+                Classification::Decided(radial) => radial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        ];
+        Ok(Classification::Decided(
+            BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
         ))
     }
 
@@ -16564,6 +17383,579 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
+    /// Returns the exact center translation between two recursively authored
+    /// frames that share one mapped source contact and the same similarity
+    /// linear part. Keeping that correlation avoids treating `T(P)` and `P`
+    /// as independent algebraic roots merely to rediscover `T(P)-P`.
+    fn represented_shared_translation(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<[Real; 2]>> {
+        let first = match self.selected_radial_frame_source(policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        let second = match other.selected_radial_frame_source(policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        if !Arc::ptr_eq(&first.pair_map.data, &second.pair_map.data)
+            || first.pair_contact != second.pair_contact
+            || first.support_first != second.support_first
+        {
+            return Ok(None);
+        }
+        let components = |similarity: Option<&Similarity2>| -> [Real; 6] {
+            match similarity {
+                Some(similarity) => {
+                    let (a, b, d, e, x, y) = similarity.affine_components();
+                    [
+                        a.clone(),
+                        b.clone(),
+                        d.clone(),
+                        e.clone(),
+                        x.clone(),
+                        y.clone(),
+                    ]
+                }
+                None => [
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                ],
+            }
+        };
+        let first = components(first.similarity.as_ref());
+        let second = components(second.similarity.as_ref());
+        if (0..4).any(|index| {
+            compare_reals(&first[index], &second[index], &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Equal)
+        }) {
+            return Ok(None);
+        }
+        Ok(Some([&second[4] - &first[4], &second[5] - &first[5]]))
+    }
+
+    /// Exact common-provenance circle-pair lane. The center delta and support
+    /// discriminant remain canonical `Real` scalars; each accepted contact
+    /// keeps its exact radial for lazy angular predicates and materializes only
+    /// the Cartesian coordinates required by downstream constructions.
+    fn represented_shared_translation_pair_intersections(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
+        let Some([dx, dy]) = self.represented_shared_translation(other, policy)? else {
+            return Ok(None);
+        };
+        let first_frame = match self.represented_circle_frame(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let second_frame = match other.represented_circle_frame(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let first_radius_squared = self.radial_distance() * self.radial_distance();
+        let second_radius_squared = other.radial_distance() * other.radial_distance();
+        let q = &dx * &dx + &dy * &dy;
+        match real_sign(&q, &CurveContext::STRICT) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Some(
+                    match real_sign(
+                        &(&first_radius_squared - &second_radius_squared),
+                        &CurveContext::STRICT,
+                    ) {
+                        Some(RealSign::Positive | RealSign::Negative) => Classification::Decided(
+                            BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                        ),
+                        Some(RealSign::Zero) => {
+                            return Ok(None);
+                        }
+                        None => Classification::Uncertain(UncertaintyReason::Predicate),
+                    },
+                ));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a translated circle-pair center distance squared was negative".into(),
+                ));
+            }
+            None => {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            }
+        }
+        let line = &q + &first_radius_squared - &second_radius_squared;
+        let discriminant = Real::from(4_i8) * &q * &first_radius_squared - &line * &line;
+        let branches: &[i8] = match real_sign(&discriminant, &CurveContext::STRICT) {
+            Some(RealSign::Negative) => {
+                return Ok(Some(Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                )));
+            }
+            Some(RealSign::Zero) => &[0],
+            Some(RealSign::Positive) => &[-1, 1],
+            None => {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            }
+        };
+        let radical = if branches.len() == 1 {
+            Real::zero()
+        } else {
+            discriminant.sqrt()?
+        };
+        let denominator = Real::from(2_i8) * &q;
+        let turn_product = self.turn_sign() * other.turn_sign();
+        let radial_dot = &first_radius_squared + &second_radius_squared - &q;
+        let mut contacts = Vec::with_capacity(branches.len());
+        let mut represented_contacts = Vec::with_capacity(branches.len());
+        for &branch in branches {
+            let signed_radical = Real::from(branch) * &radical;
+            let first_contact_radial = [
+                ((&line * &dx - &signed_radical * &dy) / &denominator)?,
+                ((&line * &dy + &signed_radical * &dx) / &denominator)?,
+            ];
+            let second_contact_radial = [
+                &first_contact_radial[0] - &dx,
+                &first_contact_radial[1] - &dy,
+            ];
+            let point = [
+                match represented_affine_coordinate(
+                    &[(&first_frame.center[0], &Real::one())],
+                    &first_contact_radial[0],
+                ) {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                },
+                match represented_affine_coordinate(
+                    &[(&first_frame.center[1], &Real::one())],
+                    &first_contact_radial[1],
+                ) {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                },
+            ];
+            let first_location = match represented_circle_contact_location_from_exact_radial(
+                &first_frame,
+                &first_contact_radial,
+                &first_radius_squared,
+                &self.turn_sign(),
+            )? {
+                Classification::Decided(Some(value)) => value,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let second_location = match represented_circle_contact_location_from_exact_radial(
+                &second_frame,
+                &second_contact_radial,
+                &second_radius_squared,
+                &other.turn_sign(),
+            )? {
+                Classification::Decided(Some(value)) => value,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let tangent_cross =
+                exact_real_algebraic_representation(&(&turn_product * &signed_radical));
+            let tangent_dot = exact_real_algebraic_representation(&(&turn_product * &radial_dot));
+            let Some(tangent_cross_sign) = represented_strict_sign(&tangent_cross) else {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            };
+            contacts.push(BezierAlgebraicCuspSemicirclePairContact2 {
+                branch,
+                first_location,
+                second_location,
+                tangent_cross_sign,
+            });
+            represented_contacts.push(BezierRepresentedCirclePairContactData2 {
+                branch,
+                point,
+                first_parameter: BezierRepresentedCircleContactParameterData2::ExactContactRadial(
+                    first_contact_radial,
+                ),
+                second_parameter: BezierRepresentedCircleContactParameterData2::ExactContactRadial(
+                    second_contact_radial,
+                ),
+                tangent_cross,
+                tangent_dot,
+            });
+        }
+        if contacts.is_empty() {
+            return Ok(Some(Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+            )));
+        }
+        let parameter_map = BezierAlgebraicCuspSemicirclePairParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicirclePairParameterMapData2 {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
+                system: BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(
+                    BezierRepresentedCirclePairParameterMapSystem2 {
+                        first_center: first_frame.center,
+                        second_center: second_frame.center,
+                        contacts: represented_contacts,
+                    },
+                ),
+                policy: *policy,
+            }),
+        };
+        Ok(Some(Classification::Decided(
+            BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        )))
+    }
+
+    /// Rank-independent exact circle-pair fallback. Compact fixed-field
+    /// systems remain the first choice; this path materializes only the two
+    /// circle frames and the retained outputs needed by later topology.
+    fn represented_pair_intersections(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
+        if let Some(result) =
+            self.represented_shared_translation_pair_intersections(other, policy)?
+        {
+            return Ok(result);
+        }
+        let first_frame = match self.represented_circle_frame(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second_frame = match other.represented_circle_frame(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let first_radius_squared = self.radial_distance() * self.radial_distance();
+        let second_radius_squared = other.radial_distance() * other.radial_distance();
+        let rank = 5;
+        let axis = |axis| {
+            DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), Real::one()])
+        };
+        let constant = |value: &Real| {
+            DenseTensorPolynomial::from_axis_polynomial(rank, 0, std::slice::from_ref(value))
+        };
+        let Some((q, line, discriminant, radial_dot, x_relation, y_relation)) = (|| {
+            let first_x = axis(0)?;
+            let first_y = axis(1)?;
+            let second_x = axis(2)?;
+            let second_y = axis(3)?;
+            let output = axis(4)?;
+            let dx = second_x.subtract(&first_x)?;
+            let dy = second_y.subtract(&first_y)?;
+            let q = dx.multiply(&dx)?.add(&dy.multiply(&dy)?)?;
+            let line = q.add(&constant(
+                &(&first_radius_squared - &second_radius_squared),
+            )?)?;
+            let discriminant = q
+                .scale(&(Real::from(4_i8) * &first_radius_squared))?
+                .subtract(&line.multiply(&line)?)?;
+            let radial_dot =
+                constant(&(&first_radius_squared + &second_radius_squared))?.subtract(&q)?;
+            let twice_q = q.scale(&Real::from(2_i8))?;
+            let x_retained = twice_q.multiply(&first_x)?.add(&line.multiply(&dx)?)?;
+            let y_retained = twice_q.multiply(&first_y)?.add(&line.multiply(&dy)?)?;
+            let x_side = twice_q.multiply(&output)?.subtract(&x_retained)?;
+            let y_side = twice_q.multiply(&output)?.subtract(&y_retained)?;
+            let x_relation = x_side
+                .multiply(&x_side)?
+                .subtract(&dy.multiply(&dy)?.multiply(&discriminant)?)?;
+            let y_relation = y_side
+                .multiply(&y_side)?
+                .subtract(&dx.multiply(&dx)?.multiply(&discriminant)?)?;
+            Some((q, line, discriminant, radial_dot, x_relation, y_relation))
+        })() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let sources = [
+            first_frame.center[0].clone(),
+            first_frame.center[1].clone(),
+            second_frame.center[0].clone(),
+            second_frame.center[1].clone(),
+        ];
+        let q_value = match represented_dense_value(&q, &sources) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match represented_strict_sign(&q_value) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return match real_sign(
+                    &(&first_radius_squared - &second_radius_squared),
+                    &CurveContext::STRICT,
+                ) {
+                    Some(RealSign::Positive | RealSign::Negative) => Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                    )),
+                    Some(RealSign::Zero) => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    }
+                    None => Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
+                };
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a represented circle-pair center distance squared was negative".into(),
+                ));
+            }
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+        }
+        let discriminant_value = match represented_dense_value(&discriminant, &sources) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let branches: &[i8] = match represented_strict_sign(&discriminant_value) {
+            Some(RealSign::Negative) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                ));
+            }
+            Some(RealSign::Zero) => &[0],
+            Some(RealSign::Positive) => &[-1, 1],
+            None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+        };
+        let line_value = match represented_dense_value(&line, &sources) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_dot_value = match represented_dense_value(&radial_dot, &sources) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let interval = |value: &AlgebraicRootRepresentation| BezierAlgebraicChordRealInterval2 {
+            lower: value.interval.lower.clone(),
+            upper: value.interval.upper.clone(),
+        };
+        let first_x = interval(&first_frame.center[0]);
+        let first_y = interval(&first_frame.center[1]);
+        let dx = interval(&second_frame.center[0]).subtract(&first_x);
+        let dy = interval(&second_frame.center[1]).subtract(&first_y);
+        let twice_q = interval(&q_value)
+            .multiply(
+                &BezierAlgebraicChordRealInterval2 {
+                    lower: Real::from(2_i8),
+                    upper: Real::from(2_i8),
+                },
+                &CurveContext::STRICT,
+            )
+            .ok_or_else(|| {
+                CurveError::Topology("a positive represented distance lost its interval".into())
+            })?;
+        let turn_product = self.turn_sign() * other.turn_sign();
+        let mut contacts = Vec::with_capacity(branches.len());
+        let mut represented_contacts = Vec::with_capacity(branches.len());
+        for &branch in branches {
+            let radical = square_root_algebraic_root_representation(&discriminant_value, branch);
+            let signed_radical = match radical.status {
+                AlgebraicRootSquareRootStatus::Transformed => radical
+                    .representation
+                    .expect("a transformed square root retains its representation"),
+                AlgebraicRootSquareRootStatus::UndecidedSign
+                | AlgebraicRootSquareRootStatus::NonIsolatingImageInterval => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                AlgebraicRootSquareRootStatus::InvalidEvidence
+                | AlgebraicRootSquareRootStatus::InvalidBranch
+                | AlgebraicRootSquareRootStatus::NegativeRadicand
+                | AlgebraicRootSquareRootStatus::NonzeroZeroBranch
+                | AlgebraicRootSquareRootStatus::InvalidTransformedEvidence => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+            };
+            let line_dx = interval(&line_value)
+                .multiply(&dx, &CurveContext::STRICT)
+                .ok_or_else(|| {
+                    CurveError::Topology("a represented contact lost its x interval".into())
+                })?;
+            let line_dy = interval(&line_value)
+                .multiply(&dy, &CurveContext::STRICT)
+                .ok_or_else(|| {
+                    CurveError::Topology("a represented contact lost its y interval".into())
+                })?;
+            let radical_dy = interval(&signed_radical)
+                .multiply(&dy, &CurveContext::STRICT)
+                .ok_or_else(|| {
+                    CurveError::Topology("a represented contact lost its x radical interval".into())
+                })?;
+            let radical_dx = interval(&signed_radical)
+                .multiply(&dx, &CurveContext::STRICT)
+                .ok_or_else(|| {
+                    CurveError::Topology("a represented contact lost its y radical interval".into())
+                })?;
+            let x_bounds = first_x.add(
+                &line_dx
+                    .subtract(&radical_dy)
+                    .divide(&twice_q, &CurveContext::STRICT)
+                    .ok_or_else(|| {
+                        CurveError::Topology(
+                            "a represented contact lost its positive x denominator".into(),
+                        )
+                    })?,
+            );
+            let y_bounds = first_y.add(
+                &line_dy
+                    .add(&radical_dx)
+                    .divide(&twice_q, &CurveContext::STRICT)
+                    .ok_or_else(|| {
+                        CurveError::Topology(
+                            "a represented contact lost its positive y denominator".into(),
+                        )
+                    })?,
+            );
+            let x = represented_tensor_coordinate(
+                &x_relation,
+                &sources,
+                &x_bounds.lower,
+                &x_bounds.upper,
+            );
+            let y = represented_tensor_coordinate(
+                &y_relation,
+                &sources,
+                &y_bounds.lower,
+                &y_bounds.upper,
+            );
+            let point = match (x, y) {
+                (Classification::Decided(x), Classification::Decided(y)) => [x, y],
+                (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+                | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                _ => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+            };
+            let first = match represented_circle_contact_location_parameter(
+                &first_frame,
+                &point,
+                &first_radius_squared,
+                &self.turn_sign(),
+            )? {
+                Classification::Decided(Some(value)) => value,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let second = match represented_circle_contact_location_parameter(
+                &second_frame,
+                &point,
+                &second_radius_squared,
+                &other.turn_sign(),
+            )? {
+                Classification::Decided(Some(value)) => value,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_cross = match represented_affine_coordinate(
+                &[(&signed_radical, &turn_product)],
+                &Real::zero(),
+            ) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_dot = match represented_affine_coordinate(
+                &[(&radial_dot_value, &turn_product)],
+                &Real::zero(),
+            ) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let Some(tangent_cross_sign) = represented_strict_sign(&tangent_cross) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            };
+            contacts.push(BezierAlgebraicCuspSemicirclePairContact2 {
+                branch,
+                first_location: first.0,
+                second_location: second.0,
+                tangent_cross_sign,
+            });
+            represented_contacts.push(BezierRepresentedCirclePairContactData2 {
+                branch,
+                point,
+                first_parameter: BezierRepresentedCircleContactParameterData2::Materialized(
+                    first.1,
+                ),
+                second_parameter: BezierRepresentedCircleContactParameterData2::Materialized(
+                    second.1,
+                ),
+                tangent_cross,
+                tangent_dot,
+            });
+        }
+        if contacts.is_empty() {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+            ));
+        }
+        let parameter_map = BezierAlgebraicCuspSemicirclePairParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicirclePairParameterMapData2 {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
+                system: BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(
+                    BezierRepresentedCirclePairParameterMapSystem2 {
+                        first_center: first_frame.center,
+                        second_center: second_frame.center,
+                        contacts: represented_contacts,
+                    },
+                ),
+                policy: *policy,
+            }),
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        ))
+    }
+
     /// Intersects two selected algebraic cusp semicircles through the exact
     /// circle-circle discriminant. Each of the at most two support branches is
     /// replayed against both oriented half-circle predicates.
@@ -16625,18 +18017,37 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         if self.uses_selected_radial_frame() {
             if other.uses_selected_radial_frame() {
-                return self.selected_radial_selected_pair_intersections(other, policy);
+                return match self.selected_radial_selected_pair_intersections(other, policy)? {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(_) => {
+                        self.represented_pair_intersections(other, policy)
+                    }
+                };
             }
             if other.data.frame.rational().is_some() {
-                return self.selected_radial_ordinary_pair_intersections(other, true, policy);
+                return match self
+                    .selected_radial_ordinary_pair_intersections(other, true, policy)?
+                {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(_) => {
+                        self.represented_pair_intersections(other, policy)
+                    }
+                };
             }
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return self.represented_pair_intersections(other, policy);
         }
         if other.uses_selected_radial_frame() {
             if self.data.frame.rational().is_some() {
-                return other.selected_radial_ordinary_pair_intersections(self, false, policy);
+                return match other
+                    .selected_radial_ordinary_pair_intersections(self, false, policy)?
+                {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(_) => {
+                        self.represented_pair_intersections(other, policy)
+                    }
+                };
             }
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return self.represented_pair_intersections(other, policy);
         }
         let system = match self.pair_system(other, policy)? {
             Classification::Decided(system) => system,
@@ -20196,9 +21607,8 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         match &self.data.system {
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Ordinary(system) => Some(system),
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialOrdinary(_)
-            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(_) => {
-                None
-            }
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(_)
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => None,
         }
     }
 
@@ -20215,9 +21625,8 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 system,
             ) => Some(system),
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Ordinary(_)
-            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(_) => {
-                None
-            }
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(_)
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => None,
         }
     }
 
@@ -20229,10 +21638,28 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 system,
             ) => Some(system),
             BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Ordinary(_)
-            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialOrdinary(_) => {
-                None
-            }
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialOrdinary(_)
+            | BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => None,
         }
+    }
+
+    fn represented_contact_data(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+    ) -> Option<(
+        &BezierRepresentedCirclePairParameterMapSystem2,
+        &BezierRepresentedCirclePairContactData2,
+    )> {
+        let BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(system) =
+            &self.data.system
+        else {
+            return None;
+        };
+        let data = system
+            .contacts
+            .iter()
+            .find(|candidate| candidate.branch == contact.branch)?;
+        Some((system, data))
     }
 
     /// Signs an exact linear combination of the two participating carrier
@@ -20359,6 +21786,25 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     policy,
                 )
             }
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => {
+                let Some((_, data)) = self.represented_contact_data(contact) else {
+                    return Err(CurveError::Topology(
+                        "a represented circle-pair contact lost its branch data".into(),
+                    ));
+                };
+                Ok(
+                    match represented_affine_coordinate(
+                        &[
+                            (&data.tangent_cross, cross_scale),
+                            (&data.tangent_dot, dot_scale),
+                        ],
+                        &Real::zero(),
+                    ) {
+                        Classification::Decided(value) => represented_policy_sign(&value, policy),
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    },
+                )
+            }
         }
     }
 
@@ -20374,6 +21820,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
     fn selected_radial_ordinary_derived_expressions(
         system: &BezierSelectedRadialOrdinaryCirclePairParameterMapSystem2,
         first: bool,
+        center_bias: &Real,
         radial_scale: &Real,
         perpendicular_scale: &Real,
         translation_x: &Real,
@@ -20391,13 +21838,13 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         let denominator = BezierSelectedRadialCirclePairNestedExpression2::from_retained(
             system.common_denominator.clone(),
         )?;
-        let one_minus_radial = Real::one() - radial_scale;
+        let center_scale = center_bias - radial_scale;
         let negative_perpendicular = -perpendicular_scale.clone();
         Some([
             BezierSelectedRadialCirclePairNestedExpression2::linear_combination(&[
                 (&system.point_x, radial_scale),
                 (&system.point_y, &negative_perpendicular),
-                (&center_x, &one_minus_radial),
+                (&center_x, &center_scale),
                 (&center_y, perpendicular_scale),
                 (&denominator, translation_x),
             ])?,
@@ -20405,7 +21852,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 (&system.point_x, perpendicular_scale),
                 (&system.point_y, radial_scale),
                 (&center_x, &negative_perpendicular),
-                (&center_y, &one_minus_radial),
+                (&center_y, &center_scale),
                 (&denominator, translation_y),
             ])?,
         ])
@@ -20415,6 +21862,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
     fn selected_radial_selected_derived_expressions(
         system: &BezierSelectedRadialSelectedCirclePairParameterMapSystem2,
         first: bool,
+        center_bias: &Real,
         radial_scale: &Real,
         perpendicular_scale: &Real,
         translation_x: &Real,
@@ -20432,13 +21880,13 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         let denominator = BezierSelectedRadialSelectedCircleNestedExpression2::from_retained(
             system.common_denominator.clone(),
         )?;
-        let one_minus_radial = Real::one() - radial_scale;
+        let center_scale = center_bias - radial_scale;
         let negative_perpendicular = -perpendicular_scale.clone();
         Some([
             BezierSelectedRadialSelectedCircleNestedExpression2::linear_combination(&[
                 (&system.point_x, radial_scale),
                 (&system.point_y, &negative_perpendicular),
-                (&center_x, &one_minus_radial),
+                (&center_x, &center_scale),
                 (&center_y, perpendicular_scale),
                 (&denominator, translation_x),
             ])?,
@@ -20446,7 +21894,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 (&system.point_x, perpendicular_scale),
                 (&system.point_y, radial_scale),
                 (&center_x, &negative_perpendicular),
-                (&center_y, &one_minus_radial),
+                (&center_y, &center_scale),
                 (&denominator, translation_y),
             ])?,
         ])
@@ -20683,6 +22131,50 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         translation_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        self.represented_selected_radial_affine(
+            contact,
+            first,
+            &Real::one(),
+            radial_scale,
+            perpendicular_scale,
+            translation_x,
+            translation_y,
+            policy,
+        )
+    }
+
+    fn represented_selected_radial_vector(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+        radial_scale: &Real,
+        perpendicular_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        self.represented_selected_radial_affine(
+            contact,
+            first,
+            &Real::zero(),
+            radial_scale,
+            perpendicular_scale,
+            &Real::zero(),
+            &Real::zero(),
+            policy,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn represented_selected_radial_affine(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+        center_bias: &Real,
+        radial_scale: &Real,
+        perpendicular_scale: &Real,
+        translation_x: &Real,
+        translation_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
         if self.data.policy != *policy {
             return Err(CurveError::Topology(
                 "a represented selected-radial point crossed predicate policies".into(),
@@ -20692,6 +22184,72 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             return Err(CurveError::Topology(
                 "a represented selected-radial contact retained an invalid branch".into(),
             ));
+        }
+        if let Some((system, data)) = self.represented_contact_data(contact) {
+            let center = if first {
+                &system.first_center
+            } else {
+                &system.second_center
+            };
+            let parameter = if first {
+                &data.first_parameter
+            } else {
+                &data.second_parameter
+            };
+            if let BezierRepresentedCircleContactParameterData2::ExactContactRadial(radial) =
+                parameter
+            {
+                let delta_x = radial_scale * &radial[0] - perpendicular_scale * &radial[1];
+                let delta_y = perpendicular_scale * &radial[0] + radial_scale * &radial[1];
+                let x = represented_affine_coordinate(
+                    &[(&center[0], center_bias)],
+                    &(translation_x + delta_x),
+                );
+                let y = represented_affine_coordinate(
+                    &[(&center[1], center_bias)],
+                    &(translation_y + delta_y),
+                );
+                return Ok(match (x, y) {
+                    (Classification::Decided(x), Classification::Decided(y)) => {
+                        Classification::Decided([x, y])
+                    }
+                    (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+                    | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                    _ => Classification::Uncertain(UncertaintyReason::Predicate),
+                });
+            }
+            let center_scale = center_bias - radial_scale;
+            let negative_perpendicular = -perpendicular_scale.clone();
+            let x = represented_affine_coordinate(
+                &[
+                    (&data.point[0], radial_scale),
+                    (&data.point[1], &negative_perpendicular),
+                    (&center[0], &center_scale),
+                    (&center[1], perpendicular_scale),
+                ],
+                translation_x,
+            );
+            let y = represented_affine_coordinate(
+                &[
+                    (&data.point[0], perpendicular_scale),
+                    (&data.point[1], radial_scale),
+                    (&center[0], &negative_perpendicular),
+                    (&center[1], &center_scale),
+                ],
+                translation_y,
+            );
+            return Ok(match (x, y) {
+                (Classification::Decided(x), Classification::Decided(y)) => {
+                    Classification::Decided([x, y])
+                }
+                (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+                | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                _ => Classification::Uncertain(UncertaintyReason::Predicate),
+            });
         }
         let strict = &CurveContext::STRICT;
         let (sources, x_relation, y_relation, bounds) = match &self.data.system {
@@ -20705,6 +22263,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     Self::selected_radial_ordinary_derived_expressions(
                         system,
                         first,
+                        center_bias,
                         radial_scale,
                         perpendicular_scale,
                         translation_x,
@@ -20769,6 +22328,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     Self::selected_radial_selected_derived_expressions(
                         system,
                         first,
+                        center_bias,
                         radial_scale,
                         perpendicular_scale,
                         translation_x,
@@ -20823,6 +22383,11 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 (sources, x_relation, y_relation, bounds)
+            }
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => {
+                return Err(CurveError::Topology(
+                    "a represented pair map lost its retained contact data".into(),
+                ));
             }
         };
         let x =
@@ -21397,6 +22962,97 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         )
     }
 
+    fn represented_contact_order_to_real_for_side(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+        parameter: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let Some((_, data)) = self.represented_contact_data(contact) else {
+            return Err(CurveError::Topology(
+                "a represented circle-pair parameter lost its branch data".into(),
+            ));
+        };
+        let (contact_parameter, location, semicircle) = if first {
+            (
+                &data.first_parameter,
+                contact.first_location,
+                &self.data.first_semicircle,
+            )
+        } else {
+            (
+                &data.second_parameter,
+                contact.second_location,
+                &self.data.second_semicircle,
+            )
+        };
+        if let Some(order) =
+            algebraic_cusp_semicircle_endpoint_contact_order(location, parameter, &self.data.policy)
+        {
+            return Ok(order);
+        }
+        match in_closed_unit_interval(parameter, &self.data.policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        match contact_parameter {
+            BezierRepresentedCircleContactParameterData2::Materialized(contact_parameter) => {
+                contact_parameter.cmp_by_refinement(
+                    &BezierParameter2::Exact(parameter.clone()),
+                    &self.data.policy,
+                )
+            }
+            BezierRepresentedCircleContactParameterData2::ExactContactRadial(contact_radial) => {
+                let frame = match semicircle.represented_circle_frame(&self.data.policy)? {
+                    Classification::Decided(frame) => frame,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let one_minus = Real::one() - parameter;
+                let negative_parameter = -parameter.clone();
+                let turn = semicircle.turn_sign();
+                let x_scale = &one_minus * &turn * &contact_radial[1]
+                    + &negative_parameter * &contact_radial[0];
+                let y_scale = -(&one_minus * &turn * &contact_radial[0])
+                    + &negative_parameter * &contact_radial[1];
+                let radius_squared = semicircle.radial_distance() * semicircle.radial_distance();
+                let offset = -parameter * &radius_squared;
+                let ordering = |sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                };
+                if let Some(sign) =
+                    represented_exact_radial_linear_sign(&frame, &x_scale, &y_scale, &offset)
+                {
+                    return Ok(Classification::Decided(ordering(sign)));
+                }
+                let [dot, cross] = match represented_circle_dot_cross_from_exact_radial(
+                    &frame,
+                    contact_radial,
+                    &turn,
+                ) {
+                    Classification::Decided(values) => values,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let predicate = match represented_affine_coordinate(
+                    &[(&cross, &one_minus), (&dot, &negative_parameter)],
+                    &offset,
+                ) {
+                    Classification::Decided(predicate) => predicate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                Ok(represented_policy_sign(&predicate, &self.data.policy).map(ordering))
+            }
+        }
+    }
+
     /// Orders the contact against a represented parameter on the first carrier.
     pub(crate) fn first_contact_order_to_real(
         &self,
@@ -21430,6 +23086,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 &system.first_diameter,
                 &system.first_radius_squared_denominator,
             ),
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => {
+                self.represented_contact_order_to_real_for_side(contact, true, parameter)
+            }
         }
     }
 
@@ -21466,6 +23125,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 &system.second_diameter,
                 &system.second_radius_squared_denominator,
             ),
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_) => {
+                self.represented_contact_order_to_real_for_side(contact, false, parameter)
+            }
         }
     }
 
@@ -38892,6 +40554,28 @@ fn algebraic_chord_point_coordinate_representation(
         | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
         | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
     }
+}
+
+fn represented_point_evidence_coordinates(
+    point: &RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+    if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) = point {
+        return Ok(match point.represented_coordinates(policy)? {
+            Classification::Decided(Some(coordinates)) => Classification::Decided(coordinates),
+            Classification::Decided(None) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        });
+    }
+    let Some(x) = algebraic_chord_point_coordinate_representation(point, Axis2::X, policy) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let Some(y) = algebraic_chord_point_coordinate_representation(point, Axis2::Y, policy) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    Ok(Classification::Decided([x, y]))
 }
 
 fn algebraic_chord_strict_rational_coordinate_between(
@@ -74926,6 +76610,46 @@ mod conversion_tests {
         circle
     }
 
+    fn recursively_pair_radial_half(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2 {
+        let ninth = (Real::one() / Real::from(9_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let pair = independent_pair_radial_unit_circle(policy);
+        let ordinary = synthetic_selected_cusp_semicircle(
+            vec![Real::zero(), Real::from(3_i8)],
+            vec![Real::zero()],
+            ninth,
+            (Real::one() / Real::from(4_i8)).unwrap(),
+            half.clone(),
+            Real::one(),
+            true,
+            policy,
+        );
+        let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+            contacts,
+            parameter_map,
+        }) = pair.pair_intersections(&ordinary, policy).unwrap()
+        else {
+            panic!("the recursive frame fixture must retain its pair contact");
+        };
+        let [contact] = contacts.as_slice() else {
+            panic!("the recursive frame fixture must have one contact");
+        };
+        let Classification::Decided(Some(recursive)) =
+            BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                &pair,
+                parameter_map.first_contact_parameter(contact),
+                Real::one(),
+                half,
+                false,
+                policy,
+            )
+            .unwrap()
+        else {
+            panic!("the recursively pair-authored circle must construct");
+        };
+        recursive
+    }
+
     #[test]
     fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
         let ninth = (Real::one() / Real::from(9_i8)).unwrap();
@@ -74998,10 +76722,9 @@ mod conversion_tests {
                     ),
                     Some(std::cmp::Ordering::Less),
                 );
-                for parameter in [
-                    parameter_map.first_contact_parameter(contact),
-                    parameter_map.second_contact_parameter(contact),
-                ] {
+                let first_parameter = parameter_map.first_contact_parameter(contact);
+                let second_parameter = parameter_map.second_contact_parameter(contact);
+                for parameter in [&first_parameter, &second_parameter] {
                     assert_eq!(
                         parameter.order_to_real(&Real::zero(), &policy).unwrap(),
                         Classification::Decided(std::cmp::Ordering::Greater),
@@ -75085,6 +76808,286 @@ mod conversion_tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_circle_materializes_its_exact_frame() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let encloses = |representation: &AlgebraicRootRepresentation, value: &Real| {
+            compare_reals(&representation.interval.lower, value, &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Greater)
+                && compare_reals(&representation.interval.upper, value, &CurveContext::STRICT)
+                    != Some(std::cmp::Ordering::Less)
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = recursively_pair_radial_half(&policy);
+            assert!(matches!(
+                recursive.selected_radial_frame_system(&policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Unsupported),
+            ));
+            let frame = recursive
+                .represented_selected_radial_frame(&policy)
+                .unwrap();
+            let Classification::Decided(frame) = frame else {
+                panic!("the recursive selected-radial frame must materialize: {frame:?}");
+            };
+            assert!(encloses(&frame.center[0], &half));
+            assert!(encloses(&frame.radial[0], &quarter));
+            assert_eq!(
+                compare_reals(
+                    &frame.center[1].interval.upper,
+                    &Real::zero(),
+                    &CurveContext::STRICT,
+                ),
+                Some(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                compare_reals(
+                    &frame.radial[1].interval.upper,
+                    &Real::zero(),
+                    &CurveContext::STRICT,
+                ),
+                Some(std::cmp::Ordering::Less),
+            );
+
+            let translate = Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::zero(),
+            )
+            .unwrap();
+            let translated = recursive.transform_similarity(&translate).unwrap();
+            let translated = translated
+                .represented_selected_radial_frame(&policy)
+                .unwrap();
+            let Classification::Decided(translated) = translated else {
+                panic!("the translated recursive frame must materialize: {translated:?}");
+            };
+            assert!(encloses(
+                &translated.center[0],
+                &(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+            ));
+            assert!(encloses(&translated.radial[0], &quarter));
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_circles_intersect_and_recurse_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
+        let three_sixteenths = (Real::from(3_i8) / Real::from(16_i8)).unwrap();
+        let translate = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            three_quarters,
+            Real::zero(),
+        )
+        .unwrap();
+        let encloses = |representation: &AlgebraicRootRepresentation, value: &Real| {
+            compare_reals(&representation.interval.lower, value, &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Greater)
+                && compare_reals(&representation.interval.upper, value, &CurveContext::STRICT)
+                    != Some(std::cmp::Ordering::Less)
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let recursive = recursively_pair_radial_half(&policy);
+            // The two radius-1/2 supports are 3/4 apart. Their aligned radial
+            // frames select both transverse contacts on complementary halves.
+            let first = recursive.clone();
+            let second = recursive
+                .transform_similarity(&translate)
+                .unwrap()
+                .complementary_half();
+            let result = first.pair_intersections(&second, &policy).unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts,
+                    parameter_map,
+                },
+            ) = result
+            else {
+                panic!("the recursive circle pair must complete exactly: {result:?}");
+            };
+            assert!(matches!(
+                parameter_map.data.system,
+                BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_),
+            ));
+            assert_eq!(contacts.len(), 2, "both transverse contacts must remain");
+            for (contact, tangent_cross_sign) in contacts
+                .iter()
+                .zip([RealSign::Negative, RealSign::Positive])
+            {
+                assert_eq!(
+                    contact.first_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(
+                    contact.second_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(contact.tangent_cross_sign, tangent_cross_sign);
+                assert_eq!(
+                    parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                    Classification::Decided(RealSign::Negative),
+                );
+                let Classification::Decided([x, y]) = parameter_map
+                    .represented_selected_radial_contact_point(contact)
+                    .unwrap()
+                else {
+                    panic!("the recursive pair contact must retain exact coordinates");
+                };
+                assert!(encloses(&x, &seven_eighths));
+                assert_eq!(
+                    compare_reals(&y.interval.upper, &Real::zero(), &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                );
+                let first_parameter = parameter_map.first_contact_parameter(contact);
+                let second_parameter = parameter_map.second_contact_parameter(contact);
+                for parameter in [&first_parameter, &second_parameter] {
+                    assert_eq!(
+                        parameter.order_to_real(&Real::zero(), &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        parameter.order_to_real(&Real::one(), &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                }
+                let first_half_order = if contact.branch < 0 {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                };
+                assert_eq!(
+                    first_parameter.order_to_real(&half, &policy).unwrap(),
+                    Classification::Decided(first_half_order),
+                );
+                assert_eq!(
+                    second_parameter.order_to_real(&half, &policy).unwrap(),
+                    Classification::Decided(first_half_order.reverse()),
+                );
+            }
+
+            // A represented pair map must itself remain a valid author for
+            // the next selected-radial construction layer.
+            let contact = contacts
+                .iter()
+                .find(|contact| contact.branch == -1)
+                .expect("the lower support branch must remain");
+            let Classification::Decided(Some(next)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    &first,
+                    parameter_map.first_contact_parameter(contact),
+                    half.clone(),
+                    quarter.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the represented recursive contact must author another circle");
+            };
+            let Classification::Decided(frame) =
+                next.represented_selected_radial_frame(&policy).unwrap()
+            else {
+                panic!("the next recursive frame must materialize exactly");
+            };
+            assert!(encloses(&frame.center[0], &seven_eighths));
+            assert!(encloses(&frame.radial[0], &three_sixteenths));
+            assert_eq!(
+                compare_reals(
+                    &frame.center[1].interval.upper,
+                    &Real::zero(),
+                    &CurveContext::STRICT,
+                ),
+                Some(std::cmp::Ordering::Less),
+            );
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_circles_handle_tangent_and_disjoint_supports() {
+        let translate = |distance: Real| {
+            Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                distance,
+                Real::zero(),
+            )
+            .unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = recursively_pair_radial_half(&policy);
+            let tangent = first
+                .transform_similarity(&translate(Real::one()))
+                .unwrap()
+                .complementary_half();
+            let result = first.pair_intersections(&tangent, &policy).unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts,
+                    parameter_map,
+                },
+            ) = result
+            else {
+                panic!("the recursive tangent pair must complete exactly: {result:?}");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the recursive tangent pair must retain one contact: {contacts:?}");
+            };
+            assert_eq!(contact.branch, 0);
+            assert_eq!(
+                contact.first_location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(
+                contact.second_location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+            assert_eq!(
+                parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                Classification::Decided(RealSign::Negative),
+            );
+            let Classification::Decided([x, y]) = parameter_map
+                .represented_selected_radial_contact_point(contact)
+                .unwrap()
+            else {
+                panic!("the recursive tangency must retain exact coordinates");
+            };
+            assert!(
+                compare_reals(&x.interval.lower, &Real::one(), &CurveContext::STRICT)
+                    != Some(std::cmp::Ordering::Greater)
+                    && compare_reals(&x.interval.upper, &Real::one(), &CurveContext::STRICT)
+                        != Some(std::cmp::Ordering::Less)
+            );
+            assert_eq!(
+                compare_reals(&y.interval.upper, &Real::zero(), &CurveContext::STRICT),
+                Some(std::cmp::Ordering::Less),
+            );
+
+            let disjoint = first
+                .transform_similarity(&translate(Real::from(2_i8)))
+                .unwrap()
+                .complementary_half();
+            assert!(matches!(
+                first.pair_intersections(&disjoint, &policy).unwrap(),
+                Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts
+                ),
+            ));
         }
     }
 
