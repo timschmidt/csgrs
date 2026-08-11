@@ -80,6 +80,25 @@ pub struct TrivariatePolynomial {
     pub coefficients: Vec<Vec<Vec<Real>>>,
 }
 
+/// Exact polynomial in four parameters.
+///
+/// `coefficients[first_power][second_power][third_power][fourth_power]`
+/// multiplies the corresponding ascending powers.  The fourth axis is the
+/// constrained fiber axis used by the bounded resultant helpers below; the
+/// first three axes remain as one exact [`TrivariatePolynomial`].
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadrivariatePolynomial {
+    /// Coefficient tensor in ascending powers of all four parameters.
+    pub coefficients: Vec<Vec<Vec<Vec<Real>>>>,
+}
+
+impl QuadrivariatePolynomial {
+    /// Constructs a quadrivariate polynomial from its ascending-power tensor.
+    pub const fn new(coefficients: Vec<Vec<Vec<Vec<Real>>>>) -> Self {
+        Self { coefficients }
+    }
+}
+
 impl TrivariatePolynomial {
     /// Constructs a trivariate polynomial from its ascending-power tensor.
     pub const fn new(coefficients: Vec<Vec<Vec<Real>>>) -> Self {
@@ -186,6 +205,40 @@ pub struct TrivariateConstraintSubresultantReport {
     pub degree_bounds: [usize; 2],
     /// Coefficients in ascending eliminated-axis power order.
     pub coefficients: Vec<BivariatePolynomial>,
+    /// Sampled determinant error, when construction stopped there.
+    pub determinant_error: Option<BareissError>,
+}
+
+/// Exact report for eliminating the fourth axis of a quadrivariate polynomial
+/// under one univariate algebraic constraint.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadrivariateConstraintResultantReport {
+    /// Final construction status.
+    pub status: TrivariateConstraintResultantStatus,
+    /// Conservative resultant degree bound on each retained axis.
+    pub degree_bounds: [usize; 3],
+    /// Exact resultant on the first three axes when construction succeeded.
+    pub resultant: Option<TrivariatePolynomial>,
+    /// Sampled resultant error, when construction stopped there.
+    pub resultant_error: Option<UnivariateResultantError>,
+}
+
+/// Exact fourth-axis subresultant with trivariate coefficient tensors.
+///
+/// `coefficients[k]` multiplies fourth-axis power `k`.  A caller can sign the
+/// coefficient tensors at three already selected roots and thereby recover
+/// the first nonzero polynomial in the selected fiber without constructing a
+/// primitive element for those roots.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuadrivariateConstraintSubresultantReport {
+    /// Final construction status.
+    pub status: TrivariateConstraintSubresultantStatus,
+    /// Requested positive subresultant order.
+    pub order: usize,
+    /// Conservative coefficient degree bound on each retained axis.
+    pub degree_bounds: [usize; 3],
+    /// Coefficients in ascending fourth-axis power order.
+    pub coefficients: Vec<TrivariatePolynomial>,
     /// Sampled determinant error, when construction stopped there.
     pub determinant_error: Option<BareissError>,
 }
@@ -840,6 +893,328 @@ pub fn subresultant_trivariate_polynomial_univariate_constraint(
     )
 }
 
+/// Eliminates the fourth axis of a quadrivariate polynomial under a
+/// univariate algebraic constraint on that axis.
+///
+/// This is the four-field counterpart of
+/// [`resultant_trivariate_polynomial_univariate_constraint`].  Only the fourth
+/// axis is exposed deliberately: geometry callers use the first three axes as
+/// an already selected coefficient field and need one additional fiber GCD,
+/// not a general-purpose four-variable elimination package.
+pub fn resultant_quadrivariate_polynomial_fourth_axis_constraint(
+    polynomial: &QuadrivariatePolynomial,
+    constraint: &[Real],
+    config: CurveIntersectionResultantConfig,
+) -> QuadrivariateConstraintResultantReport {
+    let report = |status, degree_bounds, resultant, resultant_error| {
+        QuadrivariateConstraintResultantReport {
+            status,
+            degree_bounds,
+            resultant,
+            resultant_error,
+        }
+    };
+    if quadrivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
+        return report(
+            TrivariateConstraintResultantStatus::EmptyPolynomial,
+            [0, 0, 0],
+            None,
+            None,
+        );
+    }
+    let degrees = match certified_quadrivariate_degree(polynomial, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintResultantStatus::Constructed,
+                [0, 0, 0],
+                Some(TrivariatePolynomial::new(vec![vec![vec![Real::zero()]]])),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                [0, 0, 0],
+                None,
+                None,
+            );
+        }
+    };
+    let constraint = match normalized_constraint(constraint, config.min_precision) {
+        Ok(Some(constraint)) => constraint,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintResultantStatus::InvalidConstraint,
+                [0, 0, 0],
+                None,
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                [0, 0, 0],
+                None,
+                None,
+            );
+        }
+    };
+    let constraint_degree = constraint.len() - 1;
+    let degree_bounds = std::array::from_fn(|axis| constraint_degree.saturating_mul(degrees[axis]));
+    if quadrivariate_grid_exceeds_budget(degree_bounds, config.max_resultant_degree) {
+        return report(
+            TrivariateConstraintResultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            None,
+            None,
+        );
+    }
+
+    let mut samples = vec![
+        vec![vec![Real::zero(); degree_bounds[2] + 1]; degree_bounds[1] + 1];
+        degree_bounds[0] + 1
+    ];
+    for (first, first_samples) in samples.iter_mut().enumerate() {
+        let first_value = Real::from(first as u64);
+        for (second, second_samples) in first_samples.iter_mut().enumerate() {
+            let second_value = Real::from(second as u64);
+            for (third, sample) in second_samples.iter_mut().enumerate() {
+                let third_value = Real::from(third as u64);
+                let fiber = evaluate_quadrivariate_at_first_three_parameters(
+                    polynomial,
+                    &first_value,
+                    &second_value,
+                    &third_value,
+                );
+                let fiber_degree = match certified_nonzero_degree(&fiber, config.min_precision) {
+                    Ok(degree) => degree,
+                    Err(()) => {
+                        return report(
+                            TrivariateConstraintResultantStatus::UndecidedCoefficient,
+                            degree_bounds,
+                            None,
+                            None,
+                        );
+                    }
+                };
+                *sample = if fiber_degree.is_none() {
+                    Real::zero()
+                } else {
+                    match resultant_univariate_polynomials(
+                        &constraint,
+                        &fiber,
+                        config.min_precision,
+                    ) {
+                        Ok(resultant) => resultant.resultant,
+                        Err(error) => {
+                            return report(
+                                TrivariateConstraintResultantStatus::ResultantError,
+                                degree_bounds,
+                                None,
+                                Some(error),
+                            );
+                        }
+                    }
+                };
+            }
+        }
+    }
+    let Some(resultant) = interpolate_rectangular_tensor_cube(&samples, config.min_precision)
+    else {
+        return report(
+            TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
+            degree_bounds,
+            None,
+            None,
+        );
+    };
+    report(
+        TrivariateConstraintResultantStatus::Constructed,
+        degree_bounds,
+        Some(resultant),
+        None,
+    )
+}
+
+/// Reconstructs one positive-order fourth-axis subresultant with trivariate
+/// coefficients.
+///
+/// Together with
+/// [`resultant_quadrivariate_polynomial_fourth_axis_constraint`], scanning
+/// orders from one upward recovers the exact GCD in a selected three-root
+/// coefficient fiber, including an even-multiplicity fourth-axis contact.
+pub fn subresultant_quadrivariate_polynomial_fourth_axis_constraint(
+    polynomial: &QuadrivariatePolynomial,
+    constraint: &[Real],
+    order: usize,
+    config: CurveIntersectionResultantConfig,
+) -> QuadrivariateConstraintSubresultantReport {
+    let report = |status, degree_bounds, coefficients, determinant_error| {
+        QuadrivariateConstraintSubresultantReport {
+            status,
+            order,
+            degree_bounds,
+            coefficients,
+            determinant_error,
+        }
+    };
+    if quadrivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
+        return report(
+            TrivariateConstraintSubresultantStatus::EmptyPolynomial,
+            [0, 0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+    let degrees = match certified_quadrivariate_degree(polynomial, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::EmptyPolynomial,
+                [0, 0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::UndecidedCoefficient,
+                [0, 0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+    let constraint = match normalized_constraint(constraint, config.min_precision) {
+        Ok(Some(constraint)) => constraint,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::InvalidConstraint,
+                [0, 0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::UndecidedCoefficient,
+                [0, 0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+    let polynomial_degree = degrees[3];
+    let constraint_degree = constraint.len() - 1;
+    let terminal_order = polynomial_degree.min(constraint_degree);
+    if order == 0 || order > terminal_order {
+        return report(
+            TrivariateConstraintSubresultantStatus::InvalidOrder,
+            [0, 0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+    if order == terminal_order {
+        let coefficients = if polynomial_degree < constraint_degree {
+            (0..=polynomial_degree)
+                .map(|power| quadrivariate_fourth_axis_coefficient(polynomial, power))
+                .collect()
+        } else {
+            constraint
+                .iter()
+                .map(|coefficient| TrivariatePolynomial::new(vec![vec![vec![coefficient.clone()]]]))
+                .collect()
+        };
+        let degree_bounds = if polynomial_degree < constraint_degree {
+            [degrees[0], degrees[1], degrees[2]]
+        } else {
+            [0, 0, 0]
+        };
+        return report(
+            TrivariateConstraintSubresultantStatus::Constructed,
+            degree_bounds,
+            coefficients,
+            None,
+        );
+    }
+
+    let polynomial_row_count = constraint_degree - order;
+    let degree_bounds =
+        std::array::from_fn(|axis| polynomial_row_count.saturating_mul(degrees[axis]));
+    if quadrivariate_grid_exceeds_budget(degree_bounds, config.max_resultant_degree) {
+        return report(
+            TrivariateConstraintSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
+    let mut samples = (0..=order)
+        .map(|_| {
+            vec![
+                vec![vec![Real::zero(); degree_bounds[2] + 1]; degree_bounds[1] + 1];
+                degree_bounds[0] + 1
+            ]
+        })
+        .collect::<Vec<_>>();
+    for first in 0..=degree_bounds[0] {
+        let first_value = Real::from(first as u64);
+        for second in 0..=degree_bounds[1] {
+            let second_value = Real::from(second as u64);
+            for third in 0..=degree_bounds[2] {
+                let third_value = Real::from(third as u64);
+                let mut fiber = evaluate_quadrivariate_at_first_three_parameters(
+                    polynomial,
+                    &first_value,
+                    &second_value,
+                    &third_value,
+                );
+                fiber.resize(polynomial_degree + 1, Real::zero());
+                fiber.truncate(polynomial_degree + 1);
+                let coefficients = match subresultant_coefficients(
+                    &fiber,
+                    &constraint,
+                    order,
+                    config.min_precision,
+                ) {
+                    Ok(coefficients) => coefficients,
+                    Err(error) => {
+                        return report(
+                            TrivariateConstraintSubresultantStatus::DeterminantError,
+                            degree_bounds,
+                            Vec::new(),
+                            Some(error),
+                        );
+                    }
+                };
+                for (coefficient_samples, coefficient) in samples.iter_mut().zip(coefficients) {
+                    coefficient_samples[first][second][third] = coefficient;
+                }
+            }
+        }
+    }
+    let Some(coefficients) = samples
+        .iter()
+        .map(|samples| interpolate_rectangular_tensor_cube(samples, config.min_precision))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return report(
+            TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+    report(
+        TrivariateConstraintSubresultantStatus::Constructed,
+        degree_bounds,
+        coefficients,
+        None,
+    )
+}
+
 fn trivariate_axis_coefficient_bivariate(
     polynomial: &TrivariatePolynomial,
     eliminated_axis: TrivariatePolynomialAxis,
@@ -929,6 +1304,51 @@ fn interpolate_rectangular_tensor_grid(
         }
     }
     Some(canonical_exact_bivariate(coefficients))
+}
+
+fn interpolate_rectangular_tensor_cube(
+    samples: &[Vec<Vec<Real>>],
+    min_precision: i32,
+) -> Option<TrivariatePolynomial> {
+    let first_count = samples.len();
+    let second_count = samples.first()?.len();
+    let third_count = samples.first()?.first()?.len();
+    if first_count == 0
+        || second_count == 0
+        || third_count == 0
+        || samples.iter().any(|plane| {
+            plane.len() != second_count || plane.iter().any(|row| row.len() != third_count)
+        })
+    {
+        return None;
+    }
+    let trailing_polynomials = samples
+        .iter()
+        .map(|plane| interpolate_rectangular_tensor_grid(plane, min_precision))
+        .collect::<Option<Vec<_>>>()?;
+    let mut coefficients = vec![vec![vec![Real::zero(); third_count]; second_count]; first_count];
+    for (second_power, row) in samples[0].iter().enumerate() {
+        for (third_power, _) in row.iter().enumerate() {
+            let first_samples = trailing_polynomials
+                .iter()
+                .enumerate()
+                .map(|(first, polynomial)| CurveIntersectionResultantSample {
+                    parameter_value: Real::from(first as u64),
+                    resultant: polynomial
+                        .coefficients
+                        .get(second_power)
+                        .and_then(|row| row.get(third_power))
+                        .cloned()
+                        .unwrap_or_else(Real::zero),
+                })
+                .collect::<Vec<_>>();
+            let first_polynomial = interpolate_samples(&first_samples, min_precision)?;
+            for (first_power, coefficient) in first_polynomial.into_iter().enumerate() {
+                coefficients[first_power][second_power][third_power] = coefficient;
+            }
+        }
+    }
+    Some(canonical_exact_trivariate(coefficients))
 }
 
 /// Final status for a curve intersection resultant report.
@@ -3325,6 +3745,26 @@ fn canonical_exact_bivariate(mut coefficients: Vec<Vec<Real>>) -> BivariatePolyn
     BivariatePolynomial::new(coefficients)
 }
 
+fn canonical_exact_trivariate(mut coefficients: Vec<Vec<Vec<Real>>>) -> TrivariatePolynomial {
+    for plane in &mut coefficients {
+        for row in plane.iter_mut() {
+            while row.last().is_some_and(exact_real_is_zero) {
+                row.pop();
+            }
+        }
+        while plane.last().is_some_and(Vec::is_empty) {
+            plane.pop();
+        }
+    }
+    while coefficients.last().is_some_and(Vec::is_empty) {
+        coefficients.pop();
+    }
+    if coefficients.is_empty() {
+        coefficients.push(vec![vec![Real::zero()]]);
+    }
+    TrivariatePolynomial::new(coefficients)
+}
+
 fn exact_bivariate_is_zero(polynomial: &BivariatePolynomial) -> bool {
     polynomial
         .coefficients
@@ -3348,6 +3788,149 @@ fn trivariate_polynomial_is_empty(polynomial: &TrivariatePolynomial) -> bool {
             .coefficients
             .iter()
             .all(|rows| rows.iter().all(Vec::is_empty))
+}
+
+fn quadrivariate_polynomial_is_empty(polynomial: &QuadrivariatePolynomial) -> bool {
+    polynomial.coefficients.is_empty()
+        || polynomial
+            .coefficients
+            .iter()
+            .all(|cubes| cubes.iter().all(|planes| planes.iter().all(Vec::is_empty)))
+}
+
+fn normalized_constraint(constraint: &[Real], min_precision: i32) -> Result<Option<Vec<Real>>, ()> {
+    let constraint = trim_trailing_zeroes(constraint.to_vec(), min_precision)?;
+    if constraint.len() <= 1 {
+        return Ok(None);
+    }
+    let leading = constraint
+        .last()
+        .expect("a nonconstant constraint has a leading coefficient");
+    constraint
+        .iter()
+        .map(|coefficient| (coefficient / leading).ok())
+        .collect::<Option<Vec<_>>>()
+        .map(Some)
+        .ok_or(())
+}
+
+fn quadrivariate_grid_exceeds_budget(degree_bounds: [usize; 3], maximum_degree: usize) -> bool {
+    degree_bounds
+        .into_iter()
+        .any(|degree| degree > maximum_degree)
+        || degree_bounds
+            .into_iter()
+            .try_fold(1_usize, |count, degree| count.checked_mul(degree + 1))
+            .is_none()
+}
+
+fn certified_quadrivariate_degree(
+    polynomial: &QuadrivariatePolynomial,
+    min_precision: i32,
+) -> Result<Option<[usize; 4]>, ()> {
+    let mut degrees = None;
+    for (first, cubes) in polynomial.coefficients.iter().enumerate() {
+        for (second, planes) in cubes.iter().enumerate() {
+            for (third, row) in planes.iter().enumerate() {
+                for (fourth, coefficient) in row.iter().enumerate() {
+                    match coefficient.certified_sign_until(min_precision) {
+                        CertifiedRealSign::Known {
+                            sign: RealSign::Zero,
+                            ..
+                        } => {}
+                        CertifiedRealSign::Known { .. } => {
+                            let degrees = degrees.get_or_insert([0, 0, 0, 0]);
+                            degrees[0] = degrees[0].max(first);
+                            degrees[1] = degrees[1].max(second);
+                            degrees[2] = degrees[2].max(third);
+                            degrees[3] = degrees[3].max(fourth);
+                        }
+                        CertifiedRealSign::Unknown { .. } => return Err(()),
+                    }
+                }
+            }
+        }
+    }
+    Ok(degrees)
+}
+
+fn quadrivariate_fourth_axis_coefficient(
+    polynomial: &QuadrivariatePolynomial,
+    power: usize,
+) -> TrivariatePolynomial {
+    canonical_exact_trivariate(
+        polynomial
+            .coefficients
+            .iter()
+            .map(|cubes| {
+                cubes
+                    .iter()
+                    .map(|planes| {
+                        planes
+                            .iter()
+                            .map(|row| row.get(power).cloned().unwrap_or_else(Real::zero))
+                            .collect()
+                    })
+                    .collect()
+            })
+            .collect(),
+    )
+}
+
+fn evaluate_quadrivariate_at_first_three_parameters(
+    polynomial: &QuadrivariatePolynomial,
+    first_value: &Real,
+    second_value: &Real,
+    third_value: &Real,
+) -> Vec<Real> {
+    let dimensions = [
+        polynomial.coefficients.len(),
+        polynomial
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+        polynomial
+            .coefficients
+            .iter()
+            .flat_map(|cubes| cubes.iter())
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+        polynomial
+            .coefficients
+            .iter()
+            .flat_map(|cubes| cubes.iter())
+            .flat_map(|planes| planes.iter())
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+    ];
+    let powers = |value: &Real, count: usize| {
+        let mut powers = Vec::with_capacity(count);
+        let mut power = Real::one();
+        for _ in 0..count {
+            powers.push(power.clone());
+            power *= value;
+        }
+        powers
+    };
+    let first_powers = powers(first_value, dimensions[0]);
+    let second_powers = powers(second_value, dimensions[1]);
+    let third_powers = powers(third_value, dimensions[2]);
+    let mut fiber = vec![Real::zero(); dimensions[3]];
+    for (first, cubes) in polynomial.coefficients.iter().enumerate() {
+        for (second, planes) in cubes.iter().enumerate() {
+            for (third, row) in planes.iter().enumerate() {
+                let scale = &first_powers[first] * &second_powers[second] * &third_powers[third];
+                for (fourth, coefficient) in row.iter().enumerate() {
+                    fiber[fourth] += coefficient * &scale;
+                }
+            }
+        }
+    }
+    fiber
 }
 
 fn certified_trivariate_degree(
@@ -5284,6 +5867,99 @@ mod tests {
                 .map(|coefficient| BivariatePolynomial::new(vec![vec![coefficient]]))
                 .collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd() {
+        // F(a,b,c,t)=(t-a)^2 and H(t)=t^2-2.  The retained b/c axes are
+        // deliberately present but inactive: the fourth-axis API must return
+        // the same exact tangent GCD while preserving trivariate coefficients.
+        let mut coefficients = vec![vec![vec![vec![real(0); 3]; 1]; 1]; 3];
+        coefficients[0][0][0][2] = real(1);
+        coefficients[1][0][0][1] = real(-2);
+        coefficients[2][0][0][0] = real(1);
+        let polynomial = QuadrivariatePolynomial::new(coefficients);
+        let constraint = [real(-2), real(0), real(1)];
+        let resultant = resultant_quadrivariate_polynomial_fourth_axis_constraint(
+            &polynomial,
+            &constraint,
+            CurveIntersectionResultantConfig::default(),
+        );
+        assert_eq!(
+            resultant.status,
+            TrivariateConstraintResultantStatus::Constructed
+        );
+        assert_eq!(resultant.degree_bounds, [4, 0, 0]);
+
+        let report = subresultant_quadrivariate_polynomial_fourth_axis_constraint(
+            &polynomial,
+            &constraint,
+            1,
+            CurveIntersectionResultantConfig::default(),
+        );
+        assert_eq!(
+            report.status,
+            TrivariateConstraintSubresultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [2, 0, 0]);
+        assert_eq!(report.coefficients.len(), 2);
+        let alpha = real(2).sqrt().unwrap();
+        let power = |value: &Real, exponent: usize| {
+            (0..exponent).fold(Real::one(), |product, _| product * value)
+        };
+        let evaluate = |polynomial: &TrivariatePolynomial| {
+            polynomial.coefficients.iter().enumerate().fold(
+                Real::zero(),
+                |sum, (exponent, planes)| {
+                    sum + planes
+                        .first()
+                        .and_then(|row| row.first())
+                        .cloned()
+                        .unwrap_or_else(Real::zero)
+                        * power(&alpha, exponent)
+                },
+            )
+        };
+        let gcd = report.coefficients.iter().map(evaluate).collect::<Vec<_>>();
+        assert_ne!(gcd[1], Real::zero());
+        assert_eq!(&gcd[0] + &alpha * &gcd[1], Real::zero());
+    }
+
+    #[test]
+    fn quadrivariate_fourth_axis_resultant_retains_all_three_source_axes() {
+        // F=t-(a+b+c), H=t^2-2, so Res_t(H,F)=(a+b+c)^2-2.
+        let mut coefficients = vec![vec![vec![vec![real(0); 2]; 2]; 2]; 2];
+        coefficients[0][0][0][1] = real(1);
+        coefficients[1][0][0][0] = real(-1);
+        coefficients[0][1][0][0] = real(-1);
+        coefficients[0][0][1][0] = real(-1);
+        let report = resultant_quadrivariate_polynomial_fourth_axis_constraint(
+            &QuadrivariatePolynomial::new(coefficients),
+            &[real(-2), real(0), real(1)],
+            CurveIntersectionResultantConfig::default(),
+        );
+        assert_eq!(
+            report.status,
+            TrivariateConstraintResultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [2, 2, 2]);
+        let resultant = report.resultant.unwrap();
+        let values = [real(1), real(2), real(3)];
+        let power = |value: &Real, exponent: usize| {
+            (0..exponent).fold(Real::one(), |product, _| product * value)
+        };
+        let mut evaluated = Real::zero();
+        for (first, planes) in resultant.coefficients.iter().enumerate() {
+            for (second, row) in planes.iter().enumerate() {
+                for (third, coefficient) in row.iter().enumerate() {
+                    evaluated += coefficient
+                        * power(&values[0], first)
+                        * power(&values[1], second)
+                        * power(&values[2], third);
+                }
+            }
+        }
+        assert_eq!(evaluated, real(34));
     }
 
     proptest! {
