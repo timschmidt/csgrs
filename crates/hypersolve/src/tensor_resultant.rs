@@ -160,6 +160,41 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
+    /// Substitutes one tensor variable for another equal selected variable.
+    ///
+    /// Powers on `removed_axis` are added to powers on `retained_axis`, then
+    /// the removed axis disappears. This is exact diagonal substitution and
+    /// lets represented-image callers avoid eliminating duplicate evidence
+    /// for the same uniquely selected algebraic number.
+    pub fn substitute_equal_axes(&self, retained_axis: usize, removed_axis: usize) -> Option<Self> {
+        if retained_axis >= self.dimensions.len()
+            || removed_axis >= self.dimensions.len()
+            || retained_axis == removed_axis
+        {
+            return None;
+        }
+        let merged_dimension = self.dimensions[retained_axis]
+            .checked_add(self.dimensions[removed_axis])?
+            .checked_sub(1)?;
+        let target_axis = if removed_axis < retained_axis {
+            retained_axis - 1
+        } else {
+            retained_axis
+        };
+        let mut dimensions = self.dimensions.clone();
+        dimensions.remove(removed_axis);
+        dimensions[target_axis] = merged_dimension;
+        let mut result = Self::zero(dimensions.clone())?;
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            let mut target = exponents(&self.dimensions, index);
+            let merged_power = target[retained_axis].checked_add(target[removed_axis])?;
+            target.remove(removed_axis);
+            target[target_axis] = merged_power;
+            result.coefficients[flat_index(&dimensions, &target)] += coefficient;
+        }
+        Some(result)
+    }
+
     /// Replaces every selected-axis fiber by its exact polynomial remainder.
     ///
     /// At any root of `modulus`, the returned tensor has exactly the same
@@ -860,5 +895,32 @@ mod tests {
         assert_eq!(reduced.coefficient(&[1, 0, 0]), Some(&real(2)));
         assert_eq!(reduced.coefficient(&[0, 0, 0]), Some(&real(5)));
         assert_eq!(reduced.coefficient(&[0, 1, 0]), Some(&real(7)));
+    }
+
+    #[test]
+    fn dense_tensor_equal_axis_substitution_adds_source_powers() {
+        let first = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+            .unwrap();
+        let second =
+            DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let diagonal = first
+            .add(&second)
+            .unwrap()
+            .add(&first.multiply(&second).unwrap())
+            .unwrap()
+            .substitute_equal_axes(0, 1)
+            .unwrap();
+        assert_eq!(diagonal.dimensions(), &[3, 1]);
+        assert_eq!(diagonal.coefficient(&[1, 0]), Some(&real(2)));
+        assert_eq!(diagonal.coefficient(&[2, 0]), Some(&Real::one()));
+
+        let reverse = first
+            .multiply(&second)
+            .unwrap()
+            .substitute_equal_axes(1, 0)
+            .unwrap();
+        assert_eq!(reverse.dimensions(), &[3, 1]);
+        assert_eq!(reverse.coefficient(&[2, 0]), Some(&Real::one()));
     }
 }

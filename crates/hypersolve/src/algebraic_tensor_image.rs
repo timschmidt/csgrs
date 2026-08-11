@@ -99,7 +99,33 @@ pub fn represent_algebraic_tensor_image(
         }
     }
 
+    let original_source_count = source_roots.len();
+    let mut source_roots = source_roots.to_vec();
     let mut relation = relation.clone();
+    let mut source_index = 0;
+    while source_index < source_roots.len() {
+        let duplicate = source_roots[..source_index]
+            .iter()
+            .position(|source| source == &source_roots[source_index]);
+        if let Some(retained_index) = duplicate {
+            let Some(diagonal) = relation.substitute_equal_axes(retained_index, source_index)
+            else {
+                return report(
+                    AlgebraicTensorImageStatus::InvalidRelationShape,
+                    0,
+                    None,
+                    None,
+                    "duplicate tensor-image source axes could not be identified exactly",
+                );
+            };
+            relation = diagonal;
+            source_roots.remove(source_index);
+        } else {
+            source_index += 1;
+        }
+    }
+
+    let mut constraints = Vec::with_capacity(source_roots.len());
     for (source_index, source) in source_roots.iter().enumerate() {
         let Some(constraint) = square_free_part(
             source.polynomial_coefficients.clone(),
@@ -113,20 +139,31 @@ pub fn represent_algebraic_tensor_image(
                 "a tensor-image source constraint could not be square-freed exactly",
             );
         };
-        let Some(reduced) = relation.reduce_axis_modulo(0, &constraint, PredicatePolicy::STRICT)
+        constraints.push(canonicalize_proven_rational_coefficients(constraint));
+    }
+
+    // Keep every selected source axis canonical from the outset. Repeating
+    // this reduction for every still-live source after each resultant avoids
+    // degree growth in powers already implied by those source constraints.
+    for (axis, constraint) in constraints.iter().enumerate() {
+        let Some(reduced) = relation.reduce_axis_modulo(axis, constraint, PredicatePolicy::STRICT)
         else {
             return report(
                 AlgebraicTensorImageStatus::SourceSquareFreeFailed,
-                source_index,
+                axis,
                 None,
                 None,
                 "a tensor-image source axis could not be reduced in its exact quotient ring",
             );
         };
         relation = reduced;
+    }
+    relation = canonicalize_proven_rational_tensor(relation);
+
+    for (source_index, constraint) in constraints.iter().enumerate() {
         let elimination = resultant_tensor_polynomial_univariate_constraint(
             &relation,
-            &constraint,
+            constraint,
             0,
             PredicatePolicy::MAX_REFINEMENT_PRECISION,
         );
@@ -146,11 +183,27 @@ pub fn represent_algebraic_tensor_image(
         relation = elimination
             .resultant
             .expect("a constructed tensor resultant retains its polynomial");
+        relation = canonicalize_proven_rational_tensor(relation);
+        for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
+            let Some(reduced) =
+                relation.reduce_axis_modulo(axis, remaining_constraint, PredicatePolicy::STRICT)
+            else {
+                return report(
+                    AlgebraicTensorImageStatus::SourceSquareFreeFailed,
+                    source_index + axis + 1,
+                    None,
+                    None,
+                    "a remaining tensor-image source axis could not be reduced in its exact quotient ring",
+                );
+            };
+            relation = reduced;
+        }
+        relation = canonicalize_proven_rational_tensor(relation);
     }
     if relation.dimensions().len() != 1 {
         return report(
             AlgebraicTensorImageStatus::InvalidRelationShape,
-            source_roots.len(),
+            original_source_count,
             None,
             None,
             "tensor-image elimination did not leave one output axis",
@@ -161,7 +214,7 @@ pub fn represent_algebraic_tensor_image(
     else {
         return report(
             AlgebraicTensorImageStatus::ImageSquareFreeFailed,
-            source_roots.len(),
+            original_source_count,
             None,
             None,
             "the final tensor-image eliminant could not be square-freed exactly",
@@ -171,19 +224,12 @@ pub fn represent_algebraic_tensor_image(
     // coefficient is exactly rational. Collapse only values whose bounded
     // symbolic normal form proves that fact before Sturm replay; non-rational
     // canonical `Real` coefficient fields remain untouched.
-    let polynomial_coefficients = polynomial_coefficients
-        .into_iter()
-        .map(|coefficient| {
-            coefficient
-                .exact_rational_normal_form()
-                .map(Real::new)
-                .unwrap_or(coefficient)
-        })
-        .collect::<Vec<_>>();
+    let polynomial_coefficients =
+        canonicalize_proven_rational_coefficients(polynomial_coefficients);
     if polynomial_coefficients.len() <= 1 {
         return report(
             AlgebraicTensorImageStatus::ImageSquareFreeFailed,
-            source_roots.len(),
+            original_source_count,
             None,
             None,
             "the final tensor-image eliminant was constant",
@@ -214,7 +260,7 @@ pub fn represent_algebraic_tensor_image(
         };
         return AlgebraicTensorImageReport {
             status,
-            elimination_count: source_roots.len(),
+            elimination_count: original_source_count,
             failed_elimination: None,
             representation: None,
             message: refinement.message,
@@ -242,7 +288,7 @@ pub fn represent_algebraic_tensor_image(
     if !representation.is_valid() {
         return AlgebraicTensorImageReport {
             status: AlgebraicTensorImageStatus::InvalidTransformedEvidence,
-            elimination_count: source_roots.len(),
+            elimination_count: original_source_count,
             failed_elimination: None,
             representation: Some(representation),
             message: Some("tensor-image representation did not validate under STRICT".to_owned()),
@@ -250,11 +296,31 @@ pub fn represent_algebraic_tensor_image(
     }
     AlgebraicTensorImageReport {
         status: AlgebraicTensorImageStatus::Transformed,
-        elimination_count: source_roots.len(),
+        elimination_count: original_source_count,
         failed_elimination: None,
         representation: Some(representation),
         message: None,
     }
+}
+
+fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
+    coefficients
+        .into_iter()
+        .map(|coefficient| {
+            coefficient
+                .exact_rational_normal_form()
+                .map(Real::new)
+                .unwrap_or(coefficient)
+        })
+        .collect()
+}
+
+fn canonicalize_proven_rational_tensor(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
+    let dimensions = polynomial.dimensions().to_vec();
+    let coefficients =
+        canonicalize_proven_rational_coefficients(polynomial.coefficients().to_vec());
+    DenseTensorPolynomial::try_new(dimensions, coefficients)
+        .expect("canonicalizing tensor coefficients preserves its validated shape")
 }
 
 fn report(
@@ -382,6 +448,27 @@ mod tests {
             hyperlimit::compare_reals(actual, &expected, PredicatePolicy::STRICT).value()
                 == Some(std::cmp::Ordering::Equal)
         }));
+    }
+
+    #[test]
+    fn tensor_image_identifies_duplicate_selected_source_axes_exactly() {
+        let source = square_root(2);
+        let report = represent_algebraic_tensor_image(
+            &sum_relation(2, Real::zero()),
+            &[source.clone(), source],
+            &IsolatedRootInterval {
+                lower: real(2),
+                upper: real(3),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(report.elimination_count, 2);
+        assert_eq!(
+            report.representation.unwrap().polynomial_coefficients,
+            vec![real(-8), Real::zero(), Real::one()]
+        );
     }
 
     #[test]
