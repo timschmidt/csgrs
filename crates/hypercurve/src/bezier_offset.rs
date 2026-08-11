@@ -5243,37 +5243,62 @@ fn represented_circle_contact_location_parameter(
         )>,
     >,
 > {
-    let rank = 7;
+    let contact_radial = [
+        represented_affine_coordinate(
+            &[
+                (&point[0], &Real::one()),
+                (&frame.center[0], &(-Real::one())),
+            ],
+            &Real::zero(),
+        ),
+        represented_affine_coordinate(
+            &[
+                (&point[1], &Real::one()),
+                (&frame.center[1], &(-Real::one())),
+            ],
+            &Real::zero(),
+        ),
+    ];
+    let [
+        Classification::Decided(contact_x),
+        Classification::Decided(contact_y),
+    ] = contact_radial
+    else {
+        let reason = contact_radial
+            .into_iter()
+            .find_map(|coordinate| match coordinate {
+                Classification::Decided(_) => None,
+                Classification::Uncertain(reason) => Some(reason),
+            })
+            .unwrap_or(UncertaintyReason::Predicate);
+        return Ok(Classification::Uncertain(reason));
+    };
+
+    let rank = 5;
     let axis = |axis| {
         DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), Real::one()])
     };
     let Some((dot, cross)) = (|| {
-        let center_x = axis(0)?;
-        let center_y = axis(1)?;
-        let radial_x = axis(2)?;
-        let radial_y = axis(3)?;
-        let point_x = axis(4)?;
-        let point_y = axis(5)?;
-        let point_dx = point_x.subtract(&center_x)?;
-        let point_dy = point_y.subtract(&center_y)?;
+        let radial_x = axis(0)?;
+        let radial_y = axis(1)?;
+        let contact_x = axis(2)?;
+        let contact_y = axis(3)?;
         Some((
             radial_x
-                .multiply(&point_dx)?
-                .add(&radial_y.multiply(&point_dy)?)?,
+                .multiply(&contact_x)?
+                .add(&radial_y.multiply(&contact_y)?)?,
             radial_x
-                .multiply(&point_dy)?
-                .subtract(&radial_y.multiply(&point_dx)?)?,
+                .multiply(&contact_y)?
+                .subtract(&radial_y.multiply(&contact_x)?)?,
         ))
     })() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let sources = [
-        frame.center[0].clone(),
-        frame.center[1].clone(),
         frame.radial[0].clone(),
         frame.radial[1].clone(),
-        point[0].clone(),
-        point[1].clone(),
+        contact_x,
+        contact_y,
     ];
     let dot = match represented_dense_value(&dot, &sources) {
         Classification::Decided(dot) => dot,
@@ -17387,7 +17412,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// frames that share one mapped source contact and the same similarity
     /// linear part. Keeping that correlation avoids treating `T(P)` and `P`
     /// as independent algebraic roots merely to rediscover `T(P)-P`.
-    fn represented_shared_translation(
+    fn represented_structural_translation(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -17440,29 +17465,89 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Some([&second[4] - &first[4], &second[5] - &first[5]]))
     }
 
-    /// Exact common-provenance circle-pair lane. The center delta and support
-    /// discriminant remain canonical `Real` scalars; each accepted contact
-    /// keeps its exact radial for lazy angular predicates and materializes only
-    /// the Cartesian coordinates required by downstream constructions.
-    fn represented_shared_translation_pair_intersections(
+    /// Recovers a rational translation between independently materialized
+    /// frames. Each coordinate relation is accepted only after Hypersolve has
+    /// replayed the affine image and selected-root equality under STRICT.
+    fn represented_certified_frame_translation(
+        first: &BezierRepresentedSelectedRadialCircleFrame2,
+        second: &BezierRepresentedSelectedRadialCircleFrame2,
+    ) -> Option<[Real; 2]> {
+        let mut translation = [Real::zero(), Real::zero()];
+        for (axis, translated) in translation.iter_mut().enumerate() {
+            let relation = if first.center[axis] == second.center[axis] {
+                hypersolve::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
+            } else {
+                algebraic_root_affine_relation(
+                    &first.center[axis],
+                    &second.center[axis],
+                    hypersolve::PredicatePolicy::STRICT,
+                )?
+            };
+            if compare_reals(&relation.scale, &Real::one(), &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Equal)
+                || relation.offset.exact_rational_ref().is_none()
+            {
+                return None;
+            }
+            *translated = relation.offset;
+        }
+        Some(translation)
+    }
+
+    /// Exact translated-frame circle-pair lane. Structural provenance is the
+    /// allocation-free fast path; independently encoded frames enter only
+    /// after exact affine-image replay proves both rational center deltas. The
+    /// support discriminant remains a canonical `Real`, and each accepted
+    /// contact keeps its exact radial for lazy angular predicates.
+    fn represented_translation_pair_intersections(
         &self,
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
-        let Some([dx, dy]) = self.represented_shared_translation(other, policy)? else {
-            return Ok(None);
+        let structural_translation = self.represented_structural_translation(other, policy)?;
+        let mut materialized_frames = None;
+        let [dx, dy] = if let Some(translation) = structural_translation {
+            translation
+        } else {
+            let first_frame = match self.represented_circle_frame(policy)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let second_frame = match other.represented_circle_frame(policy)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let Some(translation) =
+                Self::represented_certified_frame_translation(&first_frame, &second_frame)
+            else {
+                return Ok(None);
+            };
+            materialized_frames = Some((first_frame, second_frame));
+            translation
         };
-        let first_frame = match self.represented_circle_frame(policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
-        };
-        let second_frame = match other.represented_circle_frame(policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Some(Classification::Uncertain(reason)));
-            }
+        let (first_frame, second_frame) = if let Some(frames) = materialized_frames {
+            frames
+        } else {
+            let first_frame = match self.represented_circle_frame(policy)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let second_frame = match other.represented_circle_frame(policy)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            (first_frame, second_frame)
         };
         let first_radius_squared = self.radial_distance() * self.radial_distance();
         let second_radius_squared = other.radial_distance() * other.radial_distance();
@@ -17638,9 +17723,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
-        if let Some(result) =
-            self.represented_shared_translation_pair_intersections(other, policy)?
-        {
+        if let Some(result) = self.represented_translation_pair_intersections(other, policy)? {
             return Ok(result);
         }
         let first_frame = match self.represented_circle_frame(policy)? {
@@ -42809,6 +42892,91 @@ impl BezierAlgebraicChordRealInterval2 {
     }
 
     fn multiply(&self, other: &Self, policy: &CurveContext) -> Option<Self> {
+        let zero = Real::zero();
+        let first_lower = compare_reals(&self.lower, &zero, policy);
+        let first_upper = compare_reals(&self.upper, &zero, policy);
+        let second_lower = compare_reals(&other.lower, &zero, policy);
+        let second_upper = compare_reals(&other.upper, &zero, policy);
+        let first_nonnegative = matches!(
+            first_lower,
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        );
+        let first_nonpositive = matches!(
+            first_upper,
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        );
+        let second_nonnegative = matches!(
+            second_lower,
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        );
+        let second_nonpositive = matches!(
+            second_upper,
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        );
+        let first_spans_zero = first_lower == Some(std::cmp::Ordering::Less)
+            && first_upper == Some(std::cmp::Ordering::Greater);
+        let second_spans_zero = second_lower == Some(std::cmp::Ordering::Less)
+            && second_upper == Some(std::cmp::Ordering::Greater);
+        if first_nonnegative {
+            if second_nonnegative {
+                return Some(Self {
+                    lower: &self.lower * &other.lower,
+                    upper: &self.upper * &other.upper,
+                });
+            } else if second_nonpositive {
+                return Some(Self {
+                    lower: &self.upper * &other.lower,
+                    upper: &self.lower * &other.upper,
+                });
+            } else if second_spans_zero {
+                return Some(Self {
+                    lower: &self.upper * &other.lower,
+                    upper: &self.upper * &other.upper,
+                });
+            }
+        }
+        if first_nonpositive {
+            if second_nonnegative {
+                return Some(Self {
+                    lower: &self.lower * &other.upper,
+                    upper: &self.upper * &other.lower,
+                });
+            } else if second_nonpositive {
+                return Some(Self {
+                    lower: &self.upper * &other.upper,
+                    upper: &self.lower * &other.lower,
+                });
+            } else if second_spans_zero {
+                return Some(Self {
+                    lower: &self.lower * &other.upper,
+                    upper: &self.lower * &other.lower,
+                });
+            }
+        }
+        if first_spans_zero && second_nonnegative {
+            return Some(Self {
+                lower: &self.lower * &other.upper,
+                upper: &self.upper * &other.upper,
+            });
+        }
+        if first_spans_zero && second_nonpositive {
+            return Some(Self {
+                lower: &self.upper * &other.lower,
+                upper: &self.lower * &other.lower,
+            });
+        }
+
+        // Both intervals cross zero. The sums are conservative exact bounds:
+        // each lower product is nonpositive and each upper product is
+        // nonnegative, so no comparison between deep exact expressions is
+        // required merely to select a corner.
+        if first_spans_zero && second_spans_zero {
+            return Some(Self {
+                lower: &self.lower * &other.upper + &self.upper * &other.lower,
+                upper: &self.lower * &other.lower + &self.upper * &other.upper,
+            });
+        }
+
         let products = [
             &self.lower * &other.lower,
             &self.lower * &other.upper,
@@ -77001,6 +77169,144 @@ mod conversion_tests {
                 next.represented_selected_radial_frame(&policy).unwrap()
             else {
                 panic!("the next recursive frame must materialize exactly");
+            };
+            assert!(encloses(&frame.center[0], &seven_eighths));
+            assert!(encloses(&frame.radial[0], &three_sixteenths));
+            assert_eq!(
+                compare_reals(
+                    &frame.center[1].interval.upper,
+                    &Real::zero(),
+                    &CurveContext::STRICT,
+                ),
+                Some(std::cmp::Ordering::Less),
+            );
+        }
+    }
+
+    #[test]
+    fn independently_encoded_recursive_circles_intersect_and_recurse_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
+        let three_sixteenths = (Real::from(3_i8) / Real::from(16_i8)).unwrap();
+        let translate = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            three_quarters,
+            Real::zero(),
+        )
+        .unwrap();
+        let encloses = |representation: &AlgebraicRootRepresentation, value: &Real| {
+            compare_reals(&representation.interval.lower, value, &CurveContext::STRICT)
+                != Some(std::cmp::Ordering::Greater)
+                && compare_reals(&representation.interval.upper, value, &CurveContext::STRICT)
+                    != Some(std::cmp::Ordering::Less)
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Constructing each side independently prevents pair-map identity
+            // from selecting the structural translation fast path. The
+            // represented authority must instead replay the rational-affine
+            // center relations before using the exact-radial circle formula.
+            let first = recursively_pair_radial_half(&policy);
+            let second = recursively_pair_radial_half(&policy)
+                .transform_similarity(&translate)
+                .unwrap()
+                .complementary_half();
+            let result = first.pair_intersections(&second, &policy).unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts,
+                    parameter_map,
+                },
+            ) = result
+            else {
+                panic!("the independently encoded recursive pair must complete: {result:?}");
+            };
+            assert!(matches!(
+                parameter_map.data.system,
+                BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_),
+            ));
+            assert_eq!(contacts.len(), 2, "both transverse contacts must remain");
+            for (contact, tangent_cross_sign) in contacts
+                .iter()
+                .zip([RealSign::Negative, RealSign::Positive])
+            {
+                assert_eq!(
+                    contact.first_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(
+                    contact.second_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(contact.tangent_cross_sign, tangent_cross_sign);
+                assert_eq!(
+                    parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                    Classification::Decided(RealSign::Negative),
+                );
+                let Classification::Decided([x, y]) = parameter_map
+                    .represented_selected_radial_contact_point(contact)
+                    .unwrap()
+                else {
+                    panic!("the independent recursive contact must retain exact coordinates");
+                };
+                assert!(encloses(&x, &seven_eighths));
+                assert_eq!(
+                    compare_reals(&y.interval.upper, &Real::zero(), &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                );
+                let first_parameter = parameter_map.first_contact_parameter(contact);
+                let second_parameter = parameter_map.second_contact_parameter(contact);
+                for parameter in [&first_parameter, &second_parameter] {
+                    assert_eq!(
+                        parameter.order_to_real(&Real::zero(), &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        parameter.order_to_real(&Real::one(), &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                }
+                let first_half_order = if contact.branch < 0 {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                };
+                assert_eq!(
+                    first_parameter.order_to_real(&half, &policy).unwrap(),
+                    Classification::Decided(first_half_order),
+                );
+                assert_eq!(
+                    second_parameter.order_to_real(&half, &policy).unwrap(),
+                    Classification::Decided(first_half_order.reverse()),
+                );
+            }
+
+            let contact = contacts
+                .iter()
+                .find(|contact| contact.branch == -1)
+                .expect("the lower support branch must remain");
+            let Classification::Decided(Some(next)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    &first,
+                    parameter_map.first_contact_parameter(contact),
+                    half.clone(),
+                    quarter.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the independent represented contact must author another circle");
+            };
+            let Classification::Decided(frame) =
+                next.represented_selected_radial_frame(&policy).unwrap()
+            else {
+                panic!("the independently authored recursive frame must materialize exactly");
             };
             assert!(encloses(&frame.center[0], &seven_eighths));
             assert!(encloses(&frame.radial[0], &three_sixteenths));
