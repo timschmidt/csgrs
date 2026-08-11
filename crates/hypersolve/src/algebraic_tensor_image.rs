@@ -10,7 +10,7 @@
 //! Construction is always `STRICT`.  `APPROXIMATE_512` is a terminal equality
 //! policy and is deliberately absent from this API.
 
-use hyperlimit::PredicatePolicy;
+use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
 use crate::algebraic::{
@@ -182,28 +182,37 @@ pub fn represent_algebraic_tensor_image(
     relation = canonicalize_proven_rational_tensor(relation);
 
     for (source_index, constraint) in constraints.iter().enumerate() {
-        let elimination = resultant_tensor_polynomial_univariate_constraint(
-            &relation,
-            constraint,
-            0,
-            PredicatePolicy::MAX_REFINEMENT_PRECISION,
-        );
-        if elimination.status != TensorConstraintResultantStatus::Constructed {
-            let message = elimination
-                .message
-                .clone()
-                .unwrap_or_else(|| "one tensor-image constrained-axis resultant failed".to_owned());
-            return AlgebraicTensorImageReport {
-                status: AlgebraicTensorImageStatus::EliminationFailed,
-                elimination_count: source_index,
-                failed_elimination: Some(elimination),
-                representation: None,
-                message: Some(message),
-            };
-        }
-        relation = elimination
-            .resultant
-            .expect("a constructed tensor resultant retains its polynomial");
+        relation = if let Some(independent) =
+            relation.remove_certified_independent_axis(0, PredicatePolicy::MAX_REFINEMENT_PRECISION)
+        {
+            // A validated selected source exists, but this relation no longer
+            // depends on it. Removing the axis preserves the represented zero
+            // set and avoids raising the image polynomial to the source
+            // constraint degree merely to square-free that multiplicity later.
+            independent
+        } else {
+            let elimination = resultant_tensor_polynomial_univariate_constraint(
+                &relation,
+                constraint,
+                0,
+                PredicatePolicy::MAX_REFINEMENT_PRECISION,
+            );
+            if elimination.status != TensorConstraintResultantStatus::Constructed {
+                let message = elimination.message.clone().unwrap_or_else(|| {
+                    "one tensor-image constrained-axis resultant failed".to_owned()
+                });
+                return AlgebraicTensorImageReport {
+                    status: AlgebraicTensorImageStatus::EliminationFailed,
+                    elimination_count: source_index,
+                    failed_elimination: Some(elimination),
+                    representation: None,
+                    message: Some(message),
+                };
+            }
+            elimination
+                .resultant
+                .expect("a constructed tensor resultant retains its polynomial")
+        };
         relation = canonicalize_proven_rational_tensor(relation);
         for (axis, remaining_constraint) in constraints.iter().skip(source_index + 1).enumerate() {
             let Some(reduced) =
@@ -257,35 +266,68 @@ pub fn represent_algebraic_tensor_image(
         );
     }
 
-    let refinement = refine_isolated_univariate_polynomial_interval(
-        &polynomial_coefficients,
-        image_interval,
-        RootIsolationConfig {
-            policy: PredicatePolicy::STRICT,
-            max_interval_width: None,
-            max_refinement_steps: 4,
-        },
-    );
-    let Some(interval) = refinement.refined_interval else {
-        let status = match refinement.status {
-            IsolatedRootRefinementStatus::NonUnitIsolation => {
-                AlgebraicTensorImageStatus::NonIsolatingImageInterval
-            }
-            IsolatedRootRefinementStatus::InvalidPolynomial
-            | IsolatedRootRefinementStatus::InvalidInterval => {
-                AlgebraicTensorImageStatus::InvalidTransformedEvidence
-            }
-            IsolatedRootRefinementStatus::Undecided
-            | IsolatedRootRefinementStatus::Refined
-            | IsolatedRootRefinementStatus::ExactRoot => AlgebraicTensorImageStatus::Undecided,
+    let exact_linear_root = if polynomial_coefficients.len() == 2 {
+        (-polynomial_coefficients[0].clone() / polynomial_coefficients[1].clone())
+            .ok()
+            .and_then(|root| root.exact_rational_normal_form().map(Real::new))
+            .filter(|root| {
+                let exact_witness_matches =
+                    image_interval.exact_root.as_ref().is_none_or(|exact_root| {
+                        compare_reals(exact_root, root, PredicatePolicy::STRICT).value()
+                            == Some(std::cmp::Ordering::Equal)
+                    });
+                exact_witness_matches
+                    && matches!(
+                        compare_reals(&image_interval.lower, root, PredicatePolicy::STRICT).value(),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    )
+                    && matches!(
+                        compare_reals(root, &image_interval.upper, PredicatePolicy::STRICT).value(),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    )
+            })
+    } else {
+        None
+    };
+    let interval = if let Some(root) = exact_linear_root {
+        IsolatedRootInterval {
+            lower: root.clone(),
+            upper: root.clone(),
+            exact_root: Some(root),
+            distinct_root_count: 1,
+        }
+    } else {
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            &polynomial_coefficients,
+            image_interval,
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: None,
+                max_refinement_steps: 4,
+            },
+        );
+        let Some(interval) = refinement.refined_interval else {
+            let status = match refinement.status {
+                IsolatedRootRefinementStatus::NonUnitIsolation => {
+                    AlgebraicTensorImageStatus::NonIsolatingImageInterval
+                }
+                IsolatedRootRefinementStatus::InvalidPolynomial
+                | IsolatedRootRefinementStatus::InvalidInterval => {
+                    AlgebraicTensorImageStatus::InvalidTransformedEvidence
+                }
+                IsolatedRootRefinementStatus::Undecided
+                | IsolatedRootRefinementStatus::Refined
+                | IsolatedRootRefinementStatus::ExactRoot => AlgebraicTensorImageStatus::Undecided,
+            };
+            return AlgebraicTensorImageReport {
+                status,
+                elimination_count: original_source_count,
+                failed_elimination: None,
+                representation: None,
+                message: refinement.message,
+            };
         };
-        return AlgebraicTensorImageReport {
-            status,
-            elimination_count: original_source_count,
-            failed_elimination: None,
-            representation: None,
-            message: refinement.message,
-        };
+        interval
     };
     let first_source = &source_roots[0];
     let mut representation = AlgebraicRootRepresentation {
@@ -517,6 +559,44 @@ mod tests {
             report.representation.unwrap().polynomial_coefficients,
             vec![Real::one(), real(-6), Real::one()]
         );
+    }
+
+    #[test]
+    fn tensor_image_materializes_an_enclosed_exact_linear_eliminant() {
+        let source = square_root(2);
+        let shifted =
+            transform_algebraic_root_affine(&source, Real::one(), real(3), PredicatePolicy::STRICT)
+                .representation
+                .unwrap();
+        let first = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+            .unwrap();
+        let second =
+            DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let output =
+            DenseTensorPolynomial::from_axis_polynomial(3, 2, &[Real::zero(), Real::one()])
+                .unwrap();
+        let difference = second.subtract(&first).unwrap();
+        let relation = output
+            .subtract(&difference.multiply(&difference).unwrap())
+            .unwrap();
+        let report = represent_algebraic_tensor_image(
+            &relation,
+            &[source, shifted],
+            &IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: real(10),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        let representation = report.representation.unwrap();
+        assert_eq!(
+            representation.polynomial_coefficients,
+            vec![real(-9), Real::one()]
+        );
+        assert_eq!(representation.interval.exact_root, Some(real(9)));
     }
 
     #[test]

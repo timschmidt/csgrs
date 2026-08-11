@@ -270,6 +270,49 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
+    /// Removes an axis whose every positive-power coefficient is certified
+    /// zero.
+    ///
+    /// `None` means either that the axis is invalid or that exact coefficient
+    /// certification did not prove independence. No uncertain coefficient is
+    /// discarded. This is useful when quotient or affine substitution has
+    /// made a selected source irrelevant to the remaining relation.
+    pub fn remove_certified_independent_axis(
+        &self,
+        axis: usize,
+        min_precision: i32,
+    ) -> Option<Self> {
+        if axis >= self.dimensions.len() {
+            return None;
+        }
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            if exponents(&self.dimensions, index)[axis] == 0 {
+                continue;
+            }
+            if !matches!(
+                coefficient.certified_sign_until(min_precision),
+                CertifiedRealSign::Known {
+                    sign: RealSign::Zero,
+                    ..
+                }
+            ) {
+                return None;
+            }
+        }
+        let mut dimensions = self.dimensions.clone();
+        dimensions.remove(axis);
+        let mut result = Self::zero(dimensions.clone())?;
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            let mut source = exponents(&self.dimensions, index);
+            if source[axis] != 0 {
+                continue;
+            }
+            source.remove(axis);
+            result.coefficients[flat_index(&dimensions, &source)] = coefficient.clone();
+        }
+        Some(result)
+    }
+
     /// Replaces every selected-axis fiber by its exact polynomial remainder.
     ///
     /// At any root of `modulus`, the returned tensor has exactly the same
@@ -1017,5 +1060,37 @@ mod tests {
         assert_eq!(affine.coefficient(&[0, 0]), Some(&real(3)));
         assert_eq!(affine.coefficient(&[1, 0]), Some(&real(6)));
         assert_eq!(affine.coefficient(&[2, 0]), Some(&real(2)));
+    }
+
+    #[test]
+    fn dense_tensor_removes_only_certified_independent_axes() {
+        let independent = DenseTensorPolynomial::try_new(
+            vec![2, 3],
+            vec![
+                real(1),
+                Real::zero(),
+                Real::zero(),
+                real(2),
+                Real::zero(),
+                Real::zero(),
+            ],
+        )
+        .unwrap();
+        let removed = independent
+            .remove_certified_independent_axis(1, PredicatePolicy::MAX_REFINEMENT_PRECISION)
+            .unwrap();
+        assert_eq!(removed.dimensions(), &[2]);
+        assert_eq!(removed.coefficients(), &[real(1), real(2)]);
+
+        let dependent = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![real(1), real(3), real(2), Real::zero()],
+        )
+        .unwrap();
+        assert!(
+            dependent
+                .remove_certified_independent_axis(1, PredicatePolicy::MAX_REFINEMENT_PRECISION)
+                .is_none()
+        );
     }
 }
