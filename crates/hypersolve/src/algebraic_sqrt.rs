@@ -193,6 +193,19 @@ pub fn square_root_algebraic_root_representation(
 }
 
 fn signed_sqrt_interval(source: &IsolatedRootInterval, branch: i8) -> Option<IsolatedRootInterval> {
+    if let Some(source_root) = &source.exact_root {
+        let positive = source_root.clone().sqrt().ok()?;
+        if let Some(rational) = positive.exact_rational_normal_form() {
+            let positive = Real::new(rational);
+            let root = if branch < 0 { -positive } else { positive };
+            return Some(IsolatedRootInterval {
+                lower: root.clone(),
+                upper: root.clone(),
+                exact_root: Some(root),
+                distinct_root_count: 1,
+            });
+        }
+    }
     let zero = Real::zero();
     let lower = match compare_reals(&source.lower, &zero, PredicatePolicy::STRICT).value()? {
         Ordering::Less => zero,
@@ -299,6 +312,27 @@ mod tests {
         }
     }
 
+    fn exact_witness(value: i64) -> AlgebraicRootRepresentation {
+        let value = real(value);
+        AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-value.clone(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: value.clone(),
+                upper: value.clone(),
+                exact_root: Some(value),
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::ExactRationalWitness,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }
+    }
+
     #[test]
     fn signed_square_root_images_keep_exact_branch_isolators() {
         for branch in [-1, 1] {
@@ -345,6 +379,35 @@ mod tests {
             square_root_algebraic_root_representation(&positive_sqrt_two(), 0).status,
             AlgebraicRootSquareRootStatus::NonzeroZeroBranch,
         );
+    }
+
+    #[test]
+    fn nonzero_exact_witness_keeps_an_exact_square_root_witness() {
+        let source = exact_witness(4);
+        for branch in [-1, 1] {
+            let report = square_root_algebraic_root_representation(&source, branch);
+            assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
+            assert_eq!(
+                report.representation.unwrap().exact_rational_witness(),
+                Some(&real(2 * i64::from(branch))),
+            );
+        }
+    }
+
+    #[test]
+    fn irrational_square_root_of_an_exact_witness_uses_an_isolator() {
+        let source = exact_witness(2);
+        for branch in [-1, 1] {
+            let report = square_root_algebraic_root_representation(&source, branch);
+            assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
+            assert!(
+                report
+                    .representation
+                    .unwrap()
+                    .exact_rational_witness()
+                    .is_none()
+            );
+        }
     }
 
     #[test]
