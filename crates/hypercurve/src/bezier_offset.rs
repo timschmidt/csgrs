@@ -3893,14 +3893,17 @@ struct BezierSelectedRadialCircleFrameSystem2 {
 }
 
 /// Generic exact frame for a recursively authored selected-radial circle.
-/// `center` and `radial` are independently isolated algebraic coordinates of
-/// the authored center and parameter-zero radius. Together with the retained
-/// turn on the owning semicircle they define every circle predicate without a
-/// fixed source-field rank.
+/// `center` and `unit_radial` are independently isolated algebraic coordinates
+/// of the authored center and normalized parameter-zero direction. Keeping the
+/// exact signed radius separate makes reversal and concentric scaling scalar
+/// operations instead of new high-degree coordinate eliminants. Together with
+/// the retained turn on the owning semicircle they define every circle
+/// predicate without a fixed source-field rank.
 #[derive(Clone, Debug)]
 struct BezierRepresentedSelectedRadialCircleFrame2 {
     center: [AlgebraicRootRepresentation; 2],
-    radial: [AlgebraicRootRepresentation; 2],
+    unit_radial: [AlgebraicRootRepresentation; 2],
+    signed_radius: Real,
 }
 
 struct BezierSelectedRadialCircleFrameSource2<'a> {
@@ -5128,22 +5131,273 @@ fn represented_circle_contact_location_parameter_from_dot_cross(
     ))))
 }
 
+/// Materializes the exact dot and oriented-area products of two represented
+/// vectors through one four-source tensor authority. Affine-related component
+/// axes collapse in Hypersolve before any remaining resultant elimination.
+fn represented_vector_dot_cross(
+    first: &[AlgebraicRootRepresentation; 2],
+    second: &[AlgebraicRootRepresentation; 2],
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let exact_products = |first: &[AlgebraicRootRepresentation; 2],
+                          second: &[AlgebraicRootRepresentation; 2]| {
+        let [Some(first_x), Some(first_y), Some(second_x), Some(second_y)] = [
+            first[0].exact_rational_witness(),
+            first[1].exact_rational_witness(),
+            second[0].exact_rational_witness(),
+            second[1].exact_rational_witness(),
+        ] else {
+            return None;
+        };
+        Some([
+            exact_real_algebraic_representation(&(first_x * second_x + first_y * second_y)),
+            exact_real_algebraic_representation(&(first_x * second_y - first_y * second_x)),
+        ])
+    };
+    if let Some(products) = exact_products(first, second) {
+        return Classification::Decided(products);
+    }
+    let rank = 5;
+    let axis = |axis| {
+        DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), Real::one()])
+    };
+    let Some((dot, cross)) = (|| {
+        let first_x = axis(0)?;
+        let first_y = axis(1)?;
+        let second_x = axis(2)?;
+        let second_y = axis(3)?;
+        Some((
+            first_x
+                .multiply(&second_x)?
+                .add(&first_y.multiply(&second_y)?)?,
+            first_x
+                .multiply(&second_y)?
+                .subtract(&first_y.multiply(&second_x)?)?,
+        ))
+    })() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let sources = [
+        first[0].clone(),
+        first[1].clone(),
+        second[0].clone(),
+        second[1].clone(),
+    ];
+    let dot = represented_dense_value(&dot, &sources);
+    let cross = represented_dense_value(&cross, &sources);
+    match (dot, cross) {
+        (Classification::Decided(dot), Classification::Decided(cross)) => {
+            Classification::Decided([dot, cross])
+        }
+        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
+    }
+}
+
+const POSITIVE_UNIT_SCALE: u8 = 1;
+const NEGATIVE_UNIT_SCALE: u8 = 2;
+
+/// Proves `right = sign * left` directly from already validated polynomial
+/// and isolator evidence. Proportional defining polynomials describe the same
+/// root set, while the equal or reflected one-root intervals select the same
+/// sheet. This avoids rerunning a Sturm common-root proof for representations
+/// produced by an exact identity or negation.
+fn represented_structural_unit_scale(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    sign: i8,
+) -> bool {
+    if !left.is_valid()
+        || !right.is_valid()
+        || left.interval.distinct_root_count != 1
+        || right.interval.distinct_root_count != 1
+        || left.polynomial_coefficients.len() != right.polynomial_coefficients.len()
+        || left.polynomial_coefficients.len() < 2
+    {
+        return false;
+    }
+    let (expected_lower, expected_upper) = if sign > 0 {
+        (left.interval.lower.clone(), left.interval.upper.clone())
+    } else {
+        (-left.interval.upper.clone(), -left.interval.lower.clone())
+    };
+    if compare_reals(
+        &expected_lower,
+        &right.interval.lower,
+        &CurveContext::STRICT,
+    ) != Some(std::cmp::Ordering::Equal)
+        || compare_reals(
+            &expected_upper,
+            &right.interval.upper,
+            &CurveContext::STRICT,
+        ) != Some(std::cmp::Ordering::Equal)
+    {
+        return false;
+    }
+
+    let left_leading = left.polynomial_coefficients.last().unwrap();
+    let right_leading = right.polynomial_coefficients.last().unwrap();
+    let degree = left.polynomial_coefficients.len() - 1;
+    let transformed_leading = if sign < 0 && !degree.is_multiple_of(2) {
+        -left_leading
+    } else {
+        left_leading.clone()
+    };
+    left.polynomial_coefficients
+        .iter()
+        .zip(&right.polynomial_coefficients)
+        .enumerate()
+        .all(|(power, (left_coefficient, right_coefficient))| {
+            let transformed = if sign < 0 && !power.is_multiple_of(2) {
+                -left_coefficient
+            } else {
+                left_coefficient.clone()
+            };
+            compare_reals(
+                &(transformed * right_leading),
+                &(right_coefficient * &transformed_leading),
+                &CurveContext::STRICT,
+            ) == Some(std::cmp::Ordering::Equal)
+        })
+}
+
+/// Returns every unit scale exactly certified by `right = scale * left`.
+/// Zero admits both signs; retaining that ambiguity is necessary for axial
+/// quarter turns, where either signed relation describes the zero component.
+fn represented_zero_offset_unit_scales(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> u8 {
+    if let (Some(left), Some(right)) = (
+        left.exact_rational_witness(),
+        right.exact_rational_witness(),
+    ) {
+        let mut scales = 0;
+        if compare_reals(left, right, &CurveContext::STRICT) == Some(std::cmp::Ordering::Equal) {
+            scales |= POSITIVE_UNIT_SCALE;
+        }
+        if compare_reals(&(-left), right, &CurveContext::STRICT) == Some(std::cmp::Ordering::Equal)
+        {
+            scales |= NEGATIVE_UNIT_SCALE;
+        }
+        return scales;
+    }
+
+    let mut scales = 0;
+    if left == right || represented_structural_unit_scale(left, right, 1) {
+        scales |= POSITIVE_UNIT_SCALE;
+    }
+    if represented_structural_unit_scale(left, right, -1) {
+        scales |= NEGATIVE_UNIT_SCALE;
+    }
+    if scales != 0 {
+        return scales;
+    }
+
+    if let Some(relation) =
+        algebraic_root_affine_relation(left, right, hypersolve::PredicatePolicy::STRICT)
+        && compare_reals(&relation.offset, &Real::zero(), &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Equal)
+    {
+        if compare_reals(&relation.scale, &Real::one(), &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Equal)
+        {
+            scales |= POSITIVE_UNIT_SCALE;
+        }
+        if compare_reals(&relation.scale, &Real::from(-1_i8), &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Equal)
+        {
+            scales |= NEGATIVE_UNIT_SCALE;
+        }
+    }
+    scales
+}
+
+/// Materializes dot and cross for two scaled unit circle radials while
+/// retaining their circle correlation. Independently eliminated coordinates
+/// can still certify an orthogonal signed permutation exactly. The
+/// orientation-preserving permutations reduce to `(+-scale_product, 0)` or
+/// `(0, +-scale_product)` without inventing independent coordinate sheets.
+fn represented_scaled_unit_radial_dot_cross(
+    first: &[AlgebraicRootRepresentation; 2],
+    second: &[AlgebraicRootRepresentation; 2],
+    scale_product: &Real,
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let direct_x = represented_zero_offset_unit_scales(&first[0], &second[0]);
+    let direct_y = represented_zero_offset_unit_scales(&first[1], &second[1]);
+    let zero = || exact_real_algebraic_representation(&Real::zero());
+    if direct_x & POSITIVE_UNIT_SCALE != 0 && direct_y & POSITIVE_UNIT_SCALE != 0 {
+        return Classification::Decided([
+            exact_real_algebraic_representation(scale_product),
+            zero(),
+        ]);
+    }
+    if direct_x & NEGATIVE_UNIT_SCALE != 0 && direct_y & NEGATIVE_UNIT_SCALE != 0 {
+        return Classification::Decided([
+            exact_real_algebraic_representation(&(-scale_product)),
+            zero(),
+        ]);
+    }
+
+    let second_x_from_first_y = represented_zero_offset_unit_scales(&first[1], &second[0]);
+    let second_y_from_first_x = represented_zero_offset_unit_scales(&first[0], &second[1]);
+    if second_x_from_first_y & NEGATIVE_UNIT_SCALE != 0
+        && second_y_from_first_x & POSITIVE_UNIT_SCALE != 0
+    {
+        return Classification::Decided([
+            zero(),
+            exact_real_algebraic_representation(scale_product),
+        ]);
+    }
+    if second_x_from_first_y & POSITIVE_UNIT_SCALE != 0
+        && second_y_from_first_x & NEGATIVE_UNIT_SCALE != 0
+    {
+        return Classification::Decided([
+            zero(),
+            exact_real_algebraic_representation(&(-scale_product)),
+        ]);
+    }
+    match represented_vector_dot_cross(first, second) {
+        Classification::Decided([dot, cross]) => {
+            let dot = represented_affine_coordinate(&[(&dot, scale_product)], &Real::zero());
+            let cross = represented_affine_coordinate(&[(&cross, scale_product)], &Real::zero());
+            match (dot, cross) {
+                (Classification::Decided(dot), Classification::Decided(cross)) => {
+                    Classification::Decided([dot, cross])
+                }
+                (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+                | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                _ => Classification::Uncertain(UncertaintyReason::Predicate),
+            }
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
 fn represented_circle_dot_cross_from_exact_radial(
     frame: &BezierRepresentedSelectedRadialCircleFrame2,
     contact_radial: &[Real; 2],
     turn: &Real,
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
+    let x_scale = &frame.signed_radius * contact_radial[0].clone();
+    let y_scale = &frame.signed_radius * contact_radial[1].clone();
     let dot = represented_affine_coordinate(
         &[
-            (&frame.radial[0], &contact_radial[0]),
-            (&frame.radial[1], &contact_radial[1]),
+            (&frame.unit_radial[0], &x_scale),
+            (&frame.unit_radial[1], &y_scale),
         ],
         &Real::zero(),
     );
+    let cross_x_scale = &frame.signed_radius * contact_radial[1].clone();
+    let cross_y_scale = -(&frame.signed_radius * contact_radial[0].clone());
     let cross = represented_affine_coordinate(
         &[
-            (&frame.radial[0], &contact_radial[1]),
-            (&frame.radial[1], &(-contact_radial[0].clone())),
+            (&frame.unit_radial[0], &cross_x_scale),
+            (&frame.unit_radial[1], &cross_y_scale),
         ],
         &Real::zero(),
     );
@@ -5163,9 +5417,11 @@ fn represented_exact_radial_linear_sign(
     y_scale: &Real,
     offset: &Real,
 ) -> Option<RealSign> {
+    let x_scale = x_scale * &frame.signed_radius;
+    let y_scale = y_scale * &frame.signed_radius;
     for refinement_steps in [0, 2, 4, 8] {
-        let x = refined_represented_root(&frame.radial[0], refinement_steps);
-        let y = refined_represented_root(&frame.radial[1], refinement_steps);
+        let x = refined_represented_root(&frame.unit_radial[0], refinement_steps);
+        let y = refined_represented_root(&frame.unit_radial[1], refinement_steps);
         let interval = |source: &AlgebraicRootRepresentation, scale: &Real| {
             BezierAlgebraicChordRealInterval2 {
                 lower: source.interval.lower.clone(),
@@ -5183,8 +5439,8 @@ fn represented_exact_radial_linear_sign(
             lower: offset.clone(),
             upper: offset.clone(),
         }
-        .add(&interval(&x, x_scale)?)
-        .add(&interval(&y, y_scale)?);
+        .add(&interval(&x, &x_scale)?)
+        .add(&interval(&y, &y_scale)?);
         if compare_reals(&value.upper, &Real::zero(), &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Less)
         {
@@ -5274,47 +5530,28 @@ fn represented_circle_contact_location_parameter(
         return Ok(Classification::Uncertain(reason));
     };
 
-    let rank = 5;
-    let axis = |axis| {
-        DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[Real::zero(), Real::one()])
-    };
-    let Some((dot, cross)) = (|| {
-        let radial_x = axis(0)?;
-        let radial_y = axis(1)?;
-        let contact_x = axis(2)?;
-        let contact_y = axis(3)?;
-        Some((
-            radial_x
-                .multiply(&contact_x)?
-                .add(&radial_y.multiply(&contact_y)?)?,
-            radial_x
-                .multiply(&contact_y)?
-                .subtract(&radial_y.multiply(&contact_x)?)?,
-        ))
-    })() else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let sources = [
-        frame.radial[0].clone(),
-        frame.radial[1].clone(),
-        contact_x,
-        contact_y,
-    ];
-    let dot = match represented_dense_value(&dot, &sources) {
+    let [dot, cross] =
+        match represented_vector_dot_cross(&frame.unit_radial, &[contact_x, contact_y]) {
+            Classification::Decided(values) => values,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let dot = match represented_affine_coordinate(&[(&dot, &frame.signed_radius)], &Real::zero()) {
         Classification::Decided(dot) => dot,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let oriented_cross = match represented_dense_value(&cross, &sources) {
-        Classification::Decided(cross) => {
-            match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
-                Classification::Decided(cross) => cross,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+    let cross =
+        match represented_affine_coordinate(&[(&cross, &frame.signed_radius)], &Real::zero()) {
+            Classification::Decided(cross) => cross,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-        }
+        };
+    let oriented_cross = match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
+        Classification::Decided(cross) => cross,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
@@ -7603,6 +7840,18 @@ enum BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2 {
         second_semicircle: BezierAlgebraicCuspSemicircle2,
         system: BezierSelectedRadialSelectedCircleCoincidentMapSystem2,
     },
+    /// Rank-independent coincident support. Dot and cross are exact selected
+    /// images of the two parameter-zero radials; the exact squared radii
+    /// complete every angular correspondence predicate without coordinates.
+    Represented {
+        first_semicircle: BezierAlgebraicCuspSemicircle2,
+        second_semicircle: BezierAlgebraicCuspSemicircle2,
+        radial_dot: AlgebraicRootRepresentation,
+        radial_cross: AlgebraicRootRepresentation,
+        first_radius_squared: Real,
+        second_radius_squared: Real,
+        first_clockwise: bool,
+    },
     /// Similarity-transformed carriers sharing the source overlap's invariant
     /// parameter correspondence. Uniform similarities leave both local
     /// parameters unchanged; retaining the source proof avoids cloning its
@@ -7767,7 +8016,10 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             }
             | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SelectedRadialSelected {
                 ..
-            } => overlap.clone(),
+            }
+            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented { .. } => {
+                overlap.clone()
+            }
         };
         let transformed = BezierAlgebraicCuspSemicirclePairOverlap2 {
             data: Arc::new(BezierAlgebraicCuspSemicirclePairOverlapData2 {
@@ -10679,11 +10931,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let radial_scale = (self.radial_distance() / &frame.normal_denominator)?;
-        let radial = match pair_map.represented_selected_radial_vector(
+        let unit_radial_scale = (Real::one() / &frame.normal_denominator)?;
+        let unit_radial = match pair_map.represented_selected_radial_vector(
             pair_contact,
             support_first,
-            &radial_scale,
+            &unit_radial_scale,
             &Real::zero(),
             policy,
         )? {
@@ -10692,9 +10944,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let signed_radius = self.radial_distance().clone();
         let Some(similarity) = similarity else {
             return Ok(Classification::Decided(
-                BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
+                BezierRepresentedSelectedRadialCircleFrame2 {
+                    center,
+                    unit_radial,
+                    signed_radius,
+                },
             ));
         };
         let center = match represented_similarity_point(&center, &similarity) {
@@ -10703,14 +10960,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let radial = match represented_similarity_vector(&radial, &similarity) {
-            Classification::Decided(radial) => radial,
+        let unit_radial = match represented_similarity_vector(&unit_radial, &similarity) {
+            Classification::Decided(unit_radial) => unit_radial,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
         Ok(Classification::Decided(
-            BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
+            BezierRepresentedSelectedRadialCircleFrame2 {
+                center,
+                unit_radial,
+                signed_radius,
+            },
         ))
     }
 
@@ -10765,8 +11026,30 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             },
         ];
+        let inverse_radius = (Real::one() / self.radial_distance())?;
+        let unit_radial = radial.map(|radial| {
+            represented_affine_coordinate(&[(&radial, &inverse_radius)], &Real::zero())
+        });
+        let [
+            Classification::Decided(unit_x),
+            Classification::Decided(unit_y),
+        ] = unit_radial
+        else {
+            let reason = unit_radial
+                .into_iter()
+                .find_map(|coordinate| match coordinate {
+                    Classification::Decided(_) => None,
+                    Classification::Uncertain(reason) => Some(reason),
+                })
+                .unwrap_or(UncertaintyReason::Predicate);
+            return Ok(Classification::Uncertain(reason));
+        };
         Ok(Classification::Decided(
-            BezierRepresentedSelectedRadialCircleFrame2 { center, radial },
+            BezierRepresentedSelectedRadialCircleFrame2 {
+                center,
+                unit_radial: [unit_x, unit_y],
+                signed_radius: self.radial_distance().clone(),
+            },
         ))
     }
 
@@ -17555,20 +17838,67 @@ impl BezierAlgebraicCuspSemicircle2 {
         match real_sign(&q, &CurveContext::STRICT) {
             Some(RealSign::Positive) => {}
             Some(RealSign::Zero) => {
-                return Ok(Some(
-                    match real_sign(
-                        &(&first_radius_squared - &second_radius_squared),
-                        &CurveContext::STRICT,
-                    ) {
-                        Some(RealSign::Positive | RealSign::Negative) => Classification::Decided(
+                match real_sign(
+                    &(&first_radius_squared - &second_radius_squared),
+                    &CurveContext::STRICT,
+                ) {
+                    Some(RealSign::Positive | RealSign::Negative) => {
+                        return Ok(Some(Classification::Decided(
                             BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
-                        ),
-                        Some(RealSign::Zero) => {
-                            return Ok(None);
+                        )));
+                    }
+                    None => {
+                        return Ok(Some(Classification::Uncertain(
+                            UncertaintyReason::Predicate,
+                        )));
+                    }
+                    Some(RealSign::Zero) => {}
+                }
+                let radial_scale_product = &first_frame.signed_radius * &second_frame.signed_radius;
+                let [radial_dot, radial_cross] = match represented_scaled_unit_radial_dot_cross(
+                    &first_frame.unit_radial,
+                    &second_frame.unit_radial,
+                    &radial_scale_product,
+                ) {
+                    Classification::Decided(values) => values,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                };
+                let radial_cross_sign = match represented_policy_sign(&radial_cross, policy) {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                };
+                let radial_dot_sign = if radial_cross_sign == RealSign::Zero {
+                    Some(match represented_policy_sign(&radial_dot, policy) {
+                        Classification::Decided(sign) => sign,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
                         }
-                        None => Classification::Uncertain(UncertaintyReason::Predicate),
-                    },
-                ));
+                    })
+                } else {
+                    None
+                };
+                let parameter_map = (radial_cross_sign != RealSign::Zero).then(|| {
+                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                        first_semicircle: self.clone(),
+                        second_semicircle: other.clone(),
+                        radial_dot,
+                        radial_cross,
+                        first_radius_squared: first_radius_squared.clone(),
+                        second_radius_squared: second_radius_squared.clone(),
+                        first_clockwise: self.is_clockwise(),
+                    }
+                });
+                return Ok(Some(self.coincident_pair_intersections_from_radial_signs(
+                    other,
+                    radial_cross_sign,
+                    radial_dot_sign,
+                    parameter_map,
+                    policy,
+                )?));
             }
             Some(RealSign::Negative) => {
                 return Err(CurveError::Topology(
@@ -26731,6 +27061,11 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                 second_semicircle,
                 ..
             }
+            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                first_semicircle,
+                second_semicircle,
+                ..
+            }
             | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
                 first_semicircle,
                 second_semicircle,
@@ -26755,7 +27090,10 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             }
             | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SelectedRadialSelected {
                 ..
-            } => false,
+            }
+            | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented { .. } => {
+                false
+            }
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
                 source,
                 ..
@@ -27034,6 +27372,26 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     policy,
                 )?
             }
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                radial_dot,
+                first_radius_squared,
+                second_radius_squared,
+                ..
+            } => {
+                let radius_squared = if first {
+                    first_radius_squared
+                } else {
+                    second_radius_squared
+                };
+                let scale = &denominator * &endpoint_sign;
+                let offset = -(&radial_coefficient * radius_squared);
+                match represented_affine_coordinate(&[(radial_dot, &scale)], &offset) {
+                    Classification::Decided(predicate) => {
+                        represented_policy_sign(&predicate, policy)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            }
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
                 ..
             }
@@ -27123,6 +27481,10 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                 system,
                 ..
             } => system.first_clockwise,
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                first_clockwise,
+                ..
+            } => *first_clockwise,
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
                 ..
             }
@@ -27238,6 +27600,32 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     &predicate,
                     policy,
                 )?
+            }
+            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                radial_dot,
+                radial_cross,
+                first_radius_squared,
+                second_radius_squared,
+                ..
+            } => {
+                let target_radius_squared = if source_first {
+                    second_radius_squared
+                } else {
+                    first_radius_squared
+                };
+                let offset = -(target_radius_squared * &radius_scale);
+                match represented_affine_coordinate(
+                    &[
+                        (radial_dot, &radial_dot_scale),
+                        (radial_cross, &radial_cross_scale),
+                    ],
+                    &offset,
+                ) {
+                    Classification::Decided(predicate) => {
+                        represented_policy_sign(&predicate, policy)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
             }
             BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::ExactEndpoints {
                 ..
@@ -76818,6 +77206,64 @@ mod conversion_tests {
         recursive
     }
 
+    /// Authors a recursive frame at the rational transverse contact `(0,-1)`.
+    /// The second unit circle is centered at `(1,-1)` and its rational
+    /// Pythagorean start radial selects that contact while excluding `(1,0)`.
+    fn recursively_pair_radial_rational_center_half(
+        policy: &CurveContext,
+    ) -> BezierAlgebraicCuspSemicircle2 {
+        let first = independent_pair_radial_unit_circle(policy);
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let second = synthetic_selected_cusp_semicircle(
+            vec![Real::zero(), Real::from(3_i8)],
+            vec![Real::from(-1_i8)],
+            (Real::one() / Real::from(9_i8)).unwrap(),
+            (Real::one() / Real::from(4_i8)).unwrap(),
+            (Real::one() / Real::from(2_i8)).unwrap(),
+            Real::one(),
+            true,
+            policy,
+        );
+        let second = synthetic_selected_cusp_semicircle_with_normal(
+            &second,
+            vec![Real::from(3_i8) * &fifth],
+            vec![Real::from(-4_i8) * fifth],
+        );
+        let result = first.pair_intersections(&second, policy).unwrap();
+        let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+            contacts,
+            parameter_map,
+        }) = result
+        else {
+            panic!("the rational-center transverse recursive fixture must intersect: {result:?}");
+        };
+        let [contact] = contacts.as_slice() else {
+            panic!("the rational-center transverse fixture must retain one contact: {contacts:?}");
+        };
+        assert_eq!(
+            contact.first_location,
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+        );
+        assert_eq!(
+            contact.second_location,
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+        );
+        let Classification::Decided(Some(recursive)) =
+            BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                &first,
+                parameter_map.first_contact_parameter(contact),
+                Real::one(),
+                (Real::one() / Real::from(2_i8)).unwrap(),
+                false,
+                policy,
+            )
+            .unwrap()
+        else {
+            panic!("the rational-center transverse recursive circle must construct");
+        };
+        recursive
+    }
+
     #[test]
     fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
         let ninth = (Real::one() / Real::from(9_i8)).unwrap();
@@ -76982,7 +77428,6 @@ mod conversion_tests {
     #[test]
     fn recursively_pair_radial_circle_materializes_its_exact_frame() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let encloses = |representation: &AlgebraicRootRepresentation, value: &Real| {
             compare_reals(&representation.interval.lower, value, &CurveContext::STRICT)
                 != Some(std::cmp::Ordering::Greater)
@@ -77002,7 +77447,7 @@ mod conversion_tests {
                 panic!("the recursive selected-radial frame must materialize: {frame:?}");
             };
             assert!(encloses(&frame.center[0], &half));
-            assert!(encloses(&frame.radial[0], &quarter));
+            assert!(encloses(&frame.unit_radial[0], &half));
             assert_eq!(
                 compare_reals(
                     &frame.center[1].interval.upper,
@@ -77013,7 +77458,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 compare_reals(
-                    &frame.radial[1].interval.upper,
+                    &frame.unit_radial[1].interval.upper,
                     &Real::zero(),
                     &CurveContext::STRICT,
                 ),
@@ -77040,7 +77485,7 @@ mod conversion_tests {
                 &translated.center[0],
                 &(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
             ));
-            assert!(encloses(&translated.radial[0], &quarter));
+            assert!(encloses(&translated.unit_radial[0], &half));
         }
     }
 
@@ -77050,13 +77495,12 @@ mod conversion_tests {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
         let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
-        let three_sixteenths = (Real::from(3_i8) / Real::from(16_i8)).unwrap();
         let translate = Similarity2::try_from_real_affine(
             Real::one(),
             Real::zero(),
             Real::zero(),
             Real::one(),
-            three_quarters,
+            three_quarters.clone(),
             Real::zero(),
         )
         .unwrap();
@@ -77171,7 +77615,7 @@ mod conversion_tests {
                 panic!("the next recursive frame must materialize exactly");
             };
             assert!(encloses(&frame.center[0], &seven_eighths));
-            assert!(encloses(&frame.radial[0], &three_sixteenths));
+            assert!(encloses(&frame.unit_radial[0], &three_quarters));
             assert_eq!(
                 compare_reals(
                     &frame.center[1].interval.upper,
@@ -77189,13 +77633,12 @@ mod conversion_tests {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
         let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
-        let three_sixteenths = (Real::from(3_i8) / Real::from(16_i8)).unwrap();
         let translate = Similarity2::try_from_real_affine(
             Real::one(),
             Real::zero(),
             Real::zero(),
             Real::one(),
-            three_quarters,
+            three_quarters.clone(),
             Real::zero(),
         )
         .unwrap();
@@ -77309,7 +77752,7 @@ mod conversion_tests {
                 panic!("the independently authored recursive frame must materialize exactly");
             };
             assert!(encloses(&frame.center[0], &seven_eighths));
-            assert!(encloses(&frame.radial[0], &three_sixteenths));
+            assert!(encloses(&frame.unit_radial[0], &three_quarters));
             assert_eq!(
                 compare_reals(
                     &frame.center[1].interval.upper,
@@ -77318,6 +77761,135 @@ mod conversion_tests {
                 ),
                 Some(std::cmp::Ordering::Less),
             );
+        }
+    }
+
+    #[test]
+    fn independently_encoded_recursive_circles_map_all_coincident_half_relations() {
+        // Counterclockwise quarter turn about the retained rational center
+        // (0,-1): translation is C-RC=(-1,-1).
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let quarter_turn = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1_i8),
+            Real::one(),
+            Real::zero(),
+            Real::from(-1_i8),
+            Real::from(-1_i8),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = recursively_pair_radial_rational_center_half(&policy);
+            let aligned = recursively_pair_radial_rational_center_half(&policy);
+            for (second, expected_orientation) in [
+                (aligned.clone(), RationalBezierOverlapOrientation2::Same),
+                (
+                    aligned.reversed(),
+                    RationalBezierOverlapOrientation2::Reversed,
+                ),
+            ] {
+                for (left, right) in [(&first, &second), (&second, &first)] {
+                    let result = left.pair_intersections(right, &policy).unwrap();
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                    ) = result
+                    else {
+                        panic!("independent recursive aligned halves must overlap: {result:?}");
+                    };
+                    assert!(overlap.has_exact_endpoint_map());
+                    assert_eq!(overlap.orientation(), expected_orientation);
+                }
+            }
+
+            let complementary =
+                recursively_pair_radial_rational_center_half(&policy).complementary_half();
+            for (left, right) in [(&first, &complementary), (&complementary, &first)] {
+                let result = left.pair_intersections(right, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(contacts),
+                ) = result
+                else {
+                    panic!(
+                        "independent recursive complementary halves must meet at endpoints: {result:?}"
+                    );
+                };
+                assert_eq!(contacts.len(), 2);
+            }
+
+            let partial = recursively_pair_radial_rational_center_half(&policy)
+                .transform_similarity(&quarter_turn)
+                .unwrap();
+            for (second, expected_orientation) in [
+                (partial.clone(), RationalBezierOverlapOrientation2::Same),
+                (
+                    partial.reversed(),
+                    RationalBezierOverlapOrientation2::Reversed,
+                ),
+            ] {
+                for (left, right) in [(&first, &second), (&second, &first)] {
+                    let result = left.pair_intersections(right, &policy).unwrap();
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                    ) = result
+                    else {
+                        panic!(
+                            "independent recursive turned halves must partially overlap: {result:?}"
+                        );
+                    };
+                    assert!(!overlap.has_exact_endpoint_map());
+                    assert_eq!(overlap.orientation(), expected_orientation);
+                    for parameter in [
+                        overlap.first_start_parameter(),
+                        overlap.first_end_parameter(),
+                        overlap.second_start_parameter(),
+                        overlap.second_end_parameter(),
+                    ] {
+                        assert!(matches!(
+                            parameter.parameter_bracket(16, &policy).unwrap(),
+                            Classification::Decided(_)
+                        ));
+                    }
+                    let (source, target) = if left == &first {
+                        (
+                            three_quarters.clone(),
+                            if expected_orientation == RationalBezierOverlapOrientation2::Same {
+                                third.clone()
+                            } else {
+                                two_thirds.clone()
+                            },
+                        )
+                    } else {
+                        (
+                            if expected_orientation == RationalBezierOverlapOrientation2::Same {
+                                third.clone()
+                            } else {
+                                two_thirds.clone()
+                            },
+                            three_quarters.clone(),
+                        )
+                    };
+                    let mapped = overlap.map_parameter(
+                        &BezierAlgebraicCuspSemicircleParameter2::Exact(source.clone()),
+                        true,
+                    );
+                    assert_eq!(
+                        mapped.order_to_real(&target, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal),
+                    );
+                    assert_eq!(
+                        overlap
+                            .map_parameter(&mapped, false)
+                            .cmp_by_refinement(
+                                &BezierAlgebraicCuspSemicircleParameter2::Exact(source),
+                                &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal),
+                    );
+                }
+            }
         }
     }
 
