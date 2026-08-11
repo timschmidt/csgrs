@@ -4954,6 +4954,60 @@ fn represented_dense_value(
     represented_tensor_coordinate(&relation, sources, &interval.lower, &interval.upper)
 }
 
+/// Builds one minimal affine tensor basis for independently represented
+/// scalars. Exact rational coordinates become constants, while roots proved
+/// affine images of an earlier source reuse that axis. Every relation is
+/// certified under STRICT before it can change the tensor rank.
+fn represented_affine_tensor_basis(
+    coordinates: &[AlgebraicRootRepresentation],
+) -> Option<(Vec<AlgebraicRootRepresentation>, Vec<DenseTensorPolynomial>)> {
+    let mut sources = Vec::<AlgebraicRootRepresentation>::new();
+    let mut descriptions = Vec::with_capacity(coordinates.len());
+    for coordinate in coordinates {
+        if let Some(value) = coordinate.exact_rational_witness() {
+            descriptions.push((None, Real::zero(), value.clone()));
+            continue;
+        }
+        let relation = sources.iter().enumerate().find_map(|(axis, source)| {
+            let relation = if source == coordinate {
+                hypersolve::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
+            } else {
+                algebraic_root_affine_relation(
+                    source,
+                    coordinate,
+                    hypersolve::PredicatePolicy::STRICT,
+                )?
+            };
+            Some((axis, relation))
+        });
+        if let Some((axis, relation)) = relation {
+            descriptions.push((Some(axis), relation.scale, relation.offset));
+        } else {
+            let axis = sources.len();
+            sources.push(coordinate.clone());
+            descriptions.push((Some(axis), Real::one(), Real::zero()));
+        }
+    }
+
+    let rank = sources.len() + 1;
+    let constant = |value: &Real| {
+        DenseTensorPolynomial::from_axis_polynomial(rank, 0, std::slice::from_ref(value))
+    };
+    let mut polynomials = Vec::with_capacity(descriptions.len());
+    for (source, scale, offset) in descriptions {
+        let polynomial = if let Some(axis) = source {
+            DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[offset, scale])?
+        } else {
+            constant(&offset)?
+        };
+        polynomials.push(polynomial);
+    }
+    Some((sources, polynomials))
+}
+
 /// Materializes `(A + branch*B*sqrt(S)) / (C + branch*D*sqrt(S))`
 /// from one retained tensor authority. The supplied signed radical interval
 /// selects the authored square-root sheet; the exact squared relation remains
@@ -5689,83 +5743,6 @@ fn represented_circle_contact_location_from_exact_radial(
     Ok(
         represented_circle_contact_location_parameter_from_dot_cross(dot, cross, radius_squared)?
             .map(|contact| contact.map(|(location, _)| location)),
-    )
-}
-
-fn represented_circle_contact_location_parameter(
-    frame: &BezierRepresentedSelectedRadialCircleFrame2,
-    point: &[AlgebraicRootRepresentation; 2],
-    radius_squared: &Real,
-    turn: &Real,
-) -> CurveResult<
-    Classification<
-        Option<(
-            BezierAlgebraicCuspSemicircleContactLocation2,
-            BezierParameter2,
-        )>,
-    >,
-> {
-    let contact_radial = [
-        represented_affine_coordinate(
-            &[
-                (&point[0], &Real::one()),
-                (&frame.center[0], &(-Real::one())),
-            ],
-            &Real::zero(),
-        ),
-        represented_affine_coordinate(
-            &[
-                (&point[1], &Real::one()),
-                (&frame.center[1], &(-Real::one())),
-            ],
-            &Real::zero(),
-        ),
-    ];
-    let [
-        Classification::Decided(contact_x),
-        Classification::Decided(contact_y),
-    ] = contact_radial
-    else {
-        let reason = contact_radial
-            .into_iter()
-            .find_map(|coordinate| match coordinate {
-                Classification::Decided(_) => None,
-                Classification::Uncertain(reason) => Some(reason),
-            })
-            .unwrap_or(UncertaintyReason::Predicate);
-        return Ok(Classification::Uncertain(reason));
-    };
-
-    let [dot, cross] =
-        match represented_vector_dot_cross(&frame.unit_radial, &[contact_x, contact_y]) {
-            Classification::Decided(values) => values,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let dot = match represented_affine_coordinate(&[(&dot, &frame.signed_radius)], &Real::zero()) {
-        Classification::Decided(dot) => dot,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let cross =
-        match represented_affine_coordinate(&[(&cross, &frame.signed_radius)], &Real::zero()) {
-            Classification::Decided(cross) => cross,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let oriented_cross = match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
-        Classification::Decided(cross) => cross,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    represented_circle_contact_location_parameter_from_dot_cross(
-        dot,
-        oriented_cross,
-        radius_squared,
     )
 }
 
@@ -18427,30 +18404,54 @@ impl BezierAlgebraicCuspSemicircle2 {
                 axis(4).expect("a common-source tensor has its second radial x axis"),
                 axis(5).expect("a common-source tensor has its second radial y axis"),
             ];
-            (sources, center_coordinates, Some(unit_radial_coordinates))
+            (sources, center_coordinates, unit_radial_coordinates)
         } else {
-            let rank = 5;
-            let axis = |axis| {
-                DenseTensorPolynomial::from_axis_polynomial(
-                    rank,
-                    axis,
-                    &[Real::zero(), Real::one()],
-                )
+            // Keep both local frames and the circle-pair construction in one
+            // tensor authority. Materializing a contact first and then
+            // subtracting independently eliminated center coordinates loses
+            // the useful expression correlation and can multiply the same
+            // selected fields a second time merely to recover angular
+            // parameters.
+            let coordinates = [
+                first_frame.center[0].clone(),
+                first_frame.center[1].clone(),
+                second_frame.center[0].clone(),
+                second_frame.center[1].clone(),
+                first_frame.unit_radial[0].clone(),
+                first_frame.unit_radial[1].clone(),
+                second_frame.unit_radial[0].clone(),
+                second_frame.unit_radial[1].clone(),
+            ];
+            let Some((sources, coordinates)) = represented_affine_tensor_basis(&coordinates) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+            let coordinates: [DenseTensorPolynomial; 8] = coordinates
+                .try_into()
+                .expect("the represented frame basis retains all eight coordinates");
+            let [
+                first_center_x,
+                first_center_y,
+                second_center_x,
+                second_center_y,
+                first_radial_x,
+                first_radial_y,
+                second_radial_x,
+                second_radial_y,
+            ] = coordinates;
             (
-                vec![
-                    first_frame.center[0].clone(),
-                    first_frame.center[1].clone(),
-                    second_frame.center[0].clone(),
-                    second_frame.center[1].clone(),
+                sources,
+                [
+                    first_center_x,
+                    first_center_y,
+                    second_center_x,
+                    second_center_y,
                 ],
                 [
-                    axis(0).expect("a rank-five tensor has its first center x axis"),
-                    axis(1).expect("a rank-five tensor has its first center y axis"),
-                    axis(2).expect("a rank-five tensor has its second center x axis"),
-                    axis(3).expect("a rank-five tensor has its second center y axis"),
+                    first_radial_x,
+                    first_radial_y,
+                    second_radial_x,
+                    second_radial_y,
                 ],
-                None,
             )
         };
         let rank = sources.len() + 1;
@@ -18626,77 +18627,52 @@ impl BezierAlgebraicCuspSemicircle2 {
                 hypersolve::compact_algebraic_root_low_degree_witness(&coordinate)
                     .unwrap_or(coordinate)
             });
-            let correlated_parameters = if let Some(unit_radials) = unit_radial_coordinates.as_ref()
-            {
-                let Some(second_radial_retained) = (|| {
-                    Some([
-                        first_radial_retained[0].subtract(&twice_q.multiply(&dx)?)?,
-                        first_radial_retained[1].subtract(&twice_q.multiply(&dy)?)?,
-                    ])
-                })() else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                let first_unit = [unit_radials[0].clone(), unit_radials[1].clone()];
-                let second_unit = [unit_radials[2].clone(), unit_radials[3].clone()];
-                Some((
-                    represented_tensor_circle_contact_location_parameter(
-                        &first_unit,
-                        &first_radial_retained,
-                        &first_radial_candidate,
-                        &twice_q,
-                        &discriminant,
-                        &sources,
-                        &signed_radical,
-                        &first_frame.signed_radius,
-                        &self.turn_sign(),
-                        &first_radius_squared,
-                    )?,
-                    represented_tensor_circle_contact_location_parameter(
-                        &second_unit,
-                        &second_radial_retained,
-                        &first_radial_candidate,
-                        &twice_q,
-                        &discriminant,
-                        &sources,
-                        &signed_radical,
-                        &second_frame.signed_radius,
-                        &other.turn_sign(),
-                        &second_radius_squared,
-                    )?,
-                ))
-            } else {
-                None
+            let Some(second_radial_retained) = (|| {
+                Some([
+                    first_radial_retained[0].subtract(&twice_q.multiply(&dx)?)?,
+                    first_radial_retained[1].subtract(&twice_q.multiply(&dy)?)?,
+                ])
+            })() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let first_result = correlated_parameters.as_ref().map_or_else(
-                || {
-                    represented_circle_contact_location_parameter(
-                        &first_frame,
-                        &point,
-                        &first_radius_squared,
-                        &self.turn_sign(),
-                    )
-                },
-                |parameters| Ok(parameters.0.clone()),
-            )?;
-            let first = match first_result {
+            let first_unit = [
+                unit_radial_coordinates[0].clone(),
+                unit_radial_coordinates[1].clone(),
+            ];
+            let second_unit = [
+                unit_radial_coordinates[2].clone(),
+                unit_radial_coordinates[3].clone(),
+            ];
+            let first = match represented_tensor_circle_contact_location_parameter(
+                &first_unit,
+                &first_radial_retained,
+                &first_radial_candidate,
+                &twice_q,
+                &discriminant,
+                &sources,
+                &signed_radical,
+                &first_frame.signed_radius,
+                &self.turn_sign(),
+                &first_radius_squared,
+            )? {
                 Classification::Decided(Some(value)) => value,
                 Classification::Decided(None) => continue,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let second_result = correlated_parameters.map_or_else(
-                || {
-                    represented_circle_contact_location_parameter(
-                        &second_frame,
-                        &point,
-                        &second_radius_squared,
-                        &other.turn_sign(),
-                    )
-                },
-                |parameters| Ok(parameters.1),
-            )?;
-            let second = match second_result {
+            let second = match represented_tensor_circle_contact_location_parameter(
+                &second_unit,
+                &second_radial_retained,
+                &first_radial_candidate,
+                &twice_q,
+                &discriminant,
+                &sources,
+                &signed_radical,
+                &second_frame.signed_radius,
+                &other.turn_sign(),
+                &second_radius_squared,
+            )? {
                 Classification::Decided(Some(value)) => value,
                 Classification::Decided(None) => continue,
                 Classification::Uncertain(reason) => {
@@ -78246,6 +78222,192 @@ mod conversion_tests {
                         second_parameter.order_to_real(&half, &policy).unwrap(),
                         Classification::Decided(first_half_order.reverse()),
                     );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn independently_encoded_scaled_rotated_recursive_circles_intersect_exactly() {
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let scale_rotate = Similarity2::try_from_real_affine(
+            Real::from(8_i8) * &fifth,
+            Real::from(-6_i8) * &fifth,
+            Real::from(6_i8) * &fifth,
+            Real::from(8_i8) * fifth,
+            Real::zero(),
+            Real::zero(),
+        )
+        .unwrap();
+        assert_eq!(
+            compare_reals(
+                scale_rotate.scale(),
+                &Real::from(2_i8),
+                &CurveContext::STRICT,
+            ),
+            Some(std::cmp::Ordering::Equal),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = recursively_pair_radial_half(&policy);
+            let transformed = recursively_pair_radial_half(&policy)
+                .transform_similarity(&scale_rotate)
+                .unwrap();
+            let Classification::Decided(frame) = transformed
+                .represented_selected_radial_frame(&policy)
+                .unwrap()
+            else {
+                panic!("the scaled recursive frame must materialize exactly");
+            };
+            assert_eq!(
+                compare_reals(&frame.signed_radius, &Real::one(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Equal),
+            );
+            let Classification::Decided([unit_norm, unit_cross]) =
+                represented_vector_dot_cross(&frame.unit_radial, &frame.unit_radial)
+            else {
+                panic!("the scaled recursive frame must retain its unit radial correlation");
+            };
+            let Classification::Decided(unit_norm_residual) =
+                represented_affine_coordinate(&[(&unit_norm, &Real::one())], &Real::from(-1_i8))
+            else {
+                panic!("the transformed unit norm must remain representable");
+            };
+            assert_eq!(
+                represented_strict_sign(&unit_norm_residual),
+                Some(RealSign::Zero)
+            );
+            assert_eq!(represented_strict_sign(&unit_cross), Some(RealSign::Zero));
+
+            let second = transformed.complementary_half();
+            for (left, right) in [(&first, &second), (&second, &first)] {
+                let result = left.pair_intersections(right, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    },
+                ) = result
+                else {
+                    panic!("the scaled recursive pair must complete exactly: {result:?}");
+                };
+                assert_eq!(contacts.len(), 2);
+                for contact in &contacts {
+                    assert_eq!(
+                        contact.first_location,
+                        BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    );
+                    assert_eq!(
+                        contact.second_location,
+                        BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    );
+                    assert_eq!(
+                        parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                        Classification::Decided(RealSign::Negative),
+                    );
+                    let Classification::Decided([x, y]) = parameter_map
+                        .represented_selected_radial_contact_point(contact)
+                        .unwrap()
+                    else {
+                        panic!("the scaled recursive contact must retain exact coordinates");
+                    };
+                    assert_eq!(
+                        compare_reals(&x.interval.lower, &Real::zero(), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        compare_reals(&y.interval.upper, &Real::zero(), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Less),
+                    );
+                    for parameter in [
+                        parameter_map.first_contact_parameter(contact),
+                        parameter_map.second_contact_parameter(contact),
+                    ] {
+                        assert_eq!(
+                            parameter.order_to_real(&Real::zero(), &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Greater),
+                        );
+                        assert_eq!(
+                            parameter.order_to_real(&Real::one(), &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Less),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn unrelated_recursive_circle_centers_intersect_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = recursively_pair_radial_half(&policy).complementary_half();
+            let second = recursively_pair_radial_rational_center_half(&policy);
+            assert!(
+                first
+                    .represented_common_source_center_tensor(&second, &policy)
+                    .unwrap()
+                    .is_none(),
+                "the unrelated-center regression must exercise the independent fallback",
+            );
+            for (left, right) in [(&first, &second), (&second, &first)] {
+                let result = left.pair_intersections(right, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    },
+                ) = result
+                else {
+                    panic!("the unrelated recursive pair must complete exactly: {result:?}");
+                };
+                assert!(matches!(
+                    parameter_map.data.system,
+                    BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_),
+                ));
+                assert_eq!(contacts.len(), 2);
+                for (contact, tangent_cross_sign) in contacts
+                    .iter()
+                    .zip([RealSign::Negative, RealSign::Positive])
+                {
+                    assert_eq!(
+                        contact.first_location,
+                        BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    );
+                    assert_eq!(
+                        contact.second_location,
+                        BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    );
+                    assert_eq!(contact.tangent_cross_sign, tangent_cross_sign);
+                    assert_eq!(
+                        parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                        Classification::Decided(RealSign::Positive),
+                    );
+                    let Classification::Decided([x, y]) = parameter_map
+                        .represented_selected_radial_contact_point(contact)
+                        .unwrap()
+                    else {
+                        panic!("the unrelated recursive contact must retain exact coordinates");
+                    };
+                    assert_eq!(
+                        compare_reals(&x.interval.lower, &Real::zero(), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        compare_reals(&y.interval.upper, &Real::zero(), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Less),
+                    );
+                    for parameter in [
+                        parameter_map.first_contact_parameter(contact),
+                        parameter_map.second_contact_parameter(contact),
+                    ] {
+                        assert_eq!(
+                            parameter.order_to_real(&Real::zero(), &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Greater),
+                        );
+                        assert_eq!(
+                            parameter.order_to_real(&Real::one(), &policy).unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Less),
+                        );
+                    }
                 }
             }
         }
