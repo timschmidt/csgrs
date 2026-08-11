@@ -4954,6 +4954,28 @@ fn represented_dense_value(
     represented_tensor_coordinate(&relation, sources, &interval.lower, &interval.upper)
 }
 
+/// Proves equality of two selected algebraic numbers even when their defining
+/// eliminants differ. This is STRICT construction evidence: a shared isolated
+/// polynomial root or an exactly signed algebraic difference is required.
+fn represented_roots_strictly_equal(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> bool {
+    let comparison = hypersolve::compare_algebraic_root_representations_by_difference(
+        left,
+        right,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: hypersolve::PredicatePolicy::STRICT,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    )
+    .comparison;
+    matches!(
+        comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    ) && comparison.ordering == Some(std::cmp::Ordering::Equal)
+}
+
 /// Builds one minimal affine tensor basis for independently represented
 /// scalars. Exact rational coordinates become constants, while roots proved
 /// affine images of an earlier source reuse that axis. Every relation is
@@ -4974,12 +4996,19 @@ fn represented_affine_tensor_basis(
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
+            } else if let Some(relation) = algebraic_root_affine_relation(
+                source,
+                coordinate,
+                hypersolve::PredicatePolicy::STRICT,
+            ) {
+                relation
+            } else if represented_roots_strictly_equal(source, coordinate) {
+                hypersolve::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
             } else {
-                algebraic_root_affine_relation(
-                    source,
-                    coordinate,
-                    hypersolve::PredicatePolicy::STRICT,
-                )?
+                return None;
             };
             Some((axis, relation))
         });
@@ -17985,15 +18014,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
-            } else {
-                let Some(relation) = algebraic_root_affine_relation(
-                    &first_center[axis],
-                    &second_center[axis],
-                    hypersolve::PredicatePolicy::STRICT,
-                ) else {
-                    return Ok(None);
-                };
+            } else if let Some(relation) = algebraic_root_affine_relation(
+                &first_center[axis],
+                &second_center[axis],
+                hypersolve::PredicatePolicy::STRICT,
+            ) {
                 relation
+            } else if represented_roots_strictly_equal(&first_center[axis], &second_center[axis]) {
+                hypersolve::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
+            } else {
+                return Ok(None);
             };
             if compare_reals(&relation.scale, &Real::one(), &CurveContext::STRICT)
                 != Some(std::cmp::Ordering::Equal)
@@ -18049,12 +18082,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
+            } else if let Some(relation) = algebraic_root_affine_relation(
+                &first.center[axis],
+                &second.center[axis],
+                hypersolve::PredicatePolicy::STRICT,
+            ) {
+                relation
+            } else if represented_roots_strictly_equal(&first.center[axis], &second.center[axis]) {
+                hypersolve::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
             } else {
-                algebraic_root_affine_relation(
-                    &first.center[axis],
-                    &second.center[axis],
-                    hypersolve::PredicatePolicy::STRICT,
-                )?
+                return None;
             };
             if compare_reals(&relation.scale, &Real::one(), &CurveContext::STRICT)
                 != Some(std::cmp::Ordering::Equal)
@@ -78334,6 +78374,55 @@ mod conversion_tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn differently_factored_selected_roots_share_frame_axes_and_translation() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let BezierParameter2::Algebraic(parameter) =
+            algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()])
+        else {
+            unreachable!("the cubic fixture retains an algebraic parameter")
+        };
+        let root = parameter_representation(&parameter, &CurveContext::STRICT);
+        let mut factored = root.clone();
+        factored.polynomial_coefficients = polynomial_multiply(
+            &root.polynomial_coefficients,
+            &[Real::one(), Real::zero(), Real::one()],
+        );
+        factored.validation =
+            validate_algebraic_root_representation(&factored, hypersolve::PredicatePolicy::STRICT);
+        assert!(factored.is_valid());
+        assert_ne!(
+            root.polynomial_coefficients.len(),
+            factored.polynomial_coefficients.len(),
+        );
+        assert!(represented_roots_strictly_equal(&root, &factored));
+
+        let zero = exact_real_algebraic_representation(&Real::zero());
+        let one = exact_real_algebraic_representation(&Real::one());
+        let first = BezierRepresentedSelectedRadialCircleFrame2 {
+            center: [root.clone(), zero.clone()],
+            unit_radial: [one.clone(), zero.clone()],
+            signed_radius: Real::one(),
+        };
+        let second = BezierRepresentedSelectedRadialCircleFrame2 {
+            center: [factored.clone(), zero.clone()],
+            unit_radial: [one, zero],
+            signed_radius: Real::one(),
+        };
+        let translation = BezierAlgebraicCuspSemicircle2::represented_certified_frame_translation(
+            &first, &second,
+        )
+        .expect("equal differently factored centers must certify translation");
+        assert!(translation.iter().all(|coordinate| {
+            compare_reals(coordinate, &Real::zero(), &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Equal)
+        }));
+
+        let (sources, coordinates) = represented_affine_tensor_basis(&[root, factored]).unwrap();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(coordinates[0], coordinates[1]);
     }
 
     #[test]
