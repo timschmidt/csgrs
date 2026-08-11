@@ -402,6 +402,18 @@ fn exact_small_denominator_root_in_interval(
         }
     }
     let (numerator, denominator, _) = best?;
+    let candidate_approximation = numerator as f64 / denominator as f64;
+    let approximation_slack =
+        (upper - lower).abs() * 4.0 + midpoint.abs().max(1.0) * f64::EPSILON * 64.0;
+    // This is only an optimization gate: declining rational compaction leaves
+    // the complete exact algebraic representation unchanged. A candidate far
+    // outside the floating enclosure therefore need not trigger costly exact
+    // comparisons against large arithmetic-DAG interval endpoints.
+    if candidate_approximation < lower - approximation_slack
+        || candidate_approximation > upper + approximation_slack
+    {
+        return None;
+    }
     let candidate = Real::new(hyperreal::Rational::fraction(numerator, denominator).ok()?);
     if !matches!(
         compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
