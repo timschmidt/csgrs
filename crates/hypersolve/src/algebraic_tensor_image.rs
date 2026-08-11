@@ -293,9 +293,8 @@ pub fn represent_algebraic_tensor_image(
     // the selected image is a small rational CAD coordinate. A floating-point
     // enclosure is used only to propose bounded-denominator candidates; exact
     // polynomial evaluation and exact interval containment are the authority.
-    let exact_rational_root = exact_linear_root.or_else(|| {
-        exact_small_denominator_root_in_interval(&polynomial_coefficients, image_interval)
-    });
+    let exact_rational_root = exact_linear_root
+        .or_else(|| exact_cardinal_root_in_interval(&polynomial_coefficients, image_interval));
     let interval = if let Some(root) = &exact_rational_root {
         IsolatedRootInterval {
             lower: root.clone(),
@@ -375,65 +374,39 @@ pub fn represent_algebraic_tensor_image(
     }
 }
 
-/// Recovers a selected rational image without using approximation as proof.
-/// Small denominators cover the overwhelmingly common authored CAD grid while
+/// Recovers a selected cardinal image without using approximation as proof,
 /// leaving every other algebraic image on the unchanged exact isolator path.
-fn exact_small_denominator_root_in_interval(
+fn exact_cardinal_root_in_interval(
     polynomial_coefficients: &[Real],
     interval: &IsolatedRootInterval,
 ) -> Option<Real> {
-    const MAX_DENOMINATOR: i64 = 64;
-
-    let lower = interval.lower.to_f64_lossy()?;
-    let upper = interval.upper.to_f64_lossy()?;
-    if !lower.is_finite() || !upper.is_finite() {
-        return None;
-    }
-    let midpoint = lower / 2.0 + upper / 2.0;
-    let mut best = None;
-    for denominator in 1..=MAX_DENOMINATOR {
-        let numerator = (midpoint * denominator as f64).round();
-        if !numerator.is_finite() || numerator < i64::MIN as f64 || numerator > i64::MAX as f64 {
+    // These three coordinates dominate canonical CAD frames and need no
+    // approximate proposal or rational-root factorization. Other rational
+    // images retain their complete algebraic isolator.
+    for candidate in [Real::zero(), Real::from(-1_i8), Real::one()] {
+        let value = polynomial_coefficients
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &candidate + coefficient
+            });
+        if !value
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
             continue;
         }
-        let error = (midpoint - numerator / denominator as f64).abs();
-        if best.is_none_or(|(_, _, best_error)| error < best_error) {
-            best = Some((numerator as i64, denominator as u64, error));
+        if matches!(
+            compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) && matches!(
+            compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
+            return Some(candidate);
         }
     }
-    let (numerator, denominator, _) = best?;
-    let candidate_approximation = numerator as f64 / denominator as f64;
-    let approximation_slack =
-        (upper - lower).abs() * 4.0 + midpoint.abs().max(1.0) * f64::EPSILON * 64.0;
-    // This is only an optimization gate: declining rational compaction leaves
-    // the complete exact algebraic representation unchanged. A candidate far
-    // outside the floating enclosure therefore need not trigger costly exact
-    // comparisons against large arithmetic-DAG interval endpoints.
-    if candidate_approximation < lower - approximation_slack
-        || candidate_approximation > upper + approximation_slack
-    {
-        return None;
-    }
-    let candidate = Real::new(hyperreal::Rational::fraction(numerator, denominator).ok()?);
-    if !matches!(
-        compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
-        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-    ) || !matches!(
-        compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
-        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-    ) {
-        return None;
-    }
-    let value = polynomial_coefficients
-        .iter()
-        .rev()
-        .fold(Real::zero(), |value, coefficient| {
-            value * &candidate + coefficient
-        });
-    value
-        .exact_rational_ref()
-        .is_some_and(|value| value.is_zero())
-        .then_some(candidate)
+    None
 }
 
 fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
@@ -527,7 +500,7 @@ mod tests {
         };
         // z(z^2-2) has the selected rational root zero inside the isolator.
         assert_eq!(
-            exact_small_denominator_root_in_interval(
+            exact_cardinal_root_in_interval(
                 &[Real::zero(), real(-2), Real::zero(), Real::one()],
                 &interval,
             ),
@@ -536,7 +509,7 @@ mod tests {
         // The same candidate hint must not be accepted without exact
         // polynomial incidence.
         assert_eq!(
-            exact_small_denominator_root_in_interval(
+            exact_cardinal_root_in_interval(
                 &[Real::one(), real(-2), Real::zero(), Real::one()],
                 &interval,
             ),
