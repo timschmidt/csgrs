@@ -67,9 +67,11 @@ use hypersolve::{
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
 };
 use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig, IsolatedRootInterval,
-    compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
-    greatest_common_divisor_univariate_polynomials_exact,
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    AlgebraicRootRepresentation, AlgebraicTensorImageStatus, DenseTensorPolynomial,
+    IsolatedRootInterval, compare_algebraic_root_representations_with_refinement,
+    divide_univariate_polynomial_exact, greatest_common_divisor_univariate_polynomials_exact,
+    represent_algebraic_tensor_image,
 };
 use hypersolve::{
     BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
@@ -4207,6 +4209,424 @@ impl BezierSelectedRadialSelectedCircleNestedExpression2 {
                 &candidate,
             )?,
         })
+    }
+}
+
+/// Rank-independent one-radical expression used only to flatten a retained
+/// contact into a represented algebraic coordinate. The fixed tensor kernels
+/// remain the predicate fast paths; this exact fallback keeps one additional
+/// output axis and norms the authored radical tower without losing source-root
+/// correlation.
+#[derive(Clone)]
+struct BezierDenseSquareRootExpression2 {
+    rational: DenseTensorPolynomial,
+    radical: DenseTensorPolynomial,
+}
+
+impl BezierDenseSquareRootExpression2 {
+    fn subtract(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.subtract(&other.rational)?,
+            radical: self.radical.subtract(&other.radical)?,
+        })
+    }
+
+    fn multiply_rational(&self, polynomial: &DenseTensorPolynomial) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.multiply(polynomial)?,
+            radical: self.radical.multiply(polynomial)?,
+        })
+    }
+
+    fn multiply(&self, other: &Self, discriminant: &DenseTensorPolynomial) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.multiply(&other.rational)?.add(
+                &self
+                    .radical
+                    .multiply(&other.radical)?
+                    .multiply(discriminant)?,
+            )?,
+            radical: self
+                .rational
+                .multiply(&other.radical)?
+                .add(&self.radical.multiply(&other.rational)?)?,
+        })
+    }
+
+    fn square(&self, discriminant: &DenseTensorPolynomial) -> Option<Self> {
+        self.multiply(self, discriminant)
+    }
+
+    fn shift_axis(&self, axis: usize, power: usize) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.shift_axis(axis, power)?,
+            radical: self.radical.shift_axis(axis, power)?,
+        })
+    }
+
+    fn reduce_source_axes(&self, sources: &[AlgebraicRootRepresentation]) -> Option<Self> {
+        Some(Self {
+            rational: dense_reduce_source_axes(&self.rational, sources)?,
+            radical: dense_reduce_source_axes(&self.radical, sources)?,
+        })
+    }
+}
+
+/// Dynamic tensor form of
+/// `R+A*sqrt(K1)+B*sqrt(K2)+C*sqrt(K1)*sqrt(K2)`.
+#[derive(Clone)]
+struct BezierDenseBiquadraticExpression2 {
+    rational: DenseTensorPolynomial,
+    first_radical: DenseTensorPolynomial,
+    second_radical: DenseTensorPolynomial,
+    product_radical: DenseTensorPolynomial,
+}
+
+impl BezierDenseBiquadraticExpression2 {
+    fn subtract(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.subtract(&other.rational)?,
+            first_radical: self.first_radical.subtract(&other.first_radical)?,
+            second_radical: self.second_radical.subtract(&other.second_radical)?,
+            product_radical: self.product_radical.subtract(&other.product_radical)?,
+        })
+    }
+
+    fn multiply(
+        &self,
+        other: &Self,
+        first_discriminant: &DenseTensorPolynomial,
+        second_discriminant: &DenseTensorPolynomial,
+    ) -> Option<Self> {
+        let first_second = first_discriminant.multiply(second_discriminant)?;
+        Some(Self {
+            rational: self
+                .rational
+                .multiply(&other.rational)?
+                .add(
+                    &self
+                        .first_radical
+                        .multiply(&other.first_radical)?
+                        .multiply(first_discriminant)?,
+                )?
+                .add(
+                    &self
+                        .second_radical
+                        .multiply(&other.second_radical)?
+                        .multiply(second_discriminant)?,
+                )?
+                .add(
+                    &self
+                        .product_radical
+                        .multiply(&other.product_radical)?
+                        .multiply(&first_second)?,
+                )?,
+            first_radical: self
+                .rational
+                .multiply(&other.first_radical)?
+                .add(&self.first_radical.multiply(&other.rational)?)?
+                .add(
+                    &self
+                        .second_radical
+                        .multiply(&other.product_radical)?
+                        .multiply(second_discriminant)?,
+                )?
+                .add(
+                    &self
+                        .product_radical
+                        .multiply(&other.second_radical)?
+                        .multiply(second_discriminant)?,
+                )?,
+            second_radical: self
+                .rational
+                .multiply(&other.second_radical)?
+                .add(&self.second_radical.multiply(&other.rational)?)?
+                .add(
+                    &self
+                        .first_radical
+                        .multiply(&other.product_radical)?
+                        .multiply(first_discriminant)?,
+                )?
+                .add(
+                    &self
+                        .product_radical
+                        .multiply(&other.first_radical)?
+                        .multiply(first_discriminant)?,
+                )?,
+            product_radical: self
+                .rational
+                .multiply(&other.product_radical)?
+                .add(&self.product_radical.multiply(&other.rational)?)?
+                .add(&self.first_radical.multiply(&other.second_radical)?)?
+                .add(&self.second_radical.multiply(&other.first_radical)?)?,
+        })
+    }
+
+    fn square(
+        &self,
+        first_discriminant: &DenseTensorPolynomial,
+        second_discriminant: &DenseTensorPolynomial,
+    ) -> Option<Self> {
+        self.multiply(self, first_discriminant, second_discriminant)
+    }
+
+    fn shift_axis(&self, axis: usize, power: usize) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.shift_axis(axis, power)?,
+            first_radical: self.first_radical.shift_axis(axis, power)?,
+            second_radical: self.second_radical.shift_axis(axis, power)?,
+            product_radical: self.product_radical.shift_axis(axis, power)?,
+        })
+    }
+
+    fn reduce_source_axes(&self, sources: &[AlgebraicRootRepresentation]) -> Option<Self> {
+        Some(Self {
+            rational: dense_reduce_source_axes(&self.rational, sources)?,
+            first_radical: dense_reduce_source_axes(&self.first_radical, sources)?,
+            second_radical: dense_reduce_source_axes(&self.second_radical, sources)?,
+            product_radical: dense_reduce_source_axes(&self.product_radical, sources)?,
+        })
+    }
+}
+
+fn dense_reduce_source_axes(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<DenseTensorPolynomial> {
+    sources
+        .iter()
+        .enumerate()
+        .try_fold(polynomial.clone(), |polynomial, (axis, source)| {
+            polynomial.reduce_axis_modulo(
+                axis,
+                &source.polynomial_coefficients,
+                hypersolve::PredicatePolicy::STRICT,
+            )
+        })
+}
+
+fn dense_lift_trivariate(polynomial: &TrivariatePolynomial2) -> Option<DenseTensorPolynomial> {
+    let (first, second, third) = polynomial.dimensions();
+    DenseTensorPolynomial::try_new(
+        vec![first, second, third, 1],
+        polynomial
+            .coefficients
+            .iter()
+            .flat_map(|rows| rows.iter())
+            .flat_map(|row| row.iter().cloned())
+            .collect(),
+    )
+}
+
+fn dense_lift_quadrivariate(
+    polynomial: &QuadrivariatePolynomial2,
+) -> Option<DenseTensorPolynomial> {
+    DenseTensorPolynomial::try_new(
+        polynomial
+            .dimensions
+            .into_iter()
+            .chain(std::iter::once(1))
+            .collect(),
+        polynomial.coefficients.clone(),
+    )
+}
+
+fn dense_lift_trivariate_square_root(
+    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+) -> Option<BezierDenseSquareRootExpression2> {
+    Some(BezierDenseSquareRootExpression2 {
+        rational: dense_lift_trivariate(&expression.rational)?,
+        radical: dense_lift_trivariate(&expression.radical)?,
+    })
+}
+
+fn dense_lift_biquadratic(
+    expression: &BezierSelectedRadialCircleBiquadraticExpression2,
+) -> Option<BezierDenseBiquadraticExpression2> {
+    Some(BezierDenseBiquadraticExpression2 {
+        rational: dense_lift_quadrivariate(&expression.rational)?,
+        first_radical: dense_lift_quadrivariate(&expression.first_radical)?,
+        second_radical: dense_lift_quadrivariate(&expression.second_radical)?,
+        product_radical: dense_lift_quadrivariate(&expression.product_radical)?,
+    })
+}
+
+/// Norms a selected-radial/ordinary contact coordinate into one polynomial
+/// relation in its three selected roots and an output coordinate `z`.
+fn selected_radial_ordinary_coordinate_relation(
+    coordinate: &BezierSelectedRadialCirclePairNestedExpression2,
+    common_denominator: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    contact_discriminant: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    pair_discriminant: &TrivariatePolynomial2,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<DenseTensorPolynomial> {
+    let pair_discriminant =
+        dense_reduce_source_axes(&dense_lift_trivariate(pair_discriminant)?, sources)?;
+    let retained =
+        dense_lift_trivariate_square_root(&coordinate.retained)?.reduce_source_axes(sources)?;
+    let candidate =
+        dense_lift_trivariate_square_root(&coordinate.candidate)?.reduce_source_axes(sources)?;
+    let denominator =
+        dense_lift_trivariate_square_root(common_denominator)?.reduce_source_axes(sources)?;
+    let contact_discriminant =
+        dense_lift_trivariate_square_root(contact_discriminant)?.reduce_source_axes(sources)?;
+    let output_axis = 3;
+
+    // D*z-X = branch*Y*sqrt(S). The branch disappears only after the exact
+    // outer norm; the authored interval later selects its original sheet.
+    let retained_side = denominator
+        .shift_axis(output_axis, 1)?
+        .subtract(&retained)?;
+    let outer_norm = retained_side
+        .square(&pair_discriminant)?
+        .subtract(
+            &candidate
+                .square(&pair_discriminant)?
+                .multiply(&contact_discriminant, &pair_discriminant)?,
+        )?
+        .reduce_source_axes(sources)?;
+    dense_reduce_source_axes(
+        &outer_norm
+            .rational
+            .multiply(&outer_norm.rational)?
+            .subtract(
+                &outer_norm
+                    .radical
+                    .multiply(&outer_norm.radical)?
+                    .multiply(&pair_discriminant)?,
+            )?,
+        sources,
+    )
+}
+
+/// Norms a selected-radial/selected-radial contact coordinate into one
+/// polynomial relation in four selected roots and the output coordinate `z`.
+fn selected_radial_selected_coordinate_relation(
+    coordinate: &BezierSelectedRadialSelectedCircleNestedExpression2,
+    common_denominator: &BezierSelectedRadialCircleBiquadraticExpression2,
+    contact_discriminant: &BezierSelectedRadialCircleBiquadraticExpression2,
+    first_pair_discriminant: &QuadrivariatePolynomial2,
+    second_pair_discriminant: &QuadrivariatePolynomial2,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<DenseTensorPolynomial> {
+    let first_pair_discriminant =
+        dense_reduce_source_axes(&dense_lift_quadrivariate(first_pair_discriminant)?, sources)?;
+    let second_pair_discriminant = dense_reduce_source_axes(
+        &dense_lift_quadrivariate(second_pair_discriminant)?,
+        sources,
+    )?;
+    let retained = dense_lift_biquadratic(&coordinate.retained)?.reduce_source_axes(sources)?;
+    let candidate = dense_lift_biquadratic(&coordinate.candidate)?.reduce_source_axes(sources)?;
+    let denominator = dense_lift_biquadratic(common_denominator)?.reduce_source_axes(sources)?;
+    let contact_discriminant =
+        dense_lift_biquadratic(contact_discriminant)?.reduce_source_axes(sources)?;
+    let output_axis = 4;
+
+    let retained_side = denominator
+        .shift_axis(output_axis, 1)?
+        .subtract(&retained)?;
+    let outer_norm = retained_side
+        .square(&first_pair_discriminant, &second_pair_discriminant)?
+        .subtract(
+            &candidate
+                .square(&first_pair_discriminant, &second_pair_discriminant)?
+                .multiply(
+                    &contact_discriminant,
+                    &first_pair_discriminant,
+                    &second_pair_discriminant,
+                )?,
+        )?
+        .reduce_source_axes(sources)?;
+
+    // First eliminate sqrt(K2), retaining one expression in sqrt(K1).
+    let first_part = BezierDenseSquareRootExpression2 {
+        rational: outer_norm.rational,
+        radical: outer_norm.first_radical,
+    };
+    let second_part = BezierDenseSquareRootExpression2 {
+        rational: outer_norm.second_radical,
+        radical: outer_norm.product_radical,
+    };
+    let second_norm = first_part
+        .square(&first_pair_discriminant)?
+        .subtract(
+            &second_part
+                .square(&first_pair_discriminant)?
+                .multiply_rational(&second_pair_discriminant)?,
+        )?
+        .reduce_source_axes(sources)?;
+
+    // Then eliminate sqrt(K1), leaving only the selected-root tensor.
+    dense_reduce_source_axes(
+        &second_norm
+            .rational
+            .multiply(&second_norm.rational)?
+            .subtract(
+                &second_norm
+                    .radical
+                    .multiply(&second_norm.radical)?
+                    .multiply(&first_pair_discriminant)?,
+            )?,
+        sources,
+    )
+}
+
+fn selected_parameter_root_representation(
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> AlgebraicRootRepresentation {
+    match parameter {
+        BezierParameter2::Exact(value) => exact_real_algebraic_representation(value),
+        BezierParameter2::Algebraic(parameter) => parameter_representation(parameter, policy),
+    }
+}
+
+fn represented_coordinate_interval(lower: &Real, upper: &Real) -> Option<IsolatedRootInterval> {
+    match compare_reals(lower, upper, &CurveContext::STRICT)? {
+        std::cmp::Ordering::Greater => None,
+        std::cmp::Ordering::Equal => Some(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: Some(lower.clone()),
+            distinct_root_count: 1,
+        }),
+        std::cmp::Ordering::Less => Some(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        }),
+    }
+}
+
+fn represented_tensor_coordinate(
+    relation: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    lower: &Real,
+    upper: &Real,
+) -> Classification<AlgebraicRootRepresentation> {
+    let Some(interval) = represented_coordinate_interval(lower, upper) else {
+        return Classification::Uncertain(UncertaintyReason::Predicate);
+    };
+    let report = represent_algebraic_tensor_image(relation, sources, &interval);
+    match report.status {
+        AlgebraicTensorImageStatus::Transformed => Classification::Decided(
+            report
+                .representation
+                .expect("a transformed tensor image retains its representation"),
+        ),
+        AlgebraicTensorImageStatus::NonIsolatingImageInterval
+        | AlgebraicTensorImageStatus::Undecided => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+        AlgebraicTensorImageStatus::InvalidSourceEvidence
+        | AlgebraicTensorImageStatus::InvalidRelationShape
+        | AlgebraicTensorImageStatus::SourceSquareFreeFailed
+        | AlgebraicTensorImageStatus::EliminationFailed
+        | AlgebraicTensorImageStatus::ImageSquareFreeFailed
+        | AlgebraicTensorImageStatus::InvalidTransformedEvidence => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
     }
 }
 
@@ -19956,6 +20376,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         refinement_steps: usize,
     ) -> Option<Classification<Aabb2>> {
         let system = self.selected_radial_ordinary_system()?;
+        let strict = &CurveContext::STRICT;
         let [first_parameter, second_parameter] =
             system.authority.source_pair_map.ordinary_parameters()?;
         let parameters = [
@@ -19967,7 +20388,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             BezierAlgebraicChordRealInterval2::from_parameter(
                 &parameter
                     .clone()
-                    .refined_isolating_interval(refinement_steps, &self.data.policy),
+                    .refined_isolating_interval(refinement_steps, strict),
             )
         });
         let evaluate = |polynomial: &TrivariatePolynomial2| {
@@ -19976,7 +20397,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 &parameters[0],
                 &parameters[1],
                 &parameters[2],
-                &self.data.policy,
+                strict,
             )
         };
         let pair_discriminant = certified_selected_radical_interval(
@@ -20000,8 +20421,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         let pair_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
             let rational = evaluate(&expression.rational)?;
-            let radical =
-                evaluate(&expression.radical)?.multiply(&pair_discriminant, &self.data.policy)?;
+            let radical = evaluate(&expression.radical)?.multiply(&pair_discriminant, strict)?;
             Some(rational.add(&branch_interval(radical, system.authority.pair_branch)))
         };
         let contact_discriminant = certified_selected_radical_interval(
@@ -20011,11 +20431,11 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         let common_denominator = pair_value(&system.common_denominator)?;
         let coordinate = |expression: &BezierSelectedRadialCirclePairNestedExpression2| {
             let retained = pair_value(&expression.retained)?;
-            let candidate = pair_value(&expression.candidate)?
-                .multiply(&contact_discriminant, &self.data.policy)?;
+            let candidate =
+                pair_value(&expression.candidate)?.multiply(&contact_discriminant, strict)?;
             retained
                 .add(&branch_interval(candidate, contact.branch))
-                .divide(&common_denominator, &self.data.policy)
+                .divide(&common_denominator, strict)
         };
         let x = coordinate(&system.point_x)?;
         let y = coordinate(&system.point_y)?;
@@ -20031,11 +20451,12 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         refinement_steps: usize,
     ) -> Option<Classification<Aabb2>> {
         let system = self.selected_radial_selected_system()?;
+        let strict = &CurveContext::STRICT;
         let parameters = selected_radial_selected_parameters(&system.authority)?.map(|parameter| {
             BezierAlgebraicChordRealInterval2::from_parameter(
                 &parameter
                     .clone()
-                    .refined_isolating_interval(refinement_steps, &self.data.policy),
+                    .refined_isolating_interval(refinement_steps, strict),
             )
         });
         let evaluate = |polynomial: &QuadrivariatePolynomial2| {
@@ -20047,7 +20468,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     &parameters[2],
                     &parameters[3],
                 ],
-                &self.data.policy,
+                strict,
             )
         };
         let branch_interval = |value: BezierAlgebraicChordRealInterval2, branch: i8| {
@@ -20079,14 +20500,12 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             )?,
             system.authority.second_pair_branch,
         );
-        let product_radical = first_radical.multiply(&second_radical, &self.data.policy)?;
+        let product_radical = first_radical.multiply(&second_radical, strict)?;
         let base_value = |expression: &BezierSelectedRadialCircleBiquadraticExpression2| {
-            let first =
-                evaluate(&expression.first_radical)?.multiply(&first_radical, &self.data.policy)?;
-            let second = evaluate(&expression.second_radical)?
-                .multiply(&second_radical, &self.data.policy)?;
-            let product = evaluate(&expression.product_radical)?
-                .multiply(&product_radical, &self.data.policy)?;
+            let first = evaluate(&expression.first_radical)?.multiply(&first_radical, strict)?;
+            let second = evaluate(&expression.second_radical)?.multiply(&second_radical, strict)?;
+            let product =
+                evaluate(&expression.product_radical)?.multiply(&product_radical, strict)?;
             Some(
                 evaluate(&expression.rational)?
                     .add(&first)
@@ -20102,10 +20521,10 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         let common_denominator = base_value(&system.common_denominator)?;
         let coordinate = |expression: &BezierSelectedRadialSelectedCircleNestedExpression2| {
             let candidate =
-                base_value(&expression.candidate)?.multiply(&contact_radical, &self.data.policy)?;
+                base_value(&expression.candidate)?.multiply(&contact_radical, strict)?;
             base_value(&expression.retained)?
                 .add(&candidate)
-                .divide(&common_denominator, &self.data.policy)
+                .divide(&common_denominator, strict)
         };
         let x = coordinate(&system.point_x)?;
         let y = coordinate(&system.point_y)?;
@@ -20113,6 +20532,123 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             Point2::new(x.lower, y.lower),
             Point2::new(x.upper, y.upper),
         )))
+    }
+
+    /// Materializes one recursively authored circle contact as two exact
+    /// represented algebraic coordinates. Construction is deliberately
+    /// STRICT even when the enclosing operation permits terminal
+    /// APPROXIMATE_512 equality: the operation policy may decide a predicate,
+    /// but it may never select an algebraic sheet.
+    fn represented_selected_radial_contact_point(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+        if !(-1..=1).contains(&contact.branch) {
+            return Err(CurveError::Topology(
+                "a represented selected-radial contact retained an invalid branch".into(),
+            ));
+        }
+        let strict = &CurveContext::STRICT;
+        let (sources, x_relation, y_relation, bounds) = match &self.data.system {
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Ordinary(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialOrdinary(
+                system,
+            ) => {
+                let Some([first, second]) = system.authority.source_pair_map.ordinary_parameters()
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let sources = vec![
+                    selected_parameter_root_representation(first, strict),
+                    selected_parameter_root_representation(second, strict),
+                    selected_parameter_root_representation(
+                        &system.authority.ordinary_parameter,
+                        strict,
+                    ),
+                ];
+                let Some(x_relation) = selected_radial_ordinary_coordinate_relation(
+                    &system.point_x,
+                    &system.common_denominator,
+                    &system.contact_discriminant,
+                    &system.authority.pair_discriminant,
+                    &sources,
+                ) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let Some(y_relation) = selected_radial_ordinary_coordinate_relation(
+                    &system.point_y,
+                    &system.common_denominator,
+                    &system.contact_discriminant,
+                    &system.authority.pair_discriminant,
+                    &sources,
+                ) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let Some(bounds) =
+                    self.selected_radial_ordinary_contact_bounds_refined(contact, 64)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                (sources, x_relation, y_relation, bounds)
+            }
+            BezierAlgebraicCuspSemicirclePairParameterMapSystem2::SelectedRadialSelected(
+                system,
+            ) => {
+                let Some(parameters) = selected_radial_selected_parameters(&system.authority)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let sources = parameters
+                    .map(|parameter| selected_parameter_root_representation(parameter, strict))
+                    .into_iter()
+                    .collect::<Vec<_>>();
+                let Some(x_relation) = selected_radial_selected_coordinate_relation(
+                    &system.point_x,
+                    &system.common_denominator,
+                    &system.contact_discriminant,
+                    &system.authority.first_pair_discriminant,
+                    &system.authority.second_pair_discriminant,
+                    &sources,
+                ) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let Some(y_relation) = selected_radial_selected_coordinate_relation(
+                    &system.point_y,
+                    &system.common_denominator,
+                    &system.contact_discriminant,
+                    &system.authority.first_pair_discriminant,
+                    &system.authority.second_pair_discriminant,
+                    &sources,
+                ) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let Some(bounds) =
+                    self.selected_radial_selected_contact_bounds_refined(contact, 64)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                (sources, x_relation, y_relation, bounds)
+            }
+        };
+        let Classification::Decided(bounds) = bounds else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        let x =
+            represented_tensor_coordinate(&x_relation, &sources, bounds.min_x(), bounds.max_x());
+        let y =
+            represented_tensor_coordinate(&y_relation, &sources, bounds.min_y(), bounds.max_y());
+        Ok(match (x, y) {
+            (Classification::Decided(x), Classification::Decided(y)) => {
+                Classification::Decided([x, y])
+            }
+            (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+            | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            _ => Classification::Uncertain(UncertaintyReason::Predicate),
+        })
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -74212,6 +74748,31 @@ mod conversion_tests {
                     parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
                     Classification::Decided(RealSign::Negative),
                 );
+                let represented = parameter_map
+                    .represented_selected_radial_contact_point(contact)
+                    .unwrap();
+                let Classification::Decided([represented_x, represented_y]) = represented else {
+                    panic!("the three-root contact must materialize exactly: {represented:?}");
+                };
+                assert!(represented_x.is_valid());
+                assert!(represented_y.is_valid());
+                let half = (Real::one() / Real::from(2_i8)).unwrap();
+                assert_eq!(
+                    compare_reals(&represented_x.interval.lower, &half, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    compare_reals(&represented_x.interval.upper, &half, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    compare_reals(
+                        &represented_y.interval.upper,
+                        &Real::zero(),
+                        &CurveContext::STRICT,
+                    ),
+                    Some(std::cmp::Ordering::Less),
+                );
                 for parameter in [
                     parameter_map.first_contact_parameter(contact),
                     parameter_map.second_contact_parameter(contact),
@@ -74468,6 +75029,31 @@ mod conversion_tests {
                 assert_eq!(
                     parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
                     Classification::Decided(RealSign::Positive),
+                );
+                let represented = parameter_map
+                    .represented_selected_radial_contact_point(contact)
+                    .unwrap();
+                let Classification::Decided([represented_x, represented_y]) = represented else {
+                    panic!("the four-root contact must materialize exactly: {represented:?}");
+                };
+                assert!(represented_x.is_valid());
+                assert!(represented_y.is_valid());
+                let half = (Real::one() / Real::from(2_i8)).unwrap();
+                assert_eq!(
+                    compare_reals(&represented_x.interval.lower, &half, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    compare_reals(&represented_x.interval.upper, &half, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    compare_reals(
+                        &represented_y.interval.upper,
+                        &Real::zero(),
+                        &CurveContext::STRICT,
+                    ),
+                    Some(std::cmp::Ordering::Less),
                 );
                 for parameter in [
                     parameter_map.first_contact_parameter(contact),
