@@ -59,13 +59,12 @@ pub struct AlgebraicRootSquareRootReport {
 ///
 /// `branch` is `-1`, `0`, or `1`. A zero radicand canonicalizes every branch
 /// to the exact zero root. Nonzero branch zero is rejected rather than used as
-/// approximate construction evidence. All sign, interval, and root-count
-/// predicates use the supplied policy; STRICT never crosses an implicit
-/// approximate terminal.
+/// approximate construction evidence. Every construction predicate is
+/// evaluated under `STRICT`; approximate equality is a terminal decision
+/// policy and never selects a square-root image.
 pub fn square_root_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
     branch: i8,
-    policy: PredicatePolicy,
 ) -> AlgebraicRootSquareRootReport {
     if !root.is_valid() {
         return report(
@@ -83,7 +82,7 @@ pub fn square_root_algebraic_root_representation(
             "a signed algebraic square-root branch must be -1, 0, or 1",
         );
     }
-    let Some(sign) = represented_root_sign(root, policy) else {
+    let Some(sign) = represented_root_sign(root, PredicatePolicy::STRICT) else {
         return report(
             branch,
             AlgebraicRootSquareRootStatus::UndecidedSign,
@@ -101,7 +100,7 @@ pub fn square_root_algebraic_root_representation(
             );
         }
         Ordering::Equal => {
-            return transformed_zero(root, branch, policy);
+            return transformed_zero(root, branch);
         }
         Ordering::Greater if branch == 0 => {
             return report(
@@ -119,7 +118,7 @@ pub fn square_root_algebraic_root_representation(
     for (power, coefficient) in root.polynomial_coefficients.iter().enumerate() {
         polynomial_coefficients[power * 2] = coefficient.clone();
     }
-    let Some(interval) = signed_sqrt_interval(&root.interval, branch, policy) else {
+    let Some(interval) = signed_sqrt_interval(&root.interval, branch) else {
         return report(
             branch,
             AlgebraicRootSquareRootStatus::UndecidedSign,
@@ -131,7 +130,7 @@ pub fn square_root_algebraic_root_representation(
         &polynomial_coefficients,
         &interval,
         RootIsolationConfig {
-            policy,
+            policy: PredicatePolicy::STRICT,
             max_interval_width: None,
             max_refinement_steps: 2,
         },
@@ -175,7 +174,8 @@ pub fn square_root_algebraic_root_representation(
             message: None,
         },
     };
-    representation.validation = validate_algebraic_root_representation(&representation, policy);
+    representation.validation =
+        validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT);
     if !representation.is_valid() {
         return AlgebraicRootSquareRootReport {
             branch,
@@ -192,13 +192,9 @@ pub fn square_root_algebraic_root_representation(
     }
 }
 
-fn signed_sqrt_interval(
-    source: &IsolatedRootInterval,
-    branch: i8,
-    policy: PredicatePolicy,
-) -> Option<IsolatedRootInterval> {
+fn signed_sqrt_interval(source: &IsolatedRootInterval, branch: i8) -> Option<IsolatedRootInterval> {
     let zero = Real::zero();
-    let lower = match compare_reals(&source.lower, &zero, policy).value()? {
+    let lower = match compare_reals(&source.lower, &zero, PredicatePolicy::STRICT).value()? {
         Ordering::Less => zero,
         Ordering::Equal | Ordering::Greater => source.lower.clone(),
     };
@@ -227,7 +223,6 @@ fn signed_sqrt_interval(
 fn transformed_zero(
     source: &AlgebraicRootRepresentation,
     branch: i8,
-    policy: PredicatePolicy,
 ) -> AlgebraicRootSquareRootReport {
     let zero = Real::zero();
     let mut representation = AlgebraicRootRepresentation {
@@ -247,7 +242,8 @@ fn transformed_zero(
             message: None,
         },
     };
-    representation.validation = validate_algebraic_root_representation(&representation, policy);
+    representation.validation =
+        validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT);
     AlgebraicRootSquareRootReport {
         branch,
         status: if representation.is_valid() {
@@ -305,22 +301,21 @@ mod tests {
 
     #[test]
     fn signed_square_root_images_keep_exact_branch_isolators() {
-        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-            for branch in [-1, 1] {
-                let report =
-                    square_root_algebraic_root_representation(&positive_sqrt_two(), branch, policy);
-                assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
-                let image = report.representation.unwrap();
-                assert_eq!(
-                    image.polynomial_coefficients,
-                    vec![
-                        real(-2),
-                        Real::zero(),
-                        Real::zero(),
-                        Real::zero(),
-                        Real::one()
-                    ],
-                );
+        for branch in [-1, 1] {
+            let report = square_root_algebraic_root_representation(&positive_sqrt_two(), branch);
+            assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
+            let image = report.representation.unwrap();
+            assert_eq!(
+                image.polynomial_coefficients,
+                vec![
+                    real(-2),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one()
+                ],
+            );
+            for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
                 assert_eq!(
                     represented_root_sign(&image, policy),
                     Some(if branch < 0 {
@@ -342,16 +337,14 @@ mod tests {
             exact_root: None,
             distinct_root_count: 1,
         };
-        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-            assert_eq!(
-                square_root_algebraic_root_representation(&negative, 1, policy).status,
-                AlgebraicRootSquareRootStatus::NegativeRadicand,
-            );
-            assert_eq!(
-                square_root_algebraic_root_representation(&positive_sqrt_two(), 0, policy).status,
-                AlgebraicRootSquareRootStatus::NonzeroZeroBranch,
-            );
-        }
+        assert_eq!(
+            square_root_algebraic_root_representation(&negative, 1).status,
+            AlgebraicRootSquareRootStatus::NegativeRadicand,
+        );
+        assert_eq!(
+            square_root_algebraic_root_representation(&positive_sqrt_two(), 0).status,
+            AlgebraicRootSquareRootStatus::NonzeroZeroBranch,
+        );
     }
 
     #[test]
@@ -366,8 +359,7 @@ mod tests {
         };
         zero.kind = AlgebraicRootKind::ExactRationalWitness;
         for branch in -1..=1 {
-            let report =
-                square_root_algebraic_root_representation(&zero, branch, PredicatePolicy::STRICT);
+            let report = square_root_algebraic_root_representation(&zero, branch);
             assert_eq!(report.status, AlgebraicRootSquareRootStatus::Transformed);
             assert_eq!(
                 report.representation.unwrap().exact_rational_witness(),

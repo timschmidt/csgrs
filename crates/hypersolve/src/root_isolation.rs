@@ -672,17 +672,13 @@ pub fn refine_isolated_univariate_polynomial_interval(
             Some("could not decide polynomial degree".to_owned()),
         );
     };
-    if trimmed.len() <= 1
-        || trimmed
-            .iter()
-            .any(|coefficient| coefficient.exact_rational_ref().is_none())
-    {
+    if trimmed.len() <= 1 {
         return root_refinement_report(
             IsolatedRootRefinementStatus::InvalidPolynomial,
             interval.clone(),
             None,
             0,
-            Some("refinement requires a nonconstant exact-rational polynomial".to_owned()),
+            Some("refinement requires a nonconstant exact polynomial".to_owned()),
         );
     }
     let Some(square_free) = square_free_part(trimmed, policy) else {
@@ -2656,6 +2652,27 @@ mod tests {
             bad_polynomial.status,
             IsolatedRootRefinementStatus::InvalidPolynomial
         );
+    }
+
+    #[test]
+    fn isolated_interval_refinement_accepts_exact_real_coefficient_fields() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let polynomial = vec![-sqrt_two, Real::one()];
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            &polynomial,
+            &IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: Some((Real::one() / real(4)).expect("nonzero divisor")),
+                max_refinement_steps: 4,
+            },
+        );
+        assert!(refinement.refined_interval.is_some(), "{refinement:?}");
     }
 
     #[test]

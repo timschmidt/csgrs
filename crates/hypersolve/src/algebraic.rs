@@ -460,11 +460,12 @@ pub fn represent_univariate_algebraic_roots_from_reports(
 
 /// Validate one represented algebraic root.
 ///
-/// This checks the representation payload itself: nonconstant exact-rational
-/// coefficients, an ordered interval, a unit distinct-root claim, and, when a
-/// rational witness is present, exact polynomial replay at that witness. It
-/// does not re-run Sturm isolation; the upstream isolation report remains the
-/// proof of uniqueness.
+/// This checks the representation payload itself: a nonconstant polynomial
+/// over exact [`Real`] coefficients, an ordered interval, a unit distinct-root
+/// claim, and, when a point witness is present, exact polynomial replay at
+/// that witness. It does not re-run Sturm isolation; the upstream isolation
+/// report remains the proof of uniqueness. Rational-only construction
+/// packages may impose a narrower coefficient field at their own boundary.
 pub fn validate_algebraic_root_representation(
     root: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
@@ -2103,15 +2104,34 @@ fn validate_root_payload(
     interval: &IsolatedRootInterval,
     policy: PredicatePolicy,
 ) -> AlgebraicRootValidationReport {
-    if polynomial.len() <= 1
-        || polynomial
-            .iter()
-            .any(|value| value.exact_rational_ref().is_none())
-    {
+    if polynomial.len() <= 1 {
         return AlgebraicRootValidationReport::invalid(
             AlgebraicRootValidationStatus::InvalidPolynomial,
-            "represented algebraic roots require nonconstant exact-rational polynomials",
+            "represented algebraic roots require a nonconstant exact polynomial",
         );
+    }
+    match compare_reals(
+        polynomial
+            .last()
+            .expect("a nonconstant polynomial has a leading coefficient"),
+        &Real::zero(),
+        PredicatePolicy::STRICT,
+    )
+    .value()
+    {
+        Some(Ordering::Less | Ordering::Greater) => {}
+        Some(Ordering::Equal) => {
+            return AlgebraicRootValidationReport::invalid(
+                AlgebraicRootValidationStatus::InvalidPolynomial,
+                "represented algebraic roots require a nonzero leading coefficient",
+            );
+        }
+        None => {
+            return AlgebraicRootValidationReport::invalid(
+                AlgebraicRootValidationStatus::Undecided,
+                "represented algebraic root leading coefficient was not certified under STRICT",
+            );
+        }
     }
     match compare_reals(&interval.lower, &interval.upper, policy).value() {
         Some(Ordering::Greater) => {
@@ -2824,6 +2844,29 @@ mod tests {
             validate_algebraic_root_representation(&bad_witness, PredicatePolicy::APPROXIMATE_512)
                 .status,
             AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial
+        );
+    }
+
+    #[test]
+    fn represented_roots_accept_exact_real_coefficient_fields() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![-sqrt_two, Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        assert_eq!(
+            validate_algebraic_root_representation(&root, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::Valid
         );
     }
 

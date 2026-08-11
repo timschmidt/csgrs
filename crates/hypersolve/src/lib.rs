@@ -14,6 +14,7 @@ pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
 pub mod algebraic_rational_image;
 pub mod algebraic_sqrt;
+pub mod algebraic_tensor_image;
 pub mod alpha;
 pub mod analysis;
 pub mod bareiss;
@@ -129,6 +130,9 @@ pub use algebraic_rational_image::{
 pub use algebraic_sqrt::{
     AlgebraicRootSquareRootReport, AlgebraicRootSquareRootStatus,
     square_root_algebraic_root_representation,
+};
+pub use algebraic_tensor_image::{
+    AlgebraicTensorImageReport, AlgebraicTensorImageStatus, represent_algebraic_tensor_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

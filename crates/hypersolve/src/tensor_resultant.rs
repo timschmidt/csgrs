@@ -431,21 +431,26 @@ fn interpolate_tensor_grid(
 }
 
 fn interpolate_integer_values(values: &[Real], min_precision: i32) -> Option<Vec<Real>> {
+    if values.is_empty() {
+        return None;
+    }
     let mut result = vec![Real::zero(); values.len()];
-    for (sample_index, sample) in values.iter().enumerate() {
-        let sample_value = Real::from(sample_index as u64);
-        let mut basis = vec![Real::one()];
-        let mut denominator = Real::one();
-        for other_index in 0..values.len() {
-            if sample_index == other_index {
-                continue;
-            }
-            basis = multiply_by_linear_factor(basis, -Real::from(other_index as u64));
-            denominator *= &sample_value - Real::from(other_index as u64);
-        }
-        let scale = (sample / denominator).ok()?;
-        for (coefficient, basis) in result.iter_mut().zip(basis) {
+    let mut differences = values.to_vec();
+    let mut falling_factorial = vec![Real::one()];
+    let mut factorial = Real::one();
+    for order in 0..values.len() {
+        let scale = (differences[0].clone() / &factorial).ok()?;
+        for (coefficient, basis) in result.iter_mut().zip(&falling_factorial) {
             *coefficient += basis * &scale;
+        }
+        for index in 0..differences.len() - 1 {
+            differences[index] = &differences[index + 1] - &differences[index];
+        }
+        differences.pop();
+        if order + 1 < values.len() {
+            falling_factorial =
+                multiply_by_linear_factor(falling_factorial, -Real::from(order as u64));
+            factorial *= Real::from((order + 1) as u64);
         }
     }
     let trimmed = trim_trailing_zeroes(result, min_precision).ok()?;
