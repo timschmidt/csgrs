@@ -84,9 +84,11 @@ use hypersolve::{
     subresultant_chain_univariate_polynomials,
 };
 use hypersolve::{
-    TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantStatus,
-    TrivariatePolynomial as SolverTrivariatePolynomial, TrivariatePolynomialAxis,
+    QuadrivariatePolynomial as SolverQuadrivariatePolynomial, TrivariateConstraintResultantStatus,
+    TrivariateConstraintSubresultantStatus, TrivariatePolynomial as SolverTrivariatePolynomial,
+    TrivariatePolynomialAxis, resultant_quadrivariate_polynomial_fourth_axis_constraint,
     resultant_trivariate_polynomial_univariate_constraint,
+    subresultant_quadrivariate_polynomial_fourth_axis_constraint,
     subresultant_trivariate_polynomial_univariate_constraint,
 };
 
@@ -23569,6 +23571,276 @@ impl TrivariatePolynomial2 {
     }
 }
 
+/// Compact dense polynomial on four independently selected scalar roots.
+///
+/// Coefficients are flat and row-major, with the fourth axis contiguous.  The
+/// only symbolic elimination exposed for this tensor constrains that fourth
+/// axis and returns trivariate coefficients; all other operations are the
+/// small affine/product vocabulary needed by the pair-radial chord kernel.
+#[derive(Clone, Debug)]
+struct QuadrivariatePolynomial2 {
+    dimensions: [usize; 4],
+    coefficients: Vec<Real>,
+}
+
+const MAX_QUADRIVARIATE_CONTROLS: usize = 131_072;
+
+#[allow(dead_code)] // The pair-radial chord builder consumes the complete algebra below.
+impl QuadrivariatePolynomial2 {
+    fn try_new(dimensions: [usize; 4], coefficients: Vec<Real>) -> Option<Self> {
+        let count = dimensions
+            .into_iter()
+            .try_fold(1_usize, usize::checked_mul)?;
+        if dimensions.contains(&0)
+            || count == 0
+            || count > MAX_QUADRIVARIATE_CONTROLS
+            || coefficients.len() != count
+        {
+            return None;
+        }
+        Some(Self {
+            dimensions,
+            coefficients,
+        })
+    }
+
+    fn zero(dimensions: [usize; 4]) -> Option<Self> {
+        let count = dimensions
+            .into_iter()
+            .try_fold(1_usize, usize::checked_mul)?;
+        Self::try_new(dimensions, vec![Real::zero(); count])
+    }
+
+    fn flat_index(dimensions: [usize; 4], exponents: [usize; 4]) -> usize {
+        (((exponents[0] * dimensions[1] + exponents[1]) * dimensions[2] + exponents[2])
+            * dimensions[3])
+            + exponents[3]
+    }
+
+    fn exponents(dimensions: [usize; 4], mut index: usize) -> [usize; 4] {
+        let fourth = index % dimensions[3];
+        index /= dimensions[3];
+        let third = index % dimensions[2];
+        index /= dimensions[2];
+        let second = index % dimensions[1];
+        index /= dimensions[1];
+        [index, second, third, fourth]
+    }
+
+    fn coefficient(&self, exponents: [usize; 4]) -> Option<&Real> {
+        exponents
+            .into_iter()
+            .zip(self.dimensions)
+            .all(|(exponent, count)| exponent < count)
+            .then(|| &self.coefficients[Self::flat_index(self.dimensions, exponents)])
+    }
+
+    fn from_axis_polynomial(coefficients: &[Real], axis: usize) -> Option<Self> {
+        if coefficients.is_empty() || axis >= 4 {
+            return None;
+        }
+        let mut dimensions = [1; 4];
+        dimensions[axis] = coefficients.len();
+        let mut polynomial = Self::zero(dimensions)?;
+        for (power, coefficient) in coefficients.iter().enumerate() {
+            let mut exponents = [0; 4];
+            exponents[axis] = power;
+            polynomial.coefficients[Self::flat_index(dimensions, exponents)] = coefficient.clone();
+        }
+        Some(polynomial)
+    }
+
+    fn lift_trivariate(polynomial: &TrivariatePolynomial2, axes: [usize; 3]) -> Option<Self> {
+        if axes.into_iter().any(|axis| axis >= 4)
+            || axes[0] == axes[1]
+            || axes[0] == axes[2]
+            || axes[1] == axes[2]
+        {
+            return None;
+        }
+        let source = polynomial.dimensions();
+        let mut dimensions = [1; 4];
+        for (source_axis, target_axis) in axes.into_iter().enumerate() {
+            dimensions[target_axis] = [source.0, source.1, source.2][source_axis];
+        }
+        let mut lifted = Self::zero(dimensions)?;
+        for (first, rows) in polynomial.coefficients.iter().enumerate() {
+            for (second, row) in rows.iter().enumerate() {
+                for (third, coefficient) in row.iter().enumerate() {
+                    let source_exponents = [first, second, third];
+                    let mut target_exponents = [0; 4];
+                    for source_axis in 0..3 {
+                        target_exponents[axes[source_axis]] = source_exponents[source_axis];
+                    }
+                    lifted.coefficients[Self::flat_index(dimensions, target_exponents)] =
+                        coefficient.clone();
+                }
+            }
+        }
+        Some(lifted)
+    }
+
+    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
+        let dimensions =
+            std::array::from_fn(|axis| self.dimensions[axis].max(other.dimensions[axis]));
+        let mut result = Self::zero(dimensions)?;
+        for (source, subtract_source) in [(self, false), (other, subtract)] {
+            for (index, coefficient) in source.coefficients.iter().enumerate() {
+                let target =
+                    Self::flat_index(dimensions, Self::exponents(source.dimensions, index));
+                if subtract_source {
+                    result.coefficients[target] -= coefficient;
+                } else {
+                    result.coefficients[target] += coefficient;
+                }
+            }
+        }
+        Some(result)
+    }
+
+    fn add(&self, other: &Self) -> Option<Self> {
+        self.combine(other, false)
+    }
+
+    fn subtract(&self, other: &Self) -> Option<Self> {
+        self.combine(other, true)
+    }
+
+    fn scale(&self, scale: &Real) -> Option<Self> {
+        Self::try_new(
+            self.dimensions,
+            self.coefficients
+                .iter()
+                .map(|coefficient| coefficient * scale)
+                .collect(),
+        )
+    }
+
+    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
+        let dimensions = terms.iter().fold([0; 4], |mut dimensions, (term, _)| {
+            for (axis, count) in term.dimensions.into_iter().enumerate() {
+                dimensions[axis] = dimensions[axis].max(count);
+            }
+            dimensions
+        });
+        let mut result = Self::zero(dimensions)?;
+        for (term, scale) in terms {
+            if scale.zero_status() == ZeroStatus::Zero {
+                continue;
+            }
+            for (index, coefficient) in term.coefficients.iter().enumerate() {
+                let target = Self::flat_index(dimensions, Self::exponents(term.dimensions, index));
+                result.coefficients[target] += coefficient * *scale;
+            }
+        }
+        Some(result)
+    }
+
+    fn multiply(&self, other: &Self) -> Option<Self> {
+        Self::sum_products(&[(self, other, false)])
+    }
+
+    fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
+        let dimensions = terms
+            .iter()
+            .try_fold([0; 4], |mut dimensions, (left, right, _)| {
+                for (axis, dimension) in dimensions.iter_mut().enumerate() {
+                    *dimension = (*dimension).max(
+                        left.dimensions[axis]
+                            .checked_add(right.dimensions[axis])?
+                            .checked_sub(1)?,
+                    );
+                }
+                Some(dimensions)
+            })?;
+        let mut result = Self::zero(dimensions)?;
+        for (left, right, subtract) in terms {
+            for (left_index, left_coefficient) in left.coefficients.iter().enumerate() {
+                let left_exponents = Self::exponents(left.dimensions, left_index);
+                for (right_index, right_coefficient) in right.coefficients.iter().enumerate() {
+                    let right_exponents = Self::exponents(right.dimensions, right_index);
+                    let exponents =
+                        std::array::from_fn(|axis| left_exponents[axis] + right_exponents[axis]);
+                    let target = Self::flat_index(dimensions, exponents);
+                    if *subtract {
+                        result.coefficients[target] -= left_coefficient * right_coefficient;
+                    } else {
+                        result.coefficients[target] += left_coefficient * right_coefficient;
+                    }
+                }
+            }
+        }
+        Some(result)
+    }
+
+    fn fourth_axis_coefficient(&self, power: usize) -> Option<TrivariatePolynomial2> {
+        if power >= self.dimensions[3] {
+            return None;
+        }
+        let mut coefficients = vec![
+            vec![vec![Real::zero(); self.dimensions[2]]; self.dimensions[1]];
+            self.dimensions[0]
+        ];
+        for (first, planes) in coefficients.iter_mut().enumerate() {
+            for (second, row) in planes.iter_mut().enumerate() {
+                for (third, coefficient) in row.iter_mut().enumerate() {
+                    *coefficient = self
+                        .coefficient([first, second, third, power])
+                        .cloned()
+                        .unwrap_or_else(Real::zero);
+                }
+            }
+        }
+        Some(TrivariatePolynomial2 { coefficients })
+    }
+
+    fn from_fourth_axis_coefficients(coefficients: &[TrivariatePolynomial2]) -> Option<Self> {
+        let dimensions = coefficients
+            .iter()
+            .fold([0, 0, 0, 0], |mut dimensions, term| {
+                let term = term.dimensions();
+                dimensions[0] = dimensions[0].max(term.0);
+                dimensions[1] = dimensions[1].max(term.1);
+                dimensions[2] = dimensions[2].max(term.2);
+                dimensions[3] = coefficients.len();
+                dimensions
+            });
+        let mut result = Self::zero(dimensions)?;
+        for (fourth, term) in coefficients.iter().enumerate() {
+            for (first, planes) in term.coefficients.iter().enumerate() {
+                for (second, row) in planes.iter().enumerate() {
+                    for (third, coefficient) in row.iter().enumerate() {
+                        result.coefficients
+                            [Self::flat_index(dimensions, [first, second, third, fourth])] =
+                            coefficient.clone();
+                    }
+                }
+            }
+        }
+        Some(result)
+    }
+
+    fn to_solver(&self) -> SolverQuadrivariatePolynomial {
+        let mut coefficients =
+            vec![
+                vec![
+                    vec![vec![Real::zero(); self.dimensions[3]]; self.dimensions[2]];
+                    self.dimensions[1]
+                ];
+                self.dimensions[0]
+            ];
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            let [first, second, third, fourth] = Self::exponents(self.dimensions, index);
+            coefficients[first][second][third][fourth] = coefficient.clone();
+        }
+        SolverQuadrivariatePolynomial::new(coefficients)
+    }
+
+    fn from_solver(polynomial: &SolverTrivariatePolynomial) -> Option<TrivariatePolynomial2> {
+        TrivariatePolynomial2::from_coefficients(polynomial.coefficients.clone())
+    }
+}
+
 fn selected_trivariate_third_axis_is_identically_zero(
     polynomial: &TrivariatePolynomial2,
     first_parameter: &BezierParameter2,
@@ -27310,6 +27582,490 @@ fn trivariate_parameter_triple_sign_by_refinement(
                 return Ok(Classification::Decided(sign));
             }
         }
+    }
+    if policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        Ok(Classification::Decided(RealSign::Zero))
+    } else {
+        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+    }
+}
+
+#[allow(dead_code)]
+fn quadrivariate_structurally_zero(polynomial: &QuadrivariatePolynomial2) -> bool {
+    polynomial
+        .coefficients
+        .iter()
+        .all(|coefficient| real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero))
+}
+
+#[allow(dead_code)]
+fn quadrivariate_reduce_axis_mod_defining(
+    polynomial: QuadrivariatePolynomial2,
+    axis: usize,
+    defining: &[Real],
+) -> Option<QuadrivariatePolynomial2> {
+    let degree = defining.len().checked_sub(1)?;
+    if axis >= 4 || degree == 0 || polynomial.dimensions[axis] <= degree {
+        return Some(polynomial);
+    }
+    let leading = defining.last()?;
+    let relation = defining[..degree]
+        .iter()
+        .map(|coefficient| ((-coefficient.clone()) / leading).ok())
+        .collect::<Option<Vec<_>>>()?;
+    let dimensions = polynomial.dimensions;
+    let mut coefficients = polynomial.coefficients;
+    for power in (degree..dimensions[axis]).rev() {
+        for index in 0..coefficients.len() {
+            let exponents = QuadrivariatePolynomial2::exponents(dimensions, index);
+            if exponents[axis] != power {
+                continue;
+            }
+            let coefficient = std::mem::replace(&mut coefficients[index], Real::zero());
+            for (offset, factor) in relation.iter().enumerate() {
+                let mut target_exponents = exponents;
+                target_exponents[axis] = power - degree + offset;
+                let target = QuadrivariatePolynomial2::flat_index(dimensions, target_exponents);
+                coefficients[target] += &coefficient * factor;
+            }
+        }
+    }
+    let mut reduced_dimensions = dimensions;
+    reduced_dimensions[axis] = degree;
+    let mut reduced = QuadrivariatePolynomial2::zero(reduced_dimensions)?;
+    for (index, coefficient) in coefficients.into_iter().enumerate() {
+        let exponents = QuadrivariatePolynomial2::exponents(dimensions, index);
+        if exponents[axis] < degree {
+            let target = QuadrivariatePolynomial2::flat_index(reduced_dimensions, exponents);
+            reduced.coefficients[target] = coefficient;
+        }
+    }
+    Some(reduced)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_reduce_selected_root_relations(
+    polynomial: &QuadrivariatePolynomial2,
+    parameters: [&BezierParameter2; 4],
+) -> Option<QuadrivariatePolynomial2> {
+    let mut reduced = polynomial.clone();
+    for (axis, parameter) in parameters.into_iter().enumerate() {
+        let defining = match parameter {
+            BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
+            BezierParameter2::Algebraic(parameter) => {
+                parameter.polynomial().coefficients().to_vec()
+            }
+        };
+        reduced = quadrivariate_reduce_axis_mod_defining(reduced, axis, &defining)?;
+    }
+    Some(reduced)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_specialize_axis_trivariate(
+    polynomial: &QuadrivariatePolynomial2,
+    axis: usize,
+    value: &Real,
+) -> Option<(TrivariatePolynomial2, [usize; 3])> {
+    if axis >= 4 {
+        return None;
+    }
+    let remaining = match axis {
+        0 => [1, 2, 3],
+        1 => [0, 2, 3],
+        2 => [0, 1, 3],
+        3 => [0, 1, 2],
+        _ => unreachable!(),
+    };
+    let dimensions = remaining.map(|remaining| polynomial.dimensions[remaining]);
+    let mut coefficients =
+        vec![vec![vec![Real::zero(); dimensions[2]]; dimensions[1]]; dimensions[0]];
+    for (first, planes) in coefficients.iter_mut().enumerate() {
+        for (second, row) in planes.iter_mut().enumerate() {
+            for (third, coefficient) in row.iter_mut().enumerate() {
+                let retained = [first, second, third];
+                let mut fiber = Vec::with_capacity(polynomial.dimensions[axis]);
+                for power in 0..polynomial.dimensions[axis] {
+                    let mut exponents = [0; 4];
+                    exponents[axis] = power;
+                    for retained_axis in 0..3 {
+                        exponents[remaining[retained_axis]] = retained[retained_axis];
+                    }
+                    fiber.push(
+                        polynomial
+                            .coefficient(exponents)
+                            .cloned()
+                            .unwrap_or_else(Real::zero),
+                    );
+                }
+                *coefficient = polynomial_evaluate(&fiber, value);
+            }
+        }
+    }
+    Some((TrivariatePolynomial2 { coefficients }, remaining))
+}
+
+#[allow(dead_code)]
+fn quadrivariate_transform_axis(
+    polynomial: &mut QuadrivariatePolynomial2,
+    axis: usize,
+    mut transform: impl FnMut(&[Real]) -> CurveResult<Vec<Real>>,
+) -> CurveResult<()> {
+    let dimensions = polynomial.dimensions;
+    for index in 0..polynomial.coefficients.len() {
+        let exponents = QuadrivariatePolynomial2::exponents(dimensions, index);
+        if exponents[axis] != 0 {
+            continue;
+        }
+        let mut fiber = Vec::with_capacity(dimensions[axis]);
+        for power in 0..dimensions[axis] {
+            let mut source = exponents;
+            source[axis] = power;
+            fiber.push(
+                polynomial.coefficients[QuadrivariatePolynomial2::flat_index(dimensions, source)]
+                    .clone(),
+            );
+        }
+        let transformed = transform(&fiber)?;
+        if transformed.len() != dimensions[axis] {
+            return Err(CurveError::Topology(
+                "a four-field polynomial axis transform changed degree".into(),
+            ));
+        }
+        for (power, coefficient) in transformed.into_iter().enumerate() {
+            let mut target = exponents;
+            target[axis] = power;
+            polynomial.coefficients[QuadrivariatePolynomial2::flat_index(dimensions, target)] =
+                coefficient;
+        }
+    }
+    Ok(())
+}
+
+#[allow(dead_code)]
+fn quadrivariate_restrict_to_parameter_box(
+    polynomial: &QuadrivariatePolynomial2,
+    parameters: [&BezierParameter2; 4],
+) -> CurveResult<QuadrivariatePolynomial2> {
+    let mut restricted = polynomial.clone();
+    for (axis, parameter) in parameters.into_iter().enumerate() {
+        let (start, end) = parameter_bounds(parameter);
+        quadrivariate_transform_axis(&mut restricted, axis, |fiber| {
+            Ok(polynomial_restrict_to_interval(fiber, start, end))
+        })?;
+    }
+    Ok(restricted)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_unit_hypercube_strict_bernstein_sign(
+    mut polynomial: QuadrivariatePolynomial2,
+) -> CurveResult<Option<RealSign>> {
+    for axis in 0..4 {
+        let degree = polynomial.dimensions[axis] - 1;
+        quadrivariate_transform_axis(&mut polynomial, axis, |fiber| {
+            power_to_bernstein_coefficients(fiber, degree)
+        })?;
+    }
+    let mut sign = None;
+    for control in polynomial.coefficients {
+        let Some(control_sign @ (RealSign::Negative | RealSign::Positive)) =
+            real_sign(&control, &CurveContext::STRICT)
+        else {
+            return Ok(None);
+        };
+        match sign {
+            Some(previous) if previous != control_sign => return Ok(None),
+            Some(_) => {}
+            None => sign = Some(control_sign),
+        }
+    }
+    Ok(sign)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_parameter_tuple_bounded_box_sign(
+    polynomial: &QuadrivariatePolynomial2,
+    parameters: [&BezierParameter2; 4],
+    maximum_steps: usize,
+) -> CurveResult<Option<RealSign>> {
+    let strict = &CurveContext::STRICT;
+    let mut refinements =
+        parameters.map(|parameter| BezierParameterRefinement2::new(parameter, strict));
+    for target_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        if target_steps > maximum_steps {
+            break;
+        }
+        let refined: [BezierParameter2; 4] =
+            std::array::from_fn(|axis| refinements[axis].refine_to(target_steps).clone());
+        if let Some(sign) = quadrivariate_unit_hypercube_strict_bernstein_sign(
+            quadrivariate_restrict_to_parameter_box(
+                polynomial,
+                [&refined[0], &refined[1], &refined[2], &refined[3]],
+            )?,
+        )? {
+            return Ok(Some(sign));
+        }
+    }
+    Ok(None)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_selected_fourth_axis_has_box_root(
+    polynomial: &QuadrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    fourth: &BezierParameter2,
+) -> CurveResult<bool> {
+    let strict = &CurveContext::STRICT;
+    let mut source_refinements =
+        [first, second, third].map(|parameter| BezierParameterRefinement2::new(parameter, strict));
+    let mut fourth_refinement = BezierParameterRefinement2::new(fourth, strict);
+    for target_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let source_steps = target_steps.saturating_add(64);
+        let sources: [BezierParameter2; 3] =
+            std::array::from_fn(|axis| source_refinements[axis].refine_to(source_steps).clone());
+        let fourth = fourth_refinement.refine_to(target_steps).clone();
+        let (lower, upper) = parameter_bounds(&fourth);
+        let face_sign = |value: &Real| -> CurveResult<Option<RealSign>> {
+            let Some((face, [0, 1, 2])) =
+                quadrivariate_specialize_axis_trivariate(polynomial, 3, value)
+            else {
+                return Ok(None);
+            };
+            trivariate_unit_cube_strict_bernstein_sign(
+                trivariate_restrict_to_parameter_box(&face, &sources[0], &sources[1], &sources[2]),
+                strict,
+            )
+        };
+        if strict_signs_are_opposite(face_sign(lower)?, face_sign(upper)?) {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+#[allow(dead_code)]
+fn quadrivariate_fourth_axis_selected_root(
+    polynomial: &QuadrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    fourth: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let strict = policy.strict_counterpart();
+    let mut coefficients = (0..polynomial.dimensions[3])
+        .map(|power| {
+            polynomial
+                .fourth_axis_coefficient(power)
+                .expect("a bounded fourth-axis coefficient exists")
+        })
+        .collect::<Vec<_>>();
+    while coefficients.len() > 1 {
+        let sign = trivariate_parameter_triple_sign_by_refinement(
+            coefficients.last().expect("one coefficient remains"),
+            first,
+            second,
+            third,
+            &strict,
+        )?;
+        match sign {
+            Classification::Decided(RealSign::Zero) => {
+                coefficients.pop();
+            }
+            Classification::Decided(RealSign::Negative | RealSign::Positive) => break,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    if coefficients.len() == 1
+        && trivariate_parameter_triple_sign_by_refinement(
+            &coefficients[0],
+            first,
+            second,
+            third,
+            &strict,
+        )? == Classification::Decided(RealSign::Zero)
+    {
+        return Ok(Classification::Decided(true));
+    }
+    let polynomial = QuadrivariatePolynomial2::from_fourth_axis_coefficients(&coefficients)
+        .ok_or_else(|| {
+            CurveError::Topology("a four-field predicate exceeded its tensor budget".into())
+        })?;
+    let constraint = match selected_parameter_simple_constraint(fourth, &strict)? {
+        Classification::Decided(constraint) => constraint,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let config = CurveIntersectionResultantConfig {
+        min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let resultant = resultant_quadrivariate_polynomial_fourth_axis_constraint(
+        &polynomial.to_solver(),
+        &constraint,
+        config,
+    );
+    let resultant = match resultant.status {
+        TrivariateConstraintResultantStatus::Constructed => {
+            let resultant = resultant
+                .resultant
+                .expect("a constructed fourth-axis resultant retains its polynomial");
+            QuadrivariatePolynomial2::from_solver(&resultant).ok_or_else(|| {
+                CurveError::Topology("a fourth-axis resultant exceeded its tensor budget".into())
+            })?
+        }
+        TrivariateConstraintResultantStatus::UndecidedCoefficient => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        TrivariateConstraintResultantStatus::EmptyPolynomial
+        | TrivariateConstraintResultantStatus::InvalidConstraint
+        | TrivariateConstraintResultantStatus::DegreeBoundExceeded
+        | TrivariateConstraintResultantStatus::ResultantError
+        | TrivariateConstraintResultantStatus::InterpolationDivisionFailed => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+    };
+    match trivariate_parameter_triple_sign_by_refinement(&resultant, first, second, third, &strict)?
+    {
+        Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+            return Ok(Classification::Decided(false));
+        }
+        Classification::Decided(RealSign::Zero) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    let terminal_order = (coefficients.len() - 1).min(constraint.len() - 1);
+    for order in 1..=terminal_order {
+        let report = subresultant_quadrivariate_polynomial_fourth_axis_constraint(
+            &polynomial.to_solver(),
+            &constraint,
+            order,
+            config,
+        );
+        let coefficient_polynomials = match report.status {
+            TrivariateConstraintSubresultantStatus::Constructed => report
+                .coefficients
+                .iter()
+                .map(QuadrivariatePolynomial2::from_solver)
+                .collect::<Option<Vec<_>>>(),
+            TrivariateConstraintSubresultantStatus::UndecidedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            TrivariateConstraintSubresultantStatus::EmptyPolynomial
+            | TrivariateConstraintSubresultantStatus::InvalidConstraint
+            | TrivariateConstraintSubresultantStatus::InvalidOrder
+            | TrivariateConstraintSubresultantStatus::DegreeBoundExceeded
+            | TrivariateConstraintSubresultantStatus::DeterminantError
+            | TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        };
+        let Some(coefficient_polynomials) = coefficient_polynomials else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let mut nonzero = false;
+        for coefficient in &coefficient_polynomials {
+            match trivariate_parameter_triple_sign_by_refinement(
+                coefficient,
+                first,
+                second,
+                third,
+                &strict,
+            )? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                    nonzero = true;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if !nonzero {
+            continue;
+        }
+        let gcd = QuadrivariatePolynomial2::from_fourth_axis_coefficients(&coefficient_polynomials)
+            .ok_or_else(|| {
+                CurveError::Topology("a selected fourth-axis GCD exceeded its tensor budget".into())
+            })?;
+        if quadrivariate_selected_fourth_axis_has_box_root(&gcd, first, second, third, fourth)? {
+            return Ok(Classification::Decided(true));
+        }
+        if quadrivariate_parameter_tuple_bounded_box_sign(
+            &gcd,
+            [first, second, third, fourth],
+            512,
+        )?
+        .is_some()
+        {
+            return Ok(Classification::Decided(false));
+        }
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    Err(CurveError::Topology(
+        "a fourth-axis subresultant sequence lost its nonzero terminal polynomial".into(),
+    ))
+}
+
+#[allow(dead_code)]
+fn quadrivariate_parameter_tuple_sign_by_refinement(
+    polynomial: &QuadrivariatePolynomial2,
+    parameters: [&BezierParameter2; 4],
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    if quadrivariate_structurally_zero(polynomial) {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    for (axis, parameter) in parameters.into_iter().enumerate() {
+        let BezierParameter2::Exact(value) = parameter else {
+            continue;
+        };
+        let Some((specialized, remaining)) =
+            quadrivariate_specialize_axis_trivariate(polynomial, axis, value)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        return trivariate_parameter_triple_sign_by_refinement(
+            &specialized,
+            parameters[remaining[0]],
+            parameters[remaining[1]],
+            parameters[remaining[2]],
+            policy,
+        );
+    }
+    let reduced = quadrivariate_reduce_selected_root_relations(polynomial, parameters)
+        .unwrap_or_else(|| polynomial.clone());
+    if quadrivariate_structurally_zero(&reduced) {
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
+    if let Some(sign) = quadrivariate_parameter_tuple_bounded_box_sign(&reduced, parameters, 8)? {
+        return Ok(Classification::Decided(sign));
+    }
+    match quadrivariate_fourth_axis_selected_root(
+        &reduced,
+        parameters[0],
+        parameters[1],
+        parameters[2],
+        parameters[3],
+        policy,
+    )? {
+        Classification::Decided(true) => {
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(_) => {}
+    }
+    if let Some(sign) = quadrivariate_parameter_tuple_bounded_box_sign(&reduced, parameters, 512)? {
+        return Ok(Classification::Decided(sign));
     }
     if policy.permits_approximate_512() {
         policy.observe_approximate_512();
@@ -67619,6 +68375,107 @@ mod conversion_tests {
         coefficients[1][0][1] = -Real::one();
         coefficients[0][1][1] = -Real::one();
         (parameters, TrivariatePolynomial2 { coefficients })
+    }
+
+    fn four_selected_square_root_parameters() -> [BezierParameter2; 4] {
+        let reciprocal = |denominator: i8| (Real::one() / Real::from(denominator)).unwrap();
+        let square_root = |denominator| {
+            algebraic_parameter(vec![-reciprocal(denominator), Real::zero(), Real::one()])
+        };
+        [
+            square_root(2),
+            square_root(3),
+            square_root(5),
+            square_root(2),
+        ]
+    }
+
+    #[test]
+    fn quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly() {
+        let parameters = four_selected_square_root_parameters();
+        let mut polynomial = QuadrivariatePolynomial2::zero([3, 1, 1, 1]).unwrap();
+        polynomial.coefficients
+            [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, [2, 0, 0, 0])] =
+            Real::one();
+        polynomial.coefficients
+            [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, [0, 0, 0, 0])] =
+            -(Real::one() / Real::from(2_i8)).unwrap();
+        assert_eq!(
+            quadrivariate_parameter_tuple_sign_by_refinement(
+                &polynomial,
+                [
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    &parameters[3]
+                ],
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            Classification::Decided(RealSign::Zero)
+        );
+    }
+
+    #[test]
+    fn quadrivariate_selected_tuple_sign_separates_an_ordinary_nonzero_value() {
+        let parameters = four_selected_square_root_parameters();
+        let mut polynomial = QuadrivariatePolynomial2::zero([2, 2, 2, 2]).unwrap();
+        for axis in 0..4 {
+            let mut exponents = [0; 4];
+            exponents[axis] = 1;
+            polynomial.coefficients
+                [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, exponents)] =
+                Real::one();
+        }
+        assert_eq!(
+            quadrivariate_parameter_tuple_sign_by_refinement(
+                &polynomial,
+                [
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    &parameters[3]
+                ],
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+            Classification::Decided(RealSign::Positive)
+        );
+    }
+
+    #[test]
+    fn quadrivariate_selected_tuple_sign_recovers_an_even_correlated_root() {
+        let parameters = four_selected_square_root_parameters();
+        // (d-a)^2 is not structurally zero after independent quotient-ring
+        // reduction.  The exact fourth-axis resultant/subresultant authority
+        // must correlate the repeated root retained in the first and fourth
+        // isolators.
+        let mut polynomial = QuadrivariatePolynomial2::zero([3, 1, 1, 3]).unwrap();
+        for (exponents, coefficient) in [
+            ([2, 0, 0, 0], Real::one()),
+            ([1, 0, 0, 1], Real::from(-2_i8)),
+            ([0, 0, 0, 2], Real::one()),
+        ] {
+            polynomial.coefficients
+                [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, exponents)] =
+                coefficient;
+        }
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                quadrivariate_parameter_tuple_sign_by_refinement(
+                    &polynomial,
+                    [
+                        &parameters[0],
+                        &parameters[1],
+                        &parameters[2],
+                        &parameters[3]
+                    ],
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+        }
     }
 
     fn trivariate_multiply_axis_linear(
