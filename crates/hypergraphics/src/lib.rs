@@ -1,9 +1,10 @@
 //! Exact 3D scene geometry with an explicit primitive-float rendering boundary.
 //!
 //! Scene geometry stays in `Real` and `Point3` form until an explicit render
-//! export projects it to finite `f64` values. The crate also provides colored
-//! meshes, an orbit camera, grid and axis helpers, and an unlit OpenGL/WebGL
-//! backend.
+//! export projects it to finite `f64` values. Certified Hypercurve subdivision
+//! retains its source-chord error report alongside an exact line mesh. The crate
+//! also provides colored meshes, an orbit camera, grid and axis helpers, and an
+//! unlit OpenGL/WebGL backend.
 //!
 //! The default `exact` feature enables Hyperreal-owned geometry, predicates,
 //! triangulation, and camera helpers. Renderer-only consumers can disable
@@ -40,4 +41,7 @@ pub use hyperreal::{Rational, Real};
 pub use hypertri::{Point2, TriangulationContext, TriangulationOutcome};
 pub use render::{Color3, Primitive, RenderVertex64};
 #[cfg(feature = "exact")]
-pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh, triangle_mesh};
+pub use scene::{
+    CertifiedCurveLineMesh, axes_mesh, curve_line_mesh, curve_path_line_mesh, grid_mesh,
+    polygon_surface_mesh, triangle_mesh,
+};

@@ -21,7 +21,7 @@ approximation can accidentally become a geometric decision.
 
 ```text
 Real geometry
-    │  construct, triangulate, classify
+    │  construct, certify curve chords, triangulate, classify
     ▼
 ExactMesh
     │  explicit lossy export
@@ -41,6 +41,7 @@ finite interleaved vertex data and projection matrices.
 | Type | Purpose |
 | --- | --- |
 | `ExactMesh` | Colored line or triangle vertices whose positions remain exact. |
+| `CertifiedCurveLineMesh` | Hypercurve chord mesh with retained exact source-error evidence. |
 | `ExactVertex` | One `Point3` position and one finite linear-RGB `Color3`. |
 | `TriangleOrientation` | Exact/certified classification of a point against an oriented triangle. |
 | `ExactCamera` | Orbit-camera state stored as exact values until projection. |
@@ -120,6 +121,7 @@ by the crate test suite.
 | Construct vertices and meshes | `ExactVertex::new`, `ExactMesh::new`, `ExactMesh::empty` |
 | Inspect or edit a mesh | `primitive`, `vertices`, `vertices_mut`, `push`, `vertex_count`, `triangle_count` |
 | Build scene helpers | `axes_mesh`, `grid_mesh`, `polygon_surface_mesh`, `triangle_mesh` |
+| Adapt exact curves | `curve_line_mesh`, `curve_path_line_mesh` → `CertifiedCurveLineMesh` |
 | Select draw topology | `Primitive::Lines`, `Primitive::Triangles` |
 | Construct colors | `Color3::new`, `Color3::{RED, GREEN, BLUE}`, `Color3::to_array` |
 
@@ -130,6 +132,14 @@ selected policy consumed approximate-512 equality.
 
 `grid_mesh` takes an unsigned half-step count and returns an error if its exact
 coordinate and vertex storage cannot be allocated safely.
+
+`curve_line_mesh` and `curve_path_line_mesh` invoke Hypercurve's certified
+subdivision with caller-owned `BezierFlatteningOptions` and `CurveContext`.
+Their chord endpoints remain `Real`, and the returned adapter retains the exact
+maximum source-chord error, segment count, depth, and source-fragment count.
+Exhausted or undecidable subdivision is an error; it does not fall back to a
+fixed `f64` sample count. The mesh is presentation data and cannot replace the
+source curve or its certificate in CAM.
 
 ### Query exact geometry
 
@@ -209,7 +219,7 @@ indices used by the mesh layout.
 
 | Feature | Default | Effect |
 | --- | --- | --- |
-| `exact` | yes | Enables Hyperreal geometry, exact queries, triangulation, scene helpers, and `ExactCamera`. |
+| `exact` | yes | Enables Hyperreal/Hypercurve geometry, exact queries, certified curve adapters, triangulation, scene helpers, and `ExactCamera`. |
 | `dispatch-trace` | no | Enables lower-stack predicate/scalar tracing for development and benchmarks; also enables `exact`. |
 
 Renderer-only applications can avoid the exact geometry dependencies:
@@ -251,6 +261,8 @@ That configuration retains `Primitive`, `Color3`, `RenderVertex64`, `Viewport`,
   vectors, and exact camera parameters.
 - [Hyperlimit](https://github.com/timschmidt/hyperlimit) supplies robust
   orientation predicates.
+- [Hypercurve](https://github.com/timschmidt/hypercurve) supplies exact curve
+  carriers and certified source-chord subdivision.
 - [Hypertri](https://github.com/timschmidt/hypertri) triangulates exact planar
   polygons.
 

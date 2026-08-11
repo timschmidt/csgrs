@@ -15,6 +15,7 @@ categories = ["graphics", "rendering", "mathematics"]
 [features]
 default = ["exact"]
 exact = [
+    "dep:hypercurve",
     "dep:hyperreal",
     "dep:hyperlattice",
     "dep:hyperlimit",
@@ -25,6 +26,7 @@ exact = [
 dispatch-trace = ["exact", "hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 
 [dependencies]
+hypercurve = { version = "0.3.1", path = "../hypercurve", default-features = false, optional = true }
 hyperreal = { version = "0.13.1", path = "../hyperreal", optional = true }
 hyperlattice = { version = "0.6.1", path = "../hyperlattice", optional = true }
 hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
@@ -52,6 +54,7 @@ all-features = true
 
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]
+hypercurve = { path = "../hypercurve" }
 hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }

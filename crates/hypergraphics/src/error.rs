@@ -83,6 +83,15 @@ pub enum Error {
         /// Number of source position rows.
         vertex_count: usize,
     },
+    /// Hypercurve rejected exact source-curve segmentation.
+    #[cfg(feature = "exact")]
+    CurveSegmentation(hypercurve::ExactCurveError),
+    /// Hypercurve could not certify source-curve segmentation under the selected policy.
+    #[cfg(feature = "exact")]
+    CurveSegmentationUncertain {
+        /// Exact predicate or supported-operation boundary that remained unresolved.
+        reason: hypercurve::UncertaintyReason,
+    },
     /// The operation requires a triangle mesh.
     RequiresTriangles,
     /// Hyperreal or hyperlattice arithmetic rejected an operation.
@@ -165,6 +174,15 @@ impl fmt::Display for Error {
                 f,
                 "source triangle {triangle} corner {corner} references position {index}, but only {vertex_count} positions exist"
             ),
+            #[cfg(feature = "exact")]
+            Self::CurveSegmentation(error) => {
+                write!(f, "exact source-curve segmentation failed: {error}")
+            }
+            #[cfg(feature = "exact")]
+            Self::CurveSegmentationUncertain { reason } => write!(
+                f,
+                "source-curve segmentation remained uncertain: {reason:?}"
+            ),
             Self::RequiresTriangles => write!(f, "operation requires a triangle mesh"),
             #[cfg(feature = "exact")]
             Self::Arithmetic(problem) => write!(f, "hyperreal arithmetic failed: {problem}"),
@@ -185,6 +203,8 @@ impl StdError for Error {
             Self::Arithmetic(problem) => Some(problem),
             #[cfg(feature = "exact")]
             Self::Triangulation(error) => Some(error),
+            #[cfg(feature = "exact")]
+            Self::CurveSegmentation(error) => Some(error),
             _ => None,
         }
     }
@@ -201,5 +221,12 @@ impl From<hyperlattice::Problem> for Error {
 impl From<hypertri::Error> for Error {
     fn from(value: hypertri::Error) -> Self {
         Self::Triangulation(value)
+    }
+}
+
+#[cfg(feature = "exact")]
+impl From<hypercurve::ExactCurveError> for Error {
+    fn from(value: hypercurve::ExactCurveError) -> Self {
+        Self::CurveSegmentation(value)
     }
 }

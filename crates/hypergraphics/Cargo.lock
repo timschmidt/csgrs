@@ -349,12 +349,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 
 [[package]]
+name = "hypercurve"
+version = "0.3.1"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
+ "hypersolve",
+ "num",
+]
+
+[[package]]
 name = "hypergraphics"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
  "criterion",
  "glow",
+ "hypercurve",
  "hyperlattice",
  "hyperlimit",
  "hypermesh",
@@ -392,6 +403,16 @@ dependencies = [
 name = "hyperreal"
 version = "0.13.1"
 dependencies = [
+ "num",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.3.1"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
  "num",
 ]
 
