@@ -65,6 +65,90 @@ pub struct AlgebraicTensorImageReport {
     pub message: Option<String>,
 }
 
+/// Reduces a selected root to a rational or quadratic `x^2-q` factor when a
+/// bounded rational proposal is proved by exact polynomial divisibility.
+///
+/// This is an explicit recursive-frame optimization, not a topology
+/// predicate. Approximation only proposes `q`; exact division proves the
+/// source eliminant contains the factor, and STRICT validation proves the
+/// existing selected interval isolates one root of that factor.
+pub fn compact_algebraic_root_low_degree_witness(
+    root: &AlgebraicRootRepresentation,
+) -> Option<AlgebraicRootRepresentation> {
+    if !root.is_valid()
+        || validate_algebraic_root_representation(root, PredicatePolicy::STRICT).status
+            != AlgebraicRootValidationStatus::Valid
+    {
+        return None;
+    }
+    if let Some(witness) = exact_bounded_denominator_root_in_interval(
+        &root.polynomial_coefficients,
+        &root.interval,
+        64,
+    ) {
+        let mut compact = root.clone();
+        compact.polynomial_coefficients = vec![-witness.clone(), Real::one()];
+        compact.kind = AlgebraicRootKind::ExactRationalWitness;
+        compact.interval = IsolatedRootInterval {
+            lower: witness.clone(),
+            upper: witness.clone(),
+            exact_root: Some(witness),
+            distinct_root_count: 1,
+        };
+        compact.validation =
+            validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
+        if compact.is_valid() {
+            return Some(compact);
+        }
+    }
+    let lower = root.interval.lower.to_f64_lossy()?;
+    let upper = root.interval.upper.to_f64_lossy()?;
+    if !lower.is_finite() || !upper.is_finite() {
+        return None;
+    }
+    let midpoint = lower / 2.0 + upper / 2.0;
+    let square = midpoint * midpoint;
+    for denominator in 1_i64..=64 {
+        let numerator = (square * denominator as f64).round();
+        if !numerator.is_finite() || numerator < 0.0 || numerator > i64::MAX as f64 {
+            continue;
+        }
+        let rational = hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
+        let factor = vec![-Real::new(rational), Real::zero(), Real::one()];
+        if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
+            continue;
+        }
+        let mut compact = root.clone();
+        compact.polynomial_coefficients = factor;
+        compact.validation =
+            validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
+        if compact.is_valid() {
+            return Some(compact);
+        }
+    }
+    None
+}
+
+fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
+    if polynomial.len() < factor.len() || factor.last() != Some(&Real::one()) {
+        return false;
+    }
+    let factor_degree = factor.len() - 1;
+    let mut remainder = polynomial.to_vec();
+    for degree in (factor_degree..remainder.len()).rev() {
+        let coefficient = remainder[degree].clone();
+        for (factor_degree_index, factor_coefficient) in factor.iter().enumerate() {
+            let index = degree - factor_degree + factor_degree_index;
+            remainder[index] = remainder[index].clone() - &coefficient * factor_coefficient;
+        }
+    }
+    remainder[..factor_degree].iter().all(|coefficient| {
+        coefficient
+            .exact_rational_ref()
+            .is_some_and(|coefficient| coefficient.is_zero())
+    })
+}
+
 /// Constructs one exact represented value from a correlated tensor relation.
 ///
 /// The final tensor axis is the image variable. Every preceding axis matches
@@ -409,6 +493,55 @@ fn exact_cardinal_root_in_interval(
     None
 }
 
+fn exact_bounded_denominator_root_in_interval(
+    polynomial_coefficients: &[Real],
+    interval: &IsolatedRootInterval,
+    max_denominator: i64,
+) -> Option<Real> {
+    let lower = interval.lower.to_f64_lossy()?;
+    let upper = interval.upper.to_f64_lossy()?;
+    if !lower.is_finite() || !upper.is_finite() {
+        return None;
+    }
+    let midpoint = lower / 2.0 + upper / 2.0;
+    for denominator in 1..=max_denominator {
+        let numerator = (midpoint * denominator as f64).round();
+        if !numerator.is_finite() || numerator < i64::MIN as f64 || numerator > i64::MAX as f64 {
+            continue;
+        }
+        let rational = hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
+        let candidate = Real::new(rational);
+        if candidate
+            .to_f64_lossy()
+            .is_none_or(|candidate| candidate < lower || candidate > upper)
+        {
+            continue;
+        }
+        if !matches!(
+            compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) || !matches!(
+            compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
+            continue;
+        }
+        let value = polynomial_coefficients
+            .iter()
+            .rev()
+            .fold(Real::zero(), |value, coefficient| {
+                value * &candidate + coefficient
+            });
+        if value
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+        {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
 fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
     coefficients
         .into_iter()
@@ -515,6 +648,69 @@ mod tests {
             ),
             None,
         );
+    }
+
+    #[test]
+    fn selected_root_rational_compaction_requires_exact_replay() {
+        let half = (Real::one() / real(2)).unwrap();
+        let eighth = (Real::one() / real(8)).unwrap();
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 7,
+            symbol: SymbolId(11),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(2), real(-4), real(-1), real(2)],
+            interval: IsolatedRootInterval {
+                lower: &half - &eighth,
+                upper: &half + eighth,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let compact = compact_algebraic_root_low_degree_witness(&root)
+            .expect("the selected half root must compact exactly");
+        assert_eq!(compact.interval.exact_root, Some(half.clone()));
+        assert_eq!(compact.polynomial_coefficients, vec![-half, Real::one()]);
+
+        let mut nonroot = root;
+        nonroot.polynomial_coefficients[0] = real(1);
+        assert!(compact_algebraic_root_low_degree_witness(&nonroot).is_none());
+    }
+
+    #[test]
+    fn selected_root_quadratic_compaction_requires_exact_factor() {
+        let three_quarters = (real(3) / real(4)).unwrap();
+        let root = AlgebraicRootRepresentation {
+            constraint_index: 7,
+            symbol: SymbolId(12),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(3), real(-6), real(-4), real(8)],
+            interval: IsolatedRootInterval {
+                lower: real(-1),
+                upper: -three_quarters.clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            kind: AlgebraicRootKind::IsolatingInterval,
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let compact = compact_algebraic_root_low_degree_witness(&root)
+            .expect("the selected negative square root must compact exactly");
+        assert_eq!(
+            compact.polynomial_coefficients,
+            vec![-three_quarters, Real::zero(), Real::one()]
+        );
+
+        let mut nonfactor = root;
+        nonfactor.polynomial_coefficients[0] = real(4);
+        assert!(compact_algebraic_root_low_degree_witness(&nonfactor).is_none());
     }
 
     fn sum_relation(count: usize, constant: Real) -> DenseTensorPolynomial {

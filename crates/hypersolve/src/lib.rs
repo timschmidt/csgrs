@@ -132,7 +132,8 @@ pub use algebraic_sqrt::{
     square_root_algebraic_root_representation,
 };
 pub use algebraic_tensor_image::{
-    AlgebraicTensorImageReport, AlgebraicTensorImageStatus, represent_algebraic_tensor_image,
+    AlgebraicTensorImageReport, AlgebraicTensorImageStatus,
+    compact_algebraic_root_low_degree_witness, represent_algebraic_tensor_image,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
