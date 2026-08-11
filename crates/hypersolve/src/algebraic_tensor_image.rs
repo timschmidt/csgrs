@@ -112,6 +112,17 @@ pub fn represent_algebraic_tensor_image(
                 "a tensor-image source constraint could not be square-freed exactly",
             );
         };
+        let Some(reduced) = relation.reduce_axis_modulo(0, &constraint, PredicatePolicy::STRICT)
+        else {
+            return report(
+                AlgebraicTensorImageStatus::SourceSquareFreeFailed,
+                source_index,
+                None,
+                None,
+                "a tensor-image source axis could not be reduced in its exact quotient ring",
+            );
+        };
+        relation = reduced;
         let elimination = resultant_tensor_polynomial_univariate_constraint(
             &relation,
             &constraint,

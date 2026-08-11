@@ -17,6 +17,7 @@
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
+use crate::root_isolation::polynomial_div_rem;
 
 /// Dense ascending-power polynomial tensor with row-major coefficients.
 ///
@@ -157,6 +158,67 @@ impl DenseTensorPolynomial {
             result.coefficients[flat_index(&dimensions, &target)] = coefficient.clone();
         }
         Some(result)
+    }
+
+    /// Replaces every selected-axis fiber by its exact polynomial remainder.
+    ///
+    /// At any root of `modulus`, the returned tensor has exactly the same
+    /// value as `self`. Reducing before a constrained resultant is therefore
+    /// quotient-ring canonicalization, not approximation, and prevents powers
+    /// already implied by selected-root evidence from inflating every later
+    /// retained-axis degree.
+    pub fn reduce_axis_modulo(
+        &self,
+        axis: usize,
+        modulus: &[Real],
+        policy: hyperlimit::PredicatePolicy,
+    ) -> Option<Self> {
+        if axis >= self.dimensions.len() || modulus.len() <= 1 {
+            return None;
+        }
+        let target_axis_dimension = modulus.len() - 1;
+        let mut dimensions = self.dimensions.clone();
+        dimensions[axis] = target_axis_dimension;
+        let mut reduced = Self::zero(dimensions.clone())?;
+        let retained_dimensions = self
+            .dimensions
+            .iter()
+            .enumerate()
+            .filter_map(|(source_axis, dimension)| (source_axis != axis).then_some(*dimension))
+            .collect::<Vec<_>>();
+        let fiber_count = checked_coefficient_count(&retained_dimensions)?;
+        for fiber_index in 0..fiber_count {
+            let retained_exponents = exponents(&retained_dimensions, fiber_index);
+            let mut source_exponents = vec![0; self.dimensions.len()];
+            let mut retained = 0;
+            for (source_axis, exponent) in source_exponents.iter_mut().enumerate() {
+                if source_axis == axis {
+                    continue;
+                }
+                *exponent = retained_exponents[retained];
+                retained += 1;
+            }
+            let mut fiber = Vec::new();
+            fiber.try_reserve_exact(self.dimensions[axis]).ok()?;
+            for power in 0..self.dimensions[axis] {
+                source_exponents[axis] = power;
+                fiber.push(
+                    self.coefficient(&source_exponents)
+                        .cloned()
+                        .unwrap_or_else(Real::zero),
+                );
+            }
+            let (_, remainder) = polynomial_div_rem(fiber, modulus, policy)?;
+            for (power, coefficient) in remainder.into_iter().enumerate() {
+                if power >= target_axis_dimension {
+                    return None;
+                }
+                source_exponents[axis] = power;
+                let target = flat_index(&dimensions, &source_exponents);
+                reduced.coefficients[target] = coefficient;
+            }
+        }
+        Some(reduced)
     }
 
     fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
@@ -774,5 +836,29 @@ mod tests {
         assert_eq!(product.coefficient(&[0, 1, 0, 1, 2]), Some(&real(3)));
         let replay = product.add(&product.scale(&real(-1)).unwrap()).unwrap();
         assert!(replay.coefficients().iter().all(Real::definitely_zero));
+    }
+
+    #[test]
+    fn dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring() {
+        let cubic = DenseTensorPolynomial::from_axis_polynomial(
+            3,
+            0,
+            &[Real::zero(), Real::zero(), Real::zero(), Real::one()],
+        )
+        .unwrap();
+        let other = DenseTensorPolynomial::from_axis_polynomial(3, 1, &[real(5), real(7)]).unwrap();
+        let reduced = cubic
+            .add(&other)
+            .unwrap()
+            .reduce_axis_modulo(
+                0,
+                &[real(-2), Real::zero(), Real::one()],
+                PredicatePolicy::STRICT,
+            )
+            .unwrap();
+        assert_eq!(reduced.dimensions(), &[2, 2, 1]);
+        assert_eq!(reduced.coefficient(&[1, 0, 0]), Some(&real(2)));
+        assert_eq!(reduced.coefficient(&[0, 0, 0]), Some(&real(5)));
+        assert_eq!(reduced.coefficient(&[0, 1, 0]), Some(&real(7)));
     }
 }
