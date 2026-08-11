@@ -71,6 +71,18 @@ pub enum Error {
         /// Number of triangles in the mesh.
         triangle_count: usize,
     },
+    /// A source triangle references a position row that does not exist.
+    #[cfg(feature = "exact")]
+    SourceTriangleIndexOutOfBounds {
+        /// Source triangle row.
+        triangle: usize,
+        /// Corner within the source triangle.
+        corner: usize,
+        /// Rejected source position index.
+        index: usize,
+        /// Number of source position rows.
+        vertex_count: usize,
+    },
     /// The operation requires a triangle mesh.
     RequiresTriangles,
     /// Hyperreal or hyperlattice arithmetic rejected an operation.
@@ -142,6 +154,16 @@ impl fmt::Display for Error {
             } => write!(
                 f,
                 "triangle index {index} is out of bounds for {triangle_count} triangles"
+            ),
+            #[cfg(feature = "exact")]
+            Self::SourceTriangleIndexOutOfBounds {
+                triangle,
+                corner,
+                index,
+                vertex_count,
+            } => write!(
+                f,
+                "source triangle {triangle} corner {corner} references position {index}, but only {vertex_count} positions exist"
             ),
             Self::RequiresTriangles => write!(f, "operation requires a triangle mesh"),
             #[cfg(feature = "exact")]

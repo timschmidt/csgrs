@@ -40,4 +40,4 @@ pub use hyperreal::{Rational, Real};
 pub use hypertri::{Point2, TriangulationContext, TriangulationOutcome};
 pub use render::{Color3, Primitive, RenderVertex64};
 #[cfg(feature = "exact")]
-pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh};
+pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh, triangle_mesh};

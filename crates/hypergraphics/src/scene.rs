@@ -1,10 +1,47 @@
 //! Exact scene construction helpers.
 
 use hyperlattice::{Point3, Real};
+use hypermesh::TriangleMesh;
 use hypertri::{ExactPoint, TriangulationContext, TriangulationOutcome};
 
 use crate::error::{Error, Result};
 use crate::geometry::{Color3, ExactMesh, ExactVertex, Primitive};
+
+/// Expand a native exact Hypermesh triangle mesh into a flat colored scene mesh.
+///
+/// The source positions remain [`Real`] values. Triangle indexing is checked
+/// before any scene value is produced, and primitive-float projection remains
+/// deferred to the normal Hypergraphics render boundary.
+pub fn triangle_mesh(mesh: &TriangleMesh, color: Color3) -> Result<ExactMesh> {
+    let vertex_count = mesh
+        .triangles
+        .len()
+        .checked_mul(3)
+        .ok_or(Error::VertexCountOverflow { count: usize::MAX })?;
+    let mut vertices = Vec::new();
+    vertices
+        .try_reserve_exact(vertex_count)
+        .map_err(|_| Error::VertexCountOverflow {
+            count: vertex_count,
+        })?;
+
+    for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
+        for (corner, index) in triangle.indices().into_iter().enumerate() {
+            let position =
+                mesh.positions
+                    .get(index)
+                    .ok_or(Error::SourceTriangleIndexOutOfBounds {
+                        triangle: triangle_index,
+                        corner,
+                        index,
+                        vertex_count: mesh.positions.len(),
+                    })?;
+            vertices.push(ExactVertex::new(position.clone(), color));
+        }
+    }
+
+    Ok(ExactMesh::new(Primitive::Triangles, vertices))
+}
 
 /// Build an exact RGB axis gizmo.
 pub fn axes_mesh(length: Real, z_base: Real) -> Result<ExactMesh> {
@@ -119,11 +156,46 @@ pub fn polygon_surface_mesh(
 
 #[cfg(test)]
 mod tests {
+    use hyperlattice::Point3;
     use hyperlimit::PredicatePolicy;
+    use hypermesh::{Triangle, TriangleMesh};
     use hyperreal::Real;
     use hypertri::{Point2, TriangulationContext};
 
     use super::*;
+
+    #[test]
+    fn native_triangle_mesh_stays_exact_until_render_export() {
+        let one_third = Real::from(hyperreal::Rational::fraction(1, 3).unwrap());
+        let source = TriangleMesh::new(
+            vec![
+                Point3::new(Real::zero(), Real::zero(), Real::zero()),
+                Point3::new(one_third.clone(), Real::zero(), Real::zero()),
+                Point3::new(Real::zero(), one_third.clone(), Real::zero()),
+            ],
+            vec![Triangle::new(0, 1, 2)],
+        );
+        let scene = triangle_mesh(&source, Color3::RED).unwrap();
+
+        assert_eq!(scene.triangle_count(), 1);
+        assert_eq!(scene.vertices()[1].position.x, one_third);
+        assert_eq!(scene.to_render_vertices64().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn native_triangle_mesh_rejects_bad_source_indices() {
+        let source = TriangleMesh::new(vec![Point3::origin()], vec![Triangle::new(0, 1, 0)]);
+
+        assert!(matches!(
+            triangle_mesh(&source, Color3::RED),
+            Err(Error::SourceTriangleIndexOutOfBounds {
+                triangle: 0,
+                corner: 1,
+                index: 1,
+                vertex_count: 1,
+            })
+        ));
+    }
 
     #[test]
     fn grid_keeps_exact_vertex_count() {

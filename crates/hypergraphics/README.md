@@ -119,7 +119,7 @@ by the crate test suite.
 | --- | --- |
 | Construct vertices and meshes | `ExactVertex::new`, `ExactMesh::new`, `ExactMesh::empty` |
 | Inspect or edit a mesh | `primitive`, `vertices`, `vertices_mut`, `push`, `vertex_count`, `triangle_count` |
-| Build scene helpers | `axes_mesh`, `grid_mesh`, `polygon_surface_mesh` |
+| Build scene helpers | `axes_mesh`, `grid_mesh`, `polygon_surface_mesh`, `triangle_mesh` |
 | Select draw topology | `Primitive::Lines`, `Primitive::Triangles` |
 | Construct colors | `Color3::new`, `Color3::{RED, GREEN, BLUE}`, `Color3::to_array` |
 

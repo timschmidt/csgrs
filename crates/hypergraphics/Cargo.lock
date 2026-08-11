@@ -357,6 +357,7 @@ dependencies = [
  "glow",
  "hyperlattice",
  "hyperlimit",
+ "hypermesh",
  "hyperreal",
  "hypertri",
  "nalgebra",
@@ -375,6 +376,16 @@ version = "0.4.1"
 dependencies = [
  "hyperlattice",
  "hyperreal",
+]
+
+[[package]]
+name = "hypermesh"
+version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+ "hypertri",
 ]
 
 [[package]]
