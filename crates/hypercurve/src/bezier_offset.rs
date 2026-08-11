@@ -84,8 +84,10 @@ use hypersolve::{
     subresultant_chain_univariate_polynomials,
 };
 use hypersolve::{
-    TrivariateConstraintResultantStatus, TrivariatePolynomial as SolverTrivariatePolynomial,
-    TrivariatePolynomialAxis, resultant_trivariate_polynomial_univariate_constraint,
+    TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantStatus,
+    TrivariatePolynomial as SolverTrivariatePolynomial, TrivariatePolynomialAxis,
+    resultant_trivariate_polynomial_univariate_constraint,
+    subresultant_trivariate_polynomial_univariate_constraint,
 };
 
 /// Exact source representation retained by an analytic Bezier parallel.
@@ -14013,6 +14015,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            let mut tangent_projection = None;
+            let mut tangent_projection_attempted = false;
+            let mut tangent_constraint = None;
             let radical_sign = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
                                 candidate: &BezierParameter2| {
                 algebraic_cusp_trivariate_square_root_sum_sign(
@@ -14026,7 +14031,61 @@ impl BezierAlgebraicCuspSemicircle2 {
                 )
             };
             let mut contacts = Vec::with_capacity(candidates.len());
-            for candidate in candidates {
+            for mut candidate in candidates {
+                let has_box_root = projected_selected_trivariate_candidate_has_box_root(
+                    &system.incidence_projection,
+                    first_parameter,
+                    second_parameter,
+                    &candidate,
+                    8,
+                )?;
+                if !has_box_root {
+                    if trivariate_parameter_triple_bounded_box_sign(
+                        &system.incidence_projection,
+                        first_parameter,
+                        second_parameter,
+                        &candidate,
+                        64,
+                    )?
+                    .is_some()
+                    {
+                        continue;
+                    }
+                    if !tangent_projection_attempted {
+                        tangent_projection = system
+                            .tangent_cross
+                            .radical
+                            .multiply(&system.tangent_cross.radical)
+                            .and_then(|radical_squared| {
+                                TrivariatePolynomial2::sum_products(&[
+                                    (
+                                        &system.tangent_cross.rational,
+                                        &system.tangent_cross.rational,
+                                        false,
+                                    ),
+                                    (&radical_squared, &system.discriminant, true),
+                                ])
+                            });
+                        tangent_projection_attempted = true;
+                    }
+                    if tangent_constraint.is_none() {
+                        tangent_constraint = Some(match &tangent_projection {
+                            Some(projection) => selected_trivariate_third_axis_constraint(
+                                projection,
+                                first_parameter,
+                                second_parameter,
+                            )?,
+                            None => None,
+                        });
+                    }
+                    if let Some(constraint) = tangent_constraint
+                        .as_ref()
+                        .and_then(|constraint| constraint.as_deref())
+                    {
+                        candidate =
+                            selected_parameter_reduced_by_constraint(&candidate, constraint)?;
+                    }
+                }
                 match algebraic_cusp_projected_trivariate_square_root_sum_sign(
                     &system.incidence,
                     &system.discriminant,
@@ -14035,6 +14094,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     second_parameter,
                     &candidate,
                     system.branch,
+                    has_box_root,
                     policy,
                 )? {
                     Classification::Decided(RealSign::Zero) => {}
@@ -14069,7 +14129,22 @@ impl BezierAlgebraicCuspSemicircle2 {
                         }
                     },
                 };
-                let tangent_cross_sign = match radical_sign(&system.tangent_cross, &candidate)? {
+                let tangent_cross_sign = match if let Some(tangent_projection) = &tangent_projection
+                {
+                    algebraic_cusp_projected_trivariate_square_root_sum_sign(
+                        &system.tangent_cross,
+                        &system.discriminant,
+                        tangent_projection,
+                        first_parameter,
+                        second_parameter,
+                        &candidate,
+                        system.branch,
+                        false,
+                        policy,
+                    )?
+                } else {
+                    radical_sign(&system.tangent_cross, &candidate)?
+                } {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -22403,6 +22478,45 @@ fn selected_trivariate_third_axis_parameters(
         .map(BezierAlgebraicFiberProjection2::Parameters))
 }
 
+/// Gives an ordinary nonzero selected tuple a small exact-box opportunity to
+/// separate before correlation machinery is constructed.
+fn trivariate_parameter_triple_bounded_box_sign(
+    polynomial: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    third_parameter: &BezierParameter2,
+    maximum_steps: usize,
+) -> CurveResult<Option<RealSign>> {
+    let strict = &CurveContext::STRICT;
+    let mut first_refinement = BezierParameterRefinement2::new(first_parameter, strict);
+    let mut second_refinement = BezierParameterRefinement2::new(second_parameter, strict);
+    let mut third_refinement = BezierParameterRefinement2::new(third_parameter, strict);
+    let dimensions = polynomial.dimensions();
+    let is_multi_affine = dimensions.0 <= 2 && dimensions.1 <= 2 && dimensions.2 <= 2;
+    for target_steps in [0, 2, 4, 8, 16, 32, 64] {
+        if target_steps > maximum_steps {
+            break;
+        }
+        let first = first_refinement.refine_to(target_steps);
+        let second = second_refinement.refine_to(target_steps);
+        let third = third_refinement.refine_to(target_steps);
+        let sign = if is_multi_affine {
+            trivariate_multi_affine_parameter_box_strict_sign(
+                polynomial, first, second, third, strict,
+            )
+        } else {
+            trivariate_unit_cube_strict_bernstein_sign(
+                trivariate_restrict_to_parameter_box(polynomial, first, second, third),
+                strict,
+            )?
+        };
+        if sign.is_some() {
+            return Ok(sign);
+        }
+    }
+    Ok(None)
+}
+
 /// Certifies that one projected third-axis candidate belongs to the two
 /// selected source roots, rather than to a conjugate pair introduced by the
 /// sequential resultants.
@@ -22420,6 +22534,7 @@ fn projected_selected_trivariate_candidate_has_box_root(
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
+    maximum_steps: usize,
 ) -> CurveResult<bool> {
     let strict = &CurveContext::STRICT;
     match (first_parameter, second_parameter, third_parameter) {
@@ -22541,6 +22656,9 @@ fn projected_selected_trivariate_candidate_has_box_root(
     let mut third_refinement = BezierParameterRefinement2::new(third_parameter, strict);
     let mut previous_box = None;
     for target_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        if target_steps > maximum_steps {
+            break;
+        }
         // The incidence faces lie one target-box width away from the root.
         // Refine the retained source axes ahead of that width so their
         // coefficient variation cannot mask the transverse third-axis sign.
@@ -22607,6 +22725,328 @@ fn projected_selected_trivariate_candidate_has_box_root(
         }
     }
     Ok(false)
+}
+
+/// Returns a defining polynomial whose selected root is simple.
+///
+/// A resultant carrier may retain an even-multiplicity factor. Exact
+/// square-free reduction removes that multiplicity in one step; derivative
+/// replay is retained only as an exact fallback when the generic reduction is
+/// unavailable. No approximate equality is allowed to choose this construction
+/// polynomial.
+fn selected_parameter_simple_constraint(
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<Real>>> {
+    let BezierParameter2::Algebraic(parameter) = parameter else {
+        let BezierParameter2::Exact(parameter) = parameter else {
+            unreachable!()
+        };
+        return Ok(Classification::Decided(vec![
+            -parameter.clone(),
+            Real::one(),
+        ]));
+    };
+    let selected = BezierParameter2::Algebraic(parameter.clone());
+    let strict = policy.strict_counterpart();
+    let original = parameter.polynomial().coefficients().to_vec();
+    if let Some(square_free) =
+        hypersolve::square_free_part(original.clone(), hypersolve::PredicatePolicy::STRICT)
+    {
+        return Ok(Classification::Decided(square_free));
+    }
+    let mut constraint = original;
+    loop {
+        if constraint.len() <= 1 {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        let derivative = polynomial_derivative(&constraint);
+        match signed_coefficients_at_parameter(derivative.clone(), &selected, &strict)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Ok(Classification::Decided(constraint));
+            }
+            Classification::Decided(RealSign::Zero) => constraint = derivative,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+}
+
+/// Replaces one projected parameter carrier by an exact lower-degree common
+/// factor when that factor owns the already isolated root.
+///
+/// The proposal is accepted only after exact GCD construction, exact
+/// square-free reduction, and a STRICT singleton root count in the original
+/// isolating interval. Failure to find a smaller carrier is only a scheduling
+/// miss; the original parameter remains authoritative.
+fn selected_parameter_reduced_by_constraint(
+    parameter: &BezierParameter2,
+    constraint: &[Real],
+) -> CurveResult<BezierParameter2> {
+    let BezierParameter2::Algebraic(parameter) = parameter else {
+        return Ok(parameter.clone());
+    };
+    let original = parameter.polynomial().coefficients();
+    let Some(common) = greatest_common_divisor_univariate_polynomials_exact(original, constraint)
+    else {
+        return Ok(BezierParameter2::Algebraic(parameter.clone()));
+    };
+    let Some(common) = hypersolve::square_free_part(common, hypersolve::PredicatePolicy::STRICT)
+    else {
+        return Ok(BezierParameter2::Algebraic(parameter.clone()));
+    };
+    if common.len() <= 1 || common.len() >= original.len() {
+        return Ok(BezierParameter2::Algebraic(parameter.clone()));
+    }
+    let polynomial =
+        match BezierParameterPolynomial::try_new_power_basis(common, &CurveContext::STRICT)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(_) => {
+                return Ok(BezierParameter2::Algebraic(parameter.clone()));
+            }
+        };
+    match polynomial.root_count_in_interval(parameter.interval(), &CurveContext::STRICT)? {
+        Classification::Decided(0) | Classification::Uncertain(_) => {
+            Ok(BezierParameter2::Algebraic(parameter.clone()))
+        }
+        Classification::Decided(1) => Ok(BezierParameter2::Algebraic(
+            BezierAlgebraicParameter2::from_certified_singleton(
+                polynomial,
+                parameter.interval().clone(),
+            ),
+        )),
+        Classification::Decided(_) => Err(CurveError::Topology(
+            "an exact common factor introduced multiple roots into a singleton interval".into(),
+        )),
+    }
+}
+
+/// Returns a square-free univariate carrier for the algebraic roots of one
+/// selected-pair trivariate projection. This is optional scheduling evidence:
+/// exact projection or isolation uncertainty leaves the caller's existing
+/// carrier unchanged.
+fn selected_trivariate_third_axis_constraint(
+    polynomial: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+) -> CurveResult<Option<Vec<Real>>> {
+    let projection = match selected_trivariate_third_axis_parameters(
+        polynomial,
+        first_parameter,
+        second_parameter,
+        &CurveContext::STRICT,
+    )? {
+        Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+            parameters
+        }
+        Classification::Decided(
+            BezierAlgebraicFiberProjection2::IdenticallyZero
+            | BezierAlgebraicFiberProjection2::Degenerate,
+        )
+        | Classification::Uncertain(_) => return Ok(None),
+    };
+    let Some(coefficients) = projection
+        .into_iter()
+        .find_map(|parameter| match parameter {
+            BezierParameter2::Algebraic(parameter) => {
+                Some(parameter.polynomial().coefficients().to_vec())
+            }
+            BezierParameter2::Exact(_) => None,
+        })
+    else {
+        return Ok(None);
+    };
+    Ok(hypersolve::square_free_part(
+        coefficients,
+        hypersolve::PredicatePolicy::STRICT,
+    ))
+}
+
+fn independent_parameter_pair_incidence(second: &BezierParameter2) -> BivariatePolynomial {
+    let coefficients = match second {
+        BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
+        BezierParameter2::Algebraic(parameter) => parameter.polynomial().coefficients().to_vec(),
+    };
+    BivariatePolynomial::new(vec![coefficients])
+}
+
+/// Certifies projected-root membership through the first nonzero exact
+/// subresultant in the selected source-pair fiber.
+///
+/// The ordinary resultant proves that the target constraint and projected
+/// incidence share some root at the two selected source values. Scanning the
+/// constrained subresultants then recovers their fiber GCD without a primitive
+/// element. The target constraint is simple at the represented candidate, so
+/// that GCD is transverse there even when the original geometric incidence
+/// has even multiplicity; the existing product-box authority can therefore
+/// correlate the exact root tuple.
+fn projected_selected_trivariate_candidate_has_subresultant_root(
+    projected_incidence: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    third_parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let strict = policy.strict_counterpart();
+    let pair_incidence = independent_parameter_pair_incidence(second_parameter);
+    let pair_sign = |polynomial: &BivariatePolynomial| {
+        algebraic_selected_correlated_predicate_sign(
+            &pair_incidence,
+            polynomial,
+            first_parameter,
+            second_parameter,
+            &strict,
+        )
+    };
+
+    // Remove target-axis coefficients that vanish only in the selected pair
+    // field. Retaining their globally nonzero conjugate values would give the
+    // symbolic subresultant the wrong specialized degree.
+    let Some((mut target_coefficients, [0, 1])) =
+        trivariate_axis_bivariate_coefficients(projected_incidence, 2)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    while let Some(coefficient) = target_coefficients.last() {
+        match pair_sign(coefficient)? {
+            Classification::Decided(RealSign::Zero) if target_coefficients.len() > 1 => {
+                target_coefficients.pop();
+            }
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => break,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    let Some(projected_incidence) =
+        trivariate_from_axis_bivariate_coefficients(&target_coefficients, 2, [0, 1])
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let constraint = match selected_parameter_simple_constraint(third_parameter, &strict)? {
+        Classification::Decided(constraint) => constraint,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let config = CurveIntersectionResultantConfig {
+        min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let solver_polynomial =
+        SolverTrivariatePolynomial::new(projected_incidence.coefficients.clone());
+    let resultant = resultant_trivariate_polynomial_univariate_constraint(
+        &solver_polynomial,
+        &constraint,
+        TrivariatePolynomialAxis::Third,
+        config,
+    );
+    let resultant = match resultant.status {
+        TrivariateConstraintResultantStatus::Constructed => resultant
+            .resultant
+            .expect("a constructed constrained resultant retains its polynomial"),
+        TrivariateConstraintResultantStatus::UndecidedCoefficient => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        TrivariateConstraintResultantStatus::EmptyPolynomial
+        | TrivariateConstraintResultantStatus::InvalidConstraint
+        | TrivariateConstraintResultantStatus::DegreeBoundExceeded
+        | TrivariateConstraintResultantStatus::ResultantError
+        | TrivariateConstraintResultantStatus::InterpolationDivisionFailed => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+    };
+    match pair_sign(&resultant)? {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+            return Ok(Classification::Decided(false));
+        }
+        Classification::Decided(RealSign::Zero) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    let maximum_order = target_coefficients
+        .len()
+        .saturating_sub(1)
+        .min(constraint.len().saturating_sub(1));
+    for order in 1..=maximum_order {
+        let report = subresultant_trivariate_polynomial_univariate_constraint(
+            &solver_polynomial,
+            &constraint,
+            TrivariatePolynomialAxis::Third,
+            order,
+            config,
+        );
+        match report.status {
+            TrivariateConstraintSubresultantStatus::Constructed => {}
+            TrivariateConstraintSubresultantStatus::UndecidedCoefficient => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+            TrivariateConstraintSubresultantStatus::EmptyPolynomial
+            | TrivariateConstraintSubresultantStatus::InvalidConstraint
+            | TrivariateConstraintSubresultantStatus::InvalidOrder
+            | TrivariateConstraintSubresultantStatus::DegreeBoundExceeded
+            | TrivariateConstraintSubresultantStatus::DeterminantError
+            | TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+        }
+        let mut any_nonzero = false;
+        let mut uncertainty = None;
+        for coefficient in &report.coefficients {
+            match pair_sign(coefficient)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    any_nonzero = true;
+                    break;
+                }
+                Classification::Uncertain(reason) => uncertainty = Some(reason),
+            }
+        }
+        if !any_nonzero {
+            if let Some(reason) = uncertainty {
+                return Ok(Classification::Uncertain(reason));
+            }
+            continue;
+        }
+        let Some(gcd) =
+            trivariate_from_axis_bivariate_coefficients(&report.coefficients, 2, [0, 1])
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if projected_selected_trivariate_candidate_has_box_root(
+            &gcd,
+            first_parameter,
+            second_parameter,
+            third_parameter,
+            512,
+        )? {
+            return Ok(Classification::Decided(true));
+        }
+        return Ok(
+            match trivariate_parameter_triple_sign_by_refinement(
+                &gcd,
+                first_parameter,
+                second_parameter,
+                third_parameter,
+                &strict,
+            )? {
+                Classification::Decided(RealSign::Zero) => Classification::Decided(true),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    Classification::Decided(false)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        );
+    }
+    Err(CurveError::Topology(
+        "a constrained subresultant sequence lost its nonzero terminal polynomial".into(),
+    ))
 }
 
 #[inline]
@@ -39728,6 +40168,7 @@ fn algebraic_cusp_projected_trivariate_square_root_sum_sign(
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
     branch: i8,
+    projected_root_certified: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     algebraic_cusp_trivariate_square_root_components_sign_internal(
@@ -39735,6 +40176,7 @@ fn algebraic_cusp_projected_trivariate_square_root_sum_sign(
         &expression.radical,
         radicand,
         Some(projected_incidence),
+        projected_root_certified,
         first_parameter,
         second_parameter,
         third_parameter,
@@ -39758,6 +40200,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign(
         radical_term,
         radicand,
         None,
+        false,
         first_parameter,
         second_parameter,
         third_parameter,
@@ -39772,6 +40215,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
     radical_term: &TrivariatePolynomial2,
     radicand: &TrivariatePolynomial2,
     projected_incidence: Option<&TrivariatePolynomial2>,
+    projected_root_certified: bool,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -39823,15 +40267,64 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
         }
         _ => {}
     }
+    if projected_root_certified {
+        debug_assert!(projected_incidence.is_some());
+        return Ok(Classification::Decided(RealSign::Zero));
+    }
     if let Some(projected_incidence) = projected_incidence
         && projected_selected_trivariate_candidate_has_box_root(
             projected_incidence,
             first_parameter,
             second_parameter,
             third_parameter,
+            8,
         )?
     {
         return Ok(Classification::Decided(RealSign::Zero));
+    }
+    if let Some(projected_incidence) = projected_incidence
+        && let Some(sign) = trivariate_parameter_triple_bounded_box_sign(
+            projected_incidence,
+            first_parameter,
+            second_parameter,
+            third_parameter,
+            16,
+        )?
+    {
+        return Ok(Classification::Decided(match sign {
+            RealSign::Positive => rational,
+            RealSign::Negative => radical,
+            RealSign::Zero => unreachable!("a strict Bernstein box sign is nonzero"),
+        }));
+    }
+    if let Some(projected_incidence) = projected_incidence {
+        match projected_selected_trivariate_candidate_has_subresultant_root(
+            projected_incidence,
+            first_parameter,
+            second_parameter,
+            third_parameter,
+            policy,
+        )? {
+            Classification::Decided(true) => {
+                return Ok(Classification::Decided(RealSign::Zero));
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(_) => {
+                // Preserve the historical complete transverse authority when
+                // the symbolic backend exceeds a supported degree or
+                // coefficient domain. Even roots normally avoid this path
+                // because the subresultant proof decides them first.
+                if projected_selected_trivariate_candidate_has_box_root(
+                    projected_incidence,
+                    first_parameter,
+                    second_parameter,
+                    third_parameter,
+                    512,
+                )? {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+            }
+        }
     }
     let Some(radical_squared) = radical_term.multiply(radical_term) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -39842,11 +40335,34 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
     ]) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    Ok(match sign(&magnitude)? {
+    let strict = policy.strict_counterpart();
+    let strict_magnitude = trivariate_parameter_triple_sign_by_refinement(
+        &magnitude,
+        first_parameter,
+        second_parameter,
+        third_parameter,
+        &strict,
+    )?;
+    Ok(match strict_magnitude {
         Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
         Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
         Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        Classification::Uncertain(reason) => {
+            if policy.permits_approximate_512() {
+                match sign(&magnitude)? {
+                    Classification::Decided(RealSign::Positive) => {
+                        Classification::Decided(rational)
+                    }
+                    Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
+                    Classification::Decided(RealSign::Zero) => {
+                        Classification::Decided(RealSign::Zero)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            } else {
+                Classification::Uncertain(reason)
+            }
+        }
     })
 }
 
@@ -64169,20 +64685,24 @@ mod conversion_tests {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         synthetic_selected_cusp_semicircle(
             source_x_numerator,
+            vec![Real::zero()],
             third,
             (Real::one() / Real::from(2_i8)).unwrap(),
             (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
             Real::one(),
+            false,
             policy,
         )
     }
 
     fn synthetic_selected_cusp_semicircle(
         source_x_numerator: Vec<Real>,
+        source_y_numerator: Vec<Real>,
         root_square: Real,
         lower: Real,
         upper: Real,
         radial_distance: Real,
+        clockwise: bool,
         policy: &CurveContext,
     ) -> BezierAlgebraicCuspSemicircle2 {
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
@@ -64218,14 +64738,14 @@ mod conversion_tests {
                         direct_center: None,
                         parameter,
                         source_x_numerator,
-                        source_y_numerator: vec![Real::zero()],
+                        source_y_numerator,
                         normal_x_numerator: vec![Real::one()],
                         normal_y_numerator: vec![Real::zero()],
                         denominator: vec![Real::one()],
                     }),
                 }),
                 radial_distance,
-                clockwise: false,
+                clockwise,
             }),
         }
     }
@@ -66411,6 +66931,7 @@ mod conversion_tests {
                 &parameters[0],
                 &parameters[1],
                 &parameters[2],
+                8,
             )
             .unwrap()
         );
@@ -66426,6 +66947,7 @@ mod conversion_tests {
                 &parameters[0],
                 &parameters[1],
                 &unrelated,
+                8,
             )
             .unwrap()
         );
@@ -66440,6 +66962,7 @@ mod conversion_tests {
                 &parameters[0],
                 &parameters[1],
                 &parameters[2],
+                8,
             )
             .unwrap()
         );
@@ -66454,6 +66977,192 @@ mod conversion_tests {
             .unwrap(),
             Classification::Decided(RealSign::Zero)
         );
+    }
+
+    #[test]
+    fn selected_pair_subresultant_certifies_an_even_root_after_selected_degree_drop() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+        let alpha = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        let beta_parameters = algebraic_parameters(vec![
+            &third * &four_fifths,
+            Real::zero(),
+            -(&third + &four_fifths),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let beta = beta_parameters[0].clone();
+
+        // P(a,b,t)=(t-a)^2+(b^2-1/3)t^3.  The cubic coefficient
+        // vanishes only at beta's selected factor, not modulo beta's complete
+        // reducible defining polynomial. The selected fiber is therefore a
+        // tangent square even though the global tensor has neither that
+        // factorization nor the same target-axis degree.
+        let mut coefficients = vec![vec![vec![Real::zero(); 4]; 3]; 3];
+        coefficients[0][0][2] = Real::one();
+        coefficients[1][0][1] = Real::from(-2_i8);
+        coefficients[2][0][0] = Real::one();
+        coefficients[0][0][3] = -third;
+        coefficients[0][2][3] = Real::one();
+        let projected = TrivariatePolynomial2 { coefficients };
+        assert!(
+            !projected_selected_trivariate_candidate_has_box_root(
+                &projected, &alpha, &beta, &alpha, 8,
+            )
+            .unwrap()
+        );
+
+        let unrelated = algebraic_parameter(vec![
+            (Real::from(-2_i8) / Real::from(5_i8)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                projected_selected_trivariate_candidate_has_subresultant_root(
+                    &projected, &alpha, &beta, &alpha, &policy,
+                )
+                .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                projected_selected_trivariate_candidate_has_subresultant_root(
+                    &projected, &alpha, &beta, &unrelated, &policy,
+                )
+                .unwrap(),
+                Classification::Decided(false),
+            );
+        }
+    }
+
+    #[test]
+    fn pair_radial_circle_retains_an_algebraic_rational_tangency() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let two_fifths = Real::from(2_i8) * &fifth;
+        let tangent = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::one(), -half.clone()),
+                Point2::new(Real::one(), -half.clone()),
+                Point2::new(Real::one(), half.clone()),
+            ],
+            vec![Real::one(), Real::one(), Real::one()],
+        )
+        .unwrap();
+        let expected_parameter =
+            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // C1=(alpha,alpha), alpha^2=1/2, and
+            // C2=(beta,2 beta), beta^2=1/5, are independent unit-circle
+            // centers. Their lower semicircles share only the origin; their
+            // other full-circle contact C1+C2 lies on both upper halves.
+            let first = synthetic_selected_cusp_semicircle(
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero(), Real::one()],
+                half.clone(),
+                half.clone(),
+                Real::one(),
+                Real::one(),
+                true,
+                &policy,
+            );
+            let second = synthetic_selected_cusp_semicircle(
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero(), Real::from(2_i8)],
+                fifth.clone(),
+                two_fifths.clone(),
+                half.clone(),
+                Real::one(),
+                true,
+                &policy,
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts,
+                    parameter_map,
+                },
+            ) = first.pair_intersections(&second, &policy).unwrap()
+            else {
+                panic!("the independent lower semicircles must retain their origin contact");
+            };
+            let [center_contact] = contacts.as_slice() else {
+                panic!("the lower semicircles must have exactly one contact");
+            };
+            assert_eq!(
+                center_contact.first_location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(
+                center_contact.second_location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(center_contact.tangent_cross_sign, RealSign::Positive,);
+
+            let center_parameter = parameter_map.first_contact_parameter(center_contact);
+
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    &first,
+                    center_parameter,
+                    Real::one(),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the pair-native unit circle must construct");
+            };
+            assert!(circle.uses_selected_radial_frame());
+
+            // x=1, y=t^2-1/2 touches the unit circle at the simple selected
+            // target parameter t=sqrt(1/2), but its circle incidence is the
+            // even square (t^2-1/2)^2.
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                Some(parameter_map),
+            )) = circle
+                .rational_intersections_with_parameter_map(&tangent, &policy)
+                .unwrap()
+            else {
+                panic!("the pair-native algebraic tangency must complete");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the tangent must have exactly one circle contact");
+            };
+            assert_eq!(
+                contact
+                    .other_parameter
+                    .same_value(&expected_parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                contact.location,
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            );
+            assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+            assert_eq!(
+                contact.point.same_point(
+                    &RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, 0)),
+                    &policy,
+                ),
+                Classification::Decided(true),
+            );
+            let circle_parameter = parameter_map.contact_parameter(contact);
+            let Classification::Decided(Some(mapped_point)) = circle_parameter
+                .coincident_point_evidence(&circle, &policy)
+                .unwrap()
+            else {
+                panic!("the pair-radial contact map must replay its point");
+            };
+            assert_eq!(
+                mapped_point.same_point(&contact.point, &policy),
+                Classification::Decided(true),
+            );
+        }
     }
 
     #[test]
@@ -67000,18 +67709,22 @@ mod conversion_tests {
             let center_numerator = vec![Real::zero(), Real::one()];
             let first = synthetic_selected_cusp_semicircle(
                 center_numerator.clone(),
+                vec![Real::zero()],
                 (Real::one() / Real::from(3_i8)).unwrap(),
                 (Real::one() / Real::from(2_i8)).unwrap(),
                 (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
                 Real::one(),
+                false,
                 &policy,
             );
             let second = synthetic_selected_cusp_semicircle(
                 center_numerator,
+                vec![Real::zero()],
                 (Real::one() / Real::from(2_i8)).unwrap(),
                 (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
                 (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
                 Real::from(3_i8),
+                false,
                 &policy,
             );
             let disk = |upper: BezierAlgebraicCuspSemicircle2| {
