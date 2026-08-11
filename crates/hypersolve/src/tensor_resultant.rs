@@ -63,6 +63,125 @@ impl DenseTensorPolynomial {
                 .all(|(exponent, dimension)| exponent < dimension))
         .then(|| &self.coefficients[flat_index(&self.dimensions, exponents)])
     }
+
+    /// Constructs the zero polynomial with one explicit dense shape.
+    pub fn zero(dimensions: Vec<usize>) -> Option<Self> {
+        let count = checked_coefficient_count(&dimensions)?;
+        let mut coefficients = Vec::new();
+        coefficients.try_reserve_exact(count).ok()?;
+        coefficients.resize(count, Real::zero());
+        Self::try_new(dimensions, coefficients)
+    }
+
+    /// Embeds one univariate power-basis polynomial on a selected tensor axis.
+    pub fn from_axis_polynomial(rank: usize, axis: usize, coefficients: &[Real]) -> Option<Self> {
+        if rank == 0 || axis >= rank || coefficients.is_empty() {
+            return None;
+        }
+        let mut dimensions = vec![1; rank];
+        dimensions[axis] = coefficients.len();
+        let mut polynomial = Self::zero(dimensions.clone())?;
+        for (power, coefficient) in coefficients.iter().enumerate() {
+            let mut exponent = vec![0; rank];
+            exponent[axis] = power;
+            polynomial.coefficients[flat_index(&dimensions, &exponent)] = coefficient.clone();
+        }
+        Some(polynomial)
+    }
+
+    /// Adds another tensor polynomial of the same rank.
+    pub fn add(&self, other: &Self) -> Option<Self> {
+        self.combine(other, false)
+    }
+
+    /// Subtracts another tensor polynomial of the same rank.
+    pub fn subtract(&self, other: &Self) -> Option<Self> {
+        self.combine(other, true)
+    }
+
+    /// Scales every coefficient by one exact scalar.
+    pub fn scale(&self, scale: &Real) -> Option<Self> {
+        let mut coefficients = Vec::new();
+        coefficients
+            .try_reserve_exact(self.coefficients.len())
+            .ok()?;
+        coefficients.extend(
+            self.coefficients
+                .iter()
+                .map(|coefficient| coefficient * scale),
+        );
+        Self::try_new(self.dimensions.clone(), coefficients)
+    }
+
+    /// Multiplies two tensors by exact multidimensional convolution.
+    pub fn multiply(&self, other: &Self) -> Option<Self> {
+        if self.dimensions.len() != other.dimensions.len() {
+            return None;
+        }
+        let dimensions = self
+            .dimensions
+            .iter()
+            .zip(&other.dimensions)
+            .map(|(left, right)| left.checked_add(*right)?.checked_sub(1))
+            .collect::<Option<Vec<_>>>()?;
+        let mut result = Self::zero(dimensions.clone())?;
+        for (left_index, left) in self.coefficients.iter().enumerate() {
+            let left_exponents = exponents(&self.dimensions, left_index);
+            for (right_index, right) in other.coefficients.iter().enumerate() {
+                let right_exponents = exponents(&other.dimensions, right_index);
+                let product_exponents = left_exponents
+                    .iter()
+                    .zip(right_exponents)
+                    .map(|(left, right)| left + right)
+                    .collect::<Vec<_>>();
+                result.coefficients[flat_index(&dimensions, &product_exponents)] += left * right;
+            }
+        }
+        Some(result)
+    }
+
+    /// Multiplies by one power of a selected tensor variable.
+    pub fn shift_axis(&self, axis: usize, power: usize) -> Option<Self> {
+        if axis >= self.dimensions.len() {
+            return None;
+        }
+        if power == 0 {
+            return Some(self.clone());
+        }
+        let mut dimensions = self.dimensions.clone();
+        dimensions[axis] = dimensions[axis].checked_add(power)?;
+        let mut result = Self::zero(dimensions.clone())?;
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            let mut target = exponents(&self.dimensions, index);
+            target[axis] += power;
+            result.coefficients[flat_index(&dimensions, &target)] = coefficient.clone();
+        }
+        Some(result)
+    }
+
+    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
+        if self.dimensions.len() != other.dimensions.len() {
+            return None;
+        }
+        let dimensions = self
+            .dimensions
+            .iter()
+            .zip(&other.dimensions)
+            .map(|(left, right)| (*left).max(*right))
+            .collect::<Vec<_>>();
+        let mut result = Self::zero(dimensions.clone())?;
+        for (source, subtract_source) in [(self, false), (other, subtract)] {
+            for (index, coefficient) in source.coefficients.iter().enumerate() {
+                let target = flat_index(&dimensions, &exponents(&source.dimensions, index));
+                if subtract_source {
+                    result.coefficients[target] -= coefficient;
+                } else {
+                    result.coefficients[target] += coefficient;
+                }
+            }
+        }
+        Some(result)
+    }
 }
 
 /// Status for one exact constrained tensor-axis resultant.
@@ -642,5 +761,18 @@ mod tests {
             .status,
             TensorConstraintResultantStatus::InvalidAxis
         );
+    }
+
+    #[test]
+    fn dense_tensor_arithmetic_preserves_rank_and_power_axes() {
+        let first = DenseTensorPolynomial::from_axis_polynomial(5, 1, &[real(2), real(3)]).unwrap();
+        let second =
+            DenseTensorPolynomial::from_axis_polynomial(5, 3, &[real(-1), Real::one()]).unwrap();
+        let product = first.multiply(&second).unwrap().shift_axis(4, 2).unwrap();
+        assert_eq!(product.dimensions(), &[1, 2, 1, 2, 3]);
+        assert_eq!(product.coefficient(&[0, 0, 0, 0, 2]), Some(&real(-2)));
+        assert_eq!(product.coefficient(&[0, 1, 0, 1, 2]), Some(&real(3)));
+        let replay = product.add(&product.scale(&real(-1)).unwrap()).unwrap();
+        assert!(replay.coefficients().iter().all(Real::definitely_zero));
     }
 }
