@@ -195,6 +195,81 @@ impl DenseTensorPolynomial {
         Some(result)
     }
 
+    /// Substitutes `removed = scale * retained + offset` and removes that
+    /// affine-related tensor axis.
+    ///
+    /// This is the general exact counterpart of diagonal substitution. It is
+    /// used only after an external algebraic-root certificate has proved the
+    /// affine relation; the tensor operation itself performs the complete
+    /// binomial expansion without sampling or coefficient approximation.
+    pub fn substitute_affine_axis(
+        &self,
+        retained_axis: usize,
+        removed_axis: usize,
+        scale: &Real,
+        offset: &Real,
+    ) -> Option<Self> {
+        if retained_axis >= self.dimensions.len()
+            || removed_axis >= self.dimensions.len()
+            || retained_axis == removed_axis
+        {
+            return None;
+        }
+        let merged_dimension = self.dimensions[retained_axis]
+            .checked_add(self.dimensions[removed_axis])?
+            .checked_sub(1)?;
+        let target_axis = if removed_axis < retained_axis {
+            retained_axis - 1
+        } else {
+            retained_axis
+        };
+        let mut dimensions = self.dimensions.clone();
+        let removed_dimension = dimensions.remove(removed_axis);
+        dimensions[target_axis] = merged_dimension;
+        let mut result = Self::zero(dimensions.clone())?;
+
+        let mut scale_powers = Vec::new();
+        let mut offset_powers = Vec::new();
+        scale_powers.try_reserve_exact(removed_dimension).ok()?;
+        offset_powers.try_reserve_exact(removed_dimension).ok()?;
+        scale_powers.push(Real::one());
+        offset_powers.push(Real::one());
+        for power in 1..removed_dimension {
+            scale_powers.push(&scale_powers[power - 1] * scale);
+            offset_powers.push(&offset_powers[power - 1] * offset);
+        }
+        let mut binomial_rows = Vec::new();
+        binomial_rows.try_reserve_exact(removed_dimension).ok()?;
+        binomial_rows.push(vec![Real::one()]);
+        for power in 1..removed_dimension {
+            let previous = &binomial_rows[power - 1];
+            let mut row = Vec::new();
+            row.try_reserve_exact(power + 1).ok()?;
+            row.push(Real::one());
+            for index in 1..power {
+                row.push(&previous[index - 1] + &previous[index]);
+            }
+            row.push(Real::one());
+            binomial_rows.push(row);
+        }
+
+        for (index, coefficient) in self.coefficients.iter().enumerate() {
+            let source = exponents(&self.dimensions, index);
+            let removed_power = source[removed_axis];
+            for retained_power in 0..=removed_power {
+                let mut target = source.clone();
+                let merged_power = target[retained_axis].checked_add(retained_power)?;
+                target.remove(removed_axis);
+                target[target_axis] = merged_power;
+                result.coefficients[flat_index(&dimensions, &target)] += coefficient
+                    * &binomial_rows[removed_power][retained_power]
+                    * &scale_powers[retained_power]
+                    * &offset_powers[removed_power - retained_power];
+            }
+        }
+        Some(result)
+    }
+
     /// Replaces every selected-axis fiber by its exact polynomial remainder.
     ///
     /// At any root of `modulus`, the returned tensor has exactly the same
@@ -922,5 +997,25 @@ mod tests {
             .unwrap();
         assert_eq!(reverse.dimensions(), &[3, 1]);
         assert_eq!(reverse.coefficient(&[2, 0]), Some(&Real::one()));
+    }
+
+    #[test]
+    fn dense_tensor_affine_axis_substitution_expands_exactly() {
+        let first = DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+            .unwrap();
+        let second =
+            DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+                .unwrap();
+        let affine = first
+            .add(&second)
+            .unwrap()
+            .add(&first.multiply(&second).unwrap())
+            .unwrap()
+            .substitute_affine_axis(0, 1, &real(2), &real(3))
+            .unwrap();
+        assert_eq!(affine.dimensions(), &[3, 1]);
+        assert_eq!(affine.coefficient(&[0, 0]), Some(&real(3)));
+        assert_eq!(affine.coefficient(&[1, 0]), Some(&real(6)));
+        assert_eq!(affine.coefficient(&[2, 0]), Some(&real(2)));
     }
 }

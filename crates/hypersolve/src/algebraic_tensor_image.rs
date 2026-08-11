@@ -14,8 +14,9 @@ use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 
 use crate::algebraic::{
-    AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
-    AlgebraicRootValidationStatus, validate_algebraic_root_representation,
+    AlgebraicRootAffineRelation, AlgebraicRootKind, AlgebraicRootRepresentation,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, algebraic_root_affine_relation,
+    validate_algebraic_root_representation,
 };
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig,
@@ -104,18 +105,38 @@ pub fn represent_algebraic_tensor_image(
     let mut relation = relation.clone();
     let mut source_index = 0;
     while source_index < source_roots.len() {
-        let duplicate = source_roots[..source_index]
-            .iter()
-            .position(|source| source == &source_roots[source_index]);
-        if let Some(retained_index) = duplicate {
-            let Some(diagonal) = relation.substitute_equal_axes(retained_index, source_index)
-            else {
+        let affine =
+            source_roots[..source_index]
+                .iter()
+                .enumerate()
+                .find_map(|(retained_index, source)| {
+                    let affine = if source == &source_roots[source_index] {
+                        Some(AlgebraicRootAffineRelation {
+                            scale: Real::one(),
+                            offset: Real::zero(),
+                        })
+                    } else {
+                        algebraic_root_affine_relation(
+                            source,
+                            &source_roots[source_index],
+                            PredicatePolicy::STRICT,
+                        )
+                    }?;
+                    Some((retained_index, affine))
+                });
+        if let Some((retained_index, affine)) = affine {
+            let Some(diagonal) = relation.substitute_affine_axis(
+                retained_index,
+                source_index,
+                &affine.scale,
+                &affine.offset,
+            ) else {
                 return report(
                     AlgebraicTensorImageStatus::InvalidRelationShape,
                     0,
                     None,
                     None,
-                    "duplicate tensor-image source axes could not be identified exactly",
+                    "affine-related tensor-image source axes could not be collapsed exactly",
                 );
             };
             relation = diagonal;
@@ -345,8 +366,8 @@ mod tests {
     use hyperreal::Real;
 
     use crate::algebraic::{
-        AlgebraicRootKind, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-        represented_root_sign,
+        AlgebraicRootAffineTransformStatus, AlgebraicRootKind, AlgebraicRootValidationReport,
+        AlgebraicRootValidationStatus, represented_root_sign, transform_algebraic_root_affine,
     };
     use crate::symbolic::SymbolId;
 
@@ -468,6 +489,33 @@ mod tests {
         assert_eq!(
             report.representation.unwrap().polynomial_coefficients,
             vec![real(-8), Real::zero(), Real::one()]
+        );
+    }
+
+    #[test]
+    fn tensor_image_collapses_certified_affine_selected_source_axes() {
+        let source = square_root(2);
+        let shifted =
+            transform_algebraic_root_affine(&source, Real::one(), real(3), PredicatePolicy::STRICT);
+        assert_eq!(
+            shifted.status,
+            AlgebraicRootAffineTransformStatus::Transformed
+        );
+        let report = represent_algebraic_tensor_image(
+            &sum_relation(2, Real::zero()),
+            &[source, shifted.representation.unwrap()],
+            &IsolatedRootInterval {
+                lower: real(5),
+                upper: real(6),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+        );
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        assert_eq!(report.elimination_count, 2);
+        assert_eq!(
+            report.representation.unwrap().polynomial_coefficients,
+            vec![Real::one(), real(-6), Real::one()]
         );
     }
 
