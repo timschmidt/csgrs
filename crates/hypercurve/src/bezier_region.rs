@@ -2228,6 +2228,80 @@ fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> Exa
     ExactCurveError::invalid(operation, CurveFamily2::Line, cause)
 }
 
+fn retained_fragment_reverses_parameter(fragment: &BezierSplitFragment2) -> bool {
+    match fragment {
+        BezierSplitFragment2::AnalyticParallel(fragment) => fragment.is_reversed(),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
+        BezierSplitFragment2::SelectedFiber(fragment) => fragment.is_reversed(),
+        BezierSplitFragment2::Materialized { .. }
+        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::AlgebraicChord(_)
+        | BezierSplitFragment2::Unresolved { .. } => false,
+    }
+}
+
+/// Proves that two cuts on one closed retained carrier bound a nonempty source
+/// interval complementary to the edited seam neighborhood. The comparison is
+/// made in the carrier's native parameter field and then reversed only when
+/// traversal opposes that parameterization.
+fn retained_single_fragment_corner_cuts_are_separated(
+    fragment: &BezierSplitFragment2,
+    previous_cut: &CornerTrimCut2,
+    next_cut: &CornerTrimCut2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let ordering = match next_cut
+        .parameter
+        .cmp_by_refinement(&previous_cut.parameter, policy)
+        .map_err(|cause| curve_region_edit_error(operation, cause))?
+    {
+        Classification::Decided(ordering) => ordering,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                reason,
+            ));
+        }
+    };
+    Ok(if retained_fragment_reverses_parameter(fragment) {
+        ordering == std::cmp::Ordering::Greater
+    } else {
+        ordering == std::cmp::Ordering::Less
+    })
+}
+
+fn compact_optional_corner_solutions<T>(
+    solutions: CurveCornerSolutions2<Option<T>>,
+) -> CurveCornerSolutions2<T> {
+    let mut candidates = match solutions {
+        CurveCornerSolutions2::NoSolution(reason) => {
+            return CurveCornerSolutions2::NoSolution(reason);
+        }
+        CurveCornerSolutions2::Unique(Some(candidate)) => {
+            return CurveCornerSolutions2::Unique(candidate);
+        }
+        CurveCornerSolutions2::Unique(None) => {
+            return CurveCornerSolutions2::NoSolution(
+                crate::CurveCornerNoSolution2::OutsideTrimDomain,
+            );
+        }
+        CurveCornerSolutions2::Multiple(candidates) => {
+            candidates.into_iter().flatten().collect::<Vec<_>>()
+        }
+    };
+    match candidates.len() {
+        0 => CurveCornerSolutions2::NoSolution(crate::CurveCornerNoSolution2::OutsideTrimDomain),
+        1 => CurveCornerSolutions2::Unique(
+            candidates
+                .pop()
+                .expect("one retained corner candidate remains"),
+        ),
+        _ => CurveCornerSolutions2::Multiple(candidates),
+    }
+}
+
 fn retained_corner_fragment_trim(
     fragment: &BezierSplitFragment2,
     parameter: CurveRegionParameter2,
@@ -2487,21 +2561,138 @@ fn retained_corner_fragment_trim(
     else {
         return Ok(selected);
     };
-    Ok(
-        match curve.retained_quadratic_representative(&CurveContext::STRICT) {
-            Ok(Classification::Decided(Some(curve))) => BezierSplitFragment2::Materialized {
+    Ok(canonicalize_retained_corner_materialization(
+        BezierSplitFragment2::Materialized {
+            start,
+            end,
+            curve: BezierSubcurve2::Rational(curve),
+        },
+    ))
+}
+
+fn canonicalize_retained_corner_materialization(
+    fragment: BezierSplitFragment2,
+) -> BezierSplitFragment2 {
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Rational(curve),
+    } = fragment
+    else {
+        return fragment;
+    };
+    match curve.retained_quadratic_representative(&CurveContext::STRICT) {
+        Ok(Classification::Decided(Some(curve))) => BezierSplitFragment2::Materialized {
+            start,
+            end,
+            curve: BezierSubcurve2::RationalQuadratic(curve),
+        },
+        Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
+            BezierSplitFragment2::Materialized {
                 start,
                 end,
-                curve: BezierSubcurve2::RationalQuadratic(curve),
-            },
-            Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
-                BezierSplitFragment2::Materialized {
-                    start,
-                    end,
-                    curve: BezierSubcurve2::Rational(curve),
-                }
+                curve: BezierSubcurve2::Rational(curve),
             }
-        },
+        }
+    }
+}
+
+/// Retains the single source interval between two cuts on one closed carrier.
+/// The next cut is the interval's traversal start and the previous cut is its
+/// traversal end. Retained analytic carriers preserve their global parameter
+/// authority; native curves split both boundaries in one operation so the
+/// second cut is never mistaken for a parameter of an already-reparameterized
+/// subcurve.
+fn retained_corner_fragment_between_cuts(
+    fragment: &BezierSplitFragment2,
+    previous_cut: &CornerTrimCut2,
+    next_cut: &CornerTrimCut2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<BezierSplitFragment2> {
+    if let BezierSplitFragment2::Materialized { curve, .. } = fragment {
+        let replacement = match (
+            previous_cut.replacement_rational_curve.as_ref(),
+            next_cut.replacement_rational_curve.as_ref(),
+        ) {
+            (Some(previous), Some(next)) if previous != next => {
+                return Err(curve_region_edit_error(
+                    operation,
+                    CurveError::Topology(
+                        "one retained corner interval had incompatible canonical sources".into(),
+                    ),
+                ));
+            }
+            (Some(curve), _) | (_, Some(curve)) => Some(BezierSubcurve2::Rational(curve.clone())),
+            (None, None) => None,
+        };
+        let curve = replacement.as_ref().unwrap_or(curve);
+        let previous_parameter = previous_cut
+            .parameter
+            .as_bezier_parameter()
+            .cloned()
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    operation,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+        let next_parameter = next_cut
+            .parameter
+            .as_bezier_parameter()
+            .cloned()
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    operation,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+        let split = match curve
+            .split_at_parameters_refined(&[next_parameter, previous_parameter], policy)
+            .map_err(|cause| curve_region_edit_error(operation, cause))?
+        {
+            Classification::Decided(split) => split,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    CurveFamily2::RationalBezier,
+                    reason,
+                ));
+            }
+        };
+        if split.fragments().len() != 3 {
+            return Err(curve_region_edit_error(
+                operation,
+                CurveError::Topology(
+                    "two separated retained corner cuts did not produce three source intervals"
+                        .into(),
+                ),
+            ));
+        }
+        return Ok(canonicalize_retained_corner_materialization(
+            split.fragments()[1].clone(),
+        ));
+    }
+
+    let after_next = retained_corner_fragment_trim(
+        fragment,
+        next_cut.parameter.clone(),
+        &next_cut.point,
+        next_cut.replacement_rational_curve.as_ref(),
+        false,
+        operation,
+        policy,
+    )?;
+    retained_corner_fragment_trim(
+        &after_next,
+        previous_cut.parameter.clone(),
+        &previous_cut.point,
+        previous_cut.replacement_rational_curve.as_ref(),
+        true,
+        operation,
+        policy,
     )
 }
 
@@ -8667,12 +8858,6 @@ impl CurveRegion2 {
                 CurveError::InvalidCurveRange,
             ));
         }
-        // A one-fragment closed carrier needs two cuts on the same source
-        // interval. Keep that distinct case out of this two-incident-fragment
-        // fast path until it has a dedicated interval-selection proof.
-        if fragment_count < 2 {
-            return Ok(None);
-        }
         let previous_index = if vertex_index == 0 {
             fragment_count - 1
         } else {
@@ -8817,7 +9002,7 @@ impl CurveRegion2 {
             next_family,
             policy,
         )?;
-        try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |solution| {
             let (previous_cut, next_cut) =
                 solution.into_retained_cut_evidence().ok_or_else(|| {
                     ExactCurveError::blocked(
@@ -8826,9 +9011,21 @@ impl CurveRegion2 {
                         UncertaintyReason::Unsupported,
                     )
                 })?;
+            if fragment_count == 1
+                && !retained_single_fragment_corner_cuts_are_separated(
+                    previous_fragment,
+                    &previous_cut,
+                    &next_cut,
+                    CurveOperation2::Chamfer,
+                    policy,
+                )?
+            {
+                return Ok(None);
+            }
             self.rebuild_retained_chamfer(loop_index, vertex_index, previous_cut, next_cut, policy)
-        })
-        .map(Some)
+                .map(Some)
+        })?;
+        Ok(Some(compact_optional_corner_solutions(solutions)))
     }
 
     fn rebuild_retained_chamfer(
@@ -8899,8 +9096,22 @@ impl CurveRegion2 {
             vertex_index - 1
         };
         let next_index = vertex_index;
-        let previous_trim = if previous_cut.trim {
-            retained_corner_fragment_trim(
+        let same_fragment = previous_index == next_index;
+        let middle_trim = if same_fragment && previous_cut.trim && next_cut.trim {
+            Some(retained_corner_fragment_between_cuts(
+                &boundary_loop.fragments()[previous_index],
+                &previous_cut,
+                &next_cut,
+                operation,
+                policy,
+            )?)
+        } else {
+            None
+        };
+        let previous_trim = if same_fragment && (middle_trim.is_some() || !previous_cut.trim) {
+            None
+        } else if previous_cut.trim {
+            Some(retained_corner_fragment_trim(
                 &boundary_loop.fragments()[previous_index],
                 previous_cut.parameter,
                 &previous_cut.point,
@@ -8908,12 +9119,14 @@ impl CurveRegion2 {
                 true,
                 operation,
                 policy,
-            )?
+            )?)
         } else {
-            boundary_loop.fragments()[previous_index].clone()
+            Some(boundary_loop.fragments()[previous_index].clone())
         };
-        let next_trim = if next_cut.trim {
-            retained_corner_fragment_trim(
+        let next_trim = if same_fragment && (middle_trim.is_some() || !next_cut.trim) {
+            None
+        } else if next_cut.trim {
+            Some(retained_corner_fragment_trim(
                 &boundary_loop.fragments()[next_index],
                 next_cut.parameter,
                 &next_cut.point,
@@ -8921,26 +9134,38 @@ impl CurveRegion2 {
                 false,
                 operation,
                 policy,
-            )?
+            )?)
         } else {
-            boundary_loop.fragments()[next_index].clone()
+            Some(boundary_loop.fragments()[next_index].clone())
         };
 
         let mut fragments = Vec::with_capacity(fragment_count + inserted.len());
-        if vertex_index == 0 {
+        if same_fragment {
             fragments.extend(inserted);
-            fragments.push(next_trim);
+            if let Some(middle_trim) = middle_trim {
+                fragments.push(middle_trim);
+            } else {
+                if let Some(next_trim) = next_trim {
+                    fragments.push(next_trim);
+                }
+                if let Some(previous_trim) = previous_trim {
+                    fragments.push(previous_trim);
+                }
+            }
+        } else if vertex_index == 0 {
+            fragments.extend(inserted);
+            fragments.push(next_trim.expect("a distinct next fragment is retained"));
             fragments.extend(
                 boundary_loop.fragments()[next_index + 1..previous_index]
                     .iter()
                     .cloned(),
             );
-            fragments.push(previous_trim);
+            fragments.push(previous_trim.expect("a distinct previous fragment is retained"));
         } else {
             fragments.extend(boundary_loop.fragments()[..previous_index].iter().cloned());
-            fragments.push(previous_trim);
+            fragments.push(previous_trim.expect("a distinct previous fragment is retained"));
             fragments.extend(inserted);
-            fragments.push(next_trim);
+            fragments.push(next_trim.expect("a distinct next fragment is retained"));
             fragments.extend(boundary_loop.fragments()[next_index + 1..].iter().cloned());
         }
         // The corner solver owns the two trim/contact equalities, while the
@@ -9074,9 +9299,6 @@ impl CurveRegion2 {
                 CurveOperation2::Fillet,
                 CurveError::InvalidCurveRange,
             ));
-        }
-        if fragment_count < 2 {
-            return Ok(None);
         }
         let previous_index = if vertex_index == 0 {
             fragment_count - 1
@@ -9240,7 +9462,7 @@ impl CurveRegion2 {
             next_family,
             policy,
         )?;
-        try_map_corner_solutions(solutions, |solution| {
+        let solutions = try_map_corner_solutions(solutions, |solution| {
             let (mut previous_cut, mut next_cut, center, clockwise, retained_frame) =
                 solution.into_retained_cut_evidence().ok_or_else(|| {
                     ExactCurveError::blocked(
@@ -9259,6 +9481,17 @@ impl CurveRegion2 {
                 &mut next_cut,
                 policy,
             )?;
+            if fragment_count == 1
+                && !retained_single_fragment_corner_cuts_are_separated(
+                    previous_fragment,
+                    &previous_cut,
+                    &next_cut,
+                    CurveOperation2::Fillet,
+                    policy,
+                )?
+            {
+                return Ok(None);
+            }
             let inserted = Self::retained_fillet_fragments(
                 previous_fragment,
                 next_fragment,
@@ -9282,8 +9515,9 @@ impl CurveRegion2 {
                 CurveOperation2::Fillet,
                 policy,
             )
-        })
-        .map(Some)
+            .map(Some)
+        })?;
+        Ok(Some(compact_optional_corner_solutions(solutions)))
     }
 
     fn retained_fillet_sweep(
@@ -17063,6 +17297,255 @@ mod tests {
 
     fn p(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn one_fragment_selected_corner_region(reversed: bool, policy: &CurveContext) -> CurveRegion2 {
+        let seam = p(0, 0);
+        let source = RationalBezier2::try_new(
+            vec![seam.clone(), p(4, 0), p(0, 4), seam.clone()],
+            vec![Real::one(); 4],
+        )
+        .expect("the closed cubic selected source is finite");
+        let range = CurveRegionParameterRange2::new_validated(
+            CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+            CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+        );
+        let mut fragment = BezierSplitFragment2::SelectedFiber(
+            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                BezierSelectedFiberSource2::Rational(source),
+                range,
+                RationalBezierIntersectionPointEvidence2::Exact(seam.clone()),
+                RationalBezierIntersectionPointEvidence2::Exact(seam),
+            ),
+        );
+        if reversed {
+            fragment = fragment
+                .reversed()
+                .expect("the selected closed cubic reverses exactly");
+        }
+        let boundary = CurveRegionBoundaryLoop2::new(vec![fragment], policy)
+            .expect("the selected one-fragment loop closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![if reversed {
+                CurveBoundaryInteriorSide2::Right
+            } else {
+                CurveBoundaryInteriorSide2::Left
+            }],
+        )
+        .expect("the selected one-fragment loop has authored topology")
+    }
+
+    fn one_fragment_materialized_corner_region(
+        reversed: bool,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
+        let seam = p(0, 0);
+        let mut fragment = BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Cubic(CubicBezier2::new(seam.clone(), p(4, 0), p(0, 4), seam)),
+        };
+        if reversed {
+            fragment = fragment
+                .reversed()
+                .expect("the materialized closed cubic reverses exactly");
+        }
+        let boundary = CurveRegionBoundaryLoop2::new(vec![fragment], policy)
+            .expect("the materialized one-fragment loop closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![if reversed {
+                CurveBoundaryInteriorSide2::Right
+            } else {
+                CurveBoundaryInteriorSide2::Left
+            }],
+        )
+        .expect("the materialized one-fragment loop has authored topology")
+    }
+
+    fn for_each_corner_region(
+        solutions: &CurveCornerSolutions2<CurveRegion2>,
+        mut visit: impl FnMut(&CurveRegion2),
+    ) {
+        match solutions {
+            CurveCornerSolutions2::NoSolution(reason) => {
+                panic!("an exact corner edit unexpectedly had no solution: {reason:?}")
+            }
+            CurveCornerSolutions2::Unique(region) => visit(region),
+            CurveCornerSolutions2::Multiple(regions) => {
+                for region in regions {
+                    visit(region);
+                }
+            }
+        }
+    }
+
+    fn assert_one_fragment_edit_shape(
+        solutions: &CurveCornerSolutions2<CurveRegion2>,
+        selected_fragment_count: usize,
+        minimum_inserted_fragment_count: usize,
+    ) {
+        for_each_corner_region(solutions, |region| {
+            assert_eq!(region.boundary_loops().len(), 1);
+            let fragments = region.boundary_loops()[0].fragments();
+            assert_eq!(
+                fragments
+                    .iter()
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)))
+                    .count(),
+                selected_fragment_count,
+            );
+            assert!(
+                fragments.len() >= selected_fragment_count + minimum_inserted_fragment_count,
+                "the edit must retain its seam-side trims and inserted carrier: {fragments:?}"
+            );
+        });
+    }
+
+    #[test]
+    fn one_fragment_selected_loop_chamfers_from_one_interval() {
+        let setback = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = one_fragment_selected_corner_region(reversed, &policy);
+                let result = region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        0,
+                        setback.clone(),
+                        setback.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the one-fragment selected loop must chamfer: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(
+                    result.value.candidate_count() > 0,
+                    "the authored seam has an admissible chamfer: policy={policy:?}, reversed={reversed}, result={:?}",
+                    result.value
+                );
+                assert_one_fragment_edit_shape(&result.value, 1, 1);
+            }
+        }
+    }
+
+    #[test]
+    fn one_fragment_materialized_loop_chamfers_to_one_middle_interval() {
+        let setback = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = one_fragment_materialized_corner_region(reversed, &policy);
+                let result = region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        0,
+                        setback.clone(),
+                        setback.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the materialized one-fragment loop must chamfer: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                for_each_corner_region(&result.value, |edited| {
+                    assert_eq!(
+                        edited.boundary_loops()[0].fragments().len(),
+                        2,
+                        "two nonzero cuts must retain one middle source interval and one chamfer"
+                    );
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source() {
+        let setback = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                for (previous_setback, next_setback) in [
+                    (Real::zero(), setback.clone()),
+                    (setback.clone(), Real::zero()),
+                ] {
+                    let region = one_fragment_selected_corner_region(reversed, &policy);
+                    let result = region
+                        .chamfer_loop_vertex_by_setbacks(
+                            0,
+                            0,
+                            previous_setback,
+                            next_setback,
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the one-sided selected seam must chamfer: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_one_fragment_edit_shape(&result.value, 1, 1);
+                    for_each_corner_region(&result.value, |edited| {
+                        assert_eq!(
+                            edited.boundary_loops()[0].fragments().len(),
+                            2,
+                            "a one-sided chamfer must not retain a second copy of its only source fragment"
+                        );
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn one_fragment_selected_loop_fillets_from_one_interval() {
+        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = one_fragment_selected_corner_region(reversed, &policy);
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        0,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the one-fragment selected loop must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(
+                    result.value.candidate_count() > 0,
+                    "the authored seam has an admissible fillet: policy={policy:?}, reversed={reversed}, result={:?}",
+                    result.value
+                );
+                assert_one_fragment_edit_shape(&result.value, 1, 1);
+                for_each_corner_region(&result.value, |edited| {
+                    assert!(
+                        edited.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .any(|fragment| {
+                                matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                            })
+                    );
+                });
+            }
+        }
     }
 
     fn parallel_pair_fillet_region(

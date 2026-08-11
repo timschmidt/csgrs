@@ -5719,21 +5719,24 @@ fn fillet_offset_centers(
                 support: next,
             },
         ) => {
-            let intersections =
-                match previous
-                    .parallel_intersections(next, policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-                    })? {
-                    Classification::Decided(intersections) => intersections,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            previous_family,
-                            reason,
-                        ));
-                    }
-                };
+            let identical_supports = previous == next;
+            let intersections = match (if identical_supports {
+                previous.self_intersections(policy)
+            } else {
+                previous.parallel_intersections(next, policy)
+            })
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+            })? {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    ));
+                }
+            };
             if !intersections.is_complete() {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -5794,17 +5797,6 @@ fn fillet_offset_centers(
             let reverse_tangent_relation =
                 previous_support_reverses_source != next_support_reverses_source;
             for contact in intersections.contacts() {
-                if !previous_source.parameter_is_in_open_range(
-                    contact.first_parameter(),
-                    previous_family,
-                    policy,
-                )? || !next_source.parameter_is_in_open_range(
-                    contact.second_parameter(),
-                    next_family,
-                    policy,
-                )? {
-                    continue;
-                }
                 let point = analytic_parallel_point_evidence(
                     previous,
                     contact.first_parameter(),
@@ -5812,33 +5804,57 @@ fn fillet_offset_centers(
                     previous_family,
                     policy,
                 )?;
-                centers.push(FilletCenterWitness2 {
-                    point,
-                    previous_parameter: Some(CurveRegionParameter2::from_bezier(
-                        contact.first_parameter().clone(),
-                    )),
-                    next_parameter: Some(CurveRegionParameter2::from_bezier(
-                        contact.second_parameter().clone(),
-                    )),
-                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-                        cross: contact.tangent_cross_sign().map(|sign| {
-                            if reverse_tangent_relation {
-                                reverse_fillet_sign(sign)
-                            } else {
-                                sign
-                            }
+                // Self-contact publication is unordered. Both parameter-role
+                // assignments are mathematically distinct at a closed seam;
+                // the retained interval authority subsequently keeps only the
+                // assignment whose cuts bound disjoint seam-side intervals.
+                for swapped in 0..=usize::from(identical_supports) {
+                    let swapped = swapped != 0;
+                    let (previous_parameter, next_parameter) = if swapped {
+                        (contact.second_parameter(), contact.first_parameter())
+                    } else {
+                        (contact.first_parameter(), contact.second_parameter())
+                    };
+                    if !previous_source.parameter_is_in_open_range(
+                        previous_parameter,
+                        previous_family,
+                        policy,
+                    )? || !next_source.parameter_is_in_open_range(
+                        next_parameter,
+                        next_family,
+                        policy,
+                    )? {
+                        continue;
+                    }
+                    let orient = |sign| {
+                        if swapped != reverse_tangent_relation {
+                            reverse_fillet_sign(sign)
+                        } else {
+                            sign
+                        }
+                    };
+                    centers.push(FilletCenterWitness2 {
+                        point: point.clone(),
+                        previous_parameter: Some(CurveRegionParameter2::from_bezier(
+                            previous_parameter.clone(),
+                        )),
+                        next_parameter: Some(CurveRegionParameter2::from_bezier(
+                            next_parameter.clone(),
+                        )),
+                        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                            cross: contact.tangent_cross_sign().map(orient),
+                            dot: contact.tangent_dot_sign().map(|sign| {
+                                if reverse_tangent_relation {
+                                    reverse_fillet_sign(sign)
+                                } else {
+                                    sign
+                                }
+                            }),
+                            source_direction: None,
+                            canonical_anchor_curve: None,
                         }),
-                        dot: contact.tangent_dot_sign().map(|sign| {
-                            if reverse_tangent_relation {
-                                reverse_fillet_sign(sign)
-                            } else {
-                                sign
-                            }
-                        }),
-                        source_direction: None,
-                        canonical_anchor_curve: None,
-                    }),
-                });
+                    });
+                }
             }
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Parallel { .. })
