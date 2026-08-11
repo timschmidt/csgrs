@@ -2525,7 +2525,13 @@ fn apply_refined_interval(
     root.is_valid()
 }
 
-fn represented_root_sign(
+/// Certifies the sign of one represented algebraic root from its exact
+/// witness, isolating interval, and defining polynomial.
+///
+/// A unit isolator touching zero is resolved from the constant coefficient,
+/// so callers do not need arbitrary refinement merely to prove a strict sign
+/// or the selected zero root.
+pub fn represented_root_sign(
     root: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> Option<Ordering> {

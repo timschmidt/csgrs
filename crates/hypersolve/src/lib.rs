@@ -13,6 +13,7 @@ pub mod algebraic_fiber;
 pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
 pub mod algebraic_rational_image;
+pub mod algebraic_sqrt;
 pub mod alpha;
 pub mod analysis;
 pub mod bareiss;
@@ -89,8 +90,9 @@ pub use algebraic::{
     compare_algebraic_root_representations_by_difference,
     compare_algebraic_root_representations_with_refinement, evaluate_polynomial_at_algebraic_root,
     evaluate_rational_expression_at_algebraic_root, represent_univariate_algebraic_roots,
-    represent_univariate_algebraic_roots_from_reports, transform_algebraic_root_affine,
-    translated_algebraic_root_difference, validate_algebraic_root_representation,
+    represent_univariate_algebraic_roots_from_reports, represented_root_sign,
+    transform_algebraic_root_affine, translated_algebraic_root_difference,
+    validate_algebraic_root_representation,
 };
 pub use algebraic_binary::{
     AlgebraicRootBinaryTransformReport, AlgebraicRootBinaryTransformStatus,
@@ -122,6 +124,10 @@ pub use algebraic_rational_image::{
     AlgebraicRootRationalImageReport, AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
     transform_algebraic_root_rational_image, transform_algebraic_root_rational_image_in_interval,
     transform_algebraic_root_rational_images,
+};
+pub use algebraic_sqrt::{
+    AlgebraicRootSquareRootReport, AlgebraicRootSquareRootStatus,
+    square_root_algebraic_root_representation,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
