@@ -41,7 +41,8 @@ finite interleaved vertex data and projection matrices.
 | Type | Purpose |
 | --- | --- |
 | `ExactMesh` | Colored line or triangle vertices whose positions remain exact. |
-| `CertifiedCurveLineMesh` | Hypercurve chord mesh with retained exact source-error evidence. |
+| `CertifiedCurveLineMesh` | Hypercurve curve/path chord mesh with retained exact source-error evidence. |
+| `CertifiedCurveRegionLineMesh` | Role-colored region boundaries with per-loop topology and chord evidence. |
 | `ExactVertex` | One `Point3` position and one finite linear-RGB `Color3`. |
 | `TriangleOrientation` | Exact/certified classification of a point against an oriented triangle. |
 | `ExactCamera` | Orbit-camera state stored as exact values until projection. |
@@ -122,6 +123,7 @@ by the crate test suite.
 | Inspect or edit a mesh | `primitive`, `vertices`, `vertices_mut`, `push`, `vertex_count`, `triangle_count` |
 | Build scene helpers | `axes_mesh`, `grid_mesh`, `polygon_surface_mesh`, `triangle_mesh` |
 | Adapt exact curves | `curve_line_mesh`, `curve_path_line_mesh` → `CertifiedCurveLineMesh` |
+| Adapt exact regions | `curve_region_line_mesh` → `CertifiedCurveRegionLineMesh` |
 | Select draw topology | `Primitive::Lines`, `Primitive::Triangles` |
 | Construct colors | `Color3::new`, `Color3::{RED, GREEN, BLUE}`, `Color3::to_array` |
 
@@ -140,6 +142,12 @@ maximum source-chord error, segment count, depth, and source-fragment count.
 Exhausted or undecidable subdivision is an error; it does not fall back to a
 fixed `f64` sample count. The mesh is presentation data and cannot replace the
 source curve or its certificate in CAM.
+
+`curve_region_line_mesh` first asks Hypercurve to materialize retained boundary
+paths and classify authoritative material/hole roles. It records the certainty
+consumed by both operations, then certifies each loop's chords independently.
+Material and hole colors are presentation attributes; loop roles are never
+inferred from winding or the emitted line mesh.
 
 ### Query exact geometry
 

@@ -86,11 +86,30 @@ pub enum Error {
     /// Hypercurve rejected exact source-curve segmentation.
     #[cfg(feature = "exact")]
     CurveSegmentation(hypercurve::ExactCurveError),
+    /// Hypercurve rejected exact region role or topology materialization.
+    #[cfg(feature = "exact")]
+    CurveTopology(hypercurve::CurveError),
     /// Hypercurve could not certify source-curve segmentation under the selected policy.
     #[cfg(feature = "exact")]
     CurveSegmentationUncertain {
         /// Exact predicate or supported-operation boundary that remained unresolved.
         reason: hypercurve::UncertaintyReason,
+    },
+    /// A region operation remained explicitly unresolved under the selected policy.
+    #[cfg(feature = "exact")]
+    CurveRegionUncertain {
+        /// Exact region operation that could not complete.
+        operation: &'static str,
+        /// Exact predicate or supported-operation boundary that remained unresolved.
+        reason: hypercurve::UncertaintyReason,
+    },
+    /// Materialized region paths and authoritative loop roles disagreed in cardinality.
+    #[cfg(feature = "exact")]
+    CurveRegionLoopCountMismatch {
+        /// Number of materialized boundary paths.
+        paths: usize,
+        /// Number of authoritative material/hole roles.
+        roles: usize,
     },
     /// The operation requires a triangle mesh.
     RequiresTriangles,
@@ -179,9 +198,23 @@ impl fmt::Display for Error {
                 write!(f, "exact source-curve segmentation failed: {error}")
             }
             #[cfg(feature = "exact")]
+            Self::CurveTopology(error) => {
+                write!(f, "exact source-region topology failed: {error}")
+            }
+            #[cfg(feature = "exact")]
             Self::CurveSegmentationUncertain { reason } => write!(
                 f,
                 "source-curve segmentation remained uncertain: {reason:?}"
+            ),
+            #[cfg(feature = "exact")]
+            Self::CurveRegionUncertain { operation, reason } => write!(
+                f,
+                "source-region {operation} remained uncertain: {reason:?}"
+            ),
+            #[cfg(feature = "exact")]
+            Self::CurveRegionLoopCountMismatch { paths, roles } => write!(
+                f,
+                "source region materialized {paths} boundary paths but classified {roles} loop roles"
             ),
             Self::RequiresTriangles => write!(f, "operation requires a triangle mesh"),
             #[cfg(feature = "exact")]
@@ -205,6 +238,8 @@ impl StdError for Error {
             Self::Triangulation(error) => Some(error),
             #[cfg(feature = "exact")]
             Self::CurveSegmentation(error) => Some(error),
+            #[cfg(feature = "exact")]
+            Self::CurveTopology(error) => Some(error),
             _ => None,
         }
     }
@@ -228,5 +263,12 @@ impl From<hypertri::Error> for Error {
 impl From<hypercurve::ExactCurveError> for Error {
     fn from(value: hypercurve::ExactCurveError) -> Self {
         Self::CurveSegmentation(value)
+    }
+}
+
+#[cfg(feature = "exact")]
+impl From<hypercurve::CurveError> for Error {
+    fn from(value: hypercurve::CurveError) -> Self {
+        Self::CurveTopology(value)
     }
 }

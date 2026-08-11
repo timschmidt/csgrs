@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedCurvePolyline2, Classification,
-    Curve2, CurveContext, CurvePath2,
+    Curve2, CurveCertainty, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
 };
 use hyperlattice::{Point3, Real};
 use hypermesh::TriangleMesh;
@@ -55,6 +55,101 @@ impl CertifiedCurveLineMesh {
     }
 }
 
+/// Per-loop proof and vertex range for a certified region-boundary display mesh.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CertifiedCurveRegionLoopLineEvidence {
+    role: CurveRegionLoopRole,
+    certificate: BezierFlatteningCertificate,
+    source_fragment_count: usize,
+    first_vertex: usize,
+    vertex_count: usize,
+}
+
+impl CertifiedCurveRegionLoopLineEvidence {
+    /// Return the authoritative material/hole role retained by Hypercurve.
+    pub const fn role(&self) -> CurveRegionLoopRole {
+        self.role
+    }
+
+    /// Return the certified maximum source-curve-to-chord display error.
+    pub const fn max_error(&self) -> &Real {
+        self.certificate.max_error()
+    }
+
+    /// Return the number of certified chords in this loop.
+    pub const fn segment_count(&self) -> usize {
+        self.certificate.segment_count()
+    }
+
+    /// Return the deepest exact-predicate subdivision used in this loop.
+    pub const fn max_depth(&self) -> usize {
+        self.certificate.max_depth()
+    }
+
+    /// Return the number of native Hypercurve fragments covered by this loop.
+    pub const fn source_fragment_count(&self) -> usize {
+        self.source_fragment_count
+    }
+
+    /// Return this loop's first vertex in the combined line mesh.
+    pub const fn first_vertex(&self) -> usize {
+        self.first_vertex
+    }
+
+    /// Return this loop's vertex count in the combined line mesh.
+    pub const fn vertex_count(&self) -> usize {
+        self.vertex_count
+    }
+}
+
+/// Exact region-boundary line mesh with retained topology and subdivision evidence.
+///
+/// Material and hole roles come from Hypercurve's retained region topology;
+/// they are never inferred from display chords. The aggregate mesh remains a
+/// one-way presentation adapter.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CertifiedCurveRegionLineMesh {
+    mesh: ExactMesh,
+    loop_evidence: Vec<CertifiedCurveRegionLoopLineEvidence>,
+    path_materialization_certainty: CurveCertainty,
+    role_certainty: CurveCertainty,
+}
+
+impl CertifiedCurveRegionLineMesh {
+    /// Borrow the combined exact independent-line mesh.
+    pub const fn mesh(&self) -> &ExactMesh {
+        &self.mesh
+    }
+
+    /// Consume the adapter and return its exact independent-line mesh.
+    pub fn into_mesh(self) -> ExactMesh {
+        self.mesh
+    }
+
+    /// Borrow one role and subdivision record per retained region loop.
+    pub fn loop_evidence(&self) -> &[CertifiedCurveRegionLoopLineEvidence] {
+        &self.loop_evidence
+    }
+
+    /// Return certainty consumed while materializing retained boundary paths.
+    pub const fn path_materialization_certainty(&self) -> CurveCertainty {
+        self.path_materialization_certainty
+    }
+
+    /// Return certainty consumed while classifying material and hole loops.
+    pub const fn role_certainty(&self) -> CurveCertainty {
+        self.role_certainty
+    }
+
+    /// Return the aggregate certified chord count across all loops.
+    pub fn segment_count(&self) -> usize {
+        self.loop_evidence
+            .iter()
+            .map(CertifiedCurveRegionLoopLineEvidence::segment_count)
+            .sum()
+    }
+}
+
 /// Segment one exact Hypercurve curve into an exact line mesh with retained evidence.
 pub fn curve_line_mesh(
     curve: &Curve2,
@@ -87,6 +182,95 @@ pub fn curve_path_line_mesh(
         }
     };
     certified_curve_polyline_mesh(polyline, z, color)
+}
+
+/// Segment every exact Hypercurve region boundary into one role-colored line mesh.
+///
+/// Boundary materialization, material/hole roles, and every chord are certified
+/// independently under `policy`. Any unresolved step is returned as explicit
+/// uncertainty. Role colors are render attributes and never topology inputs.
+pub fn curve_region_line_mesh(
+    region: &CurveRegion2,
+    options: &BezierFlatteningOptions,
+    policy: &CurveContext,
+    z: Real,
+    material_color: Color3,
+    hole_color: Color3,
+) -> Result<CertifiedCurveRegionLineMesh> {
+    let path_outcome = region.materialized_boundary_paths(policy)?;
+    let path_materialization_certainty = path_outcome.certainty;
+    let paths = match path_outcome.value {
+        Classification::Decided(paths) => paths,
+        Classification::Uncertain(reason) => {
+            return Err(Error::CurveRegionUncertain {
+                operation: "boundary materialization",
+                reason,
+            });
+        }
+    };
+
+    let role_outcome = region.loop_roles(policy)?;
+    let role_certainty = role_outcome.certainty;
+    let roles = match role_outcome.value {
+        Classification::Decided(roles) => roles,
+        Classification::Uncertain(reason) => {
+            return Err(Error::CurveRegionUncertain {
+                operation: "loop-role classification",
+                reason,
+            });
+        }
+    };
+    if paths.len() != roles.len() {
+        return Err(Error::CurveRegionLoopCountMismatch {
+            paths: paths.len(),
+            roles: roles.len(),
+        });
+    }
+
+    let mut mesh = ExactMesh::empty(Primitive::Lines);
+    let mut loop_evidence = Vec::new();
+    loop_evidence
+        .try_reserve_exact(paths.len())
+        .map_err(|_| Error::VertexCountOverflow { count: usize::MAX })?;
+    for (path, role) in paths.iter().zip(roles) {
+        let color = match role {
+            CurveRegionLoopRole::Material => material_color,
+            CurveRegionLoopRole::Hole => hole_color,
+        };
+        let polyline = match path.segment_certified(options, policy)? {
+            Classification::Decided(polyline) => polyline,
+            Classification::Uncertain(reason) => {
+                return Err(Error::CurveSegmentationUncertain { reason });
+            }
+        };
+        let certified = certified_curve_polyline_mesh(polyline, z.clone(), color)?;
+        let first_vertex = mesh.vertex_count();
+        let vertex_count = certified.mesh.vertex_count();
+        let final_vertex_count = first_vertex
+            .checked_add(vertex_count)
+            .ok_or(Error::VertexCountOverflow { count: usize::MAX })?;
+        mesh.vertices_mut()
+            .try_reserve_exact(vertex_count)
+            .map_err(|_| Error::VertexCountOverflow {
+                count: final_vertex_count,
+            })?;
+        mesh.vertices_mut()
+            .extend_from_slice(certified.mesh.vertices());
+        loop_evidence.push(CertifiedCurveRegionLoopLineEvidence {
+            role,
+            certificate: certified.certificate,
+            source_fragment_count: certified.source_fragment_count,
+            first_vertex,
+            vertex_count,
+        });
+    }
+
+    Ok(CertifiedCurveRegionLineMesh {
+        mesh,
+        loop_evidence,
+        path_materialization_certainty,
+        role_certainty,
+    })
 }
 
 fn certified_curve_polyline_mesh(
@@ -270,8 +454,8 @@ pub fn polygon_surface_mesh(
 #[cfg(test)]
 mod tests {
     use hypercurve::{
-        CubicBezier2, Curve2, CurveContext, CurveGeometry2, CurvePath2, LineSeg2,
-        Point2 as CurvePoint2,
+        CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveGeometry2, CurvePath2,
+        CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2 as CurvePoint2,
     };
     use hyperlattice::Point3;
     use hyperlimit::PredicatePolicy;
@@ -416,6 +600,104 @@ mod tests {
                 reason: hypercurve::UncertaintyReason::Unsupported,
             })
         ));
+    }
+
+    #[test]
+    fn certified_region_mesh_retains_material_hole_roles_and_loop_evidence() {
+        let line =
+            |start, end| Curve2::new(CurveGeometry2::Line(LineSeg2::try_new(start, end).unwrap()));
+        let outer = CurvePath2::try_new(vec![
+            line(
+                CurvePoint2::from_values(0, 0),
+                CurvePoint2::from_values(4, 0),
+            ),
+            Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
+                CurvePoint2::from_values(4, 0),
+                CurvePoint2::from_values(6, 1),
+                CurvePoint2::from_values(6, 3),
+                CurvePoint2::from_values(4, 4),
+            ))),
+            line(
+                CurvePoint2::from_values(4, 4),
+                CurvePoint2::from_values(0, 4),
+            ),
+            line(
+                CurvePoint2::from_values(0, 4),
+                CurvePoint2::from_values(0, 0),
+            ),
+        ])
+        .unwrap();
+        let hole = CurvePath2::try_new(vec![
+            line(
+                CurvePoint2::from_values(1, 1),
+                CurvePoint2::from_values(1, 2),
+            ),
+            line(
+                CurvePoint2::from_values(1, 2),
+                CurvePoint2::from_values(2, 2),
+            ),
+            line(
+                CurvePoint2::from_values(2, 2),
+                CurvePoint2::from_values(2, 1),
+            ),
+            line(
+                CurvePoint2::from_values(2, 1),
+                CurvePoint2::from_values(1, 1),
+            ),
+        ])
+        .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[outer, hole],
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+            &[FillRule::NonZero, FillRule::NonZero],
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
+        let max_error = Real::from(hyperreal::Rational::fraction(1, 64).unwrap());
+        let options =
+            BezierFlatteningOptions::try_new(max_error.clone(), 16, &CurveContext::STRICT).unwrap();
+        let material_color = Color3::GREEN;
+        let hole_color = Color3::RED;
+
+        let certified = curve_region_line_mesh(
+            &region,
+            &options,
+            &CurveContext::STRICT,
+            Real::zero(),
+            material_color,
+            hole_color,
+        )
+        .unwrap();
+
+        assert_eq!(
+            certified.path_materialization_certainty(),
+            CurveCertainty::Certified
+        );
+        assert_eq!(certified.role_certainty(), CurveCertainty::Certified);
+        assert_eq!(certified.loop_evidence().len(), 2);
+        assert_eq!(
+            certified.loop_evidence()[0].role(),
+            CurveRegionLoopRole::Material
+        );
+        assert_eq!(
+            certified.loop_evidence()[1].role(),
+            CurveRegionLoopRole::Hole
+        );
+        assert_eq!(certified.loop_evidence()[0].max_error(), &max_error);
+        assert!(certified.loop_evidence()[0].segment_count() > 4);
+        assert_eq!(
+            certified.mesh().vertex_count(),
+            certified.segment_count() * 2
+        );
+        assert_eq!(
+            certified.mesh().vertices()[certified.loop_evidence()[0].first_vertex()].color,
+            material_color
+        );
+        assert_eq!(
+            certified.mesh().vertices()[certified.loop_evidence()[1].first_vertex()].color,
+            hole_color
+        );
     }
 
     #[test]
