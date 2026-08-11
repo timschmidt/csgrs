@@ -3519,6 +3519,20 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         source: BezierAlgebraicCuspSemicircleParameter2,
         source_first: bool,
     },
+    /// A mapped local parameter transported by one certified similarity.
+    ///
+    /// The selected-circle chart is similarity covariant: its scalar
+    /// parameter is unchanged even under reflection because the transformed
+    /// frame, signed radius, and traversal turn are reflected together.  The
+    /// source parameter therefore remains the exact ordering authority while
+    /// `point` retains the transformed Cartesian evidence without constructing
+    /// a compositum for either selected field.
+    SimilarityTransport {
+        semicircle: BezierAlgebraicCuspSemicircle2,
+        source: BezierAlgebraicCuspSemicircleParameter2,
+        point: RationalBezierIntersectionPointEvidence2,
+        policy: CurveContext,
+    },
     /// Exact angular transport on one selected supporting circle.
     ///
     /// `half_angle` is `tan(theta / 2)` in the semicircle's increasing local
@@ -3733,7 +3747,28 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source_first,
                 ..
             } => overlap.semicircle(!*source_first),
+            Self::SimilarityTransport { semicircle, .. } => semicircle,
             Self::Chamfer { semicircle, .. } => semicircle,
+        }
+    }
+
+    /// Returns point evidence stored directly beside this mapped parameter.
+    fn retained_point_evidence(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
+        match self {
+            Self::SelectedCircularTangentContact { point, .. }
+            | Self::SelectedPairContact { point, .. }
+            | Self::SelectedChordNormalContact { point, .. }
+            | Self::SimilarityTransport { point, .. }
+            | Self::Chamfer { point, .. } => Some(point),
+            Self::Rational { .. }
+            | Self::SelectedFiberRational { .. }
+            | Self::SelectedFiberParallel { .. }
+            | Self::Parallel { .. }
+            | Self::SelectedParallelContact { .. }
+            | Self::Pair { .. }
+            | Self::Chord { .. }
+            | Self::PairOverlap { .. }
+            | Self::PairOverlapMap { .. } => None,
         }
     }
 
@@ -4128,6 +4163,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4171,6 +4207,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4212,6 +4249,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedChordNormalContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4286,6 +4324,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedPairContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4313,6 +4352,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedChordNormalContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4373,6 +4413,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -4424,6 +4465,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
+            | Self::SimilarityTransport { .. }
             | Self::Chamfer { .. } => None,
         }
     }
@@ -5391,7 +5433,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleSimilarityCache2 {
     parameters: Vec<(
         Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
         BezierAlgebraicCuspSemicircle2,
-        Option<BezierAlgebraicCuspSemicircleParameter2>,
+        BezierAlgebraicCuspSemicircleParameter2,
     )>,
     chords: Vec<(BezierAlgebraicChord2, BezierAlgebraicChord2)>,
 }
@@ -5434,7 +5476,37 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
         {
             return Ok(transformed);
         }
-        let transformed = source.transform_similarity(transform)?;
+        let transformed = match source {
+            BezierSelectedCircleFrame2::SelectedRadial(frame) => {
+                let source_semicircle = frame.center_parameter.semicircle_carrier().clone();
+                let source_parameter =
+                    BezierAlgebraicCuspSemicircleParameter2::Mapped(frame.center_parameter.clone());
+                let transformed_parameter =
+                    self.parameter(&source_parameter, &source_semicircle, transform)?;
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(center_parameter) =
+                    transformed_parameter
+                else {
+                    return Err(CurveError::Topology(
+                        "a mapped selected-radial center became an inline parameter".into(),
+                    ));
+                };
+                let mut normal_denominator = &frame.normal_denominator * transform.scale();
+                if transform.reverses_orientation() {
+                    normal_denominator = -normal_denominator;
+                }
+                BezierSelectedCircleFrame2::SelectedRadial(Arc::new(
+                    BezierSelectedRadialFrameData2 {
+                        center_parameter,
+                        normal_denominator,
+                        policy: frame.policy,
+                    },
+                ))
+            }
+            BezierSelectedCircleFrame2::Rational(_)
+            | BezierSelectedCircleFrame2::ParallelNormal(_) => {
+                source.transform_similarity(transform)?
+            }
+        };
         self.frames.push((source.clone(), transformed.clone()));
         Ok(transformed)
     }
@@ -5517,9 +5589,9 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
         source_carrier: &BezierAlgebraicCuspSemicircle2,
         transform: &Similarity2,
-    ) -> CurveResult<Option<BezierAlgebraicCuspSemicircleParameter2>> {
+    ) -> CurveResult<BezierAlgebraicCuspSemicircleParameter2> {
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter else {
-            return Ok(Some(parameter.clone()));
+            return Ok(parameter.clone());
         };
         if let Some(transformed) = self
             .parameters
@@ -5551,16 +5623,15 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                 source_first,
             } if overlap.semicircle(!*source_first) == source_carrier => {
                 let transformed_overlap = self.overlap(overlap, transform)?;
-                self.parameter(source, overlap.semicircle(*source_first), transform)?
-                    .map(|transformed_source| {
-                        BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                                overlap: transformed_overlap,
-                                source: transformed_source,
-                                source_first: *source_first,
-                            },
-                        ))
-                    })
+                let transformed_source =
+                    self.parameter(source, overlap.semicircle(*source_first), transform)?;
+                Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                        overlap: transformed_overlap,
+                        source: transformed_source,
+                        source_first: *source_first,
+                    },
+                )))
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                 map,
@@ -5727,7 +5798,11 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                 );
                 let transformed_chord = match self.chord(chord, transform, policy)? {
                     Classification::Decided(chord) => chord,
-                    Classification::Uncertain(_) => return Ok(None),
+                    Classification::Uncertain(reason) => {
+                        return Err(CurveError::Topology(format!(
+                            "a selected-circle similarity could not transport its chord evidence: {reason:?}"
+                        )));
+                    }
                 };
                 let transformed_anchor =
                     transform.transform_vector_coordinates(&anchor_tangent.0, &anchor_tangent.1);
@@ -5759,7 +5834,50 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 ..
             }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { .. } => None,
+        };
+        let transformed = match transformed {
+            Some(transformed) => transformed,
+            None => {
+                let policy = parameter.evidence_policy().ok_or_else(|| {
+                    CurveError::Topology(
+                        "a mapped selected-circle parameter lost its policy".into(),
+                    )
+                })?;
+                let source_point = if data.semicircle_carrier() == source_carrier {
+                    parameter.coincident_point_evidence(source_carrier, &policy)?
+                } else {
+                    parameter.concentric_offset_point_evidence(
+                        data.semicircle_carrier(),
+                        source_carrier,
+                        &policy,
+                    )?
+                };
+                let point = match source_point {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => {
+                        return Err(CurveError::Topology(
+                            "a mapped selected-circle parameter lost its point evidence".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(CurveError::Topology(format!(
+                            "a selected-circle similarity could not retain its point evidence: {reason:?}"
+                        )));
+                    }
+                };
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                        semicircle: self.semicircle(source_carrier, transform)?,
+                        source: parameter.clone(),
+                        point: RationalBezierIntersectionPointEvidence2::Similarity(
+                            BezierSimilarityPoint2::new(point, transform.clone(), &policy),
+                        ),
+                        policy,
+                    },
+                ))
+            }
         };
         self.parameters
             .push((data.clone(), source_carrier.clone(), transformed.clone()));
@@ -6667,17 +6785,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// unchanged. Uniform scale multiplies the signed radius, while reflection
     /// also reverses the transformed source's left normal and circle traversal.
     pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
-        let mut radial_distance = &self.data.radial_distance * transform.scale();
-        if transform.reverses_orientation() {
-            radial_distance = -radial_distance;
-        }
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
-                frame: self.data.frame.transform_similarity(transform)?,
-                radial_distance,
-                clockwise: self.data.clockwise ^ transform.reverses_orientation(),
-            }),
-        })
+        BezierAlgebraicCuspSemicircleSimilarityCache2::default().semicircle(self, transform)
     }
 
     fn represented_frame_scales(
@@ -6793,7 +6901,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                     BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source_with_rotation(
                         frame.center_parameter.clone(),
-                        None,
+                        frame.center_parameter.retained_point_evidence().cloned(),
                         radial_scale,
                         perpendicular_scale,
                     ),
@@ -6919,7 +7027,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                     BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
                         frame.center_parameter.clone(),
-                        None,
+                        frame.center_parameter.retained_point_evidence().cloned(),
                         Real::one(),
                     ),
                 ),
@@ -17142,6 +17250,27 @@ impl BezierAlgebraicCuspChordPoint2 {
 }
 
 impl BezierAlgebraicCuspDerivedPointSource2 {
+    /// Returns whether two affine derivations start from the same exact mapped
+    /// point.  The optional point field is only an alternate evaluation cache;
+    /// mapped-parameter evidence remains the geometric authority.
+    fn shares_exact_evidence(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Chord(first), Self::Chord(second)) => first == second,
+            (
+                Self::Mapped {
+                    parameter: first, ..
+                },
+                Self::Mapped {
+                    parameter: second, ..
+                },
+            ) => BezierAlgebraicCuspSemicircleParameter2::Mapped(first.clone())
+                .shares_exact_evidence(&BezierAlgebraicCuspSemicircleParameter2::Mapped(
+                    second.clone(),
+                )),
+            (Self::Chord(_), Self::Mapped { .. }) | (Self::Mapped { .. }, Self::Chord(_)) => false,
+        }
+    }
+
     fn chord_map_contact(
         &self,
     ) -> Option<(
@@ -17334,6 +17463,94 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 translation_y: &self.data.translation_y + translation_y,
             }),
         }
+    }
+
+    /// Recognizes the covariant image of the same retained radial derivation.
+    ///
+    /// Similarity-transformed selected-radial circles keep their local radial
+    /// coefficient, negate only the perpendicular coefficient under
+    /// reflection, and linearly transform any extra displacement.  Matching
+    /// that compact provenance proves endpoint equality without refining the
+    /// original independent circle-pair fields to 512 bits.
+    fn is_similarity_image_of(
+        &self,
+        source: &Self,
+        transform: &Similarity2,
+        policy: &CurveContext,
+    ) -> bool {
+        let (
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter: transformed_parameter,
+                point: Some(transformed_source_point),
+            },
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter: source_parameter,
+                point: source_point,
+            },
+        ) = (&self.data.source, &source.data.source)
+        else {
+            return false;
+        };
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+            source: transported_parameter,
+            point: transported_point,
+            policy: transport_policy,
+            ..
+        } = transformed_parameter.as_ref()
+        else {
+            return false;
+        };
+        let RationalBezierIntersectionPointEvidence2::Similarity(transported_source_point) =
+            transported_point
+        else {
+            return false;
+        };
+        let transported_base_matches = source_point
+            .as_ref()
+            .is_some_and(|source_point| transported_source_point.data.source == *source_point)
+            || matches!(
+                &transported_source_point.data.source,
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point)
+                    if point.data.radial_scale == Real::one()
+                        && point.data.perpendicular_scale.zero_status() == ZeroStatus::Zero
+                        && point.data.translation_x.zero_status() == ZeroStatus::Zero
+                        && point.data.translation_y.zero_status() == ZeroStatus::Zero
+                        && matches!(
+                            &point.data.source,
+                            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                                parameter,
+                                ..
+                            } if BezierAlgebraicCuspSemicircleParameter2::Mapped(parameter.clone())
+                                .shares_exact_evidence(
+                                    &BezierAlgebraicCuspSemicircleParameter2::Mapped(
+                                        source_parameter.clone(),
+                                    ),
+                                )
+                        )
+            );
+        if *transport_policy != *policy
+            || transported_source_point.data.policy != *policy
+            || transported_source_point.data.transform != *transform
+            || !transported_base_matches
+            || transformed_source_point != transported_point
+            || !transported_parameter.shares_exact_evidence(
+                &BezierAlgebraicCuspSemicircleParameter2::Mapped(source_parameter.clone()),
+            )
+            || self.data.radial_scale != source.data.radial_scale
+        {
+            return false;
+        }
+        let expected_perpendicular = if transform.reverses_orientation() {
+            -source.data.perpendicular_scale.clone()
+        } else {
+            source.data.perpendicular_scale.clone()
+        };
+        if self.data.perpendicular_scale != expected_perpendicular {
+            return false;
+        }
+        let (translation_x, translation_y) = transform
+            .transform_vector_coordinates(&source.data.translation_x, &source.data.translation_y);
+        self.data.translation_x == translation_x && self.data.translation_y == translation_y
     }
 
     /// Returns an exact represented circle known to contain this affine image.
@@ -18205,6 +18422,14 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if self == other {
             return Classification::Decided(true);
         }
+        if self.data.source.shares_exact_evidence(&other.data.source)
+            && self.data.radial_scale == other.data.radial_scale
+            && self.data.perpendicular_scale == other.data.perpendicular_scale
+            && self.data.translation_x == other.data.translation_x
+            && self.data.translation_y == other.data.translation_y
+        {
+            return Classification::Decided(true);
+        }
         let identity_transform = |point: &Self| {
             point.data.radial_scale == Real::one()
                 && point.data.perpendicular_scale == Real::zero()
@@ -18420,6 +18645,14 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                     &RationalBezierIntersectionPointEvidence2::AnalyticParallel(other.clone()),
                     policy,
                 )
+            }
+            RationalBezierIntersectionPointEvidence2::Similarity(similarity)
+                if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    source,
+                ) = &similarity.data.source
+                    && self.is_similarity_image_of(source, &similarity.data.transform, policy) =>
+            {
+                Classification::Decided(true)
             }
             RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
@@ -19107,6 +19340,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
                 overlap, ..
             } => overlap.data.policy,
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                policy,
+                ..
+            } => *policy,
             BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { policy, .. } => *policy,
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 policy,
@@ -19146,6 +19383,14 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { source, .. } =
                 data.as_ref()
+        {
+            source.validate_policy(policy)?;
+        }
+        if let Self::Mapped(data) = self
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                source,
+                ..
+            } = data.as_ref()
         {
             source.validate_policy(policy)?;
         }
@@ -19251,6 +19496,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
                 } => Ok(Classification::Decided(None)),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                    source,
+                    ..
+                } => source.represented_rational_value(policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
@@ -19383,6 +19632,17 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             && semicircle.data.frame.rational().is_none()
         {
             return Ok(semicircle.point_evidence_at(parameter, policy)?.map(Some));
+        }
+        if let Self::Mapped(data) = self
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                semicircle: source,
+                point,
+                ..
+            } = data.as_ref()
+        {
+            return Ok(Classification::Decided(
+                (source == semicircle).then(|| point.clone()),
+            ));
         }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
@@ -19894,6 +20154,24 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                             && first_source.shares_exact_evidence(second_source)
                             && first_half_angle == second_half_angle
                     }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                            semicircle: first_semicircle,
+                            source: first_source,
+                            point: first_point,
+                            ..
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                            semicircle: second_semicircle,
+                            source: second_source,
+                            point: second_point,
+                            ..
+                        },
+                    ) => {
+                        first_semicircle == second_semicircle
+                            && first_source.shares_exact_evidence(second_source)
+                            && first_point == second_point
+                    }
                     _ => false,
                 }
             }
@@ -20193,6 +20471,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     source,
                     source_first,
                 } => overlap.mapped_parameter_order_to_real(source, *source_first, parameter),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                    source,
+                    ..
+                } => source.order_to_real(parameter, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
@@ -20267,6 +20549,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                     source,
                     source_first,
                 } => overlap.mapped_parameter_bracket(source, *source_first, refinement_steps),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                    source,
+                    ..
+                } => source.parameter_bracket(refinement_steps, policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
@@ -32999,6 +33285,9 @@ impl BezierSimilarityPoint2 {
             && other.data.policy == *policy
             && self.data.transform == other.data.transform
         {
+            if self.shares_storage(other) {
+                return Classification::Decided(true);
+            }
             return self.data.source.same_point(&other.data.source, policy);
         }
         retained_point_evidence_equality_by_refinement(
@@ -35402,12 +35691,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         cache: &mut BezierAlgebraicCuspSemicircleSimilarityCache2,
     ) -> CurveResult<Self> {
         let semicircle = cache.semicircle(&self.data.semicircle, transform)?;
-        let start = cache
-            .parameter(&self.data.start, &self.data.semicircle, transform)?
-            .unwrap_or_else(|| self.data.start.clone());
-        let end = cache
-            .parameter(&self.data.end, &self.data.semicircle, transform)?
-            .unwrap_or_else(|| self.data.end.clone());
+        let start = cache.parameter(&self.data.start, &self.data.semicircle, transform)?;
+        let end = cache.parameter(&self.data.end, &self.data.semicircle, transform)?;
         Ok(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
                 semicircle,

@@ -17780,6 +17780,59 @@ mod tests {
                                 if fragment.semicircle().uses_selected_radial_frame()
                         ))
                 );
+                for transform in [
+                    crate::Similarity2::try_from_real_affine(
+                        Real::zero(),
+                        Real::from(-2_i8),
+                        Real::from(2_i8),
+                        Real::zero(),
+                        Real::from(5_i8),
+                        Real::from(-7_i8),
+                    )
+                    .expect("the scaled quarter turn is a similarity"),
+                    crate::Similarity2::try_from_real_affine(
+                        Real::from(-3_i8),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(3_i8),
+                        Real::from(2_i8),
+                        Real::from(3_i8),
+                    )
+                    .expect("the scaled reflection is a similarity"),
+                ] {
+                    let transformed = filleted
+                        .transform_similarity(&transform, &policy)
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the pair-native fillet must retain its exact similarity: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(transformed.certainty, CurveCertainty::Certified);
+                    assert!(
+                        transformed.value.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .any(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                    if fragment.semicircle().uses_selected_radial_frame()
+                            ))
+                    );
+                    if !reversed {
+                        let transformed_square = selected_fillet_disjoint_square(&policy)
+                            .transform_similarity(&transform, &policy)
+                            .expect("the disjoint Boolean fixture retains the same similarity");
+                        let replay = transformed
+                            .value
+                            .boolean_regions(&transformed_square.value, &policy)
+                            .expect(
+                                "the transformed pair-native fillet re-enters the Boolean kernel",
+                            );
+                        assert_eq!(replay.certainty, CurveCertainty::Certified);
+                        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                        assert!(replay.value.intersection().is_empty());
+                    }
+                }
                 if !reversed {
                     let replay = filleted
                         .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
