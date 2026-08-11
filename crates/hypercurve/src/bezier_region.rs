@@ -17770,6 +17770,76 @@ mod tests {
                         "the independent selected-circle pair must have one fillet: policy={policy:?}, reversed={reversed}"
                     );
                 };
+                let selected_radial = filleted.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .find_map(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                            if fragment.semicircle().uses_selected_radial_frame() =>
+                        {
+                            Some(fragment)
+                        }
+                        _ => None,
+                    })
+                    .expect("the fillet retains its pair-radial carrier");
+                let center = match selected_radial
+                    .semicircle()
+                    .center_point_evidence(&policy)
+                    .expect("the pair-radial center evidence is exact")
+                {
+                    Classification::Decided(center) => center,
+                    Classification::Uncertain(reason) => {
+                        panic!("the pair-radial center must be decided: {reason:?}")
+                    }
+                };
+                let center_bounds =
+                    match crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                        &center, 8, &policy,
+                    ) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            panic!("the pair-radial center must refine: {reason:?}")
+                        }
+                    };
+                let two = Real::from(2_i8);
+                let y = ((center_bounds.min().y() + center_bounds.max().y()) / &two)
+                    .expect("the center bracket midpoint is rational");
+                let margin =
+                    selected_radial.semicircle().radial_distance().abs() * &two + Real::one();
+                let line = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(center_bounds.min().x() - &margin, y.clone()),
+                        Point2::new(center_bounds.max().x() + &margin, y),
+                    ],
+                    vec![Real::one(), Real::one()],
+                )
+                .expect("the pair-radial probe is a finite rational line");
+                let (contacts, parameter_map) = match selected_radial
+                    .semicircle()
+                    .rational_intersections_with_parameter_map(&line, &policy)
+                    .expect("the pair-radial/rational kernel is exact")
+                {
+                    Classification::Decided((
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                            contacts,
+                        ),
+                        parameter_map,
+                    )) => (contacts, parameter_map),
+                    Classification::Decided((intersections, _)) => {
+                        panic!("the finite probe must produce contacts, got {intersections:?}")
+                    }
+                    Classification::Uncertain(reason) => {
+                        panic!("the pair-radial/rational kernel must decide: {reason:?}")
+                    }
+                };
+                assert!(
+                    !contacts.is_empty(),
+                    "a center-straddling line meets the selected half circle"
+                );
+                assert!(
+                    parameter_map.is_some(),
+                    "an interior pair-radial contact retains one shared parameter map"
+                );
                 assert!(
                     filleted.boundary_loops()[0]
                         .fragments()
