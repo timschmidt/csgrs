@@ -145,6 +145,51 @@ pub struct TrivariateConstraintResultantReport {
     pub resultant_error: Option<UnivariateResultantError>,
 }
 
+/// Final status for one exact constrained-axis trivariate subresultant.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TrivariateConstraintSubresultantStatus {
+    /// Every coefficient of the requested subresultant was reconstructed.
+    Constructed,
+    /// The trivariate polynomial or univariate constraint was empty.
+    EmptyPolynomial,
+    /// A coefficient needed for exact degree certification remained undecided.
+    UndecidedCoefficient,
+    /// The constraint was constant after certified trimming.
+    InvalidConstraint,
+    /// The requested order was zero or exceeded the smaller input degree.
+    InvalidOrder,
+    /// At least one retained-axis degree exceeded the configured budget.
+    DegreeBoundExceeded,
+    /// A sampled exact subresultant determinant failed.
+    DeterminantError,
+    /// Exact tensor-grid interpolation failed.
+    InterpolationDivisionFailed,
+}
+
+/// Exact coefficient tensors for one constrained-axis subresultant.
+///
+/// `coefficients[k]` is the bivariate coefficient of eliminated-axis power
+/// `k`.  Callers select the first order whose coefficients do not all vanish
+/// in their retained algebraic fiber; that polynomial is the fiber GCD up to a
+/// nonzero scalar.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TrivariateConstraintSubresultantReport {
+    /// Final construction status.
+    pub status: TrivariateConstraintSubresultantStatus,
+    /// Tensor axis on which both input polynomials were compared.
+    pub eliminated_axis: TrivariatePolynomialAxis,
+    /// Remaining tensor axes, in ascending original-axis order.
+    pub retained_axes: [TrivariatePolynomialAxis; 2],
+    /// Requested subresultant order.
+    pub order: usize,
+    /// Conservative coefficient degree bound on each retained axis.
+    pub degree_bounds: [usize; 2],
+    /// Coefficients in ascending eliminated-axis power order.
+    pub coefficients: Vec<BivariatePolynomial>,
+    /// Sampled determinant error, when construction stopped there.
+    pub determinant_error: Option<BareissError>,
+}
+
 /// Final status for exact univariate axis-factor extraction from two bivariate equations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BivariatePolynomialAxisFactorStatus {
@@ -587,6 +632,303 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
         Some(canonical_exact_bivariate(coefficients)),
         None,
     )
+}
+
+/// Reconstructs one exact subresultant of a trivariate polynomial and a
+/// univariate constraint on the selected tensor axis.
+///
+/// This is the multiplicity-preserving companion to
+/// [`resultant_trivariate_polynomial_univariate_constraint`].  Order zero is
+/// the ordinary resultant and remains owned by that function.  Higher orders
+/// expose the first nonzero polynomial remainder in a selected algebraic
+/// fiber, allowing a caller to recover its GCD even when the original
+/// incidence has an even-multiplicity root.
+pub fn subresultant_trivariate_polynomial_univariate_constraint(
+    polynomial: &TrivariatePolynomial,
+    constraint: &[Real],
+    eliminated_axis: TrivariatePolynomialAxis,
+    order: usize,
+    config: CurveIntersectionResultantConfig,
+) -> TrivariateConstraintSubresultantReport {
+    let retained_axis_indices = match eliminated_axis {
+        TrivariatePolynomialAxis::First => [1, 2],
+        TrivariatePolynomialAxis::Second => [0, 2],
+        TrivariatePolynomialAxis::Third => [0, 1],
+    };
+    let retained_axes = retained_axis_indices.map(trivariate_axis_from_index);
+    let report = |status, degree_bounds, coefficients, determinant_error| {
+        TrivariateConstraintSubresultantReport {
+            status,
+            eliminated_axis,
+            retained_axes,
+            order,
+            degree_bounds,
+            coefficients,
+            determinant_error,
+        }
+    };
+    if trivariate_polynomial_is_empty(polynomial) || constraint.is_empty() {
+        return report(
+            TrivariateConstraintSubresultantStatus::EmptyPolynomial,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+    let degrees = match certified_trivariate_degree(polynomial, config.min_precision) {
+        Ok(Some(degrees)) => degrees,
+        Ok(None) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::EmptyPolynomial,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+        Err(()) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::UndecidedCoefficient,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+    let constraint = match trim_trailing_zeroes(constraint.to_vec(), config.min_precision) {
+        Ok(constraint) => constraint,
+        Err(()) => {
+            return report(
+                TrivariateConstraintSubresultantStatus::UndecidedCoefficient,
+                [0, 0],
+                Vec::new(),
+                None,
+            );
+        }
+    };
+    if constraint.len() <= 1 {
+        return report(
+            TrivariateConstraintSubresultantStatus::InvalidConstraint,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+    let leading = constraint
+        .last()
+        .expect("a nonconstant constraint has a leading coefficient");
+    let Some(constraint) = constraint
+        .iter()
+        .map(|coefficient| (coefficient / leading).ok())
+        .collect::<Option<Vec<_>>>()
+    else {
+        return report(
+            TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    };
+
+    let eliminated_index = eliminated_axis.index();
+    let polynomial_degree = degrees[eliminated_index];
+    let constraint_degree = constraint.len() - 1;
+    let terminal_order = polynomial_degree.min(constraint_degree);
+    if order == 0 || order > terminal_order {
+        return report(
+            TrivariateConstraintSubresultantStatus::InvalidOrder,
+            [0, 0],
+            Vec::new(),
+            None,
+        );
+    }
+
+    // The terminal subresultant is the smaller input itself.  Returning its
+    // coefficient tensors directly avoids determinant sampling and also owns
+    // equal-degree proportional fibers.
+    if order == terminal_order {
+        let coefficients = if polynomial_degree < constraint_degree {
+            (0..=polynomial_degree)
+                .map(|power| {
+                    trivariate_axis_coefficient_bivariate(polynomial, eliminated_axis, power)
+                })
+                .collect()
+        } else {
+            constraint
+                .iter()
+                .map(|coefficient| BivariatePolynomial::new(vec![vec![coefficient.clone()]]))
+                .collect()
+        };
+        let degree_bounds = if polynomial_degree < constraint_degree {
+            retained_axis_indices.map(|axis| degrees[axis])
+        } else {
+            [0, 0]
+        };
+        return report(
+            TrivariateConstraintSubresultantStatus::Constructed,
+            degree_bounds,
+            coefficients,
+            None,
+        );
+    }
+
+    // Only rows contributed by the trivariate operand carry retained-axis
+    // degree. Every order-k minor contains `constraint_degree-k` such rows.
+    let polynomial_row_count = constraint_degree - order;
+    let degree_bounds =
+        retained_axis_indices.map(|axis| polynomial_row_count.saturating_mul(degrees[axis]));
+    if degree_bounds
+        .into_iter()
+        .any(|degree| degree > config.max_resultant_degree)
+    {
+        return report(
+            TrivariateConstraintSubresultantStatus::DegreeBoundExceeded,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    }
+
+    let mut samples = (0..=order)
+        .map(|_| vec![vec![Real::zero(); degree_bounds[1] + 1]; degree_bounds[0] + 1])
+        .collect::<Vec<_>>();
+    for first_sample in 0..=degree_bounds[0] {
+        let first_value = Real::from(first_sample as u64);
+        for second_sample in 0..=degree_bounds[1] {
+            let second_value = Real::from(second_sample as u64);
+            let mut fiber = evaluate_trivariate_at_retained_parameters(
+                polynomial,
+                eliminated_axis,
+                &first_value,
+                &second_value,
+            );
+            fiber.resize(polynomial_degree + 1, Real::zero());
+            fiber.truncate(polynomial_degree + 1);
+            let coefficients =
+                match subresultant_coefficients(&fiber, &constraint, order, config.min_precision) {
+                    Ok(coefficients) => coefficients,
+                    Err(error) => {
+                        return report(
+                            TrivariateConstraintSubresultantStatus::DeterminantError,
+                            degree_bounds,
+                            Vec::new(),
+                            Some(error),
+                        );
+                    }
+                };
+            for (coefficient_samples, coefficient) in samples.iter_mut().zip(coefficients) {
+                coefficient_samples[first_sample][second_sample] = coefficient;
+            }
+        }
+    }
+    let Some(coefficients) = samples
+        .iter()
+        .map(|samples| interpolate_rectangular_tensor_grid(samples, config.min_precision))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return report(
+            TrivariateConstraintSubresultantStatus::InterpolationDivisionFailed,
+            degree_bounds,
+            Vec::new(),
+            None,
+        );
+    };
+    report(
+        TrivariateConstraintSubresultantStatus::Constructed,
+        degree_bounds,
+        coefficients,
+        None,
+    )
+}
+
+fn trivariate_axis_coefficient_bivariate(
+    polynomial: &TrivariatePolynomial,
+    eliminated_axis: TrivariatePolynomialAxis,
+    power: usize,
+) -> BivariatePolynomial {
+    let dimensions = [
+        polynomial.coefficients.len(),
+        polynomial
+            .coefficients
+            .iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+        polynomial
+            .coefficients
+            .iter()
+            .flat_map(|rows| rows.iter())
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0),
+    ];
+    let eliminated_index = eliminated_axis.index();
+    let retained_axes = match eliminated_axis {
+        TrivariatePolynomialAxis::First => [1, 2],
+        TrivariatePolynomialAxis::Second => [0, 2],
+        TrivariatePolynomialAxis::Third => [0, 1],
+    };
+    let mut coefficients =
+        vec![vec![Real::zero(); dimensions[retained_axes[1]]]; dimensions[retained_axes[0]]];
+    for (first, rows) in polynomial.coefficients.iter().enumerate() {
+        for (second, row) in rows.iter().enumerate() {
+            for (third, coefficient) in row.iter().enumerate() {
+                let exponents = [first, second, third];
+                if exponents[eliminated_index] == power {
+                    coefficients[exponents[retained_axes[0]]][exponents[retained_axes[1]]] =
+                        coefficient.clone();
+                }
+            }
+        }
+    }
+    canonical_exact_bivariate(coefficients)
+}
+
+fn interpolate_rectangular_tensor_grid(
+    samples: &[Vec<Real>],
+    min_precision: i32,
+) -> Option<BivariatePolynomial> {
+    let first_count = samples.len();
+    let second_count = samples.first()?.len();
+    if first_count == 0 || second_count == 0 || samples.iter().any(|row| row.len() != second_count)
+    {
+        return None;
+    }
+    let second_polynomials = samples
+        .iter()
+        .map(|row| {
+            let samples = row
+                .iter()
+                .enumerate()
+                .map(|(second, value)| CurveIntersectionResultantSample {
+                    parameter_value: Real::from(second as u64),
+                    resultant: value.clone(),
+                })
+                .collect::<Vec<_>>();
+            interpolate_samples(&samples, min_precision)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut columns = Vec::with_capacity(second_count);
+    for second_power in 0..second_count {
+        let samples = second_polynomials
+            .iter()
+            .enumerate()
+            .map(|(first, polynomial)| CurveIntersectionResultantSample {
+                parameter_value: Real::from(first as u64),
+                resultant: polynomial
+                    .get(second_power)
+                    .cloned()
+                    .unwrap_or_else(Real::zero),
+            })
+            .collect::<Vec<_>>();
+        columns.push(interpolate_samples(&samples, min_precision)?);
+    }
+    let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
+    for (second_power, column) in columns.into_iter().enumerate() {
+        for (row, coefficient) in coefficients.iter_mut().zip(column) {
+            row[second_power] = coefficient;
+        }
+    }
+    Some(canonical_exact_bivariate(coefficients))
 }
 
 /// Final status for a curve intersection resultant report.
@@ -4881,6 +5223,67 @@ mod tests {
         );
         assert_eq!(report.degree_bounds, [2, 2]);
         assert!(report.resultant.is_none());
+    }
+
+    #[test]
+    fn constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd() {
+        // F(a,b,t)=(t-a)^2 and H(t)=t^2-2. At the selected value a=sqrt(2),
+        // their first nonzero subresultant is a nonzero multiple of t-a even
+        // though the ordinary resultant has an even zero in a.
+        let polynomial = TrivariatePolynomial::new(vec![
+            vec![vec![real(0), real(0), real(1)]],
+            vec![vec![real(0), real(-2)]],
+            vec![vec![real(1)]],
+        ]);
+        let constraint = [real(-2), real(0), real(1)];
+        let report = subresultant_trivariate_polynomial_univariate_constraint(
+            &polynomial,
+            &constraint,
+            TrivariatePolynomialAxis::Third,
+            1,
+            CurveIntersectionResultantConfig::default(),
+        );
+
+        assert_eq!(
+            report.status,
+            TrivariateConstraintSubresultantStatus::Constructed
+        );
+        assert_eq!(report.degree_bounds, [2, 0]);
+        assert_eq!(report.coefficients.len(), 2);
+        let alpha = real(2).sqrt().unwrap();
+        let coefficients = report
+            .coefficients
+            .iter()
+            .map(|coefficient| {
+                evaluate_bivariate_at_retained_parameter(
+                    coefficient,
+                    &alpha,
+                    CurveResultantParameter::First,
+                )[0]
+                .clone()
+            })
+            .collect::<Vec<_>>();
+        assert_ne!(coefficients[1], Real::zero());
+        assert_eq!(&coefficients[0] + &alpha * &coefficients[1], Real::zero());
+
+        let terminal = subresultant_trivariate_polynomial_univariate_constraint(
+            &polynomial,
+            &constraint,
+            TrivariatePolynomialAxis::Third,
+            2,
+            CurveIntersectionResultantConfig::default(),
+        );
+        assert_eq!(
+            terminal.status,
+            TrivariateConstraintSubresultantStatus::Constructed
+        );
+        assert_eq!(
+            terminal.coefficients,
+            constraint
+                .into_iter()
+                .map(|coefficient| BivariatePolynomial::new(vec![vec![coefficient]]))
+                .collect::<Vec<_>>()
+        );
     }
 
     proptest! {

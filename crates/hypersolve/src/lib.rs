@@ -161,14 +161,16 @@ pub use curve_resultant::{
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantSample,
     CurveIntersectionResultantStatus, CurveResultantParameter, PolynomialParametricCurve2,
-    TrivariateConstraintResultantReport, TrivariateConstraintResultantStatus, TrivariatePolynomial,
-    TrivariatePolynomialAxis, divide_bivariate_polynomial_exact,
+    TrivariateConstraintResultantReport, TrivariateConstraintResultantStatus,
+    TrivariateConstraintSubresultantReport, TrivariateConstraintSubresultantStatus,
+    TrivariatePolynomial, TrivariatePolynomialAxis, divide_bivariate_polynomial_exact,
     divide_univariate_polynomial_exact, extract_bivariate_polynomial_system_axis_factors,
     greatest_common_divisor_univariate_polynomials_exact,
     linear_parameter_lifts_bivariate_polynomial_system,
     parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     resultant_parametric_curve_intersection, resultant_rational_parametric_curve_intersection,
     resultant_trivariate_polynomial_univariate_constraint,
+    subresultant_trivariate_polynomial_univariate_constraint,
 };
 pub use curve_substitution::{
     BezierPowerBasisSubstitutionConfig, BezierPowerBasisSubstitutionReport,

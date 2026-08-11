@@ -531,9 +531,10 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter(
         let mut boundaries = Vec::with_capacity(exact_roots.len() + 2);
         boundaries.push(fiber_lower.clone());
         boundaries.extend(
-            exact_roots.iter().filter_map(|root| {
-                (root > fiber_lower && root < fiber_upper).then(|| root.clone())
-            }),
+            exact_roots
+                .iter()
+                .filter(|root| *root > fiber_lower && *root < fiber_upper)
+                .cloned(),
         );
         boundaries.push(fiber_upper.clone());
         let boundary_variation_values = match boundaries
