@@ -11,6 +11,7 @@
 //! policy and is deliberately absent from this API.
 
 use hyperlimit::PredicatePolicy;
+use hyperreal::Real;
 
 use crate::algebraic::{
     AlgebraicRootKind, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
@@ -166,6 +167,19 @@ pub fn represent_algebraic_tensor_image(
             "the final tensor-image eliminant could not be square-freed exactly",
         );
     };
+    // Resultant interpolation can retain a large arithmetic DAG even when a
+    // coefficient is exactly rational. Collapse only values whose bounded
+    // symbolic normal form proves that fact before Sturm replay; non-rational
+    // canonical `Real` coefficient fields remain untouched.
+    let polynomial_coefficients = polynomial_coefficients
+        .into_iter()
+        .map(|coefficient| {
+            coefficient
+                .exact_rational_normal_form()
+                .map(Real::new)
+                .unwrap_or(coefficient)
+        })
+        .collect::<Vec<_>>();
     if polynomial_coefficients.len() <= 1 {
         return report(
             AlgebraicTensorImageStatus::ImageSquareFreeFailed,
@@ -335,6 +349,12 @@ mod tests {
         assert_eq!(report.elimination_count, 4);
         let representation = report.representation.unwrap();
         assert_eq!(representation.polynomial_coefficients.len(), 17);
+        assert!(
+            representation
+                .polynomial_coefficients
+                .iter()
+                .all(|coefficient| coefficient.exact_rational().is_some())
+        );
         assert_eq!(
             represented_root_sign(&representation, PredicatePolicy::STRICT),
             Some(std::cmp::Ordering::Greater)
