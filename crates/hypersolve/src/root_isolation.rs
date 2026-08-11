@@ -2058,10 +2058,12 @@ fn exact_rational_polynomial_interval_bernstein_variations(
     Some(variations)
 }
 
-pub(crate) fn square_free_part(
-    polynomial: Vec<Real>,
-    policy: PredicatePolicy,
-) -> Option<Vec<Real>> {
+/// Returns the exact square-free part of a nonzero polynomial.
+///
+/// The result has the same distinct roots as `polynomial`. `None` means that
+/// coefficient classification, GCD construction, or exact division could not
+/// be certified under `policy`; it never returns an approximate polynomial.
+pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let polynomial = trim_polynomial(polynomial, policy)?;
     let gcd = polynomial_gcd(polynomial.clone(), derivative(&polynomial), policy)?;
     if gcd.len() <= 1 {
