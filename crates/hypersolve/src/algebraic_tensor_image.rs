@@ -390,36 +390,38 @@ fn exact_small_denominator_root_in_interval(
         return None;
     }
     let midpoint = lower / 2.0 + upper / 2.0;
+    let mut best = None;
     for denominator in 1..=MAX_DENOMINATOR {
         let numerator = (midpoint * denominator as f64).round();
         if !numerator.is_finite() || numerator < i64::MIN as f64 || numerator > i64::MAX as f64 {
             continue;
         }
-        let rational = hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
-        let candidate = Real::new(rational);
-        if !matches!(
-            compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        ) || !matches!(
-            compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        ) {
-            continue;
-        }
-        let value = polynomial_coefficients
-            .iter()
-            .rev()
-            .fold(Real::zero(), |value, coefficient| {
-                value * &candidate + coefficient
-            });
-        if value
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_zero())
-        {
-            return Some(candidate);
+        let error = (midpoint - numerator / denominator as f64).abs();
+        if best.is_none_or(|(_, _, best_error)| error < best_error) {
+            best = Some((numerator as i64, denominator as u64, error));
         }
     }
-    None
+    let (numerator, denominator, _) = best?;
+    let candidate = Real::new(hyperreal::Rational::fraction(numerator, denominator).ok()?);
+    if !matches!(
+        compare_reals(&interval.lower, &candidate, PredicatePolicy::STRICT).value(),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+    ) || !matches!(
+        compare_reals(&candidate, &interval.upper, PredicatePolicy::STRICT).value(),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+    ) {
+        return None;
+    }
+    let value = polynomial_coefficients
+        .iter()
+        .rev()
+        .fold(Real::zero(), |value, coefficient| {
+            value * &candidate + coefficient
+        });
+    value
+        .exact_rational_ref()
+        .is_some_and(|value| value.is_zero())
+        .then_some(candidate)
 }
 
 fn canonicalize_proven_rational_coefficients(coefficients: Vec<Real>) -> Vec<Real> {
