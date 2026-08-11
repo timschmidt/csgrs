@@ -18148,6 +18148,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn represented_authored_center_relation(
         candidate: &Self,
         other: &Self,
+        other_frame: Option<&BezierRepresentedSelectedRadialCircleFrame2>,
         candidate_first: bool,
         policy: &CurveContext,
     ) -> CurveResult<Option<BezierRepresentedAuthoredCenterRelation2>> {
@@ -18166,7 +18167,51 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Some(similarity) => original_support.transform_similarity(similarity)?,
                 None => original_support.clone(),
             };
-            if transformed_support.data.frame == other.data.frame {
+            let structurally_equal = transformed_support.data.frame == other.data.frame;
+            let equivalent_frame = if structurally_equal {
+                None
+            } else if other_frame.is_some()
+                && matches!(
+                    &source.pair_map.data.system,
+                    BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_)
+                )
+            {
+                match transformed_support.represented_circle_frame(policy)? {
+                    Classification::Decided(frame) => Some(frame),
+                    Classification::Uncertain(_) => continue,
+                }
+            } else {
+                continue;
+            };
+            let (same_center, same_unit_radial) =
+                equivalent_frame
+                    .as_ref()
+                    .map_or((true, true), |support_frame| {
+                        let other_frame = other_frame.expect("an equivalent frame has its target");
+                        let equal =
+                            |left: &[AlgebraicRootRepresentation; 2],
+                             right: &[AlgebraicRootRepresentation; 2]| {
+                                left.iter().zip(right).all(|(left, right)| {
+                                    left == right
+                                        || (!(compare_reals(
+                                            &left.interval.upper,
+                                            &right.interval.lower,
+                                            &CurveContext::STRICT,
+                                        ) == Some(std::cmp::Ordering::Less)
+                                            || compare_reals(
+                                                &right.interval.upper,
+                                                &left.interval.lower,
+                                                &CurveContext::STRICT,
+                                            ) == Some(std::cmp::Ordering::Less))
+                                            && represented_roots_strictly_equal(left, right))
+                                })
+                            };
+                        let same_center = equal(&support_frame.center, &other_frame.center);
+                        let same_unit_radial = same_center
+                            && equal(&support_frame.unit_radial, &other_frame.unit_radial);
+                        (same_center, same_unit_radial)
+                    });
+            if same_center {
                 return Ok(Some(BezierRepresentedAuthoredCenterRelation2 {
                     distance_squared: transformed_support.radial_distance()
                         * transformed_support.radial_distance(),
@@ -18176,7 +18221,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     radial_support_first: source.support_first,
                     center_support_first: support_index == 0,
                     normal_denominator: source.frame.normal_denominator.clone(),
-                    direct_parameter_evidence: source.similarity.is_none(),
+                    direct_parameter_evidence: source.similarity.is_none() && same_unit_radial,
                 }));
             }
         }
@@ -18189,11 +18234,30 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<BezierRepresentedAuthoredCenterRelation2>> {
         if let Some(relation) =
-            Self::represented_authored_center_relation(self, other, true, policy)?
+            Self::represented_authored_center_relation(self, other, None, true, policy)?
         {
             return Ok(Some(relation));
         }
-        Self::represented_authored_center_relation(other, self, false, policy)
+        Self::represented_authored_center_relation(other, self, None, false, policy)
+    }
+
+    fn represented_equivalent_center_relation(
+        &self,
+        other: &Self,
+        first_frame: &BezierRepresentedSelectedRadialCircleFrame2,
+        second_frame: &BezierRepresentedSelectedRadialCircleFrame2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierRepresentedAuthoredCenterRelation2>> {
+        if let Some(relation) = Self::represented_authored_center_relation(
+            self,
+            other,
+            Some(second_frame),
+            true,
+            policy,
+        )? {
+            return Ok(Some(relation));
+        }
+        Self::represented_authored_center_relation(other, self, Some(first_frame), false, policy)
     }
 
     /// Reuses angular evidence from the represented contact that authored one
@@ -18692,7 +18756,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let structural_center_relation =
+        let mut structural_center_relation =
             self.represented_structural_center_relation(other, policy)?;
         let first_radius_squared = self.radial_distance() * self.radial_distance();
         let second_radius_squared = other.radial_distance() * other.radial_distance();
@@ -18792,6 +18856,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ],
             )
         };
+        if structural_center_relation.is_none() && sources.len() >= 3 {
+            structural_center_relation = self.represented_equivalent_center_relation(
+                other,
+                &first_frame,
+                &second_frame,
+                policy,
+            )?;
+        }
         let rank = sources.len() + 1;
         let constant = |value: &Real| {
             DenseTensorPolynomial::from_axis_polynomial(rank, 0, std::slice::from_ref(value))
@@ -79103,6 +79175,106 @@ mod conversion_tests {
                     parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
                     Classification::Decided(RealSign::Negative),
                 );
+                for parameter in [
+                    parameter_map.first_contact_parameter(contact),
+                    parameter_map.second_contact_parameter(contact),
+                ] {
+                    assert!(matches!(
+                        parameter.parameter_bracket(16, &policy).unwrap(),
+                        Classification::Decided(_),
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn independently_reencoded_recursive_parent_handles_exact_tangency() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let authored_parent = recursively_pair_radial_half(&policy).complementary_half();
+            let author = recursively_pair_radial_rational_center_half(&policy);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                    contacts,
+                    parameter_map,
+                },
+            ) = authored_parent
+                .pair_intersections(&author, &policy)
+                .unwrap()
+            else {
+                panic!("the independent-parent authoring pair must intersect");
+            };
+            let contact = contacts
+                .iter()
+                .find(|contact| contact.tangent_cross_sign == RealSign::Positive)
+                .expect("one transverse branch must orient the nested tangent half");
+            let Classification::Decided(Some(nested)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    &author,
+                    parameter_map.second_contact_parameter(contact),
+                    half.clone(),
+                    quarter.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the represented contact must author the nested circle");
+            };
+            let independently_reencoded = recursively_pair_radial_half(&policy)
+                .complementary_half()
+                .scaled_radial_distance(&half, &policy)
+                .unwrap();
+            let Classification::Decided(Some(parent)) = independently_reencoded else {
+                panic!("the independently reencoded parent must retain its quarter radius");
+            };
+            assert!(
+                parent
+                    .represented_structural_center_relation(&nested, &policy)
+                    .unwrap()
+                    .is_none(),
+                "independent parent authorship must not use frame identity",
+            );
+            for (first, second) in [(&parent, &nested), (&nested, &parent)] {
+                let result = first.pair_intersections(second, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                        contacts,
+                        parameter_map,
+                    },
+                ) = result
+                else {
+                    panic!("the independently reencoded tangency must complete: {result:?}");
+                };
+                assert!(matches!(
+                    parameter_map.data.system,
+                    BezierAlgebraicCuspSemicirclePairParameterMapSystem2::Represented(_),
+                ));
+                let [contact] = contacts.as_slice() else {
+                    panic!("the independently reencoded tangency must retain one contact");
+                };
+                assert_eq!(contact.branch, 0);
+                assert_eq!(
+                    contact.first_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(
+                    contact.second_location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+                assert_eq!(
+                    parameter_map.tangent_dot_sign(contact, &policy).unwrap(),
+                    Classification::Decided(RealSign::Negative),
+                );
+                assert!(matches!(
+                    parameter_map
+                        .represented_selected_radial_contact_point(contact)
+                        .unwrap(),
+                    Classification::Decided(_),
+                ));
                 for parameter in [
                     parameter_map.first_contact_parameter(contact),
                     parameter_map.second_contact_parameter(contact),
