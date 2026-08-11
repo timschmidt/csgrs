@@ -17876,18 +17876,117 @@ mod tests {
                             panic!(
                                 "the pair-native fillet must retain its exact similarity: policy={policy:?}, reversed={reversed}, error={error:?}"
                             )
-                        });
+                    });
                     assert_eq!(transformed.certainty, CurveCertainty::Certified);
-                    assert!(
-                        transformed.value.boundary_loops()[0]
-                            .fragments()
+                    let transformed_selected_radial = transformed.value.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .find_map(|fragment| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame() =>
+                            {
+                                Some(fragment)
+                            }
+                            _ => None,
+                        })
+                        .expect("the transformed fillet retains its pair-radial carrier");
+                    let transformed_line = RationalBezier2::try_new(
+                        line.control_points()
                             .iter()
-                            .any(|fragment| matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
-                                    if fragment.semicircle().uses_selected_radial_frame()
-                            ))
+                            .map(|point| point.transform_similarity(&transform))
+                            .collect(),
+                        line.weights().to_vec(),
+                    )
+                    .expect("the exact probe transforms without changing its parameterization");
+                    let (transformed_contacts, transformed_parameter_map) =
+                        match transformed_selected_radial
+                            .semicircle()
+                            .rational_intersections_with_parameter_map(
+                                &transformed_line,
+                                &policy,
+                            )
+                            .expect("the transformed pair-radial/rational kernel is exact")
+                        {
+                            Classification::Decided((
+                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                                    contacts,
+                                ),
+                                parameter_map,
+                            )) => (contacts, parameter_map),
+                            Classification::Decided((intersections, _)) => panic!(
+                                "the transformed finite probe must produce contacts, got {intersections:?}"
+                            ),
+                            Classification::Uncertain(reason) => panic!(
+                                "the transformed pair-radial/rational kernel must decide: {reason:?}"
+                            ),
+                        };
+                    assert_eq!(transformed_contacts.len(), contacts.len());
+                    assert!(
+                        transformed_parameter_map.is_some(),
+                        "the transported interior contact retains one shared parameter map"
                     );
+                    for (source, transported) in contacts.iter().zip(&transformed_contacts) {
+                        assert_eq!(source.location, transported.location);
+                        assert_eq!(
+                            source
+                                .other_parameter
+                                .cmp_by_refinement(&transported.other_parameter, &policy)
+                                .expect("transported target parameters remain comparable"),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        );
+                        let expected_cross = if transform.reverses_orientation() {
+                            match source.tangent_cross_sign {
+                                RealSign::Negative => RealSign::Positive,
+                                RealSign::Zero => RealSign::Zero,
+                                RealSign::Positive => RealSign::Negative,
+                            }
+                        } else {
+                            source.tangent_cross_sign
+                        };
+                        assert_eq!(transported.tangent_cross_sign, expected_cross);
+                    }
+                    if policy == CurveContext::STRICT
+                        && !reversed
+                        && !transform.reverses_orientation()
+                    {
+                        let nested_reflection = crate::Similarity2::try_from_real_affine(
+                            Real::from(-1_i8),
+                            Real::zero(),
+                            Real::zero(),
+                            Real::one(),
+                            Real::from(11_i8),
+                            Real::from(-13_i8),
+                        )
+                        .expect("the nested reflection is a similarity");
+                        let nested_circle = transformed_selected_radial
+                            .semicircle()
+                            .transform_similarity(&nested_reflection)
+                            .expect("a second exact similarity retains pair provenance");
+                        let nested_line = RationalBezier2::try_new(
+                            transformed_line
+                                .control_points()
+                                .iter()
+                                .map(|point| point.transform_similarity(&nested_reflection))
+                                .collect(),
+                            transformed_line.weights().to_vec(),
+                        )
+                        .expect("the probe follows the nested similarity");
+                        let nested_contacts = match nested_circle
+                            .rational_intersections_with_parameter_map(&nested_line, &policy)
+                            .expect("the nested pair-radial/rational system remains exact")
+                        {
+                            Classification::Decided((
+                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                                    contacts,
+                                ),
+                                Some(_),
+                            )) => contacts,
+                            result => panic!(
+                                "the nested transformed probe must retain contacts and a map, got {result:?}"
+                            ),
+                        };
+                        assert_eq!(nested_contacts.len(), contacts.len());
+                    }
                     if !reversed {
                         let transformed_square = selected_fillet_disjoint_square(&policy)
                             .transform_similarity(&transform, &policy)

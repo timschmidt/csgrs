@@ -2659,6 +2659,36 @@ struct BezierAlgebraicCuspNormalizedCircleFrame2 {
     cusp_parameter: BezierParameter2,
 }
 
+impl BezierAlgebraicCuspNormalizedCircleFrame2 {
+    /// Moves only this frame's homogeneous center into a similarity image.
+    ///
+    /// Pair-radial incidence uses the two selected support centers but not
+    /// their local unit-normal frames.  Keeping the original positive
+    /// denominator and transforming its two numerators is therefore the
+    /// smallest exact covariant representation of a transported pair.
+    fn transform_center_similarity(&mut self, transform: &Similarity2) {
+        let zero = Real::zero();
+        let length = self
+            .center_x
+            .len()
+            .max(self.center_y.len())
+            .max(self.denominator.len());
+        let mut center_x = Vec::with_capacity(length);
+        let mut center_y = Vec::with_capacity(length);
+        for index in 0..length {
+            let (x, y) = transform.transform_homogeneous_coordinates(
+                self.center_x.get(index).unwrap_or(&zero),
+                self.center_y.get(index).unwrap_or(&zero),
+                self.denominator.get(index).unwrap_or(&zero),
+            );
+            center_x.push(x);
+            center_y.push(y);
+        }
+        self.center_x = polynomial_trim_structural_zeros(center_x);
+        self.center_y = polynomial_trim_structural_zeros(center_y);
+    }
+}
+
 struct BezierAlgebraicCuspPositivePointField2 {
     x: Vec<Real>,
     y: Vec<Real>,
@@ -5900,6 +5930,38 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                     },
                 )))
             }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                semicircle,
+                source,
+                point,
+                policy,
+            } if semicircle == source_carrier => {
+                let RationalBezierIntersectionPointEvidence2::Similarity(point) = point else {
+                    return Err(CurveError::Topology(
+                        "a selected-circle similarity lost its exact transform provenance".into(),
+                    ));
+                };
+                if point.data.policy != *policy {
+                    return Err(CurveError::Topology(
+                        "a selected-circle similarity point crossed predicate policies".into(),
+                    ));
+                }
+                let combined = point.data.transform.then(transform);
+                Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                        semicircle: self.semicircle(semicircle, transform)?,
+                        source: source.clone(),
+                        point: RationalBezierIntersectionPointEvidence2::Similarity(
+                            BezierSimilarityPoint2::new(
+                                point.data.source.clone(),
+                                combined,
+                                policy,
+                            ),
+                        ),
+                        policy: *policy,
+                    },
+                )))
+            }
             BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
@@ -8270,33 +8332,65 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a pair-radial selected circle crossed predicate policies".into(),
             ));
         }
-        let BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
-            map: pair_map,
-            contact: pair_contact,
-            first: support_first,
-        } = frame.center_parameter.as_ref()
-        else {
-            // Similarity transports retain the same exact pair authority but
-            // require covariant coefficient transport before entering this
-            // direct-frame fast path.
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let mut center_parameter = frame.center_parameter.as_ref();
+        let mut similarity_transports = Vec::new();
+        let (pair_map, pair_contact, support_first) = loop {
+            match center_parameter {
+                BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                    map,
+                    contact,
+                    first,
+                } => break (map, contact, *first),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                    source,
+                    point,
+                    policy: transport_policy,
+                    ..
+                } => {
+                    if *transport_policy != *policy {
+                        return Err(CurveError::Topology(
+                            "a pair-radial similarity crossed predicate policies".into(),
+                        ));
+                    }
+                    let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                        return Err(CurveError::Topology(
+                            "a pair-radial similarity lost its mapped source parameter".into(),
+                        ));
+                    };
+                    let RationalBezierIntersectionPointEvidence2::Similarity(point) = point else {
+                        return Err(CurveError::Topology(
+                            "a pair-radial similarity lost its exact transform provenance".into(),
+                        ));
+                    };
+                    if point.data.policy != *policy {
+                        return Err(CurveError::Topology(
+                            "a pair-radial similarity point crossed predicate policies".into(),
+                        ));
+                    }
+                    similarity_transports.push(&point.data.transform);
+                    center_parameter = source.as_ref();
+                }
+                _ => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+            }
         };
         if pair_map.data.policy != *policy || !(-1..=1).contains(&pair_contact.branch) {
             return Err(CurveError::Topology(
                 "a pair-radial rational system lost its authored pair policy or branch".into(),
             ));
         }
-        let expected_support = if *support_first {
+        let expected_support = if support_first {
             &pair_map.data.first_semicircle
         } else {
             &pair_map.data.second_semicircle
         };
-        if expected_support != frame.center_parameter.semicircle_carrier() {
+        if expected_support != center_parameter.semicircle_carrier() {
             return Err(CurveError::Topology(
                 "a pair-radial rational system lost its source-circle identity".into(),
             ));
         }
-        let first_frame = match pair_map
+        let mut first_frame = match pair_map
             .data
             .first_semicircle
             .normalized_circle_frame(policy)?
@@ -8306,7 +8400,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second_frame = match pair_map
+        let mut second_frame = match pair_map
             .data
             .second_semicircle
             .normalized_circle_frame(policy)?
@@ -8354,11 +8448,30 @@ impl BezierAlgebraicCuspSemicircle2 {
 
         let radial_distance = self.radial_distance().clone();
         let normal_denominator = frame.normal_denominator.clone();
+        let mut branch = pair_contact.branch;
+        let mut combined_similarity: Option<Similarity2> = None;
+        for transform in similarity_transports.into_iter().rev() {
+            combined_similarity = Some(match combined_similarity {
+                Some(current) => current.then(transform),
+                None => transform.clone(),
+            });
+        }
+        let pair_scale_squared = if let Some(transform) = &combined_similarity {
+            first_frame.transform_center_similarity(transform);
+            second_frame.transform_center_similarity(transform);
+            if transform.reverses_orientation() {
+                branch = -branch;
+            }
+            transform.scale() * transform.scale()
+        } else {
+            Real::one()
+        };
         let first_radius_squared = pair_map.data.first_semicircle.radial_distance()
             * pair_map.data.first_semicircle.radial_distance();
+        let first_radius_squared = first_radius_squared * &pair_scale_squared;
         let second_radius_squared = pair_map.data.second_semicircle.radial_distance()
             * pair_map.data.second_semicircle.radial_distance();
-        let branch = pair_contact.branch;
+        let second_radius_squared = second_radius_squared * pair_scale_squared;
         let pair_map = pair_map.clone();
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
@@ -8447,7 +8560,7 @@ impl BezierAlgebraicCuspSemicircle2 {
 
             // The selected radial is R1 on the first support and R1-delta on
             // the second.  Both share the same authored square-root branch.
-            let support_line = if *support_first {
+            let support_line = if support_first {
                 center_line.clone()
             } else {
                 center_line.subtract(&twice_center_distance)?

@@ -182,6 +182,27 @@ impl Similarity2 {
         (&self.a, &self.b, &self.d, &self.e, &self.xoff, &self.yoff)
     }
 
+    /// Returns the exact similarity obtained by applying `self` and then
+    /// `next`.
+    ///
+    /// Both operands already carry certified similarity invariants, so their
+    /// affine composition needs no repeated orthogonality tests or square-root
+    /// construction.  Collapsing retained transform chains before moving an
+    /// algebraic coefficient frame also prevents expression growth from
+    /// applying every affine layer independently.
+    pub(crate) fn then(&self, next: &Self) -> Self {
+        Self {
+            a: &next.a * &self.a + &next.b * &self.d,
+            b: &next.a * &self.b + &next.b * &self.e,
+            d: &next.d * &self.a + &next.e * &self.d,
+            e: &next.d * &self.b + &next.e * &self.e,
+            xoff: &next.a * &self.xoff + &next.b * &self.yoff + &next.xoff,
+            yoff: &next.d * &self.xoff + &next.e * &self.yoff + &next.yoff,
+            scale: &self.scale * &next.scale,
+            reverses_orientation: self.reverses_orientation ^ next.reverses_orientation,
+        }
+    }
+
     /// Transforms a point with hyperreal arithmetic.
     pub fn transform_point(&self, point: &Point2) -> Point2 {
         let point_is_exact =
@@ -447,5 +468,36 @@ mod tests {
             transform.scale() * transform.scale(),
             &transform.a * &transform.a + &transform.d * &transform.d
         );
+    }
+
+    #[test]
+    fn exact_similarity_composition_matches_sequential_application() {
+        let first = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-2_i8),
+            Real::from(2_i8),
+            Real::zero(),
+            Real::from(5_i8),
+            Real::from(-7_i8),
+        )
+        .unwrap();
+        let second = Similarity2::try_from_real_affine(
+            Real::from(-3_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::from(3_i8),
+            Real::from(11_i8),
+            Real::from(-13_i8),
+        )
+        .unwrap();
+        let combined = first.then(&second);
+        let point = Point2::from_values(17, -19);
+
+        assert_eq!(
+            combined.transform_point(&point),
+            second.transform_point(&first.transform_point(&point))
+        );
+        assert_eq!(combined.scale(), &(&Real::from(2_i8) * Real::from(3_i8)));
+        assert!(combined.reverses_orientation());
     }
 }
