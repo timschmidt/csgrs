@@ -2868,6 +2868,7 @@ enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
     Axis(BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2),
     Oblique(BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2),
     SelectedFiberLine(BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2),
+    SelectedRadial(BezierSelectedRadialCircleChordParameterMapSystem2),
 }
 
 /// Compact local-field map for a line contact with a general selected
@@ -3617,6 +3618,178 @@ struct BezierSelectedRadialCircleParallelSystem2 {
     radius_squared_denominator: TrivariatePolynomial2,
     tangent_cross_source: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     tangent_dot_source: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
+}
+
+/// One value `R + B*sqrt(K)` in the four selected roots of a pair-radial
+/// circle and an independent algebraic chord.
+#[derive(Clone, Debug)]
+struct BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
+    rational: QuadrivariatePolynomial2,
+    radical: QuadrivariatePolynomial2,
+}
+
+impl BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
+    fn from_rational(rational: QuadrivariatePolynomial2) -> Option<Self> {
+        let radical = QuadrivariatePolynomial2::zero([1; 4])?;
+        Some(Self { rational, radical })
+    }
+
+    fn add(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.add(&other.rational)?,
+            radical: self.radical.add(&other.radical)?,
+        })
+    }
+
+    fn subtract(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.subtract(&other.rational)?,
+            radical: self.radical.subtract(&other.radical)?,
+        })
+    }
+
+    fn scale(&self, scale: &Real) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.scale(scale)?,
+            radical: self.radical.scale(scale)?,
+        })
+    }
+
+    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
+        let rational_terms = terms
+            .iter()
+            .map(|(expression, scale)| (&expression.rational, *scale))
+            .collect::<Vec<_>>();
+        let radical_terms = terms
+            .iter()
+            .map(|(expression, scale)| (&expression.radical, *scale))
+            .collect::<Vec<_>>();
+        Some(Self {
+            rational: QuadrivariatePolynomial2::linear_combination(&rational_terms)?,
+            radical: QuadrivariatePolynomial2::linear_combination(&radical_terms)?,
+        })
+    }
+
+    fn multiply_rational(&self, other: &QuadrivariatePolynomial2) -> Option<Self> {
+        Some(Self {
+            rational: self.rational.multiply(other)?,
+            radical: self.radical.multiply(other)?,
+        })
+    }
+
+    fn multiply(&self, other: &Self, pair_discriminant: &QuadrivariatePolynomial2) -> Option<Self> {
+        let radical_product = self.radical.multiply(&other.radical)?;
+        Some(Self {
+            rational: QuadrivariatePolynomial2::sum_products(&[
+                (&self.rational, &other.rational, false),
+                (&radical_product, pair_discriminant, false),
+            ])?,
+            radical: QuadrivariatePolynomial2::sum_products(&[
+                (&self.rational, &other.radical, false),
+                (&self.radical, &other.rational, false),
+            ])?,
+        })
+    }
+
+    fn square(&self, pair_discriminant: &QuadrivariatePolynomial2) -> Option<Self> {
+        self.multiply(self, pair_discriminant)
+    }
+}
+
+/// One nested value `X + branch*Y*sqrt(S)` where `X`, `Y`, and the
+/// nonnegative chord discriminant `S` all live in the retained pair-radical
+/// extension.  This is the complete radical tower for a line contact; no
+/// primitive element or additional selected root is needed.
+#[derive(Clone, Debug)]
+struct BezierSelectedRadialCircleChordNestedExpression2 {
+    retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+}
+
+impl BezierSelectedRadialCircleChordNestedExpression2 {
+    fn from_retained(
+        retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    ) -> Option<Self> {
+        Some(Self {
+            retained,
+            candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(
+                QuadrivariatePolynomial2::zero([1; 4])?,
+            )?,
+        })
+    }
+
+    fn from_rational(rational: QuadrivariatePolynomial2) -> Option<Self> {
+        Self::from_retained(
+            BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(rational)?,
+        )
+    }
+
+    fn subtract(&self, other: &Self) -> Option<Self> {
+        Some(Self {
+            retained: self.retained.subtract(&other.retained)?,
+            candidate: self.candidate.subtract(&other.candidate)?,
+        })
+    }
+
+    fn scale(&self, scale: &Real) -> Option<Self> {
+        Some(Self {
+            retained: self.retained.scale(scale)?,
+            candidate: self.candidate.scale(scale)?,
+        })
+    }
+
+    fn multiply_rational(&self, polynomial: &QuadrivariatePolynomial2) -> Option<Self> {
+        Some(Self {
+            retained: self.retained.multiply_rational(polynomial)?,
+            candidate: self.candidate.multiply_rational(polynomial)?,
+        })
+    }
+
+    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
+        let retained_terms = terms
+            .iter()
+            .map(|(expression, scale)| (&expression.retained, *scale))
+            .collect::<Vec<_>>();
+        let candidate_terms = terms
+            .iter()
+            .map(|(expression, scale)| (&expression.candidate, *scale))
+            .collect::<Vec<_>>();
+        Some(Self {
+            retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::linear_combination(
+                &retained_terms,
+            )?,
+            candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::linear_combination(
+                &candidate_terms,
+            )?,
+        })
+    }
+}
+
+/// Four-root exact line-circle system for a pair-radial selected circle and a
+/// genuinely algebraic chord support.
+#[derive(Debug)]
+struct BezierSelectedRadialCircleChordSystem2 {
+    retained: BezierSelectedRadialCircleChordParameterMapSystem2,
+    selected_half_plane: BezierSelectedRadialCircleChordNestedExpression2,
+    point_minus_start: BezierSelectedRadialCircleChordNestedExpression2,
+    point_minus_end: BezierSelectedRadialCircleChordNestedExpression2,
+}
+
+#[derive(Debug)]
+struct BezierSelectedRadialCircleChordParameterMapSystem2 {
+    pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
+    pair_branch: i8,
+    pair_discriminant: QuadrivariatePolynomial2,
+    chord_discriminant: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    diameter: BezierSelectedRadialCircleChordNestedExpression2,
+    radius_squared_denominator: QuadrivariatePolynomial2,
+    common_denominator: QuadrivariatePolynomial2,
+    center_x: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    center_y: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    point_x: BezierSelectedRadialCircleChordNestedExpression2,
+    point_y: BezierSelectedRadialCircleChordNestedExpression2,
+    first_parameter: BezierParameter2,
+    second_parameter: BezierParameter2,
 }
 
 /// Exact analytic intersection system for one selected algebraic circle and
@@ -12223,6 +12396,215 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
+    /// Builds the exact four-selected-root line system for a pair-radial
+    /// circle and a chord whose affine support is itself determined by two
+    /// independent algebraic endpoint fields.
+    fn selected_radial_chord_system(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierSelectedRadialCircleChordSystem2>> {
+        chord.validate_policy(policy)?;
+        let support = chord.retained_support();
+        let [support_start, support_end] = if chord.retained_support_orientation_is_reversed() {
+            [support.end(), support.start()]
+        } else {
+            [support.start(), support.end()]
+        };
+        let [start, end] =
+            match algebraic_chord_endpoint_images(support_start, support_end, policy)? {
+                Classification::Decided(endpoints) => endpoints,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let start = match positive_algebraic_point_field(&start, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match positive_algebraic_point_field(&end, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let frame = match self.selected_radial_frame_system(policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_distance = self.radial_distance().clone();
+        let turn = self.turn_sign();
+        let BezierSelectedRadialCircleFrameSystem2 {
+            pair_map,
+            branch: pair_branch,
+            discriminant,
+            denominator,
+            center_x,
+            center_y,
+            radial_x,
+            radial_y,
+            normal_denominator,
+        } = frame;
+        let system = (|| {
+            let axis = |coefficients: &[Real], axis| {
+                QuadrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+            };
+            let lift = |polynomial: &TrivariatePolynomial2| {
+                QuadrivariatePolynomial2::lift_trivariate(polynomial, [0, 1, 2])
+            };
+            let pair = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+                Some(BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
+                    rational: lift(&expression.rational)?,
+                    radical: lift(&expression.radical)?,
+                })
+            };
+            let rational_pair = |polynomial: QuadrivariatePolynomial2| {
+                BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(polynomial)
+            };
+            let ax = axis(&start.x, 2)?;
+            let ay = axis(&start.y, 2)?;
+            let aw = axis(&start.denominator, 2)?;
+            let bx = axis(&end.x, 3)?;
+            let by = axis(&end.y, 3)?;
+            let bw = axis(&end.denominator, 3)?;
+            let pair_discriminant = lift(&discriminant)?;
+            let contact_denominator = lift(&denominator)?;
+            let center_x = pair(&center_x)?;
+            let center_y = pair(&center_y)?;
+            let radial_x = pair(&radial_x)?;
+            let radial_y = pair(&radial_y)?;
+            let one = QuadrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0)?;
+
+            let dx =
+                QuadrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy =
+                QuadrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let d_squared =
+                QuadrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+            let start_x = ax.multiply(&contact_denominator)?;
+            let start_y = ay.multiply(&contact_denominator)?;
+            let vx = rational_pair(start_x)?.subtract(&center_x.multiply_rational(&aw)?)?;
+            let vy = rational_pair(start_y)?.subtract(&center_y.multiply_rational(&aw)?)?;
+            let v_dot_d = vx
+                .multiply_rational(&dx)?
+                .add(&vy.multiply_rational(&dy)?)?;
+            let v_squared = vx
+                .square(&pair_discriminant)?
+                .add(&vy.square(&pair_discriminant)?)?;
+            let aw_contact = aw.multiply(&contact_denominator)?;
+            let radius_term = aw_contact
+                .multiply(&aw_contact)?
+                .scale(&(&radial_distance * &radial_distance))?;
+            let v_squared_minus_radius = v_squared.subtract(&rational_pair(radius_term)?)?;
+            let chord_discriminant = v_dot_d
+                .square(&pair_discriminant)?
+                .subtract(&v_squared_minus_radius.multiply_rational(&d_squared)?)?;
+
+            let radial_base_x = vx
+                .multiply_rational(&d_squared)?
+                .subtract(&v_dot_d.multiply_rational(&dx)?)?;
+            let radial_base_y = vy
+                .multiply_rational(&d_squared)?
+                .subtract(&v_dot_d.multiply_rational(&dy)?)?;
+            let center_x_numerator = center_x
+                .multiply_rational(&aw)?
+                .multiply_rational(&d_squared)?;
+            let center_y_numerator = center_y
+                .multiply_rational(&aw)?
+                .multiply_rational(&d_squared)?;
+            let point_x = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: center_x_numerator.add(&radial_base_x)?,
+                candidate: rational_pair(dx.clone())?,
+            };
+            let point_y = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: center_y_numerator.add(&radial_base_y)?,
+                candidate: rational_pair(dy.clone())?,
+            };
+            let common_denominator = aw_contact.multiply(&d_squared)?;
+
+            let pair_cross =
+                |first_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 first_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 second_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 second_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+                    first_x
+                        .multiply(second_y, &pair_discriminant)?
+                        .subtract(&first_y.multiply(second_x, &pair_discriminant)?)
+                };
+            let pair_dot =
+                |first_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 first_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 second_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+                 second_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+                    first_x
+                        .multiply(second_x, &pair_discriminant)?
+                        .add(&first_y.multiply(second_y, &pair_discriminant)?)
+                };
+            let direction_x = rational_pair(dx.clone())?;
+            let direction_y = rational_pair(dy.clone())?;
+            let radial_scale = &radial_distance * &normal_denominator;
+            let selected_scale = turn * &radial_scale;
+            let selected_half_plane = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: pair_cross(&radial_x, &radial_y, &radial_base_x, &radial_base_y)?
+                    .scale(&selected_scale)?,
+                candidate: pair_cross(&radial_x, &radial_y, &direction_x, &direction_y)?
+                    .scale(&selected_scale)?,
+            };
+            let diameter = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: pair_dot(&radial_x, &radial_y, &radial_base_x, &radial_base_y)?
+                    .scale(&radial_scale)?,
+                candidate: pair_dot(&radial_x, &radial_y, &direction_x, &direction_y)?
+                    .scale(&radial_scale)?,
+            };
+            let radius_squared_denominator =
+                common_denominator.multiply(&contact_denominator)?.scale(
+                    &(&radial_distance
+                        * &radial_distance
+                        * &normal_denominator
+                        * &normal_denominator),
+                )?;
+            let negative_v_dot = v_dot_d.scale(&Real::from(-1_i8))?;
+            let point_minus_start = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: negative_v_dot.clone(),
+                candidate: rational_pair(one)?,
+            };
+            let point_minus_end = BezierSelectedRadialCircleChordNestedExpression2 {
+                retained: negative_v_dot
+                    .multiply_rational(&bw)?
+                    .subtract(&rational_pair(contact_denominator.multiply(&d_squared)?)?)?,
+                candidate: rational_pair(bw)?,
+            };
+            Some(BezierSelectedRadialCircleChordSystem2 {
+                retained: BezierSelectedRadialCircleChordParameterMapSystem2 {
+                    pair_map,
+                    pair_branch,
+                    pair_discriminant,
+                    chord_discriminant,
+                    diameter,
+                    radius_squared_denominator,
+                    common_denominator,
+                    center_x: center_x_numerator,
+                    center_y: center_y_numerator,
+                    point_x,
+                    point_y,
+                    first_parameter: start.parameter,
+                    second_parameter: end.parameter,
+                },
+                selected_half_plane,
+                point_minus_start,
+                point_minus_end,
+            })
+        })();
+        Ok(system.map_or(
+            Classification::Uncertain(UncertaintyReason::Unsupported),
+            Classification::Decided,
+        ))
+    }
+
     fn axis_chord_system_contact_minus_support_sign(
         system: &BezierAlgebraicCuspSemicircleChordSystem2,
         branch: i8,
@@ -12685,6 +13067,147 @@ impl BezierAlgebraicCuspSemicircle2 {
                 semicircle: self.clone(),
                 chord: chord.clone(),
                 system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(
+                    system.retained,
+                ),
+                policy: *policy,
+            }),
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        ))
+    }
+
+    /// Intersects a pair-radial selected circle with a finite chord whose
+    /// support is authored by two independent algebraic endpoint fields.
+    /// The circle-pair radical and the line-contact radical remain a two-level
+    /// tower over the four selected roots; every classification below replays
+    /// that tower exactly under the caller's predicate policy.
+    fn selected_radial_chord_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        let system = match self.selected_radial_chord_system(chord, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let discriminant_sign = match selected_radial_chord_pair_expression_sign(
+            &system.retained,
+            &system.retained.chord_discriminant,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let branches: &[i8] = match discriminant_sign {
+            RealSign::Negative => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
+                ));
+            }
+            RealSign::Zero => &[0],
+            RealSign::Positive => &[-1, 1],
+        };
+        let nested_sign = |expression, branch| {
+            selected_radial_chord_nested_expression_sign(
+                &system.retained,
+                expression,
+                branch,
+                policy,
+            )
+        };
+        let mut contacts = Vec::with_capacity(branches.len());
+        for &branch in branches {
+            let selected = match nested_sign(&system.selected_half_plane, branch)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let cusp_location = match selected {
+                RealSign::Negative => continue,
+                RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                RealSign::Zero => match nested_sign(&system.retained.diameter, branch)? {
+                    Classification::Decided(RealSign::Positive) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    }
+                    Classification::Decided(RealSign::Negative) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::End
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "nonzero pair-radial semicircle had an indeterminate chord endpoint"
+                                .into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            };
+            let start_sign = match nested_sign(&system.point_minus_start, branch)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let end_sign = match nested_sign(&system.point_minus_end, branch)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
+                continue;
+            }
+            let chord_location = match (start_sign, end_sign) {
+                (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            };
+            let tangent_cross_sign = match branch {
+                0 => RealSign::Zero,
+                -1 => {
+                    if self.is_clockwise() {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    }
+                }
+                1 => {
+                    if self.is_clockwise() {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    }
+                }
+                _ => unreachable!("circle/chord support has at most two branches"),
+            };
+            contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
+                branch,
+                selected_fiber_parameter: None,
+                cusp_location,
+                chord_location,
+                tangent_cross_sign,
+            });
+        }
+        if contacts.is_empty() {
+            return Ok(Classification::Decided(
+                BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
+            ));
+        }
+        let parameter_map = BezierAlgebraicCuspSemicircleChordParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicircleChordParameterMapData2 {
+                semicircle: self.clone(),
+                chord: chord.clone(),
+                system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(
                     system.retained,
                 ),
                 policy: *policy,
@@ -13307,6 +13830,20 @@ impl BezierAlgebraicCuspSemicircle2 {
             .then(|| chord.strict_provenance_support_line(policy))
             .flatten();
         let Some(line) = exact_finite_line.or(certified_support_line) else {
+            if self.uses_selected_radial_frame() {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "selected-radial-algebraic-support",
+                );
+                return match self.selected_radial_chord_intersections(chord, policy)? {
+                    Classification::Decided(intersections) => {
+                        self.retain_chord_intersections(chord, intersections, policy)
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
+            }
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -17876,6 +18413,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         match &self.data.system {
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(system) => Some(system),
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(_)
             | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => None,
         }
     }
@@ -17889,6 +18427,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     ) -> Option<&BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2> {
         match &self.data.system {
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(_)
             | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => None,
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(system) => Some(system),
         }
@@ -17902,8 +18441,58 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 Some(system)
             }
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(_)
             | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_) => None,
         }
+    }
+
+    fn selected_radial_system(
+        &self,
+    ) -> Option<&BezierSelectedRadialCircleChordParameterMapSystem2> {
+        match &self.data.system {
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(system) => {
+                Some(system)
+            }
+            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_)
+            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_) => None,
+        }
+    }
+
+    fn selected_radial_nested_sign(
+        &self,
+        expression: &BezierSelectedRadialCircleChordNestedExpression2,
+        branch: i8,
+    ) -> CurveResult<Classification<RealSign>> {
+        let system = self.selected_radial_system().ok_or_else(|| {
+            CurveError::Topology(
+                "a non-radial cusp/chord map used the pair-radial predicate kernel".into(),
+            )
+        })?;
+        selected_radial_chord_nested_expression_sign(system, expression, branch, &self.data.policy)
+    }
+
+    fn selected_radial_derived_coordinate_expression(
+        &self,
+        axis: Axis2,
+        radial_scale: &Real,
+        translation: &Real,
+    ) -> Option<BezierSelectedRadialCircleChordNestedExpression2> {
+        let system = self.selected_radial_system()?;
+        let (point, center) = match axis {
+            Axis2::X => (&system.point_x, &system.center_x),
+            Axis2::Y => (&system.point_y, &system.center_y),
+        };
+        let center =
+            BezierSelectedRadialCircleChordNestedExpression2::from_retained(center.clone())?;
+        let translated = BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+            system.common_denominator.scale(translation)?,
+        )?;
+        BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
+            (point, radial_scale),
+            (&center, &(Real::one() - radial_scale)),
+            (&translated, &Real::one()),
+        ])
     }
 
     fn trivariate_radical_sign(
@@ -18079,6 +18668,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         if self.oblique_system().is_some() {
             return self.oblique_contact_order_to_real(contact, parameter);
         }
+        if self.selected_radial_system().is_some() {
+            return self.selected_radial_contact_order_to_real(contact, parameter);
+        }
         let Some(system) = self.axis_system() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -18131,6 +18723,65 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             }
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         })
+    }
+
+    fn selected_radial_contact_order_to_real(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        parameter: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
+            contact.cusp_location,
+            parameter,
+            &self.data.policy,
+        ) {
+            return Ok(order);
+        }
+        match in_closed_unit_interval(parameter, &self.data.policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let system = self.selected_radial_system().ok_or_else(|| {
+            CurveError::Topology("a non-radial map used pair-radial parameter order".into())
+        })?;
+        let one_minus = Real::one() - parameter;
+        let denominator = &one_minus * &one_minus + parameter * parameter;
+        match real_sign(&denominator, &self.data.policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "semicircle parameter-order denominator was not positive".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
+        let Some(predicate) = system.diameter.scale(&denominator).and_then(|diameter| {
+            BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                system
+                    .radius_squared_denominator
+                    .scale(&radial_coefficient)?,
+            )
+            .and_then(|radius| diameter.subtract(&radius))
+        }) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(
+            match self.selected_radial_nested_sign(&predicate, contact.branch)? {
+                // The normalized diameter coordinate decreases strictly with u.
+                Classification::Decided(RealSign::Positive) => {
+                    Classification::Decided(std::cmp::Ordering::Less)
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     fn oblique_contact_order_to_real(
@@ -18277,6 +18928,29 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     RealSign::Positive => std::cmp::Ordering::Greater,
                 }));
         }
+        if let Some(system) = self.selected_radial_system() {
+            let expression = match axis {
+                Axis2::X => &system.point_x,
+                Axis2::Y => &system.point_y,
+            };
+            let Some(predicate) = BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                system.common_denominator.scale(value).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a pair-radial coordinate predicate exceeded its tensor budget".into(),
+                    )
+                })?,
+            )
+            .and_then(|offset| expression.subtract(&offset)) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
         let Some(system) = self.axis_system() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -18337,6 +19011,29 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     &BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical },
                     contact.branch,
                 )?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
+        if let Some(system) = self.selected_radial_system() {
+            let Some(predicate) =
+                BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
+                    (&system.point_x, x_factor),
+                    (&system.point_y, y_factor),
+                ])
+                .and_then(|point| {
+                    BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                        system.common_denominator.scale(value)?,
+                    )
+                    .and_then(|offset| point.subtract(&offset))
+                })
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .selected_radial_nested_sign(&predicate, contact.branch)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -18426,6 +19123,26 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         translation: &Real,
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if let Some(system) = self.selected_radial_system() {
+            let Some(predicate) = self
+                .selected_radial_derived_coordinate_expression(axis, radial_scale, translation)
+                .and_then(|point| {
+                    BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                        system.common_denominator.scale(value)?,
+                    )
+                    .and_then(|offset| point.subtract(&offset))
+                })
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
         if let Some(system) = self.oblique_system() {
             let (point, center) = match axis {
                 Axis2::X => (&system.point_x, &system.center_x),
@@ -18481,6 +19198,43 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         y_factor: &Real,
         value: &Real,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        if let Some(system) = self.selected_radial_system() {
+            let (Some(x), Some(y)) = (
+                self.selected_radial_derived_coordinate_expression(
+                    Axis2::X,
+                    radial_scale,
+                    translation_x,
+                ),
+                self.selected_radial_derived_coordinate_expression(
+                    Axis2::Y,
+                    radial_scale,
+                    translation_y,
+                ),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(predicate) =
+                BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
+                    (&x, x_factor),
+                    (&y, y_factor),
+                ])
+                .and_then(|point| {
+                    BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                        system.common_denominator.scale(value)?,
+                    )
+                    .and_then(|offset| point.subtract(&offset))
+                })
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .selected_radial_nested_sign(&predicate, contact.branch)?
+                .map(|sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+        }
         if let Some(system) = self.oblique_system() {
             let point_x_factor = radial_scale * x_factor;
             let point_y_factor = radial_scale * y_factor;
@@ -18552,6 +19306,41 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         second_translation_x: &Real,
         second_translation_y: &Real,
     ) -> CurveResult<Classification<bool>> {
+        if self.selected_radial_system().is_some() {
+            let difference = |axis, first_translation, second_translation| {
+                self.selected_radial_derived_coordinate_expression(
+                    axis,
+                    first_radial_scale,
+                    first_translation,
+                )?
+                .subtract(&self.selected_radial_derived_coordinate_expression(
+                    axis,
+                    second_radial_scale,
+                    second_translation,
+                )?)
+            };
+            let (Some(x), Some(y)) = (
+                difference(Axis2::X, first_translation_x, second_translation_x),
+                difference(Axis2::Y, first_translation_y, second_translation_y),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let x = self.selected_radial_nested_sign(&x, contact.branch)?;
+            let y = self.selected_radial_nested_sign(&y, contact.branch)?;
+            return Ok(match (x, y) {
+                (
+                    Classification::Decided(RealSign::Zero),
+                    Classification::Decided(RealSign::Zero),
+                ) => Classification::Decided(true),
+                (Classification::Decided(RealSign::Negative | RealSign::Positive), _)
+                | (_, Classification::Decided(RealSign::Negative | RealSign::Positive)) => {
+                    Classification::Decided(false)
+                }
+                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                    Classification::Uncertain(reason)
+                }
+            });
+        }
         if let Some(system) = self.oblique_system() {
             let radial_difference = first_radial_scale - second_radial_scale;
             let center_difference = -radial_difference.clone();
@@ -18673,6 +19462,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 refinement_steps,
             );
         }
+        if let Some(system) = self.selected_radial_system() {
+            return self.selected_radial_expressions_bounds_refined(
+                contact,
+                &system.point_x,
+                &system.point_y,
+                refinement_steps,
+            );
+        }
         let Some(system) = self.axis_system() else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
@@ -18687,6 +19484,28 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         translation_y: &Real,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
+        if self.selected_radial_system().is_some() {
+            let (Some(point_x), Some(point_y)) = (
+                self.selected_radial_derived_coordinate_expression(
+                    Axis2::X,
+                    radial_scale,
+                    translation_x,
+                ),
+                self.selected_radial_derived_coordinate_expression(
+                    Axis2::Y,
+                    radial_scale,
+                    translation_y,
+                ),
+            ) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            return self.selected_radial_expressions_bounds_refined(
+                contact,
+                &point_x,
+                &point_y,
+                refinement_steps,
+            );
+        }
         if self.oblique_system().is_some() {
             let (Some(point_x), Some(point_y)) = (
                 self.oblique_derived_coordinate_expression(Axis2::X, radial_scale, translation_x),
@@ -18707,6 +19526,92 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let point_x = self.derived_coordinate_expression(Axis2::X, radial_scale, translation_x);
         let point_y = self.derived_coordinate_expression(Axis2::Y, radial_scale, translation_y);
         self.expressions_bounds_refined(contact, &point_x, &point_y, refinement_steps)
+    }
+
+    fn selected_radial_expressions_bounds_refined(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleChordContact2,
+        point_x: &BezierSelectedRadialCircleChordNestedExpression2,
+        point_y: &BezierSelectedRadialCircleChordNestedExpression2,
+        refinement_steps: usize,
+    ) -> Classification<Aabb2> {
+        let Some(system) = self.selected_radial_system() else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let parameters = [
+            &system.pair_map.data.first_cusp_parameter,
+            &system.pair_map.data.second_cusp_parameter,
+            &system.first_parameter,
+            &system.second_parameter,
+        ]
+        .map(|parameter| {
+            BezierAlgebraicChordRealInterval2::from_parameter(
+                &parameter
+                    .clone()
+                    .refined_isolating_interval(refinement_steps, &self.data.policy),
+            )
+        });
+        let evaluate = |polynomial: &QuadrivariatePolynomial2| {
+            BezierAlgebraicChordRealInterval2::evaluate_quadrivariate_power_basis(
+                polynomial,
+                [
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    &parameters[3],
+                ],
+                &self.data.policy,
+            )
+        };
+        let Some(pair_discriminant) = evaluate(&system.pair_discriminant)
+            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+        else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let branch_interval = |value: BezierAlgebraicChordRealInterval2, branch: i8| {
+            if branch < 0 {
+                BezierAlgebraicChordRealInterval2 {
+                    lower: -value.upper,
+                    upper: -value.lower,
+                }
+            } else if branch == 0 {
+                BezierAlgebraicChordRealInterval2 {
+                    lower: Real::zero(),
+                    upper: Real::zero(),
+                }
+            } else {
+                value
+            }
+        };
+        let pair_value = |expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+            let rational = evaluate(&expression.rational)?;
+            let radical =
+                evaluate(&expression.radical)?.multiply(&pair_discriminant, &self.data.policy)?;
+            Some(rational.add(&branch_interval(radical, system.pair_branch)))
+        };
+        let Some(chord_discriminant) = pair_value(&system.chord_discriminant)
+            .and_then(|value| value.nonnegative_square_root(&self.data.policy))
+        else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let Some(common_denominator) = evaluate(&system.common_denominator) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let coordinate = |expression: &BezierSelectedRadialCircleChordNestedExpression2| {
+            let retained = pair_value(&expression.retained)?;
+            let candidate = pair_value(&expression.candidate)?
+                .multiply(&chord_discriminant, &self.data.policy)?;
+            retained
+                .add(&branch_interval(candidate, contact.branch))
+                .divide(&common_denominator, &self.data.policy)
+        };
+        let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        Classification::Decided(Aabb2::new_unchecked(
+            Point2::new(x.lower, y.lower),
+            Point2::new(x.upper, y.upper),
+        ))
     }
 
     fn expressions_bounds_refined(
@@ -20306,6 +21211,76 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         let Some((map, contact)) = self.data.source.chord_map_contact() else {
             return Ok(Classification::Decided(None));
         };
+        if let Some(system) = map.selected_radial_system() {
+            // Reuse |P-C|^2=r0^2 exactly, as in the trivariate carrier below,
+            // but retain both authored radicals:
+            //   D^2(s^2 r0^2+|T|^2-r^2)+2sD T.(P-C).
+            let Some(center_x) = BezierSelectedRadialCircleChordNestedExpression2::from_retained(
+                system.center_x.clone(),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(center_y) = BezierSelectedRadialCircleChordNestedExpression2::from_retained(
+                system.center_y.clone(),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let (Some(delta_x), Some(delta_y)) = (
+                system.point_x.subtract(&center_x),
+                system.point_y.subtract(&center_y),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(dot) =
+                BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
+                    (&delta_x, &self.data.translation_x),
+                    (&delta_y, &self.data.translation_y),
+                ])
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let source_radius_squared =
+                map.data.semicircle.radial_distance() * map.data.semicircle.radial_distance();
+            let target_radius_squared = semicircle.radial_distance() * semicircle.radial_distance();
+            let scale_squared = &self.data.radial_scale * &self.data.radial_scale;
+            let translation_squared = &self.data.translation_x * &self.data.translation_x
+                + &self.data.translation_y * &self.data.translation_y;
+            let constant =
+                scale_squared * source_radius_squared + translation_squared - target_radius_squared;
+            let Some(denominator_squared) = system
+                .common_denominator
+                .multiply(&system.common_denominator)
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(constant) = BezierSelectedRadialCircleChordNestedExpression2::from_rational(
+                denominator_squared.scale(&constant).ok_or_else(|| {
+                    CurveError::Topology(
+                        "a pair-radial incidence exceeded its tensor budget".into(),
+                    )
+                })?,
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let twice_scale = Real::from(2_i8) * &self.data.radial_scale;
+            let Some(cross) = dot
+                .multiply_rational(&system.common_denominator)
+                .and_then(|cross| cross.scale(&twice_scale))
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(incidence) =
+                BezierSelectedRadialCircleChordNestedExpression2::linear_combination(&[
+                    (&constant, &Real::one()),
+                    (&cross, &Real::one()),
+                ])
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(map
+                .selected_radial_nested_sign(&incidence, contact.branch)?
+                .map(Some));
+        }
         if let Some(system) = map.oblique_system() {
             // The source contact P already satisfies |P-C|^2 = r0^2.
             // For Q = C + s(P-C) + T, reuse that exact selected-root
@@ -23585,7 +24560,6 @@ struct QuadrivariatePolynomial2 {
 
 const MAX_QUADRIVARIATE_CONTROLS: usize = 131_072;
 
-#[allow(dead_code)] // The pair-radial chord builder consumes the complete algebra below.
 impl QuadrivariatePolynomial2 {
     fn try_new(dimensions: [usize; 4], coefficients: Vec<Real>) -> Option<Self> {
         let count = dimensions
@@ -27591,7 +28565,6 @@ fn trivariate_parameter_triple_sign_by_refinement(
     }
 }
 
-#[allow(dead_code)]
 fn quadrivariate_structurally_zero(polynomial: &QuadrivariatePolynomial2) -> bool {
     polynomial
         .coefficients
@@ -27599,7 +28572,6 @@ fn quadrivariate_structurally_zero(polynomial: &QuadrivariatePolynomial2) -> boo
         .all(|coefficient| real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero))
 }
 
-#[allow(dead_code)]
 fn quadrivariate_reduce_axis_mod_defining(
     polynomial: QuadrivariatePolynomial2,
     axis: usize,
@@ -27644,7 +28616,6 @@ fn quadrivariate_reduce_axis_mod_defining(
     Some(reduced)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_reduce_selected_root_relations(
     polynomial: &QuadrivariatePolynomial2,
     parameters: [&BezierParameter2; 4],
@@ -27662,7 +28633,6 @@ fn quadrivariate_reduce_selected_root_relations(
     Some(reduced)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_specialize_axis_trivariate(
     polynomial: &QuadrivariatePolynomial2,
     axis: usize,
@@ -27706,7 +28676,6 @@ fn quadrivariate_specialize_axis_trivariate(
     Some((TrivariatePolynomial2 { coefficients }, remaining))
 }
 
-#[allow(dead_code)]
 fn quadrivariate_transform_axis(
     polynomial: &mut QuadrivariatePolynomial2,
     axis: usize,
@@ -27743,7 +28712,6 @@ fn quadrivariate_transform_axis(
     Ok(())
 }
 
-#[allow(dead_code)]
 fn quadrivariate_restrict_to_parameter_box(
     polynomial: &QuadrivariatePolynomial2,
     parameters: [&BezierParameter2; 4],
@@ -27758,7 +28726,6 @@ fn quadrivariate_restrict_to_parameter_box(
     Ok(restricted)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_unit_hypercube_strict_bernstein_sign(
     mut polynomial: QuadrivariatePolynomial2,
 ) -> CurveResult<Option<RealSign>> {
@@ -27784,7 +28751,6 @@ fn quadrivariate_unit_hypercube_strict_bernstein_sign(
     Ok(sign)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_parameter_tuple_bounded_box_sign(
     polynomial: &QuadrivariatePolynomial2,
     parameters: [&BezierParameter2; 4],
@@ -27811,7 +28777,6 @@ fn quadrivariate_parameter_tuple_bounded_box_sign(
     Ok(None)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_selected_fourth_axis_has_box_root(
     polynomial: &QuadrivariatePolynomial2,
     first: &BezierParameter2,
@@ -27847,7 +28812,6 @@ fn quadrivariate_selected_fourth_axis_has_box_root(
     Ok(false)
 }
 
-#[allow(dead_code)]
 fn quadrivariate_fourth_axis_selected_root(
     polynomial: &QuadrivariatePolynomial2,
     first: &BezierParameter2,
@@ -27882,16 +28846,22 @@ fn quadrivariate_fourth_axis_selected_root(
             }
         }
     }
-    if coefficients.len() == 1
-        && trivariate_parameter_triple_sign_by_refinement(
-            &coefficients[0],
-            first,
-            second,
-            third,
-            &strict,
-        )? == Classification::Decided(RealSign::Zero)
-    {
-        return Ok(Classification::Decided(true));
+    if coefficients.len() == 1 {
+        return Ok(
+            match trivariate_parameter_triple_sign_by_refinement(
+                &coefficients[0],
+                first,
+                second,
+                third,
+                &strict,
+            )? {
+                Classification::Decided(RealSign::Zero) => Classification::Decided(true),
+                Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                    Classification::Decided(false)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        );
     }
     let polynomial = QuadrivariatePolynomial2::from_fourth_axis_coefficients(&coefficients)
         .ok_or_else(|| {
@@ -27903,6 +28873,79 @@ fn quadrivariate_fourth_axis_selected_root(
             return Ok(Classification::Uncertain(reason));
         }
     };
+
+    // The quotient-ring reduction makes quadratic selected roots linear on
+    // this axis.  Evaluate the linear/constraint resultant directly instead
+    // of interpolating a generic determinant: for P=A+B*d and
+    // Q=sum(q_i*d^i), Res(P,Q)=sum(q_i*(-A)^i*B^(n-i)).
+    // This is both smaller and dramatically shallower in the canonical Real
+    // DAG, while selected-root box replay below still distinguishes Q's other
+    // roots from the authored fourth root.
+    if coefficients.len() == 2 {
+        let degree = constraint.len().saturating_sub(1);
+        let one = TrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0)
+            .expect("a constant trivariate polynomial fits the tensor budget");
+        let mut constant_powers = Vec::with_capacity(degree + 1);
+        let mut linear_powers = Vec::with_capacity(degree + 1);
+        constant_powers.push(one.clone());
+        linear_powers.push(one.clone());
+        for power in 1..=degree {
+            let Some(constant) = constant_powers[power - 1].multiply(&coefficients[0]) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let Some(linear) = linear_powers[power - 1].multiply(&coefficients[1]) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            constant_powers.push(constant);
+            linear_powers.push(linear);
+        }
+        let mut resultant = one.scale(&Real::zero()).expect("a zero tensor fits");
+        for (power, coefficient) in constraint.iter().enumerate() {
+            let signed_coefficient = if power % 2 == 0 {
+                coefficient.clone()
+            } else {
+                -coefficient.clone()
+            };
+            let Some(term) = constant_powers[power]
+                .multiply(&linear_powers[degree - power])
+                .and_then(|term| term.scale(&signed_coefficient))
+                .and_then(|term| resultant.add(&term))
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            resultant = term;
+        }
+        match trivariate_parameter_triple_sign_by_refinement(
+            &resultant, first, second, third, &strict,
+        )? {
+            Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                return Ok(Classification::Decided(false));
+            }
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        if quadrivariate_selected_fourth_axis_has_box_root(
+            &polynomial,
+            first,
+            second,
+            third,
+            fourth,
+        )? {
+            return Ok(Classification::Decided(true));
+        }
+        if quadrivariate_parameter_tuple_bounded_box_sign(
+            &polynomial,
+            [first, second, third, fourth],
+            512,
+        )?
+        .is_some()
+        {
+            return Ok(Classification::Decided(false));
+        }
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
     let config = CurveIntersectionResultantConfig {
         min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -28016,7 +29059,6 @@ fn quadrivariate_fourth_axis_selected_root(
     ))
 }
 
-#[allow(dead_code)]
 fn quadrivariate_parameter_tuple_sign_by_refinement(
     polynomial: &QuadrivariatePolynomial2,
     parameters: [&BezierParameter2; 4],
@@ -28047,7 +29089,7 @@ fn quadrivariate_parameter_tuple_sign_by_refinement(
     if quadrivariate_structurally_zero(&reduced) {
         return Ok(Classification::Decided(RealSign::Zero));
     }
-    if let Some(sign) = quadrivariate_parameter_tuple_bounded_box_sign(&reduced, parameters, 8)? {
+    if let Some(sign) = quadrivariate_parameter_tuple_bounded_box_sign(&reduced, parameters, 512)? {
         return Ok(Classification::Decided(sign));
     }
     match quadrivariate_fourth_axis_selected_root(
@@ -28064,15 +29106,152 @@ fn quadrivariate_parameter_tuple_sign_by_refinement(
         Classification::Decided(false) => {}
         Classification::Uncertain(_) => {}
     }
-    if let Some(sign) = quadrivariate_parameter_tuple_bounded_box_sign(&reduced, parameters, 512)? {
-        return Ok(Classification::Decided(sign));
-    }
     if policy.permits_approximate_512() {
         policy.observe_approximate_512();
         Ok(Classification::Decided(RealSign::Zero))
     } else {
         Ok(Classification::Uncertain(UncertaintyReason::Predicate))
     }
+}
+
+fn selected_radial_chord_parameters(
+    system: &BezierSelectedRadialCircleChordParameterMapSystem2,
+) -> [&BezierParameter2; 4] {
+    [
+        &system.pair_map.data.first_cusp_parameter,
+        &system.pair_map.data.second_cusp_parameter,
+        &system.first_parameter,
+        &system.second_parameter,
+    ]
+}
+
+fn selected_radial_chord_pair_expression_sign(
+    system: &BezierSelectedRadialCircleChordParameterMapSystem2,
+    expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let parameters = selected_radial_chord_parameters(system);
+    let rational = match quadrivariate_parameter_tuple_sign_by_refinement(
+        &expression.rational,
+        parameters,
+        policy,
+    )? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if system.pair_branch == 0 {
+        return Ok(Classification::Decided(rational));
+    }
+    let radical = match quadrivariate_parameter_tuple_sign_by_refinement(
+        &expression.radical,
+        parameters,
+        policy,
+    )? {
+        Classification::Decided(sign) if system.pair_branch < 0 => match sign {
+            RealSign::Negative => RealSign::Positive,
+            RealSign::Zero => RealSign::Zero,
+            RealSign::Positive => RealSign::Negative,
+        },
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    match (rational, radical) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
+            return Ok(Classification::Decided(sign));
+        }
+        (first, second) if first == second => {
+            return Ok(Classification::Decided(first));
+        }
+        _ => {}
+    }
+    let radical_squared = expression
+        .radical
+        .multiply(&expression.radical)
+        .ok_or_else(|| {
+            CurveError::Topology("a pair-radical magnitude exceeded its tensor budget".into())
+        })?;
+    let Some(magnitude) = QuadrivariatePolynomial2::sum_products(&[
+        (&expression.rational, &expression.rational, false),
+        (&radical_squared, &system.pair_discriminant, true),
+    ]) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    Ok(
+        match quadrivariate_parameter_tuple_sign_by_refinement(&magnitude, parameters, policy)? {
+            Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
+            Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
+            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
+}
+
+fn selected_radial_chord_nested_expression_sign(
+    system: &BezierSelectedRadialCircleChordParameterMapSystem2,
+    expression: &BezierSelectedRadialCircleChordNestedExpression2,
+    branch: i8,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    debug_assert!((-1..=1).contains(&branch));
+    let retained =
+        match selected_radial_chord_pair_expression_sign(system, &expression.retained, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if branch == 0 {
+        return Ok(Classification::Decided(retained));
+    }
+    let candidate =
+        match selected_radial_chord_pair_expression_sign(system, &expression.candidate, policy)? {
+            Classification::Decided(sign) if branch < 0 => match sign {
+                RealSign::Negative => RealSign::Positive,
+                RealSign::Zero => RealSign::Zero,
+                RealSign::Positive => RealSign::Negative,
+            },
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    match (retained, candidate) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
+            return Ok(Classification::Decided(sign));
+        }
+        (first, second) if first == second => {
+            return Ok(Classification::Decided(first));
+        }
+        _ => {}
+    }
+    let Some(magnitude) = expression
+        .retained
+        .square(&system.pair_discriminant)
+        .and_then(|retained_squared| {
+            expression
+                .candidate
+                .square(&system.pair_discriminant)
+                .and_then(|candidate_squared| {
+                    candidate_squared
+                        .multiply(&system.chord_discriminant, &system.pair_discriminant)
+                        .and_then(|candidate_term| retained_squared.subtract(&candidate_term))
+                })
+        })
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    Ok(
+        match selected_radial_chord_pair_expression_sign(system, &magnitude, policy)? {
+            Classification::Decided(RealSign::Positive) => Classification::Decided(retained),
+            Classification::Decided(RealSign::Negative) => Classification::Decided(candidate),
+            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
 }
 
 fn algebraic_point_oriented_line_side_distinct_fields(
@@ -36141,6 +37320,43 @@ impl BezierAlgebraicChordRealInterval2 {
                 slice = slice.add(&Self::evaluate_power_basis(row, third, policy)?);
             }
             value = value.add(&slice);
+        }
+        Some(value)
+    }
+
+    fn evaluate_quadrivariate_power_basis(
+        polynomial: &QuadrivariatePolynomial2,
+        parameters: [&Self; 4],
+        policy: &CurveContext,
+    ) -> Option<Self> {
+        let [first, second, third, fourth] = parameters;
+        let [first_count, second_count, third_count, fourth_count] = polynomial.dimensions;
+        let zero = || Self {
+            lower: Real::zero(),
+            upper: Real::zero(),
+        };
+        let mut value = zero();
+        for first_power in (0..first_count).rev() {
+            value = value.multiply(first, policy)?;
+            let mut first_slice = zero();
+            for second_power in (0..second_count).rev() {
+                first_slice = first_slice.multiply(second, policy)?;
+                let mut second_slice = zero();
+                for third_power in (0..third_count).rev() {
+                    second_slice = second_slice.multiply(third, policy)?;
+                    let start = QuadrivariatePolynomial2::flat_index(
+                        polynomial.dimensions,
+                        [first_power, second_power, third_power, 0],
+                    );
+                    second_slice = second_slice.add(&Self::evaluate_power_basis(
+                        &polynomial.coefficients[start..start + fourth_count],
+                        fourth,
+                        policy,
+                    )?);
+                }
+                first_slice = first_slice.add(&second_slice);
+            }
+            value = value.add(&first_slice);
         }
         Some(value)
     }
@@ -69761,6 +70977,317 @@ mod conversion_tests {
         };
         assert!(circle.uses_selected_radial_frame());
         circle
+    }
+
+    #[test]
+    fn pair_radial_circle_intersects_independent_field_chord_exactly() {
+        let selected_parameter = |denominator: i8| {
+            let constant = -(Real::one() / Real::from(denominator)).unwrap();
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![constant, Real::zero(), Real::one()])
+            else {
+                panic!("the independent chord root must remain algebraic");
+            };
+            parameter
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start_parameter = selected_parameter(5);
+            let end_parameter = selected_parameter(7);
+            let point =
+                |parameter: &BezierAlgebraicParameter2, x: Vec<Real>, y: Vec<Real>, label| {
+                    RationalBezierIntersectionPointEvidence2::Algebraic(
+                        RationalBezierAlgebraicPointImage2::from_retained_expression(
+                            parameter.clone(),
+                            parameter_representation(parameter, &policy),
+                            x,
+                            y,
+                            vec![Real::one()],
+                            label,
+                        ),
+                    )
+                };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                point(
+                    &start_parameter,
+                    vec![Real::from(-3_i8), Real::one()],
+                    vec![Real::from(-3_i8)],
+                    "pair-radial independent chord start",
+                ),
+                point(
+                    &end_parameter,
+                    vec![Real::from(3_i8)],
+                    vec![Real::from(3_i8), Real::one()],
+                    "pair-radial independent chord end",
+                ),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the independent pair-radial chord must construct");
+            };
+            assert!(chord.certified_axis_direction().is_none());
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(&policy).is_none());
+            let circle = independent_pair_radial_unit_circle(&policy);
+
+            for (carrier, expected_tangent_sign) in [
+                (chord.clone(), RealSign::Positive),
+                (chord.reversed(), RealSign::Negative),
+            ] {
+                let result = circle.chord_intersections(&carrier, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    panic!("the four-field pair-radial chord must complete: {result:?}");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("the selected semicircle must retain one contact: {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign, expected_tangent_sign);
+                assert_eq!(
+                    contact
+                        .cusp_parameter
+                        .order_to_real(&Real::zero(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .cusp_parameter
+                        .order_to_real(&Real::one(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
+                    &contact.point
+                else {
+                    panic!("the four-field contact must retain its exact chord map");
+                };
+                for axis in [Axis2::X, Axis2::Y] {
+                    assert_eq!(
+                        point
+                            .axis_coordinate_order_to_real(axis, &Real::from(-1_i8), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        point
+                            .axis_coordinate_order_to_real(axis, &Real::zero(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                }
+                assert!(matches!(
+                    point.conservative_bounds_refined(16, &policy),
+                    Classification::Decided(_)
+                ));
+                if expected_tangent_sign == RealSign::Positive && policy == CurveContext::STRICT {
+                    let derived = point
+                        .radial_scaled(Real::one())
+                        .translated(&Real::from(10_i8), &Real::from(-7_i8));
+                    assert_eq!(
+                        derived
+                            .concentric_circle_incidence_sign(&circle, &policy)
+                            .unwrap(),
+                        Classification::Decided(Some(RealSign::Positive)),
+                    );
+                    assert_eq!(
+                        derived
+                            .axis_coordinate_order_to_real(Axis2::X, &Real::from(9_i8), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                    );
+                    assert_eq!(
+                        derived
+                            .axis_coordinate_order_to_real(Axis2::Y, &Real::from(-7_i8), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less),
+                    );
+                    assert!(matches!(
+                        derived.conservative_bounds_refined(16, &policy),
+                        Classification::Decided(_)
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn pair_radial_circle_retains_independent_field_chord_tangency() {
+        let selected_parameter = |denominator: i8| {
+            let constant = -(Real::one() / Real::from(denominator)).unwrap();
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![constant, Real::zero(), Real::one()])
+            else {
+                panic!("the tangent endpoint root must remain algebraic");
+            };
+            parameter
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = selected_parameter(2);
+            let second = selected_parameter(7);
+            let point =
+                |parameter: &BezierAlgebraicParameter2, x: Vec<Real>, y: Vec<Real>, label| {
+                    RationalBezierIntersectionPointEvidence2::Algebraic(
+                        RationalBezierAlgebraicPointImage2::from_retained_expression(
+                            parameter.clone(),
+                            parameter_representation(parameter, &policy),
+                            x,
+                            y,
+                            vec![Real::one()],
+                            label,
+                        ),
+                    )
+                };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                point(
+                    &first,
+                    vec![Real::zero(), Real::from(3_i8)],
+                    vec![Real::zero()],
+                    "pair-radial tangent chord start",
+                ),
+                point(
+                    &second,
+                    vec![Real::zero()],
+                    vec![Real::zero(), Real::from(-3_i8)],
+                    "pair-radial tangent chord end",
+                ),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the independent tangent chord must construct");
+            };
+            assert!(chord.certified_axis_direction().is_none());
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(&policy).is_none());
+            let circle = independent_pair_radial_unit_circle(&policy);
+            let expected = Point2::new(
+                (Real::from(2_i8).sqrt().unwrap() / Real::from(3_i8)).unwrap(),
+                -(Real::from(7_i8).sqrt().unwrap() / Real::from(3_i8)).unwrap(),
+            );
+
+            for carrier in [chord.clone(), chord.reversed()] {
+                let result = circle.chord_intersections(&carrier, &policy).unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    panic!("the exact four-field tangency must complete: {result:?}");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("the tangent support must retain one contact: {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign, RealSign::Zero);
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    contact.point.same_point(
+                        &RationalBezierIntersectionPointEvidence2::Exact(expected.clone()),
+                        &policy,
+                    ),
+                    Classification::Decided(true),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords() {
+        let selected_parameter = |denominator: i8| {
+            let constant = -(Real::one() / Real::from(denominator)).unwrap();
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![constant, Real::zero(), Real::one()])
+            else {
+                panic!("the chord endpoint root must remain algebraic");
+            };
+            parameter
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = selected_parameter(5);
+            let second = selected_parameter(7);
+            let point =
+                |parameter: &BezierAlgebraicParameter2, x: Vec<Real>, y: Vec<Real>, label| {
+                    RationalBezierIntersectionPointEvidence2::Algebraic(
+                        RationalBezierAlgebraicPointImage2::from_retained_expression(
+                            parameter.clone(),
+                            parameter_representation(parameter, &policy),
+                            x,
+                            y,
+                            vec![Real::one()],
+                            label,
+                        ),
+                    )
+                };
+            let chord = |start_x, start_y, end_x, end_y, start_label, end_label| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    point(&first, start_x, start_y, start_label),
+                    point(&second, end_x, end_y, end_label),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the four-field rejection chord must construct");
+                };
+                assert!(chord.exact_line().is_none());
+                assert!(chord.strict_provenance_support_line(&policy).is_none());
+                chord
+            };
+            let disjoint = chord(
+                vec![Real::from(-3_i8), Real::one()],
+                vec![Real::from(3_i8)],
+                vec![Real::from(3_i8)],
+                vec![Real::from(3_i8), Real::one()],
+                "pair-radial disjoint chord start",
+                "pair-radial disjoint chord end",
+            );
+            let clipped = chord(
+                vec![Real::from(3_i8), Real::one()],
+                vec![Real::zero(), Real::one()],
+                vec![Real::from(4_i8)],
+                vec![Real::zero(), Real::one()],
+                "pair-radial clipped chord start",
+                "pair-radial clipped chord end",
+            );
+            let circle = independent_pair_radial_unit_circle(&policy);
+            for carrier in [
+                disjoint.clone(),
+                disjoint.reversed(),
+                clipped.clone(),
+                clipped.reversed(),
+            ] {
+                assert!(matches!(
+                    circle.chord_intersections(&carrier, &policy).unwrap(),
+                    Classification::Decided(
+                        BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts
+                    )
+                ));
+            }
+        }
     }
 
     #[test]
