@@ -9341,6 +9341,18 @@ impl CurveRegion2 {
             }
             (tangent_cross, tangent_dot)
         };
+        Self::retained_fillet_sweep_from_tangent_relation(
+            tangent_cross,
+            tangent_dot,
+            fillet_clockwise,
+        )
+    }
+
+    fn retained_fillet_sweep_from_tangent_relation(
+        tangent_cross: RealSign,
+        tangent_dot: RealSign,
+        fillet_clockwise: bool,
+    ) -> ExactCurveResult<(u8, RealSign, RealSign)> {
         let sweep_halves = match (fillet_clockwise, tangent_cross) {
             (false, RealSign::Positive) | (true, RealSign::Negative) => 1_u8,
             (false, RealSign::Negative) | (true, RealSign::Positive) => 2_u8,
@@ -9727,6 +9739,149 @@ impl CurveRegion2 {
             .collect())
     }
 
+    /// Publishes a fillet whose center is a genuinely two-field selected
+    /// circle-pair contact. The start radial is retained by the fillet circle
+    /// frame and the terminal angular parameter reuses that same pair map;
+    /// neither endpoint requires a reconstructed Cartesian field.
+    fn retained_pair_cusp_fillet_fragments(
+        frame: &RetainedFilletFrame2,
+        fillet: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        companion: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        fillet_clockwise: bool,
+        anchor_cut: &mut CornerTrimCut2,
+        companion_cut: &mut CornerTrimCut2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let relation = frame.anchor_evidence.as_ref().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                CurveFamily2::CircularArc,
+                UncertaintyReason::Predicate,
+            )
+        })?;
+        let mut tangent_cross = relation.cross.ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                CurveFamily2::CircularArc,
+                UncertaintyReason::Predicate,
+            )
+        })?;
+        let tangent_dot = relation.dot.ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                CurveFamily2::CircularArc,
+                UncertaintyReason::Predicate,
+            )
+        })?;
+        if !frame.anchor_is_previous {
+            tangent_cross = exact_sign_reverse(tangent_cross);
+        }
+        let (sweep_halves, tangent_cross, _) = Self::retained_fillet_sweep_from_tangent_relation(
+            tangent_cross,
+            tangent_dot,
+            fillet_clockwise,
+        )?;
+        let terminal_circle = if sweep_halves == 2 {
+            fillet.complementary_half()
+        } else {
+            fillet.clone()
+        };
+        let contact_parameter = if tangent_cross == RealSign::Zero {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+        } else {
+            match terminal_circle
+                .certified_selected_pair_contact_parameter(companion.semicircle(), policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            }
+        };
+        companion_cut.point = match contact_parameter
+            .coincident_point_evidence(&terminal_circle, policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+        anchor_cut.point = match fillet
+            .start_point_evidence(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+
+        let exact_zero =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero());
+        let exact_one =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one());
+        let mut fragments = if sweep_halves == 1 {
+            vec![
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    fillet,
+                    exact_zero,
+                    contact_parameter,
+                    false,
+                    policy,
+                ),
+            ]
+        } else {
+            vec![
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    fillet,
+                    exact_zero.clone(),
+                    exact_one,
+                    false,
+                    policy,
+                ),
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    terminal_circle,
+                    exact_zero,
+                    contact_parameter,
+                    false,
+                    policy,
+                ),
+            ]
+        };
+        if !frame.anchor_is_previous {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed())
+                .collect();
+        }
+        Ok(fragments
+            .into_iter()
+            .map(BezierSplitFragment2::AlgebraicCuspSemicircle)
+            .collect())
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
         previous_fragment: &BezierSplitFragment2,
@@ -9842,6 +9997,18 @@ impl CurveRegion2 {
                     fillet_clockwise,
                     policy,
                 ),
+                RetainedFilletRadialFrame2::SelectedConcentric {
+                    support,
+                    center_parameter,
+                    normal_denominator,
+                } => crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_circle_radial(
+                    support,
+                    center_parameter.clone(),
+                    normal_denominator.clone(),
+                    frame.radial_distance.clone(),
+                    fillet_clockwise,
+                    policy,
+                ),
                 RetainedFilletRadialFrame2::ParallelNormal {
                     center_support,
                     center_parameter,
@@ -9880,6 +10047,21 @@ impl CurveRegion2 {
                     ));
                 }
             };
+            if let (
+                BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
+                RetainedFilletRadialFrame2::SelectedConcentric { .. },
+            ) = (other_fragment, &frame.radial_frame)
+            {
+                return Self::retained_pair_cusp_fillet_fragments(
+                    &frame,
+                    fillet,
+                    companion,
+                    fillet_clockwise,
+                    anchor_cut,
+                    other_cut,
+                    policy,
+                );
+            }
             if let (
                 BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
                 RetainedFilletRadialFrame2::ParallelNormal {
@@ -17010,6 +17192,32 @@ mod tests {
         BezierParameter2::algebraic(parameter)
     }
 
+    fn sqrt_third_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
+        let polynomial = BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1_i8), Real::zero(), Real::from(3_i8)],
+            policy,
+        )
+        .expect("the quadratic parameter polynomial is valid");
+        let Classification::Decided(polynomial) = polynomial else {
+            panic!("the exact polynomial must be decided");
+        };
+        let interval = BezierParameterInterval::try_new(
+            (Real::one() / Real::from(2_i8)).unwrap(),
+            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            policy,
+        )
+        .expect("the isolating interval is valid");
+        let Classification::Decided(interval) = interval else {
+            panic!("the exact interval must be decided");
+        };
+        let parameter = BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+            .expect("sqrt(1/3) has one root in the supplied interval");
+        let Classification::Decided(parameter) = parameter else {
+            panic!("the exact algebraic parameter must be decided");
+        };
+        BezierParameter2::algebraic(parameter)
+    }
+
     #[derive(Clone, Copy)]
     enum SelectedCircleFilletNeighbor2 {
         RationalArc(i8),
@@ -17360,6 +17568,222 @@ mod tests {
                     let replay = filleted
                         .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
                         .expect("the selected-circle pair fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                    assert!(replay.value.intersection().is_empty());
+                }
+            }
+        }
+    }
+
+    fn independent_selected_circle_pair_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let first_parameter = sqrt_half_algebraic_parameter(policy);
+        let second_parameter = sqrt_third_algebraic_parameter(policy);
+        let BezierParameter2::Algebraic(first_parameter) = first_parameter else {
+            panic!("sqrt(1/2) must remain algebraic");
+        };
+        let BezierParameter2::Algebraic(second_parameter) = second_parameter else {
+            panic!("sqrt(1/3) must remain algebraic");
+        };
+        let first_source =
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
+                .expect("the first selected center source is valid");
+        let second_source =
+            RationalBezier2::try_new(vec![p(0, 0), p(0, 1)], vec![Real::one(), Real::one()])
+                .expect("the second selected center source is valid");
+        let first_center = RationalBezierIntersectionPointEvidence2::Algebraic(
+            first_source
+                .point_at_algebraic_parameter(&first_parameter, policy)
+                .expect("the first selected center image is exact"),
+        );
+        let second_center = RationalBezierIntersectionPointEvidence2::Algebraic(
+            second_source
+                .point_at_algebraic_parameter(&second_parameter, policy)
+                .expect("the second selected center image is exact"),
+        );
+        let Classification::Decided(Some(first_circle)) =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                &first_center,
+                (1, 0),
+                Real::one(),
+                false,
+                policy,
+            )
+            .expect("the first selected circle is valid")
+        else {
+            panic!("the first nonzero selected circle must be decided");
+        };
+        let Classification::Decided(Some(second_circle)) =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                &second_center,
+                (0, -1),
+                Real::one(),
+                false,
+                policy,
+            )
+            .expect("the second selected circle is valid")
+        else {
+            panic!("the second nonzero selected circle must be decided");
+        };
+        assert!(
+            first_circle
+                .center_point_image(policy)
+                .expect("the first center image remains exact")
+                .exact_rational_point(&CurveContext::STRICT)
+                .is_none(),
+            "the first support center must retain its selected field"
+        );
+        assert!(
+            second_circle
+                .center_point_image(policy)
+                .expect("the second center image remains exact")
+                .exact_rational_point(&CurveContext::STRICT)
+                .is_none(),
+            "the second support center must retain its independent selected field"
+        );
+        let intersections = match first_circle
+            .pair_intersections(&second_circle, policy)
+            .expect("the independent selected circles have an exact pair relation")
+        {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                panic!("the independent selected-circle contact must be decided: {reason:?}")
+            }
+        };
+        let crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+            mut contacts,
+            parameter_map,
+        } = intersections
+        else {
+            panic!("the independent selected semicircles must meet transversely");
+        };
+        assert_eq!(contacts.len(), 1, "the selected halves retain one contact");
+        let contact = contacts.pop().expect("one pair contact was certified");
+        let first_contact = parameter_map.first_contact_parameter(&contact);
+        let second_contact = parameter_map.second_contact_parameter(&contact);
+        let Classification::Decided(first_fragment) =
+            crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                first_circle.clone(),
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                first_contact,
+                false,
+                policy,
+            )
+            .expect("the first selected contact range is valid")
+        else {
+            panic!("the first selected contact range must be decided");
+        };
+        let Classification::Decided(second_fragment) =
+            crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                second_circle.clone(),
+                second_contact,
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                false,
+                policy,
+            )
+            .expect("the second selected contact range is valid")
+        else {
+            panic!("the second selected contact range must be decided");
+        };
+        let Classification::Decided(first_endpoint) = first_circle
+            .start_point_evidence(policy)
+            .expect("the first selected endpoint is exact")
+        else {
+            panic!("the first selected endpoint must be decided");
+        };
+        let Classification::Decided(second_endpoint) = second_circle
+            .end_point_evidence(policy)
+            .expect("the second selected endpoint is exact")
+        else {
+            panic!("the second selected endpoint must be decided");
+        };
+        let Classification::Decided(closing_chord) =
+            crate::BezierAlgebraicChord2::try_new(second_endpoint, first_endpoint, policy)
+                .expect("the independent selected endpoints define a chord")
+        else {
+            panic!("the independent selected endpoint chord must be decided");
+        };
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicCuspSemicircle(first_fragment),
+            BezierSplitFragment2::AlgebraicCuspSemicircle(second_fragment),
+            BezierSplitFragment2::AlgebraicChord(closing_chord),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the exact fixture reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the independent selected-circle loop closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the independent selected-circle loop has authored topology")
+    }
+
+    #[test]
+    fn independent_selected_circle_pair_fillet_retains_pair_native_circle() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = independent_selected_circle_pair_region(&policy, reversed);
+                let fragments = region.boundary_loops()[0].fragments();
+                let corner = (0..fragments.len())
+                    .find(|index| {
+                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[*index];
+                        matches!(
+                            (previous, next),
+                            (
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            )
+                        )
+                    })
+                    .expect("the fixture retains its independent selected-circle corner");
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the independent selected-circle pair must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(filleted) = result.value else {
+                    panic!(
+                        "the independent selected-circle pair must have one fillet: policy={policy:?}, reversed={reversed}"
+                    );
+                };
+                assert!(
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame()
+                        ))
+                );
+                if !reversed {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the pair-native fillet re-enters the Boolean kernel");
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
                     assert!(replay.value.intersection().is_empty());

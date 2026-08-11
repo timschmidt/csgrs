@@ -3435,6 +3435,15 @@ pub(crate) enum RetainedFilletRadialFrame2 {
         support_center: Point2,
         normal_denominator: Real,
     },
+    /// The fillet center is a retained contact on `support`; its start radial
+    /// direction is the selected support radius divided by
+    /// `normal_denominator`. This keeps an independent two-field circle-pair
+    /// contact compact instead of adjoining or flattening its coordinates.
+    SelectedConcentric {
+        support: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        center_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+        normal_denominator: Real,
+    },
     /// The center lies on `center_support` at `center_parameter`; its source
     /// unit left normal is the fillet's start radial direction. This retains a
     /// general non-PH frame without adjoining the selected speed square root.
@@ -4461,90 +4470,119 @@ impl FilletOffsetCarrier2<'_, '_> {
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedFilletFrame2>> {
-        let (radial_frame, radial_distance) = match self {
-            Self::Line {
-                unit_x,
-                unit_y,
-                signed_distance,
-                ..
-            } => (
-                RetainedFilletRadialFrame2::RepresentedUnitNormal((
-                    -(*unit_y).clone(),
-                    (*unit_x).clone(),
-                )),
-                -signed_distance.clone(),
-            ),
-            Self::Arc {
-                source,
-                source_radius,
-                signed_radius,
-            } => {
-                let support = source.support();
-                let (normal_denominator, radial_distance) = if support.is_clockwise() {
-                    (signed_radius.clone(), *source_radius - signed_radius)
-                } else {
-                    (-signed_radius.clone(), signed_radius - *source_radius)
-                };
-                (
-                    RetainedFilletRadialFrame2::ConcentricArc {
-                        support_center: support.center().clone(),
-                        normal_denominator,
-                    },
-                    radial_distance,
-                )
-            }
-            Self::AlgebraicCusp { source, support } => {
-                // A general parallel-normal selected circle has no one-field
-                // rational center frame. Its paired analytic carrier retains
-                // the exact center parameter and is therefore the compact
-                // authoritative fillet frame for this carrier switch.
-                if support.semicircle().uses_selected_parallel_normal_frame() {
-                    return Ok(None);
+        let (radial_frame, radial_distance) =
+            match self {
+                Self::Line {
+                    unit_x,
+                    unit_y,
+                    signed_distance,
+                    ..
+                } => (
+                    RetainedFilletRadialFrame2::RepresentedUnitNormal((
+                        -(*unit_y).clone(),
+                        (*unit_x).clone(),
+                    )),
+                    -signed_distance.clone(),
+                ),
+                Self::Arc {
+                    source,
+                    source_radius,
+                    signed_radius,
+                } => {
+                    let support = source.support();
+                    let (normal_denominator, radial_distance) = if support.is_clockwise() {
+                        (signed_radius.clone(), *source_radius - signed_radius)
+                    } else {
+                        (-signed_radius.clone(), signed_radius - *source_radius)
+                    };
+                    (
+                        RetainedFilletRadialFrame2::ConcentricArc {
+                            support_center: support.center().clone(),
+                            normal_denominator,
+                        },
+                        radial_distance,
+                    )
                 }
-                let center = support
-                    .semicircle()
-                    .center_point_image(policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })?;
-                let Some(support_center) = center.exact_rational_point(&CurveContext::STRICT)
-                else {
-                    return Ok(None);
-                };
-                let support_radius = support.semicircle().radial_distance();
-                let source_radius = source.semicircle().radial_distance();
-                let clockwise = support.semicircle().is_clockwise() != support.is_reversed();
-                let (normal_denominator, radial_distance) = if clockwise {
-                    (support_radius.clone(), source_radius - support_radius)
-                } else {
-                    (-support_radius.clone(), support_radius - source_radius)
-                };
-                (
-                    RetainedFilletRadialFrame2::ConcentricArc {
-                        support_center,
-                        normal_denominator,
-                    },
-                    radial_distance,
-                )
-            }
-            Self::Parallel { source, support } => {
-                let Some(center_parameter) = anchor_parameter
-                    .and_then(CurveRegionParameter2::as_bezier_parameter)
-                    .cloned()
-                else {
-                    return Ok(None);
-                };
-                (
-                    RetainedFilletRadialFrame2::ParallelNormal {
-                        center_support: support.clone(),
-                        center_parameter,
-                        policy: *policy,
-                    },
-                    source.parallel_distance() - support.distance(),
-                )
-            }
-            _ => return Ok(None),
-        };
+                Self::AlgebraicCusp { source, support } => {
+                    // A general parallel-normal selected circle has no one-field
+                    // rational center frame. Its paired analytic carrier retains
+                    // the exact center parameter and is therefore the compact
+                    // authoritative fillet frame for this carrier switch.
+                    if support.semicircle().uses_selected_parallel_normal_frame() {
+                        return Ok(None);
+                    }
+                    let center = match support.semicircle().center_point_evidence(policy).map_err(
+                        |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause),
+                    )? {
+                        Classification::Decided(center) => center,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                family,
+                                reason,
+                            ));
+                        }
+                    };
+                    let support_radius = support.semicircle().radial_distance();
+                    let source_radius = source.semicircle().radial_distance();
+                    let clockwise = support.semicircle().is_clockwise() != support.is_reversed();
+                    let (normal_denominator, radial_distance) = if clockwise {
+                        (support_radius.clone(), source_radius - support_radius)
+                    } else {
+                        (-support_radius.clone(), support_radius - source_radius)
+                    };
+                    let support_center = match &center {
+                        RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                            Some(point.clone())
+                        }
+                        RationalBezierIntersectionPointEvidence2::Algebraic(image) => {
+                            image.exact_rational_point(&CurveContext::STRICT)
+                        }
+                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                        | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+                    };
+                    let radial_frame = if let Some(support_center) = support_center {
+                        RetainedFilletRadialFrame2::ConcentricArc {
+                            support_center,
+                            normal_denominator,
+                        }
+                    } else {
+                        let Some(center_parameter) = anchor_parameter
+                            .and_then(CurveRegionParameter2::as_algebraic_cusp)
+                            .cloned()
+                        else {
+                            return Ok(None);
+                        };
+                        RetainedFilletRadialFrame2::SelectedConcentric {
+                            support: support.semicircle().clone(),
+                            center_parameter,
+                            normal_denominator,
+                        }
+                    };
+                    (radial_frame, radial_distance)
+                }
+                Self::Parallel { source, support } => {
+                    let Some(center_parameter) = anchor_parameter
+                        .and_then(CurveRegionParameter2::as_bezier_parameter)
+                        .cloned()
+                    else {
+                        return Ok(None);
+                    };
+                    (
+                        RetainedFilletRadialFrame2::ParallelNormal {
+                            center_support: support.clone(),
+                            center_parameter,
+                            policy: *policy,
+                        },
+                        source.parallel_distance() - support.distance(),
+                    )
+                }
+                _ => return Ok(None),
+            };
         Ok(Some(RetainedFilletFrame2 {
             anchor_is_previous,
             radial_frame,
@@ -4567,6 +4605,32 @@ const fn reverse_fillet_sign(sign: RealSign) -> RealSign {
         RealSign::Negative => RealSign::Positive,
         RealSign::Zero => RealSign::Zero,
     }
+}
+
+fn retained_fillet_cusp_support_reverses_source(
+    source: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    support: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    let nonzero_radius_sign = |radius: &Real| match crate::classify::real_sign(radius, policy) {
+        Some(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
+        Some(RealSign::Zero) => Err(ExactCurveError::invalid(
+            CurveOperation2::Fillet,
+            family,
+            CurveError::Topology(
+                "a retained selected-circle fillet support had zero radius".into(),
+            ),
+        )),
+        None => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            crate::UncertaintyReason::RealSign,
+        )),
+    };
+    Ok((nonzero_radius_sign(source.semicircle().radial_distance())?
+        != nonzero_radius_sign(support.semicircle().radial_distance())?)
+        != source.is_reversed())
 }
 
 impl FilletCenterWitness2 {
@@ -6196,26 +6260,12 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            let nonzero_radius_sign =
-                |radius: &Real| match crate::classify::real_sign(radius, policy) {
-                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
-                    Some(RealSign::Zero) => Err(ExactCurveError::invalid(
-                        CurveOperation2::Fillet,
-                        cusp_family,
-                        CurveError::Topology(
-                            "a retained selected-circle fillet support had zero radius".into(),
-                        ),
-                    )),
-                    None => Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        cusp_family,
-                        crate::UncertaintyReason::RealSign,
-                    )),
-                };
-            let cusp_support_reverses_source =
-                (nonzero_radius_sign(cusp_source.semicircle().radial_distance())?
-                    != nonzero_radius_sign(cusp_support.semicircle().radial_distance())?)
-                    != cusp_source.is_reversed();
+            let cusp_support_reverses_source = retained_fillet_cusp_support_reverses_source(
+                cusp_source,
+                cusp_support,
+                cusp_family,
+                policy,
+            )?;
             let analytic_support_reverses_source = parallel_source.support_reverses_source(
                 analytic_support,
                 analytic_family,
@@ -6704,9 +6754,24 @@ fn fillet_offset_centers(
                     ));
                 }
             };
+            let previous_support_reverses_source = retained_fillet_cusp_support_reverses_source(
+                previous_source,
+                previous_support,
+                previous_family,
+                policy,
+            )?;
+            let next_support_reverses_source = retained_fillet_cusp_support_reverses_source(
+                next_source,
+                next_support,
+                next_family,
+                policy,
+            )?;
+            let reverse_pair_relation =
+                previous_support_reverses_source != next_support_reverses_source;
             let witness = |previous_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
                            next_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-                           point: RationalBezierIntersectionPointEvidence2|
+                           point: RationalBezierIntersectionPointEvidence2,
+                           retained_anchor_evidence: Option<RetainedFilletAnchorEvidence2>|
              -> ExactCurveResult<Option<FilletCenterWitness2>> {
                 for (source, parameter, family) in [
                     (previous_source, &previous_parameter, previous_family),
@@ -6736,7 +6801,7 @@ fn fillet_offset_centers(
                     next_parameter: Some(CurveRegionParameter2::from_algebraic_cusp(
                         next_parameter,
                     )),
-                    retained_anchor_evidence: None,
+                    retained_anchor_evidence,
                 }))
             };
             match intersections {
@@ -6746,6 +6811,29 @@ fn fillet_offset_centers(
                     parameter_map,
                 } => {
                     for contact in contacts {
+                        let mut tangent_cross = contact.tangent_cross_sign;
+                        let mut tangent_dot = match parameter_map
+                            .tangent_dot_sign(&contact, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Fillet,
+                                    previous_family,
+                                    cause,
+                                )
+                            })? {
+                            Classification::Decided(sign) => sign,
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    previous_family,
+                                    reason,
+                                ));
+                            }
+                        };
+                        if reverse_pair_relation {
+                            tangent_cross = reverse_fillet_sign(tangent_cross);
+                            tangent_dot = reverse_fillet_sign(tangent_dot);
+                        }
                         let previous_parameter =
                             parameter_map.first_contact_parameter(&contact);
                         let next_parameter = parameter_map.second_contact_parameter(&contact);
@@ -6787,6 +6875,12 @@ fn fillet_offset_centers(
                             previous_parameter,
                             next_parameter,
                             point,
+                            Some(RetainedFilletAnchorEvidence2 {
+                                cross: Some(tangent_cross),
+                                dot: Some(tangent_dot),
+                                source_direction: None,
+                                canonical_anchor_curve: None,
+                            }),
                         )? {
                             centers.push(witness);
                         }
@@ -6830,6 +6924,7 @@ fn fillet_offset_centers(
                             previous_parameter,
                             next_parameter,
                             point,
+                            None,
                         )? {
                             centers.push(witness);
                         }

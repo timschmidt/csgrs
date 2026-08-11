@@ -304,12 +304,27 @@ pub(crate) struct BezierParallelAlgebraicCuspFrame2 {
 enum BezierSelectedCircleFrame2 {
     Rational(BezierParallelAlgebraicCuspFrame2),
     ParallelNormal(Arc<BezierSelectedParallelNormalFrameData2>),
+    /// The circle center is one mapped point on an existing selected circle,
+    /// and its parameter-zero radius is that source circle's certified radial
+    /// direction at the same point.  This keeps a genuinely correlated
+    /// circle-pair fillet in its existing pair field instead of constructing a
+    /// primitive element for the two selected centers and contact radical.
+    SelectedRadial(Arc<BezierSelectedRadialFrameData2>),
 }
 
 #[derive(Debug, PartialEq)]
 struct BezierSelectedParallelNormalFrameData2 {
     center_support: BezierParallel2,
     center_parameter: BezierParameter2,
+    policy: CurveContext,
+}
+
+#[derive(Debug)]
+struct BezierSelectedRadialFrameData2 {
+    center_parameter: Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
+    /// Signed source-circle radius whose quotient with the contact radial is
+    /// the parameter-zero unit direction of this frame.
+    normal_denominator: Real,
     policy: CurveContext,
 }
 
@@ -356,8 +371,12 @@ impl PartialEq for BezierSelectedCircleFrame2 {
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second) || first == second
             }
-            (Self::Rational(_), Self::ParallelNormal(_))
-            | (Self::ParallelNormal(_), Self::Rational(_)) => false,
+            (Self::SelectedRadial(first), Self::SelectedRadial(second)) => {
+                Arc::ptr_eq(first, second)
+            }
+            (Self::Rational(_), Self::ParallelNormal(_) | Self::SelectedRadial(_))
+            | (Self::ParallelNormal(_), Self::Rational(_) | Self::SelectedRadial(_))
+            | (Self::SelectedRadial(_), Self::Rational(_) | Self::ParallelNormal(_)) => false,
         }
     }
 }
@@ -2481,6 +2500,10 @@ struct BezierAlgebraicCuspSemicirclePairSystem2 {
     /// Circle-circle discriminant. Positive yields two support contacts, zero
     /// one tangent contact, and negative no support contact.
     discriminant: BivariatePolynomial,
+    /// Twice `dot(R1,R2)` over the same positive squared denominator as the
+    /// square root of `discriminant`.  Keeping the common factor lets angular
+    /// predicates combine dot and cross without division.
+    radial_dot: BivariatePolynomial,
     /// Selected-half predicates whose radical coefficient is for branch `+1`.
     first_selected_half_plane: BezierAlgebraicCuspTwoTermExpression2,
     second_selected_half_plane: BezierAlgebraicCuspTwoTermExpression2,
@@ -2522,6 +2545,7 @@ struct BezierAlgebraicCuspSemicirclePairParameterMapData2 {
     second_cusp_parameter: BezierParameter2,
     incidence: BivariatePolynomial,
     discriminant: BivariatePolynomial,
+    radial_dot: BivariatePolynomial,
     first_diameter_side: BezierAlgebraicCuspTwoTermExpression2,
     second_diameter_side: BezierAlgebraicCuspTwoTermExpression2,
     first_radius_squared_denominator: BivariatePolynomial,
@@ -3444,6 +3468,22 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         point: RationalBezierIntersectionPointEvidence2,
         policy: CurveContext,
     },
+    /// One fillet endpoint retained directly from the independent selected
+    /// circle-pair contact that solved the fillet center.
+    ///
+    /// `anchor_first` records which pair carrier supplies this circle's start
+    /// radial. The pair map then signs every angular comparison from its
+    /// shared dot/discriminant representation, without constructing a
+    /// primitive element for the two selected fields.
+    SelectedPairContact {
+        semicircle: BezierAlgebraicCuspSemicircle2,
+        map: BezierAlgebraicCuspSemicirclePairParameterMap2,
+        contact: BezierAlgebraicCuspSemicirclePairContact2,
+        anchor_first: bool,
+        radial_product_sign: RealSign,
+        point: RationalBezierIntersectionPointEvidence2,
+        policy: CurveContext,
+    },
     /// One exact round-join endpoint whose radial direction is the signed
     /// left normal of a retained algebraic chord.
     ///
@@ -3677,6 +3717,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             Self::Parallel { map, .. } => &map.data.semicircle,
             Self::SelectedParallelContact { semicircle, .. } => semicircle,
             Self::SelectedCircularTangentContact { semicircle, .. } => semicircle,
+            Self::SelectedPairContact { semicircle, .. } => semicircle,
             Self::SelectedChordNormalContact { semicircle, .. } => semicircle,
             Self::Pair { map, first, .. } => {
                 if *first {
@@ -3902,6 +3943,73 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         )
     }
 
+    fn selected_pair_contact_order_to_real(
+        &self,
+        represented: &Real,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        let Self::SelectedPairContact {
+            semicircle,
+            map,
+            contact,
+            anchor_first,
+            radial_product_sign,
+            policy,
+            ..
+        } = self
+        else {
+            return Err(CurveError::Topology(
+                "a non-pair contact requested selected-circle angular ordering".into(),
+            ));
+        };
+        match in_closed_unit_interval(represented, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+        let one_minus = Real::one() - represented;
+        let radial = Real::one() - Real::from(2_i8) * represented;
+        let tangential = Real::from(2_i8) * represented * one_minus;
+        let turn = semicircle.turn_sign();
+        let mut cross_scale = -(radial * turn);
+        if !anchor_first {
+            cross_scale = -cross_scale;
+        }
+        let raw_sign = match map.tangent_cross_dot_linear_combination_sign(
+            contact,
+            &cross_scale,
+            &tangential,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let sign = product_sign(raw_sign, *radial_product_sign);
+        Ok(Classification::Decided(match sign {
+            RealSign::Positive => std::cmp::Ordering::Less,
+            RealSign::Negative => std::cmp::Ordering::Greater,
+            RealSign::Zero => std::cmp::Ordering::Equal,
+        }))
+    }
+
+    fn selected_pair_contact_parameter_bracket(
+        &self,
+        refinement_steps: usize,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
+        let Self::SelectedPairContact { policy, .. } = self else {
+            return Err(CurveError::Topology(
+                "a non-pair contact requested selected-circle angular refinement".into(),
+            ));
+        };
+        algebraic_cusp_semicircle_contact_parameter_bracket(
+            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            refinement_steps,
+            policy,
+            |parameter| self.selected_pair_contact_order_to_real(parameter),
+        )
+    }
+
     fn selected_chord_normal_contact_order_to_real(
         &self,
         represented: &Real,
@@ -4017,6 +4125,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
             | Self::Chamfer { .. } => None,
@@ -4059,6 +4168,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
             | Self::Chamfer { .. } => None,
@@ -4098,6 +4208,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::Parallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
@@ -4172,6 +4283,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
             | Self::Chamfer { .. } => None,
@@ -4197,6 +4309,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::Parallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Pair { .. }
             | Self::PairOverlap { .. }
@@ -4257,6 +4370,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
             | Self::Chamfer { .. } => None,
@@ -4307,6 +4421,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
             | Self::SelectedCircularTangentContact { .. }
+            | Self::SelectedPairContact { .. }
             | Self::SelectedChordNormalContact { .. }
             | Self::Chord { .. }
             | Self::Chamfer { .. } => None,
@@ -5640,6 +5755,7 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                 ..
             }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 ..
             }
@@ -5673,22 +5789,33 @@ impl BezierSelectedCircleFrame2 {
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second)
             }
-            (Self::Rational(_), Self::ParallelNormal(_))
-            | (Self::ParallelNormal(_), Self::Rational(_)) => false,
+            (Self::SelectedRadial(first), Self::SelectedRadial(second)) => {
+                Arc::ptr_eq(first, second)
+            }
+            (Self::Rational(_), Self::ParallelNormal(_) | Self::SelectedRadial(_))
+            | (Self::ParallelNormal(_), Self::Rational(_) | Self::SelectedRadial(_))
+            | (Self::SelectedRadial(_), Self::Rational(_) | Self::ParallelNormal(_)) => false,
         }
     }
 
     fn rational(&self) -> Option<&BezierParallelAlgebraicCuspFrame2> {
         match self {
             Self::Rational(frame) => Some(frame),
-            Self::ParallelNormal(_) => None,
+            Self::ParallelNormal(_) | Self::SelectedRadial(_) => None,
         }
     }
 
     fn parallel_normal(&self) -> Option<&BezierSelectedParallelNormalFrameData2> {
         match self {
-            Self::Rational(_) => None,
+            Self::Rational(_) | Self::SelectedRadial(_) => None,
             Self::ParallelNormal(frame) => Some(frame),
+        }
+    }
+
+    fn selected_radial(&self) -> Option<&BezierSelectedRadialFrameData2> {
+        match self {
+            Self::SelectedRadial(frame) => Some(frame),
+            Self::Rational(_) | Self::ParallelNormal(_) => None,
         }
     }
 
@@ -5704,6 +5831,7 @@ impl BezierSelectedCircleFrame2 {
         match self {
             Self::Rational(frame) => frame.center_parallel_distance(),
             Self::ParallelNormal(frame) => frame.center_support.distance().clone(),
+            Self::SelectedRadial(_) => Real::zero(),
         }
     }
 
@@ -5711,6 +5839,7 @@ impl BezierSelectedCircleFrame2 {
         match self {
             Self::Rational(frame) => frame.data.parallel.as_ref(),
             Self::ParallelNormal(frame) => Some(&frame.center_support),
+            Self::SelectedRadial(_) => None,
         }
     }
 
@@ -5724,6 +5853,9 @@ impl BezierSelectedCircleFrame2 {
                     policy: frame.policy,
                 },
             ))),
+            Self::SelectedRadial(_) => Err(CurveError::Topology(
+                "a pair-radial selected circle requires correlated similarity transport".into(),
+            )),
         }
     }
 
@@ -6074,11 +6206,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierParameter2::Algebraic(frame.data.parameter.clone())
             }
             BezierSelectedCircleFrame2::ParallelNormal(frame) => frame.center_parameter.clone(),
+            BezierSelectedCircleFrame2::SelectedRadial(_) => {
+                unreachable!("a pair-radial circle has no single selected center parameter")
+            }
         }
     }
 
     pub(crate) fn uses_selected_parallel_normal_frame(&self) -> bool {
         self.data.frame.parallel_normal().is_some()
+    }
+
+    pub(crate) fn uses_selected_radial_frame(&self) -> bool {
+        self.data.frame.selected_radial().is_some()
     }
 
     /// Builds a circle in the exact orthonormal frame selected by one regular
@@ -6117,6 +6256,57 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierSelectedParallelNormalFrameData2 {
                         center_support,
                         center_parameter,
+                        policy: *policy,
+                    },
+                )),
+                radial_distance,
+                clockwise,
+            }),
+        })))
+    }
+
+    /// Builds a circle centered at one mapped point on an existing selected
+    /// circle, using that source circle's contact radial as the local unit
+    /// frame.  The mapped parameter retains the complete circle-pair branch;
+    /// no Cartesian coordinate or primitive element is constructed.
+    pub(crate) fn from_selected_circle_radial(
+        support: &Self,
+        center_parameter: BezierAlgebraicCuspSemicircleParameter2,
+        normal_denominator: Real,
+        radial_distance: Real,
+        clockwise: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        match real_sign(&normal_denominator, &CurveContext::STRICT) {
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "selected radial circle retained a zero normal denominator".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        match real_sign(&radial_distance, policy) {
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        center_parameter.validate_policy(policy)?;
+        let BezierAlgebraicCuspSemicircleParameter2::Mapped(center_parameter) = center_parameter
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if center_parameter.semicircle_carrier() != support {
+            return Err(CurveError::Topology(
+                "selected radial center parameter referenced a different support circle".into(),
+            ));
+        }
+        Ok(Classification::Decided(Some(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: BezierSelectedCircleFrame2::SelectedRadial(Arc::new(
+                    BezierSelectedRadialFrameData2 {
+                        center_parameter,
+                        normal_denominator,
                         policy: *policy,
                     },
                 )),
@@ -6579,6 +6769,37 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ),
             ));
         }
+        if let Some(frame) = self.data.frame.selected_radial() {
+            if frame.policy != *policy {
+                return Err(CurveError::Topology(
+                    "a selected radial circle crossed predicate policies".into(),
+                ));
+            }
+            let common_denominator = &denominator * &frame.normal_denominator;
+            match real_sign(&common_denominator, &CurveContext::STRICT) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a selected radial point had a zero frame denominator".into(),
+                    ));
+                }
+                None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                }
+            }
+            let radial_scale = Real::one() + (&normal_scale / &common_denominator)?;
+            let perpendicular_scale = (&tangent_scale / common_denominator)?;
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source_with_rotation(
+                        frame.center_parameter.clone(),
+                        None,
+                        radial_scale,
+                        perpendicular_scale,
+                    ),
+                ),
+            ));
+        }
         let frame = self
             .data
             .frame
@@ -6685,6 +6906,22 @@ impl BezierAlgebraicCuspSemicircle2 {
             return Ok(Classification::Decided(
                 RationalBezierIntersectionPointEvidence2::Algebraic(
                     self.center_point_image(policy)?,
+                ),
+            ));
+        }
+        if let Some(frame) = self.data.frame.selected_radial() {
+            if frame.policy != *policy {
+                return Err(CurveError::Topology(
+                    "a selected radial circle crossed predicate policies".into(),
+                ));
+            }
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                    BezierAlgebraicCuspChordDerivedPoint2::from_mapped_source(
+                        frame.center_parameter.clone(),
+                        None,
+                        Real::one(),
+                    ),
                 ),
             ));
         }
@@ -6843,6 +7080,122 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Decided(_) => {
                     return Err(CurveError::Topology(
                         "a certified round contact lay outside its selected circle half".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(parameter))
+    }
+
+    /// Retains the second endpoint of a pair-native selected fillet circle.
+    /// The circle frame already owns the exact pair contact that selected its
+    /// center, so this adds only the signed radial relation and the exact
+    /// endpoint point evidence needed by downstream topology.
+    pub(crate) fn certified_selected_pair_contact_parameter(
+        &self,
+        companion_source: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        let Some(frame) = self.data.frame.selected_radial() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if frame.policy != *policy {
+            return Err(CurveError::Topology(
+                "a selected pair contact crossed predicate policies".into(),
+            ));
+        }
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+            map,
+            contact,
+            first,
+        } = frame.center_parameter.as_ref()
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if map.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "a selected pair contact map crossed predicate policies".into(),
+            ));
+        }
+        let (anchor_support, companion_support, companion_parameter) = if *first {
+            (
+                &map.data.first_semicircle,
+                &map.data.second_semicircle,
+                map.second_contact_parameter(contact),
+            )
+        } else {
+            (
+                &map.data.second_semicircle,
+                &map.data.first_semicircle,
+                map.first_contact_parameter(contact),
+            )
+        };
+        if anchor_support != frame.center_parameter.semicircle_carrier()
+            || companion_source.data.frame != companion_support.data.frame
+            || companion_source.is_clockwise() != companion_support.is_clockwise()
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let expected_point = match companion_parameter.concentric_offset_point_evidence(
+            companion_support,
+            companion_source,
+            policy,
+        )? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let companion_radial_numerator =
+            companion_source.radial_distance() - companion_support.radial_distance();
+        let mut radial_product_sign = RealSign::Positive;
+        for factor in [
+            self.radial_distance(),
+            &frame.normal_denominator,
+            &companion_radial_numerator,
+            companion_support.radial_distance(),
+        ] {
+            let sign = match real_sign(factor, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a retained pair fillet radial orientation collapsed".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            radial_product_sign = product_sign(radial_product_sign, sign);
+        }
+        if map.data.first_semicircle.is_clockwise() != map.data.second_semicircle.is_clockwise() {
+            radial_product_sign = product_sign(radial_product_sign, RealSign::Negative);
+        }
+        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                semicircle: self.clone(),
+                map: map.clone(),
+                contact: contact.clone(),
+                anchor_first: *first,
+                radial_product_sign,
+                point: expected_point,
+                policy: *policy,
+            },
+        ));
+        for (boundary, expected) in [
+            (Real::zero(), std::cmp::Ordering::Greater),
+            (Real::one(), std::cmp::Ordering::Less),
+        ] {
+            match parameter.order_to_real(&boundary, policy)? {
+                Classification::Decided(order) if order == expected => {}
+                Classification::Decided(_) => {
+                    return Err(CurveError::Topology(
+                        "a certified pair fillet contact lay outside its selected circle half"
+                            .into(),
                     ));
                 }
                 Classification::Uncertain(reason) => {
@@ -7078,9 +7431,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 parallel.distance().abs() + self.data.radial_distance.abs(),
             )
         } else {
-            let center = RationalBezierIntersectionPointEvidence2::Algebraic(
-                self.center_point_image(policy)?,
-            );
+            let center = match self.center_point_evidence(policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let source = match algebraic_chord_endpoint_bounds_refined(&center, 0, policy) {
                 Classification::Decided(source) => source,
                 Classification::Uncertain(reason) => {
@@ -7474,20 +7830,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if let Some(frame) = self.data.frame.parallel_normal() {
-            if frame.policy != *policy {
-                return Err(CurveError::Topology(
-                    "a parallel-normal selected circle crossed predicate policies".into(),
-                ));
-            }
-            let center = BezierAnalyticParallelPoint2::new(
-                frame.center_support.clone(),
-                frame.center_parameter.clone(),
-                policy,
-            );
-            match center.circle_residual_sign_to_exact(
-                point,
-                &(&self.data.radial_distance * &self.data.radial_distance),
+        if self.data.frame.rational().is_none() {
+            match self.retained_point_incidence_sign(
+                &RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
                 policy,
             )? {
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {
@@ -11656,6 +12001,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             ),
             &bivariate_multiply(&center_line, &center_line),
         );
+        let radial_dot = bivariate_subtract(
+            &bivariate_scale(
+                common_denominator_squared.clone(),
+                &(&first_radius_squared + &second_radius_squared),
+            ),
+            &center_distance_squared,
+        );
 
         let unit = [Real::one()];
         let first_denominator = bivariate_outer_product(&first_frame.denominator, &unit);
@@ -11743,6 +12095,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ]),
             center_distance_squared,
             discriminant,
+            radial_dot,
             first_selected_half_plane,
             second_selected_half_plane,
             first_diameter_side,
@@ -12225,6 +12578,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 second_cusp_parameter: second_parameter,
                 incidence: system.incidence,
                 discriminant: system.discriminant,
+                radial_dot: system.radial_dot,
                 first_diameter_side: system.first_diameter_side,
                 second_diameter_side: system.second_diameter_side,
                 first_radius_squared_denominator: system.first_radius_squared_denominator,
@@ -14929,6 +15283,57 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
+    /// Signs an exact linear combination of the two participating carrier
+    /// tangents at one retained pair contact.
+    ///
+    /// The pair system stores `2 dot(R1, R2)` and a discriminant whose square
+    /// root is `2 |cross(R1, R2)|`, both over the same positive denominator.
+    /// Applying the retained branch and the two circle turn signs therefore
+    /// evaluates the requested tangent combination without constructing either
+    /// algebraic contact coordinate.
+    pub(crate) fn tangent_cross_dot_linear_combination_sign(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "cusp-pair tangent predicate was replayed under a different policy".into(),
+            ));
+        }
+        if !(-1..=1).contains(&contact.branch) {
+            return Err(CurveError::Topology(
+                "cusp-pair contact retained an invalid support branch".into(),
+            ));
+        }
+        let turn_product =
+            self.data.first_semicircle.turn_sign() * self.data.second_semicircle.turn_sign();
+        let expression = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_scale(self.data.radial_dot.clone(), &(dot_scale * &turn_product)),
+            radical: BivariatePolynomial::new(vec![vec![
+                cross_scale * Real::from(contact.branch) * turn_product,
+            ]]),
+        };
+        algebraic_cusp_correlated_square_root_sum_sign(
+            &self.data.incidence,
+            &expression,
+            &self.data.discriminant,
+            &self.data.first_cusp_parameter,
+            &self.data.second_cusp_parameter,
+            policy,
+        )
+    }
+
+    pub(crate) fn tangent_dot_sign(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.tangent_cross_dot_linear_combination_sign(contact, &Real::zero(), &Real::one(), policy)
+    }
+
     fn opposite_contact_carrier(
         &self,
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
@@ -16885,11 +17290,20 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         point: Option<RationalBezierIntersectionPointEvidence2>,
         radial_scale: Real,
     ) -> Self {
+        Self::from_mapped_source_with_rotation(parameter, point, radial_scale, Real::zero())
+    }
+
+    fn from_mapped_source_with_rotation(
+        parameter: Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
+        point: Option<RationalBezierIntersectionPointEvidence2>,
+        radial_scale: Real,
+        perpendicular_scale: Real,
+    ) -> Self {
         Self {
             data: Arc::new(BezierAlgebraicCuspChordDerivedPointData2 {
                 source: BezierAlgebraicCuspDerivedPointSource2::Mapped { parameter, point },
                 radial_scale,
-                perpendicular_scale: Real::zero(),
+                perpendicular_scale,
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
             }),
@@ -16902,18 +17316,12 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         radial_scale: Real,
         perpendicular_scale: Real,
     ) -> Self {
-        Self {
-            data: Arc::new(BezierAlgebraicCuspChordDerivedPointData2 {
-                source: BezierAlgebraicCuspDerivedPointSource2::Mapped {
-                    parameter,
-                    point: Some(point),
-                },
-                radial_scale,
-                perpendicular_scale,
-                translation_x: Real::zero(),
-                translation_y: Real::zero(),
-            }),
-        }
+        Self::from_mapped_source_with_rotation(
+            parameter,
+            Some(point),
+            radial_scale,
+            perpendicular_scale,
+        )
     }
 
     fn translated(&self, translation_x: &Real, translation_y: &Real) -> Self {
@@ -18708,6 +19116,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 policy,
                 ..
             }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                policy,
+                ..
+            }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 policy,
                 ..
@@ -18835,6 +19247,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                     ..
                 }
+                | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact { .. }
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
                 } => Ok(Classification::Decided(None)),
@@ -18896,6 +19309,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                     ..
                 }
+                | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact { .. }
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
                 }
@@ -18997,6 +19411,17 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
+                semicircle: source,
+                point,
+                ..
+            } = data.as_ref()
+        {
+            return Ok(Classification::Decided(
+                (source == semicircle).then(|| point.clone()),
+            ));
+        }
+        if let Self::Mapped(data) = self
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
                 semicircle: source,
                 point,
                 ..
@@ -19336,115 +19761,141 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         match (self, other) {
             (Self::Exact(first), Self::Exact(second)) => first == second,
             (Self::Mapped(first), Self::Mapped(second)) => {
-                Arc::ptr_eq(first, second)
-                    || match (first.as_ref(), second.as_ref()) {
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
-                                map: first_map,
-                                contact: first_contact,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
-                                map: second_map,
-                                contact: second_contact,
-                            },
-                        ) => {
-                            Arc::ptr_eq(&first_map.data, &second_map.data)
-                                && first_contact == second_contact
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
-                                map: first_map,
-                                contact: first_contact,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
-                                map: second_map,
-                                contact: second_contact,
-                            },
-                        ) => {
-                            Arc::ptr_eq(&first_map.data, &second_map.data)
-                                && first_contact == second_contact
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
-                                map: first_map,
-                                contact: first_contact,
-                                first: first_side,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
-                                map: second_map,
-                                contact: second_contact,
-                                first: second_side,
-                            },
-                        ) => {
-                            Arc::ptr_eq(&first_map.data, &second_map.data)
-                                && first_contact == second_contact
-                                && first_side == second_side
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
-                                map: first_map,
-                                contact: first_contact,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
-                                map: second_map,
-                                contact: second_contact,
-                            },
-                        ) => {
-                            Arc::ptr_eq(&first_map.data, &second_map.data)
-                                && first_contact == second_contact
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
-                                overlap: first_overlap,
-                                endpoint: first_endpoint,
-                                first: first_side,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
-                                overlap: second_overlap,
-                                endpoint: second_endpoint,
-                                first: second_side,
-                            },
-                        ) => {
-                            first_overlap.shares_parameter_authority(second_overlap)
-                                && first_endpoint == second_endpoint
-                                && first_side == second_side
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                                overlap: first_overlap,
-                                source: first_source,
-                                source_first: first_side,
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                                overlap: second_overlap,
-                                source: second_source,
-                                source_first: second_side,
-                            },
-                        ) => {
-                            first_overlap.shares_parameter_authority(second_overlap)
-                                && first_source.shares_exact_evidence(second_source)
-                                && first_side == second_side
-                        }
-                        (
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
-                                semicircle: first_semicircle,
-                                source: first_source,
-                                half_angle: first_half_angle,
-                                ..
-                            },
-                            BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
-                                semicircle: second_semicircle,
-                                source: second_source,
-                                half_angle: second_half_angle,
-                                ..
-                            },
-                        ) => {
-                            first_semicircle == second_semicircle
-                                && first_source.shares_exact_evidence(second_source)
-                                && first_half_angle == second_half_angle
-                        }
-                        _ => false,
+                Arc::ptr_eq(first, second) || match (first.as_ref(), second.as_ref()) {
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
+                            map: first_map,
+                            contact: first_contact,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Rational {
+                            map: second_map,
+                            contact: second_contact,
+                        },
+                    ) => {
+                        Arc::ptr_eq(&first_map.data, &second_map.data)
+                            && first_contact == second_contact
                     }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
+                            map: first_map,
+                            contact: first_contact,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
+                            map: second_map,
+                            contact: second_contact,
+                        },
+                    ) => {
+                        Arc::ptr_eq(&first_map.data, &second_map.data)
+                            && first_contact == second_contact
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                            map: first_map,
+                            contact: first_contact,
+                            first: first_side,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                            map: second_map,
+                            contact: second_contact,
+                            first: second_side,
+                        },
+                    ) => {
+                        Arc::ptr_eq(&first_map.data, &second_map.data)
+                            && first_contact == second_contact
+                            && first_side == second_side
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                            semicircle: first_semicircle,
+                            map: first_map,
+                            contact: first_contact,
+                            anchor_first: first_side,
+                            radial_product_sign: first_radial,
+                            point: first_point,
+                            ..
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                            semicircle: second_semicircle,
+                            map: second_map,
+                            contact: second_contact,
+                            anchor_first: second_side,
+                            radial_product_sign: second_radial,
+                            point: second_point,
+                            ..
+                        },
+                    ) => {
+                        first_semicircle == second_semicircle
+                            && Arc::ptr_eq(&first_map.data, &second_map.data)
+                            && first_contact == second_contact
+                            && first_side == second_side
+                            && first_radial == second_radial
+                            && first_point == second_point
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                            map: first_map,
+                            contact: first_contact,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Chord {
+                            map: second_map,
+                            contact: second_contact,
+                        },
+                    ) => {
+                        Arc::ptr_eq(&first_map.data, &second_map.data)
+                            && first_contact == second_contact
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
+                            overlap: first_overlap,
+                            endpoint: first_endpoint,
+                            first: first_side,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
+                            overlap: second_overlap,
+                            endpoint: second_endpoint,
+                            first: second_side,
+                        },
+                    ) => {
+                        first_overlap.shares_parameter_authority(second_overlap)
+                            && first_endpoint == second_endpoint
+                            && first_side == second_side
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                            overlap: first_overlap,
+                            source: first_source,
+                            source_first: first_side,
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                            overlap: second_overlap,
+                            source: second_source,
+                            source_first: second_side,
+                        },
+                    ) => {
+                        first_overlap.shares_parameter_authority(second_overlap)
+                            && first_source.shares_exact_evidence(second_source)
+                            && first_side == second_side
+                    }
+                    (
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
+                            semicircle: first_semicircle,
+                            source: first_source,
+                            half_angle: first_half_angle,
+                            ..
+                        },
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
+                            semicircle: second_semicircle,
+                            source: second_source,
+                            half_angle: second_half_angle,
+                            ..
+                        },
+                    ) => {
+                        first_semicircle == second_semicircle
+                            && first_source.shares_exact_evidence(second_source)
+                            && first_half_angle == second_half_angle
+                    }
+                    _ => false,
+                }
             }
             (Self::Exact(_), Self::Mapped(_)) | (Self::Mapped(_), Self::Exact(_)) => false,
         }
@@ -19753,6 +20204,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                     ..
                 } => selected.selected_circular_tangent_contact_order_to_real(parameter),
+                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                    ..
+                } => selected.selected_pair_contact_order_to_real(parameter),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
                 } => selected.selected_chord_normal_contact_order_to_real(parameter),
@@ -19824,6 +20278,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact {
                     ..
                 } => selected.selected_circular_tangent_contact_parameter_bracket(refinement_steps),
+                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact {
+                    ..
+                } => selected.selected_pair_contact_parameter_bracket(refinement_steps),
                 selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                     ..
                 } => selected.selected_chord_normal_contact_parameter_bracket(refinement_steps),
@@ -35901,7 +36358,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         )
     }
 
-    fn selected_parallel_normal_forward_ray_winding_delta(
+    fn selected_procedural_forward_ray_winding_delta(
         &self,
         origin: &Point2,
         direction_x: &Real,
@@ -35923,22 +36380,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        let frame = self
-            .data
-            .semicircle
-            .data
-            .frame
-            .parallel_normal()
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a rational selected-circle entered the parallel-normal winding path".into(),
-                )
-            })?;
-        if frame.policy != *policy {
-            return Err(CurveError::Topology(
-                "a parallel-normal selected circle crossed predicate policies".into(),
-            ));
-        }
         let start = match self.endpoint_point_evidence(true, policy)? {
             Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
@@ -35957,16 +36398,14 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center_point = BezierAnalyticParallelPoint2::new(
-            frame.center_support.clone(),
-            frame.center_parameter.clone(),
-            policy,
-        );
-        let center =
-            RationalBezierIntersectionPointEvidence2::AnalyticParallel(center_point.clone());
-        let residual = match center_point.circle_residual_sign_to_exact(
-            origin,
-            &(self.data.semicircle.radial_distance() * self.data.semicircle.radial_distance()),
+        let center = match self.data.semicircle.center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let residual = match self.data.semicircle.retained_point_incidence_sign(
+            &RationalBezierIntersectionPointEvidence2::Exact(origin.clone()),
             policy,
         )? {
             Classification::Decided(sign) => sign,
@@ -36146,8 +36585,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
         self.validate_policy(policy)?;
-        if self.data.semicircle.uses_selected_parallel_normal_frame() {
-            return self.selected_parallel_normal_forward_ray_winding_delta(
+        if self.data.semicircle.data.frame.rational().is_none() {
+            return self.selected_procedural_forward_ray_winding_delta(
                 origin,
                 direction_x,
                 direction_y,
@@ -37985,6 +38424,7 @@ fn reduce_algebraic_cusp_pair_system(
         incidence,
         center_distance_squared,
         discriminant,
+        radial_dot,
         first_selected_half_plane,
         second_selected_half_plane,
         first_diameter_side,
@@ -38021,6 +38461,7 @@ fn reduce_algebraic_cusp_pair_system(
             incidence,
             center_distance_squared: reduce!(center_distance_squared),
             discriminant: reduce!(discriminant),
+            radial_dot: reduce!(radial_dot),
             first_selected_half_plane: reduce_expression!(first_selected_half_plane),
             second_selected_half_plane: reduce_expression!(second_selected_half_plane),
             first_diameter_side: reduce_expression!(first_diameter_side),
