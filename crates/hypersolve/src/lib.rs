@@ -62,6 +62,7 @@ pub mod solver;
 pub mod solver_block;
 pub mod sparse_pattern;
 pub mod symbolic;
+pub mod tensor_resultant;
 
 pub use active_set::{
     ActiveSetAffineRegenerationReport, ActiveSetAffineRegenerationStatus, ActiveSetAuditReport,
@@ -365,3 +366,7 @@ pub use sparse_pattern::{
     analyze_sparse_bareiss_elimination_pattern,
 };
 pub use symbolic::{Expr, ExprDegree, ExprEvalError, ExprFacts, SymbolId, SymbolRef};
+pub use tensor_resultant::{
+    DenseTensorPolynomial, TensorConstraintResultantReport, TensorConstraintResultantStatus,
+    resultant_tensor_polynomial_univariate_constraint,
+};
