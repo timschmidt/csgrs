@@ -8821,7 +8821,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 /// stronger statement that the complete oriented boundary chain is zero.
 fn affine_contour_is_exact_zero_chain(contour: &crate::Contour2) -> bool {
     let segments = contour.segments();
-    if segments.len() % 2 != 0 {
+    if !segments.len().is_multiple_of(2) {
         return false;
     }
     let exact_point_equal = |first: &crate::Point2, second: &crate::Point2| {

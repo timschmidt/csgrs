@@ -2237,6 +2237,97 @@ fn retained_corner_fragment_trim(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
+    if let BezierSplitFragment2::SelectedFiber(fragment) = fragment {
+        if parameter.as_bezier_parameter().is_none() && parameter.as_selected_fiber().is_none() {
+            return Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        let cut_parameter = parameter;
+        let range = fragment.range();
+        // A newly selected fixed-distance root and an existing selected
+        // fragment endpoint can belong to different local fields even though
+        // both name the same source-parameter axis.  Promote only those old
+        // boundaries needed to compare/store the new cut; the cut itself stays
+        // in its compact shared fiber authority.
+        let normalize_boundary = |boundary: &CurveRegionParameter2| {
+            if cut_parameter.is_selected_fiber() && boundary.is_selected_fiber() {
+                return match promoted_retained_parallel_parameter(boundary, policy)
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?
+                {
+                    Classification::Decided(parameter) => {
+                        Ok(CurveRegionParameter2::from_bezier(parameter))
+                    }
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        operation,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    )),
+                };
+            }
+            Ok(boundary.clone())
+        };
+        let range_start = normalize_boundary(range.start())?;
+        let range_end = normalize_boundary(range.end())?;
+        let compare = |boundary: &CurveRegionParameter2| {
+            cut_parameter
+                .cmp_by_refinement(boundary, policy)
+                .map_err(|cause| curve_region_edit_error(operation, cause))
+                .and_then(|order| match order {
+                    Classification::Decided(order) => Ok(order),
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        operation,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    )),
+                })
+        };
+        if !compare(&range_start)?.is_gt() || !compare(&range_end)?.is_lt() {
+            return Err(curve_region_edit_error(
+                operation,
+                CurveError::Topology(
+                    "an exact selected-fiber corner cut lay outside its open source range".into(),
+                ),
+            ));
+        }
+
+        let keep_lower_parameter_range = keep_before_cut != fragment.is_reversed();
+        let (source_start_point, source_end_point) = if fragment.is_reversed() {
+            (fragment.end_point(), fragment.start_point())
+        } else {
+            (fragment.start_point(), fragment.end_point())
+        };
+        let (trimmed_range, start_point, end_point) = if keep_lower_parameter_range {
+            (
+                CurveRegionParameterRange2::new_validated(range_start, cut_parameter),
+                source_start_point.clone(),
+                cut_point.clone(),
+            )
+        } else {
+            (
+                CurveRegionParameterRange2::new_validated(cut_parameter, range_end),
+                cut_point.clone(),
+                source_end_point.clone(),
+            )
+        };
+        let trimmed = BezierSplitFragment2::SelectedFiber(
+            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                fragment.source().clone(),
+                trimmed_range,
+                start_point,
+                end_point,
+            ),
+        );
+        return if fragment.is_reversed() {
+            trimmed
+                .reversed()
+                .map_err(|cause| curve_region_edit_error(operation, cause))
+        } else {
+            Ok(trimmed)
+        };
+    }
     if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
         let parameter = parameter.as_algebraic_cusp().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
@@ -3742,6 +3833,26 @@ fn promoted_retained_parallel_fragment(
             fragment.is_reversed(),
         ),
     ))
+}
+
+fn promoted_selected_corner_fragment(
+    fragment: &crate::bezier_split::BezierSelectedFiberFragment2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<crate::BezierParallelFragment2> {
+    match promoted_retained_parallel_fragment(
+        RetainedParallelOffsetFragmentRef2::Selected(fragment),
+        RetainedParallelOffsetFragmentRef2::Selected(fragment).parallel(),
+        policy,
+    )
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(fragment) => Ok(fragment),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
 }
 
 fn retained_parallel_fragment_scale_sign(
@@ -8574,14 +8685,16 @@ impl CurveRegion2 {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::SelectedFiber(_) => None,
             _ => return Ok(None),
         };
         let next_top_level = match next_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
             BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::SelectedFiber(_) => None,
             _ => return Ok(None),
         };
         let previous_family = previous_top_level
@@ -8602,6 +8715,28 @@ impl CurveRegion2 {
             next_family,
             policy,
         )?;
+        let previous_selected = match previous_fragment {
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                Some(promoted_selected_corner_fragment(
+                    fragment,
+                    CurveOperation2::Chamfer,
+                    previous_family,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
+        let next_selected = match next_fragment {
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                Some(promoted_selected_corner_fragment(
+                    fragment,
+                    CurveOperation2::Chamfer,
+                    next_family,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
         let previous_carrier = match previous_fragment {
             BezierSplitFragment2::Materialized { .. } => exact_corner_carrier(
                 previous_top_level
@@ -8626,6 +8761,13 @@ impl CurveRegion2 {
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
+            }
+            BezierSplitFragment2::SelectedFiber(_) => {
+                crate::curve::ExactCornerCarrier2::AnalyticParallel(
+                    previous_selected
+                        .as_ref()
+                        .expect("a selected corner carrier was promoted"),
+                )
             }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };
@@ -8653,6 +8795,13 @@ impl CurveRegion2 {
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
                 crate::curve::ExactCornerCarrier2::AlgebraicCusp(fragment)
+            }
+            BezierSplitFragment2::SelectedFiber(_) => {
+                crate::curve::ExactCornerCarrier2::AnalyticParallel(
+                    next_selected
+                        .as_ref()
+                        .expect("a selected corner carrier was promoted"),
+                )
             }
             _ => unreachable!("unsupported retained corner fragments returned above"),
         };
@@ -8958,14 +9107,23 @@ impl CurveRegion2 {
         let previous_is_parallel =
             matches!(previous_fragment, BezierSplitFragment2::AnalyticParallel(_));
         let next_is_parallel = matches!(next_fragment, BezierSplitFragment2::AnalyticParallel(_));
+        let previous_is_selected =
+            matches!(previous_fragment, BezierSplitFragment2::SelectedFiber(_));
+        let next_is_selected = matches!(next_fragment, BezierSplitFragment2::SelectedFiber(_));
         if previous_curve.is_none()
             && !previous_is_cusp
             && !previous_is_chord
             && !previous_is_parallel
+            && !previous_is_selected
         {
             return Ok(None);
         }
-        if next_curve.is_none() && !next_is_cusp && !next_is_chord && !next_is_parallel {
+        if next_curve.is_none()
+            && !next_is_cusp
+            && !next_is_chord
+            && !next_is_parallel
+            && !next_is_selected
+        {
             return Ok(None);
         }
         let previous_family = previous_curve
@@ -8985,6 +9143,28 @@ impl CurveRegion2 {
                 crate::CurveCornerNoSolution2::ZeroDesignValue,
             )));
         }
+        let previous_selected = match previous_fragment {
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                Some(promoted_selected_corner_fragment(
+                    fragment,
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
+        let next_selected = match next_fragment {
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                Some(promoted_selected_corner_fragment(
+                    fragment,
+                    CurveOperation2::Fillet,
+                    next_family,
+                    policy,
+                )?)
+            }
+            _ => None,
+        };
         let previous_carrier = if let Some(previous_curve) = &previous_curve {
             exact_corner_carrier(previous_curve, true, CurveOperation2::Fillet, policy)?
                 .ok_or_else(|| {
@@ -9005,6 +9185,13 @@ impl CurveRegion2 {
                     }
                     BezierSplitFragment2::AnalyticParallel(fragment) => {
                         crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
+                    }
+                    BezierSplitFragment2::SelectedFiber(_) => {
+                        crate::curve::ExactCornerCarrier2::AnalyticParallel(
+                            previous_selected
+                                .as_ref()
+                                .expect("a selected fillet carrier was promoted"),
+                        )
                     }
                     _ => unreachable!("the supported retained fillet carrier is closed"),
                 }
@@ -9031,6 +9218,13 @@ impl CurveRegion2 {
                     }
                     BezierSplitFragment2::AnalyticParallel(fragment) => {
                         crate::curve::ExactCornerCarrier2::AnalyticParallel(fragment)
+                    }
+                    BezierSplitFragment2::SelectedFiber(_) => {
+                        crate::curve::ExactCornerCarrier2::AnalyticParallel(
+                            next_selected
+                                .as_ref()
+                                .expect("a selected fillet carrier was promoted"),
+                        )
                     }
                     _ => unreachable!("the supported retained fillet carrier is closed"),
                 }
@@ -9075,6 +9269,8 @@ impl CurveRegion2 {
                 retained_frame,
                 &radius,
                 false,
+                previous_selected.as_ref(),
+                next_selected.as_ref(),
                 policy,
             )?;
             self.rebuild_retained_corner(
@@ -9350,6 +9546,187 @@ impl CurveRegion2 {
             .collect())
     }
 
+    /// Reconstructs the selected analytic/circular carrier-switch fillet from
+    /// the same mapped contact that solved its center.
+    ///
+    /// The analytic anchor supplies the fillet's selected-normal frame. The
+    /// trimmed circular companion keeps the original two-normal contact map at
+    /// its endpoint, so angular ordering is replayed without invoking the
+    /// general two-circle resultant or materializing either selected point.
+    #[allow(clippy::too_many_arguments)]
+    fn retained_parallel_cusp_fillet_fragments(
+        frame: &RetainedFilletFrame2,
+        fillet: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        companion: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        companion_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+        companion_at_start: bool,
+        anchor_parallel: &BezierParallel2,
+        anchor_parameter: &BezierParameter2,
+        source_direction: RealSign,
+        companion_radial_sign: RealSign,
+        fillet_clockwise: bool,
+        anchor_cut: &mut CornerTrimCut2,
+        companion_cut: &mut CornerTrimCut2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let (sweep_halves, tangent_cross, _) = Self::retained_fillet_sweep(
+            frame,
+            anchor_parallel,
+            anchor_parameter,
+            false,
+            fillet_clockwise,
+            policy,
+        )?;
+        let terminal_circle = if sweep_halves == 2 {
+            fillet.complementary_half()
+        } else {
+            fillet.clone()
+        };
+        let contact_parameter = if tangent_cross == RealSign::Zero {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+        } else {
+            let (start, end) = match (companion_at_start, companion.is_reversed()) {
+                (true, false) | (false, true) => (
+                    companion_parameter.clone(),
+                    companion.end_parameter().clone(),
+                ),
+                (true, true) | (false, false) => (
+                    companion.start_parameter().clone(),
+                    companion_parameter.clone(),
+                ),
+            };
+            let trimmed_companion =
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    companion.semicircle().clone(),
+                    start,
+                    end,
+                    companion.is_reversed(),
+                    policy,
+                );
+            let terminal_radial_sign = match real_sign(terminal_circle.radial_distance(), policy) {
+                Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(curve_region_edit_error(
+                        CurveOperation2::Fillet,
+                        CurveError::Topology(
+                            "a retained carrier-switch fillet terminal circle collapsed".into(),
+                        ),
+                    ));
+                }
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        UncertaintyReason::RealSign,
+                    ));
+                }
+            };
+            let radial_product_sign = exact_sign_product(
+                exact_sign_product(terminal_radial_sign, source_direction),
+                companion_radial_sign,
+            );
+            match terminal_circle
+                .certified_selected_circular_tangent_contact_parameter(
+                    trimmed_companion,
+                    companion_at_start,
+                    anchor_parallel.clone(),
+                    anchor_parameter.clone(),
+                    source_direction,
+                    radial_product_sign,
+                    companion_cut.point.clone(),
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            }
+        };
+        companion_cut.point = match contact_parameter
+            .coincident_point_evidence(&terminal_circle, policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+        anchor_cut.point = match fillet
+            .start_point_evidence(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+
+        let exact_zero =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero());
+        let exact_one =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one());
+        let mut fragments = if sweep_halves == 1 {
+            vec![
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    fillet,
+                    exact_zero,
+                    contact_parameter,
+                    false,
+                    policy,
+                ),
+            ]
+        } else {
+            vec![
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    fillet,
+                    exact_zero.clone(),
+                    exact_one,
+                    false,
+                    policy,
+                ),
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    terminal_circle,
+                    exact_zero,
+                    contact_parameter,
+                    false,
+                    policy,
+                ),
+            ]
+        };
+        if !frame.anchor_is_previous {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed())
+                .collect();
+        }
+        Ok(fragments
+            .into_iter()
+            .map(BezierSplitFragment2::AlgebraicCuspSemicircle)
+            .collect())
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
         previous_fragment: &BezierSplitFragment2,
@@ -9361,6 +9738,8 @@ impl CurveRegion2 {
         retained_frame: Option<RetainedFilletFrame2>,
         radius: &Real,
         allow_boundary_contact: bool,
+        previous_selected: Option<&crate::BezierParallelFragment2>,
+        next_selected: Option<&crate::BezierParallelFragment2>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         if let (Some(previous_point), Some(next_point), Some(center)) = (
@@ -9405,11 +9784,22 @@ impl CurveRegion2 {
                     UncertaintyReason::Unsupported,
                 )
             })?;
-            let (anchor_cut, other_cut, other_fragment) = if frame.anchor_is_previous {
-                (&mut *previous_cut, &mut *next_cut, next_fragment)
-            } else {
-                (&mut *next_cut, &mut *previous_cut, previous_fragment)
-            };
+            let (anchor_cut, other_cut, other_fragment, other_selected) =
+                if frame.anchor_is_previous {
+                    (
+                        &mut *previous_cut,
+                        &mut *next_cut,
+                        next_fragment,
+                        next_selected,
+                    )
+                } else {
+                    (
+                        &mut *next_cut,
+                        &mut *previous_cut,
+                        previous_fragment,
+                        previous_selected,
+                    )
+                };
             if let Some(relation) = frame.anchor_evidence.as_ref() {
                 anchor_cut.replacement_rational_curve = relation.canonical_anchor_curve.clone();
             }
@@ -9417,6 +9807,7 @@ impl CurveRegion2 {
                 other_fragment,
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                     | BezierSplitFragment2::AnalyticParallel(_)
+                    | BezierSplitFragment2::SelectedFiber(_)
                     | BezierSplitFragment2::Materialized { .. }
             ) {
                 return Err(ExactCurveError::blocked(
@@ -9489,6 +9880,47 @@ impl CurveRegion2 {
                     ));
                 }
             };
+            if let (
+                BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
+                RetainedFilletRadialFrame2::ParallelNormal {
+                    center_support,
+                    center_parameter,
+                    ..
+                },
+                Some(source_direction),
+                Some(companion_parameter),
+            ) = (
+                other_fragment,
+                &frame.radial_frame,
+                frame
+                    .anchor_evidence
+                    .as_ref()
+                    .and_then(|evidence| evidence.source_direction),
+                other_cut.parameter.as_algebraic_cusp().cloned(),
+            ) {
+                // The solved offset center lies on the opposite side of the
+                // circular source from its tangency point.
+                let companion_radial_sign = if clockwise {
+                    RealSign::Positive
+                } else {
+                    RealSign::Negative
+                };
+                return Self::retained_parallel_cusp_fillet_fragments(
+                    &frame,
+                    fillet,
+                    companion,
+                    companion_parameter,
+                    frame.anchor_is_previous,
+                    center_support,
+                    center_parameter,
+                    source_direction,
+                    companion_radial_sign,
+                    fillet_clockwise,
+                    anchor_cut,
+                    other_cut,
+                    policy,
+                );
+            }
             let fillet_parameter_is_open = |fillet_parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
                 let after_start = match fillet_parameter.order_to_real(&Real::zero(), policy) {
                     Ok(Classification::Decided(order)) => order == std::cmp::Ordering::Greater,
@@ -9518,6 +9950,69 @@ impl CurveRegion2 {
                 };
                 Ok(after_start && before_end)
             };
+            let other_parallel_fragment = match other_fragment {
+                BezierSplitFragment2::AnalyticParallel(fragment) => Some(fragment),
+                BezierSplitFragment2::SelectedFiber(_) => {
+                    Some(other_selected.ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::RationalBezier,
+                            UncertaintyReason::Unsupported,
+                        )
+                    })?)
+                }
+                _ => None,
+            };
+            if let Some(other_fragment) = other_parallel_fragment {
+                let expected_parameter = other_cut
+                    .parameter
+                    .as_bezier_parameter()
+                    .cloned()
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::RationalBezier,
+                            UncertaintyReason::Unsupported,
+                        )
+                    })?;
+                match crate::bezier_offset::overlap_parameter_is_in_range(
+                    &expected_parameter,
+                    other_fragment.range(),
+                    allow_boundary_contact,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+                {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Err(curve_region_edit_error(
+                            CurveOperation2::Fillet,
+                            CurveError::Topology(
+                                "a retained parallel fillet lost its interior trim parameter"
+                                    .into(),
+                            ),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::RationalBezier,
+                            reason,
+                        ));
+                    }
+                }
+                return Self::retained_parallel_fillet_fragments(
+                    &frame,
+                    fillet,
+                    other_fragment.parallel(),
+                    expected_parameter,
+                    other_fragment.is_reversed(),
+                    fillet_clockwise,
+                    anchor_cut,
+                    other_cut,
+                    policy,
+                );
+            }
             let fillet_parameter = match other_fragment {
                 BezierSplitFragment2::AlgebraicCuspSemicircle(other_fragment) => {
                     let intersections = match fillet
@@ -9620,56 +10115,6 @@ impl CurveRegion2 {
                         CurveRegionParameter2::from_algebraic_cusp(other_parameter);
                     fillet_parameter
                 }
-                BezierSplitFragment2::AnalyticParallel(other_fragment) => {
-                    let expected_parameter = other_cut
-                        .parameter
-                        .as_bezier_parameter()
-                        .cloned()
-                        .ok_or_else(|| {
-                            ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                CurveFamily2::RationalBezier,
-                                UncertaintyReason::Unsupported,
-                            )
-                        })?;
-                    match crate::bezier_offset::overlap_parameter_is_in_range(
-                        &expected_parameter,
-                        other_fragment.range(),
-                        allow_boundary_contact,
-                        policy,
-                    )
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-                    {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) => {
-                            return Err(curve_region_edit_error(
-                                CurveOperation2::Fillet,
-                                CurveError::Topology(
-                                    "a retained analytic fillet lost its interior trim parameter"
-                                        .into(),
-                                ),
-                            ));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                CurveFamily2::RationalBezier,
-                                reason,
-                            ));
-                        }
-                    }
-                    return Self::retained_parallel_fillet_fragments(
-                        &frame,
-                        fillet,
-                        other_fragment.parallel(),
-                        expected_parameter,
-                        other_fragment.is_reversed(),
-                        fillet_clockwise,
-                        anchor_cut,
-                        other_cut,
-                        policy,
-                    );
-                }
                 BezierSplitFragment2::Materialized { curve, .. } => {
                     let expected_parameter = other_cut
                         .parameter
@@ -9698,6 +10143,10 @@ impl CurveRegion2 {
                         other_cut,
                         policy,
                     );
+                }
+                BezierSplitFragment2::AnalyticParallel(_)
+                | BezierSplitFragment2::SelectedFiber(_) => {
+                    unreachable!("parallel companions returned through the shared branch")
                 }
                 _ => unreachable!("the retained fillet companion family was checked"),
             };
@@ -10598,7 +11047,7 @@ impl CurveRegion2 {
             return self.offset_exact_boundary_walk_raw(
                 &distance,
                 corner_style,
-                &filled_sides,
+                filled_sides,
                 policy,
             );
         }
