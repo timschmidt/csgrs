@@ -1594,6 +1594,50 @@ fn parallel_pair_component_saturation_retains_residual_isolated_contact() {
 }
 
 #[test]
+fn parallel_pair_replays_a_non_source_speed_component_residual() {
+    // The first source derivative is
+    // `(1 + 2t) * (1, t)`. Its root `t = -1/2` lies outside the authored
+    // interval, so the source is regular and non-PH on `[0, 1]`, but both
+    // squared parallel-pair equations still contain the unrelated factor
+    // `(1 + 2t)^2`. Saturation must retain that factor's norm intersection
+    // separately and replay the residual endpoint contact at `(0, 0)`.
+    let first = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 3), r(0)),
+        Point2::new(r(1), q(1, 6)),
+        Point2::new(r(2), q(7, 6)),
+    )
+    .parallel_left(r(1))
+    .unwrap();
+    let second = QuadraticBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 2), r(0)),
+        Point2::new(r(1), q(1, 2)),
+    )
+    .parallel_left(r(1))
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            first.exact_pythagorean_hodograph_offset(&policy).unwrap(),
+            Classification::Decided(None)
+        ));
+        assert!(matches!(
+            second.exact_pythagorean_hodograph_offset(&policy).unwrap(),
+            Classification::Decided(None)
+        ));
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(pair_has_exact_parameters(
+            intersections.contacts(),
+            r(0),
+            r(0),
+        ));
+    }
+}
+
+#[test]
 fn parallel_pair_rational_delegate_preserves_operand_parameter_order() {
     let rational_first = QuadraticBezier2::new(p(0, 1), p(0, 2), p(1, 3))
         .parallel_left(r(0))
