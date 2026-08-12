@@ -21016,42 +21016,62 @@ mod tests {
                 let lower_right = Point2::new(right.clone(), crossing_y);
                 let upper_right = Point2::new(right, top.clone());
                 let upper_left = Point2::new(left, top);
-                let cutter = CurveRegion2::try_new_with_loop_topology(
-                    vec![
-                        CurveRegionBoundaryLoop2::new(
-                            vec![
-                                line(lower_left.clone(), lower_right.clone()),
-                                line(lower_right, upper_right.clone()),
-                                line(upper_right, upper_left.clone()),
-                                line(upper_left, lower_left),
-                            ],
-                            &policy,
-                        )
-                        .expect("the crossing cutter closes exactly"),
-                    ],
-                    vec![CurveRegionLoopRole::Material],
-                    vec![FillRule::NonZero],
-                    vec![CurveBoundaryInteriorSide2::Left],
-                )
-                .expect("the crossing cutter has authored topology");
-                let evidence = filleted
-                    .intersect_region(&cutter, &policy)
-                    .expect("the crossing carrier pairs return retained evidence");
-                assert!(
-                    evidence.value.is_complete(),
-                    "the crossing carrier pairs must complete: policy={policy:?}, reversed={reversed}, blockers={:?}",
-                    evidence.value.blockers()
+                let bottom_source = QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap(),
                 );
-                let booleans = filleted
-                    .boolean_regions(&cutter, &policy)
-                    .unwrap_or_else(|error| {
-                        panic!(
-                            "the pair-native fillet must cross the Boolean cutter: policy={policy:?}, reversed={reversed}, error={error:?}"
-                        )
-                    });
-                assert_eq!(booleans.certainty, CurveCertainty::Certified);
-                assert!(!booleans.value.intersection().is_empty());
-                assert!(!booleans.value.difference().is_empty());
+                for analytic_bottom in [false, true] {
+                    let bottom = if analytic_bottom {
+                        let Classification::Decided(bottom) =
+                            crate::BezierParallelFragment2::try_new(
+                                bottom_source.parallel_left(Real::zero()).unwrap(),
+                                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("the retained line cutter has a decided range");
+                        };
+                        BezierSplitFragment2::AnalyticParallel(bottom)
+                    } else {
+                        line(lower_left.clone(), lower_right.clone())
+                    };
+                    let cutter = CurveRegion2::try_new_with_loop_topology(
+                        vec![
+                            CurveRegionBoundaryLoop2::new(
+                                vec![
+                                    bottom,
+                                    line(lower_right.clone(), upper_right.clone()),
+                                    line(upper_right.clone(), upper_left.clone()),
+                                    line(upper_left.clone(), lower_left.clone()),
+                                ],
+                                &policy,
+                            )
+                            .expect("the crossing cutter closes exactly"),
+                        ],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![CurveBoundaryInteriorSide2::Left],
+                    )
+                    .expect("the crossing cutter has authored topology");
+                    let evidence = filleted
+                        .intersect_region(&cutter, &policy)
+                        .expect("the crossing carrier pairs return retained evidence");
+                    assert!(
+                        evidence.value.is_complete(),
+                        "the crossing carrier pairs must complete: policy={policy:?}, reversed={reversed}, analytic_bottom={analytic_bottom}, blockers={:?}",
+                        evidence.value.blockers()
+                    );
+                    let booleans = filleted
+                        .boolean_regions(&cutter, &policy)
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the pair-native fillet must cross the Boolean cutter: policy={policy:?}, reversed={reversed}, analytic_bottom={analytic_bottom}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(booleans.certainty, CurveCertainty::Certified);
+                    assert!(!booleans.value.intersection().is_empty());
+                    assert!(!booleans.value.difference().is_empty());
+                }
             }
         }
     }
