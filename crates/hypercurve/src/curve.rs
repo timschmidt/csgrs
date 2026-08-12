@@ -5879,39 +5879,57 @@ fn fillet_offset_centers(
                 && previous_source.direct().is_some()
                 && next_source.direct().is_some();
             let use_incident_rays = direct_extension;
-            let intersections = match (if use_incident_rays && identical_supports {
-                previous.self_intersections_with_incident_rays(
-                    &Real::one(),
-                    crate::BezierParameterRayDirection2::Increasing,
-                    &Real::zero(),
-                    crate::BezierParameterRayDirection2::Decreasing,
-                    policy,
-                )
-            } else if use_incident_rays {
-                previous.parallel_intersections_with_incident_rays(
-                    next,
-                    &Real::one(),
-                    crate::BezierParameterRayDirection2::Increasing,
-                    &Real::zero(),
-                    crate::BezierParameterRayDirection2::Decreasing,
-                    policy,
-                )
-            } else if identical_supports {
-                previous.self_intersections(policy)
+            let (intersections, positive_dimensional_incident_seam) = if use_incident_rays {
+                let incident = match (if identical_supports {
+                    previous.self_intersections_with_incident_rays(
+                        &Real::one(),
+                        crate::BezierParameterRayDirection2::Increasing,
+                        &Real::zero(),
+                        crate::BezierParameterRayDirection2::Decreasing,
+                        policy,
+                    )
+                } else {
+                    previous.parallel_intersections_with_incident_rays(
+                        next,
+                        &Real::one(),
+                        crate::BezierParameterRayDirection2::Increasing,
+                        &Real::zero(),
+                        crate::BezierParameterRayDirection2::Decreasing,
+                        policy,
+                    )
+                })
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })? {
+                    Classification::Decided(intersections) => intersections,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                };
+                incident.into_parts()
             } else {
-                previous.parallel_intersections(next, policy)
-            })
-            .map_err(|cause| {
-                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-            })? {
-                Classification::Decided(intersections) => intersections,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        reason,
-                    ));
-                }
+                let intersections = match (if identical_supports {
+                    previous.self_intersections(policy)
+                } else {
+                    previous.parallel_intersections(next, policy)
+                })
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })? {
+                    Classification::Decided(intersections) => intersections,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                };
+                (intersections, false)
             };
             if !intersections.is_complete() {
                 return Err(ExactCurveError::blocked(
@@ -5920,6 +5938,7 @@ fn fillet_offset_centers(
                     crate::UncertaintyReason::Predicate,
                 ));
             }
+            centers.coincident |= positive_dimensional_incident_seam;
             let previous_range = previous_source.parameter_range();
             let next_range = next_source.parameter_range();
             if !intersections.overlaps().is_empty() {

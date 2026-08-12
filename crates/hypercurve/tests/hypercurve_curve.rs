@@ -2520,6 +2520,47 @@ fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
 }
 
 #[test]
+fn independently_parameterized_bezier_continuation_is_an_incident_fillet_component() {
+    // These are adjacent parameter spans of the same non-PH parabola:
+    // P(t)=(t,t^2), Q(s)=(1+s,(1+s)^2). Their authored domains share only
+    // the seam P(1)=Q(0), while their analytic continuations satisfy
+    // s=t-1. Equal selected offsets therefore provide infinitely many
+    // projective fillet centers and must be classified as a degeneracy rather
+    // than disappearing when the squared pair component is saturated.
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            p(1, 1),
+        )),
+        Curve2::from(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(3, 2), r(2)),
+            p(2, 4),
+        )),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let result = path
+                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("the incident source component must be classified exactly");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                result.into_value(),
+                CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::DegenerateCandidate)
+            );
+        }
+    }
+}
+
+#[test]
 fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
     // This regular closed cubic has P(2) = (22/3, -4/3) with tangent
     // (13, 0), and P(-1) = (4/3, -22/3) with tangent (0, 13). Its right

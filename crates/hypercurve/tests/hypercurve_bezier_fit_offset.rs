@@ -1491,6 +1491,55 @@ fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
 }
 
 #[test]
+fn parallel_pair_overlap_retains_off_correspondence_contacts() {
+    let source = CubicBezier2::new(p(0, 0), p(1, 4), p(3, -4), p(4, 0));
+    let first = source.parallel_left(q(1, 2)).unwrap();
+    let second = first.clone();
+    assert!(matches!(
+        first
+            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
+            .unwrap(),
+        Classification::Decided(None)
+    ));
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert_eq!(intersections.overlaps().len(), 1, "{intersections:?}");
+        assert_eq!(intersections.contacts().len(), 2, "{intersections:?}");
+        assert!(
+            intersections
+                .contacts()
+                .iter()
+                .all(BezierParallelPairIntersectionContact2::is_certified_transverse)
+        );
+    }
+}
+
+#[test]
+fn parallel_pair_retains_an_isolated_boundary_of_a_source_component() {
+    let first = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1))
+        .parallel_left(q(1, 2))
+        .unwrap();
+    let second = QuadraticBezier2::new(p(1, 1), Point2::new(q(3, 2), r(2)), p(2, 4))
+        .parallel_left(q(1, 2))
+        .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let intersections =
+            decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
+        assert!(intersections.is_complete(), "{intersections:?}");
+        assert!(intersections.overlaps().is_empty());
+        assert!(pair_has_exact_parameters(
+            intersections.contacts(),
+            r(1),
+            r(0),
+        ));
+    }
+}
+
+#[test]
 fn parallel_pair_removes_a_false_same_source_component() {
     let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
     let first = source.parallel_left(q(1, 2)).unwrap();
