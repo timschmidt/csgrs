@@ -21789,6 +21789,85 @@ mod tests {
     }
 
     #[test]
+    fn retained_offset_independent_chord_crosses_a_genuine_analytic_parallel() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let triangle = independent_field_algebraic_chord_region(&policy, false);
+            let chord = triangle.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .find_map(|fragment| match fragment {
+                    BezierSplitFragment2::AlgebraicChord(chord) => Some(chord.clone()),
+                    _ => None,
+                })
+                .expect("the retained triangle has one algebraic chord");
+            let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
+            let offset = chord
+                .parallel_left_retained(twentieth.clone(), &policy)
+                .expect("the independent chord has an exact retained parallel");
+            let translation_x = Real::from(2_i8);
+            let translation_y = -Real::one();
+            let offset = match offset
+                .translated(&translation_x, &translation_y, &policy)
+                .expect("the retained parallel chord translation is exact")
+            {
+                Classification::Decided(offset) => offset,
+                Classification::Uncertain(reason) => {
+                    panic!("the retained parallel chord must translate: {reason:?}")
+                }
+            };
+            assert!(matches!(
+                (offset.start(), offset.end()),
+                (
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                )
+            ));
+            assert!(offset.exact_line().is_none());
+            assert!(offset.strict_provenance_support_line(&policy).is_none());
+
+            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let translated =
+                |point: Point2| point.translated(translation_x.clone(), translation_y.clone());
+            let source = QuadraticBezier2::new(
+                translated(p(-1, 0)),
+                translated(Point2::new(Real::zero(), -quarter)),
+                translated(Point2::new(
+                    Real::one(),
+                    (Real::one() / Real::from(2_i8)).unwrap(),
+                )),
+            );
+            let parallel = source
+                .parallel_left(twentieth)
+                .expect("the regular non-PH source has an exact analytic parallel");
+            assert!(matches!(
+                parallel
+                    .exact_rational_parallel_component(&CurveContext::STRICT)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
+
+            for offset in [offset.clone(), offset.reversed()] {
+                let contacts = match offset.parallel_intersections(&parallel, &policy).unwrap() {
+                    Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                            contacts,
+                        ),
+                    ) => contacts,
+                    result => {
+                        panic!("the retained-offset chord/parallel solve must complete: {result:?}")
+                    }
+                };
+                assert!(!contacts.is_empty());
+                assert!(
+                    contacts
+                        .iter()
+                        .any(|candidate| candidate.tangent_cross_sign() != RealSign::Zero)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn retained_parallel_offset_composition_respects_traversal_orientation() {
         let policy = CurveContext::STRICT;
         let tenth = (Real::one() / Real::from(10_i8)).unwrap();
