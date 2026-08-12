@@ -4684,13 +4684,41 @@ impl FilletOffsetCarrier2<'_, '_> {
                     } else {
                         (-signed_radius.clone(), signed_radius - *source_radius)
                     };
-                    (
+                    let radial_frame = if matches!(
+                        crate::classify::real_sign(signed_radius, &CurveContext::STRICT),
+                        Some(RealSign::Positive)
+                    ) {
+                        match (
+                            anchor_evidence
+                                .as_ref()
+                                .and_then(|evidence| evidence.center_parallel.clone()),
+                            anchor_parameter
+                                .and_then(CurveRegionParameter2::as_bezier_parameter)
+                                .cloned(),
+                        ) {
+                            (Some(center_support), Some(center_parameter)) => {
+                                RetainedFilletRadialFrame2::ParallelNormal {
+                                    center_support,
+                                    center_parameter,
+                                    policy: *policy,
+                                }
+                            }
+                            _ => RetainedFilletRadialFrame2::ConcentricArc {
+                                support_center: support.center().clone(),
+                                normal_denominator,
+                            },
+                        }
+                    } else {
+                        // A past-center concentric image reverses its rational
+                        // tangent. Keep the orientation-independent radial
+                        // frame unless that reversal is proved and retained by
+                        // a future mapped-contact authority.
                         RetainedFilletRadialFrame2::ConcentricArc {
                             support_center: support.center().clone(),
                             normal_denominator,
-                        },
-                        radial_distance,
-                    )
+                        }
+                    };
+                    (radial_frame, radial_distance)
                 }
                 Self::AlgebraicCusp { source, support } => {
                     // A general parallel-normal selected circle has no one-field
@@ -4972,8 +5000,16 @@ fn solve_carrier_fillet_corner(
                         matches!(previous_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
                     let next_is_cusp =
                         matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
+                    let previous_chord_anchors_on_next_arc = matches!(
+                        (&previous_offset, &next_offset),
+                        (
+                            FilletOffsetCarrier2::AlgebraicChord { .. },
+                            FilletOffsetCarrier2::Arc { .. }
+                        )
+                    );
                     let (first, first_is_previous, first_family, second, second_family) =
-                        if previous_is_cusp && !next_is_cusp {
+                        if (previous_is_cusp && !next_is_cusp) || previous_chord_anchors_on_next_arc
+                        {
                             (
                                 &next_offset,
                                 false,
@@ -7604,6 +7640,254 @@ fn fillet_offset_centers(
                 ) => {
                     centers.coincident = !overlaps.is_empty();
                 }
+            }
+        }
+        (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Arc { .. })
+        | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
+            if mode == CurveCornerMode2::TrimOrExtend {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let (
+                chord_source,
+                chord_support,
+                chord_signed_distance,
+                arc,
+                source_radius,
+                signed_radius,
+                chord_is_previous,
+            ) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::AlgebraicChord {
+                        source: chord_source,
+                        support,
+                        signed_distance,
+                    },
+                    FilletOffsetCarrier2::Arc {
+                        source: arc_source,
+                        source_radius,
+                        signed_radius,
+                    },
+                ) => (
+                    *chord_source,
+                    support,
+                    signed_distance,
+                    *arc_source,
+                    *source_radius,
+                    signed_radius,
+                    true,
+                ),
+                (
+                    FilletOffsetCarrier2::Arc {
+                        source,
+                        source_radius,
+                        signed_radius,
+                    },
+                    FilletOffsetCarrier2::AlgebraicChord {
+                        source: chord_source,
+                        support,
+                        signed_distance,
+                    },
+                ) => (
+                    *chord_source,
+                    support,
+                    signed_distance,
+                    *source,
+                    *source_radius,
+                    signed_radius,
+                    false,
+                ),
+                _ => unreachable!(),
+            };
+            let chord_family = if chord_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let arc_family = if chord_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+
+            // Adjacent retained carriers sometimes name their common vertex
+            // in independent exact fields. When STRICT can replay that
+            // identity and the chord already owns a represented unit tangent,
+            // the common arc endpoint is an exact represented point on the
+            // chord support. Translate that point by the authored chord
+            // offset and use the primitive line/circle relation. This is the
+            // same authoritative geometry as the general selected-axis
+            // projection below, but it avoids constructing a three-parameter
+            // compositum for the overwhelmingly common incident-corner case.
+            let arc_corner = if chord_is_previous {
+                arc.support().start()
+            } else {
+                arc.support().end()
+            };
+            let chord_corner = if chord_is_previous {
+                chord_source.end()
+            } else {
+                chord_source.start()
+            };
+            let arc_corner_evidence =
+                RationalBezierIntersectionPointEvidence2::Exact(arc_corner.clone());
+            let shares_strict_corner = chord_corner.shares_storage(&arc_corner_evidence)
+                || chord_corner.same_point(&arc_corner_evidence, &CurveContext::STRICT)
+                    == Classification::Decided(true);
+            if shares_strict_corner
+                && let Some((tangent_x, tangent_y)) = chord_source.certified_unit_tangent()
+            {
+                let line_start = arc_corner.translated(
+                    -(&tangent_y * chord_signed_distance),
+                    &tangent_x * chord_signed_distance,
+                );
+                let line_support = LineSeg2::new_unchecked(
+                    line_start.clone(),
+                    line_start.translated(tangent_x, tangent_y),
+                );
+                let relation = crate::intersect::line_circle_relation_from_supports(
+                    &line_support,
+                    arc.support().center(),
+                    &(signed_radius * signed_radius),
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                })?;
+                let mut push = |point: Point2| {
+                    centers.push(FilletCenterWitness2 {
+                        point: point.into(),
+                        previous_parameter: None,
+                        next_parameter: None,
+                        retained_anchor_evidence: None,
+                    });
+                };
+                match relation {
+                    crate::LineCircleRelation::Disjoint => {}
+                    crate::LineCircleRelation::Tangent { point, .. } => push(point),
+                    crate::LineCircleRelation::Secant {
+                        first_point,
+                        second_point,
+                        ..
+                    } => {
+                        push(first_point);
+                        push(second_point);
+                    }
+                    crate::LineCircleRelation::Uncertain { reason } => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            chord_family,
+                            reason,
+                        ));
+                    }
+                }
+                return Ok(centers);
+            }
+
+            let Some(offset_arc) = arc.retained_rational_offset_evaluator(
+                source_radius,
+                signed_radius,
+                CurveOperation2::Fillet,
+                arc_family,
+                policy,
+            )?
+            else {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    arc_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            };
+            let center_parallel =
+                offset_arc
+                    .offset
+                    .parallel_left(Real::zero())
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, arc_family, cause)
+                    })?;
+            let canonical_chord;
+            let (intersection_chord, chord_tangent_reversed) = if chord_support.is_reversed() {
+                canonical_chord = chord_support.reversed();
+                (&canonical_chord, true)
+            } else {
+                (chord_support, false)
+            };
+            let contacts = match intersection_chord
+                .parallel_intersections(&center_parallel, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                })? {
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                        contacts,
+                    ),
+                ) => contacts,
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                ) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        crate::UncertaintyReason::Boundary,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        reason,
+                    ));
+                }
+            };
+            let signed_radius_sign = match crate::classify::real_sign(signed_radius, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    unreachable!("collapsed arc offsets use the point carrier")
+                }
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        arc_family,
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            };
+            for contact in contacts {
+                let mut cross = contact.tangent_cross_sign();
+                let mut dot = contact.tangent_dot_sign();
+                if chord_tangent_reversed {
+                    cross = reverse_fillet_sign(cross);
+                    dot = reverse_fillet_sign(dot);
+                }
+                if signed_radius_sign == RealSign::Negative {
+                    cross = reverse_fillet_sign(cross);
+                    dot = reverse_fillet_sign(dot);
+                }
+                let arc_parameter =
+                    CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                let (previous_parameter, next_parameter) = if chord_is_previous {
+                    (None, Some(arc_parameter))
+                } else {
+                    (Some(arc_parameter), None)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point().clone(),
+                    previous_parameter,
+                    next_parameter,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        // The retained concentric arc supplies the fillet
+                        // frame. The intersection kernel reports chord x arc.
+                        cross: Some(reverse_fillet_sign(cross)),
+                        dot: Some(dot),
+                        center_parallel: Some(center_parallel.clone()),
+                        source_direction: None,
+                        canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
+                        deferred_arc_contact: None,
+                    }),
+                });
             }
         }
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Parallel { .. })

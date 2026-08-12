@@ -9630,15 +9630,18 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// radius is selected by an analytic-parallel tangent.
     ///
     /// `point` must be the exact center of this circle displaced along
-    /// `chord`'s unit left normal.  The two signed radial distances must have
-    /// equal magnitude.  Once those construction facts are certified, angular
-    /// ordering needs only a three-axis chord/parallel tangent predicate; the
-    /// center field and the two chord endpoint fields never form a primitive
-    /// compositum.
+    /// `chord`'s unit left normal. A retained chord-parallel point supplies its
+    /// authored distance directly; represented-vector translations use the
+    /// explicit `contact_radial_distance`. The two signed radial distances
+    /// must have equal magnitude. Once those construction facts are certified,
+    /// angular ordering needs only a three-axis chord/parallel tangent
+    /// predicate; the center field and the two chord endpoint fields never
+    /// form a primitive compositum.
     pub(crate) fn certified_selected_chord_parallel_normal_contact_parameter(
         &self,
         chord: BezierAlgebraicChord2,
         point: RationalBezierIntersectionPointEvidence2,
+        contact_radial_distance: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
         chord.validate_policy(policy)?;
@@ -9650,23 +9653,21 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a selected chord/parallel-normal contact crossed predicate policies".into(),
             ));
         }
-        let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(chord_point) = &point
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        if chord_point.data.policy != *policy
-            || chord_point.data.source != chord
-            || chord_point.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
-            || chord_point.data.translation_x.zero_status() != ZeroStatus::Zero
-            || chord_point.data.translation_y.zero_status() != ZeroStatus::Zero
-        {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let Some(source_point) = chord_point.data.source_point.as_deref() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let contact_radial_distance = match &point {
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(chord_point)
+                if chord_point.data.policy == *policy
+                    && chord_point.data.source == chord
+                    && chord_point.data.direction
+                        == BezierAlgebraicChordUnitDisplacement2::LeftNormal
+                    && chord_point.data.translation_x.zero_status() == ZeroStatus::Zero
+                    && chord_point.data.translation_y.zero_status() == ZeroStatus::Zero =>
+            {
+                chord_point.data.distance.clone()
+            }
+            _ => contact_radial_distance,
         };
         let radius_residual = self.radial_distance() * self.radial_distance()
-            - &chord_point.data.distance * &chord_point.data.distance;
+            - &contact_radial_distance * &contact_radial_distance;
         match real_sign(&radius_residual, policy) {
             Some(RealSign::Zero) => {}
             Some(RealSign::Positive | RealSign::Negative) => {
@@ -9676,18 +9677,16 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        let radial_product_sign = match real_sign(
-            &(self.radial_distance() * &chord_point.data.distance),
-            policy,
-        ) {
-            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Some(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "a selected chord/parallel-normal contact retained a zero radius".into(),
-                ));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
+        let radial_product_sign =
+            match real_sign(&(self.radial_distance() * &contact_radial_distance), policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a selected chord/parallel-normal contact retained a zero radius".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
         let center = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
             BezierAnalyticParallelPoint2::new(
                 frame.center_support.clone(),
@@ -9695,7 +9694,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             ),
         );
-        if source_point.same_point(&center, policy) != Classification::Decided(true) {
+        let expected =
+            chord.normal_displaced_point_evidence(center, contact_radial_distance, policy)?;
+        if expected.same_point(&point, policy) != Classification::Decided(true) {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
@@ -34642,13 +34643,26 @@ impl BezierAlgebraicChord2 {
                     ),
                 ))
             }
-            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            endpoint @ (RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
             | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
             | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-            | RationalBezierIntersectionPointEvidence2::Similarity(_) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            | RationalBezierIntersectionPointEvidence2::Similarity(_)) => {
+                let complement = Real::one() - scale;
+                let transform = Similarity2::try_from_real_affine(
+                    scale.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                    scale.clone(),
+                    origin.x() * &complement,
+                    origin.y() * complement,
+                )?;
+                Ok(Classification::Decided(
+                    RationalBezierIntersectionPointEvidence2::Similarity(
+                        BezierSimilarityPoint2::new(endpoint.clone(), transform, policy),
+                    ),
+                ))
             }
         }
     }
@@ -43536,6 +43550,18 @@ impl BezierAlgebraicChord2 {
         self.validate_policy(policy)?;
         if distance.zero_status() == ZeroStatus::Zero {
             return Ok(self.clone());
+        }
+        if self.is_reversed() {
+            // `left(reverse(C), d) = reverse(left(C, -d))`. Re-enter the
+            // stable construction-order support before authoring procedural
+            // endpoints, so a reversed offset does not retain an avoidable
+            // reversed-chord layer inside both endpoint fields. Besides being
+            // smaller, this preserves the projection complexity of the
+            // forward chord for every exact incidence consumer.
+            return self
+                .retained_support()
+                .parallel_left_retained(-distance, policy)
+                .map(|parallel| parallel.reversed());
         }
         let (source, distance, translation_x, translation_y) = match (self.start(), self.end()) {
             (
