@@ -200,6 +200,25 @@ impl BezierParallelSource2 {
         }
     }
 
+    fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match self {
+            Self::Quadratic(source) => Ok(Classification::Decided(Self::Quadratic(
+                source.subcurve_between_affine_exact(start, end, policy)?,
+            ))),
+            Self::Cubic(source) => Ok(Classification::Decided(Self::Cubic(
+                source.subcurve_between_affine_exact(start, end, policy)?,
+            ))),
+            Self::Rational(source) => source
+                .subcurve_between_affine_exact(start, end, policy)
+                .map(|subcurve| subcurve.map(Self::Rational)),
+        }
+    }
+
     fn certified_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
         match self {
             Self::Quadratic(source) => source.certified_bounds(policy),
@@ -49432,6 +49451,24 @@ impl BezierParallel2 {
         Ok(self
             .source()
             .subcurve_between_exact(start, end, policy)?
+            .map(|source| Self::from_source(source, self.distance().clone())))
+    }
+
+    /// Restricts this exact parallel to any ordered finite affine range.
+    ///
+    /// The source is reparameterized to `[0, 1]`; a positive affine parameter
+    /// scale preserves its orientation and therefore the signed left offset.
+    /// Rational sources certify that the selected range contains no projective
+    /// pole before publishing the replacement carrier.
+    pub(crate) fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        Ok(self
+            .source()
+            .subcurve_between_affine_exact(start, end, policy)?
             .map(|source| Self::from_source(source, self.distance().clone())))
     }
 

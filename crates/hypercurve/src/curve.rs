@@ -3374,7 +3374,7 @@ impl CornerCut2 {
             parameter,
             point: self.point,
             placement: self.placement,
-            replacement_curve: None,
+            replacement: None,
         })
     }
 
@@ -3383,12 +3383,48 @@ impl CornerCut2 {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum CornerReplacement2 {
+    Curve(BezierSubcurve2),
+    AnalyticParallel(BezierParallel2),
+}
+
+impl CornerReplacement2 {
+    pub(crate) const fn as_curve(&self) -> Option<&BezierSubcurve2> {
+        match self {
+            Self::Curve(curve) => Some(curve),
+            Self::AnalyticParallel(_) => None,
+        }
+    }
+
+    pub(crate) const fn as_parallel(&self) -> Option<&BezierParallel2> {
+        match self {
+            Self::AnalyticParallel(parallel) => Some(parallel),
+            Self::Curve(_) => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct CornerTrimCut2 {
     pub(crate) parameter: CurveRegionParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
     pub(crate) placement: CornerPlacement2,
-    pub(crate) replacement_curve: Option<BezierSubcurve2>,
+    pub(crate) replacement: Option<CornerReplacement2>,
+}
+
+impl CornerTrimCut2 {
+    pub(crate) fn replacement_curve(&self) -> Option<&BezierSubcurve2> {
+        self.replacement
+            .as_ref()
+            .and_then(CornerReplacement2::as_curve)
+    }
+
+    pub(crate) fn replacement_parallel(&self) -> Option<&BezierParallel2> {
+        self.replacement
+            .as_ref()
+            .and_then(CornerReplacement2::as_parallel)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -3785,7 +3821,8 @@ impl<'a> ExactCornerCarrier2<'a> {
             }
             Self::RetainedRationalArc(_) | Self::NativeBezierSpan(_) => false,
             Self::AlgebraicChord(_) => true,
-            Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
+            Self::AnalyticParallel(_) => operation == CurveOperation2::Chamfer,
+            Self::AlgebraicCusp(_) => false,
         }
     }
 }
@@ -8442,6 +8479,40 @@ fn analytic_parallel_point_evidence(
     ))
 }
 
+fn retained_parallel_corner_parameter_placement(
+    parameter: &BezierParameter2,
+    fragment: &crate::BezierParallelFragment2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerPlacement2>> {
+    let compare = |boundary: &BezierParameter2| {
+        parameter
+            .cmp_by_refinement(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|ordering| match ordering {
+                Classification::Decided(ordering) => Ok(ordering),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
+    };
+    let start_order = compare(fragment.range().start())?;
+    let end_order = compare(fragment.range().end())?;
+    if start_order.is_gt() && end_order.is_lt() {
+        return Ok(Some(CornerPlacement2::Trim));
+    }
+    if mode != CurveCornerMode2::TrimOrExtend {
+        return Ok(None);
+    }
+    let extends_toward_higher_parameter = previous != fragment.is_reversed();
+    Ok(((extends_toward_higher_parameter && end_order.is_gt())
+        || (!extends_toward_higher_parameter && start_order.is_lt()))
+    .then_some(CornerPlacement2::Extension))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn analytic_parallel_chamfer_cuts(
     fragment: &crate::BezierParallelFragment2,
@@ -8453,13 +8524,6 @@ fn analytic_parallel_chamfer_cuts(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CornerCuts2> {
-    if mode != CurveCornerMode2::TrimOnly {
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
-    }
     let corner_parameter = match (previous, fragment.is_reversed()) {
         (true, false) | (false, true) => fragment.range().end(),
         (true, true) | (false, false) => fragment.range().start(),
@@ -8483,7 +8547,7 @@ fn analytic_parallel_chamfer_cuts(
         });
     }
     let radius_squared = setback * setback;
-    let parameters = match fragment
+    let mut parameters = match fragment
         .parallel()
         .fixed_distance_incidence_from_parameter(
             corner_parameter,
@@ -8498,24 +8562,42 @@ fn analytic_parallel_chamfer_cuts(
             return Err(ExactCurveError::blocked(operation, family, reason));
         }
     };
+    if mode == CurveCornerMode2::TrimOrExtend {
+        let anchor = corner_parameter.as_exact().ok_or_else(|| {
+            ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
+        })?;
+        let center = corner.as_exact().ok_or_else(|| {
+            ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
+        })?;
+        let direction = if previous != fragment.is_reversed() {
+            crate::BezierParameterRayDirection2::Increasing
+        } else {
+            crate::BezierParameterRayDirection2::Decreasing
+        };
+        let exterior = match fragment
+            .parallel()
+            .circle_incidence_on_incident_ray(center, &radius_squared, anchor, direction, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        parameters.extend(exterior.into_iter().map(|(parameter, _)| {
+            crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter)
+        }));
+    }
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {
-        let (parameter, point) = match parameter {
+        let (parameter, point, placement) = match parameter {
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
-                let in_range = crate::bezier_offset::overlap_parameter_is_in_range(
-                    &parameter,
-                    fragment.range(),
-                    false,
-                    policy,
-                )
-                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-                match in_range {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(operation, family, reason));
-                    }
-                }
+                let Some(placement) = retained_parallel_corner_parameter_placement(
+                    &parameter, fragment, previous, mode, operation, family, policy,
+                )?
+                else {
+                    continue;
+                };
                 let point = analytic_parallel_point_evidence(
                     fragment.parallel(),
                     &parameter,
@@ -8523,7 +8605,11 @@ fn analytic_parallel_chamfer_cuts(
                     family,
                     policy,
                 )?;
-                (CurveRegionParameter2::from_bezier(parameter), point)
+                (
+                    CurveRegionParameter2::from_bezier(parameter),
+                    point,
+                    placement,
+                )
             }
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
@@ -8552,13 +8638,17 @@ fn analytic_parallel_chamfer_cuts(
                         policy,
                     ),
                 );
-                (CurveRegionParameter2::from_selected_fiber(parameter), point)
+                (
+                    CurveRegionParameter2::from_selected_fiber(parameter),
+                    point,
+                    CornerPlacement2::Trim,
+                )
             }
         };
         cuts.push(CornerCut2 {
             parameter: Some(parameter),
             point,
-            placement: CornerPlacement2::Trim,
+            placement,
         });
     }
     Ok(cuts)
