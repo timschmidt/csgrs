@@ -58440,7 +58440,7 @@ fn certify_regular_implicit_parameter_component_with_selector(
             )
         }
         ParameterComponentSelector2::ParallelPair { .. } => {
-            certify_implicit_parameter_component_once_with_selector(
+            certify_parallel_pair_implicit_parameter_component(
                 component,
                 selector,
                 retained_parameter,
@@ -58449,6 +58449,139 @@ fn certify_regular_implicit_parameter_component_with_selector(
             )
         }
     }
+}
+
+/// Certifies every exact factor of a reducible selected-branch component.
+///
+/// A parallel-pair selector is piecewise: a selector boundary can vanish on
+/// one component while the remaining exact predicates still select or reject
+/// that complete component. Sending the unreduced product to the cell builder
+/// makes `component = boundary = 0` look positive-dimensional and prevents an
+/// otherwise regular sibling from being published. Split only after exact
+/// division, certify both supports independently, and merge their correlated
+/// evidence. This is deliberately separate from the ordinary `branch > 0`
+/// path, where a branch-zero factor is always excluded rather than selected by
+/// another predicate.
+#[cold]
+#[inline(never)]
+fn certify_parallel_pair_implicit_parameter_component(
+    component: &BivariatePolynomial,
+    selector: &ParameterComponentSelector2<'_>,
+    retained_parameter: CurveResultantParameter,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
+    let boundaries = selector.boundary_polynomials();
+    let Some([first, second]) = split_parameter_component_at_selector_boundary(
+        component,
+        &boundaries,
+        retained_parameter,
+        config,
+    ) else {
+        return certify_implicit_parameter_component_once_with_selector(
+            component,
+            selector,
+            retained_parameter,
+            policy,
+            config,
+        );
+    };
+
+    let first = match certify_parallel_pair_implicit_parameter_component(
+        &first,
+        selector,
+        retained_parameter,
+        policy,
+        config,
+    )? {
+        Classification::Decided(Some(evidence)) => evidence,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match certify_parallel_pair_implicit_parameter_component(
+        &second,
+        selector,
+        retained_parameter,
+        policy,
+        config,
+    )? {
+        Classification::Decided(Some(evidence)) => evidence,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(Some(
+        merge_parameter_component_evidence(first, second),
+    )))
+}
+
+/// Finds one proper exact factor shared by a component and selector boundary.
+///
+/// Direct division covers the common and cheapest case where the selector
+/// boundary itself is a factor. Hypersolve's component report supplies the
+/// exact GCD quotient when the boundary has additional factors. Both axis
+/// orientations are attempted, and every accepted split is replayed through
+/// exact bivariate division before topology sees either child.
+fn split_parameter_component_at_selector_boundary(
+    component: &BivariatePolynomial,
+    boundaries: &[BivariatePolynomial],
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> Option<[BivariatePolynomial; 2]> {
+    let component_degree = bivariate_storage_bidegree_sum(component);
+    if component_degree <= 1 {
+        return None;
+    }
+    let alternate_parameter = match retained_parameter {
+        CurveResultantParameter::First => CurveResultantParameter::Second,
+        CurveResultantParameter::Second => CurveResultantParameter::First,
+    };
+    for boundary in boundaries {
+        let boundary_degree = bivariate_storage_bidegree_sum(boundary);
+        if boundary_degree == 0 || divide_bivariate_polynomial_exact(boundary, component).is_some()
+        {
+            continue;
+        }
+        if let Some(quotient) = divide_bivariate_polynomial_exact(component, boundary)
+            && proper_parameter_component_split(component_degree, boundary, &quotient)
+        {
+            return Some([boundary.clone(), quotient]);
+        }
+        for parameter in [retained_parameter, alternate_parameter] {
+            let report = parameter_component_bivariate_polynomial_system(
+                component, boundary, parameter, config,
+            );
+            if !matches!(
+                report.status,
+                BivariatePolynomialComponentStatus::Rational
+                    | BivariatePolynomialComponentStatus::Implicit
+            ) {
+                continue;
+            }
+            let Some([quotient, _]) = report.reduced_equations else {
+                continue;
+            };
+            let Some(factor) = divide_bivariate_polynomial_exact(component, &quotient) else {
+                continue;
+            };
+            if proper_parameter_component_split(component_degree, &factor, &quotient) {
+                return Some([factor, quotient]);
+            }
+        }
+    }
+    None
+}
+
+fn proper_parameter_component_split(
+    component_degree: usize,
+    factor: &BivariatePolynomial,
+    quotient: &BivariatePolynomial,
+) -> bool {
+    let factor_degree = bivariate_storage_bidegree_sum(factor);
+    let quotient_degree = bivariate_storage_bidegree_sum(quotient);
+    factor_degree != 0
+        && quotient_degree != 0
+        && factor_degree < component_degree
+        && quotient_degree < component_degree
 }
 
 fn certify_regular_implicit_parameter_component(
@@ -60920,6 +61053,43 @@ impl ParameterComponentEvidence2 {
     fn excluded_pairs(&self) -> &[BezierParallelIntersectionParameterPair2] {
         &self.component_pairs[self.selected_component_pair_count..]
     }
+}
+
+fn merge_parameter_component_evidence(
+    first: ParameterComponentEvidence2,
+    second: ParameterComponentEvidence2,
+) -> ParameterComponentEvidence2 {
+    let mut overlaps = first.overlaps.to_vec();
+    for overlap in second.overlaps.iter() {
+        if !overlaps.contains(overlap) {
+            overlaps.push(overlap.clone());
+        }
+    }
+    let mut component_overlaps = first.component_overlaps.to_vec();
+    for overlap in second.component_overlaps.iter() {
+        if !component_overlaps.contains(overlap) {
+            component_overlaps.push(overlap.clone());
+        }
+    }
+    let mut selected_pairs = first.selected_pairs().to_vec();
+    for pair in second.selected_pairs() {
+        if !selected_pairs.contains(pair) {
+            selected_pairs.push(pair.clone());
+        }
+    }
+    let mut excluded_pairs = first.excluded_pairs().to_vec();
+    for pair in second.excluded_pairs() {
+        if !excluded_pairs.contains(pair) {
+            excluded_pairs.push(pair.clone());
+        }
+    }
+    let mut evidence = ParameterComponentEvidence2::from_partitioned_pairs(
+        overlaps,
+        selected_pairs,
+        excluded_pairs,
+    );
+    evidence.component_overlaps = component_overlaps.into();
+    evidence
 }
 
 fn parameter_component_evidence_from_drafts(
@@ -84759,6 +84929,91 @@ mod conversion_tests {
             assert!(!overlap.includes_end());
             assert!(component.selected_pairs().is_empty());
             assert_eq!(component.excluded_pairs().len(), 1);
+        }
+    }
+
+    #[test]
+    fn parallel_pair_selector_splits_a_reducible_boundary_factor() {
+        // The first support 4u-t=0 is also the tangent/projection boundary.
+        // The second support 4u+t-4=0 never meets that boundary on the
+        // authored square. The remaining tangent-parallel predicates must be
+        // allowed to select or reject the first support without preventing the
+        // transverse second support from being certified.
+        let boundary_component = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::from(4_i8)],
+            vec![Real::from(-1_i8)],
+        ]);
+        let transverse_component = BivariatePolynomial::new(vec![
+            vec![Real::from(-4_i8), Real::from(4_i8)],
+            vec![Real::one()],
+        ]);
+        let component = bivariate_multiply(&boundary_component, &transverse_component);
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let negative_one = BivariatePolynomial::new(vec![vec![Real::from(-1_i8)]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for (second_distance, expected_overlaps) in [(Real::one(), 2), (Real::from(2_i8), 1)] {
+            let system = BezierParallelPairEquationSystem2 {
+                first_equation: component.clone(),
+                second_equation: component.clone(),
+                norm_equation: component.clone(),
+                first_projection: boundary_component.clone(),
+                second_projection: boundary_component.clone(),
+                tangent_cross: boundary_component.clone(),
+                tangent_dot: one.clone(),
+                norm_residual: negative_one.clone(),
+                first_normal_projection: one.clone(),
+                first_distance: Real::one(),
+                second_distance,
+                first_distance_sign: RealSign::Positive,
+                second_distance_sign: RealSign::Positive,
+                weight_sign: RealSign::Positive,
+            };
+            for retained_parameter in [
+                CurveResultantParameter::First,
+                CurveResultantParameter::Second,
+            ] {
+                for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                    let Classification::Decided(Some(evidence)) =
+                        certify_regular_implicit_parameter_component_with_selector(
+                            &component,
+                            &ParameterComponentSelector2::ParallelPair {
+                                system: &system,
+                                unordered_self_pair: false,
+                            },
+                            retained_parameter,
+                            &policy,
+                            config,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the selector-boundary factor was not split exactly");
+                    };
+                    assert_eq!(evidence.overlaps.len(), expected_overlaps);
+                    assert_eq!(evidence.component_overlaps.len(), expected_overlaps);
+                    assert!(evidence.overlaps.iter().any(|overlap| {
+                        overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
+                            && overlap.second_range().exact_endpoints()
+                                == Some((
+                                    &Real::one(),
+                                    &(Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                                ))
+                    }));
+                    if expected_overlaps == 2 {
+                        assert!(evidence.overlaps.iter().any(|overlap| {
+                            overlap.orientation() == RationalBezierOverlapOrientation2::Same
+                                && overlap.second_range().exact_endpoints()
+                                    == Some((
+                                        &Real::zero(),
+                                        &(Real::one() / Real::from(4_i8)).unwrap(),
+                                    ))
+                        }));
+                    }
+                }
+            }
         }
     }
 
