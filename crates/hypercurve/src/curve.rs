@@ -4721,13 +4721,6 @@ impl FilletOffsetCarrier2<'_, '_> {
                     (radial_frame, radial_distance)
                 }
                 Self::AlgebraicCusp { source, support } => {
-                    // A general parallel-normal selected circle has no one-field
-                    // rational center frame. Its paired analytic carrier retains
-                    // the exact center parameter and is therefore the compact
-                    // authoritative fillet frame for this carrier switch.
-                    if support.semicircle().uses_selected_parallel_normal_frame() {
-                        return Ok(None);
-                    }
                     let center = match support.semicircle().center_point_evidence(policy).map_err(
                         |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause),
                     )? {
@@ -7642,6 +7635,140 @@ fn fillet_offset_centers(
                 }
             }
         }
+        (
+            FilletOffsetCarrier2::AlgebraicChord { .. },
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+        )
+        | (
+            FilletOffsetCarrier2::AlgebraicCusp { .. },
+            FilletOffsetCarrier2::AlgebraicChord { .. },
+        ) => {
+            if mode == CurveCornerMode2::TrimOrExtend {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let (chord_support, cusp_source, cusp_support, chord_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source,
+                            support: cusp,
+                        },
+                    ) => (support, source, cusp, true),
+                    (
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source,
+                            support: cusp,
+                        },
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                    ) => (support, source, cusp, false),
+                    _ => unreachable!(),
+                };
+            let chord_family = if chord_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let cusp_family = if chord_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+            let contacts = match cusp_support
+                .semicircle()
+                .chord_intersections(chord_support, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+                })? {
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+                ) => Vec::new(),
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) => contacts,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        cusp_family,
+                        reason,
+                    ));
+                }
+            };
+            let cusp_support_reverses_source = retained_fillet_cusp_support_reverses_source(
+                cusp_source,
+                cusp_support,
+                cusp_family,
+                policy,
+            )?;
+            let mut tangent_dot = match cusp_support
+                .semicircle()
+                .chord_tangent_dot_sign(chord_support, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                })? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        reason,
+                    ));
+                }
+            };
+            if cusp_support_reverses_source {
+                tangent_dot = reverse_fillet_sign(tangent_dot);
+            }
+            for contact in contacts {
+                match cusp_source
+                    .contains_parameter(&contact.cusp_parameter, false, false, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+                    })? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            cusp_family,
+                            reason,
+                        ));
+                    }
+                }
+                let tangent_cross = if cusp_support_reverses_source {
+                    reverse_fillet_sign(contact.tangent_cross_sign)
+                } else {
+                    contact.tangent_cross_sign
+                };
+                let cusp_parameter =
+                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter);
+                let chord_parameter =
+                    CurveRegionParameter2::from_algebraic_chord(contact.chord_parameter);
+                let (previous_parameter, next_parameter) = if chord_is_previous {
+                    (Some(chord_parameter), Some(cusp_parameter))
+                } else {
+                    (Some(cusp_parameter), Some(chord_parameter))
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point,
+                    previous_parameter,
+                    next_parameter,
+                    // The selected circle is the reconstruction anchor. The
+                    // lower kernel reports exactly circle x chord.
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        cross: Some(tangent_cross),
+                        dot: Some(tangent_dot),
+                        center_parallel: None,
+                        source_direction: None,
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    }),
+                });
+            }
+        }
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Arc { .. })
         | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
             if mode == CurveCornerMode2::TrimOrExtend {
@@ -8099,14 +8226,6 @@ fn fillet_offset_centers(
             }
         }
         (FilletOffsetCarrier2::Parallel { .. }, _) | (_, FilletOffsetCarrier2::Parallel { .. }) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                previous_family,
-                crate::UncertaintyReason::Unsupported,
-            ));
-        }
-        (FilletOffsetCarrier2::AlgebraicChord { .. }, _)
-        | (_, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 previous_family,
