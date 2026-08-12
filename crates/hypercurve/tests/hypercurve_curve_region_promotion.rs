@@ -3658,6 +3658,201 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
 }
 
 #[test]
+fn arc_parabola_fillet_recovers_exact_complement_contacts() {
+    fn source_path() -> CurvePath2 {
+        let corner = p(1, 1);
+        let center = Point2::new(Real::one(), q(3923, 2150));
+        let arc_end = Point2::new(q(3923, 2150), q(3923, 2150));
+        CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(q(1, 2), Real::zero()),
+                corner.clone(),
+            )),
+            Curve2::from(
+                CircularArc2::try_from_center(corner, arc_end.clone(), center, false).unwrap(),
+            ),
+            Curve2::from(LineSeg2::try_new(arc_end, p(0, 3)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(0, 3), p(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    }
+
+    fn corner_index(region: &CurveRegion2) -> usize {
+        let fragments = region.boundary_loops()[0].fragments();
+        (0..fragments.len())
+            .find(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                matches!(
+                    (previous, next),
+                    (
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::Quadratic(previous),
+                            ..
+                        },
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::RationalQuadratic(next),
+                            ..
+                        }
+                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
+                ) || matches!(
+                    (previous, next),
+                    (
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::RationalQuadratic(previous),
+                            ..
+                        },
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::Quadratic(next),
+                            ..
+                        }
+                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
+                )
+            })
+            .expect("the arc/parabola corner remains explicit")
+    }
+
+    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
+        match solutions {
+            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+            CurveCornerSolutions2::Multiple(candidates) => candidates,
+            CurveCornerSolutions2::NoSolution(reason) => {
+                panic!("the incident arc/parabola cells must contain a fillet: {reason:?}")
+            }
+        }
+    }
+
+    let exact_cut = Point2::new(q(6, 5), q(36, 25));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                source_path()
+                    .reversed(&policy)
+                    .expect("the exact fixture reverses")
+                    .into_value()
+            } else {
+                source_path()
+            };
+            let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                .expect("the exact fixture promotes")
+                .into_value();
+            let corner = corner_index(&region);
+            let edited = candidates(
+                region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the regular arc/parabola cells must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    })
+                    .into_value(),
+            );
+            let exact = edited
+                .iter()
+                .find(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::Materialized {
+                                    curve: BezierSubcurve2::Quadratic(curve), ..
+                                } if curve.start() == &exact_cut || curve.end() == &exact_cut
+                            )
+                        })
+                })
+                .expect("the represented exterior parabola contact must be retained");
+            let inside = Point2::new(q(1, 4), q(3, 2));
+            let algebraic_shape = |candidate: &CurveRegion2| {
+                let mut extended_parabola = false;
+                let mut selected_arc = false;
+                let mut selected_fillet = false;
+                let mut retained_arc_spans = 0_usize;
+                for fragment in candidate.boundary_loops()[0].fragments() {
+                    match fragment {
+                        BezierSplitFragment2::AlgebraicEndpointImages {
+                            start,
+                            end,
+                            source_curve: Some(BezierSubcurve2::Quadratic(curve)),
+                            ..
+                        } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
+                            || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))
+                            && (curve.start() == &p(0, 0) || curve.end() == &p(0, 0))
+                            && curve.start() != &p(1, 1)
+                            && curve.end() != &p(1, 1) =>
+                        {
+                            extended_parabola = true;
+                        }
+                        BezierSplitFragment2::SelectedFiber(_) => selected_arc = true,
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                            selected_fillet = true;
+                        }
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::RationalQuadratic(_),
+                            ..
+                        } => retained_arc_spans += 1,
+                        _ => {}
+                    }
+                }
+                (
+                    extended_parabola && selected_arc && selected_fillet,
+                    retained_arc_spans,
+                )
+            };
+            let location = |candidate: &CurveRegion2| {
+                candidate
+                    .classify_point(&inside, &policy)
+                    .expect("the algebraic arc/parabola fillet remains classifiable")
+                    .into_value()
+            };
+            let complement = edited
+                .iter()
+                .find(|candidate| {
+                    let (algebraic, retained_arc_spans) = algebraic_shape(candidate);
+                    algebraic
+                        && retained_arc_spans > 0
+                        && location(candidate)
+                            == Classification::Decided(RegionPointLocation::Outside)
+                })
+                .expect("the irrational complement-arc contact must remain exact");
+
+            let disjoint =
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
+                    .unwrap()
+                    .into_value();
+            assert_eq!(
+                location(exact),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            let replay = exact
+                .boolean_regions(&disjoint, &policy)
+                .expect("the represented arc/parabola fillet must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+            assert!(replay.value.intersection().is_empty());
+            assert_eq!(
+                location(complement),
+                Classification::Decided(RegionPointLocation::Outside),
+                "the complement extension winds the sample twice under even-odd fill",
+            );
+            let replay = complement
+                .boolean_regions(&disjoint, &policy)
+                .expect("the complement-arc branch must re-enter the Boolean kernel");
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert!(replay.value.intersection().is_empty());
+        }
+    }
+}
+
+#[test]
 fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
     let source = |policy: &CurveContext, reverse: bool| {
         let polynomial = decided(

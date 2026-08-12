@@ -3453,6 +3453,17 @@ pub(crate) struct RetainedFilletAnchorEvidence2 {
     /// homogeneous source tangent.
     pub(crate) source_direction: Option<RealSign>,
     pub(crate) canonical_anchor_curve: Option<RationalBezier2>,
+    /// A direct arc/Bezier center whose circular cut must be recovered in the
+    /// selected center fiber after the retained fillet circle is built.
+    pub(crate) deferred_arc_contact: Option<RetainedDeferredArcFilletContact2>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct RetainedDeferredArcFilletContact2 {
+    pub(crate) support: CircularArc2,
+    pub(crate) source_radius: Real,
+    pub(crate) signed_center_radius: Real,
+    pub(crate) arc_is_previous: bool,
 }
 
 impl FilletCorner2 {
@@ -4080,8 +4091,16 @@ fn fillet_carrier_pair_supports_extension(
                 | ExactCornerCarrier2::AlgebraicChord(_)
         )
     };
+    let is_arc = |carrier: &ExactCornerCarrier2<'_>| {
+        matches!(
+            carrier,
+            ExactCornerCarrier2::Arc(_) | ExactCornerCarrier2::RetainedRationalArc(_)
+        )
+    };
     (is_affine_line(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_affine_line(next))
+        || (is_arc(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
+        || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_arc(next))
 }
 
 #[derive(Clone, Copy)]
@@ -4800,7 +4819,21 @@ fn solve_carrier_fillet_corner(
                 saw_outside_domain = true;
                 continue;
             };
-            match previous_cut.point.same_point(&next_cut.point, policy) {
+            let cut_point_relation = if center.point.as_exact().is_none()
+                && center
+                    .retained_anchor_evidence
+                    .as_ref()
+                    .is_some_and(|evidence| evidence.deferred_arc_contact.is_some())
+            {
+                // One circular cut is only a transient marker until the
+                // retained fillet circle is intersected with the authored arc.
+                // Its marker stores the center, so it cannot participate in
+                // the ordinary two-contact degeneracy predicate.
+                Classification::Decided(false)
+            } else {
+                previous_cut.point.same_point(&next_cut.point, policy)
+            };
+            match cut_point_relation {
                 Classification::Decided(true) => saw_degenerate = true,
                 Classification::Decided(false) => {
                     let previous_is_cusp =
@@ -4828,8 +4861,10 @@ fn solve_carrier_fillet_corner(
                     let prefer_parallel_frame = center
                         .retained_anchor_evidence
                         .as_ref()
-                        .and_then(|evidence| evidence.source_direction)
-                        .is_some();
+                        .is_some_and(|evidence| {
+                            evidence.source_direction.is_some()
+                                || evidence.deferred_arc_contact.is_some()
+                        });
                     let first_frame = first.retained_fillet_frame(
                         first_is_previous,
                         center.parameter(first_is_previous),
@@ -4837,35 +4872,26 @@ fn solve_carrier_fillet_corner(
                         first_family,
                         policy,
                     )?;
-                    let retained_frame = match first_frame {
-                        Some(frame)
-                            if prefer_parallel_frame
-                                || !matches!(
-                                    &frame.radial_frame,
-                                    RetainedFilletRadialFrame2::ParallelNormal { .. }
-                                ) =>
-                        {
-                            Some(frame)
-                        }
-                        general_frame => {
-                            let second_frame = second.retained_fillet_frame(
-                                !first_is_previous,
-                                center.parameter(!first_is_previous),
-                                center.retained_anchor_evidence.clone(),
-                                second_family,
-                                policy,
-                            )?;
-                            match second_frame {
-                                Some(frame)
-                                    if !matches!(
-                                        &frame.radial_frame,
-                                        RetainedFilletRadialFrame2::ParallelNormal { .. }
-                                    ) =>
-                                {
-                                    Some(frame)
-                                }
-                                _ => general_frame,
-                            }
+                    let frame_is_preferred = |frame: &RetainedFilletFrame2| {
+                        matches!(
+                            &frame.radial_frame,
+                            RetainedFilletRadialFrame2::ParallelNormal { .. }
+                        ) == prefer_parallel_frame
+                    };
+                    let retained_frame = if first_frame.as_ref().is_some_and(frame_is_preferred) {
+                        first_frame
+                    } else {
+                        let second_frame = second.retained_fillet_frame(
+                            !first_is_previous,
+                            center.parameter(!first_is_previous),
+                            center.retained_anchor_evidence.clone(),
+                            second_family,
+                            policy,
+                        )?;
+                        if second_frame.as_ref().is_some_and(frame_is_preferred) {
+                            second_frame
+                        } else {
+                            first_frame.or(second_frame)
                         }
                     };
                     candidates.push(FilletCorner2 {
@@ -5702,35 +5728,36 @@ fn fillet_offset_centers(
             },
             FilletOffsetCarrier2::Arc { .. },
         ) if parallel_source.direct().is_some() => {
-            let (arc, signed_radius, bezier, bezier_is_previous) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        signed_radius,
-                        ..
-                    },
-                    FilletOffsetCarrier2::Parallel {
-                        support: bezier, ..
-                    },
-                ) => (source, signed_radius, bezier, false),
-                (
-                    FilletOffsetCarrier2::Parallel {
-                        support: bezier, ..
-                    },
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        signed_radius,
-                        ..
-                    },
-                ) => (source, signed_radius, bezier, true),
-                _ => unreachable!(),
-            };
+            let (arc, source_radius, signed_radius, bezier, bezier_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            source_radius,
+                            signed_radius,
+                        },
+                        FilletOffsetCarrier2::Parallel {
+                            support: bezier, ..
+                        },
+                    ) => (source, source_radius, signed_radius, bezier, false),
+                    (
+                        FilletOffsetCarrier2::Parallel {
+                            support: bezier, ..
+                        },
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            source_radius,
+                            signed_radius,
+                        },
+                    ) => (source, source_radius, signed_radius, bezier, true),
+                    _ => unreachable!(),
+                };
             let bezier_family = if bezier_is_previous {
                 previous_family
             } else {
                 next_family
             };
-            let parameters = match bezier
+            let mut parameters = match bezier
                 .circle_incidence(
                     arc.support().center(),
                     &(signed_radius * signed_radius),
@@ -5749,30 +5776,71 @@ fn fillet_offset_centers(
                     ));
                 }
             };
+            if mode == CurveCornerMode2::TrimOrExtend {
+                let (anchor, direction) = if bezier_is_previous {
+                    (Real::one(), crate::BezierParameterRayDirection2::Increasing)
+                } else {
+                    (
+                        Real::zero(),
+                        crate::BezierParameterRayDirection2::Decreasing,
+                    )
+                };
+                match bezier
+                    .circle_incidence_on_incident_ray(
+                        arc.support().center(),
+                        &(signed_radius * signed_radius),
+                        &anchor,
+                        direction,
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, bezier_family, cause)
+                    })? {
+                    Classification::Decided(exterior) => parameters.extend(exterior),
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            bezier_family,
+                            reason,
+                        ));
+                    }
+                }
+            }
             for (parameter, _) in parameters {
-                let Some(parameter) = represented_bezier_trim_parameter(
+                if !parallel_source.parameter_is_admissible(
                     &parameter,
-                    CurveOperation2::Fillet,
+                    bezier_is_previous,
+                    mode,
                     bezier_family,
                     policy,
-                )?
-                else {
+                )? {
                     continue;
-                };
-                let point = decided_parallel_point(
+                }
+                let point = analytic_parallel_point_evidence(
                     bezier,
                     &parameter,
-                    false,
                     CurveOperation2::Fillet,
                     bezier_family,
                     policy,
                 )?;
+                let retained_anchor_evidence = Some(RetainedFilletAnchorEvidence2 {
+                    cross: None,
+                    dot: None,
+                    source_direction: None,
+                    canonical_anchor_curve: None,
+                    deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
+                        support: arc.support().clone(),
+                        source_radius: (*source_radius).clone(),
+                        signed_center_radius: signed_radius.clone(),
+                        arc_is_previous: !bezier_is_previous,
+                    }),
+                });
+                let bezier_parameter = CurveRegionParameter2::from_bezier(parameter);
                 centers.push(FilletCenterWitness2 {
-                    point: point.into(),
-                    previous_parameter: bezier_is_previous
-                        .then(|| exact_parameter(parameter.clone())),
-                    next_parameter: (!bezier_is_previous).then(|| exact_parameter(parameter)),
-                    retained_anchor_evidence: None,
+                    point,
+                    previous_parameter: bezier_is_previous.then(|| bezier_parameter.clone()),
+                    next_parameter: (!bezier_is_previous).then_some(bezier_parameter),
+                    retained_anchor_evidence,
                 });
             }
         }
@@ -5919,6 +5987,7 @@ fn fillet_offset_centers(
                             }),
                             source_direction: None,
                             canonical_anchor_curve: None,
+                            deferred_arc_contact: None,
                         }),
                     });
                 }
@@ -6331,6 +6400,7 @@ fn fillet_offset_centers(
                     dot,
                     source_direction: None,
                     canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
+                    deferred_arc_contact: None,
                 };
 
                 let arc_parameter =
@@ -6525,6 +6595,7 @@ fn fillet_offset_centers(
                                             },
                                         ),
                                         canonical_anchor_curve: None,
+                                        deferred_arc_contact: None,
                                     },
                                 ),
                             });
@@ -6683,6 +6754,7 @@ fn fillet_offset_centers(
                                             },
                                         ),
                                         canonical_anchor_curve: None,
+                                        deferred_arc_contact: None,
                                     },
                                 ),
                             });
@@ -6793,6 +6865,7 @@ fn fillet_offset_centers(
                         dot: None,
                         source_direction: None,
                         canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
+                        deferred_arc_contact: None,
                     }),
                 });
             }
@@ -7009,6 +7082,7 @@ fn fillet_offset_centers(
                                 dot: Some(tangent_dot),
                                 source_direction: None,
                                 canonical_anchor_curve: None,
+                                deferred_arc_contact: None,
                             }),
                         )? {
                             centers.push(witness);
@@ -7288,6 +7362,19 @@ fn fillet_cut_from_center(
             signed_radius,
         } => {
             let Some(center) = center.as_exact() else {
+                if retained_parameter.is_none() {
+                    // Direct arc/Bezier incidence retains the center in the
+                    // Bezier parallel's selected normal field. The retained
+                    // CurveRegion reconstruction intersects the resulting
+                    // exact fillet circle with the authored arc (or its
+                    // complement) and replaces this transient corner marker
+                    // with the paired circular cut parameter and point.
+                    return Ok(Some(CornerCut2 {
+                        point: center.clone(),
+                        parameter: exact_corner_parameter(source.corner_parameter(previous)),
+                        placement: CornerPlacement2::Corner,
+                    }));
+                }
                 {
                     if mode != CurveCornerMode2::TrimOnly {
                         return Err(ExactCurveError::blocked(
@@ -7864,20 +7951,6 @@ fn bezier_corner_parameter_placement(
     Ok(None)
 }
 
-fn represented_bezier_trim_parameter(
-    parameter: &BezierParameter2,
-    operation: CurveOperation2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<Real>> {
-    if !bezier_trim_parameter_is_interior(parameter, operation, family, policy)? {
-        return Ok(None);
-    }
-    parameter.as_exact().cloned().map(Some).ok_or_else(|| {
-        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-    })
-}
-
 fn decided_parallel_point(
     parallel: &BezierParallel2,
     parameter: &Real,
@@ -7889,7 +7962,7 @@ fn decided_parallel_point(
     let point = if source_point {
         parallel.source_point_at(parameter, policy)
     } else {
-        parallel.point_at(parameter, policy)
+        parallel.point_at_affine(parameter, policy)
     }
     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
     match point {
@@ -8636,7 +8709,10 @@ fn arc_fillet_cut_from_incident_point(
                 policy,
             )? {
                 Ok(Some(CornerCut2 {
-                    parameter: None,
+                    // Retained CurveRegion reconstruction replaces this
+                    // endpoint marker from exact circular-contact evidence.
+                    // Native CurvePath materialization uses `point` directly.
+                    parameter: exact_corner_parameter(arc.corner_parameter(previous)),
                     point: point.into(),
                     placement: CornerPlacement2::Extension,
                 }))
@@ -9381,6 +9457,7 @@ mod tests {
                     dot: Some(RealSign::Zero),
                     source_direction: None,
                     canonical_anchor_curve: None,
+                    deferred_arc_contact: None,
                 }),
                 CurveFamily2::QuadraticBezier,
                 &CurveContext::STRICT,

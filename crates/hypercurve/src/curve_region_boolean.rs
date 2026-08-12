@@ -156,6 +156,7 @@ struct RegionCarrier {
     end: CurveRegionParameter2,
     reversed: bool,
     filled_side_is_left: bool,
+    selected_fiber_endpoint_points: Option<Arc<[RationalBezierIntersectionPointEvidence2; 2]>>,
     image_is_injective: OnceLock<bool>,
     bounds: OnceLock<Classification<Aabb2>>,
 }
@@ -1090,6 +1091,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 end: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
                 reversed: false,
                 filled_side_is_left: false,
+                selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
             });
@@ -1249,6 +1251,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             end: CurveRegionParameter2::from_algebraic_chord(end),
             reversed: false,
             filled_side_is_left: false,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         });
@@ -9226,6 +9229,17 @@ fn build_region_carrier(
     filled_side_is_left: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<RegionCarrier> {
+    let selected_fiber_endpoint_points = match fragment {
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let points = if fragment.is_reversed() {
+                [fragment.end_point().clone(), fragment.start_point().clone()]
+            } else {
+                [fragment.start_point().clone(), fragment.end_point().clone()]
+            };
+            Some(Arc::new(points))
+        }
+        _ => None,
+    };
     let (mut geometry, mut start, mut end, mut reversed) = match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => {
             if let Some(chord) = retained_axis_aligned_line_chord(curve, policy) {
@@ -9329,6 +9343,7 @@ fn build_region_carrier(
         end,
         reversed,
         filled_side_is_left,
+        selected_fiber_endpoint_points,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
     })
@@ -9463,10 +9478,19 @@ fn split_carrier_with_refinement(
 
 fn selected_fiber_event_point(
     event: &CarrierEvent,
+    carrier: &RegionCarrier,
     source: &BezierSelectedFiberSource2,
     contact_points: &[ContactVertex],
     policy: &CurveContext,
 ) -> Result<RationalBezierIntersectionPointEvidence2, CurveError> {
+    if let Some(points) = &carrier.selected_fiber_endpoint_points {
+        if event.parameter == carrier.start {
+            return Ok(points[0].clone());
+        }
+        if event.parameter == carrier.end {
+            return Ok(points[1].clone());
+        }
+    }
     if let Some(vertex) = event.topology_vertex
         && let Some(point) = contact_points
             .iter()
@@ -9574,8 +9598,10 @@ fn split_selected_fiber_carrier(
         {
             continue;
         }
-        let start_point = selected_fiber_event_point(&pair[0], &source, contact_points, policy)?;
-        let end_point = selected_fiber_event_point(&pair[1], &source, contact_points, policy)?;
+        let start_point =
+            selected_fiber_event_point(&pair[0], carrier, &source, contact_points, policy)?;
+        let end_point =
+            selected_fiber_event_point(&pair[1], carrier, &source, contact_points, policy)?;
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::SelectedFiber(BezierSelectedFiberFragment2::new(
                 source.clone(),
@@ -11666,6 +11692,7 @@ pub(crate) fn clip_cusp_overlap_for_test(
             end: CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             reversed: fragment.is_reversed(),
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         }
@@ -12063,6 +12090,7 @@ pub(crate) fn clip_aligned_parameter_overlap_for_test(
         end: range.end().clone(),
         reversed: false,
         filled_side_is_left: true,
+        selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
     };
@@ -12547,6 +12575,7 @@ mod certified_successor_tests {
             geometry: RegionCarrierGeometry::AlgebraicChord(chord),
             reversed: false,
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         }
@@ -13063,6 +13092,7 @@ mod certified_successor_tests {
             end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
             reversed: false,
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         };
@@ -13790,6 +13820,7 @@ mod certified_successor_tests {
                     end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
                     reversed: false,
                     filled_side_is_left: true,
+                    selected_fiber_endpoint_points: None,
                     image_is_injective: OnceLock::new(),
                     bounds: OnceLock::new(),
                 },
@@ -13807,6 +13838,7 @@ mod certified_successor_tests {
                     )),
                     reversed: false,
                     filled_side_is_left: true,
+                    selected_fiber_endpoint_points: None,
                     image_is_injective: OnceLock::new(),
                     bounds: OnceLock::new(),
                 },
@@ -13988,6 +14020,7 @@ mod certified_successor_tests {
                 geometry: RegionCarrierGeometry::AlgebraicChord(chord),
                 reversed: false,
                 filled_side_is_left: true,
+                selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
             };
@@ -14076,6 +14109,7 @@ mod certified_successor_tests {
                                 ),
                                 reversed: false,
                                 filled_side_is_left: true,
+                                selected_fiber_endpoint_points: None,
                                 image_is_injective: OnceLock::new(),
                                 bounds: OnceLock::new(),
                             },
@@ -14093,6 +14127,7 @@ mod certified_successor_tests {
                                 )),
                                 reversed: false,
                                 filled_side_is_left: true,
+                                selected_fiber_endpoint_points: None,
                                 image_is_injective: OnceLock::new(),
                                 bounds: OnceLock::new(),
                             },
@@ -14187,6 +14222,7 @@ mod certified_successor_tests {
                                 ),
                                 reversed: false,
                                 filled_side_is_left: true,
+                                selected_fiber_endpoint_points: None,
                                 image_is_injective: OnceLock::new(),
                                 bounds: OnceLock::new(),
                             },
@@ -14204,6 +14240,7 @@ mod certified_successor_tests {
                                 )),
                                 reversed: false,
                                 filled_side_is_left: true,
+                                selected_fiber_endpoint_points: None,
                                 image_is_injective: OnceLock::new(),
                                 bounds: OnceLock::new(),
                             },
@@ -14775,6 +14812,7 @@ mod certified_successor_tests {
                             end: CurveRegionParameter2::from_algebraic_chord(chord.end_parameter()),
                             reversed: false,
                             filled_side_is_left: true,
+                            selected_fiber_endpoint_points: None,
                             image_is_injective: OnceLock::new(),
                             bounds: OnceLock::new(),
                         },
@@ -14788,6 +14826,7 @@ mod certified_successor_tests {
                             end: carrier_parameter(BezierParameter2::Exact(Real::one())),
                             reversed: false,
                             filled_side_is_left: true,
+                            selected_fiber_endpoint_points: None,
                             image_is_injective: OnceLock::new(),
                             bounds: OnceLock::new(),
                         },
@@ -14995,6 +15034,7 @@ mod certified_successor_tests {
             end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         }
@@ -15017,6 +15057,7 @@ mod certified_successor_tests {
             end: carrier_parameter(BezierParameter2::Exact(Real::one())),
             reversed: false,
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         }
@@ -15076,6 +15117,7 @@ mod certified_successor_tests {
             end: CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             reversed: false,
             filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
         }

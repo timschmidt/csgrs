@@ -743,6 +743,19 @@ struct BezierSelectedParallelNormalCircleRationalSystem2 {
     angular_tangent: BezierAlgebraicCuspTwoTermExpression2,
 }
 
+/// Simple radial-alignment incidence used when concentric support and signed
+/// radii already certify a circle/circle tangency.  The unsquared relation and
+/// radial-dot sign remove the conjugate normal and antipodal roots introduced
+/// by squaring, while retaining the compact selected-fiber scalar.
+#[derive(Debug)]
+struct BezierSelectedParallelNormalRationalTangentCandidate2 {
+    incidence: BivariatePolynomial,
+    radial_alignment: BezierAlgebraicCuspTwoTermExpression2,
+    radial_dot: BezierAlgebraicCuspTwoTermExpression2,
+    speed_squared: BivariatePolynomial,
+    expected_radial_dot_sign: RealSign,
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleParallelSystem2 {
@@ -17138,6 +17151,226 @@ impl BezierAlgebraicCuspSemicircle2 {
             .map(|(intersections, _)| intersections))
     }
 
+    /// Builds the simple radial relation between this selected center and a
+    /// rational point on a concentric circle.
+    ///
+    /// If `p` is the rational radial and `q` the selected center radial, the
+    /// contact is one root of `cross(p, q) = 0`.  Substituting the analytic
+    /// parallel expression for `q` leaves one two-term source-speed radical.
+    /// Its squared incidence has simple directional roots instead of the
+    /// repeated root of the tangent circle equation.  The retained unsquared
+    /// relation and dot sign subsequently select the geometric normal branch
+    /// and reject the antipodal point.
+    fn selected_parallel_normal_concentric_arc_tangent_candidate(
+        &self,
+        other: &RationalBezier2,
+        support: &crate::CircularArc2,
+        expected_radial_dot_sign: RealSign,
+    ) -> CurveResult<BezierSelectedParallelNormalRationalTangentCandidate2> {
+        let frame = self.data.frame.parallel_normal().ok_or_else(|| {
+            CurveError::Topology("a concentric arc map lost its parallel-normal frame".into())
+        })?;
+        let source = frame.center_support.source_power_basis()?;
+        let differential = frame.center_support.differential()?;
+        let other = other.homogeneous_power_basis()?;
+        let unit = [Real::one()];
+        let source_weight = source.weight.unwrap_or(&unit);
+        let delta_x = polynomial_subtract(
+            source.x_numerator,
+            &polynomial_scale(source_weight, support.center().x()),
+        );
+        let delta_y = polynomial_subtract(
+            source.y_numerator,
+            &polynomial_scale(source_weight, support.center().y()),
+        );
+        let other_delta_x = polynomial_subtract(
+            &other.x_numerator,
+            &polynomial_scale(&other.weight, support.center().x()),
+        );
+        let other_delta_y = polynomial_subtract(
+            &other.y_numerator,
+            &polynomial_scale(&other.weight, support.center().y()),
+        );
+        let speed_squared = polynomial_add(
+            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
+            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
+        );
+        let radial_alignment = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_subtract(
+                &bivariate_outer_product(&delta_y, &other_delta_x),
+                &bivariate_outer_product(&delta_x, &other_delta_y),
+            ),
+            radical: bivariate_scale(
+                bivariate_add(
+                    &bivariate_outer_product(
+                        &polynomial_multiply(source_weight, &differential.tangent_x),
+                        &other_delta_x,
+                    ),
+                    &bivariate_outer_product(
+                        &polynomial_multiply(source_weight, &differential.tangent_y),
+                        &other_delta_y,
+                    ),
+                ),
+                frame.center_support.distance(),
+            ),
+        };
+        let radial_dot = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_add(
+                &bivariate_outer_product(&delta_x, &other_delta_x),
+                &bivariate_outer_product(&delta_y, &other_delta_y),
+            ),
+            radical: bivariate_scale(
+                bivariate_subtract(
+                    &bivariate_outer_product(
+                        &polynomial_multiply(source_weight, &differential.tangent_x),
+                        &other_delta_y,
+                    ),
+                    &bivariate_outer_product(
+                        &polynomial_multiply(source_weight, &differential.tangent_y),
+                        &other_delta_x,
+                    ),
+                ),
+                frame.center_support.distance(),
+            ),
+        };
+        let speed_squared = bivariate_outer_product(&speed_squared, &unit);
+        let incidence = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&radial_alignment.rational, &radial_alignment.rational),
+                &speed_squared,
+            ),
+            &bivariate_multiply(&radial_alignment.radical, &radial_alignment.radical),
+        );
+        Ok(BezierSelectedParallelNormalRationalTangentCandidate2 {
+            incidence,
+            radial_alignment,
+            radial_dot,
+            speed_squared,
+            expected_radial_dot_sign,
+        })
+    }
+
+    /// Replays a circle contact from an exact tangent-support certificate.
+    ///
+    /// A direct arc/Bezier fillet center already lies on the exact concentric
+    /// arc offset, and its three radii prove that the fillet and authored arc
+    /// circles are tangent. Isolating the ordinary circle equation at that
+    /// point asks a fiber solver to rediscover a double root. Instead, isolate
+    /// the simple radial directions on the rational arc. The unsquared radial
+    /// relation, signed radial dot, concentric-circle equations, and signed
+    /// radius identity together prove the original unsquared circle contact
+    /// and zero tangent cross. The selected-half predicates are then replayed
+    /// normally. No squared candidate is admitted on its own.
+    pub(crate) fn certified_tangent_rational_intersections(
+        &self,
+        other: &RationalBezier2,
+        support: &crate::CircularArc2,
+        source_radius: &Real,
+        signed_center_radius: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
+        if !self.uses_selected_parallel_normal_frame()
+            || !matches!(
+                self.selected_frame_parameter(),
+                Some(BezierParameter2::Algebraic(_))
+            )
+        {
+            return self.rational_intersections(other, policy);
+        }
+        let Some(circle) = other.retained_circular_conic() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let center_residual = circle.center.distance_squared(support.center());
+        match real_sign(&center_residual, &CurveContext::STRICT) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent replay used a different rational circle".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radius_residual = &circle.radius_squared - support.radius_squared_ref();
+        match real_sign(&radius_residual, &CurveContext::STRICT) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent replay used a different rational circle".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let source_radius_mismatch = source_radius * source_radius - support.radius_squared_ref();
+        match real_sign(&source_radius_mismatch, &CurveContext::STRICT) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent replay retained an inconsistent source radius".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let expected_radial_dot_sign = match real_sign(signed_center_radius, &CurveContext::STRICT)
+        {
+            Some(RealSign::Positive) => RealSign::Positive,
+            Some(RealSign::Negative) => RealSign::Negative,
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent retained a zero signed center radius".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let signed_radius_delta = signed_center_radius - source_radius;
+        let tangent_radius_residual = &signed_radius_delta * &signed_radius_delta
+            - self.radial_distance() * self.radial_distance();
+        match real_sign(&tangent_radius_residual, &CurveContext::STRICT) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent replay lost its signed tangent-radius identity".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let frame = self.data.frame.parallel_normal().ok_or_else(|| {
+            CurveError::Topology("a certified arc tangent lost its parallel-normal frame".into())
+        })?;
+        let center = BezierAnalyticParallelPoint2::new(
+            frame.center_support.clone(),
+            frame.center_parameter.clone(),
+            &CurveContext::STRICT,
+        );
+        match center.circle_residual_sign_to_exact(
+            support.center(),
+            &(signed_center_radius * signed_center_radius),
+            &CurveContext::STRICT,
+        )? {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a certified arc tangent center left its concentric offset".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let candidate = self.selected_parallel_normal_concentric_arc_tangent_candidate(
+            other,
+            support,
+            expected_radial_dot_sign,
+        )?;
+        Ok(self
+            .selected_parallel_normal_rational_intersections_internal(
+                other,
+                false,
+                Some(candidate),
+                policy,
+            )?
+            .map(|(intersections, _)| intersections))
+    }
+
     pub(crate) fn rational_intersections_with_parameter_map(
         &self,
         other: &RationalBezier2,
@@ -17156,15 +17389,31 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &RationalBezier2,
         system: BezierSelectedParallelNormalCircleRationalSystem2,
         center_parameter: BezierAlgebraicParameter2,
+        candidate: Option<BezierSelectedParallelNormalRationalTangentCandidate2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
+        let tangent_candidates = candidate.is_some();
+        let (candidate_incidence, tangent_certificate) = candidate.map_or_else(
+            || (system.incidence.clone(), None),
+            |candidate| {
+                (
+                    candidate.incidence,
+                    Some((
+                        candidate.radial_alignment,
+                        candidate.radial_dot,
+                        candidate.speed_squared,
+                        candidate.expected_radial_dot_sign,
+                    )),
+                )
+            },
+        );
         let refined_center = BezierParameter2::Algebraic(center_parameter.clone())
             .refined_isolating_interval(64, &CurveContext::STRICT);
         let BezierParameter2::Algebraic(refined_center) = refined_center else {
             unreachable!("a selected-fiber rational map has an algebraic center")
         };
         let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-            &system.incidence,
+            &candidate_incidence,
             CurveResultantParameter::First,
             &parameter_representation(&refined_center, policy),
             &Real::zero(),
@@ -17185,6 +17434,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ));
             }
             AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
+                if tangent_candidates {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
                 return self.selected_parallel_normal_replay_rational_circle_component(
                     other,
                     system,
@@ -17204,17 +17456,46 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };
+        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+            candidate_incidence,
+            center_parameter,
+            policy,
+        );
+        let parameters = roots
+            .into_iter()
+            .map(|root| authority.parameter(root))
+            .collect::<Vec<_>>();
 
-        let authority =
-            BezierAlgebraicSelectedFiberAuthority2::new(system.incidence, center_parameter, policy);
-        let mut retained = Vec::with_capacity(roots.len());
-        for root in roots {
-            let other_parameter = authority.parameter(root);
-            match other_parameter.radical_sum_sign(&system.circle, &system.speed_squared, policy)? {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+        let mut retained = Vec::with_capacity(parameters.len());
+        for other_parameter in parameters {
+            if let Some((radial_alignment, radial_dot, speed_squared, expected_dot_sign)) =
+                &tangent_certificate
+            {
+                match other_parameter.radical_sum_sign(radial_alignment, speed_squared, policy)? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                match other_parameter.radical_sum_sign(radial_dot, speed_squared, policy)? {
+                    Classification::Decided(sign) if sign == *expected_dot_sign => {}
+                    Classification::Decided(_) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            } else {
+                match other_parameter.radical_sum_sign(
+                    &system.circle,
+                    &system.speed_squared,
+                    policy,
+                )? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
             }
             let selected =
@@ -17249,14 +17530,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let tangent_cross_sign = match other_parameter.radical_sum_sign(
-                &system.tangent_cross,
-                &system.speed_squared,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let tangent_cross_sign = if tangent_candidates {
+                RealSign::Zero
+            } else {
+                match other_parameter.radical_sum_sign(
+                    &system.tangent_cross,
+                    &system.speed_squared,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
             };
             retained.push((other_parameter, location, tangent_cross_sign));
@@ -17755,6 +18040,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &RationalBezier2,
         retain_parameter_map: bool,
+        candidate: Option<BezierSelectedParallelNormalRationalTangentCandidate2>,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -17773,6 +18059,59 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "the selected parallel-normal rational kernel lost its center parameter".into(),
             )
         })?;
+        let tangent_candidates = candidate.is_some();
+        let candidate = match candidate {
+            Some(candidate) => {
+                let incidence = match reduce_bivariate_in_selected_parameter(
+                    candidate.incidence,
+                    &center_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let radial_alignment = match reduce_radical_expression_in_selected_parameter(
+                    candidate.radial_alignment,
+                    &center_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(expression) => expression,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let radial_dot = match reduce_radical_expression_in_selected_parameter(
+                    candidate.radial_dot,
+                    &center_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(expression) => expression,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let speed_squared = match reduce_bivariate_in_selected_parameter(
+                    candidate.speed_squared,
+                    &center_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                Some(BezierSelectedParallelNormalRationalTangentCandidate2 {
+                    incidence,
+                    radial_alignment,
+                    radial_dot,
+                    speed_squared,
+                    expected_radial_dot_sign: candidate.expected_radial_dot_sign,
+                })
+            }
+            None => None,
+        };
         let incidence = match reduce_bivariate_in_selected_parameter(
             system.incidence,
             &center_parameter,
@@ -17868,9 +18207,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                         angular_tangent,
                     },
                     selected_center,
+                    candidate,
                     policy,
                 )?
                 .map(|intersections| (intersections, None)));
+        }
+        if tangent_candidates {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         let candidates = match selected_parameter_fiber_parameters(
             &incidence,
@@ -18240,6 +18583,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             return self.selected_parallel_normal_rational_intersections_internal(
                 other,
                 retain_parameter_map,
+                None,
                 policy,
             );
         }
@@ -49138,6 +49482,185 @@ impl BezierParallel2 {
         Ok(Classification::Decided(retained))
     }
 
+    /// Solves analytic-parallel circle incidence on the regular affine cell
+    /// incident to one authored endpoint.
+    ///
+    /// Candidate roots use the same squared two-normal relation and exact
+    /// branch replay as [`Self::circle_incidence`]. The first source-weight or
+    /// source-speed zero terminates the cell, so no returned root crosses a
+    /// projective pole or a normal-field singularity. Roots remain ordered
+    /// away from `anchor`.
+    pub(crate) fn circle_incidence_on_incident_ray(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<(BezierParameter2, Option<RealSign>)>>> {
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let weight_coefficients = source
+            .weight
+            .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
+        let weight = match polynomial_from_coefficients(weight_coefficients.clone(), policy)? {
+            Classification::Decided(Some(weight)) => weight,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match real_sign(&weight.evaluate(anchor), policy) {
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let speed_polynomial = match polynomial_from_coefficients(speed_squared.clone(), policy)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match real_sign(&speed_polynomial.evaluate(anchor), policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "Bezier tangent squared norm was certified negative".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let barrier = match first_incident_ray_polynomial_root(
+            &[&weight, &speed_polynomial],
+            anchor,
+            direction,
+            policy,
+        )? {
+            Classification::Decided(barrier) => barrier,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+
+        let delta_x = polynomial_subtract(
+            source.x_numerator,
+            &polynomial_scale(&weight_coefficients, center.x()),
+        );
+        let delta_y = polynomial_subtract(
+            source.y_numerator,
+            &polynomial_scale(&weight_coefficients, center.y()),
+        );
+        let distance_square_delta = self.distance() * self.distance() - radius_squared;
+        let radial = polynomial_add(
+            &polynomial_add(
+                &polynomial_multiply(&delta_x, &delta_x),
+                &polynomial_multiply(&delta_y, &delta_y),
+            ),
+            &polynomial_scale(
+                &polynomial_multiply(&weight_coefficients, &weight_coefficients),
+                &distance_square_delta,
+            ),
+        );
+        let normal_projection = polynomial_subtract(
+            &polynomial_multiply(&delta_y, &differential.tangent_x),
+            &polynomial_multiply(&delta_x, &differential.tangent_y),
+        );
+        let normal = polynomial_scale(
+            &polynomial_multiply(&weight_coefficients, &normal_projection),
+            &(Real::from(2_u8) * self.distance()),
+        );
+        let squared = polynomial_subtract(
+            &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
+            &polynomial_multiply(&normal, &normal),
+        );
+        let candidate_polynomial = match polynomial_from_coefficients(squared, policy)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) => {
+                // A coincident squared carrier has no isolated fillet center;
+                // deciding its selected component requires overlap topology.
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let candidates =
+            match candidate_polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let candidates = match retain_parameters_before_incident_barrier(
+            candidates,
+            barrier.as_ref(),
+            direction,
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radial_polynomial = match polynomial_from_coefficients(radial, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let normal_polynomial = match polynomial_from_coefficients(normal, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            let radial_sign =
+                match signed_polynomial_at_root(radial_polynomial.as_ref(), &candidate, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let normal_sign =
+                match signed_polynomial_at_root(normal_polynomial.as_ref(), &candidate, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            match (radial_sign, normal_sign) {
+                (RealSign::Zero, RealSign::Zero)
+                | (RealSign::Positive, RealSign::Negative)
+                | (RealSign::Negative, RealSign::Positive) => {
+                    retained.push((candidate, None));
+                }
+                (RealSign::Positive, RealSign::Positive)
+                | (RealSign::Negative, RealSign::Negative) => {}
+                (RealSign::Zero, RealSign::Positive | RealSign::Negative)
+                | (RealSign::Positive | RealSign::Negative, RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "squared parallel-circle candidate lost its exact mate".into(),
+                    ));
+                }
+            }
+        }
+        Ok(Classification::Decided(retained))
+    }
+
     /// Solves circle incidence while retaining the oriented radial crossing
     /// sign and reusing represented tangent contacts certified by exact
     /// offset-join construction.
@@ -78014,6 +78537,47 @@ mod conversion_tests {
                     .cmp_by_refinement(&BezierParameter2::Exact(Real::one()), &policy)
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
+            );
+        }
+    }
+
+    #[test]
+    fn incident_parabola_parallel_circle_retains_exact_and_algebraic_contacts() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let expected = (Real::from(6_i8) / Real::from(5_i8)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(half)
+        .unwrap();
+        let center = Point2::new(
+            Real::one(),
+            (Real::from(3923_i64) / Real::from(2150_i64)).unwrap(),
+        );
+        let radius = (Real::from(349_i64) / Real::from(1075_i64)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(contacts) = parallel
+                .circle_incidence_on_incident_ray(
+                    &center,
+                    &(&radius * &radius),
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the regular polynomial incident cell must be decided");
+            };
+            let [(first, None), (second, None)] = contacts.as_slice() else {
+                panic!("the incident cell must retain both selected circle contacts: {contacts:?}");
+            };
+            assert_eq!(first.as_exact(), Some(&expected));
+            assert!(matches!(second, BezierParameter2::Algebraic(_)));
+            assert_eq!(
+                second.cmp_by_refinement(first, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
             );
         }
     }
