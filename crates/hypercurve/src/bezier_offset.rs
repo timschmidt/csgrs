@@ -36765,21 +36765,14 @@ impl BezierAlgebraicChord2 {
                 second_endpoint.map(|endpoint| [other.start(), other.end()][endpoint].clone())
             })
         else {
-            let retained = BezierAlgebraicChordPairPoint2::new(
+            let point = BezierAlgebraicChordPairPoint2::new(
                 self.clone(),
                 other.clone(),
                 first_sides,
                 second_sides,
                 policy,
             );
-            let point = match retained.exact_represented_point(policy)? {
-                Classification::Decided(Some(point)) => {
-                    RationalBezierIntersectionPointEvidence2::Exact(point)
-                }
-                Classification::Decided(None) | Classification::Uncertain(_) => {
-                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(retained)
-                }
-            };
+            let point = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point);
             let parameter = |chord: &BezierAlgebraicChord2| BezierAlgebraicChordParameter2 {
                 data: BezierAlgebraicChordParameterStorage2::Interior(Arc::new(
                     BezierAlgebraicChordParameterData2 {
@@ -43819,17 +43812,6 @@ impl BezierAlgebraicChordPairPoint2 {
                 Classification::Decided(point) => Ok(Classification::Decided(point)),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
-        }
-
-        for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
-            let Classification::Decided(bounds) =
-                self.conservative_bounds_refined(refinement_steps, policy)
-            else {
-                continue;
-            };
-            if bounds.min() == bounds.max() {
-                return Ok(Classification::Decided(Some(bounds.min().clone())));
-            }
         }
 
         Ok(match (x, y) {
@@ -69630,7 +69612,18 @@ mod conversion_tests {
                     panic!("expected one retained-offset crossing, got {contacts:?}");
                 };
                 assert_eq!(contact.tangent_cross_sign(), expected_cross);
-                assert_eq!(contact.point().as_exact(), Some(&Point2::from_values(1, 1)));
+                let Some(_point) = contact.point().as_algebraic_chord_pair() else {
+                    panic!("the physical crossing must retain its two support authorities");
+                };
+                assert_eq!(
+                    contact.point().same_point(
+                        &RationalBezierIntersectionPointEvidence2::Exact(
+                            Point2::from_values(1, 1,)
+                        ),
+                        &policy,
+                    ),
+                    Classification::Decided(true)
+                );
                 assert_eq!(
                     contact.point().same_point(
                         &RationalBezierIntersectionPointEvidence2::Exact(
