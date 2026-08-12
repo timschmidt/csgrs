@@ -334,6 +334,11 @@ pub(crate) struct BezierParallelAlgebraicCuspFrame2 {
 enum BezierSelectedCircleFrame2 {
     Rational(BezierParallelAlgebraicCuspFrame2),
     ParallelNormal(Arc<BezierSelectedParallelNormalFrameData2>),
+    /// The center is retained point evidence and the parameter-zero radius is
+    /// the exact unit left normal of one algebraic chord.  Points in this
+    /// frame remain lazy chord-normal/tangent displacements, so independent
+    /// endpoint and center fields never need a primitive-element compositum.
+    ChordNormal(Arc<BezierSelectedChordNormalFrameData2>),
     /// The circle center is one mapped point on an existing selected circle,
     /// and its parameter-zero radius is that source circle's certified radial
     /// direction at the same point.  This keeps a genuinely correlated
@@ -346,6 +351,13 @@ enum BezierSelectedCircleFrame2 {
 struct BezierSelectedParallelNormalFrameData2 {
     center_support: BezierParallel2,
     center_parameter: BezierParameter2,
+    policy: CurveContext,
+}
+
+#[derive(Debug, PartialEq)]
+struct BezierSelectedChordNormalFrameData2 {
+    anchor: BezierAlgebraicChord2,
+    center: RationalBezierIntersectionPointEvidence2,
     policy: CurveContext,
 }
 
@@ -401,12 +413,28 @@ impl PartialEq for BezierSelectedCircleFrame2 {
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second) || first == second
             }
+            (Self::ChordNormal(first), Self::ChordNormal(second)) => {
+                Arc::ptr_eq(first, second) || first == second
+            }
             (Self::SelectedRadial(first), Self::SelectedRadial(second)) => {
                 Arc::ptr_eq(first, second)
             }
-            (Self::Rational(_), Self::ParallelNormal(_) | Self::SelectedRadial(_))
-            | (Self::ParallelNormal(_), Self::Rational(_) | Self::SelectedRadial(_))
-            | (Self::SelectedRadial(_), Self::Rational(_) | Self::ParallelNormal(_)) => false,
+            (
+                Self::Rational(_),
+                Self::ParallelNormal(_) | Self::ChordNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::ParallelNormal(_),
+                Self::Rational(_) | Self::ChordNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::ChordNormal(_),
+                Self::Rational(_) | Self::ParallelNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::SelectedRadial(_),
+                Self::Rational(_) | Self::ParallelNormal(_) | Self::ChordNormal(_),
+            ) => false,
         }
     }
 }
@@ -5504,6 +5532,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleParameter2 {
 #[derive(Debug)]
 pub(crate) enum BezierSelectedChordNormalAnchor2 {
     Represented((Real, Real)),
+    RetainedChord(BezierAlgebraicChord2),
     RetainedCircleChord {
         map: BezierAlgebraicCuspSemicircleChordParameterMap2,
         contact: BezierAlgebraicCuspSemicircleChordContact2,
@@ -6210,6 +6239,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             BezierSelectedChordNormalAnchor2::Represented(anchor_tangent) => chord
                 .tangent_cross_dot_vector_linear_combination_sign(
                     anchor_tangent,
+                    &cross_scale,
+                    &tangential,
+                    policy,
+                )?,
+            BezierSelectedChordNormalAnchor2::RetainedChord(anchor) => anchor
+                .tangent_cross_dot_linear_combination_sign(
+                    chord,
                     &cross_scale,
                     &tangential,
                     policy,
@@ -7825,6 +7861,29 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             return Ok(transformed);
         }
         let transformed = match source {
+            BezierSelectedCircleFrame2::ChordNormal(frame) => {
+                let anchor = match self.chord(&frame.anchor, transform, &frame.policy)? {
+                    Classification::Decided(anchor) => anchor,
+                    Classification::Uncertain(reason) => {
+                        return Err(CurveError::Topology(format!(
+                            "a chord-normal circle similarity could not retain its anchor: {reason:?}"
+                        )));
+                    }
+                };
+                BezierSelectedCircleFrame2::ChordNormal(Arc::new(
+                    BezierSelectedChordNormalFrameData2 {
+                        anchor,
+                        center: RationalBezierIntersectionPointEvidence2::Similarity(
+                            BezierSimilarityPoint2::new(
+                                frame.center.clone(),
+                                transform.clone(),
+                                &frame.policy,
+                            ),
+                        ),
+                        policy: frame.policy,
+                    },
+                ))
+            }
             BezierSelectedCircleFrame2::SelectedRadial(frame) => {
                 let source_semicircle = frame.center_parameter.semicircle_carrier().clone();
                 let source_parameter =
@@ -8169,6 +8228,39 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                         },
                     )))
                 }
+                BezierSelectedChordNormalAnchor2::RetainedChord(anchor) => {
+                    let transformed_point = RationalBezierIntersectionPointEvidence2::Similarity(
+                        BezierSimilarityPoint2::new(point.clone(), transform.clone(), policy),
+                    );
+                    let transformed_chord = match self.chord(chord, transform, policy)? {
+                        Classification::Decided(chord) => chord,
+                        Classification::Uncertain(reason) => {
+                            return Err(CurveError::Topology(format!(
+                                "a selected-circle similarity could not transport its chord evidence: {reason:?}"
+                            )));
+                        }
+                    };
+                    let transformed_anchor = match self.chord(anchor, transform, policy)? {
+                        Classification::Decided(anchor) => anchor,
+                        Classification::Uncertain(reason) => {
+                            return Err(CurveError::Topology(format!(
+                                "a selected-circle similarity could not transport its chord-normal anchor: {reason:?}"
+                            )));
+                        }
+                    };
+                    Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+                            semicircle: self.semicircle(semicircle, transform)?,
+                            anchor_tangent: BezierSelectedChordNormalAnchor2::RetainedChord(
+                                transformed_anchor,
+                            ),
+                            chord: transformed_chord,
+                            radial_product_sign: *radial_product_sign,
+                            point: transformed_point,
+                            policy: *policy,
+                        },
+                    )))
+                }
                 BezierSelectedChordNormalAnchor2::RetainedCircleChord { .. } => None,
             },
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
@@ -8332,33 +8424,54 @@ impl BezierSelectedCircleFrame2 {
             (Self::ParallelNormal(first), Self::ParallelNormal(second)) => {
                 Arc::ptr_eq(first, second)
             }
+            (Self::ChordNormal(first), Self::ChordNormal(second)) => Arc::ptr_eq(first, second),
             (Self::SelectedRadial(first), Self::SelectedRadial(second)) => {
                 Arc::ptr_eq(first, second)
             }
-            (Self::Rational(_), Self::ParallelNormal(_) | Self::SelectedRadial(_))
-            | (Self::ParallelNormal(_), Self::Rational(_) | Self::SelectedRadial(_))
-            | (Self::SelectedRadial(_), Self::Rational(_) | Self::ParallelNormal(_)) => false,
+            (
+                Self::Rational(_),
+                Self::ParallelNormal(_) | Self::ChordNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::ParallelNormal(_),
+                Self::Rational(_) | Self::ChordNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::ChordNormal(_),
+                Self::Rational(_) | Self::ParallelNormal(_) | Self::SelectedRadial(_),
+            )
+            | (
+                Self::SelectedRadial(_),
+                Self::Rational(_) | Self::ParallelNormal(_) | Self::ChordNormal(_),
+            ) => false,
         }
     }
 
     fn rational(&self) -> Option<&BezierParallelAlgebraicCuspFrame2> {
         match self {
             Self::Rational(frame) => Some(frame),
-            Self::ParallelNormal(_) | Self::SelectedRadial(_) => None,
+            Self::ParallelNormal(_) | Self::ChordNormal(_) | Self::SelectedRadial(_) => None,
         }
     }
 
     fn parallel_normal(&self) -> Option<&BezierSelectedParallelNormalFrameData2> {
         match self {
-            Self::Rational(_) | Self::SelectedRadial(_) => None,
+            Self::Rational(_) | Self::ChordNormal(_) | Self::SelectedRadial(_) => None,
             Self::ParallelNormal(frame) => Some(frame),
+        }
+    }
+
+    fn chord_normal(&self) -> Option<&BezierSelectedChordNormalFrameData2> {
+        match self {
+            Self::ChordNormal(frame) => Some(frame),
+            Self::Rational(_) | Self::ParallelNormal(_) | Self::SelectedRadial(_) => None,
         }
     }
 
     fn selected_radial(&self) -> Option<&BezierSelectedRadialFrameData2> {
         match self {
             Self::SelectedRadial(frame) => Some(frame),
-            Self::Rational(_) | Self::ParallelNormal(_) => None,
+            Self::Rational(_) | Self::ParallelNormal(_) | Self::ChordNormal(_) => None,
         }
     }
 
@@ -8374,7 +8487,7 @@ impl BezierSelectedCircleFrame2 {
         match self {
             Self::Rational(frame) => frame.center_parallel_distance(),
             Self::ParallelNormal(frame) => frame.center_support.distance().clone(),
-            Self::SelectedRadial(_) => Real::zero(),
+            Self::ChordNormal(_) | Self::SelectedRadial(_) => Real::zero(),
         }
     }
 
@@ -8382,7 +8495,7 @@ impl BezierSelectedCircleFrame2 {
         match self {
             Self::Rational(frame) => frame.data.parallel.as_ref(),
             Self::ParallelNormal(frame) => Some(&frame.center_support),
-            Self::SelectedRadial(_) => None,
+            Self::ChordNormal(_) | Self::SelectedRadial(_) => None,
         }
     }
 
@@ -8396,8 +8509,8 @@ impl BezierSelectedCircleFrame2 {
                     policy: frame.policy,
                 },
             ))),
-            Self::SelectedRadial(_) => Err(CurveError::Topology(
-                "a pair-radial selected circle requires correlated similarity transport".into(),
+            Self::ChordNormal(_) | Self::SelectedRadial(_) => Err(CurveError::Topology(
+                "a correlated selected circle requires cached similarity transport".into(),
             )),
         }
     }
@@ -8751,12 +8864,17 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierSelectedCircleFrame2::ParallelNormal(frame) => {
                 Some(frame.center_parameter.clone())
             }
-            BezierSelectedCircleFrame2::SelectedRadial(_) => None,
+            BezierSelectedCircleFrame2::ChordNormal(_)
+            | BezierSelectedCircleFrame2::SelectedRadial(_) => None,
         }
     }
 
     pub(crate) fn uses_selected_parallel_normal_frame(&self) -> bool {
         self.data.frame.parallel_normal().is_some()
+    }
+
+    pub(crate) fn uses_selected_chord_normal_frame(&self) -> bool {
+        self.data.frame.chord_normal().is_some()
     }
 
     pub(crate) fn uses_selected_radial_frame(&self) -> bool {
@@ -8799,6 +8917,39 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierSelectedParallelNormalFrameData2 {
                         center_support,
                         center_parameter,
+                        policy: *policy,
+                    },
+                )),
+                radial_distance,
+                clockwise,
+            }),
+        })))
+    }
+
+    /// Builds a selected circle around arbitrary retained center evidence,
+    /// using one algebraic chord's exact unit left normal as its local radial
+    /// frame.  The center and the chord's two endpoint fields remain separate;
+    /// represented chart points are published as lazy normal/tangent
+    /// displacements instead of a flattened algebraic coordinate tower.
+    pub(crate) fn from_retained_center_and_chord_normal(
+        center: RationalBezierIntersectionPointEvidence2,
+        anchor: BezierAlgebraicChord2,
+        radial_distance: Real,
+        clockwise: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        anchor.validate_policy(policy)?;
+        match real_sign(&radial_distance, policy) {
+            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        Ok(Classification::Decided(Some(Self {
+            data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
+                frame: BezierSelectedCircleFrame2::ChordNormal(Arc::new(
+                    BezierSelectedChordNormalFrameData2 {
+                        anchor,
+                        center,
                         policy: *policy,
                     },
                 )),
@@ -9333,6 +9484,27 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ),
             ));
         }
+        if let Some(frame) = self.data.frame.chord_normal() {
+            if frame.policy != *policy {
+                return Err(CurveError::Topology(
+                    "a chord-normal selected circle crossed predicate policies".into(),
+                ));
+            }
+            let normal_distance = (&normal_scale / &denominator)?;
+            // The circle chart rotates the left normal counterclockwise,
+            // which is the negative unit tangent of the anchor chord.
+            let tangent_distance = -(&tangent_scale / denominator)?;
+            let point = frame.anchor.normal_displaced_point_evidence(
+                frame.center.clone(),
+                normal_distance,
+                policy,
+            )?;
+            return Ok(Classification::Decided(
+                frame
+                    .anchor
+                    .tangent_displaced_point_evidence(point, tangent_distance, policy)?,
+            ));
+        }
         let frame = self
             .data
             .frame
@@ -9457,6 +9629,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ),
                 ),
             ));
+        }
+        if let Some(frame) = self.data.frame.chord_normal() {
+            if frame.policy != *policy {
+                return Err(CurveError::Topology(
+                    "a chord-normal selected circle crossed predicate policies".into(),
+                ));
+            }
+            return Ok(Classification::Decided(frame.center.clone()));
         }
         let frame = self
             .data
@@ -9820,6 +10000,92 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Decided(_) => {
                     return Err(CurveError::Topology(
                         "a certified chord-normal contact lay outside its selected circle half"
+                            .into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(parameter))
+    }
+
+    /// Retains the second contact of a circle framed by a general algebraic
+    /// chord normal. The two chord directions remain independent exact
+    /// endpoint fields; angular ordering signs their cross/dot combination
+    /// directly instead of constructing either unit vector.
+    pub(crate) fn certified_selected_chord_pair_normal_contact_parameter(
+        &self,
+        anchor: &BezierAlgebraicChord2,
+        chord: BezierAlgebraicChord2,
+        point: RationalBezierIntersectionPointEvidence2,
+        contact_radial_distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+        anchor.validate_policy(policy)?;
+        chord.validate_policy(policy)?;
+        let Some(frame) = self.data.frame.chord_normal() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if frame.policy != *policy {
+            return Err(CurveError::Topology(
+                "a selected chord-normal pair contact crossed predicate policies".into(),
+            ));
+        }
+        if frame.anchor != *anchor {
+            return Err(CurveError::Topology(
+                "a selected chord-normal pair contact did not share its anchor frame".into(),
+            ));
+        }
+        let radius_residual = self.radial_distance() * self.radial_distance()
+            - &contact_radial_distance * &contact_radial_distance;
+        match real_sign(&radius_residual, policy) {
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Positive | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a selected chord-pair contact had unequal radial lengths".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let radial_product_sign =
+            match real_sign(&(self.radial_distance() * &contact_radial_distance), policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a selected chord-pair contact retained a zero radius".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+        let expected = chord.normal_displaced_point_evidence(
+            frame.center.clone(),
+            contact_radial_distance,
+            policy,
+        )?;
+        if expected.same_point(&point, policy) != Classification::Decided(true) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+                semicircle: self.clone(),
+                anchor_tangent: BezierSelectedChordNormalAnchor2::RetainedChord(anchor.clone()),
+                chord,
+                radial_product_sign,
+                point,
+                policy: *policy,
+            },
+        ));
+        for (boundary, expected) in [
+            (Real::zero(), std::cmp::Ordering::Greater),
+            (Real::one(), std::cmp::Ordering::Less),
+        ] {
+            match parameter.order_to_real(&boundary, policy)? {
+                Classification::Decided(order) if order == expected => {}
+                Classification::Decided(_) => {
+                    return Err(CurveError::Topology(
+                        "a certified chord-pair contact lay outside its selected circle half"
                             .into(),
                     ));
                 }
@@ -16600,6 +16866,23 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
         chord.validate_policy(policy)?;
+        let broad_phase_refinements: &[usize] = if self.uses_selected_chord_normal_frame() {
+            &[0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+        } else {
+            &[0]
+        };
+        for &refinement_steps in broad_phase_refinements {
+            if let (Classification::Decided(circle_bounds), Classification::Decided(chord_bounds)) = (
+                self.conservative_bounds_refined(refinement_steps, policy)?,
+                chord.conservative_bounds_refined(refinement_steps, policy)?,
+            ) && circle_bounds.overlaps(&chord_bounds, &CurveContext::STRICT)
+                == Classification::Decided(false)
+            {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+                ));
+            }
+        }
         if self.data.frame.rational().is_some() && chord.certified_axis_direction().is_some() {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -19578,6 +19861,22 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
+        if self.uses_selected_chord_normal_frame()
+            && let Classification::Decided(other_bounds) = other.certified_bounds_classified(policy)
+        {
+            for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+                if let Classification::Decided(circle_bounds) =
+                    self.conservative_bounds_refined(refinement_steps, policy)?
+                    && circle_bounds.overlaps(&other_bounds, &CurveContext::STRICT)
+                        == Classification::Decided(false)
+                {
+                    return Ok(Classification::Decided((
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                        None,
+                    )));
+                }
+            }
+        }
         if self.uses_selected_radial_frame() {
             let system = match self.selected_radial_rational_system(other, policy)? {
                 Classification::Decided(system) => system,
@@ -42638,26 +42937,48 @@ impl BezierAlgebraicChord2 {
         cross: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        let zero = Real::zero();
+        let one = Real::one();
+        self.tangent_cross_dot_linear_combination_sign(
+            other,
+            if cross { &one } else { &zero },
+            if cross { &zero } else { &one },
+            policy,
+        )
+    }
+
+    /// Signs `cross_scale * (self x other) + dot_scale * (self dot other)`.
+    /// Both products share the same positive normalization factor, so the
+    /// unnormalized endpoint differences are authoritative. Independent
+    /// selected endpoint fields are refined in place and only an
+    /// APPROXIMATE_512 query may terminate an unresolved equality.
+    pub(crate) fn tangent_cross_dot_linear_combination_sign(
+        &self,
+        other: &Self,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
         other.validate_policy(policy)?;
         if let Some(reversed) = self.shared_tangent_orientation(other) {
-            return Ok(Classification::Decided(if cross {
-                RealSign::Zero
-            } else if reversed {
-                RealSign::Negative
+            let value = if reversed {
+                -dot_scale.clone()
             } else {
-                RealSign::Positive
-            }));
+                dot_scale.clone()
+            };
+            return Ok(real_sign(&value, &CurveContext::STRICT).map_or(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided,
+            ));
         }
         if let (Some(first), Some(second)) = (
             self.certified_unit_tangent(),
             other.certified_unit_tangent(),
         ) {
-            let value = if cross {
-                Real::diff_of_products(&first.0, &second.1, &first.1, &second.0)
-            } else {
-                &first.0 * &second.0 + &first.1 * &second.1
-            };
+            let cross = Real::diff_of_products(&first.0, &second.1, &first.1, &second.0);
+            let dot = &first.0 * &second.0 + &first.1 * &second.1;
+            let value = cross_scale * cross + dot_scale * dot;
             return Ok(real_sign(&value, &CurveContext::STRICT).map_or(
                 Classification::Uncertain(UncertaintyReason::RealSign),
                 Classification::Decided,
@@ -42695,19 +43016,31 @@ impl BezierAlgebraicChord2 {
             let second_x = delta(&second_start, &second_end, Axis2::X);
             let second_y = delta(&second_start, &second_end, Axis2::Y);
             let strict = &CurveContext::STRICT;
-            let value = if cross {
-                first_x.multiply(&second_y, strict).and_then(|first| {
-                    first_y
-                        .multiply(&second_x, strict)
-                        .map(|second| first.subtract(&second))
-                })
-            } else {
-                first_x.multiply(&second_x, strict).and_then(|first| {
-                    first_y
-                        .multiply(&second_y, strict)
-                        .map(|second| first.add(&second))
-                })
+            let cross = first_x.multiply(&second_y, strict).and_then(|first| {
+                first_y
+                    .multiply(&second_x, strict)
+                    .map(|second| first.subtract(&second))
+            });
+            let dot = first_x.multiply(&second_x, strict).and_then(|first| {
+                first_y
+                    .multiply(&second_y, strict)
+                    .map(|second| first.add(&second))
+            });
+            let scale = |value: BezierAlgebraicChordRealInterval2, scale: &Real| {
+                value.multiply(
+                    &BezierAlgebraicChordRealInterval2 {
+                        lower: scale.clone(),
+                        upper: scale.clone(),
+                    },
+                    strict,
+                )
             };
+            let value = cross
+                .and_then(|cross| scale(cross, cross_scale))
+                .and_then(|cross| {
+                    dot.and_then(|dot| scale(dot, dot_scale))
+                        .map(|dot| cross.add(&dot))
+                });
             let Some(value) = value else {
                 continue;
             };
@@ -43954,6 +44287,26 @@ impl BezierAlgebraicChordParallelPoint2 {
         }
     }
 
+    fn tangent_displaced_point(
+        source: BezierAlgebraicChord2,
+        source_point: RationalBezierIntersectionPointEvidence2,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicChordParallelData2 {
+                source,
+                source_point: Some(Arc::new(source_point)),
+                distance,
+                translation_x: Real::zero(),
+                translation_y: Real::zero(),
+                direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
+                policy: *policy,
+            }),
+            at_end: false,
+        }
+    }
+
     fn source_endpoint(&self) -> &RationalBezierIntersectionPointEvidence2 {
         if let Some(point) = self.data.source_point.as_deref() {
             return point;
@@ -44863,6 +45216,45 @@ impl BezierAlgebraicChord2 {
         Ok(
             RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(
                 BezierAlgebraicChordParallelPoint2::normal_displaced_point(
+                    self.clone(),
+                    point,
+                    distance,
+                    policy,
+                ),
+            ),
+        )
+    }
+
+    /// Displaces retained point evidence along this chord's exact unit
+    /// tangent. Together with [`Self::normal_displaced_point_evidence`] this
+    /// is the complete local orthonormal chart used by a chord-framed circle;
+    /// neither displacement merges the source point and endpoint fields.
+    pub(crate) fn tangent_displaced_point_evidence(
+        &self,
+        point: RationalBezierIntersectionPointEvidence2,
+        distance: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<RationalBezierIntersectionPointEvidence2> {
+        self.validate_policy(policy)?;
+        if distance.zero_status() == ZeroStatus::Zero {
+            return Ok(point);
+        }
+        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
+            return match Self::translated_endpoint(
+                &point,
+                &(tangent_x * &distance),
+                &(tangent_y * distance),
+                policy,
+            )? {
+                Classification::Decided(point) => Ok(point),
+                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                    "a certified chord tangent displacement became uncertain: {reason:?}"
+                ))),
+            };
+        }
+        Ok(
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(
+                BezierAlgebraicChordParallelPoint2::tangent_displaced_point(
                     self.clone(),
                     point,
                     distance,
@@ -46141,6 +46533,27 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         ),
                     )));
                 }
+                if let Some(frame) = self.data.semicircle.data.frame.chord_normal() {
+                    if frame.policy != *policy {
+                        return Err(CurveError::Topology(
+                            "a chord-normal tangent support crossed predicate policies".into(),
+                        ));
+                    }
+                    let normal_distance = (&support_normal_scale / &denominator)?;
+                    let tangent_distance = -(&support_tangent_scale / denominator)?;
+                    let point = frame.anchor.normal_displaced_point_evidence(
+                        frame.center.clone(),
+                        normal_distance,
+                        policy,
+                    )?;
+                    return Ok(Classification::Decided(Some(
+                        frame.anchor.tangent_displaced_point_evidence(
+                            point,
+                            tangent_distance,
+                            policy,
+                        )?,
+                    )));
+                }
                 let frame = self
                     .data
                     .semicircle
@@ -46349,6 +46762,50 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     ) -> CurveResult<Classification<Option<(BezierAlgebraicChord2, RealSign, Option<RealSign>)>>>
     {
         self.validate_policy(policy)?;
+        if let (Some(frame), BezierAlgebraicCuspSemicircleParameter2::Exact(parameter)) = (
+            self.data.semicircle.data.frame.chord_normal(),
+            self.endpoint_parameter(start_endpoint),
+        ) {
+            if frame.policy != *policy {
+                return Err(CurveError::Topology(
+                    "a chord-normal endpoint tangent crossed predicate policies".into(),
+                ));
+            }
+            let diameter_sign = if parameter.zero_status() == ZeroStatus::Zero {
+                RealSign::Negative
+            } else if (parameter - Real::one()).zero_status() == ZeroStatus::Zero {
+                RealSign::Positive
+            } else {
+                return Ok(Classification::Decided(None));
+            };
+            let radial_sign = match real_sign(self.data.semicircle.radial_distance(), policy) {
+                Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Some(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a chord-normal circle retained a zero radius".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            let turn_sign = if self.data.semicircle.is_clockwise() {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            let traversal_sign = if self.data.reversed {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            return Ok(Classification::Decided(Some((
+                frame.anchor.clone(),
+                RealSign::Zero,
+                Some(product_sign(
+                    diameter_sign,
+                    product_sign(radial_sign, product_sign(turn_sign, traversal_sign)),
+                )),
+            ))));
+        }
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) =
             self.endpoint_parameter(start_endpoint)
         else {

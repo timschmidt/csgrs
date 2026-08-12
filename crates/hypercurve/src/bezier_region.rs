@@ -11002,6 +11002,14 @@ impl CurveRegion2 {
                         policy,
                     )
                 }
+                RetainedFilletRadialFrame2::ChordNormal { anchor, .. } => terminal_circle
+                    .certified_selected_chord_pair_normal_contact_parameter(
+                        anchor,
+                        chord.clone(),
+                        chord_cut.point.clone(),
+                        frame.radial_distance.clone(),
+                        policy,
+                    ),
                 RetainedFilletRadialFrame2::ParallelNormal { .. } => terminal_circle
                     .certified_selected_chord_parallel_normal_contact_parameter(
                         chord.clone(),
@@ -11687,6 +11695,26 @@ impl CurveRegion2 {
                     crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
                         &center,
                         unit_normal.clone(),
+                        frame.radial_distance.clone(),
+                        fillet_clockwise,
+                        policy,
+                    )
+                }
+                RetainedFilletRadialFrame2::ChordNormal {
+                    anchor,
+                    policy: frame_policy,
+                } => {
+                    if frame_policy != policy {
+                        return Err(curve_region_edit_error(
+                            CurveOperation2::Fillet,
+                            CurveError::Topology(
+                                "a chord-normal fillet frame crossed predicate policies".into(),
+                            ),
+                        ));
+                    }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                        center.clone(),
+                        anchor.clone(),
                         frame.radial_distance.clone(),
                         fillet_clockwise,
                         policy,
@@ -22342,6 +22370,67 @@ mod tests {
         .unwrap()
     }
 
+    fn independent_oblique_chord_pair_corner_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let selected = |start: Point2, end: Point2, radicand| {
+            let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap();
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source,
+                &positive_inverse_sqrt_parameter(radicand, policy),
+                policy,
+            )
+            .unwrap()
+            .expect("the independent chord endpoint retains exact evidence")
+        };
+        let previous_start = selected(p(0, 0), p(0, 1), 3);
+        let corner = selected(p(0, 0), p(1, 0), 2);
+        let next_end = selected(p(1, 0), p(1, 1), 5);
+        let chord =
+            |start, end| match crate::BezierAlgebraicChord2::try_new(start, end, policy).unwrap() {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    panic!("the independent oblique chord must construct: {reason:?}")
+                }
+            };
+        let previous = chord(previous_start.clone(), corner.clone());
+        let next = chord(corner, next_end.clone());
+        for incident in [&previous, &next] {
+            assert!(incident.exact_line().is_none());
+            assert!(incident.strict_provenance_support_line(policy).is_none());
+            assert!(incident.certified_unit_tangent().is_none());
+        }
+        let closing = chord(next_end, previous_start);
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicChord(previous),
+            BezierSplitFragment2::AlgebraicChord(next),
+            BezierSplitFragment2::AlgebraicChord(closing),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        CurveRegion2::try_new_with_loop_topology(
+            vec![
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    fragments, None, policy,
+                )
+                .unwrap(),
+            ],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    }
+
     fn nonrepresented_chord_rational_arc_corner_region(
         policy: &CurveContext,
         reversed: bool,
@@ -22613,6 +22702,100 @@ mod tests {
                             .count()
                             >= 2
                     );
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn independent_oblique_chord_pair_fillets_extend_on_infinite_supports() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = independent_oblique_chord_pair_corner_region(&policy, reversed);
+                let corner = if reversed { 2 } else { 1 };
+                let trim = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "independent chord/chord trim: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(trim.certainty, CurveCertainty::Certified);
+                let extended = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "independent chord/chord extension: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(
+                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    "extension must publish the supporting-line contact: policy={policy:?}, reversed={reversed}, trim={:?}, extended={:?}",
+                    trim.value,
+                    extended.value,
+                );
+                for_each_corner_region(&extended.value, |filleted| {
+                    let fragments = filleted.boundary_loops()[0].fragments();
+                    let mut chord_adjacencies = 0;
+                    let mut retained_tangent_relations = 0;
+                    for (index, fragment) in fragments.iter().enumerate() {
+                        let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment else {
+                            continue;
+                        };
+                        for endpoint in [true, false] {
+                            if matches!(
+                                fillet.endpoint_chord_tangent_relation(endpoint, &policy),
+                                Ok(Classification::Decided(Some((
+                                    _,
+                                    RealSign::Zero,
+                                    Some(RealSign::Positive | RealSign::Negative)
+                                ))))
+                            ) {
+                                retained_tangent_relations += 1;
+                            }
+                        }
+                        for adjacent in [
+                            &fragments[(index + fragments.len() - 1) % fragments.len()],
+                            &fragments[(index + 1) % fragments.len()],
+                        ] {
+                            let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                                continue;
+                            };
+                            assert_eq!(
+                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                Ok(Classification::Decided(true))
+                            );
+                            chord_adjacencies += 1;
+                        }
+                    }
+                    assert_eq!(chord_adjacencies, 2);
+                    assert!(retained_tangent_relations >= 2);
+                    assert_eq!(
+                        filleted
+                            .classify_point(&p(10, 10), &policy)
+                            .expect("the chord-normal fillet remains classifiable")
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Outside),
+                    );
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the chord-normal fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert!(replay.value.intersection().is_empty());
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
                 });
             }
         }

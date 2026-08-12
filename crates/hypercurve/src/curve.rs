@@ -3462,6 +3462,14 @@ pub(crate) struct RetainedFilletFrame2 {
 #[derive(Clone, Debug)]
 pub(crate) enum RetainedFilletRadialFrame2 {
     RepresentedUnitNormal((Real, Real)),
+    /// The fillet center is arbitrary retained evidence and the local radial
+    /// is one algebraic chord's exact unit left normal. This is the general
+    /// projective line/line frame when neither direction is a represented
+    /// `Real` vector.
+    ChordNormal {
+        anchor: crate::BezierAlgebraicChord2,
+        policy: CurveContext,
+    },
     ConcentricArc {
         support_center: Point2,
         normal_denominator: Real,
@@ -4642,88 +4650,91 @@ impl FilletOffsetCarrier2<'_, '_> {
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedFilletFrame2>> {
-        let (radial_frame, radial_distance) =
-            match self {
-                Self::Line {
-                    unit_x,
-                    unit_y,
-                    signed_distance,
-                    ..
-                } => {
-                    let radial_frame = if let Some(center_support) = anchor_evidence
-                        .as_ref()
-                        .and_then(|evidence| evidence.center_parallel.clone())
-                    {
-                        let Some(center_parameter) = anchor_parameter
+        let (radial_frame, radial_distance) = match self {
+            Self::Line {
+                unit_x,
+                unit_y,
+                signed_distance,
+                ..
+            } => {
+                let radial_frame = if let Some(center_support) = anchor_evidence
+                    .as_ref()
+                    .and_then(|evidence| evidence.center_parallel.clone())
+                {
+                    let Some(center_parameter) = anchor_parameter
+                        .and_then(CurveRegionParameter2::as_bezier_parameter)
+                        .cloned()
+                    else {
+                        return Ok(None);
+                    };
+                    RetainedFilletRadialFrame2::ParallelNormal {
+                        center_support,
+                        center_parameter,
+                        policy: *policy,
+                    }
+                } else {
+                    RetainedFilletRadialFrame2::RepresentedUnitNormal((
+                        -(*unit_y).clone(),
+                        (*unit_x).clone(),
+                    ))
+                };
+                (radial_frame, -signed_distance.clone())
+            }
+            Self::Arc {
+                source,
+                source_radius,
+                signed_radius,
+            } => {
+                let support = source.support();
+                let (normal_denominator, radial_distance) = if support.is_clockwise() {
+                    (signed_radius.clone(), *source_radius - signed_radius)
+                } else {
+                    (-signed_radius.clone(), signed_radius - *source_radius)
+                };
+                let radial_frame = if matches!(
+                    crate::classify::real_sign(signed_radius, &CurveContext::STRICT),
+                    Some(RealSign::Positive)
+                ) {
+                    match (
+                        anchor_evidence
+                            .as_ref()
+                            .and_then(|evidence| evidence.center_parallel.clone()),
+                        anchor_parameter
                             .and_then(CurveRegionParameter2::as_bezier_parameter)
-                            .cloned()
-                        else {
-                            return Ok(None);
-                        };
-                        RetainedFilletRadialFrame2::ParallelNormal {
-                            center_support,
-                            center_parameter,
-                            policy: *policy,
-                        }
-                    } else {
-                        RetainedFilletRadialFrame2::RepresentedUnitNormal((
-                            -(*unit_y).clone(),
-                            (*unit_x).clone(),
-                        ))
-                    };
-                    (radial_frame, -signed_distance.clone())
-                }
-                Self::Arc {
-                    source,
-                    source_radius,
-                    signed_radius,
-                } => {
-                    let support = source.support();
-                    let (normal_denominator, radial_distance) = if support.is_clockwise() {
-                        (signed_radius.clone(), *source_radius - signed_radius)
-                    } else {
-                        (-signed_radius.clone(), signed_radius - *source_radius)
-                    };
-                    let radial_frame = if matches!(
-                        crate::classify::real_sign(signed_radius, &CurveContext::STRICT),
-                        Some(RealSign::Positive)
+                            .cloned(),
                     ) {
-                        match (
-                            anchor_evidence
-                                .as_ref()
-                                .and_then(|evidence| evidence.center_parallel.clone()),
-                            anchor_parameter
-                                .and_then(CurveRegionParameter2::as_bezier_parameter)
-                                .cloned(),
-                        ) {
-                            (Some(center_support), Some(center_parameter)) => {
-                                RetainedFilletRadialFrame2::ParallelNormal {
-                                    center_support,
-                                    center_parameter,
-                                    policy: *policy,
-                                }
+                        (Some(center_support), Some(center_parameter)) => {
+                            RetainedFilletRadialFrame2::ParallelNormal {
+                                center_support,
+                                center_parameter,
+                                policy: *policy,
                             }
-                            _ => RetainedFilletRadialFrame2::ConcentricArc {
-                                support_center: support.center().clone(),
-                                normal_denominator,
-                            },
                         }
-                    } else {
-                        // A past-center concentric image reverses its rational
-                        // tangent. Keep the orientation-independent radial
-                        // frame unless that reversal is proved and retained by
-                        // a future mapped-contact authority.
-                        RetainedFilletRadialFrame2::ConcentricArc {
+                        _ => RetainedFilletRadialFrame2::ConcentricArc {
                             support_center: support.center().clone(),
                             normal_denominator,
-                        }
-                    };
-                    (radial_frame, radial_distance)
-                }
-                Self::AlgebraicCusp { source, support } => {
-                    let center = match support.semicircle().center_point_evidence(policy).map_err(
-                        |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause),
-                    )? {
+                        },
+                    }
+                } else {
+                    // A past-center concentric image reverses its rational
+                    // tangent. Keep the orientation-independent radial
+                    // frame unless that reversal is proved and retained by
+                    // a future mapped-contact authority.
+                    RetainedFilletRadialFrame2::ConcentricArc {
+                        support_center: support.center().clone(),
+                        normal_denominator,
+                    }
+                };
+                (radial_frame, radial_distance)
+            }
+            Self::AlgebraicCusp { source, support } => {
+                let center =
+                    match support
+                        .semicircle()
+                        .center_point_evidence(policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })? {
                         Classification::Decided(center) => center,
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
@@ -4733,79 +4744,80 @@ impl FilletOffsetCarrier2<'_, '_> {
                             ));
                         }
                     };
-                    let support_radius = support.semicircle().radial_distance();
-                    let source_radius = source.semicircle().radial_distance();
-                    let clockwise = support.semicircle().is_clockwise() != support.is_reversed();
-                    let (normal_denominator, radial_distance) = if clockwise {
-                        (support_radius.clone(), source_radius - support_radius)
-                    } else {
-                        (-support_radius.clone(), support_radius - source_radius)
-                    };
-                    let support_center = match &center {
-                        RationalBezierIntersectionPointEvidence2::Exact(point) => {
-                            Some(point.clone())
-                        }
-                        RationalBezierIntersectionPointEvidence2::Algebraic(image) => {
-                            image.exact_rational_point(&CurveContext::STRICT)
-                        }
-                        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                        | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                        | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
-                    };
-                    let radial_frame = if let Some(support_center) = support_center {
-                        RetainedFilletRadialFrame2::ConcentricArc {
-                            support_center,
-                            normal_denominator,
-                        }
-                    } else {
-                        let Some(center_parameter) = anchor_parameter
-                            .and_then(CurveRegionParameter2::as_algebraic_cusp)
-                            .cloned()
-                        else {
-                            return Ok(None);
-                        };
-                        RetainedFilletRadialFrame2::SelectedConcentric {
-                            support: support.semicircle().clone(),
-                            center_parameter,
-                            normal_denominator,
-                        }
-                    };
-                    (radial_frame, radial_distance)
-                }
-                Self::Parallel { source, support } => {
+                let support_radius = support.semicircle().radial_distance();
+                let source_radius = source.semicircle().radial_distance();
+                let clockwise = support.semicircle().is_clockwise() != support.is_reversed();
+                let (normal_denominator, radial_distance) = if clockwise {
+                    (support_radius.clone(), source_radius - support_radius)
+                } else {
+                    (-support_radius.clone(), support_radius - source_radius)
+                };
+                let support_center = match &center {
+                    RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
+                    RationalBezierIntersectionPointEvidence2::Algebraic(image) => {
+                        image.exact_rational_point(&CurveContext::STRICT)
+                    }
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                    | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                    | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+                };
+                let radial_frame = if let Some(support_center) = support_center {
+                    RetainedFilletRadialFrame2::ConcentricArc {
+                        support_center,
+                        normal_denominator,
+                    }
+                } else {
                     let Some(center_parameter) = anchor_parameter
-                        .and_then(CurveRegionParameter2::as_bezier_parameter)
+                        .and_then(CurveRegionParameter2::as_algebraic_cusp)
                         .cloned()
                     else {
                         return Ok(None);
                     };
-                    (
-                        RetainedFilletRadialFrame2::ParallelNormal {
-                            center_support: support.clone(),
-                            center_parameter,
-                            policy: *policy,
-                        },
-                        source.parallel_distance() - support.distance(),
-                    )
-                }
-                Self::AlgebraicChord {
-                    source,
-                    signed_distance,
-                    ..
-                } => {
-                    let Some((tangent_x, tangent_y)) = source.certified_unit_tangent() else {
-                        return Ok(None);
-                    };
-                    (
-                        RetainedFilletRadialFrame2::RepresentedUnitNormal((-tangent_y, tangent_x)),
-                        -signed_distance.clone(),
-                    )
-                }
-                _ => return Ok(None),
-            };
+                    RetainedFilletRadialFrame2::SelectedConcentric {
+                        support: support.semicircle().clone(),
+                        center_parameter,
+                        normal_denominator,
+                    }
+                };
+                (radial_frame, radial_distance)
+            }
+            Self::Parallel { source, support } => {
+                let Some(center_parameter) = anchor_parameter
+                    .and_then(CurveRegionParameter2::as_bezier_parameter)
+                    .cloned()
+                else {
+                    return Ok(None);
+                };
+                (
+                    RetainedFilletRadialFrame2::ParallelNormal {
+                        center_support: support.clone(),
+                        center_parameter,
+                        policy: *policy,
+                    },
+                    source.parallel_distance() - support.distance(),
+                )
+            }
+            Self::AlgebraicChord {
+                source,
+                signed_distance,
+                ..
+            } => {
+                let radial_frame = match source.certified_unit_tangent() {
+                    Some((tangent_x, tangent_y)) => {
+                        RetainedFilletRadialFrame2::RepresentedUnitNormal((-tangent_y, tangent_x))
+                    }
+                    None => RetainedFilletRadialFrame2::ChordNormal {
+                        anchor: (*source).clone(),
+                        policy: *policy,
+                    },
+                };
+                (radial_frame, -signed_distance.clone())
+            }
+            _ => return Ok(None),
+        };
         Ok(Some(RetainedFilletFrame2 {
             anchor_is_previous,
             radial_frame,
@@ -5039,6 +5051,10 @@ fn solve_carrier_fillet_corner(
                             &frame.radial_frame,
                             RetainedFilletRadialFrame2::ParallelNormal { .. }
                         ) == prefer_parallel_frame
+                            && !matches!(
+                                &frame.radial_frame,
+                                RetainedFilletRadialFrame2::ChordNormal { .. }
+                            )
                     };
                     let retained_frame = if first_frame.as_ref().is_some_and(frame_is_preferred) {
                         first_frame
@@ -7469,13 +7485,6 @@ fn fillet_offset_centers(
                 signed_distance: next_distance,
             },
         ) => {
-            if mode == CurveCornerMode2::TrimOrExtend {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
             let tangent_relation = |cross| {
                 let relation = if cross {
                     previous_support.tangent_cross_sign(next_support, policy)
@@ -7588,12 +7597,41 @@ fn fillet_offset_centers(
                 });
                 return Ok(centers);
             }
-            let intersections = match previous_support
-                .chord_intersections(next_support, policy)
+            let tangent_cross = tangent_relation(true)?;
+            if tangent_cross == RealSign::Zero {
+                let side = match previous_support
+                    .oriented_support_side(next_support.start(), policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                    })? {
+                    Classification::Decided(side) => side,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            previous_family,
+                            reason,
+                        ));
+                    }
+                };
+                centers.coincident = side == crate::classify::LineSide::On;
+                return Ok(centers);
+            }
+            let point = match previous_support
+                .supporting_line_intersection(next_support, policy)
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
                 })? {
-                Classification::Decided(intersections) => intersections,
+                Classification::Decided(Some(point)) => point,
+                Classification::Decided(None) => {
+                    return Err(ExactCurveError::invalid(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        CurveError::Topology(
+                            "nonparallel retained fillet supports omitted their intersection"
+                                .into(),
+                        ),
+                    ));
+                }
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
@@ -7602,38 +7640,19 @@ fn fillet_offset_centers(
                     ));
                 }
             };
-            match intersections {
-                crate::bezier_offset::BezierAlgebraicChordPairIntersections2::Contacts(
-                    contacts,
-                ) => {
-                    let tangent_dot = tangent_relation(false)?;
-                    for contact in contacts {
-                        let contact_cross = contact.tangent_cross_sign();
-                        if contact_cross == RealSign::Zero {
-                            centers.coincident = true;
-                            continue;
-                        }
-                        centers.push(FilletCenterWitness2 {
-                            point: contact.point().clone(),
-                            previous_parameter: None,
-                            next_parameter: None,
-                            retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-                                cross: Some(contact_cross),
-                                dot: Some(tangent_dot),
-                                center_parallel: None,
-                                source_direction: None,
-                                canonical_anchor_curve: None,
-                                deferred_arc_contact: None,
-                            }),
-                        });
-                    }
-                }
-                crate::bezier_offset::BezierAlgebraicChordPairIntersections2::Overlaps(
-                    overlaps,
-                ) => {
-                    centers.coincident = !overlaps.is_empty();
-                }
-            }
+            centers.push(FilletCenterWitness2 {
+                point,
+                previous_parameter: None,
+                next_parameter: None,
+                retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                    cross: Some(tangent_cross),
+                    dot: Some(tangent_relation(false)?),
+                    center_parallel: None,
+                    source_direction: None,
+                    canonical_anchor_curve: None,
+                    deferred_arc_contact: None,
+                }),
+            });
         }
         (
             FilletOffsetCarrier2::AlgebraicChord { .. },
