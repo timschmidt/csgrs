@@ -6105,7 +6105,8 @@ fn append_selected_chord_normal_round_join(
     let end = match semicircle.certified_selected_chord_normal_contact_parameter(
         anchor_tangent.clone(),
         chord.clone(),
-        point.clone(),
+        RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point.clone()),
+        distance.clone(),
         policy,
     )? {
         Classification::Decided(parameter) => parameter,
@@ -10993,20 +10994,12 @@ impl CurveRegion2 {
         } else {
             let parameter = match &frame.radial_frame {
                 RetainedFilletRadialFrame2::RepresentedUnitNormal(unit_normal) => {
-                    let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) =
-                        &chord_cut.point
-                    else {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            CurveFamily2::RationalBezier,
-                            UncertaintyReason::Unsupported,
-                        ));
-                    };
                     let anchor_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
                     terminal_circle.certified_selected_chord_normal_contact_parameter(
                         anchor_tangent,
                         chord.clone(),
-                        point.clone(),
+                        chord_cut.point.clone(),
+                        frame.radial_distance.clone(),
                         policy,
                     )
                 }
@@ -22196,6 +22189,149 @@ mod tests {
             vec![interior_side],
         )
         .unwrap()
+    }
+
+    fn nonrepresented_cardinal_chord_pair_corner_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
+        let diagonal =
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();
+        let corner = crate::rational_bezier_general::exact_contact_point_evidence(
+            &diagonal,
+            &selected_parameter,
+            policy,
+        )
+        .unwrap()
+        .expect("the selected corner retains exact evidence");
+        let translated = |point: &RationalBezierIntersectionPointEvidence2, x, y| {
+            match crate::BezierAlgebraicChord2::translated_endpoint(
+                point,
+                &Real::from(x),
+                &Real::from(y),
+                policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("the selected corner translation must remain exact: {reason:?}")
+                }
+            }
+        };
+        let chord = |start, end, direction| {
+            let chord = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                start, end, direction, policy,
+            );
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(policy).is_none());
+            assert!(chord.certified_unit_tangent().is_some());
+            chord
+        };
+        let previous = chord(
+            translated(&corner, 0, -1),
+            corner.clone(),
+            crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveY,
+        );
+        let next = chord(
+            corner,
+            translated(previous.end(), 1, 0),
+            crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveX,
+        );
+        let Classification::Decided(closing) = crate::BezierAlgebraicChord2::try_new(
+            next.end().clone(),
+            previous.start().clone(),
+            policy,
+        )
+        .unwrap() else {
+            panic!("the closing chord must construct");
+        };
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicChord(previous),
+            BezierSplitFragment2::AlgebraicChord(next),
+            BezierSplitFragment2::AlgebraicChord(closing),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        CurveRegion2::try_new_with_loop_topology(
+            vec![
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    fragments, None, policy,
+                )
+                .unwrap(),
+            ],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers() {
+        let radius = (Real::one() / Real::from(100_i16)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonrepresented_cardinal_chord_pair_corner_region(&policy, reversed);
+                let outcome = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        if reversed { 2 } else { 1 },
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "nonrepresented chord/chord fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert!(outcome.value.candidate_count() > 0);
+                for_each_corner_region(&outcome.value, |filleted| {
+                    let fragments = filleted.boundary_loops()[0].fragments();
+                    let mut chord_adjacencies = 0;
+                    for (index, fragment) in fragments.iter().enumerate() {
+                        let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment else {
+                            continue;
+                        };
+                        for adjacent in [
+                            &fragments[(index + fragments.len() - 1) % fragments.len()],
+                            &fragments[(index + 1) % fragments.len()],
+                        ] {
+                            let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                                continue;
+                            };
+                            assert_eq!(
+                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                Ok(Classification::Decided(true))
+                            );
+                            chord_adjacencies += 1;
+                        }
+                    }
+                    assert_eq!(chord_adjacencies, 2);
+                    assert!(
+                        fragments
+                            .iter()
+                            .filter(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicChord(_)
+                            ))
+                            .count()
+                            >= 2
+                    );
+                });
+            }
+        }
     }
 
     #[test]

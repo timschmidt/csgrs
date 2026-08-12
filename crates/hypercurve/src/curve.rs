@@ -4770,6 +4770,19 @@ impl FilletOffsetCarrier2<'_, '_> {
                         source.parallel_distance() - support.distance(),
                     )
                 }
+                Self::AlgebraicChord {
+                    source,
+                    signed_distance,
+                    ..
+                } => {
+                    let Some((tangent_x, tangent_y)) = source.certified_unit_tangent() else {
+                        return Ok(None);
+                    };
+                    (
+                        RetainedFilletRadialFrame2::RepresentedUnitNormal((-tangent_y, tangent_x)),
+                        -signed_distance.clone(),
+                    )
+                }
                 _ => return Ok(None),
             };
         Ok(Some(RetainedFilletFrame2 {
@@ -7412,6 +7425,184 @@ fn fillet_offset_centers(
                         previous_family,
                         policy,
                     )?;
+                }
+            }
+        }
+        (
+            FilletOffsetCarrier2::AlgebraicChord {
+                source: previous_source,
+                support: previous_support,
+                signed_distance: previous_distance,
+            },
+            FilletOffsetCarrier2::AlgebraicChord {
+                source: next_source,
+                support: next_support,
+                signed_distance: next_distance,
+            },
+        ) => {
+            if mode == CurveCornerMode2::TrimOrExtend {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let tangent_relation = |cross| {
+                let relation = if cross {
+                    previous_support.tangent_cross_sign(next_support, policy)
+                } else {
+                    previous_support.tangent_dot_sign(next_support, policy)
+                }
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })?;
+                match relation {
+                    Classification::Decided(sign) => Ok(sign),
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    )),
+                }
+            };
+            let common_corner = previous_source.end();
+            let shares_corner = common_corner.shares_storage(next_source.start())
+                || common_corner.same_point(next_source.start(), policy)
+                    == Classification::Decided(true);
+            let common_corner_center = if shares_corner {
+                match (
+                    previous_source.certified_unit_tangent(),
+                    next_source.certified_unit_tangent(),
+                ) {
+                    (Some(previous_tangent), Some(next_tangent)) => {
+                        let offset_origin = |tangent: &(Real, Real), distance: &Real| {
+                            Point2::new(-(&tangent.1 * distance), &tangent.0 * distance)
+                        };
+                        let previous_origin = offset_origin(&previous_tangent, previous_distance);
+                        let next_origin = offset_origin(&next_tangent, next_distance);
+                        let previous_line = LineSeg2::new_unchecked(
+                            previous_origin.clone(),
+                            previous_origin.translated(previous_tangent.0, previous_tangent.1),
+                        );
+                        let next_line = LineSeg2::new_unchecked(
+                            next_origin.clone(),
+                            next_origin.translated(next_tangent.0, next_tangent.1),
+                        );
+                        match crate::offset::line_support_intersection(
+                            &previous_line,
+                            &next_line,
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Fillet,
+                                previous_family,
+                                cause,
+                            )
+                        })? {
+                            Classification::Decided(Some(delta)) => {
+                                match crate::BezierAlgebraicChord2::translated_endpoint(
+                                    common_corner,
+                                    delta.x(),
+                                    delta.y(),
+                                    policy,
+                                )
+                                .map_err(|cause| {
+                                    ExactCurveError::invalid(
+                                        CurveOperation2::Fillet,
+                                        previous_family,
+                                        cause,
+                                    )
+                                })? {
+                                    Classification::Decided(point) => Some((
+                                        point,
+                                        tangent_relation(true)?,
+                                        tangent_relation(false)?,
+                                    )),
+                                    Classification::Uncertain(reason) => {
+                                        return Err(ExactCurveError::blocked(
+                                            CurveOperation2::Fillet,
+                                            previous_family,
+                                            reason,
+                                        ));
+                                    }
+                                }
+                            }
+                            Classification::Decided(None) => None,
+                            Classification::Uncertain(reason) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    previous_family,
+                                    reason,
+                                ));
+                            }
+                        }
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            };
+            if let Some((point, tangent_cross, tangent_dot)) = common_corner_center {
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter: None,
+                    next_parameter: None,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        cross: Some(tangent_cross),
+                        dot: Some(tangent_dot),
+                        center_parallel: None,
+                        source_direction: None,
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    }),
+                });
+                return Ok(centers);
+            }
+            let intersections = match previous_support
+                .chord_intersections(next_support, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
+                })? {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        previous_family,
+                        reason,
+                    ));
+                }
+            };
+            match intersections {
+                crate::bezier_offset::BezierAlgebraicChordPairIntersections2::Contacts(
+                    contacts,
+                ) => {
+                    let tangent_dot = tangent_relation(false)?;
+                    for contact in contacts {
+                        let contact_cross = contact.tangent_cross_sign();
+                        if contact_cross == RealSign::Zero {
+                            centers.coincident = true;
+                            continue;
+                        }
+                        centers.push(FilletCenterWitness2 {
+                            point: contact.point().clone(),
+                            previous_parameter: None,
+                            next_parameter: None,
+                            retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                                cross: Some(contact_cross),
+                                dot: Some(tangent_dot),
+                                center_parallel: None,
+                                source_direction: None,
+                                canonical_anchor_curve: None,
+                                deferred_arc_contact: None,
+                            }),
+                        });
+                    }
+                }
+                crate::bezier_offset::BezierAlgebraicChordPairIntersections2::Overlaps(
+                    overlaps,
+                ) => {
+                    centers.coincident = !overlaps.is_empty();
                 }
             }
         }
