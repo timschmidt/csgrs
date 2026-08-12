@@ -4354,6 +4354,9 @@ enum PreparedFilletCarrier2<'a> {
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
     },
+    AlgebraicChord {
+        source: &'a crate::BezierAlgebraicChord2,
+    },
     AnalyticParallel {
         source: &'a crate::BezierParallelFragment2,
     },
@@ -4423,16 +4426,12 @@ impl<'a> PreparedFilletCarrier2<'a> {
             }),
             ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
             ExactCornerCarrier2::AlgebraicChord(source) => {
-                let support = source
+                let Some(support) = source
                     .exact_line()
                     .or_else(|| source.strict_provenance_support_line(policy))
-                    .ok_or_else(|| {
-                        ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            crate::UncertaintyReason::Unsupported,
-                        )
-                    })?;
+                else {
+                    return Ok(Self::AlgebraicChord { source });
+                };
                 let (unit_x, unit_y) = if let Some(unit) = source.certified_unit_tangent() {
                     unit
                 } else {
@@ -4547,6 +4546,18 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     };
                 Ok(FilletOffsetCarrier2::AlgebraicCusp { source, support })
             }
+            Self::AlgebraicChord { source } => {
+                let support = source
+                    .parallel_left_retained(signed_distance.clone(), policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?;
+                Ok(FilletOffsetCarrier2::AlgebraicChord {
+                    source,
+                    support,
+                    signed_distance: signed_distance.clone(),
+                })
+            }
             Self::AnalyticParallel { source } => {
                 let source_scale = match source
                     .parallel()
@@ -4611,6 +4622,11 @@ enum FilletOffsetCarrier2<'a, 'b> {
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
         support: crate::BezierAlgebraicCuspSemicircleFragment2,
+    },
+    AlgebraicChord {
+        source: &'a crate::BezierAlgebraicChord2,
+        support: crate::BezierAlgebraicChord2,
+        signed_distance: Real,
     },
 }
 
@@ -7371,7 +7387,129 @@ fn fillet_offset_centers(
                 }
             }
         }
+        (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Parallel { .. })
+        | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
+            if mode == CurveCornerMode2::TrimOrExtend {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let (chord_support, parallel_source, analytic_support, chord_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                        FilletOffsetCarrier2::Parallel {
+                            source,
+                            support: analytic,
+                        },
+                    ) => (support, source, analytic, true),
+                    (
+                        FilletOffsetCarrier2::Parallel {
+                            source,
+                            support: analytic,
+                        },
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                    ) => (support, source, analytic, false),
+                    _ => unreachable!(),
+                };
+            let chord_family = if chord_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let analytic_family = if chord_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+            let intersections = match chord_support
+                .parallel_intersections(analytic_support, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                })?
+            {
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                        contacts,
+                    ),
+                ) => contacts,
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                ) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        crate::UncertaintyReason::Boundary,
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        reason,
+                    ));
+                }
+            };
+            let analytic_is_previous = !chord_is_previous;
+            let analytic_support_reverses_source = parallel_source.support_reverses_source(
+                analytic_support,
+                analytic_family,
+                policy,
+            )?;
+            for contact in intersections {
+                if !parallel_source.parameter_is_admissible(
+                    contact.parallel_parameter(),
+                    analytic_is_previous,
+                    mode,
+                    analytic_family,
+                    policy,
+                )? {
+                    continue;
+                }
+                let mut cross = contact.tangent_cross_sign();
+                let mut dot = contact.tangent_dot_sign();
+                if analytic_support_reverses_source {
+                    cross = reverse_fillet_sign(cross);
+                    dot = reverse_fillet_sign(dot);
+                }
+                let analytic_parameter =
+                    CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                let (previous_parameter, next_parameter) = if chord_is_previous {
+                    (None, Some(analytic_parameter))
+                } else {
+                    (Some(analytic_parameter), None)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point().clone(),
+                    previous_parameter,
+                    next_parameter,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        // The retained circle frame is analytic, while the
+                        // intersection kernel reports chord x analytic.
+                        cross: Some(reverse_fillet_sign(cross)),
+                        dot: Some(dot),
+                        source_direction: Some(if analytic_support_reverses_source {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        }),
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    }),
+                });
+            }
+        }
         (FilletOffsetCarrier2::Parallel { .. }, _) | (_, FilletOffsetCarrier2::Parallel { .. }) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                previous_family,
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+        (FilletOffsetCarrier2::AlgebraicChord { .. }, _)
+        | (_, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 previous_family,
@@ -7465,6 +7603,19 @@ fn point_on_fillet_offset(
             )),
         };
     }
+    if let FilletOffsetCarrier2::AlgebraicChord { support, .. } = support {
+        return match support
+            .contains_point(point, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(contains) => Ok(contains),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            )),
+        };
+    }
     if matches!(support, FilletOffsetCarrier2::AlgebraicCusp { .. }) {
         return Err(ExactCurveError::blocked(
             CurveOperation2::Fillet,
@@ -7485,6 +7636,7 @@ fn point_on_fillet_offset(
         } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
         FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
         FilletOffsetCarrier2::Parallel { .. } => unreachable!(),
+        FilletOffsetCarrier2::AlgebraicChord { .. } => unreachable!(),
         FilletOffsetCarrier2::AlgebraicCusp { .. } => unreachable!(),
     };
     crate::classify::is_zero(&residual, policy).ok_or_else(|| {
@@ -7749,6 +7901,26 @@ fn fillet_cut_from_center(
                     }))
                 }
             }
+        }
+        FilletOffsetCarrier2::AlgebraicChord {
+            source,
+            signed_distance,
+            ..
+        } => {
+            let point = source
+                .normal_displaced_point_evidence(center.clone(), -signed_distance.clone(), policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?;
+            algebraic_chord_corner_cut_from_support_point(
+                source,
+                point,
+                previous,
+                mode,
+                CurveOperation2::Fillet,
+                family,
+                policy,
+            )
         }
         FilletOffsetCarrier2::AlgebraicCusp { source, support } => {
             let parameter = retained_parameter
