@@ -1773,9 +1773,10 @@ impl CurvePath2 {
     /// explicit `Unsupported` blocker until public curve subdivision can retain
     /// that parameter exactly.
     /// [`CurveCornerMode2::TrimOrExtend`] returns every exact native-support
-    /// candidate in deterministic order; retained rational circles and general
-    /// Beziers remain trim-only until their projective extension domains are
-    /// authoritative.
+    /// candidate in deterministic order. The retained-region caller also uses
+    /// this kernel for affine algebraic chords without materializing their
+    /// endpoints; retained rational circles and general Beziers remain
+    /// trim-only until their projective extension domains are authoritative.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -1923,7 +1924,8 @@ impl CurvePath2 {
     /// Beziers, including the one incident retained native span of a polynomial
     /// spline or NURBS carrier. Retained algebraic chords with a certified
     /// represented support share the line carrier and preserve their canonical
-    /// finite parameters. Mixed line/Bezier and arc/Bezier pairs use complete
+    /// finite or exterior affine-support parameters. Mixed line/Bezier and
+    /// arc/Bezier pairs use complete
     /// analytic incidence. Bezier/Bezier pairs currently admit
     /// structural and exact rational-parallel fast paths; a general algebraic
     /// center or trim remains an explicit blocker until its public carrier is
@@ -3343,7 +3345,7 @@ fn retained_native_endpoint(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CornerPlacement2 {
+pub(crate) enum CornerPlacement2 {
     Trim,
     Corner,
     Extension,
@@ -3371,14 +3373,11 @@ impl CornerCut2 {
     }
 
     fn into_retained_evidence(self) -> Option<CornerTrimCut2> {
-        if self.placement == CornerPlacement2::Extension {
-            return None;
-        }
         let parameter = self.parameter?;
         Some(CornerTrimCut2 {
             parameter,
             point: self.point,
-            trim: self.placement == CornerPlacement2::Trim,
+            placement: self.placement,
             replacement_rational_curve: None,
         })
     }
@@ -3392,7 +3391,7 @@ impl CornerCut2 {
 pub(crate) struct CornerTrimCut2 {
     pub(crate) parameter: CurveRegionParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
-    pub(crate) trim: bool,
+    pub(crate) placement: CornerPlacement2,
     pub(crate) replacement_rational_curve: Option<RationalBezier2>,
 }
 
@@ -3764,11 +3763,12 @@ impl<'a> ExactCornerCarrier2<'a> {
         }
     }
 
-    const fn supports_extension(&self) -> bool {
+    pub(crate) const fn supports_extension(&self) -> bool {
         match self {
             Self::Line(_) | Self::PromotedLine(_) | Self::Arc(_) => true,
             Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
-            Self::AlgebraicChord(_) | Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
+            Self::AlgebraicChord(_) => true,
+            Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
         }
     }
 }
@@ -7107,6 +7107,7 @@ fn fillet_cut_from_center(
                     unit_x,
                     unit_y,
                     signed_distance,
+                    previous,
                     mode,
                     family,
                     policy,
@@ -7423,17 +7424,11 @@ fn algebraic_chord_fillet_cut_from_center(
     unit_x: &Real,
     unit_y: &Real,
     signed_distance: &Real,
+    previous: bool,
     mode: CurveCornerMode2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
-    if mode != CurveCornerMode2::TrimOnly {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
-    }
     let point = match crate::BezierAlgebraicChord2::translated_endpoint(
         center,
         &(signed_distance * unit_y),
@@ -7451,55 +7446,58 @@ fn algebraic_chord_fillet_cut_from_center(
             ));
         }
     };
-    let parameter = match source
-        .parameter_at_certified_point(point.clone(), policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(Some(parameter)) => parameter,
-        Classification::Decided(None) => return Ok(None),
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
-    };
+    algebraic_chord_corner_cut_from_support_point(
+        source,
+        point,
+        previous,
+        mode,
+        CurveOperation2::Fillet,
+        family,
+        policy,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn algebraic_chord_corner_cut_from_support_point(
+    source: &crate::BezierAlgebraicChord2,
+    point: RationalBezierIntersectionPointEvidence2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerCut2>> {
+    let parameter = source
+        .parameter_at_certified_support_point(point.clone(), policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
     let start = source.start_parameter();
     let end = source.end_parameter();
-    let after_start = match parameter
-        .cmp_by_refinement(&start, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(order) => order == std::cmp::Ordering::Greater,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
+    let compare = |boundary| {
+        parameter
+            .cmp_by_refinement(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|order| match order {
+                Classification::Decided(order) => Ok(order),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
     };
-    let before_end = match parameter
-        .cmp_by_refinement(&end, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    let start_order = compare(&start)?;
+    let end_order = compare(&end)?;
+    let placement = if start_order.is_gt() && end_order.is_lt() {
+        CornerPlacement2::Trim
+    } else if mode == CurveCornerMode2::TrimOrExtend
+        && ((previous && end_order.is_gt()) || (!previous && start_order.is_lt()))
     {
-        Classification::Decided(order) => order == std::cmp::Ordering::Less,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
-    };
-    if !after_start || !before_end {
+        CornerPlacement2::Extension
+    } else {
         return Ok(None);
-    }
+    };
     Ok(Some(CornerCut2 {
         point,
         parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
-        placement: CornerPlacement2::Trim,
+        placement,
     }))
 }
 
@@ -8046,13 +8044,6 @@ fn algebraic_chord_chamfer_cuts(
     chord
         .validate_policy(policy)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-    if mode != CurveCornerMode2::TrimOnly {
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
-    }
     let corner_parameter = if previous {
         chord.end_parameter()
     } else {
@@ -8072,59 +8063,37 @@ fn algebraic_chord_chamfer_cuts(
             overflow: Vec::new(),
         });
     }
-    let signed_setback = if previous {
+    let interior_distance = if previous {
         -setback.clone()
     } else {
         setback.clone()
     };
-    // Unit-tangent displacement is construction evidence for support
-    // incidence. General endpoint fields remain separate behind one lazy
-    // normalized expression; only finite-domain placement is a predicate.
-    let point = match chord
-        .endpoint_at_signed_tangent_distance(previous, signed_setback, policy)
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(operation, family, reason));
+    let mut cuts = CornerCuts2::default();
+    let distances = if mode == CurveCornerMode2::TrimOrExtend {
+        [Some(interior_distance.clone()), Some(-interior_distance)]
+    } else {
+        [Some(interior_distance), None]
+    };
+    for distance in distances.into_iter().flatten() {
+        // Unit-tangent displacement is construction evidence for support
+        // incidence. General endpoint fields remain separate behind one lazy
+        // normalized expression; only finite-domain placement is a predicate.
+        let point = match chord
+            .endpoint_at_signed_tangent_distance(previous, distance, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        if let Some(cut) = algebraic_chord_corner_cut_from_support_point(
+            chord, point, previous, mode, operation, family, policy,
+        )? {
+            cuts.push(cut);
         }
-    };
-    let parameter = match chord
-        .parameter_at_certified_point(point.clone(), policy)
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    {
-        Classification::Decided(Some(parameter)) => parameter,
-        Classification::Decided(None) => return Ok(CornerCuts2::default()),
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(operation, family, reason));
-        }
-    };
-    let start = chord.start_parameter();
-    let end = chord.end_parameter();
-    let compare = |boundary| {
-        parameter
-            .cmp_by_refinement(boundary, policy)
-            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
-            .and_then(|order| match order {
-                Classification::Decided(order) => Ok(order),
-                Classification::Uncertain(reason) => {
-                    Err(ExactCurveError::blocked(operation, family, reason))
-                }
-            })
-    };
-    if compare(&start)? != std::cmp::Ordering::Greater || compare(&end)? != std::cmp::Ordering::Less
-    {
-        return Ok(CornerCuts2::default());
     }
-    Ok(CornerCuts2 {
-        first: Some(CornerCut2 {
-            parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
-            point,
-            placement: CornerPlacement2::Trim,
-        }),
-        second: None,
-        overflow: Vec::new(),
-    })
+    Ok(cuts)
 }
 
 fn analytic_parallel_point_evidence(

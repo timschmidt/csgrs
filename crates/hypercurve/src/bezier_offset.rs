@@ -32798,6 +32798,20 @@ impl BezierAlgebraicChord2 {
         }
     }
 
+    /// Names a point whose incidence on this chord's affine support was
+    /// certified by the caller. Unlike [`Self::parameter_at_certified_point`],
+    /// this intentionally does not clamp the parameter to the finite chord;
+    /// retained corner extension uses the same monotone support coordinate on
+    /// either exterior ray.
+    pub(crate) fn parameter_at_certified_support_point(
+        &self,
+        point: RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<BezierAlgebraicChordParameter2> {
+        self.validate_policy(policy)?;
+        Ok(self.parameter_on_retained_support(point))
+    }
+
     pub(crate) fn parameter_at_certified_point(
         &self,
         point: RationalBezierIntersectionPointEvidence2,
