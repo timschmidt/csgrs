@@ -47564,37 +47564,37 @@ pub struct BezierParallelPairIntersectionSet2 {
 
 /// Exact incident-cell pair result used by projective corner editing.
 ///
-/// A positive-dimensional source correspondence through the authored seam is
-/// kept separate from ordinary finite overlap ranges.  Its maximal exterior
-/// endpoints can be algebraic pole/speed barriers, while the corner solver
-/// only needs the stronger local fact that infinitely many admissible centers
-/// exist.  Keeping that bit out of [`BezierParallelPairIntersectionSet2`]
-/// preserves the common public result layout.
+/// A positive-dimensional correspondence anywhere in the authored spans plus
+/// their incident regular rays is kept separate from ordinary finite overlap
+/// ranges. Its maximal exterior endpoints can be algebraic pole/speed
+/// barriers, while the corner solver only needs the stronger fact that
+/// infinitely many admissible centers exist. Keeping that bit out of
+/// [`BezierParallelPairIntersectionSet2`] preserves the common public layout.
 pub(crate) struct BezierParallelPairIncidentIntersectionSet2 {
     intersections: BezierParallelPairIntersectionSet2,
-    positive_dimensional_at_seam: bool,
+    positive_dimensional: bool,
 }
 
 impl BezierParallelPairIncidentIntersectionSet2 {
     fn isolated(intersections: BezierParallelPairIntersectionSet2) -> Self {
         Self {
             intersections,
-            positive_dimensional_at_seam: false,
+            positive_dimensional: false,
         }
     }
 
-    fn positive_dimensional_at_seam() -> Self {
+    fn positive_dimensional() -> Self {
         Self {
             intersections: BezierParallelPairIntersectionSet2::complete(
                 Arc::from([]),
                 Arc::from([]),
             ),
-            positive_dimensional_at_seam: true,
+            positive_dimensional: true,
         }
     }
 
     pub(crate) fn into_parts(self) -> (BezierParallelPairIntersectionSet2, bool) {
-        (self.intersections, self.positive_dimensional_at_seam)
+        (self.intersections, self.positive_dimensional)
     }
 }
 
@@ -51933,10 +51933,9 @@ impl BezierParallel2 {
     /// This is the projective corner domain used by TrimOrExtend. The ordinary
     /// parallel-pair equations and exact replay remain authoritative; only the
     /// two univariate resultant projections are enlarged. Each exterior axis
-    /// stops before its first source pole or source-speed zero. An exact source
-    /// correspondence through the seam is classified locally; every other
-    /// positive-dimensional projection remains explicit until its domain
-    /// correspondence is certified.
+    /// stops before its first source pole or source-speed zero. Exact source
+    /// and radical components reuse the finite topology through four compact
+    /// charts, with correlated clipping against exact regularity barriers.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn parallel_intersections_with_incident_rays(
         &self,
@@ -52000,10 +51999,19 @@ impl BezierParallel2 {
             residual_equations: None,
             radical_component_projection: None,
         };
-        if matches!(
-            projection.candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
-        ) {
+        let mut source_isolated_projection = None;
+        let axis_component = extract_bivariate_polynomial_system_axis_factors(
+            &system.first_equation,
+            &system.second_equation,
+        )
+        .status
+            == BivariatePolynomialAxisFactorStatus::Reduced;
+        if axis_component
+            || matches!(
+                projection.candidates,
+                BezierParallelIntersectionCandidates2::DegenerateResultant
+            )
+        {
             let config = CurveIntersectionResultantConfig {
                 min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
                 max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -52014,47 +52022,90 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            if !components.is_empty() {
-                match selected_parallel_source_component_at_incident_seam(
-                    &system,
-                    &components,
+            let source_constraint = match parameter_component_union_support(&components) {
+                Some(support) => match incident_parameter_constraint(
+                    support,
+                    &system.norm_equation,
                     first_anchor,
+                    first_direction,
+                    first_barrier.as_ref(),
                     second_anchor,
+                    second_direction,
+                    second_barrier.as_ref(),
                     policy,
+                    config,
                 )? {
-                    Classification::Decided(true) => {
-                        return Ok(Classification::Decided(
-                            BezierParallelPairIncidentIntersectionSet2::positive_dimensional_at_seam(),
-                        ));
-                    }
-                    Classification::Decided(false) => {
-                        let excluded = Classification::Decided(
-                            CertifiedParallelSourceOverlap2::without_contacts(
-                                CertifiedParallelSourceOverlapKind2::Excluded,
-                            ),
-                        );
-                        if let Some(residual_projection) =
-                            project_parallel_pair_without_components_with_incident_rays(
-                                &system,
-                                self,
-                                other,
-                                &excluded,
-                                first_anchor,
-                                first_direction,
-                                first_barrier.as_ref(),
-                                second_anchor,
-                                second_direction,
-                                second_barrier.as_ref(),
-                                policy,
-                            )?
-                        {
-                            projection = residual_projection;
-                        }
-                    }
+                    Classification::Decided(constraint) => Some(constraint),
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
+                },
+                None => None,
+            };
+            if let Some(source_constraint) = source_constraint {
+                let mut selected_pairs = Vec::new();
+                if let Some(support) = source_constraint.component_support {
+                    let selection = match selected_parameter_component_on_incident_domain(
+                        &support,
+                        &system,
+                        first_anchor,
+                        first_direction,
+                        first_barrier.as_ref(),
+                        second_anchor,
+                        second_direction,
+                        second_barrier.as_ref(),
+                        policy,
+                        config,
+                    )? {
+                        Classification::Decided(selection) => selection,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    if selection.positive_dimensional {
+                        return Ok(Classification::Decided(
+                            BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                        ));
+                    }
+                    selected_pairs = selection.selected_pairs;
                 }
+                source_isolated_projection = retain_incident_component_pairs(
+                    source_constraint.isolated_projection,
+                    selected_pairs,
+                );
+            }
+            let excluded =
+                Classification::Decided(CertifiedParallelSourceOverlap2::without_contacts(
+                    CertifiedParallelSourceOverlapKind2::Excluded,
+                ));
+            if let Some(residual_projection) =
+                project_parallel_pair_without_components_with_incident_rays(
+                    &system,
+                    self,
+                    other,
+                    &excluded,
+                    first_anchor,
+                    first_direction,
+                    first_barrier.as_ref(),
+                    second_anchor,
+                    second_direction,
+                    second_barrier.as_ref(),
+                    policy,
+                )?
+            {
+                match residual_projection {
+                    BezierParallelPairIncidentProjection2::Isolated(residual_projection) => {
+                        projection = residual_projection;
+                    }
+                    BezierParallelPairIncidentProjection2::PositiveDimensional => {
+                        return Ok(Classification::Decided(
+                            BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                        ));
+                    }
+                }
+            }
+            if let Some(source_projection) = source_isolated_projection.take() {
+                prepend_parallel_pair_projection(&mut projection, source_projection);
             }
         }
         Ok(self
@@ -52136,6 +52187,70 @@ impl BezierParallel2 {
             Classification::Decided(CertifiedParallelSourceOverlap2::without_contacts(
                 CertifiedParallelSourceOverlapKind2::Excluded,
             ));
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let source_components =
+            match parallel_nonstructural_source_parameter_components(self, self, config)? {
+                Classification::Decided(components) => components,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let source_constraint = match parameter_component_union_support(&source_components) {
+            Some(support) => match incident_parameter_constraint(
+                support,
+                &system.norm_equation,
+                first_anchor,
+                first_direction,
+                first_barrier.as_ref(),
+                second_anchor,
+                second_direction,
+                second_barrier.as_ref(),
+                policy,
+                config,
+            )? {
+                Classification::Decided(constraint) => Some(constraint),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+            None => None,
+        };
+        let mut source_isolated_projection = None;
+        if let Some(source_constraint) = source_constraint {
+            let mut selected_pairs = Vec::new();
+            if let Some(support) = source_constraint.component_support {
+                let selection = match selected_parameter_component_on_incident_domain(
+                    &support,
+                    &system,
+                    first_anchor,
+                    first_direction,
+                    first_barrier.as_ref(),
+                    second_anchor,
+                    second_direction,
+                    second_barrier.as_ref(),
+                    policy,
+                    config,
+                )? {
+                    Classification::Decided(selection) => selection,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if selection.positive_dimensional {
+                    return Ok(Classification::Decided(
+                        BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                    ));
+                }
+                selected_pairs = selection.selected_pairs;
+            }
+            source_isolated_projection = retain_incident_component_pairs(
+                source_constraint.isolated_projection,
+                selected_pairs,
+            );
+        }
         let Some(projection) = project_parallel_pair_without_components_with_incident_rays(
             &system,
             self,
@@ -52160,6 +52275,17 @@ impl BezierParallel2 {
                 ),
             ));
         };
+        let mut projection = match projection {
+            BezierParallelPairIncidentProjection2::Isolated(projection) => projection,
+            BezierParallelPairIncidentProjection2::PositiveDimensional => {
+                return Ok(Classification::Decided(
+                    BezierParallelPairIncidentIntersectionSet2::positive_dimensional(),
+                ));
+            }
+        };
+        if let Some(source_projection) = source_isolated_projection {
+            prepend_parallel_pair_projection(&mut projection, source_projection);
+        }
         Ok(self
             .replay_parallel_pair_projection(self, &system, projection, false, policy)?
             .map(BezierParallelPairIncidentIntersectionSet2::isolated))
@@ -61648,6 +61774,7 @@ fn rational_parameter_map_at(
     ))
 }
 
+#[derive(Clone)]
 struct BezierParallelPairEquationSystem2 {
     first_equation: BivariatePolynomial,
     second_equation: BivariatePolynomial,
@@ -61800,6 +61927,17 @@ fn parallel_source_parameter_components_from_equations(
 ) -> Classification<Vec<BivariatePolynomial>> {
     let mut components = Vec::new();
     loop {
+        match extract_bivariate_axis_components(&residual) {
+            Classification::Decided(Some(axis)) => {
+                components.extend(axis.supports);
+                residual = axis.residual_equations;
+                continue;
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
+        }
         let previous_degree = residual
             .iter()
             .map(bivariate_storage_bidegree_sum)
@@ -61944,6 +62082,77 @@ fn divide_bivariate_system_component(
     removed.then_some(residual)
 }
 
+struct ExtractedBivariateAxisComponents2 {
+    supports: Vec<BivariatePolynomial>,
+    residual_equations: [BivariatePolynomial; 2],
+}
+
+/// Extracts exact common fibers before the generic component solver.
+///
+/// A component fixed on one parameter axis is not finite over that axis, so a
+/// lifted subresultant need not publish it. Hypersolve's axis-content report
+/// discovers those factors; exact division here remains the authorization for
+/// saturation. Square-free reduction keeps one copy of each geometric fiber
+/// whenever strict exact arithmetic can prove it.
+fn extract_bivariate_axis_components(
+    equations: &[BivariatePolynomial; 2],
+) -> Classification<Option<ExtractedBivariateAxisComponents2>> {
+    let report = extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
+    if report.status != BivariatePolynomialAxisFactorStatus::Reduced {
+        return match report.status {
+            BivariatePolynomialAxisFactorStatus::ZeroSystem => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            BivariatePolynomialAxisFactorStatus::Primitive
+            | BivariatePolynomialAxisFactorStatus::UnsupportedCoefficient
+            | BivariatePolynomialAxisFactorStatus::DivisionFailed => Classification::Decided(None),
+            BivariatePolynomialAxisFactorStatus::Reduced => unreachable!(),
+        };
+    }
+
+    let mut residual = equations.clone();
+    let mut supports = Vec::with_capacity(2);
+    for (factor, axis) in [
+        (
+            report.first_parameter_factor,
+            CurveResultantParameter::First,
+        ),
+        (
+            report.second_parameter_factor,
+            CurveResultantParameter::Second,
+        ),
+    ] {
+        if factor.len() <= 1 {
+            continue;
+        }
+        let square_free =
+            hypersolve::square_free_part(factor.clone(), hypersolve::PredicatePolicy::STRICT)
+                .unwrap_or_else(|| factor.clone());
+        let support = match axis {
+            CurveResultantParameter::First => bivariate_outer_product(&square_free, &[Real::one()]),
+            CurveResultantParameter::Second => {
+                bivariate_outer_product(&[Real::one()], &square_free)
+            }
+        };
+        let division_support = match axis {
+            CurveResultantParameter::First => bivariate_outer_product(&factor, &[Real::one()]),
+            CurveResultantParameter::Second => bivariate_outer_product(&[Real::one()], &factor),
+        };
+        let Some(reduced) = divide_bivariate_system_component(&residual, &division_support) else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        supports.push(support);
+        residual = reduced;
+    }
+    if supports.is_empty() {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    }
+    Classification::Decided(Some(ExtractedBivariateAxisComponents2 {
+        supports,
+        residual_equations: residual,
+    }))
+}
+
 /// Extracts every exactly published common factor and retains its geometric
 /// support separately from the zero-dimensional residual system.
 ///
@@ -61960,6 +62169,22 @@ fn extract_bivariate_system_components(
 ) -> Classification<ExtractedBivariateSystemComponents2> {
     let mut support: Option<BivariatePolynomial> = None;
     loop {
+        match extract_bivariate_axis_components(&residual_equations) {
+            Classification::Decided(Some(axis)) => {
+                for component in axis.supports {
+                    support = Some(match support {
+                        Some(support) => bivariate_multiply(&support, &component),
+                        None => component,
+                    });
+                }
+                residual_equations = axis.residual_equations;
+                continue;
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Classification::Uncertain(reason);
+            }
+        }
         let previous_degree = residual_equations
             .iter()
             .map(bivariate_storage_bidegree_sum)
@@ -62064,105 +62289,183 @@ fn parallel_pair_saturation_from_equations(
     }
 }
 
-fn selected_parallel_source_component_at_incident_seam(
-    system: &BezierParallelPairEquationSystem2,
+fn parameter_component_union_support(
     components: &[BivariatePolynomial],
-    first_anchor: &Real,
-    second_anchor: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let same_orientation_selected =
-        match compare_reals(&system.first_distance, &system.second_distance, policy) {
-            Some(std::cmp::Ordering::Equal) => true,
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => false,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-    let reversed_orientation_selected = match compare_reals(
-        &system.first_distance,
-        &-system.second_distance.clone(),
-        policy,
-    ) {
-        Some(std::cmp::Ordering::Equal) => true,
-        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => false,
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
+) -> Option<BivariatePolynomial> {
+    components
+        .iter()
+        .cloned()
+        .reduce(|support, component| bivariate_multiply(&support, &component))
+}
 
-    // Unequal absolute source distances exclude every source-coordinate
-    // component regardless of its parameter orientation. Such factors can be
-    // divided from the squared pair equations without inspecting their real
-    // domain topology.
-    if !same_orientation_selected && !reversed_orientation_selected {
-        return Ok(Classification::Decided(false));
+fn merge_parameter_component_support(
+    first: Option<BivariatePolynomial>,
+    second: Option<BivariatePolynomial>,
+) -> Option<BivariatePolynomial> {
+    match (first, second) {
+        (Some(first), Some(second)) => Some(bivariate_multiply(&first, &second)),
+        (Some(support), None) | (None, Some(support)) => Some(support),
+        (None, None) => None,
     }
+}
 
-    let first_anchor = BezierParameter2::Exact(first_anchor.clone());
-    let second_anchor = BezierParameter2::Exact(second_anchor.clone());
-    let mut contains_seam = false;
-    for component in components {
-        match signed_bivariate_at_parameter_pair(component, &first_anchor, &second_anchor, policy)?
-        {
-            Classification::Decided(RealSign::Zero) => {
-                contains_seam = true;
-                break;
+struct IncidentParameterConstraint2 {
+    component_support: Option<BivariatePolynomial>,
+    isolated_projection: Option<BezierParallelPairProjection2>,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn incident_parameter_constraint(
+    support: BivariatePolynomial,
+    constraint: &BivariatePolynomial,
+    first_anchor: &Real,
+    first_direction: BezierParameterRayDirection2,
+    first_barrier: Option<&BezierParameter2>,
+    second_anchor: &Real,
+    second_direction: BezierParameterRayDirection2,
+    second_barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<IncidentParameterConstraint2>> {
+    let mut residual_equations = [support, constraint.clone()];
+    let mut component_support = None;
+    let project = |equations: &[BivariatePolynomial; 2]| {
+        project_parallel_intersection_equations_with_incident_rays(
+            &equations[0],
+            &equations[1],
+            first_anchor,
+            first_direction,
+            first_barrier,
+            second_anchor,
+            second_direction,
+            second_barrier,
+            policy,
+        )
+    };
+    match extract_bivariate_axis_components(&residual_equations) {
+        Classification::Decided(Some(axis)) => {
+            component_support = parameter_component_union_support(&axis.supports);
+            residual_equations = axis.residual_equations;
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let initial_candidates = match project(&residual_equations)? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let candidates = if matches!(
+        initial_candidates,
+        BezierParallelIntersectionCandidates2::DegenerateResultant
+    ) {
+        let extracted = match extract_bivariate_system_components(residual_equations, config) {
+            Classification::Decided(extracted) => extracted,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+        };
+        component_support = merge_parameter_component_support(component_support, extracted.support);
+        residual_equations = extracted.residual_equations;
+        match project(&residual_equations)? {
+            Classification::Decided(candidates) => candidates,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-    }
-    if !contains_seam {
-        // A selected source component may still enter one of the enlarged
-        // cells away from the seam. Do not erase it without domain topology.
-        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-    }
-
-    match signed_bivariate_at_parameter_pair(
-        &system.tangent_cross,
-        &first_anchor,
-        &second_anchor,
-        policy,
-    )? {
-        Classification::Decided(RealSign::Zero) => {}
-        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-            return Err(CurveError::Topology(
-                "a source-coordinate component reached the incident seam with transverse tangents"
-                    .into(),
-            ));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    }
-    let tangent_dot = match signed_bivariate_at_parameter_pair(
-        &system.tangent_dot,
-        &first_anchor,
-        &second_anchor,
-        policy,
-    )? {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Classification::Decided(RealSign::Zero) => {
-            return Err(CurveError::Topology(
-                "regular coincident source germs have zero tangent dot product".into(),
-            ));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let selected = match tangent_dot {
-        RealSign::Positive => same_orientation_selected,
-        RealSign::Negative => reversed_orientation_selected,
-        RealSign::Zero => unreachable!(),
-    };
-    if selected {
-        Ok(Classification::Decided(true))
     } else {
-        // Distances select the other possible source orientation. Another
-        // source component may carry that orientation elsewhere in an
-        // incident cell, so keep the degenerate projection explicit.
-        Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        initial_candidates
+    };
+    let isolated_projection = match candidates {
+        BezierParallelIntersectionCandidates2::NoIntersection => None,
+        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        candidates @ BezierParallelIntersectionCandidates2::Candidates { .. } => {
+            Some(BezierParallelPairProjection2 {
+                candidates,
+                basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+                overlap: None,
+                component_overlaps: Arc::from([]),
+                component_overlap_evidence: Arc::from([]),
+                component_pairs: Arc::from([]),
+                selected_component_pair_count: 0,
+                residual_equations: Some(Box::new(residual_equations)),
+                radical_component_projection: None,
+            })
+        }
+    };
+    Ok(Classification::Decided(IncidentParameterConstraint2 {
+        component_support,
+        isolated_projection,
+    }))
+}
+
+fn prepend_parallel_pair_projection(
+    projection: &mut BezierParallelPairProjection2,
+    mut preceding: BezierParallelPairProjection2,
+) {
+    preceding.radical_component_projection = projection.radical_component_projection.take();
+    projection.radical_component_projection = Some(Box::new(preceding));
+}
+
+fn retain_incident_component_pairs(
+    projection: Option<BezierParallelPairProjection2>,
+    pairs: Vec<BezierParallelIntersectionParameterPair2>,
+) -> Option<BezierParallelPairProjection2> {
+    if pairs.is_empty() {
+        return projection;
     }
+    let mut projection = projection.unwrap_or(BezierParallelPairProjection2 {
+        candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+        basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+        overlap: None,
+        component_overlaps: Arc::from([]),
+        component_overlap_evidence: Arc::from([]),
+        component_pairs: Arc::from([]),
+        selected_component_pair_count: 0,
+        residual_equations: None,
+        radical_component_projection: None,
+    });
+    let mut retained =
+        projection.component_pairs[..projection.selected_component_pair_count].to_vec();
+    for pair in pairs {
+        if !retained.contains(&pair) {
+            retained.push(pair);
+        }
+    }
+    let selected_count = retained.len();
+    for pair in &projection.component_pairs[projection.selected_component_pair_count..] {
+        if !retained.contains(pair) {
+            retained.push(pair.clone());
+        }
+    }
+    projection.component_pairs = retained.into();
+    projection.selected_component_pair_count = selected_count;
+    Some(projection)
+}
+
+fn parallel_nonstructural_source_parameter_components(
+    first: &BezierParallel2,
+    second: &BezierParallel2,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Vec<BivariatePolynomial>>> {
+    let equations = parallel_source_equality_equations(first, second)?;
+    let residual =
+        if let Some(structural) = structural_parallel_source_parameter_component(first, second) {
+            let Some(residual) = divide_bivariate_system_component(&equations, &structural) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            };
+            residual
+        } else {
+            equations
+        };
+    Ok(parallel_source_parameter_components_from_equations(
+        residual, config,
+    ))
 }
 
 fn parallel_pair_equations_without_source_components(
@@ -62398,6 +62701,587 @@ fn project_parallel_pair_without_components(
     }))
 }
 
+enum BezierParallelPairIncidentProjection2 {
+    Isolated(BezierParallelPairProjection2),
+    PositiveDimensional,
+}
+
+#[derive(Clone, Copy)]
+enum ParameterComponentChart2<'a> {
+    Authored,
+    Incident {
+        anchor: &'a Real,
+        direction: BezierParameterRayDirection2,
+        barrier: Option<&'a BezierParameter2>,
+    },
+}
+
+impl ParameterComponentChart2<'_> {
+    fn compact_range(
+        self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameterRange2>> {
+        let end = match self {
+            Self::Authored | Self::Incident { barrier: None, .. } => {
+                BezierParameter2::Exact(Real::one())
+            }
+            Self::Incident {
+                anchor,
+                direction,
+                barrier: Some(barrier),
+            } => match barrier.incident_ray_compact_parameter(anchor, direction, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
+        BezierParameterRange2::try_new(BezierParameter2::Exact(Real::zero()), end, policy)
+    }
+
+    fn transform(
+        self,
+        polynomial: &BivariatePolynomial,
+        axis: CurveResultantParameter,
+    ) -> Option<BivariatePolynomial> {
+        match self {
+            Self::Authored => Some(polynomial.clone()),
+            Self::Incident {
+                anchor, direction, ..
+            } => bivariate_compose_incident_parameter(polynomial, axis, anchor, direction),
+        }
+    }
+
+    fn contains_component_event(
+        self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let Self::Incident { .. } = self else {
+            return Ok(Classification::Decided(true));
+        };
+        let range = match self.compact_range(policy)? {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
+            Classification::Decided(ordering) => ordering == std::cmp::Ordering::Greater,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if !after_start {
+            return Ok(Classification::Decided(false));
+        }
+        Ok(match parameter.cmp_by_refinement(range.end(), policy)? {
+            Classification::Decided(ordering) => {
+                Classification::Decided(ordering == std::cmp::Ordering::Less)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
+    }
+
+    fn original_parameter(
+        self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        match self {
+            Self::Authored => Ok(Classification::Decided(parameter.clone())),
+            Self::Incident {
+                anchor, direction, ..
+            } => parameter.incident_ray_parameter(anchor, direction, policy),
+        }
+    }
+}
+
+fn bivariate_compose_incident_parameter(
+    polynomial: &BivariatePolynomial,
+    axis: CurveResultantParameter,
+    anchor: &Real,
+    direction: BezierParameterRayDirection2,
+) -> Option<BivariatePolynomial> {
+    let direction_sign = match direction {
+        BezierParameterRayDirection2::Decreasing => -Real::one(),
+        BezierParameterRayDirection2::Increasing => Real::one(),
+    };
+    // t = anchor +/- x/(1-x)
+    let numerator = vec![anchor.clone(), &direction_sign - anchor];
+    let denominator = vec![Real::one(), -Real::one()];
+    let transformed = match axis {
+        CurveResultantParameter::First => {
+            let degree = polynomial.coefficients.len().saturating_sub(1);
+            let numerator_powers = polynomial_powers(&numerator, degree);
+            let denominator_powers = polynomial_powers(&denominator, degree);
+            let second_count = polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(0);
+            let mut coefficients = vec![vec![Real::zero(); second_count]; degree + 1];
+            for (power, row) in polynomial.coefficients.iter().enumerate() {
+                let homogeneous = polynomial_multiply(
+                    &numerator_powers[power],
+                    &denominator_powers[degree - power],
+                );
+                for (compact_power, scale) in homogeneous.iter().enumerate() {
+                    for (second_power, coefficient) in row.iter().enumerate() {
+                        coefficients[compact_power][second_power] += coefficient * scale;
+                    }
+                }
+            }
+            BivariatePolynomial::new(coefficients)
+        }
+        CurveResultantParameter::Second => {
+            let degree = polynomial
+                .coefficients
+                .iter()
+                .map(|row| row.len().saturating_sub(1))
+                .max()
+                .unwrap_or(0);
+            let numerator_powers = polynomial_powers(&numerator, degree);
+            let denominator_powers = polynomial_powers(&denominator, degree);
+            let coefficients = polynomial
+                .coefficients
+                .iter()
+                .map(|row| {
+                    let mut transformed = vec![Real::zero(); degree + 1];
+                    for (power, coefficient) in row.iter().enumerate() {
+                        let homogeneous = polynomial_multiply(
+                            &numerator_powers[power],
+                            &denominator_powers[degree - power],
+                        );
+                        for (compact_power, scale) in homogeneous.iter().enumerate() {
+                            transformed[compact_power] += coefficient * scale;
+                        }
+                    }
+                    transformed
+                })
+                .collect();
+            BivariatePolynomial::new(coefficients)
+        }
+    };
+    bivariate_trim_exact(transformed)
+}
+
+fn transform_parameter_component_chart_polynomial(
+    polynomial: &BivariatePolynomial,
+    first_chart: ParameterComponentChart2<'_>,
+    second_chart: ParameterComponentChart2<'_>,
+) -> Option<BivariatePolynomial> {
+    let first = first_chart.transform(polynomial, CurveResultantParameter::First)?;
+    second_chart.transform(&first, CurveResultantParameter::Second)
+}
+
+fn transform_parallel_pair_system_for_component_chart(
+    system: &BezierParallelPairEquationSystem2,
+    first_chart: ParameterComponentChart2<'_>,
+    second_chart: ParameterComponentChart2<'_>,
+) -> Option<BezierParallelPairEquationSystem2> {
+    let transform = |polynomial: &BivariatePolynomial| {
+        transform_parameter_component_chart_polynomial(polynomial, first_chart, second_chart)
+    };
+    Some(BezierParallelPairEquationSystem2 {
+        first_equation: transform(&system.first_equation)?,
+        second_equation: transform(&system.second_equation)?,
+        norm_equation: transform(&system.norm_equation)?,
+        first_projection: transform(&system.first_projection)?,
+        second_projection: transform(&system.second_projection)?,
+        tangent_cross: transform(&system.tangent_cross)?,
+        tangent_dot: transform(&system.tangent_dot)?,
+        norm_residual: transform(&system.norm_residual)?,
+        first_normal_projection: transform(&system.first_normal_projection)?,
+        first_distance: system.first_distance.clone(),
+        second_distance: system.second_distance.clone(),
+        first_distance_sign: system.first_distance_sign,
+        second_distance_sign: system.second_distance_sign,
+        weight_sign: system.weight_sign,
+    })
+}
+
+struct IncidentParameterComponentSelection2 {
+    positive_dimensional: bool,
+    selected_pairs: Vec<BezierParallelIntersectionParameterPair2>,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn select_axis_parameter_components_on_chart(
+    factor: &[Real],
+    fixed_axis: CurveResultantParameter,
+    selector: &ParameterComponentSelector2<'_>,
+    first_chart: ParameterComponentChart2<'_>,
+    second_chart: ParameterComponentChart2<'_>,
+    selected_pairs: &mut Vec<BezierParallelIntersectionParameterPair2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    if factor.len() <= 1 {
+        return Ok(Classification::Decided(false));
+    }
+    let polynomial = match polynomial_from_coefficients(factor.to_vec(), policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let fixed_parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (fixed_chart, free_chart) = match fixed_axis {
+        CurveResultantParameter::First => (first_chart, second_chart),
+        CurveResultantParameter::Second => (second_chart, first_chart),
+    };
+    let free_range = match free_chart.compact_range(policy)? {
+        Classification::Decided(range) => range,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    for fixed in fixed_parameters {
+        match fixed_chart.contains_component_event(&fixed, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => continue,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let mut events = Vec::new();
+        for boundary in selector.boundary_polynomials() {
+            let boundary = match fixed_axis {
+                CurveResultantParameter::First => boundary,
+                CurveResultantParameter::Second => bivariate_swap_parameters(&boundary),
+            };
+            let projection = match selected_parameter_fiber_parameters(
+                &boundary,
+                &fixed,
+                MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+                policy,
+            )? {
+                Classification::Decided(projection) => projection,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let roots = match projection {
+                BezierAlgebraicFiberProjection2::Parameters(roots) => roots,
+                BezierAlgebraicFiberProjection2::IdenticallyZero => continue,
+                BezierAlgebraicFiberProjection2::Degenerate => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+            };
+            for root in roots {
+                match free_chart.contains_component_event(&root, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                match insert_ordered_parameter_component_boundary(&mut events, root, policy)? {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+
+        let pair = |free: BezierParameter2| match fixed_axis {
+            CurveResultantParameter::First => BezierParallelIntersectionParameterPair2 {
+                parallel_parameter: fixed.clone(),
+                other_parameter: free,
+            },
+            CurveResultantParameter::Second => BezierParallelIntersectionParameterPair2 {
+                parallel_parameter: free,
+                other_parameter: fixed.clone(),
+            },
+        };
+        for event in &events {
+            let event_pair = pair(event.clone());
+            let selected = match selector.selected_at(
+                CurveResultantParameter::First,
+                &event_pair.parallel_parameter,
+                &event_pair.other_parameter,
+                policy,
+            )? {
+                Classification::Decided(selected) => selected,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if selected {
+                let mapped = match map_incident_component_pair_from_chart(
+                    &event_pair,
+                    first_chart,
+                    second_chart,
+                    policy,
+                )? {
+                    Classification::Decided(pair) => pair,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if !selected_pairs.contains(&mapped) {
+                    selected_pairs.push(mapped);
+                }
+            }
+        }
+
+        let mut boundaries = Vec::with_capacity(events.len() + 2);
+        boundaries.push(free_range.start().clone());
+        boundaries.extend(events);
+        boundaries.push(free_range.end().clone());
+        for boundaries in boundaries.windows(2) {
+            match boundaries[0].cmp_by_refinement(&boundaries[1], policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => {}
+                Classification::Decided(std::cmp::Ordering::Equal) => continue,
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            let sample =
+                match boundaries[0].strict_rational_between_ordered(&boundaries[1], policy)? {
+                    Classification::Decided(sample) => sample,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let sample_pair = pair(BezierParameter2::Exact(sample));
+            match selector.selected_at(
+                CurveResultantParameter::First,
+                &sample_pair.parallel_parameter,
+                &sample_pair.other_parameter,
+                policy,
+            )? {
+                Classification::Decided(true) => return Ok(Classification::Decided(true)),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+    }
+    Ok(Classification::Decided(false))
+}
+
+fn map_incident_component_pair_from_chart(
+    pair: &BezierParallelIntersectionParameterPair2,
+    first_chart: ParameterComponentChart2<'_>,
+    second_chart: ParameterComponentChart2<'_>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelIntersectionParameterPair2>> {
+    let first = match first_chart.original_parameter(&pair.parallel_parameter, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match second_chart.original_parameter(&pair.other_parameter, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(
+        BezierParallelIntersectionParameterPair2 {
+            parallel_parameter: first,
+            other_parameter: second,
+        },
+    ))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn selected_parameter_component_on_incident_domain(
+    support: &BivariatePolynomial,
+    system: &BezierParallelPairEquationSystem2,
+    first_anchor: &Real,
+    first_direction: BezierParameterRayDirection2,
+    first_barrier: Option<&BezierParameter2>,
+    second_anchor: &Real,
+    second_direction: BezierParameterRayDirection2,
+    second_barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<IncidentParameterComponentSelection2>> {
+    let mut selected_pairs = Vec::new();
+    let first_incident = ParameterComponentChart2::Incident {
+        anchor: first_anchor,
+        direction: first_direction,
+        barrier: first_barrier,
+    };
+    let second_incident = ParameterComponentChart2::Incident {
+        anchor: second_anchor,
+        direction: second_direction,
+        barrier: second_barrier,
+    };
+    for (first_chart, second_chart) in [
+        (
+            ParameterComponentChart2::Authored,
+            ParameterComponentChart2::Authored,
+        ),
+        (first_incident, ParameterComponentChart2::Authored),
+        (ParameterComponentChart2::Authored, second_incident),
+        (first_incident, second_incident),
+    ] {
+        let Some(chart_support) =
+            transform_parameter_component_chart_polynomial(support, first_chart, second_chart)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+        };
+        let Some(chart_system) =
+            transform_parallel_pair_system_for_component_chart(system, first_chart, second_chart)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+        };
+        let selector = ParameterComponentSelector2::ParallelPair {
+            system: &chart_system,
+            unordered_self_pair: false,
+        };
+        let axis_report =
+            extract_bivariate_polynomial_system_axis_factors(&chart_support, &chart_support);
+        let chart_support = if axis_report.status == BivariatePolynomialAxisFactorStatus::Reduced {
+            for (factor, axis) in [
+                (
+                    &axis_report.first_parameter_factor,
+                    CurveResultantParameter::First,
+                ),
+                (
+                    &axis_report.second_parameter_factor,
+                    CurveResultantParameter::Second,
+                ),
+            ] {
+                match select_axis_parameter_components_on_chart(
+                    factor,
+                    axis,
+                    &selector,
+                    first_chart,
+                    second_chart,
+                    &mut selected_pairs,
+                    policy,
+                )? {
+                    Classification::Decided(true) => {
+                        return Ok(Classification::Decided(
+                            IncidentParameterComponentSelection2 {
+                                positive_dimensional: true,
+                                selected_pairs,
+                            },
+                        ));
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let Some([reduced, _]) = axis_report.reduced_equations else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            };
+            reduced
+        } else {
+            chart_support
+        };
+        if bivariate_unit_square_has_strict_bernstein_sign(&chart_support, policy)? {
+            continue;
+        }
+        let component = match parameter_component_system_with_selector(
+            &[chart_support.clone(), chart_support],
+            &selector,
+            policy,
+            config,
+        )? {
+            Classification::Decided(Some(component)) => component,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if component.overlaps.iter().any(|overlap| {
+            !component
+                .component_overlaps
+                .iter()
+                .any(|evidence| evidence.overlap() == overlap)
+        }) {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        let first_range = match first_chart.compact_range(policy)? {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second_range = match second_chart.compact_range(policy)? {
+            Classification::Decided(range) => range,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        for overlap in component.component_overlaps.iter() {
+            match overlap.clipped_ranges(&first_range, &second_range, policy)? {
+                Classification::Decided(Some(_)) => {
+                    return Ok(Classification::Decided(
+                        IncidentParameterComponentSelection2 {
+                            positive_dimensional: true,
+                            selected_pairs,
+                        },
+                    ));
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        for pair in &component.component_pairs[..component.selected_component_pair_count] {
+            let first_inside =
+                match first_chart.contains_component_event(&pair.parallel_parameter, policy)? {
+                    Classification::Decided(inside) => inside,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let second_inside =
+                match second_chart.contains_component_event(&pair.other_parameter, policy)? {
+                    Classification::Decided(inside) => inside,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            if !first_inside || !second_inside {
+                continue;
+            }
+            let first = match first_chart.original_parameter(&pair.parallel_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let second = match second_chart.original_parameter(&pair.other_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let pair = BezierParallelIntersectionParameterPair2 {
+                parallel_parameter: first,
+                other_parameter: second,
+            };
+            if !selected_pairs.contains(&pair) {
+                selected_pairs.push(pair);
+            }
+        }
+    }
+    Ok(Classification::Decided(
+        IncidentParameterComponentSelection2 {
+            positive_dimensional: false,
+            selected_pairs,
+        },
+    ))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn project_parallel_pair_without_components_with_incident_rays(
     system: &BezierParallelPairEquationSystem2,
@@ -62411,7 +63295,7 @@ fn project_parallel_pair_without_components_with_incident_rays(
     second_direction: BezierParameterRayDirection2,
     second_barrier: Option<&BezierParameter2>,
     policy: &CurveContext,
-) -> CurveResult<Option<BezierParallelPairProjection2>> {
+) -> CurveResult<Option<BezierParallelPairIncidentProjection2>> {
     if !matches!(source_overlap, Classification::Decided(_)) {
         return Ok(None);
     }
@@ -62440,28 +63324,41 @@ fn project_parallel_pair_without_components_with_incident_rays(
             policy,
         )
     };
+    let config = CurveIntersectionResultantConfig {
+        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let mut pair_component_support = None;
+    let mut residual_was_saturated = false;
+    match extract_bivariate_axis_components(&residual_equations) {
+        Classification::Decided(Some(axis)) => {
+            pair_component_support = parameter_component_union_support(&axis.supports);
+            residual_equations = axis.residual_equations;
+            residual_was_saturated = true;
+        }
+        Classification::Decided(None) => {}
+        Classification::Uncertain(_) => return Ok(None),
+    }
     let initial_candidates = match project(&residual_equations)? {
         Classification::Decided(candidates) => candidates,
         Classification::Uncertain(_) => return Ok(None),
     };
-    let (candidates, radical_component_projection, residual_was_saturated) = if matches!(
+    let candidates = if matches!(
         initial_candidates,
         BezierParallelIntersectionCandidates2::DegenerateResultant
     ) {
-        let config = CurveIntersectionResultantConfig {
-            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        let extracted = match extract_bivariate_system_components(residual_equations, config) {
+            Classification::Decided(extracted) => extracted,
+            Classification::Uncertain(_) => return Ok(None),
         };
-        let saturation =
-            match parallel_pair_saturation_from_equations(system, residual_equations, config) {
-                Classification::Decided(saturation) => saturation,
-                Classification::Uncertain(_) => return Ok(None),
-            };
-        let Some(radical_equations) = saturation.radical_component_equations else {
+        if extracted.support.is_none() {
             return Ok(None);
-        };
-        residual_equations = saturation.residual_equations;
-        let residual_candidates = match project(&residual_equations)? {
+        }
+        pair_component_support =
+            merge_parameter_component_support(pair_component_support, extracted.support);
+        residual_equations = extracted.residual_equations;
+        residual_was_saturated = true;
+        match project(&residual_equations)? {
             Classification::Decided(candidates)
                 if !matches!(
                     candidates,
@@ -62471,61 +63368,79 @@ fn project_parallel_pair_without_components_with_incident_rays(
                 candidates
             }
             _ => return Ok(None),
-        };
-        let radical_candidates = match project(&radical_equations)? {
-            Classification::Decided(candidates) => candidates,
+        }
+    } else {
+        initial_candidates
+    };
+    let radical_component_projection = if let Some(support) = pair_component_support {
+        let constraint = match incident_parameter_constraint(
+            support,
+            &system.norm_equation,
+            first_anchor,
+            first_direction,
+            first_barrier,
+            second_anchor,
+            second_direction,
+            second_barrier,
+            policy,
+            config,
+        )? {
+            Classification::Decided(constraint) => constraint,
             Classification::Uncertain(_) => return Ok(None),
         };
-        // The existing component topology is authored for the closed unit
-        // square. Incident rays may extend beyond it, so a positive-dimensional
-        // exterior component remains explicit until the same decomposition is
-        // generalized to ordered ray cells.
-        if matches!(
-            radical_candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
-        ) {
-            return Ok(None);
+        let mut selected_pairs = Vec::new();
+        if let Some(component_support) = constraint.component_support {
+            let selection = match selected_parameter_component_on_incident_domain(
+                &component_support,
+                system,
+                first_anchor,
+                first_direction,
+                first_barrier,
+                second_anchor,
+                second_direction,
+                second_barrier,
+                policy,
+                config,
+            )? {
+                Classification::Decided(selection) => selection,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            if selection.positive_dimensional {
+                return Ok(Some(
+                    BezierParallelPairIncidentProjection2::PositiveDimensional,
+                ));
+            }
+            selected_pairs = selection.selected_pairs;
         }
-        (
-            residual_candidates,
-            Some(Box::new(BezierParallelPairProjection2 {
-                candidates: radical_candidates,
-                basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
-                overlap: None,
-                component_overlaps: Arc::from([]),
-                component_overlap_evidence: Arc::from([]),
-                component_pairs: Arc::from([]),
-                selected_component_pair_count: 0,
-                residual_equations: Some(Box::new(radical_equations)),
-                radical_component_projection: None,
-            })),
-            true,
-        )
+        retain_incident_component_pairs(constraint.isolated_projection, selected_pairs)
+            .map(Box::new)
     } else {
-        (initial_candidates, None, false)
+        None
     };
     let residual_equations =
         (source_component_removed || residual_was_saturated).then(|| Box::new(residual_equations));
-    Ok(Some(BezierParallelPairProjection2 {
-        candidates,
-        basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
-        overlap: match source_overlap {
-            Classification::Decided(source) => source.selected_overlap().cloned(),
-            Classification::Uncertain(_) => None,
+    Ok(Some(BezierParallelPairIncidentProjection2::Isolated(
+        BezierParallelPairProjection2 {
+            candidates,
+            basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+            overlap: match source_overlap {
+                Classification::Decided(source) => source.selected_overlap().cloned(),
+                Classification::Uncertain(_) => None,
+            },
+            component_overlaps: Arc::from([]),
+            component_overlap_evidence: Arc::from([]),
+            component_pairs: match source_overlap {
+                Classification::Decided(source) => source.contacts.clone(),
+                Classification::Uncertain(_) => Arc::from([]),
+            },
+            selected_component_pair_count: match source_overlap {
+                Classification::Decided(source) => source.contacts.len(),
+                Classification::Uncertain(_) => 0,
+            },
+            residual_equations,
+            radical_component_projection,
         },
-        component_overlaps: Arc::from([]),
-        component_overlap_evidence: Arc::from([]),
-        component_pairs: match source_overlap {
-            Classification::Decided(source) => source.contacts.clone(),
-            Classification::Uncertain(_) => Arc::from([]),
-        },
-        selected_component_pair_count: match source_overlap {
-            Classification::Decided(source) => source.contacts.len(),
-            Classification::Uncertain(_) => 0,
-        },
-        residual_equations,
-        radical_component_projection,
-    }))
+    )))
 }
 
 fn project_parallel_pair_intersection_system(
@@ -81574,8 +82489,8 @@ mod conversion_tests {
                     panic!("excluded incident source component remained uncertain: {reason:?}")
                 }
             };
-            let (intersections, positive_dimensional_at_seam) = incident.into_parts();
-            assert!(!positive_dimensional_at_seam);
+            let (intersections, positive_dimensional) = incident.into_parts();
+            assert!(!positive_dimensional);
             assert!(intersections.is_complete(), "{intersections:?}");
         }
     }
@@ -85013,6 +85928,559 @@ mod conversion_tests {
                         }));
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn incident_component_charts_clip_exact_regular_barriers() {
+        let support_before_barriers = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let support_beyond_barriers = BivariatePolynomial::new(vec![
+            vec![Real::from(2_i8), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let system = BezierParallelPairEquationSystem2 {
+            first_equation: support_before_barriers.clone(),
+            second_equation: support_before_barriers.clone(),
+            norm_equation: support_before_barriers.clone(),
+            first_projection: one.clone(),
+            second_projection: one.clone(),
+            tangent_cross: one.clone(),
+            tangent_dot: one.clone(),
+            norm_residual: one.clone(),
+            first_normal_projection: one,
+            first_distance: Real::one(),
+            second_distance: Real::one(),
+            first_distance_sign: RealSign::Positive,
+            second_distance_sign: RealSign::Positive,
+            weight_sign: RealSign::Positive,
+        };
+        let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+        let second_barrier =
+            BezierParameter2::Exact((Real::from(-1_i8) / Real::from(2_i8)).unwrap());
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = selected_parameter_component_on_incident_domain(
+                &support_before_barriers,
+                &system,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                Some(&first_barrier),
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                Some(&second_barrier),
+                &policy,
+                config,
+            )
+            .unwrap();
+            let Classification::Decided(selected) = selected else {
+                panic!("the pre-barrier component was uncertain")
+            };
+            assert!(selected.positive_dimensional);
+            let excluded = selected_parameter_component_on_incident_domain(
+                &support_beyond_barriers,
+                &system,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                Some(&first_barrier),
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                Some(&second_barrier),
+                &policy,
+                config,
+            )
+            .unwrap();
+            let Classification::Decided(excluded) = excluded else {
+                panic!("the post-barrier component was uncertain")
+            };
+            assert!(!excluded.positive_dimensional);
+            assert!(excluded.selected_pairs.is_empty());
+
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            for axis_support in [
+                BivariatePolynomial::new(vec![vec![-half.clone()], vec![Real::one()]]),
+                BivariatePolynomial::new(vec![vec![-half, Real::one()]]),
+            ] {
+                let axis_system = BezierParallelPairEquationSystem2 {
+                    first_equation: axis_support.clone(),
+                    second_equation: axis_support.clone(),
+                    norm_equation: axis_support.clone(),
+                    ..system.clone()
+                };
+                let axis_selection = selected_parameter_component_on_incident_domain(
+                    &axis_support,
+                    &axis_system,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    Some(&first_barrier),
+                    &Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    Some(&second_barrier),
+                    &policy,
+                    config,
+                )
+                .unwrap();
+                let Classification::Decided(axis_selection) = axis_selection else {
+                    panic!("the axis-wide component was uncertain")
+                };
+                assert!(axis_selection.positive_dimensional);
+
+                let axis_constraint = incident_parameter_constraint(
+                    axis_support.clone(),
+                    &axis_support,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    Some(&first_barrier),
+                    &Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    Some(&second_barrier),
+                    &policy,
+                    config,
+                )
+                .unwrap();
+                let Classification::Decided(axis_constraint) = axis_constraint else {
+                    panic!("the axis-wide constraint was uncertain")
+                };
+                assert!(axis_constraint.component_support.is_some());
+                assert!(axis_constraint.isolated_projection.is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn incident_component_charts_transport_an_isolated_selected_event() {
+        let support = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let tangent_cross = BivariatePolynomial::new(vec![
+            vec![Real::from(-2_i8)],
+            vec![Real::zero()],
+            vec![Real::one()],
+        ]);
+        let opposite_projection = bivariate_scale(tangent_cross.clone(), &Real::from(-1_i8));
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let system = BezierParallelPairEquationSystem2 {
+            first_equation: support.clone(),
+            second_equation: support.clone(),
+            norm_equation: support.clone(),
+            first_projection: opposite_projection.clone(),
+            second_projection: opposite_projection,
+            tangent_cross: tangent_cross.clone(),
+            tangent_dot: one.clone(),
+            norm_residual: BivariatePolynomial::new(vec![vec![Real::from(-1_i8)]]),
+            first_normal_projection: one,
+            first_distance: Real::one(),
+            second_distance: Real::one(),
+            first_distance_sign: RealSign::Positive,
+            second_distance_sign: RealSign::Positive,
+            weight_sign: RealSign::Positive,
+        };
+        let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(selection) =
+                selected_parameter_component_on_incident_domain(
+                    &support,
+                    &system,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    Some(&first_barrier),
+                    &Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    None,
+                    &policy,
+                    config,
+                )
+                .unwrap()
+            else {
+                panic!("the isolated exterior selector event was uncertain")
+            };
+            assert!(!selection.positive_dimensional);
+            let [pair] = selection.selected_pairs.as_slice() else {
+                panic!("the isolated exterior selector event was not retained once")
+            };
+            assert_eq!(
+                signed_bivariate_at_parameter_pair(
+                    &support,
+                    &pair.parallel_parameter,
+                    &pair.other_parameter,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+            assert_eq!(
+                signed_bivariate_at_parameter_pair(
+                    &tangent_cross,
+                    &pair.parallel_parameter,
+                    &pair.other_parameter,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+            assert_eq!(
+                pair.parallel_parameter
+                    .cmp_by_refinement(&first_barrier, &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+        }
+    }
+
+    #[test]
+    fn incident_constraint_retains_isolated_roots_after_component_analysis() {
+        let support = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let five_quarters = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+        let constraint =
+            BivariatePolynomial::new(vec![vec![-five_quarters.clone()], vec![Real::one()]]);
+        let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(constraint) = incident_parameter_constraint(
+                support.clone(),
+                &constraint,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                Some(&first_barrier),
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                None,
+                &policy,
+                config,
+            )
+            .unwrap() else {
+                panic!("the isolated incident constraint was uncertain");
+            };
+            assert!(constraint.component_support.is_none());
+            let Some(projection) = constraint.isolated_projection else {
+                panic!("the isolated source/component constraint was discarded");
+            };
+            let BezierParallelIntersectionCandidates2::Candidates {
+                parallel_parameters,
+                other_parameters,
+            } = projection.candidates
+            else {
+                panic!("the isolated incident constraint was not projected");
+            };
+            assert_eq!(
+                parallel_parameters,
+                vec![BezierParameter2::Exact(five_quarters.clone())],
+            );
+            assert_eq!(
+                other_parameters,
+                vec![BezierParameter2::Exact(
+                    (Real::one() / Real::from(4_i8)).unwrap(),
+                )],
+            );
+        }
+    }
+
+    #[test]
+    fn incident_pair_projection_accepts_a_non_source_radical_component() {
+        let source = |height| {
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::new(Real::zero(), Real::from(height)),
+                    Point2::new(Real::one(), Real::from(height)),
+                )
+                .unwrap(),
+            )
+            .parallel_left(Real::one())
+            .unwrap()
+        };
+        let first = source(0);
+        let second = source(4);
+        let support = BivariatePolynomial::new(vec![
+            vec![Real::one(), Real::one()],
+            vec![Real::from(-1_i8)],
+        ]);
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let system = BezierParallelPairEquationSystem2 {
+            first_equation: support.clone(),
+            second_equation: support.clone(),
+            norm_equation: support,
+            first_projection: one.clone(),
+            second_projection: one.clone(),
+            tangent_cross: one.clone(),
+            tangent_dot: one.clone(),
+            norm_residual: one.clone(),
+            first_normal_projection: one,
+            first_distance: Real::one(),
+            second_distance: Real::one(),
+            first_distance_sign: RealSign::Positive,
+            second_distance_sign: RealSign::Positive,
+            weight_sign: RealSign::Positive,
+        };
+        let excluded = Classification::Decided(CertifiedParallelSourceOverlap2::without_contacts(
+            CertifiedParallelSourceOverlapKind2::Excluded,
+        ));
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let projection = project_parallel_pair_without_components_with_incident_rays(
+                &system,
+                &first,
+                &second,
+                &excluded,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                None,
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                None,
+                &policy,
+            )
+            .unwrap();
+            assert!(matches!(
+                projection,
+                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+            ));
+
+            let fixed_first = BivariatePolynomial::new(vec![
+                vec![-(Real::one() / Real::from(2_i8)).unwrap()],
+                vec![Real::one()],
+            ]);
+            let axis_system = BezierParallelPairEquationSystem2 {
+                first_equation: fixed_first.clone(),
+                second_equation: fixed_first.clone(),
+                norm_equation: fixed_first,
+                ..system.clone()
+            };
+            let axis_projection = project_parallel_pair_without_components_with_incident_rays(
+                &axis_system,
+                &first,
+                &second,
+                &excluded,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                None,
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                None,
+                &policy,
+            )
+            .unwrap();
+            assert!(matches!(
+                axis_projection,
+                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+            ));
+
+            let tangent_cross = BivariatePolynomial::new(vec![
+                vec![Real::from(-2_i8)],
+                vec![Real::zero()],
+                vec![Real::one()],
+            ]);
+            let opposite_projection = bivariate_scale(tangent_cross.clone(), &Real::from(-1_i8));
+            let isolated_system = BezierParallelPairEquationSystem2 {
+                first_projection: opposite_projection.clone(),
+                second_projection: opposite_projection,
+                tangent_cross,
+                norm_residual: BivariatePolynomial::new(vec![vec![Real::from(-1_i8)]]),
+                ..system.clone()
+            };
+            let first_barrier =
+                BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+            let Some(BezierParallelPairIncidentProjection2::Isolated(projection)) =
+                project_parallel_pair_without_components_with_incident_rays(
+                    &isolated_system,
+                    &first,
+                    &second,
+                    &excluded,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    Some(&first_barrier),
+                    &Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    None,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the isolated selected component event was not projected")
+            };
+            let Some(component_projection) = projection.radical_component_projection else {
+                panic!("the isolated component event lost its projection")
+            };
+            let [pair] = component_projection.component_pairs.as_ref() else {
+                panic!("the isolated component event was not retained once")
+            };
+            assert_eq!(
+                signed_bivariate_at_parameter_pair(
+                    &isolated_system.tangent_cross,
+                    &pair.parallel_parameter,
+                    &pair.other_parameter,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+        }
+    }
+
+    #[test]
+    fn incident_non_source_parallel_overlap_reaches_the_common_projection() {
+        let line = |start_x: i8, height: i8, distance: i8| {
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::new(Real::from(start_x), Real::from(height)),
+                    Point2::new(Real::from(start_x + 1), Real::from(height)),
+                )
+                .unwrap(),
+            )
+            .parallel_left(Real::from(distance))
+            .unwrap()
+        };
+        // The sources are disjoint parallel lines, but their selected
+        // parallels are the same line with exterior correspondence u=t-1.
+        // This is a radical component, not a source-coordinate component.
+        let first = line(0, 0, 1);
+        let second = line(1, 2, -1);
+        let excluded = Classification::Decided(CertifiedParallelSourceOverlap2::without_contacts(
+            CertifiedParallelSourceOverlapKind2::Excluded,
+        ));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(system)) =
+                parallel_pair_equation_system(&first, &second, false, &policy).unwrap()
+            else {
+                panic!("the incident non-source overlap lacked a pair system")
+            };
+            let projection = project_parallel_pair_without_components_with_incident_rays(
+                &system,
+                &first,
+                &second,
+                &excluded,
+                &Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                None,
+                &Real::zero(),
+                BezierParameterRayDirection2::Decreasing,
+                None,
+                &policy,
+            )
+            .unwrap();
+            assert!(matches!(
+                projection,
+                Some(BezierParallelPairIncidentProjection2::PositiveDimensional),
+            ));
+            let Classification::Decided(incident) = first
+                .parallel_intersections_with_incident_rays(
+                    &second,
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    &Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the complete incident pair result was uncertain")
+            };
+            let (intersections, positive_dimensional) = incident.into_parts();
+            assert!(intersections.is_complete());
+            assert!(positive_dimensional);
+        }
+    }
+
+    #[test]
+    fn algebraic_incident_barrier_retains_its_exact_compact_root() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let irrational = (Real::from(2_i8)).sqrt().unwrap();
+            for (constant, compact_polynomial) in [
+                (
+                    Real::from(2_i8),
+                    vec![Real::one(), Real::from(-4_i8), Real::from(2_i8)],
+                ),
+                (
+                    irrational.clone(),
+                    vec![
+                        Real::one() - &irrational,
+                        Real::from(2_i8) * &irrational,
+                        -irrational.clone(),
+                    ],
+                ),
+            ] {
+                let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                    vec![-constant, Real::zero(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        panic!("the barrier polynomial was uncertain: {reason:?}")
+                    }
+                };
+                let barriers = match polynomial
+                    .isolate_incident_ray_roots(
+                        &Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        &policy,
+                    )
+                    .unwrap()
+                {
+                    Classification::Decided(barriers) => barriers,
+                    Classification::Uncertain(reason) => {
+                        panic!("incident barrier isolation was uncertain: {reason:?}")
+                    }
+                };
+                let [barrier] = barriers.as_slice() else {
+                    panic!("the positive square root has one increasing incident root")
+                };
+                let compact = match barrier
+                    .incident_ray_compact_parameter(
+                        &Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        &policy,
+                    )
+                    .unwrap()
+                {
+                    Classification::Decided(compact) => compact,
+                    Classification::Uncertain(reason) => {
+                        panic!("the compact barrier was uncertain: {reason:?}")
+                    }
+                };
+                assert_eq!(
+                    signed_coefficients_at_parameter(compact_polynomial, &compact, &policy)
+                        .unwrap(),
+                    Classification::Decided(RealSign::Zero),
+                );
+                let restored = match compact
+                    .incident_ray_parameter(
+                        &Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        &policy,
+                    )
+                    .unwrap()
+                {
+                    Classification::Decided(restored) => restored,
+                    Classification::Uncertain(reason) => {
+                        panic!("the restored incident barrier was uncertain: {reason:?}")
+                    }
+                };
+                assert_eq!(
+                    restored.same_value(barrier, &policy).unwrap(),
+                    Classification::Decided(true),
+                );
             }
         }
     }

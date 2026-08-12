@@ -1480,6 +1480,136 @@ impl BezierParameter2 {
         Ok(Classification::Decided(Self::Algebraic(mapped)))
     }
 
+    /// Maps an exterior parameter on the ray incident to `anchor` back into
+    /// the compact coordinate used by [`BezierParameterPolynomial::isolate_incident_ray_roots`].
+    ///
+    /// For `direction_sign = +/-1`, the exact inverse of
+    /// `t = anchor + direction_sign*x/(1-x)` is
+    /// `x = (t-anchor)/(t-anchor+direction_sign)`. The input is already
+    /// certified to lie on that open ray, so its denominator cannot vanish.
+    /// Algebraic inputs retain an exact transformed polynomial and isolator;
+    /// no floating approximation becomes construction evidence.
+    pub(crate) fn incident_ray_compact_parameter(
+        &self,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let direction_sign = match direction {
+            BezierParameterRayDirection2::Decreasing => -Real::one(),
+            BezierParameterRayDirection2::Increasing => Real::one(),
+        };
+        let map = |parameter: &Real| -> CurveResult<Real> {
+            ((parameter - anchor) / (parameter - anchor + &direction_sign))
+                .map_err(CurveError::from)
+        };
+        let parameter = match self {
+            Self::Exact(parameter) => {
+                return Self::exact(map(parameter)?, policy);
+            }
+            Self::Algebraic(parameter) => parameter,
+        };
+
+        // Q(x) = (1-x)^degree P(anchor + direction*x/(1-x)).
+        let coefficients = match compose_univariate_polynomial_linear_fractional(
+            parameter.polynomial().coefficients(),
+            &(&direction_sign - anchor),
+            anchor,
+            &-Real::one(),
+            &Real::one(),
+            policy.predicate_policy(),
+        ) {
+            Some(coefficients) => coefficients,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let first = map(parameter.interval().start())?;
+        let second = map(parameter.interval().end())?;
+        let (start, end) = match direction {
+            BezierParameterRayDirection2::Increasing => (first, second),
+            BezierParameterRayDirection2::Decreasing => (second, first),
+        };
+        let interval = match BezierParameterInterval::try_new(start, end, policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
+        if parameter.data.shared.simple_root.get() == Some(&true) {
+            let _ = mapped.data.shared.simple_root.set(true);
+        }
+        Ok(Classification::Decided(Self::Algebraic(mapped)))
+    }
+
+    /// Maps a compact incident-ray coordinate back to its original affine
+    /// parameter while retaining exact algebraic evidence.
+    pub(crate) fn incident_ray_parameter(
+        &self,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let direction_sign = match direction {
+            BezierParameterRayDirection2::Decreasing => -Real::one(),
+            BezierParameterRayDirection2::Increasing => Real::one(),
+        };
+        let map = |parameter: &Real| -> CurveResult<Real> {
+            let distance = (parameter / (Real::one() - parameter))?;
+            Ok(anchor + &direction_sign * distance)
+        };
+        let parameter = match self {
+            Self::Exact(parameter) => {
+                return Ok(Classification::Decided(Self::Exact(map(parameter)?)));
+            }
+            Self::Algebraic(parameter) => parameter,
+        };
+
+        // If x=(t-anchor)/(t-anchor+direction), inverse substitution gives
+        // the exact defining polynomial for t.
+        let coefficients = match compose_univariate_polynomial_linear_fractional(
+            parameter.polynomial().coefficients(),
+            &Real::one(),
+            &-anchor.clone(),
+            &Real::one(),
+            &(&direction_sign - anchor),
+            policy.predicate_policy(),
+        ) {
+            Some(coefficients) => coefficients,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let first = map(parameter.interval().start())?;
+        let second = map(parameter.interval().end())?;
+        let (start, end) = match direction {
+            BezierParameterRayDirection2::Increasing => (first, second),
+            BezierParameterRayDirection2::Decreasing => (second, first),
+        };
+        let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
+        if parameter.data.shared.simple_root.get() == Some(&true) {
+            let _ = mapped.data.shared.simple_root.set(true);
+        }
+        Ok(Classification::Decided(Self::Algebraic(mapped)))
+    }
+
     /// Promotes a rational algebraic parameter to a represented exact value.
     ///
     /// Irrational and nonrational-coefficient parameters remain algebraic.
