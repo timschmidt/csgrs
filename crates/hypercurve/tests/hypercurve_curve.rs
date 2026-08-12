@@ -2520,6 +2520,62 @@ fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
 }
 
 #[test]
+fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
+    // This regular closed cubic has P(2) = (22/3, -4/3) with tangent
+    // (13, 0), and P(-1) = (4/3, -22/3) with tangent (0, 13). Its right
+    // parallel at distance 6 therefore has the off-diagonal self-contact
+    // (2, -1) at (22/3, -22/3). The coincident t=s component must be divided
+    // out before the two incident domains are projected.
+    let previous_cut = Point2::new(q(22, 3), -q(4, 3));
+    let next_cut = Point2::new(q(4, 3), -q(22, 3));
+    let expected_center = Point2::new(q(22, 3), -q(22, 3));
+    let source = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(-q(5, 9), q(8, 9)),
+        Point2::new(-q(8, 9), q(5, 9)),
+        p(0, 0),
+    );
+    let path =
+        CurvePath2::try_new(vec![Curve2::from(source.clone()), Curve2::from(source)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let result = path
+                .fillet_vertex_by_radius(1, r(6), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("the structural diagonal must leave complete off-diagonal contacts");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                let (expected_previous, expected_next) = if reversed {
+                    (&next_cut, &previous_cut)
+                } else {
+                    (&previous_cut, &next_cut)
+                };
+                candidate.curves()[0].end() == expected_previous
+                    && candidate.curves()[2].start() == expected_next
+                    && fillet.center() == &expected_center
+            };
+            match result.into_value() {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(&candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the off-diagonal projective fillet was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn represented_arc_bezier_fillets_use_circle_incidence() {
     let source_center = Point2::new(-q(7, 16), q(207, 512));
     let source_start = Point2::new(-q(7, 16), -q(49, 256));

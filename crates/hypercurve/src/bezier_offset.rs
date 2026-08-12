@@ -51660,8 +51660,9 @@ impl BezierParallel2 {
                 BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
             ));
         };
-        let projection = match project_parallel_intersection_system_with_incident_rays(
-            &system,
+        let candidates = match project_parallel_intersection_equations_with_incident_rays(
+            &system.first_equation,
+            &system.second_equation,
             first_anchor,
             first_direction,
             first_barrier.as_ref(),
@@ -51670,12 +51671,85 @@ impl BezierParallel2 {
             second_barrier.as_ref(),
             policy,
         )? {
-            Classification::Decided(projection) => projection,
+            Classification::Decided(candidates) => candidates,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let projection = BezierParallelPairProjection2 {
+            candidates,
+            basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+            overlap: None,
+            residual_equations: None,
+        };
         self.replay_parallel_pair_projection(other, &system, projection, false, policy)
+    }
+
+    /// Returns off-diagonal self-contacts on two independently oriented
+    /// authored-span-plus-incident-ray domains.
+    ///
+    /// The structural parameter diagonal is divided from both radical
+    /// equations before projection, exactly as in [`Self::self_intersections`].
+    /// The remaining axes keep their corner roles, so replay is ordered rather
+    /// than using the finite self-contact kernel's unordered-pair filter.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn self_intersections_with_incident_rays(
+        &self,
+        first_anchor: &Real,
+        first_direction: BezierParameterRayDirection2,
+        second_anchor: &Real,
+        second_direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        let first_barrier =
+            match self.incident_ray_regular_barrier(first_anchor, first_direction, policy)? {
+                Classification::Decided(barrier) => barrier,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let second_barrier =
+            match self.incident_ray_regular_barrier(second_anchor, second_direction, policy)? {
+                Classification::Decided(barrier) => barrier,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }) else {
+            return Ok(Classification::Decided(
+                BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+            ));
+        };
+        let source_diagonal_excluded =
+            Classification::Decided(CertifiedParallelSourceOverlap2::Excluded);
+        let Some(projection) = project_parallel_pair_without_components_with_incident_rays(
+            &system,
+            self,
+            self,
+            &source_diagonal_excluded,
+            first_anchor,
+            first_direction,
+            first_barrier.as_ref(),
+            second_anchor,
+            second_direction,
+            second_barrier.as_ref(),
+            policy,
+        )?
+        else {
+            return Ok(Classification::Decided(
+                BezierParallelPairIntersectionSet2::incomplete(
+                    Arc::from([]),
+                    Arc::from([]),
+                    BezierParallelPairIntersectionCandidates2::DegenerateResultant,
+                ),
+            ));
+        };
+        self.replay_parallel_pair_projection(self, &system, projection, false, policy)
     }
 
     /// Tries the bounded structural and exact-rational parallel-pair routes.
@@ -56287,8 +56361,9 @@ fn project_parallel_intersection_system(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn project_parallel_intersection_system_with_incident_rays(
-    system: &BezierParallelPairEquationSystem2,
+fn project_parallel_intersection_equations_with_incident_rays(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
     first_anchor: &Real,
     first_direction: BezierParameterRayDirection2,
     first_barrier: Option<&BezierParameter2>,
@@ -56296,14 +56371,14 @@ fn project_parallel_intersection_system_with_incident_rays(
     second_direction: BezierParameterRayDirection2,
     second_barrier: Option<&BezierParameter2>,
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParallelPairProjection2>> {
+) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
     let first_report = resultant_bivariate_polynomial_system(
-        &system.first_equation,
-        &system.second_equation,
+        first_equation,
+        second_equation,
         CurveResultantParameter::First,
         config,
     );
@@ -56320,16 +56395,13 @@ fn project_parallel_intersection_system_with_incident_rays(
         }
     };
     if matches!(first, ResultantParameterProjection::Degenerate) {
-        return Ok(Classification::Decided(BezierParallelPairProjection2 {
-            candidates: BezierParallelIntersectionCandidates2::DegenerateResultant,
-            basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
-            overlap: None,
-            residual_equations: None,
-        }));
+        return Ok(Classification::Decided(
+            BezierParallelIntersectionCandidates2::DegenerateResultant,
+        ));
     }
     let second_report = resultant_bivariate_polynomial_system(
-        &system.first_equation,
-        &system.second_equation,
+        first_equation,
+        second_equation,
         CurveResultantParameter::Second,
         config,
     );
@@ -56363,12 +56435,7 @@ fn project_parallel_intersection_system_with_incident_rays(
             other_parameters: second_parameters,
         },
     };
-    Ok(Classification::Decided(BezierParallelPairProjection2 {
-        candidates,
-        basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
-        overlap: None,
-        residual_equations: None,
-    }))
+    Ok(Classification::Decided(candidates))
 }
 
 /// Returns the axis-primitive system only after proving saturation preserves
@@ -60065,13 +60132,13 @@ fn divide_bivariate_system_component(
     removed.then_some(residual)
 }
 
-fn project_parallel_pair_without_components(
+fn parallel_pair_residual_equations_without_components(
     system: &BezierParallelPairEquationSystem2,
     first: &BezierParallel2,
     second: &BezierParallel2,
     source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
     policy: &CurveContext,
-) -> CurveResult<Option<BezierParallelPairProjection2>> {
+) -> CurveResult<Option<[BivariatePolynomial; 2]>> {
     let non_ph = certified_non_ph_parallel_pair(first, second, policy)?;
     if !matches!(
         source_overlap,
@@ -60102,9 +60169,82 @@ fn project_parallel_pair_without_components(
     let Some(residual_equations) = residual_equations else {
         return Ok(None);
     };
+    Ok(Some(residual_equations))
+}
+
+fn project_parallel_pair_without_components(
+    system: &BezierParallelPairEquationSystem2,
+    first: &BezierParallel2,
+    second: &BezierParallel2,
+    source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
+    policy: &CurveContext,
+) -> CurveResult<Option<BezierParallelPairProjection2>> {
+    let Some(residual_equations) = parallel_pair_residual_equations_without_components(
+        system,
+        first,
+        second,
+        source_overlap,
+        policy,
+    )?
+    else {
+        return Ok(None);
+    };
     let candidates = match project_parallel_intersection_system(
         &residual_equations[0],
         &residual_equations[1],
+        policy,
+    )? {
+        Classification::Decided(candidates)
+            if !matches!(
+                candidates,
+                BezierParallelIntersectionCandidates2::DegenerateResultant
+            ) =>
+        {
+            candidates
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some(BezierParallelPairProjection2 {
+        candidates,
+        basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+        overlap: None,
+        residual_equations: Some(Box::new(residual_equations)),
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn project_parallel_pair_without_components_with_incident_rays(
+    system: &BezierParallelPairEquationSystem2,
+    first: &BezierParallel2,
+    second: &BezierParallel2,
+    source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
+    first_anchor: &Real,
+    first_direction: BezierParameterRayDirection2,
+    first_barrier: Option<&BezierParameter2>,
+    second_anchor: &Real,
+    second_direction: BezierParameterRayDirection2,
+    second_barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Option<BezierParallelPairProjection2>> {
+    let Some(residual_equations) = parallel_pair_residual_equations_without_components(
+        system,
+        first,
+        second,
+        source_overlap,
+        policy,
+    )?
+    else {
+        return Ok(None);
+    };
+    let candidates = match project_parallel_intersection_equations_with_incident_rays(
+        &residual_equations[0],
+        &residual_equations[1],
+        first_anchor,
+        first_direction,
+        first_barrier,
+        second_anchor,
+        second_direction,
+        second_barrier,
         policy,
     )? {
         Classification::Decided(candidates)

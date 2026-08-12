@@ -8021,19 +8021,28 @@ pub(crate) fn exact_contact_point_evidence(
         }
         BezierParameter2::Algebraic(parameter) => {
             let image = curve.point_at_algebraic_parameter(parameter, policy)?;
-            Ok((matches!(
-                image.status(),
+            Ok(match image.status() {
                 crate::BezierAlgebraicImageStatus::Transformed
-                    | crate::BezierAlgebraicImageStatus::RetainedRationalExpression
-            ) || (image
-                .x()
-                .and_then(|coordinate| coordinate.representation())
-                .is_some()
-                && image
-                    .y()
-                    .and_then(|coordinate| coordinate.representation())
-                    .is_some()))
-            .then_some(RationalBezierIntersectionPointEvidence2::Algebraic(image)))
+                | crate::BezierAlgebraicImageStatus::RetainedRationalExpression => {
+                    Some(RationalBezierIntersectionPointEvidence2::Algebraic(image))
+                }
+                crate::BezierAlgebraicImageStatus::XImageFailed
+                | crate::BezierAlgebraicImageStatus::YImageFailed => {
+                    Some(RationalBezierIntersectionPointEvidence2::Algebraic(
+                        // The coordinate-image package is deliberately bounded.
+                        // Preserve the exact curve/selected-parameter expression
+                        // when one coordinate resultant exceeds that budget;
+                        // consumers resolve or refine it only when a predicate
+                        // actually needs Cartesian coordinates.
+                        RationalBezierAlgebraicPointImage2::from_parametric_source(
+                            curve.clone(),
+                            parameter.clone(),
+                            policy,
+                        ),
+                    ))
+                }
+                crate::BezierAlgebraicImageStatus::InvalidParameterEvidence => None,
+            })
         }
     }
 }
@@ -9409,6 +9418,62 @@ mod tests {
                 .unwrap(),
             Some(Classification::Decided(true))
         );
+    }
+
+    #[test]
+    fn exact_contact_evidence_retains_a_bounded_high_degree_image_failure() {
+        let policy = CurveContext::STRICT;
+        let mut coefficients = vec![Real::zero(); 42];
+        coefficients[0] = (Real::from(-1_i8) / Real::from(2_i8)).unwrap();
+        coefficients[41] = Real::one();
+        let Classification::Decided(polynomial) =
+            BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap()
+        else {
+            panic!("degree-41 parameter polynomial was not certified");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+        else {
+            panic!("degree-41 root interval was not certified");
+        };
+        let Classification::Decided(parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+        else {
+            panic!("positive degree-41 parameter was not isolated");
+        };
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 2),
+                Point2::from_values(3, -1),
+            ],
+            vec![Real::one(), Real::from(2_i8), Real::from(3_i8)],
+        )
+        .unwrap();
+        let bounded = curve
+            .point_at_algebraic_parameter(&parameter, &policy)
+            .unwrap();
+        assert!(matches!(
+            bounded.status(),
+            crate::BezierAlgebraicImageStatus::XImageFailed
+                | crate::BezierAlgebraicImageStatus::YImageFailed
+        ));
+
+        let evidence = exact_contact_point_evidence(
+            &curve,
+            &BezierParameter2::Algebraic(parameter.clone()),
+            &policy,
+        )
+        .unwrap()
+        .expect("the exact parametric source must survive a bounded image failure");
+        let RationalBezierIntersectionPointEvidence2::Algebraic(retained) = evidence else {
+            panic!("the high-degree contact must remain algebraic");
+        };
+        assert_eq!(
+            retained.status(),
+            crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+        );
+        assert_eq!(retained.retained_parameter(), Some(&parameter));
     }
 
     #[test]

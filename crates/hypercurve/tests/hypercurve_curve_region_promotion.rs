@@ -4426,6 +4426,92 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
 }
 
 #[test]
+fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
+    let end = Point2::new(-q(14, 65), q(196, 325));
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            p(1, 1),
+        )),
+        Curve2::from(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(99, 130), q(282, 325)),
+            end.clone(),
+        )),
+        Curve2::from(LineSeg2::try_new(end, p(0, 0)).unwrap()),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let (oriented_path, vertex_index) = if reversed {
+                (path.clone().reversed(&policy).unwrap().into_value(), 2)
+            } else {
+                (path.clone(), 1)
+            };
+            let source = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&oriented_path),
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let result = source
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    vertex_index,
+                    q(2, 5),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("the algebraic Bezier-pair incident cells must remain retained");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let candidates = match result.into_value() {
+                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                CurveCornerSolutions2::Multiple(candidates) => candidates,
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the projective algebraic fillet was lost: {reason:?}")
+                }
+            };
+            let has_projective_selected_circle = |candidate: &&CurveRegion2| {
+                let fragments = candidate.boundary_loops()[0].fragments();
+                fragments
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        )
+                    })
+                    .count()
+                    >= 2
+                    && fragments.iter().any(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                    })
+            };
+            let filleted = candidates
+                .iter()
+                .find(has_projective_selected_circle)
+                .expect("both projective algebraic cuts and the selected circle must be retained");
+            assert_eq!(
+                certified(filleted.classify_point(&p(10, 10), &policy).unwrap()),
+                Classification::Decided(RegionPointLocation::Outside),
+            );
+            let distant =
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
+                    .unwrap()
+                    .into_value();
+            let replay = filleted
+                .boolean_regions(&distant, &policy)
+                .expect("the projective algebraic fillet must re-enter the Boolean kernel")
+                .into_value();
+            assert!(replay.intersection().is_empty());
+            assert_eq!(replay.union().boundary_loops().len(), 2);
+        }
+    }
+}
+
+#[test]
 fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = analytic_parallel_cap_region(&policy)

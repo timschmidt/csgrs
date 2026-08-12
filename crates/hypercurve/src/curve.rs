@@ -4825,7 +4825,21 @@ fn solve_carrier_fillet_corner(
                 saw_outside_domain = true;
                 continue;
             };
-            let cut_point_relation = if center.point.as_exact().is_none()
+            let cut_point_relation = if center
+                .retained_anchor_evidence
+                .as_ref()
+                .and_then(|evidence| evidence.cross)
+                .is_some_and(|cross| matches!(cross, RealSign::Positive | RealSign::Negative))
+            {
+                // Two contacts on one nonzero-radius circle cannot occupy the
+                // same point with nonparallel tangents: both tangents would be
+                // perpendicular to the same radial vector. The pair replay's
+                // exact nonzero tangent cross is therefore also a constant-
+                // time distinct-cut certificate and avoids constructing a
+                // potentially high-degree Cartesian compositum solely for
+                // this degeneracy test.
+                Classification::Decided(false)
+            } else if center.point.as_exact().is_none()
                 && center
                     .retained_anchor_evidence
                     .as_ref()
@@ -5864,19 +5878,16 @@ fn fillet_offset_centers(
             let direct_extension = mode == CurveCornerMode2::TrimOrExtend
                 && previous_source.direct().is_some()
                 && next_source.direct().is_some();
-            if direct_extension && identical_supports {
-                // The ordinary self-contact authority removes the structural
-                // diagonal on the unit square. Its incident-ray analogue must
-                // remove that same positive-dimensional component before it
-                // may claim the exterior pair set is complete.
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Predicate,
-                ));
-            }
             let use_incident_rays = direct_extension;
-            let intersections = match (if use_incident_rays {
+            let intersections = match (if use_incident_rays && identical_supports {
+                previous.self_intersections_with_incident_rays(
+                    &Real::one(),
+                    crate::BezierParameterRayDirection2::Increasing,
+                    &Real::zero(),
+                    crate::BezierParameterRayDirection2::Decreasing,
+                    policy,
+                )
+            } else if use_incident_rays {
                 previous.parallel_intersections_with_incident_rays(
                     next,
                     &Real::one(),
