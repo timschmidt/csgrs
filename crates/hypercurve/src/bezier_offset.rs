@@ -47865,6 +47865,64 @@ fn parallel_pair_set_from_parallel_rational(
     }
 }
 
+fn rational_self_contact_on_parallel(
+    parallel: &BezierParallel2,
+    mut contact: BezierParallelPairIntersectionContact2,
+    policy: &CurveContext,
+) -> CurveResult<BezierParallelPairIntersectionContact2> {
+    let tangent_relation = match (
+        parallel.parallel_derivative_scale_sign(&contact.first_parameter, policy)?,
+        parallel.parallel_derivative_scale_sign(&contact.second_parameter, policy)?,
+        parallel.source_tangent_pair_cross_and_dot_signs(
+            &contact.first_parameter,
+            parallel,
+            &contact.second_parameter,
+            policy,
+        )?,
+    ) {
+        (
+            Classification::Decided(first @ (RealSign::Positive | RealSign::Negative)),
+            Classification::Decided(second @ (RealSign::Positive | RealSign::Negative)),
+            Classification::Decided((cross, dot)),
+        ) => {
+            let scale = product_sign(first, second);
+            Some((product_sign(cross, scale), product_sign(dot, scale)))
+        }
+        _ => None,
+    };
+    if let (Some(rational_cross), Some((parallel_cross, _))) =
+        (contact.tangent_cross_sign, tangent_relation)
+        && rational_cross != parallel_cross
+    {
+        return Err(CurveError::Topology(
+            "an exact rational parallel self-contact changed tangent orientation".to_owned(),
+        ));
+    }
+    contact.tangent_cross_sign = contact
+        .tangent_cross_sign
+        .or(tangent_relation.map(|relation| relation.0));
+    contact.tangent_dot_sign = tangent_relation.map(|relation| relation.1);
+    Ok(contact)
+}
+
+fn parallel_pair_set_from_rational_self_contacts(
+    parallel: &BezierParallel2,
+    result: RationalBezierIntersectionContacts2,
+    policy: &CurveContext,
+) -> CurveResult<BezierParallelPairIntersectionSet2> {
+    let mut result = parallel_pair_set_from_parallel_rational(
+        parallel_set_from_rational_contacts(result),
+        false,
+    );
+    result.contacts = result
+        .contacts
+        .iter()
+        .cloned()
+        .map(|contact| rational_self_contact_on_parallel(parallel, contact, policy))
+        .collect::<CurveResult<Arc<[_]>>>()?;
+    Ok(result)
+}
+
 fn parallel_set_from_rational_contacts(
     result: RationalBezierIntersectionContacts2,
 ) -> BezierParallelIntersectionSet2 {
@@ -50492,8 +50550,9 @@ impl BezierParallel2 {
     /// Returns every unordered off-diagonal self-contact of this analytic parallel.
     ///
     /// Zero-distance and exactly materializable Pythagorean-hodograph carriers
-    /// delegate to the rational authority. General carriers use one bivariate
-    /// projection and replay graph. Every isolated pair must satisfy all three
+    /// delegate to the rational self-contact authority, including non-injective
+    /// carriers. General carriers use one bivariate projection and replay graph.
+    /// Every isolated pair must satisfy all three
     /// squared equations and the corresponding unsquared signs. At parallel
     /// tangents, norm replay selects `|d-sign(Hp·Hq)e|` and a final normal-side
     /// predicate selects its direction. No square root is numerically evaluated.
@@ -50505,13 +50564,30 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
         match self.exact_rational_parallel_component(policy)? {
-            Classification::Decided(Some(curve)) if curve.has_certified_injective_axis(policy) => {
+            Classification::Decided(Some(curve)) => {
+                let mut fallback_point_evidence = |parameter: &BezierParameter2| {
+                    Ok(Some(
+                        RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                            crate::BezierAnalyticParallelPoint2::new(
+                                self.clone(),
+                                parameter.clone(),
+                                policy,
+                            ),
+                        ),
+                    ))
+                };
+                let result = match curve.self_intersection_contacts_with_point_evidence_classified(
+                    policy,
+                    &mut fallback_point_evidence,
+                )? {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 return Ok(Classification::Decided(
-                    BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+                    parallel_pair_set_from_rational_self_contacts(self, result, policy)?,
                 ));
-            }
-            Classification::Decided(Some(_)) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
@@ -59704,6 +59780,11 @@ enum BivariateParameterPairReplay {
     LinearLift(CurveResultantParameter, usize),
 }
 
+#[derive(Default)]
+pub(crate) struct BivariateParameterPairReplayCache {
+    parameter_lifts: [Option<CurveIntersectionParameterLiftReport>; 2],
+}
+
 fn replay_bivariate_parameter_pair(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -59791,6 +59872,29 @@ fn replay_bivariate_parameter_pair(
         Classification::Decided(replay) => Ok(Classification::Decided(replay)),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+/// Replays one Cartesian pair drawn from the two resultant projections of an
+/// exact bivariate system. The cache shares its exact linear subresultant lifts
+/// across every pair from the same system.
+pub(crate) fn replay_projected_bivariate_parameter_pair(
+    equations: &[BivariatePolynomial; 2],
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    policy: &CurveContext,
+    config: CurveIntersectionResultantConfig,
+    cache: &mut BivariateParameterPairReplayCache,
+) -> CurveResult<Classification<bool>> {
+    Ok(replay_bivariate_parameter_pair(
+        &equations[0],
+        &equations[1],
+        first_parameter,
+        second_parameter,
+        policy,
+        config,
+        &mut cache.parameter_lifts,
+    )?
+    .map(|replay| replay != BivariateParameterPairReplay::Rejected))
 }
 
 fn replay_parallel_rational_contact_pair(
@@ -77275,6 +77379,52 @@ mod conversion_tests {
                 contact.tangent_cross_sign(),
                 Some(RealSign::Positive | RealSign::Negative)
             ));
+        }
+    }
+
+    #[test]
+    fn exact_rational_parallel_self_intersections_reuse_rational_authority() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let loop_controls = vec![point(9, 0), point(-7, 3), point(-7, -10), point(9, 9)];
+        let sources = [
+            RationalBezier2::try_new(loop_controls.clone(), vec![Real::one(); 4]).unwrap(),
+            RationalBezier2::try_new(
+                loop_controls,
+                vec![
+                    Real::one(),
+                    Real::from(2_i8),
+                    Real::from(4_i8),
+                    Real::from(8_i8),
+                ],
+            )
+            .unwrap(),
+            RationalBezier2::try_new(
+                vec![point(3, 0), point(-5, 1), point(-5, -6), point(3, 3)],
+                vec![Real::one(); 4],
+            )
+            .unwrap(),
+        ];
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for source in &sources {
+                let parallel = source.parallel_left(Real::zero()).unwrap();
+                let result = match parallel.self_intersections(&policy).unwrap() {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        panic!("exact rational self-contact remained uncertain: {reason:?}")
+                    }
+                };
+                assert!(result.is_complete());
+                let [contact] = result.contacts() else {
+                    panic!("the rational loop must retain one off-diagonal self-contact")
+                };
+                assert!(contact.is_certified_transverse());
+                assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Negative));
+                assert!(matches!(
+                    contact.tangent_dot_sign(),
+                    Some(RealSign::Positive | RealSign::Negative)
+                ));
+            }
         }
     }
 

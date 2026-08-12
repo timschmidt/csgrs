@@ -17548,6 +17548,76 @@ mod tests {
         }
     }
 
+    #[test]
+    fn one_fragment_ph_loop_fillets_through_rational_self_contact() {
+        let root_three = Real::from(3_i8).sqrt().unwrap();
+        let control_x = (Real::one() / Real::from(18_i8)).unwrap();
+        let control_y = -((Real::one() / (&root_three * Real::from(6_i8))).unwrap());
+        let radius = ((Real::from(7_i8) * &root_three) / Real::from(768_i16)).unwrap();
+        let seam = p(0, 0);
+        let source = RationalBezier2::try_new(
+            vec![
+                seam.clone(),
+                Point2::new(control_x.clone(), control_y.clone()),
+                Point2::new(-control_x, control_y),
+                seam.clone(),
+            ],
+            vec![Real::one(); 4],
+        )
+        .expect("the closed cubic PH source is finite");
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let range = CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero())),
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                );
+                let mut fragment = BezierSplitFragment2::SelectedFiber(
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        BezierSelectedFiberSource2::Rational(source.clone()),
+                        range,
+                        RationalBezierIntersectionPointEvidence2::Exact(seam.clone()),
+                        RationalBezierIntersectionPointEvidence2::Exact(seam.clone()),
+                    ),
+                );
+                if reversed {
+                    fragment = fragment
+                        .reversed()
+                        .expect("the selected closed PH cubic reverses exactly");
+                }
+                let boundary = CurveRegionBoundaryLoop2::new(vec![fragment], &policy)
+                    .expect("the selected one-fragment PH loop closes exactly");
+                let region = CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![if reversed {
+                        CurveBoundaryInteriorSide2::Left
+                    } else {
+                        CurveBoundaryInteriorSide2::Right
+                    }],
+                )
+                .expect("the selected PH loop has authored topology");
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        0,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the exact PH self-contact must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(result.value.candidate_count() > 0);
+                assert_one_fragment_edit_shape(&result.value, 1, 1);
+            }
+        }
+    }
+
     fn parallel_pair_fillet_region(
         previous_retained: bool,
         next_retained: bool,

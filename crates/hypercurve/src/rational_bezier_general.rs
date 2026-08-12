@@ -3232,6 +3232,18 @@ impl RationalBezier2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        self.self_intersection_contacts_with_point_evidence_classified(policy, &mut |_| Ok(None))
+    }
+
+    pub(crate) fn self_intersection_contacts_with_point_evidence_classified(
+        &self,
+        policy: &CurveContext,
+        fallback_point_evidence: &mut dyn FnMut(
+            &BezierParameter2,
+        ) -> CurveResult<
+            Option<RationalBezierIntersectionPointEvidence2>,
+        >,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if self.has_certified_injective_axis(policy) {
             return Ok(Classification::Decided(
                 RationalBezierIntersectionContacts2::NoIntersection,
@@ -3265,6 +3277,8 @@ impl RationalBezier2 {
                 first_parameters,
                 second_parameters,
                 true,
+                Some(&equations),
+                Some(fallback_point_evidence),
                 policy,
             )? {
                 Classification::Decided(replayed) => replayed,
@@ -4636,6 +4650,8 @@ impl RationalBezier2 {
             first_parameters,
             second_parameters,
             false,
+            None,
+            None,
             policy,
         )
     }
@@ -4646,6 +4662,13 @@ impl RationalBezier2 {
         first_parameters: &[BezierParameter2],
         second_parameters: &[BezierParameter2],
         unordered_self_pairs: bool,
+        pair_equations: Option<&[BivariatePolynomial; 2]>,
+        mut certified_pair_point_evidence: Option<
+            &mut dyn FnMut(
+                &BezierParameter2,
+            )
+                -> CurveResult<Option<RationalBezierIntersectionPointEvidence2>>,
+        >,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         if !unordered_self_pairs
@@ -4677,10 +4700,12 @@ impl RationalBezier2 {
             .iter()
             .map(|parameter| candidate_parameter_is_simple_root(parameter, policy))
             .collect::<CurveResult<Vec<_>>>()?;
+        let mut pair_replay_cache =
+            crate::bezier_offset::BivariateParameterPairReplayCache::default();
         let mut incomplete = false;
         let mut contacts = Vec::new();
         for first_index in 0..first_parameters.len() {
-            for second_index in 0..second_parameters.len() {
+            'second_parameter: for second_index in 0..second_parameters.len() {
                 if unordered_self_pairs {
                     match first_parameters[first_index]
                         .cmp_by_refinement(&second_parameters[second_index], policy)?
@@ -4691,6 +4716,52 @@ impl RationalBezier2 {
                             return Ok(Classification::Uncertain(reason));
                         }
                     }
+                }
+                let projected_pair = if let Some(equations) = pair_equations {
+                    let replay = crate::bezier_offset::replay_projected_bivariate_parameter_pair(
+                        equations,
+                        &first_parameters[first_index],
+                        &second_parameters[second_index],
+                        policy,
+                        CurveIntersectionResultantConfig {
+                            min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+                            max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
+                        },
+                        &mut pair_replay_cache,
+                    )?;
+                    match replay {
+                        Classification::Decided(false) => continue 'second_parameter,
+                        Classification::Decided(true) => Some(true),
+                        Classification::Uncertain(_) => None,
+                    }
+                } else {
+                    None
+                };
+                if projected_pair == Some(true) {
+                    let point = match exact_contact_point_evidence(
+                        self,
+                        &first_parameters[first_index],
+                        policy,
+                    )? {
+                        Some(point) => Some(point),
+                        None => match certified_pair_point_evidence.as_deref_mut() {
+                            Some(fallback) => fallback(&first_parameters[first_index])?,
+                            None => None,
+                        },
+                    };
+                    let Some(point) = point else {
+                        incomplete = true;
+                        continue;
+                    };
+                    contacts.push(RationalBezierIntersectionContact2 {
+                        first_parameter: first_parameters[first_index].clone(),
+                        second_parameter: second_parameters[second_index].clone(),
+                        point,
+                        certified_transverse: first_simple_roots[first_index]
+                            && second_simple_roots[second_index],
+                        tangent_cross_sign: None,
+                    });
+                    continue;
                 }
                 if first_replays[first_index].is_none() {
                     first_replays[first_index] =
