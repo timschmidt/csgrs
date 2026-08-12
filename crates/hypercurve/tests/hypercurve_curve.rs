@@ -1807,6 +1807,55 @@ fn rational_chamfer_materializes_the_incident_projective_cell() {
 }
 
 #[test]
+fn line_parabola_mixed_exact_algebraic_fillet_requires_retained_region() {
+    let half = q(1, 2);
+    let radius = q(299, 125);
+    let line_direction = Point2::new(q(38280, 91901), q(83549, 91901));
+    let corner = p(1, 1);
+    let line_end = Point2::new(
+        corner.x() + line_direction.x(),
+        corner.y() + line_direction.y(),
+    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(half.clone(), Real::zero()),
+                corner.clone(),
+            )),
+            Curve2::from(LineSeg2::try_new(corner.clone(), line_end.clone()).unwrap()),
+        ])
+        .unwrap();
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let result = path.fillet_vertex_by_radius(
+                1,
+                radius.clone(),
+                CurveCornerMode2::TrimOrExtend,
+                &policy,
+            );
+            assert!(
+                matches!(
+                    &result,
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.operation() == CurveOperation2::Fillet
+                            && matches!(
+                                blocker.family(),
+                                CurveFamily2::QuadraticBezier | CurveFamily2::Line
+                            )
+                            && blocker.reason() == UncertaintyReason::Unsupported
+                ),
+                "policy={policy:?}, reversed={reversed}, result={result:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
     let path = right_angle_line_path(4);
     assert_eq!(

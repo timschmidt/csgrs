@@ -9413,9 +9413,11 @@ impl CurveRegion2 {
     /// Exact candidates come from the same carrier-interaction authority used
     /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
     /// or fill rule. Represented direct and canonical spline/NURBS Bezier trims
-    /// use the retained path authority. Retained affine algebraic chords also
-    /// support exact exterior-ray fillet contacts without endpoint
-    /// materialization.
+    /// use the retained path authority. Retained affine algebraic chords and
+    /// direct polynomial or rational Beziers paired with affine lines also
+    /// support exact exterior-ray fillet contacts. Direct Bezier incident
+    /// cells are partitioned at projective and regularity barriers, and retain
+    /// exact or algebraic cuts without endpoint materialization.
     pub fn fillet_loop_vertex_by_radius(
         &self,
         loop_index: usize,
@@ -9639,20 +9641,6 @@ impl CurveRegion2 {
                 }
             }
         };
-        if mode == CurveCornerMode2::TrimOrExtend
-            && (!previous_carrier.supports_extension(CurveOperation2::Fillet)
-                || !next_carrier.supports_extension(CurveOperation2::Fillet))
-        {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                if !previous_carrier.supports_extension(CurveOperation2::Fillet) {
-                    previous_family
-                } else {
-                    next_family
-                },
-                UncertaintyReason::Unsupported,
-            ));
-        }
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
             next_carrier,

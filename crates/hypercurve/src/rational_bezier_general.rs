@@ -8131,6 +8131,7 @@ impl RationalParameterImageMap2 {
                 source,
                 &self.coefficients.0,
                 &self.coefficients.1,
+                true,
                 &strict_policy,
             )?;
             if strict.is_decided() || !self.policy.permits_approximate_512() {
@@ -8140,6 +8141,7 @@ impl RationalParameterImageMap2 {
                 source,
                 &self.coefficients.0,
                 &self.coefficients.1,
+                true,
                 &self.policy,
             );
         }
@@ -8192,12 +8194,38 @@ impl RationalParameterImageMap2 {
             &self.policy,
         )
     }
+
+    /// Maps to any finite affine parameter. The caller owns the projective
+    /// cell and placement checks; unlike [`Self::image`], this does not clip
+    /// the image to the authored unit segment.
+    pub(crate) fn image_unbounded(
+        &self,
+        source: &BezierParameter2,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        let strict_policy = self.policy.strict_counterpart();
+        let strict = rational_parameter_image_unbounded(
+            source,
+            &self.coefficients.0,
+            &self.coefficients.1,
+            &strict_policy,
+        )?;
+        if strict.is_decided() || !self.policy.permits_approximate_512() {
+            return Ok(strict);
+        }
+        rational_parameter_image_unbounded(
+            source,
+            &self.coefficients.0,
+            &self.coefficients.1,
+            &self.policy,
+        )
+    }
 }
 
 fn exact_rational_parameter_image(
     source: &Real,
     numerator: &[Real],
     denominator: &[Real],
+    unit_domain: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let denominator_value = evaluate_power_polynomial(denominator, source);
@@ -8207,12 +8235,54 @@ fn exact_rational_parameter_image(
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     let value = (evaluate_power_polynomial(numerator, source) / denominator_value)?;
+    if !unit_domain {
+        return Ok(Classification::Decided(Some(BezierParameter2::Exact(
+            value,
+        ))));
+    }
     match BezierParameter2::exact(value, policy) {
         Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
         Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
         Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
         Err(error) => Err(error),
     }
+}
+
+fn rational_parameter_image_unbounded(
+    source: &BezierParameter2,
+    numerator: &[Real],
+    denominator: &[Real],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let BezierParameter2::Algebraic(source) = source else {
+        return exact_rational_parameter_image(
+            source
+                .as_exact()
+                .expect("a non-algebraic Bezier parameter is exact"),
+            numerator,
+            denominator,
+            false,
+            policy,
+        );
+    };
+    let map = AlgebraicRootRationalMap::new(
+        source.polynomial().coefficients(),
+        numerator,
+        denominator,
+        policy.predicate_policy(),
+    );
+    let evidence = map.transform(&parameter_representation(source, policy));
+    if evidence.status == AlgebraicRootRationalImageStatus::CertifiedZeroDenominator {
+        return Ok(Classification::Decided(None));
+    }
+    if evidence.status != AlgebraicRootRationalImageStatus::Transformed {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    let Some(representation) = evidence.representation.as_ref() else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    BezierParameter2::from_algebraic_root_representation_unbounded(representation, policy)
+        .map(|parameter| parameter.map(Some))
 }
 
 fn conic_parameter_candidate(

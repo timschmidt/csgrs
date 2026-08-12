@@ -1619,11 +1619,34 @@ impl BezierParameter2 {
         representation: &AlgebraicRootRepresentation,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
+        Self::from_algebraic_root_representation_with_domain(representation, true, policy)
+    }
+
+    /// Retains a finite algebraic parameter without imposing the authored
+    /// Bezier segment domain. Incident-cell corner operations use this after a
+    /// separate exact pole/regularity certificate has selected the affine
+    /// continuation containing the authored endpoint.
+    pub(crate) fn from_algebraic_root_representation_unbounded(
+        representation: &AlgebraicRootRepresentation,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        Self::from_algebraic_root_representation_with_domain(representation, false, policy)
+    }
+
+    fn from_algebraic_root_representation_with_domain(
+        representation: &AlgebraicRootRepresentation,
+        unit_domain: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
         if !representation.is_valid() || representation.interval.distinct_root_count != 1 {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         if let Some(exact) = representation.exact_rational_witness() {
-            return Self::exact(exact.clone(), policy);
+            return if unit_domain {
+                Self::exact(exact.clone(), policy)
+            } else {
+                Ok(Classification::Decided(Self::Exact(exact.clone())))
+            };
         }
         let polynomial = match BezierParameterPolynomial::try_new_power_basis(
             representation.polynomial_coefficients.clone(),
@@ -1634,11 +1657,19 @@ impl BezierParameter2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let interval = match BezierParameterInterval::try_new(
-            representation.interval.lower.clone(),
-            representation.interval.upper.clone(),
-            policy,
-        )? {
+        let interval = match if unit_domain {
+            BezierParameterInterval::try_new(
+                representation.interval.lower.clone(),
+                representation.interval.upper.clone(),
+                policy,
+            )
+        } else {
+            BezierParameterInterval::try_new_ordered(
+                representation.interval.lower.clone(),
+                representation.interval.upper.clone(),
+                policy,
+            )
+        }? {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));

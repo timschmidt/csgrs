@@ -4,12 +4,12 @@ use hypercurve::{
     RationalBezierIntersectionPointEvidence2,
 };
 use hypercurve::{
-    BezierFlatteningOptions, BezierSplitFragment2, CircularArc2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerNoSolution2,
-    CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
-    Segment2, Similarity2,
+    BezierFlatteningOptions, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
+    Contour2, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
+    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
+    FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -3493,6 +3493,166 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
                 certified(filleted.classify_point(&p(2, 0), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside),
             );
+        }
+    }
+}
+
+#[test]
+fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
+    fn source_path(line_end: Point2) -> CurvePath2 {
+        let corner = p(1, 1);
+        CurvePath2::try_new(vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(q(1, 2), Real::zero()),
+                corner.clone(),
+            )),
+            Curve2::from(LineSeg2::try_new(corner, line_end.clone()).unwrap()),
+            Curve2::from(LineSeg2::try_new(line_end, p(-2, 3)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-2, 3), p(-2, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-2, -2), p(0, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(0, -2), p(0, 0)).unwrap()),
+        ])
+        .unwrap()
+    }
+
+    fn corner_index(region: &CurveRegion2) -> usize {
+        let fragments = region.boundary_loops()[0].fragments();
+        (0..fragments.len())
+            .find(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                matches!(
+                    (previous, next),
+                    (
+                        BezierSplitFragment2::Materialized {
+                            curve: previous, ..
+                        },
+                        BezierSplitFragment2::Materialized { curve: next, .. }
+                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
+                )
+            })
+            .expect("the line/parabola corner remains explicit")
+    }
+
+    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
+        match solutions {
+            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+            CurveCornerSolutions2::Multiple(candidates) => candidates,
+            CurveCornerSolutions2::NoSolution(reason) => {
+                panic!("the incident cell must contain a fillet: {reason:?}")
+            }
+        }
+    }
+
+    let exact_line_end = Point2::new(Real::one() + q(38280, 91901), Real::one() + q(83549, 91901));
+    let algebraic_line_end = Point2::new(q(23, 13), q(37, 13));
+    let exact_cut = Point2::new(q(6, 5), q(36, 25));
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let edit = |path: CurvePath2, radius: Real| {
+                let path = if reversed {
+                    path.reversed(&policy)
+                        .expect("the exact fixture reverses")
+                        .into_value()
+                } else {
+                    path
+                };
+                let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                    .expect("the exact fixture promotes")
+                    .into_value();
+                let corner = corner_index(&region);
+                candidates(
+                    region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            radius,
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the regular incident cell must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        })
+                        .into_value(),
+                )
+            };
+
+            let exact = edit(source_path(exact_line_end.clone()), q(299, 125))
+                .into_iter()
+                .find(|candidate| {
+                    candidate.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::Materialized {
+                                    curve: BezierSubcurve2::Quadratic(curve), ..
+                                } if curve.start() == &exact_cut || curve.end() == &exact_cut
+                            )
+                        })
+                })
+                .expect("the represented exterior parabola cut must be retained");
+            assert_eq!(
+                exact
+                    .classify_point(&p(-1, -1), &policy)
+                    .expect("the exact exterior fillet remains classifiable")
+                    .into_value(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+
+            let algebraic = edit(source_path(algebraic_line_end.clone()), q(1, 2))
+                .into_iter()
+                .find(|candidate| {
+                    let mut extended_parabola = false;
+                    let mut selected_circle = false;
+                    for fragment in candidate.boundary_loops()[0].fragments() {
+                        match fragment {
+                            BezierSplitFragment2::AlgebraicEndpointImages {
+                                start,
+                                end,
+                                source_curve: Some(BezierSubcurve2::Quadratic(curve)),
+                                ..
+                            } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
+                                || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))
+                                && (curve.start() == &p(0, 0) || curve.end() == &p(0, 0))
+                                && curve.start() != &p(1, 1)
+                                && curve.end() != &p(1, 1) =>
+                            {
+                                extended_parabola = true;
+                            }
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                                selected_circle = true;
+                            }
+                            _ => {}
+                        }
+                    }
+                    extended_parabola && selected_circle
+                })
+                .expect("the irrational exterior parabola cut must remain exact");
+            assert_eq!(
+                algebraic
+                    .classify_point(&p(-1, -1), &policy)
+                    .expect("the algebraic exterior fillet remains classifiable")
+                    .into_value(),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
+            let disjoint =
+                CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
+                    .unwrap()
+                    .into_value();
+            for filleted in [&exact, &algebraic] {
+                let replay = filleted
+                    .boolean_regions(&disjoint, &policy)
+                    .expect("the exterior fillet must re-enter the Boolean kernel");
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                assert!(replay.value.intersection().is_empty());
+            }
         }
     }
 }

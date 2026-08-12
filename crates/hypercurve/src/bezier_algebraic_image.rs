@@ -993,7 +993,10 @@ impl RationalBezierAlgebraicPointImage2 {
         let parameter = if let Some(parameter) = image.retained_parameter() {
             BezierParameter2::Algebraic(parameter.clone())
         } else {
-            match BezierParameter2::from_algebraic_root_representation(image.parameter(), policy)? {
+            match BezierParameter2::from_algebraic_root_representation_unbounded(
+                image.parameter(),
+                policy,
+            )? {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
