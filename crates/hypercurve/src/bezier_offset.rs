@@ -42235,7 +42235,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         };
-        match (classify(&self.data.first), classify(&self.data.second)) {
+        let incidence = match (classify(&self.data.first), classify(&self.data.second)) {
             (
                 Classification::Decided(crate::classify::LineSide::On),
                 Classification::Decided(crate::classify::LineSide::On),
@@ -42249,6 +42249,17 @@ impl BezierAlgebraicChordPairPoint2 {
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
                 Classification::Uncertain(reason)
             }
+        };
+        if matches!(incidence, Classification::Decided(_)) {
+            return incidence;
+        }
+        // A foreign retained point representation need not implement either
+        // support-side predicate. Conservative exact boxes still prove
+        // inequality without flattening either point into coordinates.
+        let point = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(self.clone());
+        match retained_point_evidence_equality_by_refinement(&point, other, policy) {
+            decided @ Classification::Decided(_) => decided,
+            Classification::Uncertain(_) => incidence,
         }
     }
 
@@ -42304,11 +42315,31 @@ impl BezierAlgebraicChordPairPoint2 {
                 order.map(std::cmp::Ordering::reverse)
             });
         };
+        // Support-side incidence is the cheaper authority and proves equality.
+        // When a foreign retained representation cannot enter that predicate,
+        // the carrier's certified injective axis still orders exact boxes.
+        let compare_coordinates = || {
+            let point = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(self.clone());
+            let order = algebraic_chord_point_coordinate_order(
+                &point,
+                other,
+                chord.data.parameter_axis.axis,
+                policy,
+            )?;
+            Ok(if chord.data.parameter_axis.coordinate_increases {
+                order
+            } else {
+                order.map(std::cmp::Ordering::reverse)
+            })
+        };
         let opposite = match BezierAlgebraicChordSupportPredicate2::try_new(opposite_chord, policy)?
         {
             Classification::Decided(predicate) => predicate,
             Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+                return match compare_coordinates()? {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(_) => Ok(Classification::Uncertain(reason)),
+                };
             }
         };
         let side = match opposite.oriented_side(other, policy)? {
@@ -42317,7 +42348,10 @@ impl BezierAlgebraicChordPairPoint2 {
                 if let Some(other) = correlated_other {
                     return self.cmp_on_common_chord(chord, other, policy);
                 }
-                return Ok(Classification::Uncertain(reason));
+                return match compare_coordinates()? {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(_) => Ok(Classification::Uncertain(reason)),
+                };
             }
         };
         if side == crate::classify::LineSide::On {
@@ -42355,7 +42389,7 @@ impl BezierAlgebraicChordPairPoint2 {
             if let Some(other) = correlated_other {
                 return self.cmp_on_common_chord(chord, other, policy);
             }
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            return compare_coordinates();
         };
         Ok(Classification::Decided(
             if owner.data.parameter_axis.coordinate_increases
