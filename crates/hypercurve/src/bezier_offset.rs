@@ -51688,10 +51688,11 @@ impl BezierParallel2 {
     /// Returns off-diagonal self-contacts on two independently oriented
     /// authored-span-plus-incident-ray domains.
     ///
-    /// The structural parameter diagonal is divided from both radical
-    /// equations before projection, exactly as in [`Self::self_intersections`].
-    /// The remaining axes keep their corner roles, so replay is ordered rather
-    /// than using the finite self-contact kernel's unordered-pair filter.
+    /// An exactly rational PH parallel first reuses rational coordinate
+    /// equality; a general non-PH parallel divides the structural parameter
+    /// diagonal from both radical equations. The remaining axes keep their
+    /// corner roles, so replay is ordered rather than using the finite self-
+    /// contact kernel's unordered-pair filter.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn self_intersections_with_incident_rays(
         &self,
@@ -51715,6 +51716,31 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+        match self.exact_rational_parallel_component(policy)? {
+            Classification::Decided(Some(curve)) => {
+                let result = match curve.self_intersection_contacts_with_incident_rays_classified(
+                    first_anchor,
+                    first_direction,
+                    first_barrier.as_ref(),
+                    second_anchor,
+                    second_direction,
+                    second_barrier.as_ref(),
+                    policy,
+                )? {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return Ok(Classification::Decided(
+                    parallel_pair_set_from_rational_self_contacts(self, result, policy)?,
+                ));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
         let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {

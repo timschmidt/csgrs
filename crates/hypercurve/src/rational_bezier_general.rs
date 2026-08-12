@@ -1336,6 +1336,72 @@ fn project_symmetric_self_intersection_system(
     }))
 }
 
+#[allow(clippy::too_many_arguments)]
+fn project_symmetric_self_intersection_system_with_incident_rays(
+    equations: &[BivariatePolynomial; 2],
+    first_anchor: &Real,
+    first_direction: BezierParameterRayDirection2,
+    first_barrier: Option<&BezierParameter2>,
+    second_anchor: &Real,
+    second_direction: BezierParameterRayDirection2,
+    second_barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    let project = |parameter, anchor, direction, barrier| {
+        resultant_parameter_projection_with_incident_ray(
+            resultant_bivariate_polynomial_system(
+                &equations[0],
+                &equations[1],
+                parameter,
+                CurveIntersectionResultantConfig {
+                    min_precision: RATIONAL_INTERSECTION_RESULTANT_PRECISION,
+                    max_resultant_degree: MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE,
+                },
+            ),
+            anchor,
+            direction,
+            barrier,
+            policy,
+        )
+    };
+    let first = match project(
+        CurveResultantParameter::First,
+        first_anchor,
+        first_direction,
+        first_barrier,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match project(
+        CurveResultantParameter::Second,
+        second_anchor,
+        second_direction,
+        second_barrier,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(Classification::Decided(match (first, second) {
+        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
+            RationalBezierIntersectionCandidates2::NoIntersection
+        }
+        (ResultantParameterProjection::Degenerate, _)
+        | (_, ResultantParameterProjection::Degenerate) => {
+            RationalBezierIntersectionCandidates2::DegenerateResultant
+        }
+        (
+            ResultantParameterProjection::Parameters(first_parameters)
+            | ResultantParameterProjection::SelectedParameters(first_parameters),
+            ResultantParameterProjection::Parameters(second_parameters)
+            | ResultantParameterProjection::SelectedParameters(second_parameters),
+        ) => RationalBezierIntersectionCandidates2::Candidates {
+            first_parameters,
+            second_parameters,
+        },
+    }))
+}
+
 fn rational_tangent_cross_polynomial(
     basis: &RationalParametricCurve2,
 ) -> Option<BivariatePolynomial> {
@@ -3305,6 +3371,91 @@ impl RationalBezier2 {
             },
         };
         retain_unordered_rational_self_contacts(replayed, basis, policy)
+    }
+
+    /// Returns ordered off-diagonal self-contacts over two authored-span-plus-
+    /// incident-ray domains.
+    ///
+    /// This is the exact-rational specialization used by projective PH-corner
+    /// solving. Unlike the finite unordered authority, injectivity on the
+    /// authored unit span is not an exclusion certificate: either exterior ray
+    /// may revisit the other incident cell. The structural parameter diagonal
+    /// is removed once, both residual projections are isolated on their own
+    /// ordered domains, and the unchanged bivariate replay proves every pair.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn self_intersection_contacts_with_incident_rays_classified(
+        &self,
+        first_anchor: &Real,
+        first_direction: BezierParameterRayDirection2,
+        first_barrier: Option<&BezierParameter2>,
+        second_anchor: &Real,
+        second_direction: BezierParameterRayDirection2,
+        second_barrier: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
+        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let basis = self.homogeneous_power_basis()?;
+        let Some(equations) = rational_self_intersection_residual_system(basis) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let candidates = match project_symmetric_self_intersection_system_with_incident_rays(
+            &equations,
+            first_anchor,
+            first_direction,
+            first_barrier,
+            second_anchor,
+            second_direction,
+            second_barrier,
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut exterior_point_evidence = |parameter: &BezierParameter2| {
+            let BezierParameter2::Exact(parameter) = parameter else {
+                return Ok(None);
+            };
+            Ok(match self.point_at_affine_classified(parameter, policy) {
+                Classification::Decided(point) => {
+                    Some(RationalBezierIntersectionPointEvidence2::Exact(point))
+                }
+                Classification::Uncertain(_) => None,
+            })
+        };
+        let replayed = match &candidates {
+            RationalBezierIntersectionCandidates2::NoIntersection => {
+                RationalBezierIntersectionContacts2::NoIntersection
+            }
+            RationalBezierIntersectionCandidates2::DegenerateResultant => {
+                RationalBezierIntersectionContacts2::DegenerateResultant
+            }
+            RationalBezierIntersectionCandidates2::Candidates {
+                first_parameters,
+                second_parameters,
+            } => match self.replay_intersection_candidates_with_pair_filter(
+                self,
+                first_parameters,
+                second_parameters,
+                false,
+                Some(&equations),
+                Some(&mut exterior_point_evidence),
+                policy,
+            )? {
+                Classification::Decided(replayed) => replayed,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
+        retain_rational_contact_tangent_cross_signs(
+            replayed,
+            rational_tangent_cross_polynomial(basis).as_ref(),
+            policy,
+        )
     }
 
     fn retained_lineage_intersection_contacts(

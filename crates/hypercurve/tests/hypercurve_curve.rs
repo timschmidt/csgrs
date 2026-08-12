@@ -2576,6 +2576,74 @@ fn same_bezier_support_fillet_removes_the_projective_parameter_diagonal() {
 }
 
 #[test]
+fn same_ph_bezier_support_fillet_reuses_rational_projective_self_contact() {
+    // With x=t-1/2 and b=sqrt(3)/6, this closed PH cubic is
+    // P(x)=(x^3/3-x/12, b(x^2-1/4)); its hodograph is
+    // (x^2-b^2, 2bx) and its everywhere-positive speed is x^2+b^2.
+    // At signed left distance 13*sqrt(3)/48, the exact rational parallel has
+    // the off-diagonal contact x=(1,-1), hence t=(3/2,-1/2), at
+    // (0,17*sqrt(3)/48). The finite PH injectivity fast path must not discard
+    // this exterior pair.
+    let sqrt_three = r(3).sqrt().unwrap();
+    let source = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 18), -(&sqrt_three / r(18)).unwrap()),
+        Point2::new(-q(1, 18), -(&sqrt_three / r(18)).unwrap()),
+        p(0, 0),
+    );
+    let radius = (&r(13) * &sqrt_three / r(48)).unwrap();
+    let previous_cut = Point2::new(q(1, 4), (&sqrt_three / r(8)).unwrap());
+    let next_cut = Point2::new(-q(1, 4), (&sqrt_three / r(8)).unwrap());
+    let expected_center = Point2::new(Real::zero(), (&r(17) * &sqrt_three / r(48)).unwrap());
+    assert!(matches!(
+        source
+            .parallel_left(radius.clone())
+            .unwrap()
+            .exact_pythagorean_hodograph_offset(&CurveContext::STRICT)
+            .unwrap(),
+        Classification::Decided(Some(_))
+    ));
+    let path =
+        CurvePath2::try_new(vec![Curve2::from(source.clone()), Curve2::from(source)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let result = path
+                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("the exact PH parallel must retain its exterior self-contact");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                let (expected_previous, expected_next) = if reversed {
+                    (&next_cut, &previous_cut)
+                } else {
+                    (&previous_cut, &next_cut)
+                };
+                candidate.curves()[0].end() == expected_previous
+                    && candidate.curves()[2].start() == expected_next
+                    && fillet.center() == &expected_center
+            };
+            match result.into_value() {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(&candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the PH projective fillet was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn represented_arc_bezier_fillets_use_circle_incidence() {
     let source_center = Point2::new(-q(7, 16), q(207, 512));
     let source_start = Point2::new(-q(7, 16), -q(49, 256));
