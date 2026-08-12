@@ -116,7 +116,7 @@ pub use algebraic_fiber::{
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
-    transform_algebraic_root_mobius,
+    compose_univariate_polynomial_linear_fractional, transform_algebraic_root_mobius,
 };
 pub use algebraic_polynomial_image::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,

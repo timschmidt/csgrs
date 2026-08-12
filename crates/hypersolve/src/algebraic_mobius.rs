@@ -249,6 +249,43 @@ pub fn transform_algebraic_root_mobius(
     )
 }
 
+/// Composes a univariate polynomial with a linear-fractional parameter map.
+///
+/// For a degree-`n` power-basis polynomial `P`, this returns the normalized
+/// power-basis coefficients of
+///
+/// `(c*x + d)^n * P((a*x + b) / (c*x + d))`.
+///
+/// The homogeneous denominator clearing introduces no roots on an interval
+/// where `c*x + d` is certified nonzero. `None` reports an empty input or a
+/// transformed polynomial whose nonzero degree could not be certified under
+/// `policy`; no approximate coefficient is constructed.
+pub fn compose_univariate_polynomial_linear_fractional(
+    polynomial: &[Real],
+    numerator_scale: &Real,
+    numerator_offset: &Real,
+    denominator_scale: &Real,
+    denominator_offset: &Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    // `mobius_transformed_polynomial` accepts the forward root map
+    // `y = (a*x+b)/(c*x+d)` and performs its inverse substitution. Supplying
+    // the inverse map here makes that same authority perform the requested
+    // direct composition without duplicating homogeneous Horner machinery.
+    let inverse_numerator_scale = denominator_offset.clone();
+    let inverse_numerator_offset = -numerator_offset.clone();
+    let inverse_denominator_scale = -denominator_scale.clone();
+    let inverse_denominator_offset = numerator_scale.clone();
+    mobius_transformed_polynomial(
+        polynomial,
+        &inverse_numerator_scale,
+        &inverse_numerator_offset,
+        &inverse_denominator_scale,
+        &inverse_denominator_offset,
+        policy,
+    )
+}
+
 fn mobius_transformed_polynomial(
     polynomial: &[Real],
     numerator_scale: &Real,
@@ -681,6 +718,23 @@ mod tests {
         .unwrap();
 
         assert_eq!(horner, power_sum);
+    }
+
+    #[test]
+    fn linear_fractional_composition_clears_the_authored_denominator() {
+        // P(t) = t^2 - 2 under t = 1 / (1-u) becomes
+        // (1-u)^2 P(1/(1-u)) = -1 + 4u - 2u^2.
+        let transformed = compose_univariate_polynomial_linear_fractional(
+            &[real(-2), Real::zero(), Real::one()],
+            &Real::zero(),
+            &Real::one(),
+            &real(-1),
+            &Real::one(),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+
+        assert_eq!(transformed, vec![real(-1), real(4), real(-2)]);
     }
 
     proptest! {
