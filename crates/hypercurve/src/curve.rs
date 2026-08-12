@@ -5328,6 +5328,26 @@ fn retained_fillet_corresponding_overlap_is_positive(
     Ok(retained_fillet_bezier_parameter_order(&second_start, &second_end, family, policy)?.is_lt())
 }
 
+fn retained_fillet_parameter_component_overlap_is_positive(
+    overlap: &crate::bezier_offset::BezierParameterComponentOverlap2,
+    first_fragment: &BezierParameterRange2,
+    second_fragment: &BezierParameterRange2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    match overlap
+        .clipped_ranges(first_fragment, second_fragment, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(ranges) => Ok(ranges.is_some()),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    }
+}
+
 fn retained_fillet_cusp_rational_contacts(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     rational: &RationalBezier2,
@@ -5942,23 +5962,56 @@ fn fillet_offset_centers(
             let previous_range = previous_source.parameter_range();
             let next_range = next_source.parameter_range();
             if !intersections.overlaps().is_empty() {
-                let previous_curve = bezier_parallel_rational_source(
-                    previous,
-                    CurveOperation2::Fillet,
-                    previous_family,
-                )?;
-                let next_curve =
-                    bezier_parallel_rational_source(next, CurveOperation2::Fillet, next_family)?;
+                let mut rational_sources = None;
                 for overlap in intersections.overlaps() {
-                    if retained_fillet_corresponding_overlap_is_positive(
-                        &previous_curve,
-                        &next_curve,
-                        overlap,
-                        &previous_range,
-                        &next_range,
-                        previous_family,
-                        policy,
-                    )? {
+                    let mut has_component = false;
+                    let mut positive = false;
+                    for component in intersections
+                        .component_overlaps()
+                        .iter()
+                        .filter(|source| source.overlap() == overlap)
+                    {
+                        has_component = true;
+                        if retained_fillet_parameter_component_overlap_is_positive(
+                            component,
+                            &previous_range,
+                            &next_range,
+                            previous_family,
+                            policy,
+                        )? {
+                            positive = true;
+                            break;
+                        }
+                    }
+                    if !has_component {
+                        if rational_sources.is_none() {
+                            rational_sources = Some((
+                                bezier_parallel_rational_source(
+                                    previous,
+                                    CurveOperation2::Fillet,
+                                    previous_family,
+                                )?,
+                                bezier_parallel_rational_source(
+                                    next,
+                                    CurveOperation2::Fillet,
+                                    next_family,
+                                )?,
+                            ));
+                        }
+                        let (previous_curve, next_curve) = rational_sources
+                            .as_ref()
+                            .expect("fillet rational sources were initialized");
+                        positive = retained_fillet_corresponding_overlap_is_positive(
+                            previous_curve,
+                            next_curve,
+                            overlap,
+                            &previous_range,
+                            &next_range,
+                            previous_family,
+                            policy,
+                        )?;
+                    }
+                    if positive {
                         centers.coincident = true;
                         break;
                     }
@@ -6334,40 +6387,73 @@ fn fillet_offset_centers(
                 BezierParameter2::Exact(Real::one()),
             );
             if !intersections.overlaps().is_empty() {
-                let analytic_rational = match analytic_support
-                    .exact_rational_parallel_component(policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
-                    })? {
-                    Classification::Decided(Some(curve)) => curve,
-                    Classification::Decided(None) => {
-                        return Err(ExactCurveError::invalid(
-                            CurveOperation2::Fillet,
-                            analytic_family,
-                            CurveError::Topology(
-                                "an analytic/rational fillet overlap omitted its rational analytic carrier"
-                                    .into(),
-                            ),
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            analytic_family,
-                            reason,
-                        ));
-                    }
-                };
+                let mut analytic_rational = None;
                 for overlap in intersections.overlaps() {
-                    if retained_fillet_corresponding_overlap_is_positive(
-                        &analytic_rational,
-                        &offset_arc.offset,
-                        overlap,
-                        analytic_source.range(),
-                        &full_arc_range,
-                        analytic_family,
-                        policy,
-                    )? {
+                    let mut has_component = false;
+                    let mut positive = false;
+                    for component in intersections
+                        .component_overlaps()
+                        .iter()
+                        .filter(|source| source.overlap() == overlap)
+                    {
+                        has_component = true;
+                        if retained_fillet_parameter_component_overlap_is_positive(
+                            component,
+                            analytic_source.range(),
+                            &full_arc_range,
+                            analytic_family,
+                            policy,
+                        )? {
+                            positive = true;
+                            break;
+                        }
+                    }
+                    if !has_component {
+                        if analytic_rational.is_none() {
+                            analytic_rational = Some(
+                                match analytic_support
+                                    .exact_rational_parallel_component(policy)
+                                    .map_err(|cause| {
+                                        ExactCurveError::invalid(
+                                            CurveOperation2::Fillet,
+                                            analytic_family,
+                                            cause,
+                                        )
+                                    })? {
+                                    Classification::Decided(Some(curve)) => curve,
+                                    Classification::Decided(None) => {
+                                        return Err(ExactCurveError::invalid(
+                                            CurveOperation2::Fillet,
+                                            analytic_family,
+                                            CurveError::Topology(
+                                                "an analytic/rational fillet overlap omitted its rational analytic carrier"
+                                                    .into(),
+                                            ),
+                                        ));
+                                    }
+                                    Classification::Uncertain(reason) => {
+                                        return Err(ExactCurveError::blocked(
+                                            CurveOperation2::Fillet,
+                                            analytic_family,
+                                            reason,
+                                        ));
+                                    }
+                                },
+                            );
+                        }
+                        positive = retained_fillet_corresponding_overlap_is_positive(
+                            analytic_rational
+                                .as_ref()
+                                .expect("fillet rational analytic carrier was initialized"),
+                            &offset_arc.offset,
+                            overlap,
+                            analytic_source.range(),
+                            &full_arc_range,
+                            analytic_family,
+                            policy,
+                        )?;
+                    }
+                    if positive {
                         centers.coincident = true;
                         break;
                     }
