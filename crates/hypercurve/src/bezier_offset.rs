@@ -60529,12 +60529,10 @@ fn parallel_source_equality_equations(
 /// its geometric branch was replayed.  Source equality is the narrower
 /// authority: Hypersolve publishes each exact factor and residual, and only
 /// those published factors may subsequently be removed from the pair system.
-fn parallel_source_parameter_components(
-    first: &BezierParallel2,
-    second: &BezierParallel2,
+fn parallel_source_parameter_components_from_equations(
+    mut residual: [BivariatePolynomial; 2],
     config: CurveIntersectionResultantConfig,
-) -> CurveResult<Classification<Vec<BivariatePolynomial>>> {
-    let mut residual = parallel_source_equality_equations(first, second)?;
+) -> Classification<Vec<BivariatePolynomial>> {
     let mut components = Vec::new();
     loop {
         let previous_degree = residual
@@ -60590,30 +60588,46 @@ fn parallel_source_parameter_components(
                 BivariatePolynomialComponentStatus::EmptyEquation
                 | BivariatePolynomialComponentStatus::DegreeBoundExceeded
                 | BivariatePolynomialComponentStatus::DeterminantError
-                | BivariatePolynomialComponentStatus::InterpolationFailed
-                | BivariatePolynomialComponentStatus::DivisionFailed => {
+                | BivariatePolynomialComponentStatus::InterpolationFailed => {
                     blocker = Some(UncertaintyReason::Boundary)
                 }
                 BivariatePolynomialComponentStatus::UnsupportedLiftedDegree
                 | BivariatePolynomialComponentStatus::NoSupportedComponent => {}
+                // Hypersolve reaches `DivisionFailed` when the exact first
+                // nonzero subresultant is not a common divisor. That is the
+                // coprime residual case, not an uncertain coefficient: a
+                // genuine generic source component would divide both source
+                // coordinate equations exactly.
+                BivariatePolynomialComponentStatus::DivisionFailed => {}
             }
         }
         let Some((component, next_residual)) = next else {
-            return Ok(blocker.map_or_else(
+            return blocker.map_or_else(
                 || Classification::Decided(components),
                 Classification::Uncertain,
-            ));
+            );
         };
         let next_degree = next_residual
             .iter()
             .map(bivariate_storage_bidegree_sum)
             .sum::<usize>();
         if next_degree >= previous_degree {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            return Classification::Uncertain(UncertaintyReason::Boundary);
         }
         components.push(component);
         residual = next_residual;
     }
+}
+
+fn parallel_source_parameter_components(
+    first: &BezierParallel2,
+    second: &BezierParallel2,
+    config: CurveIntersectionResultantConfig,
+) -> CurveResult<Classification<Vec<BivariatePolynomial>>> {
+    Ok(parallel_source_parameter_components_from_equations(
+        parallel_source_equality_equations(first, second)?,
+        config,
+    ))
 }
 
 fn structural_parallel_source_parameter_component(
@@ -60784,10 +60798,23 @@ fn parallel_pair_residual_equations_without_components(
         system.first_equation.clone(),
         system.second_equation.clone(),
     ];
-    let mut residual_equations = structural_parallel_source_parameter_component(first, second)
-        .as_ref()
-        .and_then(|component| divide_bivariate_system_component(&equations, component));
-    let source_components = match parallel_source_parameter_components(first, second, config)? {
+    let source_equations = parallel_source_equality_equations(first, second)?;
+    let (mut residual_equations, source_residual_equations) =
+        if let Some(component) = structural_parallel_source_parameter_component(first, second) {
+            let (Some(pair_residual), Some(source_residual)) = (
+                divide_bivariate_system_component(&equations, &component),
+                divide_bivariate_system_component(&source_equations, &component),
+            ) else {
+                return Ok(None);
+            };
+            (Some(pair_residual), source_residual)
+        } else {
+            (None, source_equations)
+        };
+    let source_components = match parallel_source_parameter_components_from_equations(
+        source_residual_equations,
+        config,
+    ) {
         Classification::Decided(components) => components,
         Classification::Uncertain(_) => return Ok(None),
     };
@@ -79709,6 +79736,26 @@ mod conversion_tests {
                 Some(RealSign::Positive | RealSign::Negative)
             ));
         }
+    }
+
+    #[test]
+    fn closed_source_diagonal_is_removed_before_residual_component_scan() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let source = CubicBezier2::new(point(0, 0), point(4, 0), point(0, 4), point(0, 0));
+        let parallel = source.parallel_left(Real::zero()).unwrap();
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        let equations = parallel_source_equality_equations(&parallel, &parallel).unwrap();
+        let diagonal = structural_parallel_source_parameter_component(&parallel, &parallel)
+            .expect("self pairs have a structural diagonal");
+        let residual = divide_bivariate_system_component(&equations, &diagonal)
+            .expect("the source diagonal divides both coordinate equations");
+        assert!(matches!(
+            parallel_source_parameter_components_from_equations(residual, config),
+            Classification::Decided(components) if components.is_empty()
+        ));
     }
 
     #[test]
