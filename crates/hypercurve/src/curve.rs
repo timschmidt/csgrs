@@ -1778,8 +1778,9 @@ impl CurvePath2 {
     /// polynomial subcurves, while a public path explicitly blocks an
     /// algebraic endpoint that only retained-region topology can store. The
     /// retained-region caller also uses this kernel for affine algebraic
-    /// chords. General rational Beziers remain trim-only until reconstruction
-    /// over their pole-partitioned incident projective cell is authoritative.
+    /// chords. General rational Beziers extend only through the finite incident
+    /// projective cell before their first pole; exact homogeneous subdivision
+    /// materializes that cell without weakening any predicate.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -3775,7 +3776,10 @@ impl<'a> ExactCornerCarrier2<'a> {
                 operation == CurveOperation2::Chamfer
                     && matches!(
                         curve.geometry(),
-                        CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_)
+                        CurveGeometry2::QuadraticBezier(_)
+                            | CurveGeometry2::CubicBezier(_)
+                            | CurveGeometry2::RationalQuadraticBezier(_)
+                            | CurveGeometry2::RationalBezier(_)
                     )
             }
             Self::RetainedRationalArc(_) | Self::NativeBezierSpan(_) => false,
@@ -8921,24 +8925,17 @@ fn materialize_corner_cut(
                 } else {
                     (parameter, domain.end())
                 };
-                let lineage = curve
-                    .lineage_subrange(start, end)
-                    .map_err(|error| remap_operation(error, operation))?;
-                let geometry = match curve.geometry() {
-                    CurveGeometry2::QuadraticBezier(source) => CurveGeometry2::QuadraticBezier(
-                        source
-                            .subcurve_between_affine_exact(start, end, policy)
-                            .map_err(|cause| {
-                                ExactCurveError::invalid(operation, curve.family(), cause)
-                            })?,
-                    ),
-                    CurveGeometry2::CubicBezier(source) => CurveGeometry2::CubicBezier(
-                        source
-                            .subcurve_between_affine_exact(start, end, policy)
-                            .map_err(|cause| {
-                                ExactCurveError::invalid(operation, curve.family(), cause)
-                            })?,
-                    ),
+                let source = match curve.geometry() {
+                    CurveGeometry2::QuadraticBezier(source) => {
+                        BezierSubcurve2::Quadratic(source.clone())
+                    }
+                    CurveGeometry2::CubicBezier(source) => BezierSubcurve2::Cubic(source.clone()),
+                    CurveGeometry2::RationalQuadraticBezier(source) => {
+                        BezierSubcurve2::RationalQuadratic(source.clone())
+                    }
+                    CurveGeometry2::RationalBezier(source) => {
+                        BezierSubcurve2::Rational(source.clone())
+                    }
                     _ => {
                         return Err(ExactCurveError::blocked(
                             operation,
@@ -8947,9 +8944,15 @@ fn materialize_corner_cut(
                         ));
                     }
                 };
-                curve
-                    .with_lineage(geometry, lineage)
-                    .map_err(|error| remap_operation(error, operation))
+                match source
+                    .subcurve_between_affine_exact(start, end, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
+                {
+                    Classification::Decided(curve) => Ok(Curve2::from(curve)),
+                    Classification::Uncertain(reason) => {
+                        Err(ExactCurveError::blocked(operation, curve.family(), reason))
+                    }
+                }
             } else {
                 Err(ExactCurveError::blocked(
                     operation,
@@ -9196,6 +9199,100 @@ fn validate_subcurve_range(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn represented_rational_corner_extension_materializes_before_its_pole() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let source = Curve2::from(
+            RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new(half, Real::zero()),
+                    Point2::from_values(1, 1),
+                ],
+                vec![
+                    Real::one(),
+                    (Real::one() / Real::from(2_i8)).unwrap(),
+                    quarter,
+                ],
+            )
+            .unwrap(),
+        );
+        let parameter = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let extended = materialize_corner_cut(
+                &source,
+                &CornerCut2 {
+                    parameter: exact_corner_parameter(parameter.clone()),
+                    point: Point2::from_values(3, 9).into(),
+                    placement: CornerPlacement2::Extension,
+                },
+                true,
+                CurveOperation2::Chamfer,
+                &policy,
+            )
+            .expect("the represented pre-pole interval must materialize");
+            assert_eq!(extended.start(), &Point2::from_values(0, 0));
+            assert_eq!(extended.end(), &Point2::from_values(3, 9));
+        }
+    }
+
+    #[test]
+    fn rational_chamfer_solver_retains_pre_pole_extension() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let previous = Curve2::from(
+            RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new(half.clone(), Real::zero()),
+                    Point2::from_values(1, 1),
+                ],
+                vec![Real::one(), half, quarter],
+            )
+            .unwrap(),
+        );
+        let next = Curve2::from(
+            LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(1, 12)).unwrap(),
+        );
+        let setback = Real::from(68_i8).sqrt().unwrap();
+        let expected_parameter = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let previous_carrier =
+                exact_corner_carrier(&previous, true, CurveOperation2::Chamfer, &policy)
+                    .unwrap()
+                    .unwrap();
+            let next_carrier =
+                exact_corner_carrier(&next, false, CurveOperation2::Chamfer, &policy)
+                    .unwrap()
+                    .unwrap();
+            let solution = solve_exact_chamfer_corner(
+                previous_carrier,
+                next_carrier,
+                &setback,
+                &Real::zero(),
+                RealSign::Positive,
+                RealSign::Zero,
+                CurveCornerMode2::TrimOrExtend,
+                previous.family(),
+                next.family(),
+                &policy,
+            )
+            .expect("the shared solver must retain the pre-pole rational contact");
+            let CurveCornerSolutions2::Unique(solution) = solution else {
+                panic!("the pre-pole rational contact must be unique");
+            };
+            assert_eq!(
+                solution.previous.exact_parameter(),
+                Some(&expected_parameter)
+            );
+            assert_eq!(
+                solution.previous.exact_point(),
+                Some(&Point2::from_values(3, 9))
+            );
+        }
+    }
 
     #[test]
     fn parallel_fillet_frame_retains_selected_normal_and_radial_distance() {

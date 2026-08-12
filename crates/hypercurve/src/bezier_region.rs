@@ -8881,12 +8881,11 @@ impl CurveRegion2 {
     /// retain their selected parameters and exact point images, joined by one
     /// compact algebraic chord instead of falling through to historical
     /// contour machinery. `TrimOrExtend` keeps retained straight and direct
-    /// polynomial-Bezier endpoints in that same affine support authority.
-    /// Algebraic polynomial contacts are reparameterized onto an exact finite
+    /// polynomial or rational Bezier endpoints in that same affine support
+    /// authority. Algebraic contacts are reparameterized onto an exact finite
     /// envelope before reconstruction, so all downstream topology remains in
-    /// the ordinary unit domain. General rational carriers remain explicitly
-    /// blocked until reconstruction over their pole-partitioned incident cell
-    /// is authoritative.
+    /// the ordinary unit domain. Rational envelopes are narrowed as necessary
+    /// to stay inside the incident endpoint's first projective pole.
     pub fn chamfer_loop_vertex_by_setbacks(
         &self,
         loop_index: usize,
@@ -10887,17 +10886,7 @@ impl CurveRegion2 {
                 UncertaintyReason::Unsupported,
             ));
         };
-        if !matches!(
-            curve,
-            BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_)
-        ) {
-            return Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::RationalBezier,
-                UncertaintyReason::Unsupported,
-            ));
-        }
-        let parameter = cut
+        let mut parameter = cut
             .parameter
             .as_bezier_parameter()
             .cloned()
@@ -10908,96 +10897,123 @@ impl CurveRegion2 {
                     UncertaintyReason::Unsupported,
                 )
             })?;
-        let extended_curve = |start: &Real, end: &Real| match curve
-            .subcurve_between_affine_exact(start, end, policy)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?
-        {
-            Classification::Decided(curve) => Ok(curve),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::RationalBezier,
-                reason,
-            )),
+        let extended_curve = |start: &Real, end: &Real| {
+            curve
+                .subcurve_between_affine_exact(start, end, policy)
+                .map_err(|cause| curve_region_edit_error(operation, cause))
         };
-        match parameter {
-            BezierParameter2::Exact(parameter) => {
-                let replacement = if previous {
-                    extended_curve(&Real::zero(), &parameter)?
-                } else {
-                    extended_curve(&parameter, &Real::one())?
-                };
-                cut.parameter =
-                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(if previous {
-                        Real::one()
+        loop {
+            match &parameter {
+                BezierParameter2::Exact(parameter) => {
+                    let replacement = match if previous {
+                        extended_curve(&Real::zero(), parameter)?
                     } else {
-                        Real::zero()
-                    }));
-                cut.point = RationalBezierIntersectionPointEvidence2::Exact(if previous {
-                    replacement.end().clone()
-                } else {
-                    replacement.start().clone()
-                });
-                cut.replacement_curve = Some(replacement);
-            }
-            BezierParameter2::Algebraic(parameter) => {
-                let outer = if previous {
-                    parameter.interval().end()
-                } else {
-                    parameter.interval().start()
-                };
-                let replacement = if previous {
-                    extended_curve(&Real::zero(), outer)?
-                } else {
-                    extended_curve(outer, &Real::one())?
-                };
-                let (scale, offset) = if previous {
-                    (
-                        (Real::one() / outer).map_err(|cause| {
+                        extended_curve(parameter, &Real::one())?
+                    } {
+                        Classification::Decided(curve) => curve,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                operation,
+                                CurveFamily2::RationalBezier,
+                                reason,
+                            ));
+                        }
+                    };
+                    cut.parameter =
+                        CurveRegionParameter2::from_bezier(BezierParameter2::Exact(if previous {
+                            Real::one()
+                        } else {
+                            Real::zero()
+                        }));
+                    cut.point = RationalBezierIntersectionPointEvidence2::Exact(if previous {
+                        replacement.end().clone()
+                    } else {
+                        replacement.start().clone()
+                    });
+                    cut.replacement_curve = Some(replacement);
+                    return Ok(());
+                }
+                BezierParameter2::Algebraic(algebraic) => {
+                    let outer = if previous {
+                        algebraic.interval().end()
+                    } else {
+                        algebraic.interval().start()
+                    };
+                    let replacement = match if previous {
+                        extended_curve(&Real::zero(), outer)?
+                    } else {
+                        extended_curve(outer, &Real::one())?
+                    } {
+                        Classification::Decided(curve) => curve,
+                        Classification::Uncertain(UncertaintyReason::Boundary) => {
+                            let refined = parameter.clone().refined_isolating_interval(1, policy);
+                            if refined == parameter {
+                                return Err(ExactCurveError::blocked(
+                                    operation,
+                                    CurveFamily2::RationalBezier,
+                                    UncertaintyReason::Boundary,
+                                ));
+                            }
+                            parameter = refined;
+                            continue;
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                operation,
+                                CurveFamily2::RationalBezier,
+                                reason,
+                            ));
+                        }
+                    };
+                    let (scale, offset) = if previous {
+                        (
+                            (Real::one() / outer).map_err(|cause| {
+                                curve_region_edit_error(operation, CurveError::from(cause))
+                            })?,
+                            Real::zero(),
+                        )
+                    } else {
+                        let span = Real::one() - outer;
+                        let scale = (Real::one() / &span).map_err(|cause| {
                             curve_region_edit_error(operation, CurveError::from(cause))
-                        })?,
-                        Real::zero(),
+                        })?;
+                        let offset = ((-outer.clone()) / span).map_err(|cause| {
+                            curve_region_edit_error(operation, CurveError::from(cause))
+                        })?;
+                        (scale, offset)
+                    };
+                    let mapped = match parameter
+                        .affine_image_unbounded(&scale, &offset, policy)
+                        .map_err(|cause| curve_region_edit_error(operation, cause))?
+                    {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                operation,
+                                CurveFamily2::RationalBezier,
+                                reason,
+                            ));
+                        }
+                    };
+                    let rational = RationalBezier2::try_from_subcurve(&replacement)
+                        .map_err(|cause| curve_region_edit_error(operation, cause))?;
+                    cut.point = crate::rational_bezier_general::exact_contact_point_evidence(
+                        &rational, &mapped, policy,
                     )
-                } else {
-                    let span = Real::one() - outer;
-                    let scale = (Real::one() / &span).map_err(|cause| {
-                        curve_region_edit_error(operation, CurveError::from(cause))
-                    })?;
-                    let offset = ((-outer.clone()) / span).map_err(|cause| {
-                        curve_region_edit_error(operation, CurveError::from(cause))
-                    })?;
-                    (scale, offset)
-                };
-                let mapped = match BezierParameter2::Algebraic(parameter)
-                    .affine_image_unbounded(&scale, &offset, policy)
                     .map_err(|cause| curve_region_edit_error(operation, cause))?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
                             operation,
                             CurveFamily2::RationalBezier,
-                            reason,
-                        ));
-                    }
-                };
-                let rational = RationalBezier2::try_from_subcurve(&replacement)
-                    .map_err(|cause| curve_region_edit_error(operation, cause))?;
-                cut.point = crate::rational_bezier_general::exact_contact_point_evidence(
-                    &rational, &mapped, policy,
-                )
-                .map_err(|cause| curve_region_edit_error(operation, cause))?
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        operation,
-                        CurveFamily2::RationalBezier,
-                        UncertaintyReason::Unsupported,
-                    )
-                })?;
-                cut.parameter = CurveRegionParameter2::from_bezier(mapped);
-                cut.replacement_curve = Some(replacement);
+                            UncertaintyReason::Unsupported,
+                        )
+                    })?;
+                    cut.parameter = CurveRegionParameter2::from_bezier(mapped);
+                    cut.replacement_curve = Some(replacement);
+                    return Ok(());
+                }
             }
         }
-        Ok(())
     }
 
     /// Chamfers one boundary-loop vertex without leaving the unified carrier.
@@ -17829,6 +17845,61 @@ mod tests {
         .expect("the nonlinear extension loop has authored topology")
     }
 
+    fn retained_rational_extension_region(reversed: bool, policy: &CurveContext) -> CurveRegion2 {
+        let materialized = |curve| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve,
+        };
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        // R(t) = (t / (2 - t), (t / (2 - t))^2). The edited endpoint is
+        // R(1) = (1, 1), and its increasing incident cell ends at the pole
+        // t = 2. Setback sqrt(68) has the represented exterior contact
+        // R(3/2) = (3, 9); setback one has an algebraic exterior contact whose
+        // first coarse isolator reaches the pole and therefore exercises exact
+        // finite-envelope refinement.
+        let rational = RationalBezier2::try_new(
+            vec![p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1)],
+            vec![Real::one(), half, quarter],
+        )
+        .unwrap();
+        let mut fragments = vec![
+            materialized(BezierSubcurve2::Rational(rational)),
+            materialized(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(1, 1), p(1, 12)).unwrap()),
+            )),
+            materialized(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(p(1, 12), p(-3, 12)).unwrap(),
+                ),
+            )),
+            materialized(BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(-3, 12), p(0, 0)).unwrap()),
+            )),
+        ];
+        if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the rational loop reverses"))
+                .collect();
+        }
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the rational extension loop closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![if reversed {
+                CurveBoundaryInteriorSide2::Right
+            } else {
+                CurveBoundaryInteriorSide2::Left
+            }],
+        )
+        .expect("the rational extension loop has authored topology")
+    }
+
     fn retained_fragment_has_exact_endpoint(
         fragment: &BezierSplitFragment2,
         expected: &Point2,
@@ -18068,6 +18139,85 @@ mod tests {
                     assert!(
                         found_extension,
                         "an edited candidate must retain the exterior nonlinear carrier"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots() {
+        let sqrt_sixty_eight = Real::from(68_i8).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = retained_rational_extension_region(reversed, &policy);
+                let corner = if reversed { 3 } else { 1 };
+                let setbacks = |setback| {
+                    if reversed {
+                        (Real::zero(), setback)
+                    } else {
+                        (setback, Real::zero())
+                    }
+                };
+                for (setback, exact_endpoint) in [
+                    (sqrt_sixty_eight.clone(), Some(p(3, 9))),
+                    (Real::one(), None),
+                ] {
+                    let (previous_setback, next_setback) = setbacks(setback.clone());
+                    let trim = region
+                        .chamfer_loop_vertex_by_setbacks(
+                            0,
+                            corner,
+                            previous_setback.clone(),
+                            next_setback.clone(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .expect("the rational corner has a decided trim result")
+                        .into_value();
+                    let extended = region
+                        .chamfer_loop_vertex_by_setbacks(
+                            0,
+                            corner,
+                            previous_setback,
+                            next_setback,
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the rational incident cell must extend: policy={policy:?}, reversed={reversed}, setback={setback:?}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(extended.certainty, CurveCertainty::Certified);
+                    let extended = extended.into_value();
+                    assert!(extended.candidate_count() > trim.candidate_count());
+                    let mut found_extension = false;
+                    for_each_corner_region(&extended, |edited| {
+                        assert!(matches!(
+                            edited
+                                .classify_point(&p(20, 20), &policy)
+                                .expect("the pole-free rational extension remains classifiable")
+                                .into_value(),
+                            Classification::Decided(_)
+                        ));
+                        found_extension |=
+                            edited.boundary_loops()[0]
+                                .fragments()
+                                .iter()
+                                .any(|fragment| match &exact_endpoint {
+                                    Some(endpoint) => {
+                                        retained_fragment_has_exact_endpoint(fragment, endpoint)
+                                    }
+                                    None => matches!(
+                                        fragment,
+                                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                                    ),
+                                });
+                    });
+                    assert!(
+                        found_extension,
+                        "an edited candidate must retain the pre-pole rational extension"
                     );
                 }
             }

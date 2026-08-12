@@ -1031,9 +1031,12 @@ impl BezierSubcurve2 {
             Self::Cubic(curve) => Classification::Decided(Self::Cubic(
                 curve.subcurve_between_affine_exact(start, end, policy)?,
             )),
-            Self::RationalQuadratic(_) | Self::Rational(_) => {
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
+            Self::RationalQuadratic(curve) => RationalBezier2::from(curve.clone())
+                .subcurve_between_affine_exact(start, end, policy)?
+                .map(Self::Rational),
+            Self::Rational(curve) => curve
+                .subcurve_between_affine_exact(start, end, policy)?
+                .map(Self::Rational),
         })
     }
 

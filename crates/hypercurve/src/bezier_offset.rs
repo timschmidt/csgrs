@@ -52738,7 +52738,7 @@ impl BezierParallel2 {
                 Classification::Decided(source.point_at(parameter.clone()))
             }
             BezierParallelSource2::Rational(source) => {
-                source.point_at_classified(parameter, policy)
+                source.point_at_affine_classified(parameter, policy)
             }
         }
     }
@@ -77421,6 +77421,41 @@ mod conversion_tests {
                 };
                 assert_eq!(parameter.as_exact(), Some(&expected));
             }
+        }
+    }
+
+    #[test]
+    fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(half.clone(), Real::zero()),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::one(), half, quarter],
+        )
+        .unwrap();
+        let parallel = source.parallel_left(Real::zero()).unwrap();
+        let expected = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(parameters) = parallel
+                .source_circle_incidence_on_incident_ray(
+                    &Point2::from_values(1, 1),
+                    &Real::from(68_i8),
+                    &Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the rational parabola incident cell must be decided");
+            };
+            let [parameter] = parameters.as_slice() else {
+                panic!("only one pre-pole contact has the selected distance");
+            };
+            assert_eq!(parameter.as_exact(), Some(&expected));
         }
     }
 

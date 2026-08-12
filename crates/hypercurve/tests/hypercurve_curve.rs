@@ -1756,6 +1756,57 @@ fn polynomial_chamfer_materializes_represented_incident_extension() {
 }
 
 #[test]
+fn rational_chamfer_materializes_the_incident_projective_cell() {
+    let half = q(1, 2);
+    let quarter = q(1, 4);
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let path = CurvePath2::try_new(vec![
+            Curve2::from(
+                RationalBezier2::try_new(
+                    vec![p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1)],
+                    vec![Real::one(), half.clone(), quarter.clone()],
+                )
+                .unwrap(),
+            ),
+            Curve2::from(LineSeg2::try_new(p(1, 1), p(1, 12)).unwrap()),
+        ])
+        .unwrap();
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let setback = Real::from(68_i8).sqrt().unwrap();
+            let (previous_setback, next_setback) = if reversed {
+                (Real::zero(), setback)
+            } else {
+                (setback, Real::zero())
+            };
+            let result = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("the incident rational cell must extend before its pole");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let CurveCornerSolutions2::Unique(edited) = result.into_value() else {
+                panic!("the pole-partitioned rational extension must be unique");
+            };
+            let rational = edited
+                .curves()
+                .iter()
+                .find(|curve| curve.family() == CurveFamily2::RationalBezier)
+                .expect("the exact rational carrier must be retained");
+            assert!(rational.start() == &p(3, 9) || rational.end() == &p(3, 9));
+        }
+    }
+}
+
+#[test]
 fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
     let path = right_angle_line_path(4);
     assert_eq!(

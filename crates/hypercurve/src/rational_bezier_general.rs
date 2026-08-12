@@ -13,8 +13,9 @@ use hypersolve::{
 use hypersolve::{
     AlgebraicRootRepresentation, BivariatePolynomial, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantStatus, CurveResultantParameter,
-    RationalParametricCurve2, divide_bivariate_polynomial_exact,
-    resultant_bivariate_polynomial_system, resultant_rational_parametric_curve_intersection,
+    RationalParametricCurve2, compose_univariate_polynomial_linear_fractional,
+    divide_bivariate_polynomial_exact, resultant_bivariate_polynomial_system,
+    resultant_rational_parametric_curve_intersection,
 };
 
 use crate::bezier_algebraic_image::{
@@ -1922,6 +1923,21 @@ impl RationalBezier2 {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
+        self.point_at_affine_classified(parameter, policy)
+    }
+
+    /// Evaluates any finite affine parameter without imposing the authored
+    /// unit-domain restriction.
+    ///
+    /// Callers must separately prove that the parameter belongs to the
+    /// intended pole-partitioned projective cell. Projection still rejects a
+    /// zero or undecidable homogeneous weight, so this cannot turn a point at
+    /// infinity into affine geometry.
+    pub(crate) fn point_at_affine_classified(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> Classification<Point2> {
         if parameter.zero_status() == ZeroKnowledge::Zero {
             return Classification::Decided(self.start().clone());
         }
@@ -4408,6 +4424,128 @@ impl RationalBezier2 {
             Classification::Decided((_, middle)) => Ok(Classification::Decided(middle)),
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+
+    /// Materializes the exact rational image over any ordered finite affine
+    /// parameter range whose denominator has no zero.
+    ///
+    /// Exterior corner reconstruction uses this after the incident-ray solver
+    /// has selected one pole-partitioned component. Reparameterization creates
+    /// a fresh unit-domain lineage: an injectivity fact proved only on the
+    /// authored source interval must not leak onto its projective extension.
+    /// A finite rational image can nevertheless acquire zero or mixed-sign
+    /// intermediate Bernstein weights under extrapolation. Exact homogeneous
+    /// degree elevation is repeated until every weight has the common sign
+    /// guaranteed by the pole-free denominator, avoiding a second carrier for
+    /// controls at infinity.
+    pub(crate) fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match compare_reals(start, end, policy) {
+            Some(Ordering::Greater) => return Err(CurveError::InvalidBezierRange),
+            Some(_) => {}
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        }
+
+        let span = end - start;
+        let transformed_weight = match compose_univariate_polynomial_linear_fractional(
+            &self.homogeneous_power_basis()?.weight,
+            &span,
+            start,
+            &Real::zero(),
+            &Real::one(),
+            policy.predicate_policy(),
+        ) {
+            Some(coefficients) => coefficients,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let transformed_weight =
+            match BezierParameterPolynomial::try_new_power_basis(transformed_weight, policy)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        match transformed_weight.isolate_unit_interval_roots(policy)? {
+            Classification::Decided(roots) if roots.is_empty() => {}
+            Classification::Decided(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let start_at_one = match compare_reals(start, &Real::one(), policy) {
+            Some(Ordering::Equal) => true,
+            Some(_) => false,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        let mut controls = affine_homogeneous_subcurve_controls(
+            self.homogeneous_controls(),
+            start,
+            end,
+            start_at_one,
+            policy,
+        )?;
+        loop {
+            match homogeneous_controls_common_weight_sign(&controls, policy) {
+                Classification::Decided(Some(_)) => break,
+                Classification::Decided(None) => {
+                    controls = elevate_homogeneous_controls_once(&controls)?;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+
+        let mut points = Vec::with_capacity(controls.len());
+        let mut weights = Vec::with_capacity(controls.len());
+        for control in controls {
+            let point = match project_homogeneous(&control, policy) {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            points.push(point);
+            weights.push(control.weight);
+        }
+
+        let root = Arc::new(RationalBezierLineageRoot::default());
+        if let Some(implicit) = self.data.lineage.root.implicit_quadratic_conic.get() {
+            let _ = root.implicit_quadratic_conic.set(Arc::clone(implicit));
+        }
+        if let Some(circle) = self.data.lineage.root.circular_conic.get() {
+            let _ = root.circular_conic.set(Arc::clone(circle));
+        }
+        let exact_line_image = self.data.exact_line_image.as_ref().and_then(|_| {
+            LineSeg2::try_new(
+                points
+                    .first()
+                    .expect("positive-degree curve has a start")
+                    .clone(),
+                points
+                    .last()
+                    .expect("positive-degree curve has an end")
+                    .clone(),
+            )
+            .ok()
+        });
+        Self::try_new_with_lineage_and_exact_line_image(
+            points,
+            weights,
+            RationalBezierLineage {
+                root,
+                range: ParamRange::new(Real::zero(), Real::one()),
+            },
+            exact_line_image,
+        )
+        .map(Classification::Decided)
     }
 
     pub(crate) fn endpoint_derivatives(
@@ -8829,6 +8967,100 @@ impl HomogeneousPoint2 {
     }
 }
 
+fn split_homogeneous_controls(
+    source: &[HomogeneousPoint2],
+    parameter: &Real,
+) -> (Vec<HomogeneousPoint2>, Vec<HomogeneousPoint2>) {
+    let mut level = source.to_vec();
+    let mut left = Vec::with_capacity(level.len());
+    let mut right = Vec::with_capacity(level.len());
+    left.push(level[0].clone());
+    right.push(
+        level
+            .last()
+            .expect("positive-degree homogeneous curve has controls")
+            .clone(),
+    );
+    for next_len in (1..level.len()).rev() {
+        for index in 0..next_len {
+            level[index] = level[index].lerp(&level[index + 1], parameter);
+        }
+        left.push(level[0].clone());
+        right.push(level[next_len - 1].clone());
+    }
+    right.reverse();
+    (left, right)
+}
+
+fn affine_homogeneous_subcurve_controls(
+    source: &[HomogeneousPoint2],
+    start: &Real,
+    end: &Real,
+    start_at_one: bool,
+    policy: &CurveContext,
+) -> CurveResult<Vec<HomogeneousPoint2>> {
+    if compare_reals(start, end, policy) == Some(Ordering::Equal) {
+        let (left, _) = split_homogeneous_controls(source, start);
+        let point = left
+            .last()
+            .expect("a homogeneous evaluation has one terminal point")
+            .clone();
+        return Ok(vec![point; source.len()]);
+    }
+    if !start_at_one {
+        let (_, right) = split_homogeneous_controls(source, start);
+        let local_end = ((end - start) / (Real::one() - start))?;
+        let (range, _) = split_homogeneous_controls(&right, &local_end);
+        return Ok(range);
+    }
+    let (left, _) = split_homogeneous_controls(source, end);
+    let local_start = (start / end)?;
+    let (_, range) = split_homogeneous_controls(&left, &local_start);
+    Ok(range)
+}
+
+fn homogeneous_controls_common_weight_sign(
+    controls: &[HomogeneousPoint2],
+    policy: &CurveContext,
+) -> Classification<Option<RealSign>> {
+    let mut common = None;
+    for control in controls {
+        let Some(sign) = real_sign(&control.weight, policy) else {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        };
+        match (common, sign) {
+            (_, RealSign::Zero) => return Classification::Decided(None),
+            (None, sign) => common = Some(sign),
+            (Some(expected), sign) if sign == expected => {}
+            (Some(_), _) => return Classification::Decided(None),
+        }
+    }
+    Classification::Decided(common)
+}
+
+fn elevate_homogeneous_controls_once(
+    source: &[HomogeneousPoint2],
+) -> CurveResult<Vec<HomogeneousPoint2>> {
+    let target_degree = source.len();
+    let denominator =
+        Real::from(u64::try_from(target_degree).map_err(|_| CurveError::InvalidDegreeElevation)?);
+    let mut elevated = Vec::with_capacity(source.len() + 1);
+    elevated.push(source[0].clone());
+    for index in 1..target_degree {
+        let numerator =
+            Real::from(u64::try_from(index).map_err(|_| CurveError::InvalidDegreeElevation)?);
+        let alpha = (numerator / &denominator)?;
+        elevated.push(source[index].lerp(&source[index - 1], &alpha));
+    }
+    elevated.push(
+        source
+            .last()
+            .expect("positive-degree homogeneous curve has an end")
+            .clone(),
+    );
+    Ok(elevated)
+}
+
 fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
     let mut result = Real::one();
     let mut factor = base.clone();
@@ -8901,6 +9133,82 @@ mod tests {
             curve.exact_linear_parameterization_line(),
             Some(LineSeg2::try_new(start, end).unwrap())
         );
+    }
+
+    #[test]
+    fn affine_subcurve_elevates_zero_intermediate_weight_without_a_pole() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(2, 0),
+            ],
+            vec![Real::one(), half, Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(extended) = source
+                .subcurve_between_affine_exact(&Real::zero(), &Real::from(2_i8), &policy)
+                .unwrap()
+            else {
+                panic!("the pole-free affine extension must materialize");
+            };
+            assert_eq!(extended.degree(), 3);
+            assert_eq!(extended.start(), &Point2::from_values(0, 0));
+            assert_eq!(
+                extended.end(),
+                &Point2::new(Real::from(2_i8), -two_thirds.clone())
+            );
+            assert_eq!(
+                extended.common_weight_sign(&policy),
+                Classification::Decided(RealSign::Positive)
+            );
+        }
+    }
+
+    #[test]
+    fn affine_subcurve_rejects_a_crossed_projective_pole() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+            vec![Real::one(), half],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                source
+                    .subcurve_between_affine_exact(&Real::zero(), &Real::from(3_i8), &policy,)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+        }
+    }
+
+    #[test]
+    fn affine_subcurve_materializes_a_finite_rational_parabola_extension() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(half.clone(), Real::zero()),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::one(), half, quarter],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(extended) = source
+                .subcurve_between_affine_exact(&Real::zero(), &three_halves, &policy)
+                .unwrap()
+            else {
+                panic!("the pre-pole rational parabola interval must materialize");
+            };
+            assert_eq!(extended.end(), &Point2::from_values(3, 9));
+        }
     }
 
     #[test]
