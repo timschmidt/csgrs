@@ -3386,7 +3386,7 @@ impl CornerCut2 {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum CornerReplacement2 {
     Curve(BezierSubcurve2),
-    AnalyticParallel(BezierParallel2),
+    AnalyticParallel(crate::BezierParallelFragment2),
 }
 
 impl CornerReplacement2 {
@@ -3397,9 +3397,9 @@ impl CornerReplacement2 {
         }
     }
 
-    pub(crate) const fn as_parallel(&self) -> Option<&BezierParallel2> {
+    pub(crate) const fn as_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
         match self {
-            Self::AnalyticParallel(parallel) => Some(parallel),
+            Self::AnalyticParallel(fragment) => Some(fragment),
             Self::Curve(_) => None,
         }
     }
@@ -3420,10 +3420,10 @@ impl CornerTrimCut2 {
             .and_then(CornerReplacement2::as_curve)
     }
 
-    pub(crate) fn replacement_parallel(&self) -> Option<&BezierParallel2> {
+    pub(crate) fn replacement_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
         self.replacement
             .as_ref()
-            .and_then(CornerReplacement2::as_parallel)
+            .and_then(CornerReplacement2::as_parallel_fragment)
     }
 }
 
