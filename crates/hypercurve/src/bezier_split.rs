@@ -1018,6 +1018,25 @@ impl BezierSubcurve2 {
         }
     }
 
+    pub(crate) fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        Ok(match self {
+            Self::Quadratic(curve) => Classification::Decided(Self::Quadratic(
+                curve.subcurve_between_affine_exact(start, end, policy)?,
+            )),
+            Self::Cubic(curve) => Classification::Decided(Self::Cubic(
+                curve.subcurve_between_affine_exact(start, end, policy)?,
+            )),
+            Self::RationalQuadratic(_) | Self::Rational(_) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+        })
+    }
+
     /// Returns the same exact image with traversal direction reversed.
     pub fn reversed(&self) -> Self {
         match self {
@@ -1480,6 +1499,16 @@ impl QuadraticBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<QuadraticBezier2> {
         validate_exact_range(start, end, policy)?;
+        self.subcurve_between_affine_exact(start, end, policy)
+    }
+
+    pub(crate) fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<QuadraticBezier2> {
+        validate_ordered_exact_range(start, end, policy)?;
         if compare_reals(start, end, policy) == Some(Ordering::Equal) {
             let point = self.point_at(start.clone());
             return Ok(QuadraticBezier2::new(point.clone(), point.clone(), point));
@@ -1583,6 +1612,16 @@ impl CubicBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<CubicBezier2> {
         validate_exact_range(start, end, policy)?;
+        self.subcurve_between_affine_exact(start, end, policy)
+    }
+
+    pub(crate) fn subcurve_between_affine_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<CubicBezier2> {
+        validate_ordered_exact_range(start, end, policy)?;
         if compare_reals(start, end, policy) == Some(Ordering::Equal) {
             let point = self.point_at(start.clone());
             return Ok(CubicBezier2::new(
@@ -1958,6 +1997,14 @@ fn validate_exact_range(start: &Real, end: &Real, policy: &CurveContext) -> Curv
             ));
         }
     }
+    validate_ordered_exact_range(start, end, policy)
+}
+
+fn validate_ordered_exact_range(
+    start: &Real,
+    end: &Real,
+    policy: &CurveContext,
+) -> CurveResult<()> {
     match compare_reals(start, end, policy) {
         Some(Ordering::Greater) => Err(CurveError::InvalidBezierRange),
         Some(_) => Ok(()),

@@ -1773,10 +1773,13 @@ impl CurvePath2 {
     /// explicit `Unsupported` blocker until public curve subdivision can retain
     /// that parameter exactly.
     /// [`CurveCornerMode2::TrimOrExtend`] returns every exact native-support
-    /// candidate in deterministic order. The retained-region caller also uses
-    /// this kernel for affine algebraic chords without materializing their
-    /// endpoints; retained rational circles and general Beziers remain
-    /// trim-only until their projective extension domains are authoritative.
+    /// candidate in deterministic order. Direct polynomial Beziers use their
+    /// complete affine incident ray; represented exterior roots materialize as
+    /// polynomial subcurves, while a public path explicitly blocks an
+    /// algebraic endpoint that only retained-region topology can store. The
+    /// retained-region caller also uses this kernel for affine algebraic
+    /// chords. General rational Beziers remain trim-only until reconstruction
+    /// over their pole-partitioned incident projective cell is authoritative.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -1844,11 +1847,12 @@ impl CurvePath2 {
                 )
             })?;
         if mode == CurveCornerMode2::TrimOrExtend
-            && (!previous_carrier.supports_extension() || !next_carrier.supports_extension())
+            && (!previous_carrier.supports_extension(CurveOperation2::Chamfer)
+                || !next_carrier.supports_extension(CurveOperation2::Chamfer))
         {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Chamfer,
-                if !previous_carrier.supports_extension() {
+                if !previous_carrier.supports_extension(CurveOperation2::Chamfer) {
                     previous.family()
                 } else {
                     next.family()
@@ -1984,11 +1988,12 @@ impl CurvePath2 {
                 )
             })?;
         if mode == CurveCornerMode2::TrimOrExtend
-            && (!previous_carrier.supports_extension() || !next_carrier.supports_extension())
+            && (!previous_carrier.supports_extension(CurveOperation2::Fillet)
+                || !next_carrier.supports_extension(CurveOperation2::Fillet))
         {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
-                if !previous_carrier.supports_extension() {
+                if !previous_carrier.supports_extension(CurveOperation2::Fillet) {
                     previous.family()
                 } else {
                     next.family()
@@ -3378,7 +3383,7 @@ impl CornerCut2 {
             parameter,
             point: self.point,
             placement: self.placement,
-            replacement_rational_curve: None,
+            replacement_curve: None,
         })
     }
 
@@ -3392,7 +3397,7 @@ pub(crate) struct CornerTrimCut2 {
     pub(crate) parameter: CurveRegionParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
     pub(crate) placement: CornerPlacement2,
-    pub(crate) replacement_rational_curve: Option<RationalBezier2>,
+    pub(crate) replacement_curve: Option<BezierSubcurve2>,
 }
 
 #[derive(Clone, Debug)]
@@ -3763,10 +3768,17 @@ impl<'a> ExactCornerCarrier2<'a> {
         }
     }
 
-    pub(crate) const fn supports_extension(&self) -> bool {
+    pub(crate) fn supports_extension(&self, operation: CurveOperation2) -> bool {
         match self {
             Self::Line(_) | Self::PromotedLine(_) | Self::Arc(_) => true,
-            Self::RetainedRationalArc(_) | Self::Bezier(_) | Self::NativeBezierSpan(_) => false,
+            Self::Bezier(curve) => {
+                operation == CurveOperation2::Chamfer
+                    && matches!(
+                        curve.geometry(),
+                        CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_)
+                    )
+            }
+            Self::RetainedRationalArc(_) | Self::NativeBezierSpan(_) => false,
             Self::AlgebraicChord(_) => true,
             Self::AnalyticParallel(_) | Self::AlgebraicCusp(_) => false,
         }
@@ -7742,6 +7754,24 @@ fn bezier_trim_parameter_is_interior(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    Ok(bezier_corner_parameter_placement(
+        parameter,
+        false,
+        CurveCornerMode2::TrimOnly,
+        operation,
+        family,
+        policy,
+    )? == Some(CornerPlacement2::Trim))
+}
+
+fn bezier_corner_parameter_placement(
+    parameter: &BezierParameter2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerPlacement2>> {
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
     let compare = |boundary: &BezierParameter2| {
@@ -7755,11 +7785,18 @@ fn bezier_trim_parameter_is_interior(
                 }
             })
     };
-    if compare(&zero)? != std::cmp::Ordering::Greater || compare(&one)? != std::cmp::Ordering::Less
-    {
-        return Ok(false);
+    let zero_order = compare(&zero)?;
+    let one_order = compare(&one)?;
+    if zero_order == std::cmp::Ordering::Greater && one_order == std::cmp::Ordering::Less {
+        return Ok(Some(CornerPlacement2::Trim));
     }
-    Ok(true)
+    if mode == CurveCornerMode2::TrimOrExtend
+        && ((previous && one_order == std::cmp::Ordering::Greater)
+            || (!previous && zero_order == std::cmp::Ordering::Less))
+    {
+        return Ok(Some(CornerPlacement2::Extension));
+    }
+    Ok(None)
 }
 
 fn represented_bezier_trim_parameter(
@@ -7806,8 +7843,12 @@ fn bezier_parallel_source_point_evidence(
     policy: &CurveContext,
 ) -> ExactCurveResult<RationalBezierIntersectionPointEvidence2> {
     if let Some(parameter) = parameter.as_exact() {
-        return decided_parallel_point(parallel, parameter, true, operation, family, policy)
-            .map(Into::into);
+        return match parallel.source_point_at_unchecked(parameter, policy) {
+            Classification::Decided(point) => Ok(point.into()),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, family, reason))
+            }
+        };
     }
     let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;
     if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
@@ -7911,6 +7952,7 @@ fn corner_chamfer_cuts(
             setback,
             setback_sign,
             previous,
+            mode,
             operation,
             family,
             policy,
@@ -7920,6 +7962,7 @@ fn corner_chamfer_cuts(
             setback,
             setback_sign,
             previous,
+            mode,
             operation,
             family,
             policy,
@@ -8240,6 +8283,7 @@ fn bezier_chamfer_cuts(
     setback: &Real,
     setback_sign: RealSign,
     previous: bool,
+    mode: CurveCornerMode2,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
@@ -8263,8 +8307,8 @@ fn bezier_chamfer_cuts(
 
     let radius_squared = setback * setback;
     let parallel = exact_corner_bezier_parallel(source, Real::zero(), operation, family)?;
-    let parameters = match parallel
-        .circle_incidence(corner, &radius_squared, &[], policy)
+    let mut parameters = match parallel
+        .source_circle_incidence(corner, &radius_squared, policy)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
         Classification::Decided(parameters) => parameters,
@@ -8272,11 +8316,40 @@ fn bezier_chamfer_cuts(
             return Err(ExactCurveError::blocked(operation, family, reason));
         }
     };
+    if mode == CurveCornerMode2::TrimOrExtend {
+        let (anchor, direction) = if previous {
+            (Real::one(), crate::BezierParameterRayDirection2::Increasing)
+        } else {
+            (
+                Real::zero(),
+                crate::BezierParameterRayDirection2::Decreasing,
+            )
+        };
+        let exterior = match parallel
+            .source_circle_incidence_on_incident_ray(
+                corner,
+                &radius_squared,
+                &anchor,
+                direction,
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        parameters.extend(exterior);
+    }
     let mut cuts = CornerCuts2::default();
-    for (parameter, _) in parameters {
-        if !bezier_trim_parameter_is_interior(&parameter, operation, family, policy)? {
+    for parameter in parameters {
+        let Some(placement) = bezier_corner_parameter_placement(
+            &parameter, previous, mode, operation, family, policy,
+        )?
+        else {
             continue;
-        }
+        };
         let point = bezier_parallel_source_point_evidence(
             &parallel, &parameter, operation, family, policy,
         )?;
@@ -8291,7 +8364,7 @@ fn bezier_chamfer_cuts(
         cuts.push(CornerCut2 {
             parameter,
             point,
-            placement: CornerPlacement2::Trim,
+            placement,
         });
     }
     Ok(cuts)
@@ -8841,6 +8914,42 @@ fn materialize_corner_cut(
                         None,
                     )
                 }))
+            } else if let Some(parameter) = cut.exact_parameter() {
+                let domain = curve.parameter_domain();
+                let (start, end) = if previous {
+                    (domain.start(), parameter)
+                } else {
+                    (parameter, domain.end())
+                };
+                let lineage = curve
+                    .lineage_subrange(start, end)
+                    .map_err(|error| remap_operation(error, operation))?;
+                let geometry = match curve.geometry() {
+                    CurveGeometry2::QuadraticBezier(source) => CurveGeometry2::QuadraticBezier(
+                        source
+                            .subcurve_between_affine_exact(start, end, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(operation, curve.family(), cause)
+                            })?,
+                    ),
+                    CurveGeometry2::CubicBezier(source) => CurveGeometry2::CubicBezier(
+                        source
+                            .subcurve_between_affine_exact(start, end, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(operation, curve.family(), cause)
+                            })?,
+                    ),
+                    _ => {
+                        return Err(ExactCurveError::blocked(
+                            operation,
+                            curve.family(),
+                            crate::UncertaintyReason::Unsupported,
+                        ));
+                    }
+                };
+                curve
+                    .with_lineage(geometry, lineage)
+                    .map_err(|error| remap_operation(error, operation))
             } else {
                 Err(ExactCurveError::blocked(
                     operation,

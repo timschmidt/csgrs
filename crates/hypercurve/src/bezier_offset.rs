@@ -43,11 +43,12 @@ use crate::{
     BezierDegree, BezierEndpoint, BezierInflectionClassification, BezierLineContact,
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, CertifiedBezierLineImageOffset2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError,
-    CurveGeometry2, CurveOperation2, CurvePath2, CurveRegionParameter2, CurveRegionParameterRange2,
-    CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
+    CertifiedBezierLineImageOffset2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2,
+    CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
+    ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
     RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, Similarity2,
@@ -48995,6 +48996,145 @@ impl BezierParallel2 {
             }))
     }
 
+    fn source_circle_polynomial(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameterPolynomial>> {
+        let source = self.source_power_basis()?;
+        let weight = source
+            .weight
+            .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
+        let delta_x =
+            polynomial_subtract(source.x_numerator, &polynomial_scale(&weight, center.x()));
+        let delta_y =
+            polynomial_subtract(source.y_numerator, &polynomial_scale(&weight, center.y()));
+        let incidence = polynomial_subtract(
+            &polynomial_add(
+                &polynomial_multiply(&delta_x, &delta_x),
+                &polynomial_multiply(&delta_y, &delta_y),
+            ),
+            &polynomial_scale(&polynomial_multiply(&weight, &weight), radius_squared),
+        );
+        match polynomial_from_coefficients(incidence, policy)? {
+            Classification::Decided(Some(polynomial)) => Ok(Classification::Decided(polynomial)),
+            Classification::Decided(None) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
+    /// Solves source-curve circle incidence on the complete finite source
+    /// domain without imposing analytic-parallel tangent regularity.
+    pub(crate) fn source_circle_incidence(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        let source = self.source_power_basis()?;
+        if let Classification::Uncertain(reason) = Self::certify_finite_source(&source, policy)? {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let incidence = match self.source_circle_polynomial(center, radius_squared, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        incidence.isolate_unit_interval_roots(policy)
+    }
+
+    /// Solves source-curve circle incidence on the finite component of one
+    /// incident exterior parameter ray.
+    ///
+    /// The first rational weight zero is a projective pole barrier: roots at
+    /// or beyond it do not belong to the endpoint's connected affine support.
+    /// Polynomial sources have no barrier. This is the shared exterior-domain
+    /// authority used by exact chamfer setback construction.
+    pub(crate) fn source_circle_incidence_on_incident_ray(
+        &self,
+        center: &Point2,
+        radius_squared: &Real,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        let incidence = match self.source_circle_polynomial(center, radius_squared, policy)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let candidates = match incidence.isolate_incident_ray_roots(anchor, direction, policy)? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+
+        let source = self.source_power_basis()?;
+        let weight = if let Some(weight) = source.weight {
+            match polynomial_from_coefficients(weight.to_vec(), policy)? {
+                Classification::Decided(Some(weight)) => Some(weight),
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            None
+        };
+        let barrier = if let Some(weight) = weight.as_ref() {
+            match weight.isolate_incident_ray_roots(anchor, direction, policy)? {
+                Classification::Decided(roots) => roots.into_iter().next(),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            None
+        };
+
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            if let Some(barrier) = barrier.as_ref() {
+                let ordering = match candidate.cmp_by_refinement(barrier, policy)? {
+                    Classification::Decided(ordering) => ordering,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let before_barrier = match direction {
+                    BezierParameterRayDirection2::Decreasing => {
+                        ordering == std::cmp::Ordering::Greater
+                    }
+                    BezierParameterRayDirection2::Increasing => {
+                        ordering == std::cmp::Ordering::Less
+                    }
+                };
+                if !before_barrier {
+                    continue;
+                }
+            }
+            if let Some(weight) = weight.as_ref() {
+                match signed_polynomial_at_root(Some(weight), &candidate, policy)? {
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                    Classification::Decided(RealSign::Zero) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            retained.push(candidate);
+        }
+        Ok(Classification::Decided(retained))
+    }
+
     /// Solves circle incidence while retaining the oriented radial crossing
     /// sign and reusing represented tangent contacts certified by exact
     /// offset-join construction.
@@ -52585,7 +52725,7 @@ impl BezierParallel2 {
         Ok(self.source_point_at_unchecked(parameter, policy))
     }
 
-    fn source_point_at_unchecked(
+    pub(crate) fn source_point_at_unchecked(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -77199,6 +77339,88 @@ mod conversion_tests {
             assert_eq!(contacts.len(), 2);
             assert_eq!(contacts[0].1, Some(RealSign::Negative));
             assert_eq!(contacts[1].1, Some(RealSign::Positive));
+        }
+    }
+
+    #[test]
+    fn source_circle_incidence_does_not_require_source_regularity() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(1, 0),
+            Point2::from_values(-1, 0),
+            Point2::from_values(1, 0),
+        );
+        let parallel = source.parallel_left(Real::zero()).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(parameters) = parallel
+                .source_circle_incidence(&Point2::from_values(1, 0), &Real::one(), &policy)
+                .unwrap()
+            else {
+                panic!("source-circle incidence must not require a nonzero tangent");
+            };
+            let [parameter] = parameters.as_slice() else {
+                panic!("the retracing quadratic has one distinct circle contact");
+            };
+            assert_eq!(parameter.as_exact(), Some(&half));
+        }
+    }
+
+    #[test]
+    fn incident_source_circle_stops_at_the_first_projective_pole() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let increasing = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+                vec![Real::one(), half.clone()],
+            )
+            .unwrap()
+            .parallel_left(Real::zero())
+            .unwrap();
+            let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+            let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+            let decreasing = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::new(one_third, Real::zero()),
+                ],
+                vec![Real::one(), three_halves],
+            )
+            .unwrap()
+            .parallel_left(Real::zero())
+            .unwrap();
+            for (parallel, center, anchor, direction, expected) in [
+                (
+                    increasing,
+                    Point2::from_values(1, 0),
+                    Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    (Real::from(8_i8) / Real::from(5_i8)).unwrap(),
+                ),
+                (
+                    decreasing,
+                    Point2::from_values(0, 0),
+                    Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    (-Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                ),
+            ] {
+                let Classification::Decided(parameters) = parallel
+                    .source_circle_incidence_on_incident_ray(
+                        &center,
+                        &Real::from(9_i8),
+                        &anchor,
+                        direction,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the pole-partitioned incident ray must be decided");
+                };
+                let [parameter] = parameters.as_slice() else {
+                    panic!("only the contact before the first pole belongs to the incident cell");
+                };
+                assert_eq!(parameter.as_exact(), Some(&expected));
+            }
         }
     }
 

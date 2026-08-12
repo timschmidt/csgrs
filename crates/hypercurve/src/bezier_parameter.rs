@@ -1421,6 +1421,65 @@ impl BezierParameter2 {
         }
     }
 
+    /// Applies `scale * parameter + offset` while retaining an exact algebraic
+    /// root carrier on any finite affine interval.
+    pub(crate) fn affine_image_unbounded(
+        &self,
+        scale: &Real,
+        offset: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let scale_sign = match real_sign(scale, policy) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let parameter = match self {
+            Self::Exact(parameter) => {
+                return Ok(Classification::Decided(Self::Exact(
+                    scale * parameter + offset,
+                )));
+            }
+            Self::Algebraic(parameter) => parameter,
+        };
+        let coefficients = match compose_univariate_polynomial_linear_fractional(
+            parameter.polynomial().coefficients(),
+            &Real::one(),
+            &-offset.clone(),
+            &Real::zero(),
+            scale,
+            policy.predicate_policy(),
+        ) {
+            Some(coefficients) => coefficients,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let first = scale * parameter.interval().start() + offset;
+        let second = scale * parameter.interval().end() + offset;
+        let interval = match scale_sign {
+            RealSign::Positive => BezierParameterInterval {
+                start: first,
+                end: second,
+            },
+            RealSign::Negative => BezierParameterInterval {
+                start: second,
+                end: first,
+            },
+            RealSign::Zero => unreachable!(),
+        };
+        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
+        if parameter.data.shared.simple_root.get() == Some(&true) {
+            let _ = mapped.data.shared.simple_root.set(true);
+        }
+        Ok(Classification::Decided(Self::Algebraic(mapped)))
+    }
+
     /// Promotes a rational algebraic parameter to a represented exact value.
     ///
     /// Irrational and nonrational-coefficient parameters remain algebraic.
