@@ -21464,76 +21464,88 @@ mod tests {
         }
     }
 
+    fn independent_field_algebraic_chord_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let x_parameter = positive_inverse_sqrt_parameter(2, policy);
+        let y_parameter = positive_inverse_sqrt_parameter(3, policy);
+        let x_source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
+        ));
+        let y_source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(p(0, 0), p(0, 1)).unwrap(),
+        ));
+        let endpoint_image = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
+            let BezierParameter2::Algebraic(parameter) = parameter else {
+                panic!("the selected endpoint must remain algebraic");
+            };
+            BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy).unwrap()
+        };
+        let x_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed: false,
+            start: BezierParameter2::Exact(Real::zero()),
+            end: x_parameter.clone(),
+            source_curve: Some(x_source.clone()),
+            start_image: None,
+            end_image: Some(endpoint_image(&x_source, &x_parameter)),
+        };
+        let y_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed: true,
+            start: BezierParameter2::Exact(Real::zero()),
+            end: y_parameter.clone(),
+            source_curve: Some(y_source.clone()),
+            start_image: None,
+            end_image: Some(endpoint_image(&y_source, &y_parameter)),
+        };
+        let point_evidence = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
+            let source = RationalBezier2::try_from_subcurve(source).unwrap();
+            crate::rational_bezier_general::exact_contact_point_evidence(&source, parameter, policy)
+                .unwrap()
+                .expect("the algebraic line endpoint must retain point evidence")
+        };
+        let chord = match crate::BezierAlgebraicChord2::try_new(
+            point_evidence(&x_source, &x_parameter),
+            point_evidence(&y_source, &y_parameter),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                panic!("independent algebraic chord: {reason:?}")
+            }
+        };
+        let mut fragments = vec![
+            x_fragment,
+            BezierSplitFragment2::AlgebraicChord(chord),
+            y_fragment,
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the exact triangle reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the retained triangle must close by exact endpoint evidence");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    }
+
     #[test]
     fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let x_parameter = positive_inverse_sqrt_parameter(2, &policy);
-            let y_parameter = positive_inverse_sqrt_parameter(3, &policy);
-            let x_source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
-            ));
-            let y_source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(p(0, 0), p(0, 1)).unwrap(),
-            ));
-            let endpoint_image = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
-                let BezierParameter2::Algebraic(parameter) = parameter else {
-                    panic!("the selected endpoint must remain algebraic");
-                };
-                BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, &policy)
-                    .unwrap()
-            };
-            let x_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
-                reversed: false,
-                start: BezierParameter2::Exact(Real::zero()),
-                end: x_parameter.clone(),
-                source_curve: Some(x_source.clone()),
-                start_image: None,
-                end_image: Some(endpoint_image(&x_source, &x_parameter)),
-            };
-            let y_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
-                reversed: true,
-                start: BezierParameter2::Exact(Real::zero()),
-                end: y_parameter.clone(),
-                source_curve: Some(y_source.clone()),
-                start_image: None,
-                end_image: Some(endpoint_image(&y_source, &y_parameter)),
-            };
-            let point_evidence = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
-                let source = RationalBezier2::try_from_subcurve(source).unwrap();
-                crate::rational_bezier_general::exact_contact_point_evidence(
-                    &source, parameter, &policy,
-                )
-                .unwrap()
-                .expect("the algebraic line endpoint must retain point evidence")
-            };
-            let chord = match crate::BezierAlgebraicChord2::try_new(
-                point_evidence(&x_source, &x_parameter),
-                point_evidence(&y_source, &y_parameter),
-                &policy,
-            )
-            .unwrap()
-            {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    panic!("independent algebraic chord: {reason:?}")
-                }
-            };
-            let boundary = CurveRegionBoundaryLoop2::new(
-                vec![
-                    x_fragment,
-                    BezierSplitFragment2::AlgebraicChord(chord),
-                    y_fragment,
-                ],
-                &policy,
-            )
-            .expect("the retained triangle must close by exact endpoint evidence");
-            let region = CurveRegion2::try_new_with_loop_topology(
-                vec![boundary],
-                vec![CurveRegionLoopRole::Material],
-                vec![FillRule::NonZero],
-                vec![CurveBoundaryInteriorSide2::Left],
-            )
-            .unwrap();
+            let region = independent_field_algebraic_chord_region(&policy, false);
             let tenth = (Real::one() / Real::from(10_i8)).unwrap();
             assert_eq!(
                 region
@@ -21556,6 +21568,223 @@ mod tests {
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Boundary)
             );
+        }
+    }
+
+    #[test]
+    fn independent_field_chord_crosses_a_genuine_analytic_parallel_boolean() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let triangle = independent_field_algebraic_chord_region(&policy, reversed);
+                let chord = triangle.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .find_map(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicChord(chord) => Some(chord),
+                        _ => None,
+                    })
+                    .expect("the retained triangle has one algebraic chord");
+                assert!(chord.exact_line().is_none());
+                assert!(chord.strict_provenance_support_line(&policy).is_none());
+
+                let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+                let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
+                let source = QuadraticBezier2::new(
+                    p(-1, 0),
+                    Point2::new(Real::zero(), -quarter),
+                    Point2::new(Real::one(), (Real::one() / Real::from(2_i8)).unwrap()),
+                );
+                let parallel = source
+                    .parallel_left(twentieth)
+                    .expect("the regular non-PH source has an exact analytic parallel");
+                assert!(matches!(
+                    parallel
+                        .exact_rational_parallel_component(&CurveContext::STRICT)
+                        .unwrap(),
+                    Classification::Decided(None)
+                ));
+                let contacts = match chord.parallel_intersections(&parallel, &policy).unwrap() {
+                    Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                            contacts,
+                        ),
+                    ) => contacts,
+                    result => panic!("the retained chord/parallel solve must complete: {result:?}"),
+                };
+                assert!(!contacts.is_empty());
+                assert!(
+                    contacts
+                        .iter()
+                        .any(|candidate| candidate.tangent_cross_sign() != RealSign::Zero)
+                );
+
+                let endpoint =
+                    |parameter: Real| match parallel.point_at(&parameter, &policy).unwrap() {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => {
+                            panic!("an exact analytic endpoint must evaluate: {reason:?}")
+                        }
+                    };
+                let lower_left = endpoint(Real::zero());
+                let lower_right = endpoint(Real::one());
+                let top = if compare_reals(lower_left.y(), lower_right.y(), &policy)
+                    == Some(std::cmp::Ordering::Greater)
+                {
+                    lower_left.y() + Real::from(2_i8)
+                } else {
+                    lower_right.y() + Real::from(2_i8)
+                };
+                let upper_left = Point2::new(lower_left.x().clone(), top.clone());
+                let upper_right = Point2::new(lower_right.x().clone(), top);
+                let Classification::Decided(bottom) = crate::BezierParallelFragment2::try_new(
+                    parallel,
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the complete analytic cutter span must be regular");
+                };
+                let line = |start, end| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                        LineSeg2::try_new(start, end).unwrap(),
+                    )),
+                };
+                let cutter = CurveRegion2::try_new_with_loop_topology(
+                    vec![
+                        CurveRegionBoundaryLoop2::new(
+                            vec![
+                                BezierSplitFragment2::AnalyticParallel(bottom),
+                                line(lower_right.clone(), upper_right.clone()),
+                                line(upper_right, upper_left.clone()),
+                                line(upper_left, lower_left),
+                            ],
+                            &policy,
+                        )
+                        .expect("the analytic cutter closes exactly"),
+                    ],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![CurveBoundaryInteriorSide2::Left],
+                )
+                .expect("the analytic cutter has authored topology");
+                let evidence = triangle
+                    .intersect_region(&cutter, &policy)
+                    .expect("the retained chord/analytic carrier pair remains exact");
+                assert!(
+                    evidence.value.is_complete(),
+                    "the retained chord/analytic intersection must complete: {:?}",
+                    evidence.value.blockers()
+                );
+                let booleans = triangle
+                    .boolean_regions(&cutter, &policy)
+                    .expect("the retained chord/analytic Boolean must complete");
+                assert_eq!(booleans.certainty, CurveCertainty::Certified);
+                assert!(!booleans.value.intersection().is_empty());
+                assert!(!booleans.value.difference().is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn independent_field_chord_replays_a_genuine_parallel_endpoint_contact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel_parameter = positive_inverse_sqrt_parameter(2, &policy);
+            let independent_parameter = positive_inverse_sqrt_parameter(3, &policy);
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+            let endpoint_source = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::zero(), half.clone()),
+                    Point2::new(three_quarters, half.clone()),
+                ],
+                vec![Real::one(); 2],
+            )
+            .expect("the selected parallel endpoint source is valid");
+            let independent_source =
+                RationalBezier2::try_new(vec![p(0, 0), p(0, 1)], vec![Real::one(); 2])
+                    .expect("the independent selected endpoint source is valid");
+            let selected_point = |source: &RationalBezier2, parameter: &BezierParameter2| {
+                let BezierParameter2::Algebraic(parameter) = parameter else {
+                    panic!("the selected endpoint parameter must remain algebraic");
+                };
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    source
+                        .point_at_algebraic_parameter(parameter, &policy)
+                        .expect("the selected endpoint image is exact"),
+                )
+            };
+            let chord = match crate::BezierAlgebraicChord2::try_new(
+                selected_point(&endpoint_source, &parallel_parameter),
+                selected_point(&independent_source, &independent_parameter),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    panic!("the independent endpoint chord must construct: {reason:?}")
+                }
+            };
+
+            let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+            let distance = (three_halves.sqrt().unwrap() / Real::from(4_i8)).unwrap();
+            let source = QuadraticBezier2::new(
+                p(0, 0),
+                Point2::new(half.clone(), Real::zero()),
+                Point2::new(Real::one(), half),
+            );
+            let parallel = source
+                .parallel_left(distance)
+                .expect("the regular quadratic has an exact analytic parallel");
+            assert!(matches!(
+                parallel
+                    .exact_rational_parallel_component(&CurveContext::STRICT)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
+
+            for reversed in [false, true] {
+                let chord = if reversed {
+                    chord.reversed()
+                } else {
+                    chord.clone()
+                };
+                assert!(chord.exact_line().is_none());
+                assert!(chord.strict_provenance_support_line(&policy).is_none());
+                let contacts = match chord.parallel_intersections(&parallel, &policy).unwrap() {
+                    Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                            contacts,
+                        ),
+                    ) => contacts,
+                    result => panic!("the endpoint chord/parallel solve must complete: {result:?}"),
+                };
+                let contact = contacts
+                    .iter()
+                    .find(|contact| {
+                        contact
+                            .parallel_parameter()
+                            .cmp_by_refinement(&parallel_parameter, &policy)
+                            .unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Equal)
+                    })
+                    .expect("the exact parallel parameter reaches the chord endpoint");
+                let endpoint = if reversed {
+                    chord.end_parameter()
+                } else {
+                    chord.start_parameter()
+                };
+                assert_eq!(
+                    contact
+                        .chord_parameter()
+                        .cmp_by_refinement(&endpoint, &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
+            }
         }
     }
 

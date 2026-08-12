@@ -7,8 +7,8 @@ use std::sync::{Arc, OnceLock};
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicChordPairIntersections2,
-    BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
-    BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
+    BezierAlgebraicChordParallelIntersections2, BezierAlgebraicChordRationalIntersections2,
+    BezierAlgebraicChordRationalOverlap2, BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
     BezierAlgebraicCuspSemicircleSelectedFiberContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
 };
@@ -2508,8 +2508,63 @@ impl<'a> CurveRegionBooleanContext<'a> {
             parallel,
             parallel_index,
         )?;
-        if support_result.blockers.is_empty() || chord.exact_line().is_none() {
+        if support_result.blockers.is_empty() {
             return Ok(support_result);
+        }
+        if chord.exact_line().is_none() {
+            let blocker = |reason| RegionPairResult {
+                contacts: Vec::new(),
+                overlaps: Vec::new(),
+                blockers: vec![RegionPairBlocker::Uncertain(reason)],
+            };
+            let contacts = match chord
+                .parallel_intersections(parallel, &self.data.policy)
+                .map_err(|cause| self.invalid(parallel_index, cause))?
+            {
+                Classification::Decided(BezierAlgebraicChordParallelIntersections2::Contacts(
+                    contacts,
+                )) => contacts,
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                ) => return Ok(blocker(UncertaintyReason::Boundary)),
+                Classification::Uncertain(reason) => return Ok(blocker(reason)),
+            };
+            let chord_is_first = chord_index == pair.first_carrier_index;
+            let contacts = contacts
+                .into_iter()
+                .map(|contact| {
+                    let tangent_cross_sign =
+                        orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
+                    let chord_parameter = CurveRegionParameter2::from_algebraic_chord(
+                        contact.chord_parameter().clone(),
+                    );
+                    let parallel_parameter =
+                        CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                    let (first_parameter, second_parameter) = if chord_is_first {
+                        (chord_parameter, parallel_parameter)
+                    } else {
+                        (parallel_parameter, chord_parameter)
+                    };
+                    RegionPairContactEvidence::direct(
+                        first_parameter,
+                        second_parameter,
+                        Some(contact.point().clone()),
+                        tangent_cross_sign != RealSign::Zero,
+                        Some(tangent_cross_sign),
+                    )
+                })
+                .collect();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-pair",
+                "analytic-parallel-retained-support",
+            );
+            return Ok(RegionPairResult {
+                contacts,
+                overlaps: Vec::new(),
+                blockers: Vec::new(),
+            });
         }
         let Some(chord_line) = chord.exact_line() else {
             unreachable!("the retained-support path owns non-represented chords");

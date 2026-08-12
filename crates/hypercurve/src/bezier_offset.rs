@@ -6876,6 +6876,20 @@ pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
 }
 
 #[derive(Clone, Debug)]
+pub(crate) struct BezierAlgebraicChordParallelContact2 {
+    chord_parameter: BezierAlgebraicChordParameter2,
+    parallel_parameter: BezierParameter2,
+    point: RationalBezierIntersectionPointEvidence2,
+    tangent_cross_sign: RealSign,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum BezierAlgebraicChordParallelIntersections2 {
+    Contacts(Vec<BezierAlgebraicChordParallelContact2>),
+    DegenerateProjection,
+}
+
+#[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordPairContact2 {
     first_parameter: BezierAlgebraicChordParameter2,
     second_parameter: BezierAlgebraicChordParameter2,
@@ -6974,6 +6988,53 @@ struct BezierAlgebraicChordIndependentIncidence2 {
     second_parameter: BezierParameter2,
     source_weight: Vec<Real>,
     chord_denominator_sign: RealSign,
+}
+
+/// Target-independent two-field support equation for one retained chord.
+///
+/// The first and second tensor axes retain the independently selected chord
+/// endpoints.  Rational and analytic-parallel targets add only their native
+/// third-axis coordinate expressions, so both intersection kernels share one
+/// exact supporting-line construction.
+#[derive(Debug)]
+struct BezierAlgebraicChordIndependentSupport2 {
+    start_x: Vec<Real>,
+    start_y: Vec<Real>,
+    start_denominator: Vec<Real>,
+    line_x: BivariatePolynomial,
+    line_y: BivariatePolynomial,
+    first_parameter: BezierParameter2,
+    second_parameter: BezierParameter2,
+    chord_denominator_sign: RealSign,
+}
+
+/// One-radical incidence of a retained two-field chord with an exact analytic
+/// parallel.  `incidence` is the authored line equation
+/// `R + B*sqrt(speed_squared)`; its norm is used only for candidate projection.
+#[derive(Debug)]
+struct BezierAlgebraicChordIndependentParallelIncidence2 {
+    incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    speed_squared: TrivariatePolynomial2,
+    tangent_cross: TrivariatePolynomial2,
+    first_parameter: BezierParameter2,
+    second_parameter: BezierParameter2,
+    chord_denominator_sign: RealSign,
+}
+
+/// Exact finite-chord coordinate tests for one analytic-parallel candidate.
+///
+/// Each expression is `Q_axis-endpoint_axis`, multiplied by the candidate's
+/// positive source-speed radical and otherwise only by represented projective
+/// denominators. It is built lazily because separated interior contacts are
+/// usually admitted by the cheaper retained point bounds.
+#[derive(Debug)]
+struct BezierAlgebraicChordIndependentParallelParameterMap2 {
+    source_minus_start_axis: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    source_minus_end_axis: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    speed_squared: TrivariatePolynomial2,
+    source_weight: Vec<Real>,
+    start_denominator_sign: RealSign,
+    end_denominator_sign: RealSign,
 }
 
 /// Lazily prepared coordinate differences for a source point already proved
@@ -35468,6 +35529,126 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
+    /// Replays every finite contact between this retained chord and a
+    /// genuinely analytic parallel.
+    ///
+    /// The two selected chord-endpoint fields stay independent. Hypersolve
+    /// eliminates them from the squared one-radical supporting-line equation,
+    /// then exact authored-sheet replay rejects conjugate and opposite-normal
+    /// roots before finite chord containment and tangent orientation are
+    /// published. No approximate value selects a carrier representation.
+    pub(crate) fn parallel_intersections(
+        &self,
+        parallel: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
+        self.validate_policy(policy)?;
+        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let projected = selected_pair_square_root_expression_third_axis_parameters(
+            &system.incidence,
+            &system.speed_squared,
+            &system.first_parameter,
+            &system.second_parameter,
+            1,
+            policy,
+        )?;
+        let candidates = match projected {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut contacts = Vec::with_capacity(candidates.len());
+        let mut independent_parameter_map = None;
+        for candidate in candidates {
+            let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy),
+            );
+            let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(_) => {
+                    if independent_parameter_map.is_none() {
+                        independent_parameter_map = Some(
+                            match self.independent_parallel_parameter_map(parallel, policy)? {
+                                Classification::Decided(map) => map,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            },
+                        );
+                    }
+                    match self.parameter_at_independent_parallel_incidence_candidate(
+                        point.clone(),
+                        independent_parameter_map
+                            .as_ref()
+                            .expect("the independent parallel parameter map was initialized"),
+                        &system,
+                        &candidate,
+                        policy,
+                    )? {
+                        Classification::Decided(Some(parameter)) => parameter,
+                        Classification::Decided(None) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            };
+            let source_cross = match trivariate_parameter_triple_sign_by_refinement(
+                &system.tangent_cross,
+                &system.first_parameter,
+                &system.second_parameter,
+                &candidate,
+                policy,
+            )? {
+                Classification::Decided(sign) => product_sign(sign, system.chord_denominator_sign),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let tangent_cross_sign = if source_cross == RealSign::Zero {
+                RealSign::Zero
+            } else {
+                match parallel.parallel_derivative_scale_sign(&candidate, policy)? {
+                    Classification::Decided(scale @ (RealSign::Positive | RealSign::Negative)) => {
+                        product_sign(source_cross, scale)
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+            contacts.push(BezierAlgebraicChordParallelContact2 {
+                chord_parameter,
+                parallel_parameter: candidate,
+                point,
+                tangent_cross_sign,
+            });
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+        ))
+    }
+
     /// Replays every finite contact between this retained chord and an
     /// arbitrary rational Bezier without adjoining its finite-boundary fields.
     ///
@@ -37006,11 +37187,10 @@ impl BezierAlgebraicChord2 {
         Ok(Classification::Decided(candidates))
     }
 
-    fn independent_incidence_system(
+    fn independent_support_system(
         &self,
-        source: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicChordIndependentIncidence2>> {
+    ) -> CurveResult<Classification<BezierAlgebraicChordIndependentSupport2>> {
         self.validate_policy(policy)?;
         // Splitting changes only the finite interval on one retained support.
         // Build the supporting-line equation from that stable root chord so
@@ -37053,19 +37233,47 @@ impl BezierAlgebraicChord2 {
             &bivariate_outer_product(start_denominator, end_y),
             &bivariate_outer_product(start_y, end_denominator),
         );
+        Ok(Classification::Decided(
+            BezierAlgebraicChordIndependentSupport2 {
+                start_x: start_x.to_vec(),
+                start_y: start_y.to_vec(),
+                start_denominator: start_denominator.to_vec(),
+                line_x,
+                line_y,
+                first_parameter: start.retained_parameter().clone(),
+                second_parameter: end.retained_parameter().clone(),
+                chord_denominator_sign: product_sign(
+                    start.denominator_sign(),
+                    end.denominator_sign(),
+                ),
+            },
+        ))
+    }
+
+    fn independent_incidence_system(
+        &self,
+        source: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordIndependentIncidence2>> {
+        let support = match self.independent_support_system(policy)? {
+            Classification::Decided(support) => support,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let source = source.homogeneous_power_basis()?;
         let point_delta_x = bivariate_subtract(
-            &bivariate_outer_product(start_denominator, &source.x_numerator),
-            &bivariate_outer_product(start_x, &source.weight),
+            &bivariate_outer_product(&support.start_denominator, &source.x_numerator),
+            &bivariate_outer_product(&support.start_x, &source.weight),
         );
         let point_delta_y = bivariate_subtract(
-            &bivariate_outer_product(start_denominator, &source.y_numerator),
-            &bivariate_outer_product(start_y, &source.weight),
+            &bivariate_outer_product(&support.start_denominator, &source.y_numerator),
+            &bivariate_outer_product(&support.start_y, &source.weight),
         );
         let Some(incidence) = TrivariatePolynomial2::ab_ac_determinant(
-            &line_x,
+            &support.line_x,
             &point_delta_y,
-            &line_y,
+            &support.line_y,
             &point_delta_x,
         ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -37073,24 +37281,321 @@ impl BezierAlgebraicChord2 {
         let [tangent_x, tangent_y] = rational_parametric_tangent_numerator(source);
         let tangent_x = BivariatePolynomial::new(vec![tangent_x]);
         let tangent_y = BivariatePolynomial::new(vec![tangent_y]);
-        let Some(tangent_cross) =
-            TrivariatePolynomial2::ab_ac_determinant(&line_x, &tangent_y, &line_y, &tangent_x)
-        else {
+        let Some(tangent_cross) = TrivariatePolynomial2::ab_ac_determinant(
+            &support.line_x,
+            &tangent_y,
+            &support.line_y,
+            &tangent_x,
+        ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         Ok(Classification::Decided(
             BezierAlgebraicChordIndependentIncidence2 {
                 incidence,
                 tangent_cross,
-                first_parameter: start.retained_parameter().clone(),
-                second_parameter: end.retained_parameter().clone(),
+                first_parameter: support.first_parameter,
+                second_parameter: support.second_parameter,
                 source_weight: source.weight.clone(),
-                chord_denominator_sign: product_sign(
-                    start.denominator_sign(),
-                    end.denominator_sign(),
-                ),
+                chord_denominator_sign: support.chord_denominator_sign,
             },
         ))
+    }
+
+    fn independent_parallel_incidence_system(
+        &self,
+        parallel: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordIndependentParallelIncidence2>> {
+        let support = match self.independent_support_system(policy)? {
+            Classification::Decided(support) => support,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source = parallel.source_power_basis()?;
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_finite_source(&source, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let differential = parallel.differential()?;
+        if parallel.distance().zero_status() != ZeroStatus::Zero
+            && let Classification::Uncertain(reason) =
+                BezierParallel2::certify_regular_differential(differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let unit = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit);
+        let point_delta_x = bivariate_subtract(
+            &bivariate_outer_product(&support.start_denominator, source.x_numerator),
+            &bivariate_outer_product(&support.start_x, weight),
+        );
+        let point_delta_y = bivariate_subtract(
+            &bivariate_outer_product(&support.start_denominator, source.y_numerator),
+            &bivariate_outer_product(&support.start_y, weight),
+        );
+        let Some(source_incidence) = TrivariatePolynomial2::ab_ac_determinant(
+            &support.line_x,
+            &point_delta_y,
+            &support.line_y,
+            &point_delta_x,
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(line_x) = trivariate_from_axis_bivariate_coefficients(
+            std::slice::from_ref(&support.line_x),
+            2,
+            [0, 1],
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(line_y) = trivariate_from_axis_bivariate_coefficients(
+            std::slice::from_ref(&support.line_y),
+            2,
+            [0, 1],
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(tangent_x) =
+            TrivariatePolynomial2::from_axis_polynomial(&differential.tangent_x, 2)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(tangent_y) =
+            TrivariatePolynomial2::from_axis_polynomial(&differential.tangent_y, 2)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(tangent_dot) = TrivariatePolynomial2::sum_products(&[
+            (&line_x, &tangent_x, false),
+            (&line_y, &tangent_y, false),
+        ]) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(start_denominator) =
+            TrivariatePolynomial2::from_axis_polynomial(&support.start_denominator, 0)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(weight) = TrivariatePolynomial2::from_axis_polynomial(weight, 2) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(normal_incidence) = start_denominator
+            .multiply(&weight)
+            .and_then(|scale| scale.multiply(&tangent_dot))
+            .and_then(|term| term.scale(parallel.distance()))
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(speed_squared) = TrivariatePolynomial2::from_axis_polynomial(
+            &parallel_speed_squared_polynomial(differential),
+            2,
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(tangent_cross) = TrivariatePolynomial2::sum_products(&[
+            (&line_x, &tangent_y, false),
+            (&line_y, &tangent_x, true),
+        ]) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicChordIndependentParallelIncidence2 {
+                incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                    rational: normal_incidence,
+                    radical: source_incidence,
+                },
+                speed_squared,
+                tangent_cross,
+                first_parameter: support.first_parameter,
+                second_parameter: support.second_parameter,
+                chord_denominator_sign: support.chord_denominator_sign,
+            },
+        ))
+    }
+
+    fn independent_parallel_parameter_map(
+        &self,
+        parallel: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordIndependentParallelParameterMap2>> {
+        let [start, end] = match algebraic_chord_endpoint_images(self.start(), self.end(), policy)?
+        {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = match start.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match end.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source = parallel.source_power_basis()?;
+        let differential = parallel.differential()?;
+        let unit = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit);
+        let (source_axis, normal_axis) = match self.data.parameter_axis.axis {
+            Axis2::X => (
+                source.x_numerator,
+                polynomial_scale(&differential.tangent_y, &Real::from(-1_i8)),
+            ),
+            Axis2::Y => (source.y_numerator, differential.tangent_x.clone()),
+        };
+        let expression =
+            |endpoint_axis: &[Real], endpoint_denominator: &[Real], endpoint_is_start: bool| {
+                let source_delta = bivariate_subtract(
+                    &bivariate_outer_product(endpoint_denominator, source_axis),
+                    &bivariate_outer_product(endpoint_axis, weight),
+                );
+                let normal = bivariate_scale(
+                    bivariate_outer_product(
+                        endpoint_denominator,
+                        &polynomial_multiply(weight, &normal_axis),
+                    ),
+                    parallel.distance(),
+                );
+                let (dummy_axis, remaining) = if endpoint_is_start {
+                    (1, [0, 2])
+                } else {
+                    (0, [1, 2])
+                };
+                Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                    rational: trivariate_from_axis_bivariate_coefficients(
+                        std::slice::from_ref(&normal),
+                        dummy_axis,
+                        remaining,
+                    )?,
+                    radical: trivariate_from_axis_bivariate_coefficients(
+                        std::slice::from_ref(&source_delta),
+                        dummy_axis,
+                        remaining,
+                    )?,
+                })
+            };
+        let (start_x, start_y, start_denominator) = start.coordinate_polynomials();
+        let (end_x, end_y, end_denominator) = end.coordinate_polynomials();
+        let start_axis = if self.data.parameter_axis.axis == Axis2::X {
+            start_x
+        } else {
+            start_y
+        };
+        let end_axis = if self.data.parameter_axis.axis == Axis2::X {
+            end_x
+        } else {
+            end_y
+        };
+        let (Some(source_minus_start_axis), Some(source_minus_end_axis)) = (
+            expression(start_axis, start_denominator, true),
+            expression(end_axis, end_denominator, false),
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(speed_squared) = TrivariatePolynomial2::from_axis_polynomial(
+            &parallel_speed_squared_polynomial(differential),
+            2,
+        ) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(Classification::Decided(
+            BezierAlgebraicChordIndependentParallelParameterMap2 {
+                source_minus_start_axis,
+                source_minus_end_axis,
+                speed_squared,
+                source_weight: weight.to_vec(),
+                start_denominator_sign: start.denominator_sign(),
+                end_denominator_sign: end.denominator_sign(),
+            },
+        ))
+    }
+
+    fn parameter_at_independent_parallel_incidence_candidate(
+        &self,
+        point: RationalBezierIntersectionPointEvidence2,
+        map: &BezierAlgebraicChordIndependentParallelParameterMap2,
+        system: &BezierAlgebraicChordIndependentParallelIncidence2,
+        candidate: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChordParameter2>>> {
+        let source_weight_sign =
+            match signed_coefficients_at_parameter(map.source_weight.clone(), candidate, policy)? {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let parameter_order = |difference: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+                               endpoint_denominator_sign: RealSign|
+         -> CurveResult<Classification<std::cmp::Ordering>> {
+            Ok(algebraic_cusp_trivariate_square_root_sum_sign(
+                difference,
+                &map.speed_squared,
+                &system.first_parameter,
+                &system.second_parameter,
+                candidate,
+                1,
+                policy,
+            )?
+            .map(|sign| {
+                let sign = product_sign(
+                    sign,
+                    product_sign(source_weight_sign, endpoint_denominator_sign),
+                );
+                let order = match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                };
+                if self.data.parameter_axis.coordinate_increases {
+                    order
+                } else {
+                    order.reverse()
+                }
+            }))
+        };
+        let start_order =
+            match parameter_order(&map.source_minus_start_axis, map.start_denominator_sign)? {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let end_order = match parameter_order(&map.source_minus_end_axis, map.end_denominator_sign)?
+        {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let start = self.start_parameter();
+        let end = self.end_parameter();
+        Ok(Classification::Decided(match (start_order, end_order) {
+            (std::cmp::Ordering::Equal, _) => Some(start),
+            (_, std::cmp::Ordering::Equal) => Some(end),
+            (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => {
+                Some(BezierAlgebraicChordParameter2 {
+                    data: BezierAlgebraicChordParameterStorage2::Interior(Arc::new(
+                        BezierAlgebraicChordParameterData2 {
+                            chord: self.clone(),
+                            point,
+                            axis: self.data.parameter_axis,
+                        },
+                    )),
+                })
+            }
+            _ => None,
+        }))
     }
 
     fn independent_parameter_map(
@@ -37635,6 +38140,24 @@ impl BezierAlgebraicChordRationalContact2 {
 
     pub(crate) fn other_parameter(&self) -> &BezierParameter2 {
         &self.other_parameter
+    }
+
+    pub(crate) fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
+        &self.point
+    }
+
+    pub(crate) const fn tangent_cross_sign(&self) -> RealSign {
+        self.tangent_cross_sign
+    }
+}
+
+impl BezierAlgebraicChordParallelContact2 {
+    pub(crate) fn chord_parameter(&self) -> &BezierAlgebraicChordParameter2 {
+        &self.chord_parameter
+    }
+
+    pub(crate) fn parallel_parameter(&self) -> &BezierParameter2 {
+        &self.parallel_parameter
     }
 
     pub(crate) fn point(&self) -> &RationalBezierIntersectionPointEvidence2 {
