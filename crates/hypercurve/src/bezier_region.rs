@@ -2317,6 +2317,46 @@ fn retained_corner_decision<T>(
     }
 }
 
+fn retained_chord_on_certified_line(
+    line: &LineSeg2,
+    start: RationalBezierIntersectionPointEvidence2,
+    end: RationalBezierIntersectionPointEvidence2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<BezierSplitFragment2> {
+    let support = match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+        RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+        RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+        policy,
+    )
+    .map_err(|cause| curve_region_edit_error(operation, cause))?
+    {
+        Classification::Decided(support) => support,
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::Line,
+                reason,
+            ));
+        }
+    };
+    match support
+        .chord_between_certified_support_points(start, end, policy)
+        .map_err(|cause| curve_region_edit_error(operation, cause))?
+    {
+        Classification::Decided(Some(chord)) => Ok(BezierSplitFragment2::AlgebraicChord(chord)),
+        Classification::Decided(None) => Err(curve_region_edit_error(
+            operation,
+            CurveError::Topology("a retained line trim collapsed to one point".into()),
+        )),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            operation,
+            CurveFamily2::Line,
+            reason,
+        )),
+    }
+}
+
 fn retained_corner_fragment_extension(
     fragment: &BezierSplitFragment2,
     parameter: CurveRegionParameter2,
@@ -2426,18 +2466,15 @@ fn retained_corner_fragment_extension(
             curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
         });
     }
-    match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-        start, end, policy,
+    retained_chord_on_certified_line(
+        source
+            .retained_exact_line_image()
+            .expect("the retained extension source is an exact line"),
+        start,
+        end,
+        operation,
+        policy,
     )
-    .map_err(|cause| curve_region_edit_error(operation, cause))?
-    {
-        Classification::Decided(chord) => Ok(BezierSplitFragment2::AlgebraicChord(chord)),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            operation,
-            CurveFamily2::RationalBezier,
-            reason,
-        )),
-    }
 }
 
 fn retained_corner_fragment_trim(
@@ -2699,16 +2736,15 @@ fn retained_corner_fragment_trim(
         } else {
             RationalBezierIntersectionPointEvidence2::Exact(line_curve.end().clone())
         };
-        return match crate::BezierAlgebraicChord2::try_new(start, end, policy)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?
-        {
-            Classification::Decided(chord) => Ok(BezierSplitFragment2::AlgebraicChord(chord)),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::RationalBezier,
-                reason,
-            )),
-        };
+        return retained_chord_on_certified_line(
+            line_curve
+                .retained_exact_line_image()
+                .expect("the retained trim source is an exact line"),
+            start,
+            end,
+            operation,
+            policy,
+        );
     }
     let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
         ExactCurveError::blocked(
@@ -10908,14 +10944,14 @@ impl CurveRegion2 {
             .collect())
     }
 
-    /// Reconstructs a selected analytic/chord fillet directly from the center
-    /// contact retained by the offset solver.
+    /// Reconstructs a selected line-or-analytic/chord fillet directly from the
+    /// center contact retained by the offset solver.
     ///
-    /// The analytic carrier owns the circle's selected-normal frame.  The
-    /// chord cut is already stored as the same center displaced along the
-    /// chord's exact unit normal, so the terminal angular parameter can retain
-    /// those authorities separately instead of intersecting the new circle
-    /// with the chord a second time.
+    /// The anchor carrier owns either a represented unit-normal frame or an
+    /// analytic selected-normal frame. The chord cut is already stored as the
+    /// same center displaced along the chord's exact unit normal, so the
+    /// terminal angular parameter can retain those authorities separately
+    /// instead of intersecting the new circle with the chord a second time.
     fn retained_chord_fillet_fragments(
         frame: &RetainedFilletFrame2,
         fillet: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
@@ -10955,14 +10991,42 @@ impl CurveRegion2 {
         let fillet_parameter = if tangent_cross == RealSign::Zero {
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
         } else {
-            match terminal_circle
-                .certified_selected_chord_parallel_normal_contact_parameter(
-                    chord.clone(),
-                    chord_cut.point.clone(),
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-            {
+            let parameter = match &frame.radial_frame {
+                RetainedFilletRadialFrame2::RepresentedUnitNormal(unit_normal) => {
+                    let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) =
+                        &chord_cut.point
+                    else {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::RationalBezier,
+                            UncertaintyReason::Unsupported,
+                        ));
+                    };
+                    let anchor_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
+                    terminal_circle.certified_selected_chord_normal_contact_parameter(
+                        anchor_tangent,
+                        chord.clone(),
+                        point.clone(),
+                        policy,
+                    )
+                }
+                RetainedFilletRadialFrame2::ParallelNormal { .. } => terminal_circle
+                    .certified_selected_chord_parallel_normal_contact_parameter(
+                        chord.clone(),
+                        chord_cut.point.clone(),
+                        policy,
+                    ),
+                RetainedFilletRadialFrame2::ConcentricArc { .. }
+                | RetainedFilletRadialFrame2::SelectedConcentric { .. } => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::RationalBezier,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
+            }
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
+            match parameter {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
@@ -11714,20 +11778,23 @@ impl CurveRegion2 {
                     policy,
                 );
             }
-            if let (
-                BezierSplitFragment2::AlgebraicChord(chord),
-                RetainedFilletRadialFrame2::ParallelNormal { .. },
-            ) = (other_fragment, &frame.radial_frame)
-            {
-                return Self::retained_chord_fillet_fragments(
-                    &frame,
-                    fillet,
-                    chord,
-                    fillet_clockwise,
-                    anchor_cut,
-                    other_cut,
-                    policy,
-                );
+            if let BezierSplitFragment2::AlgebraicChord(chord) = other_fragment {
+                match &frame.radial_frame {
+                    RetainedFilletRadialFrame2::RepresentedUnitNormal(_)
+                    | RetainedFilletRadialFrame2::ParallelNormal { .. } => {
+                        return Self::retained_chord_fillet_fragments(
+                            &frame,
+                            fillet,
+                            chord,
+                            fillet_clockwise,
+                            anchor_cut,
+                            other_cut,
+                            policy,
+                        );
+                    }
+                    RetainedFilletRadialFrame2::ConcentricArc { .. }
+                    | RetainedFilletRadialFrame2::SelectedConcentric { .. } => {}
+                }
             }
             let fillet_parameter_is_open = |fillet_parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
                 let after_start = match fillet_parameter.order_to_real(&Real::zero(), policy) {
@@ -22054,6 +22121,150 @@ mod tests {
             vec![interior_side],
         )
         .unwrap()
+    }
+
+    fn nonrepresented_chord_line_corner_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
+        let source = RationalBezier2::try_new(
+            vec![p(0, 0), Point2::new(half, Real::zero()), p(1, 1)],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        let selected_point = crate::rational_bezier_general::exact_contact_point_evidence(
+            &source,
+            &selected_parameter,
+            policy,
+        )
+        .unwrap()
+        .expect("the selected quadratic point retains exact evidence");
+        let corner = RationalBezierIntersectionPointEvidence2::Exact(p(0, 0));
+        let chord = match crate::BezierAlgebraicChord2::try_new(
+            corner.clone(),
+            selected_point.clone(),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => panic!("independent corner chord: {reason:?}"),
+        };
+        assert!(chord.exact_line().is_none());
+        assert!(chord.strict_provenance_support_line(policy).is_none());
+        let line = LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap();
+        let closing = match crate::BezierAlgebraicChord2::try_new(
+            selected_point,
+            RationalBezierIntersectionPointEvidence2::Exact(p(-1, 0)),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => panic!("independent closing chord: {reason:?}"),
+        };
+        let mut fragments = vec![
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
+            },
+            BezierSplitFragment2::AlgebraicChord(chord),
+            BezierSplitFragment2::AlgebraicChord(closing),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        };
+        CurveRegion2::try_new_with_loop_topology(
+            vec![
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    fragments, None, policy,
+                )
+                .unwrap(),
+            ],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn nonrepresented_chord_line_corner_fillets_through_shared_carriers() {
+        let radius = (Real::one() / Real::from(100_i16)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonrepresented_chord_line_corner_region(&policy, reversed);
+                let vertex = if reversed { 2 } else { 1 };
+                let outcome = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        vertex,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "nonrepresented chord/line fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert!(
+                    outcome.value.candidate_count() > 0,
+                    "policy={policy:?}, reversed={reversed}, outcome={:?}",
+                    outcome.value
+                );
+                for_each_corner_region(&outcome.value, |filleted| {
+                    let fragments = filleted.boundary_loops()[0].fragments();
+                    let mut chord_adjacencies = 0;
+                    let mut retained_tangent_relations = 0;
+                    for (index, fragment) in fragments.iter().enumerate() {
+                        let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment else {
+                            continue;
+                        };
+                        for endpoint in [true, false] {
+                            if matches!(
+                                fillet.endpoint_chord_tangent_relation(endpoint, &policy),
+                                Ok(Classification::Decided(Some((
+                                    _,
+                                    RealSign::Zero,
+                                    Some(RealSign::Positive | RealSign::Negative)
+                                ))))
+                            ) {
+                                retained_tangent_relations += 1;
+                            }
+                        }
+                        for adjacent_index in [
+                            (index + fragments.len() - 1) % fragments.len(),
+                            (index + 1) % fragments.len(),
+                        ] {
+                            let adjacent = &fragments[adjacent_index];
+                            let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                                continue;
+                            };
+                            assert_eq!(
+                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                Ok(Classification::Decided(true)),
+                                "policy={policy:?}, reversed={reversed}, fillet={index}, adjacent={adjacent_index}"
+                            );
+                            chord_adjacencies += 1;
+                        }
+                    }
+                    assert!(chord_adjacencies > 0);
+                    assert!(retained_tangent_relations > 0);
+                });
+            }
+        }
     }
 
     #[test]

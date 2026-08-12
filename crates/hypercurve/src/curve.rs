@@ -3489,6 +3489,9 @@ pub(crate) enum RetainedFilletRadialFrame2 {
 pub(crate) struct RetainedFilletAnchorEvidence2 {
     pub(crate) cross: Option<RealSign>,
     pub(crate) dot: Option<RealSign>,
+    /// Optional analytic center frame supplied by a represented carrier that
+    /// deliberately entered the shared analytic intersection authority.
+    pub(crate) center_parallel: Option<BezierParallel2>,
     /// Traversal orientation of a selected analytic anchor relative to its
     /// homogeneous source tangent.
     pub(crate) source_direction: Option<RealSign>,
@@ -4646,13 +4649,30 @@ impl FilletOffsetCarrier2<'_, '_> {
                     unit_y,
                     signed_distance,
                     ..
-                } => (
-                    RetainedFilletRadialFrame2::RepresentedUnitNormal((
-                        -(*unit_y).clone(),
-                        (*unit_x).clone(),
-                    )),
-                    -signed_distance.clone(),
-                ),
+                } => {
+                    let radial_frame = if let Some(center_support) = anchor_evidence
+                        .as_ref()
+                        .and_then(|evidence| evidence.center_parallel.clone())
+                    {
+                        let Some(center_parameter) = anchor_parameter
+                            .and_then(CurveRegionParameter2::as_bezier_parameter)
+                            .cloned()
+                        else {
+                            return Ok(None);
+                        };
+                        RetainedFilletRadialFrame2::ParallelNormal {
+                            center_support,
+                            center_parameter,
+                            policy: *policy,
+                        }
+                    } else {
+                        RetainedFilletRadialFrame2::RepresentedUnitNormal((
+                            -(*unit_y).clone(),
+                            (*unit_x).clone(),
+                        ))
+                    };
+                    (radial_frame, -signed_distance.clone())
+                }
                 Self::Arc {
                     source,
                     source_radius,
@@ -4961,7 +4981,8 @@ fn solve_carrier_fillet_corner(
                         .retained_anchor_evidence
                         .as_ref()
                         .is_some_and(|evidence| {
-                            evidence.source_direction.is_some()
+                            evidence.center_parallel.is_some()
+                                || evidence.source_direction.is_some()
                                 || evidence.deferred_arc_contact.is_some()
                         });
                     let first_frame = first.retained_fillet_frame(
@@ -5945,6 +5966,7 @@ fn fillet_offset_centers(
                 let retained_anchor_evidence = Some(RetainedFilletAnchorEvidence2 {
                     cross: None,
                     dot: None,
+                    center_parallel: None,
                     source_direction: None,
                     canonical_anchor_curve: None,
                     deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
@@ -6193,6 +6215,7 @@ fn fillet_offset_centers(
                                     sign
                                 }
                             }),
+                            center_parallel: None,
                             source_direction: None,
                             canonical_anchor_curve: None,
                             deferred_arc_contact: None,
@@ -6641,6 +6664,7 @@ fn fillet_offset_centers(
                 let anchor_evidence = RetainedFilletAnchorEvidence2 {
                     cross: reverse(cross),
                     dot,
+                    center_parallel: None,
                     source_direction: None,
                     canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
                     deferred_arc_contact: None,
@@ -6830,6 +6854,7 @@ fn fillet_offset_centers(
                                     RetainedFilletAnchorEvidence2 {
                                         cross: Some(reverse_fillet_sign(cross)),
                                         dot: Some(dot),
+                                        center_parallel: None,
                                         source_direction: Some(
                                             if analytic_support_reverses_source {
                                                 RealSign::Negative
@@ -6989,6 +7014,7 @@ fn fillet_offset_centers(
                                     RetainedFilletAnchorEvidence2 {
                                         cross: Some(reverse_fillet_sign(cross)),
                                         dot: Some(dot),
+                                        center_parallel: None,
                                         source_direction: Some(
                                             if analytic_support_reverses_source {
                                                 RealSign::Negative
@@ -7106,6 +7132,7 @@ fn fillet_offset_centers(
                     retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
                         cross: None,
                         dot: None,
+                        center_parallel: None,
                         source_direction: None,
                         canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
                         deferred_arc_contact: None,
@@ -7323,6 +7350,7 @@ fn fillet_offset_centers(
                             Some(RetainedFilletAnchorEvidence2 {
                                 cross: Some(tangent_cross),
                                 dot: Some(tangent_dot),
+                                center_parallel: None,
                                 source_direction: None,
                                 canonical_anchor_curve: None,
                                 deferred_arc_contact: None,
@@ -7490,11 +7518,105 @@ fn fillet_offset_centers(
                         // intersection kernel reports chord x analytic.
                         cross: Some(reverse_fillet_sign(cross)),
                         dot: Some(dot),
+                        center_parallel: None,
                         source_direction: Some(if analytic_support_reverses_source {
                             RealSign::Negative
                         } else {
                             RealSign::Positive
                         }),
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    }),
+                });
+            }
+        }
+        (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Line { .. })
+        | (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
+            if mode == CurveCornerMode2::TrimOrExtend {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            let (chord_support, line_support, chord_is_previous) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                    FilletOffsetCarrier2::Line { support: line, .. },
+                ) => (support, line, true),
+                (
+                    FilletOffsetCarrier2::Line { support: line, .. },
+                    FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                ) => (support, line, false),
+                _ => unreachable!(),
+            };
+            let chord_family = if chord_is_previous {
+                previous_family
+            } else {
+                next_family
+            };
+            let line_family = if chord_is_previous {
+                next_family
+            } else {
+                previous_family
+            };
+            let line = RationalBezier2::try_new_with_exact_line_image(
+                vec![line_support.start().clone(), line_support.end().clone()],
+                vec![Real::one(), Real::one()],
+                line_support.clone(),
+            )
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+            })?;
+            let center_parallel = line.parallel_left(Real::zero()).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+            })?;
+            let intersections = match chord_support
+                .parallel_intersections(&center_parallel, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                })? {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        reason,
+                    ));
+                }
+            };
+            let contacts = match intersections {
+                crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                    contacts,
+                ) => contacts,
+                crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        chord_family,
+                        crate::UncertaintyReason::Boundary,
+                    ));
+                }
+            };
+            for contact in contacts {
+                let line_parameter =
+                    CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
+                let (previous_parameter, next_parameter) = if chord_is_previous {
+                    (None, Some(line_parameter))
+                } else {
+                    (Some(line_parameter), None)
+                };
+                centers.push(FilletCenterWitness2 {
+                    point: contact.point().clone(),
+                    previous_parameter,
+                    next_parameter,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        // The represented line supplies the circle frame, so
+                        // retain line x chord rather than the kernel's chord x
+                        // line relation.
+                        cross: Some(reverse_fillet_sign(contact.tangent_cross_sign())),
+                        dot: Some(contact.tangent_dot_sign()),
+                        center_parallel: Some(center_parallel.clone()),
+                        source_direction: None,
                         canonical_anchor_curve: None,
                         deferred_arc_contact: None,
                     }),
@@ -9904,6 +10026,7 @@ mod tests {
                 Some(RetainedFilletAnchorEvidence2 {
                     cross: Some(RealSign::Positive),
                     dot: Some(RealSign::Zero),
+                    center_parallel: None,
                     source_direction: None,
                     canonical_anchor_curve: None,
                     deferred_arc_contact: None,
