@@ -3542,6 +3542,16 @@ struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
     radical: TrivariatePolynomial2,
 }
 
+impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+    /// Complete polynomial norm used only to enumerate candidates for
+    /// `rational + branch * radical * sqrt(radicand)`.
+    fn projection(&self, radicand: &TrivariatePolynomial2) -> Option<TrivariatePolynomial2> {
+        let rational_squared = self.rational.multiply(&self.rational)?;
+        let radical_squared = self.radical.multiply(&self.radical)?;
+        rational_squared.subtract(&radical_squared.multiply(radicand)?)
+    }
+}
+
 /// Exact expression in the retained circle-pair radical and one analytic
 /// parallel's positive source-speed radical.
 ///
@@ -7146,6 +7156,13 @@ struct BezierAlgebraicChordIndependentParallelOffset2 {
 #[derive(Debug)]
 enum BezierAlgebraicChordIndependentParallelEquation2 {
     Direct(BezierAlgebraicCuspTrivariateSquareRootExpression2),
+    /// A rational target represented as an analytic parallel at zero
+    /// distance. The positive target-speed radical cancels before projection,
+    /// leaving only the retained chord-normal radical.
+    RetainedOffsetRational {
+        incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        chord_speed_squared: TrivariatePolynomial2,
+    },
     RetainedOffset {
         incidence: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
         chord_speed_squared: TrivariatePolynomial2,
@@ -28803,23 +28820,34 @@ fn selected_pair_square_root_expression_third_axis_parameters(
     branch: i8,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let Some(rational_squared) = expression.rational.multiply(&expression.rational) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(radical_squared) = expression.radical.multiply(&expression.radical) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(radical_squared_radicand) = radical_squared.multiply(radicand) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(projection) = rational_squared.subtract(&radical_squared_radicand) else {
+    let Some(projection) = expression.projection(radicand) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let projection =
         trivariate_reduce_parameter_pair_relations(&projection, first_parameter, second_parameter)
             .unwrap_or(projection);
-    selected_projected_trivariate_third_axis_parameters(
+    selected_pair_square_root_expression_third_axis_parameters_from_projection(
+        expression,
+        radicand,
         &projection,
+        first_parameter,
+        second_parameter,
+        branch,
+        policy,
+    )
+}
+
+fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
+    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    radicand: &TrivariatePolynomial2,
+    projection: &TrivariatePolynomial2,
+    first_parameter: &BezierParameter2,
+    second_parameter: &BezierParameter2,
+    branch: i8,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+    selected_projected_trivariate_third_axis_parameters(
+        projection,
         first_parameter,
         second_parameter,
         policy,
@@ -28827,7 +28855,7 @@ fn selected_pair_square_root_expression_third_axis_parameters(
             algebraic_cusp_projected_trivariate_square_root_sum_sign(
                 expression,
                 radicand,
-                &projection,
+                projection,
                 first_parameter,
                 second_parameter,
                 candidate,
@@ -35983,6 +36011,42 @@ impl BezierAlgebraicChord2 {
                     policy,
                 )?
             }
+            BezierAlgebraicChordIndependentParallelEquation2::RetainedOffsetRational {
+                incidence,
+                chord_speed_squared,
+            } => {
+                let Some(projection) = incidence.projection(chord_speed_squared) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                let projection = trivariate_reduce_parameter_pair_relations(
+                    &projection,
+                    &system.first_parameter,
+                    &system.second_parameter,
+                )
+                .unwrap_or(projection);
+                match selected_trivariate_third_axis_is_identically_zero(
+                    &projection,
+                    &system.first_parameter,
+                    &system.second_parameter,
+                    policy,
+                )? {
+                    Classification::Decided(true) => {
+                        Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
+                    }
+                    Classification::Decided(false) => {
+                        selected_pair_square_root_expression_third_axis_parameters_from_projection(
+                            incidence,
+                            chord_speed_squared,
+                            &projection,
+                            &system.first_parameter,
+                            &system.second_parameter,
+                            1,
+                            policy,
+                        )?
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            }
             BezierAlgebraicChordIndependentParallelEquation2::RetainedOffset {
                 incidence,
                 chord_speed_squared,
@@ -36113,6 +36177,150 @@ impl BezierAlgebraicChord2 {
         ))
     }
 
+    fn has_retained_parallel_support(&self) -> bool {
+        let support = self.retained_support();
+        matches!(
+            (support.start(), support.end()),
+            (
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start),
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end),
+            ) if start.shares_carrier(end)
+                && start.at_end != end.at_end
+                && start.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
+        )
+    }
+
+    /// Reuses the analytic retained-offset authority for a rational target at
+    /// zero normal distance. The specialization in
+    /// `independent_parallel_incidence_system` cancels the target-speed radical
+    /// before projection, so stationary rational parameters cannot become
+    /// artificial contacts.
+    fn retained_parallel_rational_intersections(
+        &self,
+        source: &RationalBezier2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        let parallel = source.parallel_left(Real::zero())?;
+        let intersections = match self.parallel_intersections(&parallel, policy)? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let contacts = match intersections {
+            BezierAlgebraicChordParallelIntersections2::Contacts(contacts) => contacts,
+            BezierAlgebraicChordParallelIntersections2::DegenerateProjection => {
+                return self.retained_parallel_rational_degenerate_intersections(
+                    source,
+                    &parallel,
+                    excluded_source_parameter,
+                    policy,
+                );
+            }
+        };
+        let mut retained = Vec::with_capacity(contacts.len());
+        for contact in contacts {
+            if let Some(excluded) = excluded_source_parameter {
+                match contact
+                    .parallel_parameter
+                    .cmp_by_refinement(excluded, policy)?
+                {
+                    Classification::Decided(std::cmp::Ordering::Equal) => continue,
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            retained.push(BezierAlgebraicChordRationalContact2 {
+                chord_parameter: contact.chord_parameter,
+                other_parameter: contact.parallel_parameter,
+                point: contact.point,
+                tangent_cross_sign: contact.tangent_cross_sign,
+            });
+        }
+        Ok(Classification::Decided(
+            BezierAlgebraicChordRationalIntersections2::Contacts(retained),
+        ))
+    }
+
+    /// Distinguishes a physical coincident line from the opposite normal sheet
+    /// introduced by squaring the retained chord displacement. Projection
+    /// identity is necessary but not sufficient: exact unsquared replay at one
+    /// finite source endpoint selects the connected rational image's authored
+    /// sheet before overlap ranges are published.
+    fn retained_parallel_rational_degenerate_intersections(
+        &self,
+        source: &RationalBezier2,
+        parallel: &BezierParallel2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let BezierAlgebraicChordIndependentParallelEquation2::RetainedOffsetRational {
+            incidence,
+            chord_speed_squared,
+        } = &system.equation
+        else {
+            return Ok(Classification::Decided(
+                BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+            ));
+        };
+        let Some(projection) = incidence.projection(chord_speed_squared) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let projection = trivariate_reduce_parameter_pair_relations(
+            &projection,
+            &system.first_parameter,
+            &system.second_parameter,
+        )
+        .unwrap_or(projection);
+        match selected_trivariate_third_axis_is_identically_zero(
+            &projection,
+            &system.first_parameter,
+            &system.second_parameter,
+            policy,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let source_start = BezierParameter2::Exact(Real::zero());
+        match algebraic_cusp_projected_trivariate_square_root_sum_sign(
+            incidence,
+            chord_speed_squared,
+            &projection,
+            &system.first_parameter,
+            &system.second_parameter,
+            &source_start,
+            1,
+            true,
+            policy,
+        )? {
+            Classification::Decided(RealSign::Zero) => {
+                self.collinear_rational_intersections(source, excluded_source_parameter, policy)
+            }
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                Ok(Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+                ))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     /// Replays every finite contact between this retained chord and an
     /// arbitrary rational Bezier without adjoining its finite-boundary fields.
     ///
@@ -36207,6 +36415,13 @@ impl BezierAlgebraicChord2 {
             return Ok(Classification::Decided(
                 BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
             ));
+        }
+        if self.has_retained_parallel_support() {
+            return self.retained_parallel_rational_intersections(
+                source,
+                excluded_source_parameter,
+                policy,
+            );
         }
         let system = match self.independent_incidence_system(source, policy)? {
             Classification::Decided(system) => system,
@@ -37482,6 +37697,19 @@ impl BezierAlgebraicChord2 {
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) = point {
+            return self
+                .retained_parallel_collinear_source_parameters_at_endpoint(source, point, policy);
+        }
+        if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point
+            && let Some(parameters) = point.zero_distance_rational_source_parameters_for_axis(
+                source,
+                self.data.parameter_axis.axis,
+                policy,
+            )?
+        {
+            return Ok(parameters);
+        }
         if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) = point {
             let (map, contact) = point.map_contact();
             map.validate_policy(policy)?;
@@ -37601,6 +37829,99 @@ impl BezierAlgebraicChord2 {
         self.collinear_source_parameters_at_chord_endpoint_image(source, &point_image, policy)
     }
 
+    /// Maps one procedural retained-offset endpoint back to every parameter on
+    /// a coincident rational line image. Projecting along the root chord
+    /// tangent cancels the normal displacement exactly, so this reuses the
+    /// finite-clipping parameter map and isolates only its radical-free
+    /// coordinate equation.
+    fn retained_parallel_collinear_source_parameters_at_endpoint(
+        &self,
+        source: &RationalBezier2,
+        point: &BezierAlgebraicChordParallelPoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        let support = self.retained_support();
+        let at_end = match (support.start(), support.end()) {
+            (RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(start), _)
+                if start.shares_storage(point) =>
+            {
+                false
+            }
+            (_, RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(end))
+                if end.shares_storage(point) =>
+            {
+                true
+            }
+            _ => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        };
+        let parallel = source.parallel_left(Real::zero())?;
+        let system = match support.independent_parallel_incidence_system(&parallel, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let map = match support.independent_parallel_parameter_map(&parallel, &system, policy)? {
+            Classification::Decided(map) => map,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let difference = if at_end {
+            &map.source_minus_end
+        } else {
+            &map.source_minus_start
+        };
+        match selected_trivariate_third_axis_is_identically_zero(
+            &difference.rational,
+            &system.first_parameter,
+            &system.second_parameter,
+            policy,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let candidates = match selected_trivariate_third_axis_parameters(
+            &difference.radical,
+            &system.first_parameter,
+            &system.second_parameter,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            match trivariate_parameter_triple_sign_by_refinement(
+                &difference.radical,
+                &system.first_parameter,
+                &system.second_parameter,
+                &candidate,
+                policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => retained.push(candidate),
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(retained))
+    }
+
     fn collinear_source_parameters_at_chord_endpoint_image(
         &self,
         source: &RationalBezier2,
@@ -37627,6 +37948,28 @@ impl BezierAlgebraicChord2 {
             &bivariate_outer_product(point_weight, source_axis),
             &bivariate_outer_product(point_axis, &source_power.weight),
         );
+        if equation
+            .coefficients
+            .iter()
+            .skip(1)
+            .flatten()
+            .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+        {
+            let coefficients = equation
+                .coefficients
+                .first()
+                .expect("a bivariate endpoint equation retains one row");
+            let polynomial = match polynomial_from_coefficients(coefficients.clone(), policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            return polynomial.isolate_unit_interval_roots(policy);
+        }
         let selected_parameter = match algebraic_chord_image_parameter(point_image, policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {
@@ -37937,6 +38280,34 @@ impl BezierAlgebraicChord2 {
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+            if parallel.distance().zero_status() == ZeroStatus::Zero {
+                let reduce = |polynomial: TrivariatePolynomial2| {
+                    trivariate_reduce_parameter_pair_relations(
+                        &polynomial,
+                        &support.first_parameter,
+                        &support.second_parameter,
+                    )
+                    .unwrap_or(polynomial)
+                };
+                return Ok(Classification::Decided(
+                    BezierAlgebraicChordIndependentParallelIncidence2 {
+                        equation:
+                            BezierAlgebraicChordIndependentParallelEquation2::RetainedOffsetRational {
+                                incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                                    rational: reduce(source_incidence),
+                                    radical: reduce(product),
+                                },
+                                chord_speed_squared: reduce(chord_speed_squared),
+                            },
+                        speed_squared: reduce(speed_squared),
+                        tangent_cross: reduce(tangent_cross),
+                        tangent_dot: reduce(tangent_dot),
+                        first_parameter: support.first_parameter,
+                        second_parameter: support.second_parameter,
+                        chord_denominator_sign: support.chord_denominator_sign,
+                    },
+                ));
+            }
             let incidence = BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
                 product,
                 pair: TrivariatePolynomial2::from_axis_polynomial(&[Real::zero()], 2)
@@ -42653,6 +43024,85 @@ impl BezierAnalyticParallelPoint2 {
             Real::zero(),
             policy,
         )
+    }
+
+    /// Maps a zero-distance rational-source point onto one coordinate of a
+    /// collinear rational target without first resolving its point image.
+    /// Constant source coordinates therefore remain O(target degree), even
+    /// when the contact parameter's eliminant has high degree.
+    fn zero_distance_rational_source_parameters_for_axis(
+        &self,
+        target: &RationalBezier2,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<Vec<BezierParameter2>>>> {
+        if self.data.policy != *policy
+            || self.data.parallel.distance().zero_status() != ZeroStatus::Zero
+            || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
+            || self.data.translation_x.zero_status() != ZeroStatus::Zero
+            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+        {
+            return Ok(None);
+        }
+        let BezierParallelSource2::Rational(source) = self.data.parallel.source() else {
+            return Ok(None);
+        };
+        let BezierAnalyticParallelPointParameter2::Bezier(parameter) = &self.data.parameter else {
+            return Ok(None);
+        };
+        let point = source.homogeneous_power_basis()?;
+        let target = target.homogeneous_power_basis()?;
+        let point_axis = match axis {
+            Axis2::X => &point.x_numerator,
+            Axis2::Y => &point.y_numerator,
+        };
+        let target_axis = match axis {
+            Axis2::X => &target.x_numerator,
+            Axis2::Y => &target.y_numerator,
+        };
+        let equation = bivariate_subtract(
+            &bivariate_outer_product(&point.weight, target_axis),
+            &bivariate_outer_product(point_axis, &target.weight),
+        );
+        if equation
+            .coefficients
+            .iter()
+            .skip(1)
+            .flatten()
+            .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+        {
+            let coefficients = equation
+                .coefficients
+                .first()
+                .expect("a bivariate point-coordinate equation retains one row");
+            let polynomial = match polynomial_from_coefficients(coefficients.clone(), policy)? {
+                Classification::Decided(Some(polynomial)) => polynomial,
+                Classification::Decided(None) => {
+                    return Ok(Some(Classification::Uncertain(UncertaintyReason::Boundary)));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            return Ok(Some(polynomial.isolate_unit_interval_roots(policy)?));
+        }
+        let projection = selected_parameter_fiber_parameters(
+            &equation,
+            parameter,
+            MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+            MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+            policy,
+        )?;
+        Ok(Some(match projection {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+                Classification::Decided(parameters)
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => Classification::Uncertain(UncertaintyReason::Boundary),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        }))
     }
 
     /// Retains one exact point in the source curve's selected orthonormal
@@ -68161,6 +68611,436 @@ mod conversion_tests {
                     BezierAlgebraicChordRationalIntersections2::Contacts(contacts)
                 ) if contacts.is_empty()
             ));
+        }
+    }
+
+    #[test]
+    fn retained_offset_chord_rational_intersections_select_the_physical_support() {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let two_thirds = Real::from(2_i8) * &third;
+        let line = |start: Point2, end: Point2| {
+            RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()]).unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(start_parameter) =
+                algebraic_parameter(vec![-third.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/3) must remain algebraic");
+            };
+            let BezierParameter2::Algebraic(end_parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/2) must remain algebraic");
+            };
+            let root_support = line(Point2::from_values(0, 0), Point2::from_values(1, 0));
+            let start = RationalBezierIntersectionPointEvidence2::Algebraic(
+                root_support
+                    .point_at_algebraic_parameter(&start_parameter, &policy)
+                    .unwrap(),
+            );
+            let end = RationalBezierIntersectionPointEvidence2::Algebraic(
+                root_support
+                    .point_at_algebraic_parameter(&end_parameter, &policy)
+                    .unwrap(),
+            );
+            let Classification::Decided(root_chord) =
+                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
+            else {
+                panic!("the independent root chord must construct");
+            };
+            let offset = root_chord
+                .parallel_left_retained(Real::one(), &policy)
+                .unwrap();
+            let translation_x = Real::from(2_i8);
+            let translation_y = -Real::one();
+            let Classification::Decided(offset) = offset
+                .translated(&translation_x, &translation_y, &policy)
+                .unwrap()
+            else {
+                panic!("the retained offset translation must complete");
+            };
+            assert!(offset.has_retained_parallel_support());
+            assert!(offset.exact_line().is_none());
+            assert!(offset.strict_provenance_support_line(&policy).is_none());
+
+            let crossing = line(
+                Point2::new(&translation_x + &two_thirds, Real::from(-1_i8)),
+                Point2::new(&translation_x + &two_thirds, Real::one()),
+            );
+            let tangent = RationalBezier2::try_new(
+                vec![
+                    Point2::new(
+                        &translation_x + (Real::one() / Real::from(6_i8)).unwrap(),
+                        Real::one(),
+                    ),
+                    Point2::new(&translation_x + &two_thirds, Real::from(-1_i8)),
+                    Point2::new(
+                        &translation_x + (Real::from(7_i8) / Real::from(6_i8)).unwrap(),
+                        Real::one(),
+                    ),
+                ],
+                vec![Real::one(), Real::one(), Real::one()],
+            )
+            .unwrap();
+            let coincident = line(Point2::from_values(2, 0), Point2::from_values(3, 0));
+            let opposite_sheet = line(Point2::from_values(2, -2), Point2::from_values(3, -2));
+            let expected_point = RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                &translation_x + &two_thirds,
+                Real::zero(),
+            ));
+
+            for (carrier, expected_cross, expected_overlap_orientation) in [
+                (
+                    offset.clone(),
+                    RealSign::Positive,
+                    RationalBezierOverlapOrientation2::Same,
+                ),
+                (
+                    offset.reversed(),
+                    RealSign::Negative,
+                    RationalBezierOverlapOrientation2::Reversed,
+                ),
+            ] {
+                let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                    contacts,
+                )) = carrier
+                    .rational_intersections(&crossing, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("the retained-offset rational crossing must complete");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one retained-offset crossing, got {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign(), expected_cross);
+                assert_eq!(
+                    contact
+                        .other_parameter()
+                        .cmp_by_refinement(&BezierParameter2::Exact(half.clone()), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_eq!(
+                    contact.point().same_point(&expected_point, &policy),
+                    Classification::Decided(true),
+                );
+                assert!(matches!(
+                    carrier
+                        .rational_intersections(
+                            &crossing,
+                            Some(&BezierParameter2::Exact(half.clone())),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::Contacts(contacts)
+                    ) if contacts.is_empty()
+                ));
+
+                let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                    tangent_contacts,
+                )) = carrier
+                    .rational_intersections(&tangent, None, &policy)
+                    .unwrap()
+                else {
+                    panic!("the retained-offset rational tangency must complete");
+                };
+                let [tangent_contact] = tangent_contacts.as_slice() else {
+                    panic!("expected one retained-offset tangency, got {tangent_contacts:?}");
+                };
+                assert_eq!(tangent_contact.tangent_cross_sign(), RealSign::Zero);
+
+                let overlap_result = carrier
+                    .rational_intersections(&coincident, None, &policy)
+                    .unwrap();
+                let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                    overlaps,
+                )) = overlap_result
+                else {
+                    panic!(
+                        "the retained-offset rational overlap must complete: {overlap_result:?}"
+                    );
+                };
+                let [overlap] = overlaps.as_slice() else {
+                    panic!("expected one retained-offset overlap, got {overlaps:?}");
+                };
+                assert_eq!(overlap.orientation(), expected_overlap_orientation);
+                let [overlap_start, overlap_end] = overlap.chord_range();
+                assert_eq!(
+                    overlap_start
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                assert_eq!(
+                    overlap_end
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+
+                assert!(matches!(
+                    carrier
+                        .rational_intersections(&opposite_sheet, None, &policy)
+                        .unwrap(),
+                    Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::Contacts(contacts)
+                    ) if contacts.is_empty()
+                ));
+            }
+
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                split_contacts,
+            )) = offset
+                .rational_intersections(&crossing, None, &policy)
+                .unwrap()
+            else {
+                panic!("the retained-offset split contact must complete");
+            };
+            let [split_contact] = split_contacts.as_slice() else {
+                panic!("the retained-offset split requires one contact");
+            };
+            let split = BezierAlgebraicChord2::from_ordered_parameter_range(
+                &offset,
+                &offset.start_parameter(),
+                split_contact.chord_parameter(),
+                &policy,
+            )
+            .unwrap();
+            let split_overlap_result = split
+                .rational_intersections(&coincident, None, &policy)
+                .unwrap();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                split_overlaps,
+            )) = split_overlap_result
+            else {
+                panic!("the split retained-offset overlap must complete: {split_overlap_result:?}");
+            };
+            let [split_overlap] = split_overlaps.as_slice() else {
+                panic!("the split retained-offset chord must publish one overlap");
+            };
+            assert_eq!(
+                split_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
+            let [split_start, split_end] = split_overlap.chord_range();
+            assert_eq!(
+                split_start
+                    .cmp_by_refinement(&split.start_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(
+                split_end
+                    .cmp_by_refinement(&split.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+
+            let algebraic_crossing = RationalBezier2::try_new(
+                vec![
+                    Point2::new(&translation_x + &two_thirds, -(half.clone())),
+                    Point2::new(&translation_x + &two_thirds, -(half.clone())),
+                    Point2::new(&translation_x + &two_thirds, half.clone()),
+                ],
+                vec![Real::one(), Real::one(), Real::one()],
+            )
+            .unwrap();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                algebraic_contacts,
+            )) = offset
+                .rational_intersections(&algebraic_crossing, None, &policy)
+                .unwrap()
+            else {
+                panic!("the retained-offset algebraic crossing must complete");
+            };
+            let [algebraic_contact] = algebraic_contacts.as_slice() else {
+                panic!("the retained-offset algebraic crossing must be unique");
+            };
+            assert_eq!(
+                algebraic_contact
+                    .other_parameter()
+                    .cmp_by_refinement(
+                        &BezierParameter2::Algebraic(end_parameter.clone()),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            let algebraic_split = BezierAlgebraicChord2::from_ordered_parameter_range(
+                &offset,
+                &offset.start_parameter(),
+                algebraic_contact.chord_parameter(),
+                &policy,
+            )
+            .unwrap();
+            let algebraic_split_result = algebraic_split
+                .rational_intersections(&coincident, None, &policy)
+                .unwrap();
+            assert!(
+                matches!(
+                    algebraic_split_result,
+                    Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::Overlaps(ref overlaps)
+                    ) if overlaps.len() == 1
+                ),
+                "the algebraic split overlap must complete: {algebraic_split_result:?}",
+            );
+
+            let retraced = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(2, 0),
+                    Point2::from_values(4, 0),
+                    Point2::from_values(2, 0),
+                ],
+                vec![Real::one(), Real::one(), Real::one()],
+            )
+            .unwrap();
+            let retraced_result = offset
+                .rational_intersections(&retraced, None, &policy)
+                .unwrap();
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Overlaps(
+                retraced_overlaps,
+            )) = retraced_result
+            else {
+                panic!(
+                    "the retained-offset noninjective overlap must complete: {retraced_result:?}"
+                );
+            };
+            assert_eq!(retraced_overlaps.len(), 2, "{retraced_overlaps:?}");
+            assert_eq!(
+                retraced_overlaps
+                    .iter()
+                    .filter(
+                        |overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same
+                    )
+                    .count(),
+                1,
+            );
+            assert_eq!(
+                retraced_overlaps
+                    .iter()
+                    .filter(|overlap| overlap.orientation()
+                        == RationalBezierOverlapOrientation2::Reversed)
+                    .count(),
+                1,
+            );
+
+            let materialized_line = |start, end| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Rational(line(start, end)),
+            };
+            let right_top =
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(3, 0));
+            let Classification::Decided(right_closure) =
+                BezierAlgebraicChord2::try_new(offset.end().clone(), right_top, &policy).unwrap()
+            else {
+                panic!("the retained-offset right closure must construct");
+            };
+            let left_top =
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(2, 0));
+            let Classification::Decided(left_closure) =
+                BezierAlgebraicChord2::try_new(left_top, offset.start().clone(), &policy).unwrap()
+            else {
+                panic!("the retained-offset left closure must construct");
+            };
+            let retained_region = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::AlgebraicChord(offset.clone()),
+                            BezierSplitFragment2::AlgebraicChord(right_closure),
+                            materialized_line(
+                                Point2::from_values(3, 0),
+                                Point2::from_values(3, -1),
+                            ),
+                            materialized_line(
+                                Point2::from_values(3, -1),
+                                Point2::from_values(2, -1),
+                            ),
+                            materialized_line(
+                                Point2::from_values(2, -1),
+                                Point2::from_values(2, 0),
+                            ),
+                            BezierSplitFragment2::AlgebraicChord(left_closure),
+                        ],
+                        &policy,
+                    )
+                    .unwrap(),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Right],
+            )
+            .unwrap();
+            let cutter_left = (Real::from(13_i8) / Real::from(5_i8)).unwrap();
+            let cutter_right = (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+            let lower_left = Point2::new(cutter_left.clone(), Real::from(-2_i8));
+            let lower_right = Point2::new(cutter_right.clone(), Real::from(-2_i8));
+            let upper_right = Point2::new(cutter_right.clone(), Real::one());
+            let upper_left = Point2::new(cutter_left.clone(), Real::one());
+            let rational_region = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(
+                        vec![
+                            materialized_line(lower_left.clone(), lower_right.clone()),
+                            materialized_line(lower_right, upper_right.clone()),
+                            materialized_line(upper_right, upper_left.clone()),
+                            materialized_line(upper_left, lower_left),
+                        ],
+                        &policy,
+                    )
+                    .unwrap(),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let intersections = retained_region
+                .intersect_region(&rational_region, &policy)
+                .unwrap();
+            assert_eq!(intersections.certainty, CurveCertainty::Certified);
+            assert!(
+                intersections.value.is_complete(),
+                "{:?}",
+                intersections.value
+            );
+            let retained_contacts = intersections
+                .value
+                .contacts()
+                .iter()
+                .filter(|contact| contact.first().fragment_index() == 0)
+                .collect::<Vec<_>>();
+            assert_eq!(retained_contacts.len(), 2, "{:?}", intersections.value);
+            for expected_x in [cutter_left, cutter_right] {
+                let expected = RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                    expected_x,
+                    Real::zero(),
+                ));
+                assert!(retained_contacts.iter().any(|contact| {
+                    contact.point().is_some_and(|point| {
+                        point.same_point(&expected, &policy) == Classification::Decided(true)
+                    })
+                }));
+            }
+            let booleans = retained_region
+                .boolean_regions(&rational_region, &policy)
+                .unwrap();
+            assert_eq!(
+                booleans.certainty,
+                if policy == CurveContext::STRICT {
+                    CurveCertainty::Certified
+                } else {
+                    CurveCertainty::Approximate512Consumed
+                }
+            );
+            assert!(!booleans.value.union().is_empty());
+            assert!(!booleans.value.intersection().is_empty());
+            assert!(!booleans.value.difference().is_empty());
+            assert!(!booleans.value.xor().is_empty());
         }
     }
 
