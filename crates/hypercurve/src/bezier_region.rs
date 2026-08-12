@@ -19716,6 +19716,103 @@ mod tests {
         }
     }
 
+    #[test]
+    fn one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier() {
+        let root_three = Real::from(3_i8).sqrt().unwrap();
+        let control_x = (Real::one() / Real::from(18_i8)).unwrap();
+        let control_y = -((&root_three / Real::from(18_i8)).unwrap());
+        let radius = ((Real::from(13_i8) * &root_three) / Real::from(48_i8)).unwrap();
+        let source = CubicBezier2::new(
+            p(0, 0),
+            Point2::new(control_x.clone(), control_y.clone()),
+            Point2::new(-control_x, control_y),
+            p(0, 0),
+        );
+        let selected_source = RationalBezier2::try_new(
+            source.control_points().into_iter().cloned().collect(),
+            vec![Real::one(); 4],
+        )
+        .expect("the closed cubic PH source is finite");
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                for selected in [false, true] {
+                    let mut fragment = if selected {
+                        let seam = p(0, 0);
+                        BezierSplitFragment2::SelectedFiber(
+                            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                                BezierSelectedFiberSource2::Rational(selected_source.clone()),
+                                CurveRegionParameterRange2::new_validated(
+                                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                        Real::zero(),
+                                    )),
+                                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(
+                                        Real::one(),
+                                    )),
+                                ),
+                                RationalBezierIntersectionPointEvidence2::Exact(seam.clone()),
+                                RationalBezierIntersectionPointEvidence2::Exact(seam),
+                            ),
+                        )
+                    } else {
+                        let parallel = source.parallel_left(Real::zero()).unwrap();
+                        let Classification::Decided(fragment) =
+                            crate::BezierParallelFragment2::try_new(
+                                parallel,
+                                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("the complete PH analytic span must be regular");
+                        };
+                        BezierSplitFragment2::AnalyticParallel(fragment)
+                    };
+                    if reversed {
+                        fragment = fragment.reversed().unwrap();
+                    }
+                    let boundary = CurveRegionBoundaryLoop2::new(vec![fragment], &policy).unwrap();
+                    let region = CurveRegion2::try_new_with_loop_topology(
+                        vec![boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![if reversed {
+                            CurveBoundaryInteriorSide2::Left
+                        } else {
+                            CurveBoundaryInteriorSide2::Right
+                        }],
+                    )
+                    .unwrap();
+                    let extended = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            0,
+                            radius.clone(),
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the retained projective fillet must rebuild: policy={policy:?}, reversed={reversed}, selected={selected}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(extended.certainty, CurveCertainty::Certified);
+                    let mut found_extension = false;
+                    for_each_corner_region(&extended.value, |edited| {
+                        found_extension |=
+                            edited.boundary_loops()[0]
+                                .fragments()
+                                .iter()
+                                .any(|fragment| {
+                                    matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                                });
+                    });
+                    assert!(found_extension, "the extended analytic interval was lost");
+                }
+            }
+        }
+    }
+
     fn parallel_pair_fillet_region(
         previous_retained: bool,
         next_retained: bool,
