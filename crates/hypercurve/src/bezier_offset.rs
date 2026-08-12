@@ -37,6 +37,7 @@ use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_inte
 use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
     ResultantParameterProjection, exact_contact_point_evidence, resultant_parameter_projection,
+    resultant_parameter_projection_with_incident_ray,
 };
 use crate::{
     Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierCuspClassification,
@@ -49482,6 +49483,27 @@ impl BezierParallel2 {
         Ok(Classification::Decided(retained))
     }
 
+    /// Returns the first source pole or source-speed zero on one open endpoint
+    /// ray. Before this barrier the analytic parallel remains on the same
+    /// finite regular cell as the authored Bezier span.
+    pub(crate) fn incident_ray_regular_barrier(
+        &self,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        regular_incident_ray_barrier_from_polynomials(
+            source.weight,
+            &speed_squared,
+            anchor,
+            direction,
+            policy,
+        )
+    }
+
     /// Solves analytic-parallel circle incidence on the regular affine cell
     /// incident to one authored endpoint.
     ///
@@ -49503,47 +49525,10 @@ impl BezierParallel2 {
         let weight_coefficients = source
             .weight
             .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
-        let weight = match polynomial_from_coefficients(weight_coefficients.clone(), policy)? {
-            Classification::Decided(Some(weight)) => weight,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match real_sign(&weight.evaluate(anchor), policy) {
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            Some(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-
         let speed_squared = parallel_speed_squared_polynomial(differential);
-        let speed_polynomial = match polynomial_from_coefficients(speed_squared.clone(), policy)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match real_sign(&speed_polynomial.evaluate(anchor), policy) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Some(RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "Bezier tangent squared norm was certified negative".into(),
-                ));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let barrier = match first_incident_ray_polynomial_root(
-            &[&weight, &speed_polynomial],
+        let barrier = match regular_incident_ray_barrier_from_polynomials(
+            source.weight,
+            &speed_squared,
             anchor,
             direction,
             policy,
@@ -50341,59 +50326,10 @@ impl BezierParallel2 {
 
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
-        let weight = source
-            .weight
-            .map(|weight| polynomial_from_coefficients(weight.to_vec(), policy))
-            .transpose()?;
-        let weight = match weight {
-            Some(Classification::Decided(Some(weight))) => Some(weight),
-            Some(Classification::Decided(None)) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Some(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-            None => None,
-        };
-        if let Some(weight) = weight.as_ref() {
-            match real_sign(&weight.evaluate(anchor), policy) {
-                Some(RealSign::Positive | RealSign::Negative) => {}
-                Some(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-        }
-
         let speed_squared = parallel_speed_squared_polynomial(differential);
-        let speed_polynomial = match polynomial_from_coefficients(speed_squared.clone(), policy)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        match real_sign(&speed_polynomial.evaluate(anchor), policy) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Some(RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "Bezier tangent squared norm was certified negative".into(),
-                ));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-
-        let mut barrier_polynomials = vec![&speed_polynomial];
-        if let Some(weight) = weight.as_ref() {
-            barrier_polynomials.push(weight);
-        }
-        let barrier = match first_incident_ray_polynomial_root(
-            &barrier_polynomials,
+        let barrier = match regular_incident_ray_barrier_from_polynomials(
+            source.weight,
+            &speed_squared,
             anchor,
             direction,
             policy,
@@ -51533,7 +51469,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let Some(system) = (match parallel_pair_equation_system(self, other, policy)? {
+        let Some(system) = (match parallel_pair_equation_system(self, other, true, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51611,7 +51547,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let Some(system) = (match parallel_pair_equation_system(self, self, policy)? {
+        let Some(system) = (match parallel_pair_equation_system(self, self, true, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51661,7 +51597,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let Some(system) = (match parallel_pair_equation_system(self, other, policy)? {
+        let Some(system) = (match parallel_pair_equation_system(self, other, true, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -51678,6 +51614,67 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+        self.replay_parallel_pair_projection(other, &system, projection, false, policy)
+    }
+
+    /// Returns selected-branch intersections on both authored unit spans plus
+    /// one regular incident ray for each source.
+    ///
+    /// This is the projective corner domain used by TrimOrExtend. The ordinary
+    /// parallel-pair equations and exact replay remain authoritative; only the
+    /// two univariate resultant projections are enlarged. Each exterior axis
+    /// stops before its first source pole or source-speed zero. A positive-
+    /// dimensional projection remains explicitly incomplete until its
+    /// component correspondence is certified on these enlarged domains.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn parallel_intersections_with_incident_rays(
+        &self,
+        other: &Self,
+        first_anchor: &Real,
+        first_direction: BezierParameterRayDirection2,
+        second_anchor: &Real,
+        second_direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        let first_barrier =
+            match self.incident_ray_regular_barrier(first_anchor, first_direction, policy)? {
+                Classification::Decided(barrier) => barrier,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let second_barrier =
+            match other.incident_ray_regular_barrier(second_anchor, second_direction, policy)? {
+                Classification::Decided(barrier) => barrier,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }) else {
+            return Ok(Classification::Decided(
+                BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+            ));
+        };
+        let projection = match project_parallel_intersection_system_with_incident_rays(
+            &system,
+            first_anchor,
+            first_direction,
+            first_barrier.as_ref(),
+            second_anchor,
+            second_direction,
+            second_barrier.as_ref(),
+            policy,
+        )? {
+            Classification::Decided(projection) => projection,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         self.replay_parallel_pair_projection(other, &system, projection, false, policy)
     }
 
@@ -56289,6 +56286,91 @@ fn project_parallel_intersection_system(
     }))
 }
 
+#[allow(clippy::too_many_arguments)]
+fn project_parallel_intersection_system_with_incident_rays(
+    system: &BezierParallelPairEquationSystem2,
+    first_anchor: &Real,
+    first_direction: BezierParameterRayDirection2,
+    first_barrier: Option<&BezierParameter2>,
+    second_anchor: &Real,
+    second_direction: BezierParameterRayDirection2,
+    second_barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelPairProjection2>> {
+    let config = CurveIntersectionResultantConfig {
+        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let first_report = resultant_bivariate_polynomial_system(
+        &system.first_equation,
+        &system.second_equation,
+        CurveResultantParameter::First,
+        config,
+    );
+    let first = match resultant_parameter_projection_with_incident_ray(
+        first_report,
+        first_anchor,
+        first_direction,
+        first_barrier,
+        policy,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    if matches!(first, ResultantParameterProjection::Degenerate) {
+        return Ok(Classification::Decided(BezierParallelPairProjection2 {
+            candidates: BezierParallelIntersectionCandidates2::DegenerateResultant,
+            basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+            overlap: None,
+            residual_equations: None,
+        }));
+    }
+    let second_report = resultant_bivariate_polynomial_system(
+        &system.first_equation,
+        &system.second_equation,
+        CurveResultantParameter::Second,
+        config,
+    );
+    let second = match resultant_parameter_projection_with_incident_ray(
+        second_report,
+        second_anchor,
+        second_direction,
+        second_barrier,
+        policy,
+    )? {
+        Classification::Decided(projection) => projection,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let candidates = match (first, second) {
+        (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
+            BezierParallelIntersectionCandidates2::NoIntersection
+        }
+        (ResultantParameterProjection::Degenerate, _)
+        | (_, ResultantParameterProjection::Degenerate) => {
+            BezierParallelIntersectionCandidates2::DegenerateResultant
+        }
+        (
+            ResultantParameterProjection::Parameters(first_parameters)
+            | ResultantParameterProjection::SelectedParameters(first_parameters),
+            ResultantParameterProjection::Parameters(second_parameters)
+            | ResultantParameterProjection::SelectedParameters(second_parameters),
+        ) => BezierParallelIntersectionCandidates2::Candidates {
+            parallel_parameters: first_parameters,
+            other_parameters: second_parameters,
+        },
+    };
+    Ok(Classification::Decided(BezierParallelPairProjection2 {
+        candidates,
+        basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
+        overlap: None,
+        residual_equations: None,
+    }))
+}
+
 /// Returns the axis-primitive system only after proving saturation preserves
 /// the complete solution set on the closed parameter square.
 fn rootless_axis_primitive_system(
@@ -60287,6 +60369,7 @@ fn parallel_fixed_distance_system(
 fn parallel_pair_equation_system(
     first: &BezierParallel2,
     second: &BezierParallel2,
+    use_unit_domain_bounds: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParallelPairEquationSystem2>>> {
     let first_distance_sign = match real_sign(first.distance(), policy) {
@@ -60325,13 +60408,16 @@ fn parallel_pair_equation_system(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    if let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
-        first.conservative_bounds(policy)?,
-        second.conservative_bounds(policy)?,
-    ) && matches!(
-        first_bounds.overlaps(&second_bounds, policy),
-        Classification::Decided(false)
-    ) {
+    if use_unit_domain_bounds
+        && let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
+            first.conservative_bounds(policy)?,
+            second.conservative_bounds(policy)?,
+        )
+        && matches!(
+            first_bounds.overlaps(&second_bounds, policy),
+            Classification::Decided(false)
+        )
+    {
         return Ok(Classification::Decided(None));
     }
 
@@ -62078,6 +62164,63 @@ fn first_incident_ray_polynomial_root(
         }
     }
     Ok(Classification::Decided(first))
+}
+
+fn regular_incident_ray_barrier_from_polynomials(
+    weight_coefficients: Option<&[Real]>,
+    speed_squared: &[Real],
+    anchor: &Real,
+    direction: BezierParameterRayDirection2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let weight = match weight_coefficients
+        .map(|weight| polynomial_from_coefficients(weight.to_vec(), policy))
+        .transpose()?
+    {
+        Some(Classification::Decided(Some(weight))) => Some(weight),
+        Some(Classification::Decided(None)) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Some(Classification::Uncertain(reason)) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+        None => None,
+    };
+    if let Some(weight) = weight.as_ref() {
+        match real_sign(&weight.evaluate(anchor), policy) {
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+    let speed = match polynomial_from_coefficients(speed_squared.to_vec(), policy)? {
+        Classification::Decided(Some(speed)) => speed,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    match real_sign(&speed.evaluate(anchor), policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Some(RealSign::Negative) => {
+            return Err(CurveError::Topology(
+                "Bezier tangent squared norm was certified negative".into(),
+            ));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let mut polynomials = vec![&speed];
+    if let Some(weight) = weight.as_ref() {
+        polynomials.push(weight);
+    }
+    first_incident_ray_polynomial_root(&polynomials, anchor, direction, policy)
 }
 
 fn retain_parameters_before_incident_barrier(
@@ -78828,7 +78971,7 @@ mod conversion_tests {
         policy: &CurveContext,
     ) -> Classification<bool> {
         let Classification::Decided(Some(system)) =
-            parallel_pair_equation_system(first, second, policy).unwrap()
+            parallel_pair_equation_system(first, second, true, policy).unwrap()
         else {
             panic!("parallel-pair equation system was not decided");
         };

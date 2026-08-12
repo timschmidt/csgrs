@@ -1931,11 +1931,15 @@ impl CurvePath2 {
     /// represented support share the line carrier and preserve their canonical
     /// finite or exterior affine-support parameters. Mixed line/Bezier and
     /// arc/Bezier pairs use complete
-    /// analytic incidence. Bezier/Bezier pairs currently admit
-    /// structural and exact rational-parallel fast paths; a general algebraic
-    /// center or trim remains an explicit blocker until its public carrier is
-    /// authoritative. General Beziers, spline spans, and retained rational
-    /// circles are trim-only.
+    /// analytic incidence. Bezier/Bezier pairs share the complete selected-
+    /// branch parallel-intersection kernel. For two direct Beziers,
+    /// `TrimOrExtend` enlarges both parameter projections through the regular
+    /// endpoint-adjacent cells, stopping before the first pole or source-speed
+    /// zero. A positive-dimensional exterior correspondence and any algebraic
+    /// center or trim that a public path cannot retain remain explicit
+    /// blockers for this API and are delegated to retained-region
+    /// reconstruction. Spline spans and retained rational circles are
+    /// trim-only.
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -4101,6 +4105,8 @@ fn fillet_carrier_pair_supports_extension(
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_affine_line(next))
         || (is_arc(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_arc(next))
+        || (matches!(previous, ExactCornerCarrier2::Bezier(_))
+            && matches!(next, ExactCornerCarrier2::Bezier(_)))
 }
 
 #[derive(Clone, Copy)]
@@ -5855,7 +5861,31 @@ fn fillet_offset_centers(
             },
         ) => {
             let identical_supports = previous == next;
-            let intersections = match (if identical_supports {
+            let direct_extension = mode == CurveCornerMode2::TrimOrExtend
+                && previous_source.direct().is_some()
+                && next_source.direct().is_some();
+            if direct_extension && identical_supports {
+                // The ordinary self-contact authority removes the structural
+                // diagonal on the unit square. Its incident-ray analogue must
+                // remove that same positive-dimensional component before it
+                // may claim the exterior pair set is complete.
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    crate::UncertaintyReason::Predicate,
+                ));
+            }
+            let use_incident_rays = direct_extension;
+            let intersections = match (if use_incident_rays {
+                previous.parallel_intersections_with_incident_rays(
+                    next,
+                    &Real::one(),
+                    crate::BezierParameterRayDirection2::Increasing,
+                    &Real::zero(),
+                    crate::BezierParameterRayDirection2::Decreasing,
+                    policy,
+                )
+            } else if identical_supports {
                 previous.self_intersections(policy)
             } else {
                 previous.parallel_intersections(next, policy)
@@ -5879,7 +5909,6 @@ fn fillet_offset_centers(
                     crate::UncertaintyReason::Predicate,
                 ));
             }
-
             let previous_range = previous_source.parameter_range();
             let next_range = next_source.parameter_range();
             if !intersections.overlaps().is_empty() {
@@ -5950,12 +5979,16 @@ fn fillet_offset_centers(
                     } else {
                         (contact.first_parameter(), contact.second_parameter())
                     };
-                    if !previous_source.parameter_is_in_open_range(
+                    if !previous_source.parameter_is_admissible(
                         previous_parameter,
+                        true,
+                        mode,
                         previous_family,
                         policy,
-                    )? || !next_source.parameter_is_in_open_range(
+                    )? || !next_source.parameter_is_admissible(
                         next_parameter,
+                        false,
+                        mode,
                         next_family,
                         policy,
                     )? {

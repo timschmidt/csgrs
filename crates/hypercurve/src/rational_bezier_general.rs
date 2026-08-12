@@ -37,10 +37,11 @@ use crate::intersect::{circle_relation_from_supports, oriented_param_range_overl
 use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
-    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2, BezierSubcurve2,
-    CircleCircleRelation, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
-    CurveOperation2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
-    ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
+    BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveResult,
+    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
@@ -8717,10 +8718,10 @@ fn compare_algebraic_coordinates(
         .map(|ordering| ordering.is_eq())
 }
 
-pub(crate) fn resultant_parameter_projection(
+fn resultant_parameter_polynomial(
     evidence: CurveIntersectionResultantReport,
     policy: &CurveContext,
-) -> CurveResult<Classification<ResultantParameterProjection>> {
+) -> CurveResult<Classification<Option<BezierParameterPolynomial>>> {
     match evidence.status {
         CurveIntersectionResultantStatus::Constructed => {}
         CurveIntersectionResultantStatus::UndecidedCoefficient => {
@@ -8739,9 +8740,7 @@ pub(crate) fn resultant_parameter_projection(
         .iter()
         .all(|coefficient| is_zero(coefficient, policy) == Some(true))
     {
-        return Ok(Classification::Decided(
-            ResultantParameterProjection::Degenerate,
-        ));
+        return Ok(Classification::Decided(None));
     }
     if evidence
         .resultant_coefficients
@@ -8750,11 +8749,37 @@ pub(crate) fn resultant_parameter_projection(
     {
         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
     }
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        evidence.resultant_coefficients,
-        policy,
-    )? {
-        Classification::Decided(polynomial) => polynomial,
+    // A resultant is only a projection carrier: its multiplicities do not
+    // encode geometric multiplicities, which are established by bivariate
+    // replay. Remove repeated factors exactly before root isolation so squared
+    // eliminants do not inflate Sturm construction, especially after mapping
+    // an unbounded incident ray to a compact chart. STRICT owns this algebraic
+    // reduction under both public policies; retaining the original polynomial
+    // remains exact when the GCD cannot be certified.
+    let coefficients = hypersolve::square_free_part(
+        evidence.resultant_coefficients.clone(),
+        hypersolve::PredicatePolicy::STRICT,
+    )
+    .unwrap_or(evidence.resultant_coefficients);
+    Ok(
+        match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
+            Classification::Decided(polynomial) => Classification::Decided(Some(polynomial)),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
+}
+
+pub(crate) fn resultant_parameter_projection(
+    evidence: CurveIntersectionResultantReport,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ResultantParameterProjection>> {
+    let polynomial = match resultant_parameter_polynomial(evidence, policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => {
+            return Ok(Classification::Decided(
+                ResultantParameterProjection::Degenerate,
+            ));
+        }
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
@@ -8768,6 +8793,64 @@ pub(crate) fn resultant_parameter_projection(
         )),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
+}
+
+/// Projects one resultant onto the authored unit span plus its open regular
+/// endpoint ray. The caller supplies the first source pole or speed-zero
+/// barrier, so every retained exterior root stays in the same analytic cell.
+pub(crate) fn resultant_parameter_projection_with_incident_ray(
+    evidence: CurveIntersectionResultantReport,
+    anchor: &Real,
+    direction: BezierParameterRayDirection2,
+    barrier: Option<&BezierParameter2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<ResultantParameterProjection>> {
+    let polynomial = match resultant_parameter_polynomial(evidence, policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => {
+            return Ok(Classification::Decided(
+                ResultantParameterProjection::Degenerate,
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let mut parameters = match polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let exterior = match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
+        Classification::Decided(parameters) => parameters,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    for parameter in exterior {
+        if let Some(barrier) = barrier {
+            let ordering = match parameter.cmp_by_refinement(barrier, policy)? {
+                Classification::Decided(ordering) => ordering,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let before_barrier = match direction {
+                BezierParameterRayDirection2::Decreasing => ordering == Ordering::Greater,
+                BezierParameterRayDirection2::Increasing => ordering == Ordering::Less,
+            };
+            if !before_barrier {
+                continue;
+            }
+        }
+        parameters.push(parameter);
+    }
+    Ok(Classification::Decided(if parameters.is_empty() {
+        ResultantParameterProjection::Empty
+    } else {
+        ResultantParameterProjection::Parameters(parameters)
+    }))
 }
 
 fn evaluate_power_polynomial(coefficients: &[Real], parameter: &Real) -> Real {

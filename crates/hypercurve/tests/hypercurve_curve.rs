@@ -2457,6 +2457,69 @@ fn represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes()
 }
 
 #[test]
+fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
+    // P(t) = (t, t^2) and
+    // Q(s) = (1, 1) + (-31/65, -86/325)s + (-48/65, -43/325)s^2.
+    // Their left parallels at distance 1/2 meet at the exact parameters
+    // t = 6/5 and s = -1, outside both authored spans but inside their
+    // endpoint-adjacent regular cells.
+    let previous_cut = Point2::new(q(6, 5), q(36, 25));
+    let next_cut = Point2::new(q(48, 65), q(368, 325));
+    let expected_center = Point2::new(q(48, 65), q(1061, 650));
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            p(1, 1),
+        )),
+        Curve2::from(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(99, 130), q(282, 325)),
+            Point2::new(-q(14, 65), q(196, 325)),
+        )),
+    ])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let path = if reversed {
+                path.clone().reversed(&policy).unwrap().into_value()
+            } else {
+                path.clone()
+            };
+            let result = path
+                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("both regular Bezier incident extensions must be solved exactly");
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let has_expected = |candidate: &CurvePath2| {
+                let CurveGeometry2::CircularArc(fillet) = candidate.curves()[1].geometry() else {
+                    return false;
+                };
+                let (expected_previous, expected_next) = if reversed {
+                    (&next_cut, &previous_cut)
+                } else {
+                    (&previous_cut, &next_cut)
+                };
+                candidate.curves()[0].end() == expected_previous
+                    && candidate.curves()[2].start() == expected_next
+                    && fillet.center() == &expected_center
+                    && candidate.curves()[0].family() == CurveFamily2::QuadraticBezier
+                    && candidate.curves()[2].family() == CurveFamily2::QuadraticBezier
+            };
+            match result.into_value() {
+                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(&candidate)),
+                CurveCornerSolutions2::Multiple(candidates) => {
+                    assert!(candidates.iter().any(has_expected));
+                }
+                CurveCornerSolutions2::NoSolution(reason) => {
+                    panic!("the exact projective Bezier fillet was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn represented_arc_bezier_fillets_use_circle_incidence() {
     let source_center = Point2::new(-q(7, 16), q(207, 512));
     let source_start = Point2::new(-q(7, 16), -q(49, 256));
