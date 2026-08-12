@@ -69481,6 +69481,196 @@ mod conversion_tests {
     }
 
     #[test]
+    fn retained_offset_chord_pair_intersects_the_physical_supports() {
+        let chord = |start: Point2, end: Point2, policy: &CurveContext| {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(start),
+                RationalBezierIntersectionPointEvidence2::Exact(end),
+                policy,
+            )
+            .unwrap() else {
+                panic!("a represented nondegenerate chord must construct");
+            };
+            chord
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let horizontal = chord(
+                Point2::from_values(0, 0),
+                Point2::from_values(4, 0),
+                &policy,
+            )
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
+            let vertical = chord(
+                Point2::from_values(2, -2),
+                Point2::from_values(2, 2),
+                &policy,
+            )
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
+            assert!(matches!(
+                (
+                    horizontal.start(),
+                    horizontal.end(),
+                    vertical.start(),
+                    vertical.end()
+                ),
+                (
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                    RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+                )
+            ));
+            for (first, second, expected_cross) in [
+                (&horizontal, &vertical, RealSign::Positive),
+                (&vertical, &horizontal, RealSign::Negative),
+            ] {
+                let result = first.chord_intersections(second, &policy).unwrap();
+                let Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(
+                    contacts,
+                )) = result
+                else {
+                    panic!("retained-offset chord crossing must complete: {result:?}");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one retained-offset crossing, got {contacts:?}");
+                };
+                assert_eq!(contact.tangent_cross_sign(), expected_cross);
+                let Some(_point) = contact.point().as_algebraic_chord_pair() else {
+                    panic!("the physical crossing must retain its two support authorities");
+                };
+                assert_eq!(
+                    contact.point().same_point(
+                        &RationalBezierIntersectionPointEvidence2::Exact(
+                            Point2::from_values(1, 1,)
+                        ),
+                        &policy,
+                    ),
+                    Classification::Decided(true)
+                );
+            }
+
+            let overlapping = chord(
+                Point2::from_values(2, 0),
+                Point2::from_values(6, 0),
+                &policy,
+            )
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
+            for (other, orientation) in [
+                (overlapping.clone(), RationalBezierOverlapOrientation2::Same),
+                (
+                    overlapping.reversed(),
+                    RationalBezierOverlapOrientation2::Reversed,
+                ),
+            ] {
+                let result = horizontal.chord_intersections(&other, &policy).unwrap();
+                let Classification::Decided(BezierAlgebraicChordPairIntersections2::Overlaps(
+                    overlaps,
+                )) = result
+                else {
+                    panic!("retained-offset overlap must complete: {result:?}");
+                };
+                let [overlap] = overlaps.as_slice() else {
+                    panic!("expected one retained-offset overlap, got {overlaps:?}");
+                };
+                assert_eq!(overlap.orientation(), orientation);
+            }
+
+            let fraction = |numerator: i8, denominator: i8| {
+                (Real::from(numerator) / Real::from(denominator)).unwrap()
+            };
+            let parameter = |square: Real| {
+                let BezierParameter2::Algebraic(parameter) =
+                    algebraic_parameter(vec![-square, Real::zero(), Real::one()])
+                else {
+                    unreachable!("the selected square root is nonrational");
+                };
+                parameter
+            };
+            let horizontal_source = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let vertical_source = RationalBezier2::try_new(
+                vec![
+                    Point2::new(fraction(5, 8), Real::from(-1_i8)),
+                    Point2::new(fraction(5, 8), Real::one()),
+                ],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let image = |source: &RationalBezier2, parameter: &BezierAlgebraicParameter2| {
+                RationalBezierIntersectionPointEvidence2::Algebraic(
+                    source
+                        .point_at_algebraic_parameter(parameter, &policy)
+                        .unwrap(),
+                )
+            };
+            let retained = |source: &RationalBezier2,
+                            start: &BezierAlgebraicParameter2,
+                            end: &BezierAlgebraicParameter2| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    image(source, start),
+                    image(source, end),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the independent chord must remain exact");
+                };
+                chord
+                    .parallel_left_retained(fraction(1, 100), &policy)
+                    .unwrap()
+            };
+            let independent_horizontal = retained(
+                &horizontal_source,
+                &parameter(fraction(1, 2)),
+                &parameter(fraction(1, 3)),
+            );
+            let independent_vertical = retained(
+                &vertical_source,
+                &parameter(fraction(2, 5)),
+                &parameter(fraction(1, 5)),
+            );
+            for (first, second) in [
+                (independent_horizontal.clone(), independent_vertical.clone()),
+                (independent_horizontal.reversed(), independent_vertical),
+            ] {
+                let result = first.chord_intersections(&second, &policy).unwrap();
+                let Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(
+                    contacts,
+                )) = result
+                else {
+                    panic!("independent retained-offset crossing must complete: {result:?}");
+                };
+                let [contact] = contacts.as_slice() else {
+                    panic!("expected one independent offset crossing, got {contacts:?}");
+                };
+                assert_ne!(contact.tangent_cross_sign(), RealSign::Zero);
+                for (parameter, chord) in [
+                    (contact.first_parameter(), &first),
+                    (contact.second_parameter(), &second),
+                ] {
+                    assert_eq!(
+                        parameter
+                            .cmp_by_refinement(&chord.start_parameter(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    );
+                    assert_eq!(
+                        parameter
+                            .cmp_by_refinement(&chord.end_parameter(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let third = (Real::one() / Real::from(3_i8)).unwrap();
