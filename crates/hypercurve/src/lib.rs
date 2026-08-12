@@ -122,8 +122,8 @@ pub use bezier_offset::{
 };
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, BezierRootIsolationResult2,
-    BezierRootIsolationTrace2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
+    BezierRootIsolationResult2, BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
     BezierBoundaryLoop2, CurveBoundaryInteriorSide2, CurveRegion2, CurveRegionArrangement2,
