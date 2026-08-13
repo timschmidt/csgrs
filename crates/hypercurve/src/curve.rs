@@ -4647,6 +4647,7 @@ impl FilletOffsetCarrier2<'_, '_> {
         anchor_is_previous: bool,
         anchor_parameter: Option<&CurveRegionParameter2>,
         anchor_evidence: Option<RetainedFilletAnchorEvidence2>,
+        force_chord_normal: bool,
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<RetainedFilletFrame2>> {
@@ -4805,7 +4806,10 @@ impl FilletOffsetCarrier2<'_, '_> {
                 signed_distance,
                 ..
             } => {
-                let radial_frame = match source.certified_unit_tangent() {
+                let radial_frame = match (!force_chord_normal)
+                    .then(|| source.certified_unit_tangent())
+                    .flatten()
+                {
                     Some((tangent_x, tangent_y)) => {
                         RetainedFilletRadialFrame2::RepresentedUnitNormal((-tangent_y, tangent_x))
                     }
@@ -5039,14 +5043,32 @@ fn solve_carrier_fillet_corner(
                                 || evidence.source_direction.is_some()
                                 || evidence.deferred_arc_contact.is_some()
                         });
+                    let force_chord_normal = mode == CurveCornerMode2::TrimOrExtend
+                        && matches!(
+                            (&previous_offset, &next_offset),
+                            (
+                                FilletOffsetCarrier2::AlgebraicChord { .. },
+                                FilletOffsetCarrier2::Line { .. }
+                            ) | (
+                                FilletOffsetCarrier2::Line { .. },
+                                FilletOffsetCarrier2::AlgebraicChord { .. }
+                            )
+                        );
                     let first_frame = first.retained_fillet_frame(
                         first_is_previous,
                         center.parameter(first_is_previous),
                         center.retained_anchor_evidence.clone(),
+                        force_chord_normal,
                         first_family,
                         policy,
                     )?;
                     let frame_is_preferred = |frame: &RetainedFilletFrame2| {
+                        if force_chord_normal {
+                            return matches!(
+                                &frame.radial_frame,
+                                RetainedFilletRadialFrame2::ChordNormal { .. }
+                            );
+                        }
                         matches!(
                             &frame.radial_frame,
                             RetainedFilletRadialFrame2::ParallelNormal { .. }
@@ -5063,6 +5085,7 @@ fn solve_carrier_fillet_corner(
                             !first_is_previous,
                             center.parameter(!first_is_previous),
                             center.retained_anchor_evidence.clone(),
+                            force_chord_normal,
                             second_family,
                             policy,
                         )?;
@@ -8154,11 +8177,105 @@ fn fillet_offset_centers(
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Line { .. })
         | (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
             if mode == CurveCornerMode2::TrimOrExtend {
-                return Err(ExactCurveError::blocked(
+                let (chord_support, line_support, chord_is_previous) = match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                        FilletOffsetCarrier2::Line { support: line, .. },
+                    ) => (support, line, true),
+                    (
+                        FilletOffsetCarrier2::Line { support: line, .. },
+                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
+                    ) => (support, line, false),
+                    _ => unreachable!(),
+                };
+                let line_family = if chord_is_previous {
+                    next_family
+                } else {
+                    previous_family
+                };
+                let line_chord = algebraic_chord_from_line_support(
+                    line_support,
                     CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
+                    line_family,
+                    policy,
+                )?;
+                let tangent_relation = |cross| {
+                    let relation = if cross {
+                        line_chord.tangent_cross_sign(chord_support, policy)
+                    } else {
+                        line_chord.tangent_dot_sign(chord_support, policy)
+                    }
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                    })?;
+                    match relation {
+                        Classification::Decided(sign) => Ok(sign),
+                        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            line_family,
+                            reason,
+                        )),
+                    }
+                };
+                let tangent_cross = tangent_relation(true)?;
+                if tangent_cross == RealSign::Zero {
+                    let side = match line_chord
+                        .oriented_support_side(chord_support.start(), policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                        })? {
+                        Classification::Decided(side) => side,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                line_family,
+                                reason,
+                            ));
+                        }
+                    };
+                    centers.coincident = side == crate::classify::LineSide::On;
+                    return Ok(centers);
+                }
+                let point = match line_chord
+                    .supporting_line_intersection(chord_support, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                    })? {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => {
+                        return Err(ExactCurveError::invalid(
+                            CurveOperation2::Fillet,
+                            line_family,
+                            CurveError::Topology(
+                                "nonparallel retained line/chord fillet supports omitted their intersection"
+                                    .into(),
+                            ),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            line_family,
+                            reason,
+                        ));
+                    }
+                };
+                centers.push(FilletCenterWitness2 {
+                    point,
+                    previous_parameter: None,
+                    next_parameter: None,
+                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                        // Extension reconstruction uses the algebraic chord's
+                        // general center frame, so retain anchor chord x line.
+                        cross: Some(reverse_fillet_sign(tangent_cross)),
+                        dot: Some(tangent_relation(false)?),
+                        center_parallel: None,
+                        source_direction: None,
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    }),
+                });
+                return Ok(centers);
             }
             let (chord_support, line_support, chord_is_previous) = match (previous, next) {
                 (
@@ -8417,6 +8534,40 @@ fn fillet_cut_from_center(
             let source = source
                 .native_line()
                 .expect("a non-chord linear fillet carrier retains its native line");
+            if retained_parameter.is_none() {
+                let support = algebraic_chord_from_line_support(
+                    source,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                )?;
+                let point = match crate::BezierAlgebraicChord2::translated_endpoint(
+                    center,
+                    &(signed_distance * *unit_y),
+                    &(-(signed_distance * *unit_x)),
+                    policy,
+                )
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+                {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            reason,
+                        ));
+                    }
+                };
+                return algebraic_chord_corner_cut_from_support_point(
+                    &support,
+                    point,
+                    previous,
+                    mode,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                );
+            }
             let parameter = retained_parameter
                 .expect("a line offset intersection retains its affine parameter")
                 .clone();
@@ -8808,6 +8959,26 @@ fn line_parameter_at_point(
     let denominator = &delta.0 * &delta.0 + &delta.1 * &delta.1;
     (numerator / denominator)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))
+}
+
+fn algebraic_chord_from_line_support(
+    line: &LineSeg2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<crate::BezierAlgebraicChord2> {
+    match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+        RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+        RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+        policy,
+    )
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    {
+        Classification::Decided(chord) => Ok(chord),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, family, reason))
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -10644,6 +10815,7 @@ mod tests {
                     canonical_anchor_curve: None,
                     deferred_arc_contact: None,
                 }),
+                false,
                 CurveFamily2::QuadraticBezier,
                 &CurveContext::STRICT,
             )

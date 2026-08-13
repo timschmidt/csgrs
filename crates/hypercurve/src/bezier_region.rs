@@ -2324,22 +2324,7 @@ fn retained_chord_on_certified_line(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
-    let support = match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-        RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
-        RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
-        policy,
-    )
-    .map_err(|cause| curve_region_edit_error(operation, cause))?
-    {
-        Classification::Decided(support) => support,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::Line,
-                reason,
-            ));
-        }
-    };
+    let support = retained_algebraic_line_support(line, operation, policy)?;
     match support
         .chord_between_certified_support_points(start, end, policy)
         .map_err(|cause| curve_region_edit_error(operation, cause))?
@@ -2349,6 +2334,27 @@ fn retained_chord_on_certified_line(
             operation,
             CurveError::Topology("a retained line trim collapsed to one point".into()),
         )),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            operation,
+            CurveFamily2::Line,
+            reason,
+        )),
+    }
+}
+
+fn retained_algebraic_line_support(
+    line: &LineSeg2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<crate::BezierAlgebraicChord2> {
+    match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+        RationalBezierIntersectionPointEvidence2::Exact(line.start().clone()),
+        RationalBezierIntersectionPointEvidence2::Exact(line.end().clone()),
+        policy,
+    )
+    .map_err(|cause| curve_region_edit_error(operation, cause))?
+    {
+        Classification::Decided(support) => Ok(support),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
             operation,
             CurveFamily2::Line,
@@ -2661,6 +2667,29 @@ fn retained_corner_fragment_trim(
         ));
     };
     let curve = replacement_curve.unwrap_or(curve);
+    if parameter.as_algebraic_chord().is_some()
+        && let BezierSubcurve2::Quadratic(line) = curve
+        && line.retained_exact_line_image().is_some()
+    {
+        let start = if keep_before_cut {
+            RationalBezierIntersectionPointEvidence2::Exact(line.start().clone())
+        } else {
+            cut_point.clone()
+        };
+        let end = if keep_before_cut {
+            cut_point.clone()
+        } else {
+            RationalBezierIntersectionPointEvidence2::Exact(line.end().clone())
+        };
+        return retained_chord_on_certified_line(
+            line.retained_exact_line_image()
+                .expect("the retained corner source is an exact line"),
+            start,
+            end,
+            operation,
+            policy,
+        );
+    }
     if parameter.is_selected_fiber() {
         let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
         let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
@@ -11883,6 +11912,29 @@ impl CurveRegion2 {
                     policy,
                 );
             }
+            if let BezierSplitFragment2::Materialized {
+                curve: BezierSubcurve2::Quadratic(line),
+                ..
+            } = other_fragment
+                && line.retained_exact_line_image().is_some()
+                && other_cut.parameter.as_algebraic_chord().is_some()
+            {
+                let support = retained_algebraic_line_support(
+                    line.retained_exact_line_image()
+                        .expect("the retained fillet companion is an exact line"),
+                    CurveOperation2::Fillet,
+                    policy,
+                )?;
+                return Self::retained_chord_fillet_fragments(
+                    &frame,
+                    fillet,
+                    &support,
+                    fillet_clockwise,
+                    anchor_cut,
+                    other_cut,
+                    policy,
+                );
+            }
             let fillet_parameter_is_open = |fillet_parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
                 let after_start = match fillet_parameter.order_to_real(&Real::zero(), policy) {
                     Ok(Classification::Decided(order)) => order == std::cmp::Ordering::Greater,
@@ -12278,6 +12330,18 @@ impl CurveRegion2 {
             return Ok(());
         }
         if cut.placement != CornerPlacement2::Extension {
+            return Ok(());
+        }
+
+        if cut.parameter.as_algebraic_chord().is_some()
+            && matches!(
+                fragment,
+                BezierSplitFragment2::Materialized {
+                    curve: BezierSubcurve2::Quadratic(curve),
+                    ..
+                } if curve.retained_exact_line_image().is_some()
+            )
+        {
             return Ok(());
         }
 
@@ -23304,64 +23368,78 @@ mod tests {
             for reversed in [false, true] {
                 let region = nonrepresented_chord_line_corner_region(&policy, reversed);
                 let vertex = if reversed { 2 } else { 1 };
-                let outcome = region
-                    .fillet_loop_vertex_by_radius(
-                        0,
-                        vertex,
-                        radius.clone(),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
-                    .unwrap_or_else(|error| {
-                        panic!(
-                            "nonrepresented chord/line fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                let mut trim_count = None;
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    let outcome = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            vertex,
+                            radius.clone(),
+                            mode,
+                            &policy,
                         )
-                    });
-                assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(
-                    outcome.value.candidate_count() > 0,
-                    "policy={policy:?}, reversed={reversed}, outcome={:?}",
-                    outcome.value
-                );
-                for_each_corner_region(&outcome.value, |filleted| {
-                    let fragments = filleted.boundary_loops()[0].fragments();
-                    let mut chord_adjacencies = 0;
-                    let mut retained_tangent_relations = 0;
-                    for (index, fragment) in fragments.iter().enumerate() {
-                        let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment else {
-                            continue;
-                        };
-                        for endpoint in [true, false] {
-                            if matches!(
-                                fillet.endpoint_chord_tangent_relation(endpoint, &policy),
-                                Ok(Classification::Decided(Some((
-                                    _,
-                                    RealSign::Zero,
-                                    Some(RealSign::Positive | RealSign::Negative)
-                                ))))
-                            ) {
-                                retained_tangent_relations += 1;
-                            }
-                        }
-                        for adjacent_index in [
-                            (index + fragments.len() - 1) % fragments.len(),
-                            (index + 1) % fragments.len(),
-                        ] {
-                            let adjacent = &fragments[adjacent_index];
-                            let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "nonrepresented chord/line fillet: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(
+                        outcome.value.candidate_count() > 0,
+                        "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
+                        outcome.value
+                    );
+                    if mode == CurveCornerMode2::TrimOnly {
+                        trim_count = Some(outcome.value.candidate_count());
+                    } else {
+                        assert!(
+                            outcome.value.candidate_count()
+                                > trim_count.expect("the trim result runs first"),
+                            "extension must retain the second infinite-support fillet branch"
+                        );
+                    }
+                    for_each_corner_region(&outcome.value, |filleted| {
+                        let fragments = filleted.boundary_loops()[0].fragments();
+                        let mut chord_adjacencies = 0;
+                        let mut retained_tangent_relations = 0;
+                        for (index, fragment) in fragments.iter().enumerate() {
+                            let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment
+                            else {
                                 continue;
                             };
-                            assert_eq!(
-                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
-                                Ok(Classification::Decided(true)),
-                                "policy={policy:?}, reversed={reversed}, fillet={index}, adjacent={adjacent_index}"
-                            );
-                            chord_adjacencies += 1;
+                            for endpoint in [true, false] {
+                                if matches!(
+                                    fillet.endpoint_chord_tangent_relation(endpoint, &policy),
+                                    Ok(Classification::Decided(Some((
+                                        _,
+                                        RealSign::Zero,
+                                        Some(RealSign::Positive | RealSign::Negative)
+                                    ))))
+                                ) {
+                                    retained_tangent_relations += 1;
+                                }
+                            }
+                            for adjacent_index in [
+                                (index + fragments.len() - 1) % fragments.len(),
+                                (index + 1) % fragments.len(),
+                            ] {
+                                let adjacent = &fragments[adjacent_index];
+                                let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                                    continue;
+                                };
+                                assert_eq!(
+                                    fillet
+                                        .certified_adjacent_chord_is_endpoint_only(chord, &policy,),
+                                    Ok(Classification::Decided(true)),
+                                    "policy={policy:?}, reversed={reversed}, mode={mode:?}, fillet={index}, adjacent={adjacent_index}"
+                                );
+                                chord_adjacencies += 1;
+                            }
                         }
-                    }
-                    assert!(chord_adjacencies > 0);
-                    assert!(retained_tangent_relations > 0);
-                });
+                        assert!(chord_adjacencies > 0);
+                        assert!(retained_tangent_relations > 0);
+                    });
+                }
             }
         }
     }
