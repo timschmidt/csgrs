@@ -9805,16 +9805,61 @@ fn retained_parallel_corner_parameter_placement(
     };
     let start_order = compare(fragment.range().start())?;
     let end_order = compare(fragment.range().end())?;
+    Ok(retained_parallel_corner_orders_placement(
+        start_order,
+        end_order,
+        fragment,
+        previous,
+        mode,
+    ))
+}
+
+fn retained_parallel_corner_orders_placement(
+    start_order: std::cmp::Ordering,
+    end_order: std::cmp::Ordering,
+    fragment: &crate::BezierParallelFragment2,
+    previous: bool,
+    mode: CurveCornerMode2,
+) -> Option<CornerPlacement2> {
     if start_order.is_gt() && end_order.is_lt() {
-        return Ok(Some(CornerPlacement2::Trim));
+        return Some(CornerPlacement2::Trim);
     }
     if mode != CurveCornerMode2::TrimOrExtend {
-        return Ok(None);
+        return None;
     }
     let extends_toward_higher_parameter = previous != fragment.is_reversed();
-    Ok(((extends_toward_higher_parameter && end_order.is_gt())
+    ((extends_toward_higher_parameter && end_order.is_gt())
         || (!extends_toward_higher_parameter && start_order.is_lt()))
-    .then_some(CornerPlacement2::Extension))
+    .then_some(CornerPlacement2::Extension)
+}
+
+fn retained_parallel_selected_corner_parameter_placement(
+    parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
+    fragment: &crate::BezierParallelFragment2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerPlacement2>> {
+    let compare = |boundary: &BezierParameter2| {
+        parameter
+            .cmp_bezier_parameter(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|ordering| match ordering {
+                Classification::Decided(ordering) => Ok(ordering),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
+    };
+    Ok(retained_parallel_corner_orders_placement(
+        compare(fragment.range().start())?,
+        compare(fragment.range().end())?,
+        fragment,
+        previous,
+        mode,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -9851,47 +9896,36 @@ fn analytic_parallel_chamfer_cuts(
         });
     }
     let radius_squared = setback * setback;
-    let mut parameters = match fragment
-        .parallel()
-        .fixed_distance_incidence_from_parameter(
+    let direction = if previous != fragment.is_reversed() {
+        crate::BezierParameterRayDirection2::Increasing
+    } else {
+        crate::BezierParameterRayDirection2::Decreasing
+    };
+    let parameters = match (if mode == CurveCornerMode2::TrimOrExtend {
+        fragment
+            .parallel()
+            .fixed_distance_incidence_from_parameter_with_incident_ray(
+                corner_parameter,
+                &radius_squared,
+                fragment.range(),
+                direction,
+                policy,
+            )
+    } else {
+        fragment.parallel().fixed_distance_incidence_from_parameter(
             corner_parameter,
             &radius_squared,
             fragment.range(),
             policy,
         )
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    })
+    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
         Classification::Decided(parameters) => parameters,
         Classification::Uncertain(reason) => {
             return Err(ExactCurveError::blocked(operation, family, reason));
         }
     };
-    if mode == CurveCornerMode2::TrimOrExtend {
-        let anchor = corner_parameter.as_exact().ok_or_else(|| {
-            ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-        })?;
-        let center = corner.as_exact().ok_or_else(|| {
-            ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-        })?;
-        let direction = if previous != fragment.is_reversed() {
-            crate::BezierParameterRayDirection2::Increasing
-        } else {
-            crate::BezierParameterRayDirection2::Decreasing
-        };
-        let exterior = match fragment
-            .parallel()
-            .circle_incidence_on_incident_ray(center, &radius_squared, anchor, direction, policy)
-            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-        {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(operation, family, reason));
-            }
-        };
-        parameters.extend(exterior.into_iter().map(|(parameter, _)| {
-            crate::bezier_offset::BezierParallelFixedDistanceParameter2::Bezier(parameter)
-        }));
-    }
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {
         let (parameter, point, placement) = match parameter {
@@ -9918,23 +9952,12 @@ fn analytic_parallel_chamfer_cuts(
             crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber(
                 parameter,
             ) => {
-                let after_start = parameter
-                    .cmp_bezier_parameter(fragment.range().start(), policy)
-                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-                let before_end = parameter
-                    .cmp_bezier_parameter(fragment.range().end(), policy)
-                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-                match (after_start, before_end) {
-                    (
-                        Classification::Decided(std::cmp::Ordering::Greater),
-                        Classification::Decided(std::cmp::Ordering::Less),
-                    ) => {}
-                    (Classification::Decided(_), Classification::Decided(_)) => continue,
-                    (Classification::Uncertain(reason), _)
-                    | (_, Classification::Uncertain(reason)) => {
-                        return Err(ExactCurveError::blocked(operation, family, reason));
-                    }
-                }
+                let Some(placement) = retained_parallel_selected_corner_parameter_placement(
+                    &parameter, fragment, previous, mode, operation, family, policy,
+                )?
+                else {
+                    continue;
+                };
                 let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                     crate::BezierAnalyticParallelPoint2::new_selected_fiber(
                         fragment.parallel().clone(),
@@ -9945,7 +9968,7 @@ fn analytic_parallel_chamfer_cuts(
                 (
                     CurveRegionParameter2::from_selected_fiber(parameter),
                     point,
-                    CornerPlacement2::Trim,
+                    placement,
                 )
             }
         };

@@ -12949,6 +12949,16 @@ impl CurveRegion2 {
             return Ok(());
         }
 
+        for cut in [&mut *previous_cut, &mut *next_cut] {
+            if cut.parameter.is_selected_fiber() {
+                cut.parameter = CurveRegionParameter2::from_bezier(retained_corner_decision(
+                    promoted_retained_parallel_parameter(&cut.parameter, policy)
+                        .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                    operation,
+                )?);
+            }
+        }
+
         let promoted;
         let carrier = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
@@ -12962,13 +12972,6 @@ impl CurveRegion2 {
                 RetainedCornerExtensionCarrier2::AnalyticParallel(fragment)
             }
             BezierSplitFragment2::SelectedFiber(fragment) => {
-                for cut in [&mut *previous_cut, &mut *next_cut] {
-                    cut.parameter = CurveRegionParameter2::from_bezier(retained_corner_decision(
-                        promoted_retained_parallel_parameter(&cut.parameter, policy)
-                            .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                        operation,
-                    )?);
-                }
                 promoted = promoted_selected_corner_fragment(
                     fragment,
                     operation,
@@ -13069,6 +13072,14 @@ impl CurveRegion2 {
             return Ok(());
         }
 
+        if cut.parameter.is_selected_fiber() {
+            cut.parameter = CurveRegionParameter2::from_bezier(retained_corner_decision(
+                promoted_retained_parallel_parameter(&cut.parameter, policy)
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                operation,
+            )?);
+        }
+
         let promoted;
         let carrier = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => {
@@ -13082,11 +13093,6 @@ impl CurveRegion2 {
                 RetainedCornerExtensionCarrier2::AnalyticParallel(fragment)
             }
             BezierSplitFragment2::SelectedFiber(fragment) => {
-                cut.parameter = CurveRegionParameter2::from_bezier(retained_corner_decision(
-                    promoted_retained_parallel_parameter(&cut.parameter, policy)
-                        .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                    operation,
-                )?);
                 promoted = promoted_selected_corner_fragment(
                     fragment,
                     operation,
@@ -23018,6 +23024,135 @@ mod tests {
                             }
                     )));
                 }
+            }
+        }
+    }
+
+    fn nonlinear_algebraic_endpoint_region(policy: &CurveContext, reversed: bool) -> CurveRegion2 {
+        let alpha = positive_inverse_sqrt_parameter(2, policy);
+        let BezierParameter2::Algebraic(alpha_root) = &alpha else {
+            panic!("sqrt(1/2) must remain algebraic");
+        };
+        // P(t)=(t^2,t), represented as a quadratic Bezier. The retained span
+        // starts at alpha, while its regular decreasing support contains
+        // -alpha at exact squared distance 2 from the corner.
+        let source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(Real::zero(), q(1, 2)),
+            p(1, 1),
+        ));
+        let rational = RationalBezier2::try_from_subcurve(&source).unwrap();
+        let corner =
+            crate::rational_bezier_general::exact_contact_point_evidence(&rational, &alpha, policy)
+                .unwrap()
+                .expect("the nonlinear algebraic endpoint retains point evidence");
+        let chord = match crate::BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(p(0, 0)),
+            corner.clone(),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => panic!("endpoint chord: {reason:?}"),
+        };
+        let nonlinear = BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed: false,
+            start: alpha.clone(),
+            end: BezierParameter2::Exact(Real::one()),
+            source_curve: Some(source.clone()),
+            start_image: Some(
+                BezierAlgebraicEndpointImage2::from_source_curve(&source, alpha_root, policy)
+                    .unwrap(),
+            ),
+            end_image: None,
+        };
+        let closure = BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(p(1, 1), p(0, 0)).unwrap(),
+            )),
+        };
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicChord(chord),
+            nonlinear,
+            closure,
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the endpoint loop reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the nonlinear algebraic endpoint loop closes");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray() {
+        let setback = Real::from(2_i8).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
+                let corner = if reversed { 2 } else { 1 };
+                let (previous_setback, next_setback) = if reversed {
+                    (setback.clone(), Real::zero())
+                } else {
+                    (Real::zero(), setback.clone())
+                };
+                let trim = region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        corner,
+                        previous_setback.clone(),
+                        next_setback.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the finite nonlinear endpoint search must decide")
+                    .into_value();
+                let extended = region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        corner,
+                        previous_setback,
+                        next_setback,
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the nonlinear algebraic endpoint ray must extend: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(extended.value.candidate_count() > trim.candidate_count());
+                for_each_corner_region(&extended.value, |edited| {
+                    assert!(
+                        edited.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .any(|fragment| {
+                                matches!(
+                                    fragment,
+                                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                                        | BezierSplitFragment2::AnalyticParallel(_)
+                                )
+                            })
+                    );
+                });
             }
         }
     }

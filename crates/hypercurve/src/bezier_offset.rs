@@ -56723,6 +56723,72 @@ fn algebraic_selected_fiber_parameters_with_incident_ray(
     ))
 }
 
+/// Isolates one selected bivariate fiber between represented affine bounds.
+///
+/// The retained first-axis parameter stays in its local algebraic field and
+/// all second-axis roots share one compact authority. This is the bounded
+/// counterpart of [`selected_fiber_parameters_on_incident_ray`]; together the
+/// two cover a ray whose authored endpoint is itself algebraic without ever
+/// turning an isolating bound into construction evidence.
+fn selected_fiber_parameters_in_interval(
+    incidence: &BivariatePolynomial,
+    retained_parameter: &BezierAlgebraicParameter2,
+    lower: &Real,
+    upper: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
+    let refined_retained = BezierParameter2::Algebraic(retained_parameter.clone())
+        .refined_isolating_interval(64, &CurveContext::STRICT);
+    let retained_root = match refined_retained {
+        BezierParameter2::Algebraic(parameter) => parameter_representation(&parameter, policy),
+        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(&parameter),
+    };
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        incidence,
+        CurveResultantParameter::First,
+        &retained_root,
+        lower,
+        upper,
+        AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: 512,
+            refinement_steps: 8,
+        },
+        policy.predicate_policy(),
+    );
+    if report.certainty == PredicateCertainty::Approximate {
+        policy.observe_approximate_512();
+    }
+    let roots = match report.status {
+        AlgebraicFiberRootIsolationStatus::Isolated => report.intervals,
+        AlgebraicFiberRootIsolationStatus::NoRoots => Vec::new(),
+        AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
+            return Ok(Classification::Decided(None));
+        }
+        AlgebraicFiberRootIsolationStatus::InvalidEvidence
+        | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+            return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        AlgebraicFiberRootIsolationStatus::DepthLimit
+        | AlgebraicFiberRootIsolationStatus::Undecided => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+    };
+    let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+        incidence.clone(),
+        retained_parameter.clone(),
+        policy,
+    );
+    Ok(Classification::Decided(Some(
+        roots
+            .into_iter()
+            .map(|root| authority.parameter(root))
+            .collect(),
+    )))
+}
+
 /// Isolates one selected bivariate fiber on an open incident ray without
 /// constructing its degree-multiplied norm. Hypersolve sees the compact chart
 /// `u in (0, 1)` while every returned scalar is transported back to the
@@ -61708,6 +61774,48 @@ impl BezierParallel2 {
         isolation_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+        self.fixed_distance_incidence_from_parameter_with_domain(
+            center_parameter,
+            radius_squared,
+            isolation_range,
+            None,
+            policy,
+        )
+    }
+
+    /// Solves the authored range and the complete regular affine ray incident
+    /// to one retained algebraic or represented endpoint.
+    ///
+    /// An algebraic endpoint retains its selected center field. A certified
+    /// rootless isolator supplies a represented chart anchor, while a bounded
+    /// selected-fiber solve covers the exact gap between that anchor and the
+    /// endpoint. The remaining open ray reuses the ordinary compact incident
+    /// chart and terminates at the first source pole or tangent-speed zero.
+    pub(crate) fn fixed_distance_incidence_from_parameter_with_incident_ray(
+        &self,
+        center_parameter: &BezierParameter2,
+        radius_squared: &Real,
+        isolation_range: &BezierParameterRange2,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+        self.fixed_distance_incidence_from_parameter_with_domain(
+            center_parameter,
+            radius_squared,
+            isolation_range,
+            Some(direction),
+            policy,
+        )
+    }
+
+    fn fixed_distance_incidence_from_parameter_with_domain(
+        &self,
+        center_parameter: &BezierParameter2,
+        radius_squared: &Real,
+        isolation_range: &BezierParameterRange2,
+        incident_direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
         let BezierParameter2::Algebraic(center_parameter) = center_parameter else {
             let center_parameter = center_parameter
                 .as_exact()
@@ -61718,17 +61826,70 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            return Ok(self
-                .circle_incidence(&center, radius_squared, &[], policy)?
-                .map(|parameters| {
-                    parameters
-                        .into_iter()
-                        .map(|(parameter, _)| {
-                            BezierParallelFixedDistanceParameter2::Bezier(parameter)
-                        })
-                        .collect()
-                }));
+            let mut parameters =
+                match self.circle_incidence(&center, radius_squared, &[], policy)? {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let mut finite = Vec::with_capacity(parameters.len());
+            for parameter in parameters {
+                match overlap_parameter_is_in_range(&parameter.0, isolation_range, true, policy)? {
+                    Classification::Decided(true) => finite.push(parameter),
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            parameters = finite;
+            if let Some(direction) = incident_direction {
+                let exterior = match self.circle_incidence_on_incident_ray(
+                    &center,
+                    radius_squared,
+                    center_parameter,
+                    direction,
+                    policy,
+                )? {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                parameters.extend(exterior);
+            }
+            return Ok(Classification::Decided(
+                parameters
+                    .into_iter()
+                    .map(|(parameter, _)| BezierParallelFixedDistanceParameter2::Bezier(parameter))
+                    .collect(),
+            ));
         };
+
+        if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero) {
+            let incidence =
+                match parallel_source_fixed_distance_incidence(self, radius_squared, policy)? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let incidence =
+                match reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)? {
+                    Classification::Decided(incidence) => incidence,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            return self.fixed_distance_candidate_parameters(
+                &incidence,
+                center_parameter,
+                isolation_range,
+                incident_direction,
+                policy,
+            );
+        }
 
         let BezierParallelFixedDistanceSystem2 {
             incidence,
@@ -61792,100 +61953,18 @@ impl BezierParallel2 {
             candidate: candidate_term.rational.clone(),
             rational: center_term.rational.clone(),
         };
-        let candidates: Vec<BezierParallelFixedDistanceParameter2> =
-            if center_parameter.polynomial().degree() > MAX_FIXED_DISTANCE_QUOTIENT_DEGREE {
-                // A global norm multiplies the candidate degree by the selected
-                // center field degree.  Retain high-degree contacts directly in
-                // Q(alpha) instead: local Sturm isolation supplies exact singleton
-                // intervals and the shared authority stores the reduced incidence
-                // only once for all roots.
-                let refined_center = BezierParameter2::Algebraic(center_parameter.clone())
-                    .refined_isolating_interval(64, &CurveContext::STRICT);
-                let center_representation = match refined_center {
-                    BezierParameter2::Algebraic(parameter) => {
-                        parameter_representation(&parameter, policy)
-                    }
-                    BezierParameter2::Exact(parameter) => {
-                        exact_real_algebraic_representation(&parameter)
-                    }
-                };
-                let isolation_lower = match isolation_range.start() {
-                    BezierParameter2::Exact(parameter) => parameter.clone(),
-                    BezierParameter2::Algebraic(parameter) => parameter.interval().start().clone(),
-                };
-                let isolation_upper = match isolation_range.end() {
-                    BezierParameter2::Exact(parameter) => parameter.clone(),
-                    BezierParameter2::Algebraic(parameter) => parameter.interval().end().clone(),
-                };
-                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-                    &incidence,
-                    CurveResultantParameter::First,
-                    &center_representation,
-                    &isolation_lower,
-                    &isolation_upper,
-                    AlgebraicFiberRootIsolationConfig {
-                        max_subdivision_depth: 512,
-                        refinement_steps: 8,
-                    },
-                    policy.predicate_policy(),
-                );
-                if report.certainty == PredicateCertainty::Approximate {
-                    policy.observe_approximate_512();
-                }
-                let roots = match report.status {
-                    AlgebraicFiberRootIsolationStatus::Isolated => report.intervals,
-                    AlgebraicFiberRootIsolationStatus::NoRoots => Vec::new(),
-                    AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                    AlgebraicFiberRootIsolationStatus::InvalidEvidence
-                    | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
-                        return Err(CurveError::InvalidBezierAlgebraicParameter);
-                    }
-                    AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    AlgebraicFiberRootIsolationStatus::DepthLimit
-                    | AlgebraicFiberRootIsolationStatus::Undecided => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-                    }
-                };
-                let authority = BezierAlgebraicSelectedFiberAuthority2::new(
-                    incidence.clone(),
-                    center_parameter.clone(),
-                    policy,
-                );
-                roots
-                    .into_iter()
-                    .map(|root| {
-                        BezierParallelFixedDistanceParameter2::SelectedFiber(
-                            authority.parameter(root),
-                        )
-                    })
-                    .collect()
-            } else {
-                match algebraic_selected_reduced_fiber_parameters_with_resultant_limit(
-                    &incidence,
-                    center_parameter,
-                    MAX_FIXED_DISTANCE_RESULTANT_DEGREE,
-                    MAX_FIXED_DISTANCE_QUOTIENT_DEGREE,
-                    policy,
-                )? {
-                    Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
-                        candidates,
-                    )) => candidates
-                        .into_iter()
-                        .map(BezierParallelFixedDistanceParameter2::Bezier)
-                        .collect(),
-                    Classification::Decided(
-                        BezierAlgebraicFiberProjection2::IdenticallyZero
-                        | BezierAlgebraicFiberProjection2::Degenerate,
-                    ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            };
+        let candidates = match self.fixed_distance_candidate_parameters(
+            &incidence,
+            center_parameter,
+            isolation_range,
+            incident_direction,
+            policy,
+        )? {
+            Classification::Decided(candidates) => candidates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
 
         let center_parameter = BezierParameter2::Algebraic(center_parameter.clone());
         let radical_sign =
@@ -61959,6 +62038,207 @@ impl BezierParallel2 {
             }
         }
         Ok(Classification::Decided(retained))
+    }
+
+    fn fixed_distance_candidate_parameters(
+        &self,
+        incidence: &BivariatePolynomial,
+        center_parameter: &BezierAlgebraicParameter2,
+        isolation_range: &BezierParameterRange2,
+        incident_direction: Option<BezierParameterRayDirection2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParallelFixedDistanceParameter2>>> {
+        let candidates: Vec<BezierParallelFixedDistanceParameter2> =
+            if center_parameter.polynomial().degree() > MAX_FIXED_DISTANCE_QUOTIENT_DEGREE {
+                // A global norm multiplies the candidate degree by the selected
+                // center field degree. Retain high-degree contacts directly in
+                // Q(alpha), sharing the reduced incidence across every root.
+                let isolation_lower = match isolation_range.start() {
+                    BezierParameter2::Exact(parameter) => parameter.clone(),
+                    BezierParameter2::Algebraic(parameter) => parameter.interval().start().clone(),
+                };
+                let isolation_upper = match isolation_range.end() {
+                    BezierParameter2::Exact(parameter) => parameter.clone(),
+                    BezierParameter2::Algebraic(parameter) => parameter.interval().end().clone(),
+                };
+                let roots = match selected_fiber_parameters_in_interval(
+                    incidence,
+                    center_parameter,
+                    &isolation_lower,
+                    &isolation_upper,
+                    policy,
+                )? {
+                    Classification::Decided(Some(roots)) => roots,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                roots
+                    .into_iter()
+                    .map(BezierParallelFixedDistanceParameter2::SelectedFiber)
+                    .collect()
+            } else {
+                match algebraic_selected_reduced_fiber_parameters_with_resultant_limit(
+                    incidence,
+                    center_parameter,
+                    MAX_FIXED_DISTANCE_RESULTANT_DEGREE,
+                    MAX_FIXED_DISTANCE_QUOTIENT_DEGREE,
+                    policy,
+                )? {
+                    Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
+                        candidates,
+                    )) => candidates
+                        .into_iter()
+                        .map(BezierParallelFixedDistanceParameter2::Bezier)
+                        .collect(),
+                    Classification::Decided(
+                        BezierAlgebraicFiberProjection2::IdenticallyZero
+                        | BezierAlgebraicFiberProjection2::Degenerate,
+                    ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+
+        let mut finite = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            let inside = match &candidate {
+                BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
+                    overlap_parameter_is_in_range(parameter, isolation_range, true, policy)?
+                }
+                BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
+                    let after_start =
+                        parameter.cmp_bezier_parameter(isolation_range.start(), policy)?;
+                    let before_end =
+                        parameter.cmp_bezier_parameter(isolation_range.end(), policy)?;
+                    match (after_start, before_end) {
+                        (
+                            Classification::Decided(
+                                std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                            ),
+                            Classification::Decided(
+                                std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
+                            ),
+                        ) => Classification::Decided(true),
+                        (Classification::Decided(_), Classification::Decided(_)) => {
+                            Classification::Decided(false)
+                        }
+                        (Classification::Uncertain(reason), _)
+                        | (_, Classification::Uncertain(reason)) => {
+                            Classification::Uncertain(reason)
+                        }
+                    }
+                }
+            };
+            match inside {
+                Classification::Decided(true) => finite.push(candidate),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let mut candidates = finite;
+
+        let Some(direction) = incident_direction else {
+            return Ok(Classification::Decided(candidates));
+        };
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let incident = match algebraic_incident_ray_regular_anchor_from_polynomials(
+            source.weight,
+            &speed_squared,
+            center_parameter,
+            direction,
+        )? {
+            Classification::Decided(incident) => incident,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let center = BezierParameter2::Algebraic(center_parameter.clone());
+        if let Some(interval) = incident.adjacent_interval.as_ref() {
+            let adjacent = match selected_fiber_parameters_in_interval(
+                incidence,
+                center_parameter,
+                interval.start(),
+                interval.end(),
+                policy,
+            )? {
+                Classification::Decided(Some(parameters)) => parameters,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let mut retained_adjacent = Vec::with_capacity(adjacent.len());
+            for parameter in adjacent {
+                let ordering = match parameter.cmp_bezier_parameter(&center, policy)? {
+                    Classification::Decided(ordering) => ordering,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let beyond_endpoint = match direction {
+                    BezierParameterRayDirection2::Decreasing => {
+                        ordering == std::cmp::Ordering::Less
+                    }
+                    BezierParameterRayDirection2::Increasing => {
+                        ordering == std::cmp::Ordering::Greater
+                    }
+                };
+                if beyond_endpoint {
+                    retained_adjacent.push(parameter);
+                }
+            }
+            if direction == BezierParameterRayDirection2::Decreasing {
+                retained_adjacent.reverse();
+            }
+            candidates.extend(
+                retained_adjacent
+                    .into_iter()
+                    .map(BezierParallelFixedDistanceParameter2::SelectedFiber),
+            );
+        }
+        let barrier = match self.incident_ray_regular_barrier(
+            &incident.represented_anchor,
+            direction,
+            policy,
+        )? {
+            Classification::Decided(barrier) => barrier,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let exterior = match selected_fiber_parameters_on_incident_ray(
+            incidence,
+            center_parameter,
+            &incident.represented_anchor,
+            direction,
+            barrier.as_ref(),
+            policy,
+        )? {
+            Classification::Decided(Some(parameters)) => parameters,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        candidates.extend(
+            exterior
+                .into_iter()
+                .map(BezierParallelFixedDistanceParameter2::SelectedFiber),
+        );
+        Ok(Classification::Decided(candidates))
     }
 
     /// Returns two inverse rational-quadratic parameter charts on a supporting
@@ -75083,6 +75363,36 @@ fn project_parallel_pair_intersection_system(
 /// Squaring first in `sqrt(St)` gives `F0 + F1 sqrt(Su) = 0`; squaring once
 /// more gives the projected incidence `F0^2-Su F1^2=0`. The returned radical
 /// expressions retain both unsquared relations for selected-branch replay.
+fn parallel_source_fixed_distance_incidence(
+    parallel: &BezierParallel2,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BivariatePolynomial>> {
+    let source = parallel.source_power_basis()?;
+    if let Classification::Uncertain(reason) =
+        BezierParallel2::certify_finite_source(&source, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+    let unit = [Real::one()];
+    let weight = source.weight.unwrap_or(&unit);
+    let delta_x =
+        bivariate_parameter_difference(weight, source.x_numerator, source.x_numerator, weight);
+    let delta_y =
+        bivariate_parameter_difference(weight, source.y_numerator, source.y_numerator, weight);
+    let weight_product = bivariate_outer_product(weight, weight);
+    Ok(Classification::Decided(bivariate_subtract(
+        &bivariate_add(
+            &bivariate_multiply(&delta_x, &delta_x),
+            &bivariate_multiply(&delta_y, &delta_y),
+        ),
+        &bivariate_scale(
+            bivariate_multiply(&weight_product, &weight_product),
+            radius_squared,
+        ),
+    )))
+}
+
 fn parallel_fixed_distance_system(
     center: &BezierParallel2,
     candidate: &BezierParallel2,
@@ -77049,13 +77359,11 @@ fn first_incident_ray_polynomial_root(
     Ok(Classification::Decided(first))
 }
 
-fn regular_incident_ray_barrier_from_polynomials(
+fn regular_barrier_polynomials(
     weight_coefficients: Option<&[Real]>,
     speed_squared: &[Real],
-    anchor: &Real,
-    direction: BezierParameterRayDirection2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<BezierParameter2>>> {
+) -> CurveResult<Classification<(Option<BezierParameterPolynomial>, BezierParameterPolynomial)>> {
     let weight = match weight_coefficients
         .map(|weight| polynomial_from_coefficients(weight.to_vec(), policy))
         .transpose()?
@@ -77069,15 +77377,6 @@ fn regular_incident_ray_barrier_from_polynomials(
         }
         None => None,
     };
-    if let Some(weight) = weight.as_ref() {
-        match real_sign(&weight.evaluate(anchor), policy) {
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            Some(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-    }
     let speed = match polynomial_from_coefficients(speed_squared.to_vec(), policy)? {
         Classification::Decided(Some(speed)) => speed,
         Classification::Decided(None) => {
@@ -77087,6 +77386,126 @@ fn regular_incident_ray_barrier_from_polynomials(
             return Ok(Classification::Uncertain(reason));
         }
     };
+    Ok(Classification::Decided((weight, speed)))
+}
+
+struct BezierAlgebraicIncidentRayAnchor2 {
+    adjacent_interval: Option<BezierParameterInterval>,
+    represented_anchor: Real,
+}
+
+/// Finds a represented point in the same regular affine cell immediately
+/// beyond one algebraic endpoint.
+///
+/// Exact nonvanishing at the selected endpoint is certified first. Its
+/// isolator is then refined until neither the source weight nor tangent-speed
+/// polynomial has a root anywhere in that isolator. The directional interval
+/// boundary is consequently a safe represented chart anchor, while the whole
+/// interval remains available to isolate the small selected-fiber piece
+/// between the true endpoint and that chart.
+fn algebraic_incident_ray_regular_anchor_from_polynomials(
+    weight_coefficients: Option<&[Real]>,
+    speed_squared: &[Real],
+    endpoint: &BezierAlgebraicParameter2,
+    direction: BezierParameterRayDirection2,
+) -> CurveResult<Classification<BezierAlgebraicIncidentRayAnchor2>> {
+    let strict = &CurveContext::STRICT;
+    let (weight, speed) =
+        match regular_barrier_polynomials(weight_coefficients, speed_squared, strict)? {
+            Classification::Decided(polynomials) => polynomials,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let endpoint_parameter = BezierParameter2::Algebraic(endpoint.clone());
+    if let Some(weight) = weight.as_ref() {
+        match signed_polynomial_at_root(Some(weight), &endpoint_parameter, strict)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    match signed_polynomial_at_root(Some(&speed), &endpoint_parameter, strict)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        Classification::Decided(RealSign::Negative) => {
+            return Err(CurveError::Topology(
+                "Bezier tangent squared norm was certified negative".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+
+    let mut refined = endpoint_parameter;
+    loop {
+        let interval = match &refined {
+            BezierParameter2::Exact(anchor) => {
+                return Ok(Classification::Decided(BezierAlgebraicIncidentRayAnchor2 {
+                    adjacent_interval: None,
+                    represented_anchor: anchor.clone(),
+                }));
+            }
+            BezierParameter2::Algebraic(parameter) => parameter.interval().clone(),
+        };
+        let mut rootless = true;
+        for polynomial in std::iter::once(&speed).chain(weight.as_ref()) {
+            match polynomial.root_count_in_interval(&interval, strict)? {
+                Classification::Decided(0) => {}
+                Classification::Decided(_) | Classification::Uncertain(_) => {
+                    rootless = false;
+                    break;
+                }
+            }
+        }
+        if rootless {
+            let represented_anchor = match direction {
+                BezierParameterRayDirection2::Decreasing => interval.start().clone(),
+                BezierParameterRayDirection2::Increasing => interval.end().clone(),
+            };
+            return Ok(Classification::Decided(BezierAlgebraicIncidentRayAnchor2 {
+                adjacent_interval: Some(interval),
+                represented_anchor,
+            }));
+        }
+        let next = refined.clone().refined_isolating_interval(1, strict);
+        if next == refined {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
+        refined = next;
+    }
+}
+
+fn regular_incident_ray_barrier_from_polynomials(
+    weight_coefficients: Option<&[Real]>,
+    speed_squared: &[Real],
+    anchor: &Real,
+    direction: BezierParameterRayDirection2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let (weight, speed) =
+        match regular_barrier_polynomials(weight_coefficients, speed_squared, policy)? {
+            Classification::Decided(polynomials) => polynomials,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if let Some(weight) = weight.as_ref() {
+        match real_sign(&weight.evaluate(anchor), policy) {
+            Some(RealSign::Positive | RealSign::Negative) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
     match real_sign(&speed.evaluate(anchor), policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero) => {
@@ -97749,6 +98168,100 @@ mod conversion_tests {
                 matches!(incidence, Classification::Decided(ref parameters) if !parameters.is_empty()),
                 "the high-degree fixed-distance fiber must project under {policy:?}: {incidence:?}"
             );
+        }
+    }
+
+    #[test]
+    fn algebraic_center_fixed_distance_covers_adjacent_and_incident_ray() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        // P(t)=(t^2,t) is regular everywhere. For alpha^2=1/2, the
+        // fixed-distance circle centered at P(alpha) with r^2=2 contains
+        // P(-alpha), strictly beyond the decreasing endpoint ray.
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(Real::zero(), half.clone()),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let center = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        let range = BezierParameterRange2::new_validated(
+            center.clone(),
+            BezierParameter2::Exact(Real::one()),
+        );
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let finite = parallel
+                .fixed_distance_incidence_from_parameter(
+                    &center,
+                    &Real::from(2_i8),
+                    &range,
+                    &policy,
+                )
+                .unwrap();
+            assert!(matches!(finite, Classification::Decided(ref roots) if roots.is_empty()));
+
+            let extended = parallel
+                .fixed_distance_incidence_from_parameter_with_incident_ray(
+                    &center,
+                    &Real::from(2_i8),
+                    &range,
+                    BezierParameterRayDirection2::Decreasing,
+                    &policy,
+                )
+                .unwrap();
+            let Classification::Decided(extended) = extended else {
+                panic!("the algebraic endpoint incident ray must decide under {policy:?}");
+            };
+            assert!(extended.iter().any(|parameter| {
+                match parameter {
+                    BezierParallelFixedDistanceParameter2::Bezier(parameter) => {
+                        parameter
+                            .cmp_by_refinement(&BezierParameter2::Exact(Real::zero()), &policy)
+                            .unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Less)
+                    }
+                    BezierParallelFixedDistanceParameter2::SelectedFiber(parameter) => {
+                        parameter.order_to_real(&Real::zero(), &policy).unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Less)
+                    }
+                }
+            }));
+        }
+    }
+
+    #[test]
+    fn algebraic_center_fixed_distance_stops_before_speed_barrier() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        // P(t)=(t^2,0) has its first decreasing speed barrier at t=0.
+        // The unit-distance mate t=-sqrt(3/2) is therefore on a different
+        // regular component and must not leak into endpoint extension.
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let center = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        let range = BezierParameterRange2::new_validated(
+            center.clone(),
+            BezierParameter2::Exact(Real::one()),
+        );
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parallel
+                    .fixed_distance_incidence_from_parameter_with_incident_ray(
+                        &center,
+                        &Real::one(),
+                        &range,
+                        BezierParameterRayDirection2::Decreasing,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(ref parameters) if parameters.is_empty()
+            ));
         }
     }
 
