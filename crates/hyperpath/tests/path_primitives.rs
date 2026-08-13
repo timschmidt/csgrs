@@ -7964,13 +7964,14 @@ fn constant_feed_time_rejects_invalid_inputs() {
 }
 
 #[test]
-fn mixed_path_feed_replay_rejects_unsupported_line_elements() {
+fn mixed_path_feed_replay_accepts_exact_diagonal_line_elements() {
     let diagonal = vec![FeedPathElement::Line(strict_segment!(p(0, 0), p(3, 4),))];
-    assert_eq!(
+    let report =
         certify_constant_feed_time_for_path(&diagonal, r(1), r(5), PredicatePolicy::STRICT)
-            .unwrap_err(),
-        RouteCertificationError::UnsupportedRouteGeometry
-    );
+            .unwrap();
+
+    assert_eq!(report.path_length, r(5));
+    assert!(report.certification.all_satisfied());
 }
 
 #[test]

@@ -35,14 +35,14 @@ use super::{
 /// Retained feed-replay path element for exact mixed line/arc routes.
 ///
 /// This is a metric carrier, not a topology materializer. Lines contribute
-/// their certified axis-aligned length, and explicit circular arcs contribute
+/// exact Euclidean length, and explicit circular arcs contribute
 /// [`ExplicitCircularArc::certified_sweep_length`]. That keeps Farouki's
 /// curve-length and path-parameterization view compatible with Yap's exact
-/// object/predicate boundary: unsupported line directions or undecidable arc
-/// sweep lengths reject before any feed residual is replayed.
+/// object/predicate boundary: no finite coordinate approximation participates,
+/// and undecidable arc sweep lengths reject before any feed residual is replayed.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FeedPathElement {
-    /// Exact line path segment, accepted only when axis-aligned.
+    /// Exact line path segment in any retained direction.
     Line(LinePathSegment),
     /// Exact explicit circular arc with a certified symbolic sweep length.
     ExplicitArc(ExplicitCircularArc),
@@ -153,9 +153,9 @@ impl CornerLookaheadLimitReport {
 ///
 /// This is the curved-segment counterpart of
 /// [`super::certify_constant_feed_time`]. The route length is first replayed
-/// from retained path objects: axis-aligned lines use exact coordinate
-/// differences, while explicit circular arcs use symbolic `pi`/`acos` sweep
-/// lengths when the arc sweep class is certified. The feed residual remains
+/// from retained path objects: lines use exact Euclidean square-root lengths,
+/// while explicit circular arcs use symbolic `pi`/`acos` sweep lengths when
+/// the arc sweep class is certified. The feed residual remains
 /// `length - feed * time = 0`, so invalid process parameters and unsupported
 /// geometry are reported before solver replay.
 pub fn certify_constant_feed_time_for_path(
@@ -487,12 +487,12 @@ fn route_path_length(
 
 fn element_length(
     element: &FeedPathElement,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<Real, RouteCertificationError> {
     match element {
         FeedPathElement::Line(segment) => segment
-            .axis_length(policy)
-            .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+            .euclidean_length()
+            .map_err(|_| RouteCertificationError::UnsupportedRouteGeometry),
         FeedPathElement::ExplicitArc(arc) => arc
             .certified_sweep_length()
             .ok_or(RouteCertificationError::UnsupportedRouteGeometry),

@@ -415,12 +415,12 @@ fn certify_phase_continuity(pair: &[JerkRampPhaseProposal]) -> CandidateCertific
 
 fn element_length(
     element: &FeedPathElement,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<Real, RouteCertificationError> {
     match element {
         FeedPathElement::Line(segment) => segment
-            .axis_length(policy)
-            .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
+            .euclidean_length()
+            .map_err(|_| RouteCertificationError::UnsupportedRouteGeometry),
         FeedPathElement::ExplicitArc(arc) => arc
             .certified_sweep_length()
             .ok_or(RouteCertificationError::UnsupportedRouteGeometry),

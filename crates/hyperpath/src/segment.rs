@@ -12,7 +12,7 @@ use hyperlimit::{
     Aabb2Facts, Point2, PredicateOutcome, PredicatePolicy, Segment2Facts, Sign, aabb2_facts,
     classify_real_sign, compare_reals, point2_equal, segment2_facts,
 };
-use hyperreal::{Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
+use hyperreal::{Problem, Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
 
 /// Coordinate axis used by an axis-aligned path segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -126,6 +126,16 @@ impl LinePathSegment {
         let dx = self.end.x.clone() - self.start.x.clone();
         let dy = self.end.y.clone() - self.start.y.clone();
         Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]])
+    }
+
+    /// Return exact Euclidean segment length as `sqrt(dx² + dy²)`.
+    ///
+    /// Unlike [`Self::axis_length`], this metric operation accepts any retained
+    /// direction. It does not infer topology, incidence, or point ordering from
+    /// the square root; those operations deliberately remain restricted to
+    /// their separately certified structural predicates.
+    pub fn euclidean_length(&self) -> Result<Real, Problem> {
+        self.length_squared().sqrt()
     }
 
     /// Return the exact tangent vector at the segment start.
@@ -292,4 +302,23 @@ pub(crate) fn real_sign_with_policy(value: &Real, policy: PredicatePolicy) -> Op
             Sign::Zero => RealSign::Zero,
             Sign::Positive => RealSign::Positive,
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn diagonal_segment_retains_exact_euclidean_length_without_axis_promotion() {
+        let segment = LinePathSegment::new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(Real::from(3), Real::from(4)),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap();
+
+        assert_eq!(segment.facts().axis_aligned, None);
+        assert_eq!(segment.axis_length(PredicatePolicy::STRICT), None);
+        assert_eq!(segment.euclidean_length().unwrap(), Real::from(5));
+    }
 }
