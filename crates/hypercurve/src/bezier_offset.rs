@@ -25827,6 +25827,36 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         Some((system, data))
     }
 
+    /// Returns an exact source-parameter identity retained by a structurally
+    /// authored tangent. The Boolean/corner kernels may intersect a
+    /// concentric offset of a recursive circle with one of the circles that
+    /// authored its center. On that parent side the new circle-pair map does
+    /// not define another algebraic number: it deliberately stores the
+    /// already-authoritative source parameter, optionally through the unit
+    /// complement. Exposing that relation keeps subsequent finite-fragment
+    /// ordering out of duplicate interval refinement.
+    fn retained_contact_parameter_for_side(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+        first: bool,
+    ) -> Option<(&BezierAlgebraicCuspSemicircleParameter2, bool)> {
+        let (_, data) = self.represented_contact_data(contact)?;
+        let parameter = if first {
+            &data.first_parameter
+        } else {
+            &data.second_parameter
+        };
+        match parameter {
+            BezierRepresentedCircleContactParameterData2::Retained {
+                parameter,
+                unit_complement,
+            } => Some((parameter, *unit_complement)),
+            BezierRepresentedCircleContactParameterData2::Materialized(_)
+            | BezierRepresentedCircleContactParameterData2::ExactContactRadial(_)
+            | BezierRepresentedCircleContactParameterData2::AuthoredPairAngular { .. } => None,
+        }
+    }
+
     /// Signs an exact linear combination of the two participating carrier
     /// tangents at one retained pair contact.
     ///
@@ -31957,6 +31987,25 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         })
     }
 
+    /// Peels one circle-pair parameter that is exactly an earlier parameter
+    /// on the same local half-circle chart. This is a scalar identity, not a
+    /// geometric approximation; the pair kernel retained it while proving an
+    /// authored tangency.
+    fn retained_pair_parameter(&self) -> Option<(&Self, bool)> {
+        let Self::Mapped(data) = self else {
+            return None;
+        };
+        let BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+            map,
+            contact,
+            first,
+        } = data.as_ref()
+        else {
+            return None;
+        };
+        map.retained_contact_parameter_for_side(contact, *first)
+    }
+
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if self
             .evidence_policy()
@@ -33196,6 +33245,29 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         other.validate_policy(policy)?;
         if self.shares_exact_evidence(other) {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        match (
+            self.retained_pair_parameter(),
+            other.retained_pair_parameter(),
+        ) {
+            (Some((first, first_complement)), Some((second, second_complement)))
+                if first_complement == second_complement =>
+            {
+                return Ok(first.cmp_by_refinement(second, policy)?.map(|order| {
+                    if first_complement {
+                        order.reverse()
+                    } else {
+                        order
+                    }
+                }));
+            }
+            (Some((source, false)), _) => {
+                return source.cmp_by_refinement(other, policy);
+            }
+            (_, Some((source, false))) => {
+                return self.cmp_by_refinement(source, policy);
+            }
+            _ => {}
         }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {

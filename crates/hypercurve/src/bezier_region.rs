@@ -21676,6 +21676,53 @@ mod tests {
     }
 
     #[test]
+    fn collapsed_pair_radial_fillet_retains_its_recursive_center() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let filleted = independent_pair_native_fillet(&policy, reversed);
+                let fragments = filleted.boundary_loops()[0].fragments();
+                let (corner, radius) = (0..fragments.len())
+                    .find_map(|index| {
+                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[index];
+                        let radial = |fragment: &BezierSplitFragment2| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame() =>
+                            {
+                                Some(fragment.semicircle().radial_distance().abs())
+                            }
+                            _ => None,
+                        };
+                        radial(previous)
+                            .or_else(|| radial(next))
+                            .map(|radius| (index, radius))
+                    })
+                    .expect("the first fillet retains one pair-radial circle");
+                let result = filleted
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        radius,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the collapsed pair-radial fillet must retain its recursive center: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::DegenerateCandidate,
+                    )
+                );
+            }
+        }
+    }
+
+    #[test]
     fn independent_selected_circle_pair_fillet_retains_pair_native_circle() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
