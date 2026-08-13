@@ -11602,11 +11602,18 @@ impl CurveRegion2 {
         } else {
             fillet.clone()
         };
+        let complementary_companion;
+        let companion_circle = if companion_cut.parameter.is_algebraic_cusp_complement() {
+            complementary_companion = companion.semicircle().complementary_half();
+            &complementary_companion
+        } else {
+            companion.semicircle()
+        };
         let contact_parameter = if tangent_cross == RealSign::Zero {
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
         } else {
             match terminal_circle
-                .certified_selected_pair_contact_parameter(companion.semicircle(), policy)
+                .certified_selected_pair_contact_parameter(companion_circle, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
             {
                 Classification::Decided(parameter) => parameter,
@@ -20913,6 +20920,24 @@ mod tests {
         .expect("one disjoint exact loop")
     }
 
+    fn selected_circle_pair_corner(region: &CurveRegion2) -> usize {
+        let fragments = region.boundary_loops()[0].fragments();
+        (0..fragments.len())
+            .find(|index| {
+                matches!(
+                    (
+                        &fragments[(index + fragments.len() - 1) % fragments.len()],
+                        &fragments[*index],
+                    ),
+                    (
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                    )
+                )
+            })
+            .expect("the fixture retains its selected-circle pair corner")
+    }
+
     #[test]
     fn selected_circle_and_retained_rational_arc_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -21007,20 +21032,7 @@ mod tests {
                     SelectedCircleFilletNeighbor2::SelectedCircle,
                     reversed,
                 );
-                let fragments = region.boundary_loops()[0].fragments();
-                let corner = (0..fragments.len())
-                    .find(|index| {
-                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
-                        let next = &fragments[*index];
-                        matches!(
-                            (previous, next),
-                            (
-                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                            )
-                        )
-                    })
-                    .expect("the fixture retains its selected-circle pair corner");
+                let corner = selected_circle_pair_corner(&region);
                 let result = region
                     .fillet_loop_vertex_by_radius(
                         0,
@@ -21066,6 +21078,61 @@ mod tests {
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
                     assert!(replay.value.intersection().is_empty());
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_pair_fillets_extend_over_both_full_supports() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::SelectedCircle,
+                    reversed,
+                );
+                let corner = selected_circle_pair_corner(&region);
+                let trim = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the finite selected-circle pair remains supported");
+                let extended = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the selected-circle pair must extend exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(
+                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    "full circular supports must retain an exterior center"
+                );
+                for_each_corner_region(&extended.value, |filleted| {
+                    assert!(
+                        filleted.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .filter(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            ))
+                            .count()
+                            >= 3,
+                        "both extended sources and the fillet remain exact selected circles"
+                    );
+                });
             }
         }
     }
@@ -21226,22 +21293,68 @@ mod tests {
         .expect("the independent selected-circle loop has authored topology")
     }
 
+    #[test]
+    fn independent_selected_circle_pair_fillets_extend_over_both_full_supports() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = independent_selected_circle_pair_region(&policy, reversed);
+                let corner = selected_circle_pair_corner(&region);
+                let trim = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the finite independent selected-circle pair remains supported");
+                let extended = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the independent selected-circle pair must extend exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(
+                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    "both full selected supports must contribute exterior centers"
+                );
+                for_each_corner_region(&extended.value, |filleted| {
+                    let selected_circles = filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .filter_map(|fragment| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                                Some(fragment.semicircle())
+                            }
+                            _ => None,
+                        })
+                        .collect::<Vec<_>>();
+                    assert!(
+                        selected_circles.len() >= 3,
+                        "both extended sources and the fillet remain exact selected circles"
+                    );
+                    assert!(
+                        selected_circles
+                            .iter()
+                            .any(|circle| circle.uses_selected_radial_frame()),
+                        "the independent pair correlation remains the fillet radial authority"
+                    );
+                });
+            }
+        }
+    }
+
     fn independent_pair_native_fillet(policy: &CurveContext, reversed: bool) -> CurveRegion2 {
         let region = independent_selected_circle_pair_region(policy, reversed);
-        let fragments = region.boundary_loops()[0].fragments();
-        let corner = (0..fragments.len())
-            .find(|index| {
-                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
-                let next = &fragments[*index];
-                matches!(
-                    (previous, next),
-                    (
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                    )
-                )
-            })
-            .expect("the fixture retains its independent selected-circle corner");
+        let corner = selected_circle_pair_corner(&region);
         let result = region
             .fillet_loop_vertex_by_radius(
                 0,

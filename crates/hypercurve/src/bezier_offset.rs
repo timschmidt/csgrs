@@ -30912,6 +30912,17 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleParameter2 {
+    pub(crate) fn retains_pair_contact(&self) -> bool {
+        matches!(
+            self,
+            Self::Mapped(data)
+                if matches!(
+                    data.as_ref(),
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
+                )
+        )
+    }
+
     fn evidence_policy(&self) -> Option<CurveContext> {
         let Self::Mapped(data) = self else {
             return None;
