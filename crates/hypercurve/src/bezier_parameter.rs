@@ -319,6 +319,27 @@ impl BezierParameterPolynomial {
             .map(BezierRootIsolationResult2::into_roots))
     }
 
+    /// Isolates an exactly square-free rational polynomial on `[0, 1]` with
+    /// Bernstein--Descartes subdivision before falling back to Sturm replay.
+    ///
+    /// Callers own the square-free certificate. One Bernstein sign variation
+    /// then certifies one simple root, so recursive exact subdivision has no
+    /// historical degree cap. A root on a dyadic split or an undecided sign
+    /// uses the general complete isolator instead.
+    pub(crate) fn isolate_square_free_unit_interval_roots(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        let mut trace = BezierRootIsolationTrace2::default();
+        if let Some(roots) =
+            exact_rational_square_free_bernstein_unit_roots(self, policy, &mut trace)?
+        {
+            return ordered_root_isolation_result(roots, trace, policy)
+                .map(|result| result.map(BezierRootIsolationResult2::into_roots));
+        }
+        self.isolate_unit_interval_roots(policy)
+    }
+
     /// Isolates every distinct root in `[0, 1]` and evidence exact work counts.
     pub fn isolate_unit_interval_roots_with_trace(
         &self,
@@ -3202,9 +3223,11 @@ fn sturm_sequence(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
+    let maximum_sequence_len = p0.len();
     let mut sequence = vec![p0, p1];
-    while sequence.len() < 64 {
+    while sequence.len() < maximum_sequence_len {
         let previous = sequence[sequence.len() - 2].clone();
+        let divisor_len = sequence[sequence.len() - 1].len();
         let remainder = match scale_invariant_polynomial_remainder(
             previous,
             &sequence[sequence.len() - 1],
@@ -3214,6 +3237,9 @@ fn sturm_sequence(
             Classification::Decided(None) => break,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        if remainder.len() >= divisor_len {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        }
         sequence.push(negate_coefficients(remainder));
     }
 
@@ -3237,14 +3263,19 @@ fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Rea
     if !p1.is_empty() {
         integer_sequence.push(p1);
     }
-    while integer_sequence.len() >= 2 && integer_sequence.len() < 64 {
+    let maximum_sequence_len = coefficients.len();
+    while integer_sequence.len() >= 2 && integer_sequence.len() < maximum_sequence_len {
         let previous = integer_sequence[integer_sequence.len() - 2].clone();
+        let divisor_len = integer_sequence[integer_sequence.len() - 1].len();
         let mut remainder = primitive_integer_pseudo_remainder_bigint(
             previous,
             &integer_sequence[integer_sequence.len() - 1],
         )?;
         if remainder.is_empty() {
             break;
+        }
+        if remainder.len() >= divisor_len {
+            return None;
         }
         for coefficient in &mut remainder {
             *coefficient = -std::mem::take(coefficient);
@@ -3861,6 +3892,116 @@ fn exact_nonrational_bernstein_unit_roots(
             // A zero midpoint is a represented root. The existing Sturm path
             // materializes and deflates it without mixing certificates.
             Some(RealSign::Zero) | None => return Ok(None),
+        };
+        trace.bisections += 1;
+        pending.push((
+            right,
+            midpoint.clone(),
+            end,
+            depth + 1,
+            false,
+            touches_end,
+            midpoint_sign,
+            end_sign,
+        ));
+        pending.push((
+            left,
+            start,
+            midpoint,
+            depth + 1,
+            touches_start,
+            false,
+            start_sign,
+            midpoint_sign,
+        ));
+    }
+    Ok(Some(isolated))
+}
+
+fn exact_rational_square_free_bernstein_unit_roots(
+    polynomial: &BezierParameterPolynomial,
+    policy: &CurveContext,
+    trace: &mut BezierRootIsolationTrace2,
+) -> CurveResult<Option<Vec<BezierParameter2>>> {
+    if polynomial.degree() < 2
+        || polynomial
+            .coefficients()
+            .iter()
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return Ok(None);
+    }
+    let controls = power_to_bernstein_coefficients(polynomial.coefficients(), polynomial.degree())?;
+    let endpoint_sign = |value: &Real| match real_sign(value, policy) {
+        Some(RealSign::Positive) => Some(RealSign::Positive),
+        Some(RealSign::Negative) => Some(RealSign::Negative),
+        Some(RealSign::Zero) | None => None,
+    };
+    let Some(start_sign) = endpoint_sign(&controls[0]) else {
+        return Ok(None);
+    };
+    let Some(end_sign) = endpoint_sign(&controls[controls.len() - 1]) else {
+        return Ok(None);
+    };
+    let variations = |controls: &[Real], start_sign: RealSign, end_sign: RealSign| {
+        let mut previous = start_sign;
+        let mut variations = 0_usize;
+        for control in &controls[1..controls.len() - 1] {
+            let sign = real_sign(control, policy)?;
+            if sign != RealSign::Zero {
+                variations += usize::from(previous != sign);
+                previous = sign;
+            }
+        }
+        Some(variations + usize::from(previous != end_sign))
+    };
+    let mut pending = vec![(
+        controls,
+        Real::zero(),
+        Real::one(),
+        0_usize,
+        true,
+        true,
+        start_sign,
+        end_sign,
+    )];
+    let mut isolated = Vec::new();
+    while let Some((
+        controls,
+        start,
+        end,
+        depth,
+        touches_start,
+        touches_end,
+        start_sign,
+        end_sign,
+    )) = pending.pop()
+    {
+        trace.maximum_depth = trace.maximum_depth.max(depth);
+        let Some(variation_count) = variations(&controls, start_sign, end_sign) else {
+            return Ok(None);
+        };
+        trace.interval_root_counts += 1;
+        if variation_count == 0 {
+            continue;
+        }
+        if variation_count == 1 && !touches_start && !touches_end {
+            let interval = match BezierParameterInterval::try_new(start, end, policy)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            isolated.push(BezierParameter2::Algebraic(
+                BezierAlgebraicParameter2::from_certified_simple_singleton(
+                    polynomial.clone(),
+                    interval,
+                ),
+            ));
+            continue;
+        }
+        let midpoint = midpoint_real(&start, &end)?;
+        let (left, right) = subdivide_scalar_bernstein_half(&controls)?;
+        let Some(midpoint_sign) = endpoint_sign(&left[left.len() - 1]) else {
+            return Ok(None);
         };
         trace.bisections += 1;
         pending.push((
@@ -4703,6 +4844,41 @@ mod conversion_tests {
     }
 
     #[test]
+    fn primitive_integer_sturm_sequence_has_no_historical_degree_cap() {
+        let policy = CurveContext::STRICT;
+        let mut previous = vec![Real::one()];
+        let mut current = vec![Real::zero(), Real::one()];
+        for _ in 2..=70 {
+            let mut next = vec![Real::zero(); current.len() + 1];
+            for (power, coefficient) in current.iter().enumerate() {
+                next[power + 1] += Real::from(2_i8) * coefficient;
+            }
+            for (power, coefficient) in previous.iter().enumerate() {
+                next[power] -= coefficient;
+            }
+            previous = current;
+            current = next;
+        }
+        let sequence = primitive_integer_sturm_sequence(&current)
+            .expect("the degree-seventy Chebyshev polynomial has an integer Sturm chain");
+        assert!(sequence.len() > 64);
+        assert_eq!(sequence.last().map(Vec::len), Some(1));
+        let start = decided(
+            sturm_point_evidence(&sequence, &Real::zero(), &policy).unwrap(),
+            "Chebyshev Sturm start",
+        );
+        let end = decided(
+            sturm_point_evidence(&sequence, &Real::one(), &policy).unwrap(),
+            "Chebyshev Sturm end",
+        );
+        let (SturmPointEvidence::NonRoot(start), SturmPointEvidence::NonRoot(end)) = (start, end)
+        else {
+            panic!("the degree-seventy Chebyshev endpoints are not roots")
+        };
+        assert_eq!(start - end, 35);
+    }
+
+    #[test]
     fn carried_sturm_variations_match_partition_root_counts() {
         let policy = CurveContext::STRICT;
         // (2t² - 1)(3t² - 1) has two irrational roots in (1/2, 3/4).
@@ -4926,6 +5102,44 @@ mod conversion_tests {
                     .simple_root_classifications(result.roots(), &policy)
                     .unwrap(),
                 vec![Classification::Decided(true); expected.len()]
+            );
+        }
+    }
+
+    #[test]
+    fn square_free_degree_128_bernstein_isolates_every_unit_root() {
+        // (9t² - 9t + 2)(t^126 + 1) is square-free and has exactly the
+        // rational roots 1/3 and 2/3 in the unit interval. Its degree exceeds
+        // the former 64-entry Sturm schedule that omitted valid roots from
+        // arbitrary-rank curve norms.
+        let policy = CurveContext::STRICT;
+        let mut coefficients = vec![Real::zero(); 129];
+        for (power, coefficient) in [2_i16, -9, 9].into_iter().enumerate() {
+            coefficients[power] = Real::from(coefficient);
+            coefficients[126 + power] = Real::from(coefficient);
+        }
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap(),
+            "degree-128 square-free polynomial",
+        );
+        let roots = decided(
+            polynomial
+                .isolate_square_free_unit_interval_roots(&policy)
+                .unwrap(),
+            "degree-128 Bernstein roots",
+        );
+        assert_eq!(roots.len(), 2);
+        for (root, expected) in roots.iter().zip([rational(1, 3), rational(2, 3)]) {
+            let BezierParameter2::Algebraic(root) = root else {
+                panic!("a Bernstein singleton retains algebraic evidence")
+            };
+            assert_eq!(
+                compare_reals(root.interval().start(), &expected, &policy),
+                Some(Ordering::Less)
+            );
+            assert_eq!(
+                compare_reals(root.interval().end(), &expected, &policy),
+                Some(Ordering::Greater)
             );
         }
     }

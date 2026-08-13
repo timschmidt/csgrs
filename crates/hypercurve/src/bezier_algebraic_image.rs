@@ -2161,9 +2161,22 @@ pub(crate) fn parameter_representation(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> AlgebraicRootRepresentation {
+    let mut representation = certified_parameter_representation(parameter, policy);
+    validate_parameter_representation(&mut representation, policy);
+    representation
+}
+
+/// Bridges an internally certified singleton parameter into Hypersolve root
+/// evidence without replaying its complete Sturm proof. The Bezier parameter
+/// constructor has already certified this exact polynomial/interval pair, and
+/// refined clones share that same certificate and retained Sturm sequence.
+pub(crate) fn certified_parameter_representation(
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> AlgebraicRootRepresentation {
     let interval = parameter.interval();
     let exact_root = linear_parameter_witness(parameter, policy);
-    let mut representation = AlgebraicRootRepresentation {
+    AlgebraicRootRepresentation {
         constraint_index: 0,
         symbol: SymbolId(0),
         interval_index: 0,
@@ -2183,9 +2196,7 @@ pub(crate) fn parameter_representation(
             status: AlgebraicRootValidationStatus::Valid,
             message: None,
         },
-    };
-    validate_parameter_representation(&mut representation, policy);
-    representation
+    }
 }
 
 fn validate_parameter_representation(
