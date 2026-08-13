@@ -4242,6 +4242,9 @@ fn fillet_carrier_pair_supports_extension(
     let is_selected_circle = |carrier: &ExactCornerCarrier2<'_>| {
         matches!(carrier, ExactCornerCarrier2::AlgebraicCusp(_))
     };
+    let is_analytic_parallel = |carrier: &ExactCornerCarrier2<'_>| {
+        matches!(carrier, ExactCornerCarrier2::AnalyticParallel(_))
+    };
     (is_affine_line(previous) && is_arc(next))
         || (is_arc(previous) && is_affine_line(next))
         || (is_arc(previous) && is_arc(next))
@@ -4250,6 +4253,8 @@ fn fillet_carrier_pair_supports_extension(
         || (is_affine_line(previous) && is_selected_circle(next))
         || (is_selected_circle(previous) && is_affine_line(next))
         || (is_selected_circle(previous) && is_selected_circle(next))
+        || (is_selected_circle(previous) && is_analytic_parallel(next))
+        || (is_analytic_parallel(previous) && is_selected_circle(next))
         || (is_affine_line(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_affine_line(next))
         || (is_arc(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
@@ -5840,29 +5845,6 @@ fn retained_fillet_parameter_is_in_open_range(
     }
 }
 
-fn retained_selected_fillet_parameter_is_in_open_range(
-    parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
-    range: &BezierParameterRange2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    let compare = |boundary: &BezierParameter2| {
-        parameter
-            .cmp_bezier_parameter(boundary, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))
-            .and_then(|order| match order {
-                Classification::Decided(order) => Ok(order),
-                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    reason,
-                )),
-            })
-    };
-    Ok(compare(range.start())? == std::cmp::Ordering::Greater
-        && compare(range.end())? == std::cmp::Ordering::Less)
-}
-
 fn retained_selected_fillet_overlap_is_positive(
     overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
     analytic_range: &BezierParameterRange2,
@@ -6962,17 +6944,49 @@ fn fillet_offset_centers(
                 analytic_family,
                 policy,
             )?;
+            let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
+                Some(
+                    parallel_source
+                        .incident_domain(!cusp_is_previous)
+                        .ok_or_else(|| {
+                            ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                analytic_family,
+                                crate::UncertaintyReason::Unsupported,
+                            )
+                        })?,
+                )
+            } else {
+                None
+            };
+            let complementary_support = (mode == CurveCornerMode2::TrimOrExtend)
+                .then(|| cusp_support.semicircle().complementary_half());
             // Every selected-circle frame enters the same complete
-            // circle/parallel authority. General frames retain local-fiber
-            // contacts; rational frames retain the one-radical parameter map
-            // needed to recover the circular cut and tangent dot directly.
+            // circle/parallel authority. Extension changes only the chart
+            // domains: the authored half owns both diameter endpoints, its
+            // complement owns neither, and the analytic carrier contributes
+            // only its regular incident ray beyond the authored range.
+            for (cusp_circle, complementary) in std::iter::once((cusp_support.semicircle(), false))
+                .chain(complementary_support.as_ref().map(|circle| (circle, true)))
             {
-                let intersections = match cusp_support
-                    .semicircle()
-                    .parallel_intersections_in_range(analytic_support, &analytic_range, policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
-                    })? {
+                let result = if let Some((anchor, direction)) = &incident_domain {
+                    cusp_circle.parallel_intersections_with_incident_ray(
+                        analytic_support,
+                        &analytic_range,
+                        anchor.clone(),
+                        *direction,
+                        policy,
+                    )
+                } else {
+                    cusp_circle.parallel_intersections_in_range(
+                        analytic_support,
+                        &analytic_range,
+                        policy,
+                    )
+                };
+                let intersections = match result.map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+                })? {
                     Classification::Decided(intersections) => intersections,
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
@@ -6985,32 +6999,32 @@ fn fillet_offset_centers(
                 match intersections {
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(contacts) => {
                         for contact in contacts {
-                            if !retained_selected_fillet_parameter_is_in_open_range(
-                                contact.other_parameter(),
-                                &analytic_range,
-                                analytic_family,
-                                policy,
-                            )? {
+                            if complementary
+                                && contact.location()
+                                    != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                            {
                                 continue;
                             }
                             let cusp_parameter = contact.cusp_parameter();
-                            match cusp_source
-                                .contains_parameter(&cusp_parameter, false, false, policy)
-                                .map_err(|cause| {
-                                    ExactCurveError::invalid(
-                                        CurveOperation2::Fillet,
-                                        cusp_family,
-                                        cause,
-                                    )
-                                })? {
-                                Classification::Decided(true) => {}
-                                Classification::Decided(false) => continue,
-                                Classification::Uncertain(reason) => {
-                                    return Err(ExactCurveError::blocked(
-                                        CurveOperation2::Fillet,
-                                        cusp_family,
-                                        reason,
-                                    ));
+                            if mode != CurveCornerMode2::TrimOrExtend {
+                                match cusp_source
+                                    .contains_parameter(&cusp_parameter, false, false, policy)
+                                    .map_err(|cause| {
+                                        ExactCurveError::invalid(
+                                            CurveOperation2::Fillet,
+                                            cusp_family,
+                                            cause,
+                                        )
+                                    })? {
+                                    Classification::Decided(true) => {}
+                                    Classification::Decided(false) => continue,
+                                    Classification::Uncertain(reason) => {
+                                        return Err(ExactCurveError::blocked(
+                                            CurveOperation2::Fillet,
+                                            cusp_family,
+                                            reason,
+                                        ));
+                                    }
                                 }
                             }
                             let mut cross = contact.tangent_cross_sign();
@@ -7059,8 +7073,22 @@ fn fillet_offset_centers(
                                     ));
                                 }
                             };
-                            let cusp_parameter =
-                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
+                            if !parallel_source.parameter_is_admissible(
+                                &analytic_parameter,
+                                !cusp_is_previous,
+                                mode,
+                                analytic_family,
+                                policy,
+                            )? {
+                                continue;
+                            }
+                            let cusp_parameter = if complementary {
+                                CurveRegionParameter2::from_algebraic_cusp_complement(
+                                    cusp_parameter,
+                                )
+                            } else {
+                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+                            };
                             let analytic_parameter =
                                 CurveRegionParameter2::from_bezier(analytic_parameter);
                             let (previous_parameter, next_parameter) = if cusp_is_previous {
@@ -7110,8 +7138,7 @@ fn fillet_offset_centers(
                         }
                     }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
-                        let parameter_map = match cusp_support
-                            .semicircle()
+                        let parameter_map = match cusp_circle
                             .parallel_parameter_map(analytic_support, policy)
                             .map_err(|cause| {
                                 ExactCurveError::invalid(
@@ -7130,32 +7157,38 @@ fn fillet_offset_centers(
                             }
                         };
                         for contact in contacts {
-                            if !retained_fillet_parameter_is_in_open_range(
+                            if (complementary
+                                && contact.location
+                                    != crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior)
+                                || !parallel_source.parameter_is_admissible(
                                 &contact.parallel_parameter,
-                                &analytic_range,
+                                !cusp_is_previous,
+                                mode,
                                 analytic_family,
                                 policy,
                             )? {
                                 continue;
                             }
                             let cusp_parameter = parameter_map.contact_parameter(&contact);
-                            match cusp_source
-                                .contains_parameter(&cusp_parameter, false, false, policy)
-                                .map_err(|cause| {
-                                    ExactCurveError::invalid(
-                                        CurveOperation2::Fillet,
-                                        cusp_family,
-                                        cause,
-                                    )
-                                })? {
-                                Classification::Decided(true) => {}
-                                Classification::Decided(false) => continue,
-                                Classification::Uncertain(reason) => {
-                                    return Err(ExactCurveError::blocked(
-                                        CurveOperation2::Fillet,
-                                        cusp_family,
-                                        reason,
-                                    ));
+                            if mode != CurveCornerMode2::TrimOrExtend {
+                                match cusp_source
+                                    .contains_parameter(&cusp_parameter, false, false, policy)
+                                    .map_err(|cause| {
+                                        ExactCurveError::invalid(
+                                            CurveOperation2::Fillet,
+                                            cusp_family,
+                                            cause,
+                                        )
+                                    })? {
+                                    Classification::Decided(true) => {}
+                                    Classification::Decided(false) => continue,
+                                    Classification::Uncertain(reason) => {
+                                        return Err(ExactCurveError::blocked(
+                                            CurveOperation2::Fillet,
+                                            cusp_family,
+                                            reason,
+                                        ));
+                                    }
                                 }
                             }
                             let mut cross = contact.tangent_cross_sign.ok_or_else(|| {
@@ -7165,8 +7198,7 @@ fn fillet_offset_centers(
                                     crate::UncertaintyReason::Predicate,
                                 )
                             })?;
-                            let mut dot = match cusp_support
-                                .semicircle()
+                            let mut dot = match cusp_circle
                                 .parallel_contact_tangent_dot_sign(
                                     analytic_support,
                                     &contact,
@@ -7197,7 +7229,7 @@ fn fillet_offset_centers(
                                 dot = reverse_fillet_sign(dot);
                             }
                             let point = match cusp_parameter
-                                .coincident_point_evidence(cusp_support.semicircle(), policy)
+                                .coincident_point_evidence(cusp_circle, policy)
                                 .map_err(|cause| {
                                     ExactCurveError::invalid(
                                         CurveOperation2::Fillet,
@@ -7221,8 +7253,13 @@ fn fillet_offset_centers(
                                     ));
                                 }
                             };
-                            let cusp_parameter =
-                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
+                            let cusp_parameter = if complementary {
+                                CurveRegionParameter2::from_algebraic_cusp_complement(
+                                    cusp_parameter,
+                                )
+                            } else {
+                                CurveRegionParameter2::from_algebraic_cusp(cusp_parameter)
+                            };
                             let analytic_parameter = CurveRegionParameter2::from_bezier(
                                 contact.parallel_parameter,
                             );
@@ -7275,6 +7312,9 @@ fn fillet_offset_centers(
                             }
                         }
                     }
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent => {
+                        centers.coincident = true;
+                    }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
@@ -7283,8 +7323,8 @@ fn fillet_offset_centers(
                         ));
                     }
                 }
-                return Ok(centers);
             }
+            return Ok(centers);
         }
         (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
         | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Arc { .. }) => {

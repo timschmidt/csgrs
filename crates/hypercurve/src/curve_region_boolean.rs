@@ -4304,7 +4304,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             blockers: Vec::new(),
                         });
                     }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent
+                    | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
                         return Ok(RegionPairResult {
                             contacts: Vec::new(),
                             overlaps: Vec::new(),

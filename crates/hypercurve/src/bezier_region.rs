@@ -11483,19 +11483,33 @@ impl CurveRegion2 {
         let contact_parameter = if tangent_cross == RealSign::Zero {
             crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
         } else {
+            let complementary_companion;
+            let zero =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero());
+            let one =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one());
+            let companion_is_complement = companion_cut.parameter.is_algebraic_cusp_complement();
+            let (companion_circle, companion_start, companion_end) = if companion_is_complement {
+                complementary_companion = companion.semicircle().complementary_half();
+                (&complementary_companion, &zero, &one)
+            } else {
+                (
+                    companion.semicircle(),
+                    companion.start_parameter(),
+                    companion.end_parameter(),
+                )
+            };
             let (start, end) = match (companion_at_start, companion.is_reversed()) {
-                (true, false) | (false, true) => (
-                    companion_parameter.clone(),
-                    companion.end_parameter().clone(),
-                ),
-                (true, true) | (false, false) => (
-                    companion.start_parameter().clone(),
-                    companion_parameter.clone(),
-                ),
+                (true, false) | (false, true) => {
+                    (companion_parameter.clone(), companion_end.clone())
+                }
+                (true, true) | (false, false) => {
+                    (companion_start.clone(), companion_parameter.clone())
+                }
             };
             let trimmed_companion =
                 crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
-                    companion.semicircle().clone(),
+                    companion_circle.clone(),
                     start,
                     end,
                     companion.is_reversed(),
@@ -22014,6 +22028,91 @@ mod tests {
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
                     assert!(replay.value.intersection().is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_analytic_parallel_extend_on_full_supports() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for curved in [false, true] {
+                for reversed in [false, true] {
+                    let region = selected_circle_neighbor_region(
+                        &policy,
+                        SelectedCircleFilletNeighbor2::AnalyticParallel(curved),
+                        reversed,
+                    );
+                    let fragments = region.boundary_loops()[0].fragments();
+                    let corner = (0..fragments.len())
+                        .find(|index| {
+                            let previous =
+                                &fragments[(index + fragments.len() - 1) % fragments.len()];
+                            let next = &fragments[*index];
+                            matches!(
+                                (previous, next),
+                                (
+                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                    BezierSplitFragment2::AnalyticParallel(_)
+                                ) | (
+                                    BezierSplitFragment2::AnalyticParallel(_),
+                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                                )
+                            )
+                        })
+                        .expect("the fixture retains its selected-circle/analytic corner");
+                    let trim = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            q(1, 10),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .expect("the finite selected-circle/analytic corner remains supported");
+                    let extended = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            q(1, 10),
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the selected-circle/analytic supports must extend exactly: policy={policy:?}, curved={curved}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(extended.certainty, CurveCertainty::Certified);
+                    assert!(
+                        extended.value.candidate_count() > trim.value.candidate_count(),
+                        "the full circle and analytic incident ray must add exterior centers"
+                    );
+                    for_each_corner_region(&extended.value, |filleted| {
+                        assert!(filleted.boundary_loops()[0].fragments().iter().any(
+                            |fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            )
+                        ));
+                        assert_eq!(
+                            filleted
+                                .classify_point(&p(0, 0), &policy)
+                                .expect("the extended analytic fillet remains classifiable")
+                                .into_value(),
+                            Classification::Decided(RegionPointLocation::Inside),
+                        );
+                        if !curved && !reversed {
+                            let replay = filleted
+                                .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                                .expect(
+                                    "the extended analytic fillet re-enters the Boolean kernel",
+                                );
+                            assert_eq!(replay.certainty, CurveCertainty::Certified);
+                            assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                            assert!(replay.value.intersection().is_empty());
+                        }
+                    });
                 }
             }
         }
