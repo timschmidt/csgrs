@@ -203,6 +203,25 @@ impl Similarity2 {
         }
     }
 
+    /// Returns this similarity followed by an exact translation.
+    ///
+    /// Translation leaves the certified linear part, uniform scale, and
+    /// orientation unchanged.  Retained algebraic points use this closure to
+    /// absorb later tangent/normal displacements without nesting another
+    /// transform carrier or re-certifying the same linear map.
+    pub(crate) fn translated(&self, delta_x: &Real, delta_y: &Real) -> Self {
+        Self {
+            a: self.a.clone(),
+            b: self.b.clone(),
+            d: self.d.clone(),
+            e: self.e.clone(),
+            xoff: &self.xoff + delta_x,
+            yoff: &self.yoff + delta_y,
+            scale: self.scale.clone(),
+            reverses_orientation: self.reverses_orientation,
+        }
+    }
+
     /// Transforms a point with hyperreal arithmetic.
     pub fn transform_point(&self, point: &Point2) -> Point2 {
         let point_is_exact =

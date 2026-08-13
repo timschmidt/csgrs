@@ -13323,6 +13323,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             &frame.center_support,
             other,
             &radius_squared,
+            Some(&frame.center_parameter),
             policy,
         )? {
             Classification::Decided(system) => system,
@@ -15107,60 +15108,66 @@ impl BezierAlgebraicCuspSemicircle2 {
             match other.exact_rational_parallel_component(policy)? {
                 Classification::Decided(Some(curve)) => {
                     match self.rational_intersections(&curve, policy)? {
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
-                    ) => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
-                                contacts
-                                    .into_iter()
-                                    .map(|contact| BezierAlgebraicCuspSemicircleParallelContact2 {
-                                        parallel_parameter: contact.other_parameter,
-                                        tangent_cross_sign: Some(contact.tangent_cross_sign),
-                                        location: contact.location,
-                                        correlated: true,
-                                    })
-                                    .collect(),
-                            ),
-                        ));
-                    }
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
-                    ) if range.is_none() => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
-                        ));
-                    }
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_)
-                        | BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                    ) => {}
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                            contacts,
-                        ),
-                    ) => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                        ) => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
+                                    contacts
+                                        .into_iter()
+                                        .map(|contact| {
+                                            BezierAlgebraicCuspSemicircleParallelContact2 {
+                                                parallel_parameter: contact.other_parameter,
+                                                tangent_cross_sign: Some(contact.tangent_cross_sign),
+                                                location: contact.location,
+                                                correlated: true,
+                                            }
+                                        })
+                                        .collect(),
+                                ),
+                            ));
+                        }
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                        ) if range.is_none() => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+                                    overlaps,
+                                ),
+                            ));
+                        }
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_)
+                            | BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                        ) => {}
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
                                 contacts,
                             ),
-                        ));
-                    }
-                    Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                            overlaps,
-                        ),
-                    ) => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
+                        ) => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                                    contacts,
+                                ),
+                            ));
+                        }
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
                                 overlaps,
                             ),
-                        ));
+                        ) => {
+                            return Ok(Classification::Decided(
+                                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
+                                    overlaps,
+                                ),
+                            ));
+                        }
+                        // Rational materialization is only a fast path. A
+                        // selected parallel-normal frame retains a direct exact
+                        // two-normal system, so an inconclusive component replay
+                        // must fall through to that authoritative kernel.
+                        Classification::Uncertain(_) => {}
                     }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
                 }
                 Classification::Decided(None) => {}
                 Classification::Uncertain(reason) => {
@@ -42732,9 +42739,11 @@ impl BezierAlgebraicChord2 {
                     ),
                 ))
             }
-            RationalBezierIntersectionPointEvidence2::Similarity(_) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
+            RationalBezierIntersectionPointEvidence2::Similarity(point) => Ok(
+                Classification::Decided(RationalBezierIntersectionPointEvidence2::Similarity(
+                    point.translated(delta_x, delta_y, policy)?,
+                )),
+            ),
         }
     }
 
@@ -48173,6 +48182,20 @@ fn represented_point_evidence_coordinates(
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         });
     }
+    if let RationalBezierIntersectionPointEvidence2::Similarity(point) = point {
+        if point.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "similarity point entered a represented predicate under a different policy".into(),
+            ));
+        }
+        let source = match represented_point_evidence_coordinates(&point.data.source, policy)? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        return Ok(represented_similarity_point(&source, &point.data.transform));
+    }
     let Some(x) = algebraic_chord_point_coordinate_representation(point, Axis2::X, policy) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -51884,6 +51907,46 @@ impl BezierAnalyticParallelPoint2 {
         Arc::ptr_eq(&self.data, &other.data)
     }
 
+    /// Re-enters the ordinary one-parameter algebraic point authority when
+    /// this carrier is exactly a selected point on its rational source.
+    ///
+    /// This is a predicate-only normalization: the retained analytic point
+    /// remains authoritative.  It lets point/parallel incidence reuse the
+    /// existing selected-fiber ray kernel without constructing a second
+    /// two-parallel field or weakening equality under APPROXIMATE_512.
+    fn zero_frame_point_evidence(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "analytic-parallel point entered a predicate under a different policy".into(),
+            ));
+        }
+        let strict_zero =
+            |value: &Real| real_sign(value, &CurveContext::STRICT) == Some(RealSign::Zero);
+        if ![
+            self.data.parallel.distance(),
+            &self.data.tangent_distance,
+            &self.data.translation_x,
+            &self.data.translation_y,
+        ]
+        .into_iter()
+        .all(strict_zero)
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let BezierAnalyticParallelPointParameter2::Bezier(parameter) = &self.data.parameter else {
+            return Ok(Classification::Decided(None));
+        };
+        let source = self.data.parallel.source().to_rational_bezier()?;
+        Ok(Classification::Decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source, parameter, policy,
+            )?,
+        ))
+    }
+
     pub(crate) fn represented_point(
         &self,
         policy: &CurveContext,
@@ -52156,6 +52219,84 @@ impl BezierSimilarityPoint2 {
             || (self.data.policy == other.data.policy
                 && self.data.transform == other.data.transform
                 && self.data.source.shares_storage(&other.data.source))
+    }
+
+    fn translated(
+        &self,
+        delta_x: &Real,
+        delta_y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "similarity point was translated under a different predicate policy".into(),
+            ));
+        }
+        Ok(Self::new(
+            self.data.source.clone(),
+            self.data.transform.translated(delta_x, delta_y),
+            policy,
+        ))
+    }
+
+    /// Materializes only the one-field point forms understood by existing
+    /// point-incidence kernels.  The stored similarity carrier remains the
+    /// published construction evidence; this exact affine image is temporary
+    /// predicate input and never becomes APPROXIMATE_512 construction data.
+    fn predicate_point_evidence(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
+        if self.data.policy != *policy {
+            return Err(CurveError::Topology(
+                "similarity point entered a predicate under a different policy".into(),
+            ));
+        }
+        let source = match &self.data.source {
+            source @ (RationalBezierIntersectionPointEvidence2::Exact(_)
+            | RationalBezierIntersectionPointEvidence2::Algebraic(_)) => source.clone(),
+            RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+                match point.zero_frame_point_evidence(policy)? {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            RationalBezierIntersectionPointEvidence2::Similarity(point) => {
+                match point.predicate_point_evidence(policy)? {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
+                return Ok(Classification::Decided(None));
+            }
+        };
+        let (m00, m01, m10, m11, tx, ty) = self.data.transform.affine_components();
+        Ok(
+            match BezierAlgebraicChord2::affine_transformed_endpoint(
+                &source, m00, m01, m10, m11, tx, ty, None, None, policy,
+            )? {
+                Classification::Decided(
+                    point @ (RationalBezierIntersectionPointEvidence2::Exact(_)
+                    | RationalBezierIntersectionPointEvidence2::Algebraic(_)),
+                ) => Classification::Decided(Some(point)),
+                Classification::Decided(_) => Classification::Decided(None),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     pub(crate) fn conservative_bounds_refined(
@@ -61906,12 +62047,32 @@ impl BezierParallel2 {
                 RationalBezierIntersectionPointEvidence2::Exact(point) => {
                     self.contains_point(point, policy)
                 }
+                RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+                    return match point.zero_frame_point_evidence(policy)? {
+                        Classification::Decided(Some(point)) => {
+                            self.contains_point_evidence(&point, policy)
+                        }
+                        Classification::Decided(None) => {
+                            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                        }
+                        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                    };
+                }
+                RationalBezierIntersectionPointEvidence2::Similarity(point) => {
+                    return match point.predicate_point_evidence(policy)? {
+                        Classification::Decided(Some(point)) => {
+                            self.contains_point_evidence(&point, policy)
+                        }
+                        Classification::Decided(None) => {
+                            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                        }
+                        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                    };
+                }
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                | RationalBezierIntersectionPointEvidence2::Similarity(_) => {
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 RationalBezierIntersectionPointEvidence2::Algebraic(_) => unreachable!(),
@@ -62695,7 +62856,7 @@ impl BezierParallel2 {
             candidate_speed_squared,
             squared_branch,
             circle,
-        } = match parallel_fixed_distance_system(self, self, radius_squared, policy)? {
+        } = match parallel_fixed_distance_system(self, self, radius_squared, None, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -76248,6 +76409,7 @@ fn parallel_fixed_distance_system(
     center: &BezierParallel2,
     candidate: &BezierParallel2,
     radius_squared: &Real,
+    certified_center_parameter: Option<&BezierParameter2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelFixedDistanceSystem2>> {
     let center_source = center.source_power_basis()?;
@@ -76261,12 +76423,25 @@ fn parallel_fixed_distance_system(
     }
     let center_differential = center.differential()?;
     let candidate_differential = candidate.differential()?;
-    for differential in [center_differential, candidate_differential] {
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_regular_differential(differential, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
+    if let Some(parameter) = certified_center_parameter {
+        match center.parallel_derivative_scale_sign(parameter, policy)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
+    } else if let Classification::Uncertain(reason) =
+        BezierParallel2::certify_regular_differential(center_differential, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+    if let Classification::Uncertain(reason) =
+        BezierParallel2::certify_regular_differential(candidate_differential, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
     }
 
     let unit = [Real::one()];

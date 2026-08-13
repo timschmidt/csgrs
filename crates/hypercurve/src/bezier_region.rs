@@ -20537,13 +20537,11 @@ mod tests {
         DirectBezier,
     }
 
-    fn selected_circle_neighbor_region(
+    fn selected_circle_fixture_center(
         policy: &CurveContext,
-        neighbor: SelectedCircleFilletNeighbor2,
-        reversed: bool,
-    ) -> CurveRegion2 {
+    ) -> (BezierParameter2, RationalBezierIntersectionPointEvidence2) {
         let center_parameter = sqrt_half_algebraic_parameter(policy);
-        let BezierParameter2::Algebraic(center_parameter) = &center_parameter else {
+        let BezierParameter2::Algebraic(parameter) = &center_parameter else {
             panic!("sqrt(1/2) must remain an isolated algebraic parameter");
         };
         let center_source = RationalBezier2::try_new(
@@ -20553,9 +20551,21 @@ mod tests {
         .expect("the selected center source is a valid rational quadratic");
         let center = RationalBezierIntersectionPointEvidence2::Algebraic(
             center_source
-                .point_at_algebraic_parameter(center_parameter, policy)
+                .point_at_algebraic_parameter(parameter, policy)
                 .expect("the selected center has an exact rational image"),
         );
+        (center_parameter, center)
+    }
+
+    fn selected_circle_neighbor_region(
+        policy: &CurveContext,
+        neighbor: SelectedCircleFilletNeighbor2,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let (center_parameter, center) = selected_circle_fixture_center(policy);
+        let BezierParameter2::Algebraic(center_parameter) = &center_parameter else {
+            panic!("sqrt(1/2) must remain an isolated algebraic parameter");
+        };
         let Classification::Decided(Some(support)) =
             crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                 &center,
@@ -20754,6 +20764,107 @@ mod tests {
             vec![interior_side],
         )
         .expect("the mixed exact loop has authored topology")
+    }
+
+    fn selected_circle_direct_line_region_from_support(
+        support: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let alpha = q(1, 2);
+        let start = Point2::new(&alpha + Real::one(), Real::zero());
+        let join = Point2::new(&alpha - Real::one(), Real::zero());
+        let end = Point2::new(alpha.clone(), Real::one());
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                crate::BezierAlgebraicCuspSemicircleFragment2::full(support, policy),
+            ),
+            quadratic_fragment(join.clone(), join.lerp(&end, q(1, 2)), end.clone()),
+            quadratic_fragment(end, Point2::new(&alpha + q(1, 2), q(1, 2)), start),
+        ];
+        let interior_side = if reversed {
+            fragments = fragments
+                .iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the exact fixture reverses"))
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        let boundary = CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+            fragments, None, policy,
+        )
+        .expect("the selected-frame circle/line fixture closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the selected-frame circle/line fixture has authored topology")
+    }
+
+    fn selected_chord_normal_circle(
+        policy: &CurveContext,
+    ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
+        let (_, center) = selected_circle_fixture_center(policy);
+        let anchor_start = match crate::BezierAlgebraicChord2::translated_endpoint(
+            &center,
+            &Real::zero(),
+            &Real::one(),
+            policy,
+        )
+        .expect("the chord-normal anchor translation is exact")
+        {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                panic!("the chord-normal anchor must remain exact: {reason:?}")
+            }
+        };
+        let anchor = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+            anchor_start,
+            center.clone(),
+            crate::bezier_offset::BezierAlgebraicChordAxisDirection2::NegativeY,
+            policy,
+        );
+        match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+            center,
+            anchor,
+            Real::one(),
+            true,
+            policy,
+        )
+        .expect("the retained chord-normal circle is exact")
+        {
+            Classification::Decided(Some(circle)) => circle,
+            result => panic!("the nonzero chord-normal circle must construct: {result:?}"),
+        }
+    }
+
+    fn selected_parallel_normal_circle(
+        policy: &CurveContext,
+    ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
+        let half = q(1, 2);
+        let center_support = QuadraticBezier2::new(
+            Point2::new(half.clone(), half.clone()),
+            Point2::new(half.clone(), half.clone()),
+            Point2::new(half.clone(), -half),
+        )
+        .parallel_left(Real::zero())
+        .expect("the selected vertical center support is regular");
+        match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+            center_support,
+            sqrt_half_algebraic_parameter(policy),
+            Real::one(),
+            true,
+            policy,
+        )
+        .expect("the retained parallel-normal circle is exact")
+        {
+            Classification::Decided(Some(circle)) => circle,
+            result => panic!("the nonzero parallel-normal circle must construct: {result:?}"),
+        }
     }
 
     fn selected_fillet_disjoint_square(policy: &CurveContext) -> CurveRegion2 {
@@ -21092,6 +21203,104 @@ mod tests {
                             crate::CurveCornerNoSolution2::NoTangentCircle,
                         ),
                         "policy={policy:?}, reversed={reversed}, neighbor={name}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_general_selected_frames_retain_exact_centers() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let chord_region = selected_circle_direct_line_region_from_support(
+                    selected_chord_normal_circle(&policy),
+                    &policy,
+                    reversed,
+                );
+                let parallel_region = selected_circle_direct_line_region_from_support(
+                    selected_parallel_normal_circle(&policy),
+                    &policy,
+                    reversed,
+                );
+                let transform = crate::Similarity2::try_from_real_affine(
+                    Real::zero(),
+                    Real::from(-2_i8),
+                    Real::from(2_i8),
+                    Real::zero(),
+                    Real::from(5_i8),
+                    Real::from(-7_i8),
+                )
+                .expect("the scaled quarter turn is a similarity");
+                let transformed = chord_region
+                    .transform_similarity(&transform, &policy)
+                    .expect("the chord-normal fixture transforms exactly");
+                assert_eq!(transformed.certainty, CurveCertainty::Certified);
+
+                for (name, region) in [
+                    ("chord-normal", chord_region),
+                    ("parallel-normal", parallel_region),
+                    ("similarity", transformed.value),
+                ] {
+                    let circle = region.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .find_map(|fragment| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                                Some(fragment.semicircle())
+                            }
+                            _ => None,
+                        })
+                        .expect("the selected-frame fixture retains its circle");
+                    match name {
+                        "chord-normal" => {
+                            assert!(circle.uses_selected_chord_normal_frame());
+                            assert!(matches!(
+                                circle.center_point_evidence(&policy).unwrap(),
+                                Classification::Decided(
+                                    RationalBezierIntersectionPointEvidence2::Algebraic(_)
+                                )
+                            ));
+                        }
+                        "parallel-normal" => {
+                            assert!(circle.uses_selected_parallel_normal_frame());
+                            assert!(matches!(
+                                circle.center_point_evidence(&policy).unwrap(),
+                                Classification::Decided(
+                                    RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                                )
+                            ));
+                        }
+                        "similarity" => {
+                            assert!(circle.uses_selected_chord_normal_frame());
+                            assert!(matches!(
+                                circle.center_point_evidence(&policy).unwrap(),
+                                Classification::Decided(
+                                    RationalBezierIntersectionPointEvidence2::Similarity(_)
+                                )
+                            ));
+                        }
+                        _ => unreachable!(),
+                    }
+                    let result = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            if reversed { 2 } else { 1 },
+                            circle.radial_distance().abs(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the collapsed {name} center must remain exact: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        result.value,
+                        CurveCornerSolutions2::NoSolution(
+                            crate::CurveCornerNoSolution2::NoTangentCircle
+                        )
                     );
                 }
             }
