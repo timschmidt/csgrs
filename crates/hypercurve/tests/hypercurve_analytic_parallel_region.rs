@@ -254,6 +254,55 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
 }
 
 #[test]
+fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
+    let radius = (Real::one() / Real::from(4_i8)).unwrap();
+    let count = |solutions: CurveCornerSolutions2<CurveRegion2>| match solutions {
+        CurveCornerSolutions2::Unique(_) => 1,
+        CurveCornerSolutions2::Multiple(candidates) => candidates.len(),
+        CurveCornerSolutions2::NoSolution(_) => 0,
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for unit_end_weights in [false, true] {
+            for reversed in [false, true] {
+                let (source, vertex_index) =
+                    analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
+                let trim_count = count(
+                    source
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            vertex_index,
+                            radius.clone(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!("retained trim-only fillet must decide: {error:?}")
+                        })
+                        .value,
+                );
+                let extended = source
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        vertex_index,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!("retained trim-or-extend fillet must decide: {error:?}")
+                    })
+                    .value;
+                let extended_count = count(extended);
+                assert!(
+                    extended_count > trim_count,
+                    "the incident analytic ray must contribute an exterior fillet center"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
     let center = point(1, 2);
     let source = QuadraticBezier2::new(point(0, 0), point(1, 0), point(1, 1));
