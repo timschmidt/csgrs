@@ -41,8 +41,9 @@ pub use jerk_schedule::{
     certify_multi_phase_jerk_ramp_feed_schedule,
 };
 pub use lookahead::{
-    LookaheadFeedSchedule, LookaheadFeedScheduleReport, LookaheadSpanTransitionReport,
-    certify_lookahead_feed_schedule,
+    LookaheadFeedPlanningLimits, LookaheadFeedSchedule, LookaheadFeedScheduleReport,
+    LookaheadSpanTransitionReport, PlannedLookaheadFeedSchedule, certify_lookahead_feed_schedule,
+    plan_lookahead_feed_schedule,
 };
 use orthogonal_keepout::{
     segment_intersects_orthogonal_keepout, validate_orthogonal_keepout_vertices,
@@ -522,6 +523,10 @@ pub enum RouteCertificationError {
     ZeroCornerRadius,
     /// Lookahead schedule vectors do not match the retained route shape.
     ScheduleShapeMismatch,
+    /// An exact square-root construction failed during lookahead planning.
+    UnsupportedRadical,
+    /// Independent replay rejected the internally generated lookahead proposal.
+    LookaheadProposalUncertified,
     /// The selected predicate policy could not certify a scalar sign.
     PredicateUnresolved,
 }

@@ -15,7 +15,9 @@
 //! "Time-Optimal Control of Robotic Manipulators Along Specified Paths"
 //! (1985), specialized here to scalar feed along an already chosen path.
 
-use hyperlimit::{PredicatePolicy, Sign, classify_real_sign};
+use std::cmp::Ordering;
+
+use hyperlimit::{PredicatePolicy, Sign, classify_real_sign, compare_reals};
 use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
@@ -33,12 +35,13 @@ use super::feed::{
 /// Exact local lookahead speed proposal for a retained route.
 ///
 /// `corner_feeds` and `corner_radii` are indexed by adjacent-span join, so
-/// both vectors must have `route.len() - 1` entries. A zero radius explicitly
-/// denotes an unblended source corner and therefore certifies only with zero
-/// corner feed; a positive radius denotes a retained geometric blend. Entry
-/// and exit feed are attached to the path endpoints. This keeps controller
-/// lookahead state as explicit retained data rather than hiding it in sampled
-/// machine positions.
+/// both vectors must have `route.len() - 1` entries. At a true corner, zero
+/// radius explicitly denotes an unblended source corner and therefore
+/// certifies only with zero corner feed; a positive radius denotes a retained
+/// geometric blend. Exact G1 joins do not need a corner radius. Entry and exit
+/// feed are attached to the path endpoints. This keeps controller lookahead
+/// state as explicit retained data rather than hiding it in sampled machine
+/// positions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LookaheadFeedSchedule {
     /// Exact candidate feed at the route entry.
@@ -49,6 +52,58 @@ pub struct LookaheadFeedSchedule {
     pub corner_radii: Vec<Real>,
     /// Exact candidate feed at the route exit.
     pub exit_feed: Real,
+}
+
+/// Caller-owned feed ceilings and retained blend radii for exact lookahead
+/// planning.
+///
+/// These are limits, not requested speed nodes. The planner may lower any node
+/// during its forward and reverse reachability passes. A caller that requires
+/// a stop sets that node's limit to zero. A positive radius permits a true
+/// corner to receive a positive geometric speed ceiling; it does not by itself
+/// override a zero caller limit.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LookaheadFeedPlanningLimits {
+    /// Maximum permitted feed at the route entry.
+    pub maximum_entry_feed: Real,
+    /// Per-join caller-owned feed ceilings.
+    pub maximum_corner_feeds: Vec<Real>,
+    /// Per-join retained geometric blend radii.
+    pub corner_radii: Vec<Real>,
+    /// Maximum permitted feed at the route exit.
+    pub maximum_exit_feed: Real,
+}
+
+/// Exact two-pass lookahead proposal and its independent replay.
+///
+/// `effective_node_feed_limits` contains the caller, global, and geometric
+/// ceilings after exact tangent classification. `forward_node_feeds` records
+/// the acceleration-reachable forward pass. `schedule` contains the final
+/// reverse-pass result, `caller_limit_certifications` replays every caller
+/// ceiling, and `certification` independently replays every global, corner,
+/// reversal, and span constraint through Hypersolve.
+#[derive(Clone, Debug)]
+pub struct PlannedLookaheadFeedSchedule {
+    /// Effective entry, join, and exit limits in node order.
+    pub effective_node_feed_limits: Vec<Real>,
+    /// Node feeds after the exact forward acceleration pass.
+    pub forward_node_feeds: Vec<Real>,
+    /// Final exact feed schedule after reverse deceleration propagation.
+    pub schedule: LookaheadFeedSchedule,
+    /// Independent Hypersolve replay of every caller-owned node ceiling.
+    pub caller_limit_certifications: Vec<CandidateCertificationReport>,
+    /// Independent exact corner and transition replay.
+    pub certification: LookaheadFeedScheduleReport,
+}
+
+impl PlannedLookaheadFeedSchedule {
+    /// Return whether caller, corner, global, and reachability rows all replayed.
+    pub fn all_satisfied(&self) -> bool {
+        self.caller_limit_certifications
+            .iter()
+            .all(CandidateCertificationReport::all_satisfied)
+            && self.certification.all_satisfied()
+    }
 }
 
 /// Exact acceleration-feasibility replay for one retained path element.
@@ -99,6 +154,142 @@ impl LookaheadFeedScheduleReport {
             .iter()
             .position(|span| !span.certification.all_satisfied())
     }
+}
+
+/// Plan and certify an exact forward/reverse lookahead schedule.
+///
+/// The proposer uses the standard squared-speed reachability relation
+/// `v_next^2 <= v_current^2 + 2*a_max*length`. The forward pass propagates
+/// acceleration reachability and the reverse pass propagates deceleration
+/// reachability. At each true corner, the effective node limit also includes
+/// `v^2 <= a_max*radius`; exact G1 joins need no geometric corner reduction,
+/// while a reversal is fixed at zero. Caller-owned node limits can impose
+/// additional stops or process caps.
+///
+/// This function constructs a candidate and then invokes
+/// [`certify_lookahead_feed_schedule`] as an independent replay. No sampled
+/// time step, floating proposal, or firmware behavior participates.
+pub fn plan_lookahead_feed_schedule(
+    route: &[FeedPathElement],
+    spans: &[TangentSpan],
+    limits: &LookaheadFeedPlanningLimits,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    policy: PredicatePolicy,
+) -> Result<PlannedLookaheadFeedSchedule, RouteCertificationError> {
+    if route.is_empty() || spans.is_empty() {
+        return Err(RouteCertificationError::EmptyRoute);
+    }
+    if route.len() != spans.len()
+        || limits.maximum_corner_feeds.len() != route.len().saturating_sub(1)
+        || limits.corner_radii.len() != route.len().saturating_sub(1)
+    {
+        return Err(RouteCertificationError::ScheduleShapeMismatch);
+    }
+
+    require_nonnegative_feed(&limits.maximum_entry_feed, policy)?;
+    require_nonnegative_feed(&limits.maximum_exit_feed, policy)?;
+    for feed in &limits.maximum_corner_feeds {
+        require_nonnegative_feed(feed, policy)?;
+    }
+    for radius in &limits.corner_radii {
+        require_nonnegative_corner_radius(radius, policy)?;
+    }
+    require_positive_feed(&max_feed_rate, policy)?;
+    require_positive_acceleration(&max_acceleration, policy)?;
+
+    let path_lengths = route
+        .iter()
+        .map(|element| element_length(element, policy))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut effective_node_feed_limits = Vec::with_capacity(route.len().saturating_add(1));
+    effective_node_feed_limits.push(minimum_real(
+        limits.maximum_entry_feed.clone(),
+        max_feed_rate.clone(),
+        policy,
+    )?);
+    for (index, pair) in spans.windows(2).enumerate() {
+        let class = lookahead_join_class(&pair[0], &pair[1], policy)?;
+        let geometric_limit = match class {
+            CornerLookaheadJoinClass::StraightThrough => max_feed_rate.clone(),
+            CornerLookaheadJoinClass::RadiusLimitedCorner => (max_acceleration.clone()
+                * &limits.corner_radii[index])
+                .sqrt()
+                .map_err(|_| RouteCertificationError::UnsupportedRadical)?,
+            CornerLookaheadJoinClass::ReversalStop => Real::zero(),
+        };
+        let caller_and_global = minimum_real(
+            limits.maximum_corner_feeds[index].clone(),
+            max_feed_rate.clone(),
+            policy,
+        )?;
+        effective_node_feed_limits.push(minimum_real(caller_and_global, geometric_limit, policy)?);
+    }
+    effective_node_feed_limits.push(minimum_real(
+        limits.maximum_exit_feed.clone(),
+        max_feed_rate.clone(),
+        policy,
+    )?);
+
+    let doubled_acceleration = Real::from(2) * &max_acceleration;
+    let mut forward_node_feeds = effective_node_feed_limits.clone();
+    for edge in 0..route.len() {
+        let reachable = (&forward_node_feeds[edge] * &forward_node_feeds[edge]
+            + &doubled_acceleration * &path_lengths[edge])
+            .sqrt()
+            .map_err(|_| RouteCertificationError::UnsupportedRadical)?;
+        forward_node_feeds[edge + 1] =
+            minimum_real(forward_node_feeds[edge + 1].clone(), reachable, policy)?;
+    }
+
+    let mut selected_node_feeds = forward_node_feeds.clone();
+    for edge in (0..route.len()).rev() {
+        let reachable = (&selected_node_feeds[edge + 1] * &selected_node_feeds[edge + 1]
+            + &doubled_acceleration * &path_lengths[edge])
+            .sqrt()
+            .map_err(|_| RouteCertificationError::UnsupportedRadical)?;
+        selected_node_feeds[edge] =
+            minimum_real(selected_node_feeds[edge].clone(), reachable, policy)?;
+    }
+
+    let schedule = LookaheadFeedSchedule {
+        entry_feed: selected_node_feeds[0].clone(),
+        corner_feeds: selected_node_feeds[1..route.len()].to_vec(),
+        corner_radii: limits.corner_radii.clone(),
+        exit_feed: selected_node_feeds[route.len()].clone(),
+    };
+    let caller_node_limits = std::iter::once(&limits.maximum_entry_feed)
+        .chain(limits.maximum_corner_feeds.iter())
+        .chain(std::iter::once(&limits.maximum_exit_feed));
+    let caller_limit_certifications = selected_node_feeds
+        .iter()
+        .cloned()
+        .zip(caller_node_limits.cloned())
+        .map(|(candidate, maximum)| certify_node_limit_candidate(candidate, maximum))
+        .collect::<Vec<_>>();
+    let certification = certify_lookahead_feed_schedule(
+        route,
+        spans,
+        &schedule,
+        max_feed_rate,
+        max_acceleration,
+        policy,
+    )?;
+    if !caller_limit_certifications
+        .iter()
+        .all(CandidateCertificationReport::all_satisfied)
+        || !certification.all_satisfied()
+    {
+        return Err(RouteCertificationError::LookaheadProposalUncertified);
+    }
+
+    Ok(PlannedLookaheadFeedSchedule {
+        effective_node_feed_limits,
+        forward_node_feeds,
+        schedule,
+        caller_limit_certifications,
+        certification,
+    })
 }
 
 /// Certify a local lookahead feed schedule for a retained mixed path.
@@ -203,16 +394,7 @@ fn certify_local_corner_limits(
             &pair[1].start_tangent,
             policy,
         );
-        let class = match tangent_join.class {
-            TangentJoinClass::G1Continuous => CornerLookaheadJoinClass::StraightThrough,
-            TangentJoinClass::Corner => CornerLookaheadJoinClass::RadiusLimitedCorner,
-            TangentJoinClass::ReversedTangent => CornerLookaheadJoinClass::ReversalStop,
-            TangentJoinClass::DegenerateTangent
-            | TangentJoinClass::EndpointMismatch
-            | TangentJoinClass::Unknown => {
-                return Err(RouteCertificationError::UnsupportedRouteGeometry);
-            }
-        };
+        let class = lookahead_join_class_from_tangent(tangent_join.class)?;
         let certification = certify_corner_candidate(
             class,
             corner_feeds[index].clone(),
@@ -317,6 +499,21 @@ fn certify_span_transition_candidate(
     certify_problem(problem)
 }
 
+fn certify_node_limit_candidate(
+    candidate_feed: Real,
+    maximum_feed: Real,
+) -> CandidateCertificationReport {
+    let mut problem = Problem::default();
+    let feed = problem.add_variable("planned_feed", candidate_feed);
+    problem.add_constraint(feed_cap_constraint(
+        "lookahead caller node feed cap",
+        maximum_feed,
+        feed,
+        "planned_feed",
+    ));
+    certify_problem(problem)
+}
+
 fn element_length(
     element: &FeedPathElement,
     _policy: PredicatePolicy,
@@ -396,6 +593,46 @@ fn require_nonnegative_corner_radius(
     match classify_real_sign(value, policy).value() {
         Some(Sign::Negative) => Err(RouteCertificationError::NegativeCornerRadius),
         Some(Sign::Zero | Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
+    }
+}
+
+fn lookahead_join_class(
+    incoming: &TangentSpan,
+    outgoing: &TangentSpan,
+    policy: PredicatePolicy,
+) -> Result<CornerLookaheadJoinClass, RouteCertificationError> {
+    let tangent_join = classify_tangent_join(
+        &incoming.end,
+        &incoming.end_tangent,
+        &outgoing.start,
+        &outgoing.start_tangent,
+        policy,
+    );
+    lookahead_join_class_from_tangent(tangent_join.class)
+}
+
+fn lookahead_join_class_from_tangent(
+    class: TangentJoinClass,
+) -> Result<CornerLookaheadJoinClass, RouteCertificationError> {
+    match class {
+        TangentJoinClass::G1Continuous => Ok(CornerLookaheadJoinClass::StraightThrough),
+        TangentJoinClass::Corner => Ok(CornerLookaheadJoinClass::RadiusLimitedCorner),
+        TangentJoinClass::ReversedTangent => Ok(CornerLookaheadJoinClass::ReversalStop),
+        TangentJoinClass::DegenerateTangent
+        | TangentJoinClass::EndpointMismatch
+        | TangentJoinClass::Unknown => Err(RouteCertificationError::UnsupportedRouteGeometry),
+    }
+}
+
+fn minimum_real(
+    left: Real,
+    right: Real,
+    policy: PredicatePolicy,
+) -> Result<Real, RouteCertificationError> {
+    match compare_reals(&left, &right, policy).value() {
+        Some(Ordering::Less | Ordering::Equal) => Ok(left),
+        Some(Ordering::Greater) => Ok(right),
         None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }

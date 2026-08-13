@@ -26,6 +26,7 @@ This README describes crate version `0.3.0`.
 | `PcbBoardOutline`, pad and via types | Board geometry and fabrication intent |
 | `RectangularPocket`, `RectangularRegion` | Supported exact CAM planning domains |
 | `TangentSpan`, `G1ChainCertificationReport` | Tangency and continuity evidence |
+| `LookaheadFeedPlanningLimits`, `PlannedLookaheadFeedSchedule` | Exact forward/reverse speed-node planning plus replay |
 | `SpecctraRoute`, `SpecctraGridRouteRecords` | In-memory and fixed-grid route exchange |
 | `PcbConstraintSet`, `ToolpathConstraintSet` | Domain-owned Hypersolve residual collections |
 
@@ -180,10 +181,13 @@ Freeform curved pocket trimming is not inferred from these rectangular APIs.
 - `certify_differential_pair_skew`, `certify_constant_feed_time`, and
   `certify_acceleration_limited_feed_time` cover common route/toolpath checks.
 - Path-wide feed APIs certify constant, acceleration-limited, symmetric
-  jerk-limited, and corner-lookahead schedules with per-join evidence. In a
-  `LookaheadFeedSchedule`, zero corner radius explicitly represents an
-  unblended stop and certifies only with zero corner feed; retained blends use
-  positive radii.
+  jerk-limited, and corner-lookahead schedules with per-join evidence.
+  `plan_lookahead_feed_schedule` applies exact squared-speed forward/reverse
+  reachability, caller node ceilings, tangent class, and retained corner radius,
+  then independently replays the proposal through Hypersolve. A zero radius at
+  a true corner permits only zero feed; an exact G1 join can remain moving, a
+  reversal always stops, and callers can impose a stop at any join with a zero
+  feed ceiling.
 
 These are structured proposal and certification helpers, not a global route
 search.

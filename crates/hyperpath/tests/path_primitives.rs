@@ -71,21 +71,21 @@ use hyperpath::{
     LineRationalQuadraticBezierAlgebraicSourceSpanBoundary,
     LineRationalQuadraticBezierIntersectionClass, LineRationalQuadraticBezierInverseBoundarySource,
     LineRationalQuadraticBezierInverseRootDomain,
-    LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedSchedule, MeanderError,
-    MeanderKeepout, MeanderObstacle, MeanderPlacementCandidate, MixedCurveEndpointTangentClass,
-    MixedCurveFragmentEndpoint, MixedCurveFragmentRef, MixedCurveFragmentSeparationClass,
-    MixedCurveSourceRef, NetId, OffsetSide, PcbBoardOutline, PcbCardinalRectPad,
-    PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad,
-    PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
-    PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, PhCurveError,
-    PocketLinkGraphError, PocketRingError, PocketRingSide, QuadraticBezier,
-    QuinticPythagoreanHodograph, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularBeadError, RectangularPocket, RectangularPocketError, RectangularRegionRelation,
-    RectangularRestMaterialError, RectangularScheduleStop, RouteCertificationError,
-    SegmentParameterOrder, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
-    SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
-    SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
+    LineRationalQuadraticBezierSupportOverlapMonotonicity, LookaheadFeedPlanningLimits,
+    LookaheadFeedSchedule, MeanderError, MeanderKeepout, MeanderObstacle,
+    MeanderPlacementCandidate, MixedCurveEndpointTangentClass, MixedCurveFragmentEndpoint,
+    MixedCurveFragmentRef, MixedCurveFragmentSeparationClass, MixedCurveSourceRef, NetId,
+    OffsetSide, PcbBoardOutline, PcbCardinalRectPad, PcbCircularBoardOutline, PcbCircularPad,
+    PcbConvexBoardOutline, PcbConvexPad, PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad,
+    PcbOrthogonalBoardOutline, PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace,
+    PcbViaStack, PhCurveError, PocketLinkGraphError, PocketRingError, PocketRingSide,
+    QuadraticBezier, QuinticPythagoreanHodograph, RationalQuadraticBezier,
+    RationalQuadraticBezierError, RectangularBeadError, RectangularPocket, RectangularPocketError,
+    RectangularRegionRelation, RectangularRestMaterialError, RectangularScheduleStop,
+    RouteCertificationError, SegmentParameterOrder, SpecctraGridArcWireRecord,
+    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord,
+    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
+    SpecctraNetAlias, SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
     SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceStatus,
     SpecctraRouteRuleWidthStatus, SpecctraTraceRecord, SupportFootprintError,
     SupportFootprintStatus, SweptLineSegment, TangentAlignment, TangentJoinClass,
@@ -134,15 +134,16 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, rectangular_beads, rectangular_pocket_link_graph,
-    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
-    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
-    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
-    specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
-    specctra_grid_via_record, subtract_rectangular_region, tangent_alignment_problem,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    parse_specctra_grid_trace_records, plan_lookahead_feed_schedule, rectangular_beads,
+    rectangular_pocket_link_graph, rectangular_pocket_rings, rectangular_rest_material_graph,
+    rectangular_serpentine_infill_graph, rectangular_support_footprint,
+    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
+    specctra_grid_route_rule_record, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_alignment_problem, tangent_cross, tangent_dot,
+    tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -8505,6 +8506,170 @@ fn lookahead_feed_schedule_certifies_local_corner_and_span_speed_nodes() {
 }
 
 #[test]
+fn lookahead_planner_propagates_exact_forward_and_reverse_reachability() {
+    let line0 = strict_segment!(p(0, 0), p(1, 0));
+    let line1 = strict_segment!(p(1, 0), p(1, 100));
+    let line2 = strict_segment!(p(1, 100), p(2, 100));
+    let route = vec![
+        FeedPathElement::Line(line0.clone()),
+        FeedPathElement::Line(line1.clone()),
+        FeedPathElement::Line(line2.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&line0),
+        TangentSpan::from_line_segment(&line1),
+        TangentSpan::from_line_segment(&line2),
+    ];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(100), r(100)],
+        corner_radii: vec![r(10_000), r(10_000)],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    let planned = plan_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &limits,
+        r(100),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    let sqrt_two = r(2).sqrt().unwrap();
+    let sqrt_two_hundred_two = r(202).sqrt().unwrap();
+
+    assert_eq!(
+        planned.effective_node_feed_limits,
+        vec![Real::zero(), r(100), r(100), Real::zero()]
+    );
+    assert_eq!(
+        planned.forward_node_feeds,
+        vec![
+            Real::zero(),
+            sqrt_two.clone(),
+            sqrt_two_hundred_two,
+            Real::zero(),
+        ]
+    );
+    assert_eq!(planned.schedule.entry_feed, Real::zero());
+    assert_eq!(
+        planned.schedule.corner_feeds,
+        vec![sqrt_two.clone(), sqrt_two]
+    );
+    assert_eq!(planned.schedule.exit_feed, Real::zero());
+    assert_eq!(planned.caller_limit_certifications.len(), 4);
+    assert!(planned.all_satisfied());
+    assert_eq!(planned.certification.first_unsatisfied_span(), None);
+}
+
+#[test]
+fn lookahead_planner_distinguishes_g1_caller_stops_and_reversals() {
+    let line0 = strict_segment!(p(0, 0), p(5, 0));
+    let line1 = strict_segment!(p(5, 0), p(10, 0));
+    let line2 = strict_segment!(p(10, 0), p(5, 0));
+    let route = vec![
+        FeedPathElement::Line(line0.clone()),
+        FeedPathElement::Line(line1.clone()),
+        FeedPathElement::Line(line2.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&line0),
+        TangentSpan::from_line_segment(&line1),
+        TangentSpan::from_line_segment(&line2),
+    ];
+    let moving_limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(5), r(5)],
+        corner_radii: vec![Real::zero(), r(100)],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    let moving = plan_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &moving_limits,
+        r(10),
+        r(10),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(moving.schedule.corner_feeds, vec![r(5), Real::zero()]);
+    assert_eq!(
+        moving.certification.corners.joins[0].class,
+        CornerLookaheadJoinClass::StraightThrough
+    );
+    assert_eq!(
+        moving.certification.corners.joins[1].class,
+        CornerLookaheadJoinClass::ReversalStop
+    );
+    assert!(moving.all_satisfied());
+
+    let stopped_limits = LookaheadFeedPlanningLimits {
+        maximum_corner_feeds: vec![Real::zero(), Real::zero()],
+        ..moving_limits
+    };
+    let stopped = plan_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &stopped_limits,
+        r(10),
+        r(10),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(
+        stopped.schedule.corner_feeds,
+        vec![Real::zero(), Real::zero()]
+    );
+    assert!(stopped.all_satisfied());
+}
+
+#[test]
+fn lookahead_planner_rejects_invalid_policy_before_proposal() {
+    let line = strict_segment!(p(0, 0), p(1, 0));
+    let route = vec![FeedPathElement::Line(line.clone())];
+    let spans = vec![TangentSpan::from_line_segment(&line)];
+    let shape_mismatch = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![Real::zero()],
+        corner_radii: vec![],
+        maximum_exit_feed: Real::zero(),
+    };
+    assert_eq!(
+        plan_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &shape_mismatch,
+            r(1),
+            r(1),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::ScheduleShapeMismatch
+    );
+
+    let negative_entry = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: r(-1),
+        maximum_corner_feeds: vec![],
+        corner_radii: vec![],
+        maximum_exit_feed: Real::zero(),
+    };
+    assert_eq!(
+        plan_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &negative_entry,
+            r(1),
+            r(1),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+}
+
+#[test]
 fn lookahead_feed_schedule_reports_corner_and_transition_violations() {
     let line0 = strict_segment!(p(0, 0), p(1, 0));
     let line1 = strict_segment!(p(1, 0), p(1, 1));
@@ -12134,6 +12299,52 @@ proptest! {
             && i64::from(end_feed) <= i64::from(max_feed)
             && (end_sq - start_sq).abs() <= budget;
         prop_assert_eq!(report.all_satisfied(), expected);
+    }
+
+    #[test]
+    fn lookahead_planner_generated_single_spans_replay_every_limit(
+        length in 1_i16..=50,
+        entry_limit in 0_i16..=30,
+        exit_limit in 0_i16..=30,
+        max_feed in 1_i16..=30,
+        acceleration in 1_i16..=30,
+    ) {
+        let line = strict_segment!(p(0, 0), p(i64::from(length), 0));
+        let route = vec![FeedPathElement::Line(line.clone())];
+        let spans = vec![TangentSpan::from_line_segment(&line)];
+        let limits = LookaheadFeedPlanningLimits {
+            maximum_entry_feed: r(i64::from(entry_limit)),
+            maximum_corner_feeds: vec![],
+            corner_radii: vec![],
+            maximum_exit_feed: r(i64::from(exit_limit)),
+        };
+        let planned = plan_lookahead_feed_schedule(
+            &route,
+            &spans,
+            &limits,
+            r(i64::from(max_feed)),
+            r(i64::from(acceleration)),
+            PredicatePolicy::STRICT,
+        ).unwrap();
+
+        prop_assert!(planned.all_satisfied());
+        prop_assert_eq!(planned.caller_limit_certifications.len(), 2);
+        prop_assert!(matches!(
+            compare_reals(
+                &planned.schedule.entry_feed,
+                &limits.maximum_entry_feed,
+                PredicatePolicy::STRICT,
+            ).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
+        prop_assert!(matches!(
+            compare_reals(
+                &planned.schedule.exit_feed,
+                &limits.maximum_exit_feed,
+                PredicatePolicy::STRICT,
+            ).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
     }
 
     #[test]
