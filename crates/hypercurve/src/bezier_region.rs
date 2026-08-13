@@ -22802,6 +22802,117 @@ mod tests {
     }
 
     #[test]
+    fn independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let region = independent_oblique_chord_pair_corner_region(&policy, false);
+            let extended = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    Real::one(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("the independent chord pair has exact extended fillets");
+            let mut exercised = 0;
+            for_each_corner_region(&extended.value, |filleted| {
+                let Some(circle) =
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .find_map(|fragment| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_chord_normal_frame() =>
+                            {
+                                Some(fragment.semicircle())
+                            }
+                            _ => None,
+                        })
+                else {
+                    return;
+                };
+                exercised += 1;
+                let center = match circle.center_point_evidence(&policy).unwrap() {
+                    Classification::Decided(center) => center,
+                    Classification::Uncertain(reason) => {
+                        panic!("the chord-normal center must be exact: {reason:?}")
+                    }
+                };
+                let bounds = match crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                    &center, 8, &policy,
+                ) {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(reason) => {
+                        panic!("the chord-pair center must refine: {reason:?}")
+                    }
+                };
+                let interior_dyadic = |lower: &Real, upper: &Real| {
+                    let approximate =
+                        ((lower.to_f64_lossy().unwrap() + upper.to_f64_lossy().unwrap()) * 0.5)
+                            .clamp(-1.0e6, 1.0e6);
+                    (0..=32)
+                        .find_map(|power| {
+                            let denominator = 1_i64 << power;
+                            let numerator = (approximate * denominator as f64).round() as i64;
+                            let candidate =
+                                (Real::from(numerator) / Real::from(denominator)).ok()?;
+                            (crate::classify::compare_reals(
+                                lower,
+                                &candidate,
+                                &CurveContext::STRICT,
+                            ) == Some(std::cmp::Ordering::Less)
+                                && crate::classify::compare_reals(
+                                    &candidate,
+                                    upper,
+                                    &CurveContext::STRICT,
+                                ) == Some(std::cmp::Ordering::Less))
+                            .then_some(candidate)
+                        })
+                        .expect("a refined center interval contains a rational dyadic")
+                };
+                let x = interior_dyadic(bounds.min().x(), bounds.max().x());
+                let y = interior_dyadic(bounds.min().y(), bounds.max().y());
+                let margin = circle.radial_distance().abs() * Real::from(2_i8) + Real::one();
+                let line = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(&x - &margin, y.clone()),
+                        Point2::new(&x + &margin, y),
+                    ],
+                    vec![Real::one(), Real::one()],
+                )
+                .unwrap();
+                let (contacts, map) = match circle
+                    .rational_intersections_with_parameter_map(&line, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided((
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                            contacts,
+                        ),
+                        map,
+                    )) => (contacts, map),
+                    Classification::Decided((intersections, _)) => {
+                        panic!("the chord-normal probe must cross: {intersections:?}")
+                    }
+                    Classification::Uncertain(reason) => {
+                        panic!("the chord-normal rational kernel must decide: {reason:?}")
+                    }
+                };
+                assert!(!contacts.is_empty());
+                let map = map.expect("an interior chord-normal contact retains its angular map");
+                for contact in &contacts {
+                    assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+                    assert!(matches!(
+                        map.contact_parameter_bracket(contact, 16).unwrap(),
+                        Classification::Decided(_)
+                    ));
+                }
+            });
+            assert!(exercised > 0);
+        }
+    }
+
+    #[test]
     fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
         for radius in [
             (Real::one() / Real::from(100_i16)).unwrap(),
