@@ -42577,6 +42577,7 @@ impl BezierAlgebraicChord2 {
             parallel,
             &system,
             SelectedThirdAxisDomain2::UnitInterval,
+            true,
             policy,
         )
     }
@@ -42585,9 +42586,10 @@ impl BezierAlgebraicChord2 {
     /// authored analytic span plus one regular incident projective ray.
     ///
     /// This is the `TrimOrExtend` domain for a chord/parallel corner. The
-    /// selected-pair incidence system is built once; finite and exterior roots
-    /// differ only in final-axis isolation and chord-domain clipping. The ray
-    /// stops before its first source pole or tangent-speed zero.
+    /// selected-pair incidence system is built once; both the authored target
+    /// span and its exterior ray replay against the chord's affine support.
+    /// Only final-axis isolation differs. The ray stops before its first source
+    /// pole or tangent-speed zero.
     pub(crate) fn parallel_intersections_with_incident_ray(
         &self,
         parallel: &BezierParallel2,
@@ -42612,6 +42614,7 @@ impl BezierAlgebraicChord2 {
             parallel,
             &system,
             SelectedThirdAxisDomain2::UnitInterval,
+            false,
             policy,
         )? {
             Classification::Decided(intersections) => intersections,
@@ -42627,6 +42630,7 @@ impl BezierAlgebraicChord2 {
                 direction,
                 barrier: barrier.as_ref(),
             },
+            false,
             policy,
         )? {
             Classification::Decided(intersections) => intersections,
@@ -42651,9 +42655,9 @@ impl BezierAlgebraicChord2 {
         parallel: &BezierParallel2,
         system: &BezierAlgebraicChordIndependentParallelIncidence2,
         domain: SelectedThirdAxisDomain2<'_>,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
-        let retain_finite_chord = matches!(domain, SelectedThirdAxisDomain2::UnitInterval);
         let projected = match &system.equation {
             BezierAlgebraicChordIndependentParallelEquation2::Direct(incidence) => {
                 selected_pair_square_root_expression_third_axis_parameters(
@@ -42751,7 +42755,7 @@ impl BezierAlgebraicChord2 {
             let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                 BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy),
             );
-            let chord_parameter = if retain_finite_chord {
+            let chord_parameter = if clip_to_finite_chord {
                 match self.parameter_at_certified_point(point.clone(), policy)? {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) => continue,
@@ -92453,6 +92457,80 @@ mod conversion_tests {
                     panic!("the barrier-bounded incident projection must be decided");
                 };
                 assert_eq!(parameters, vec![BezierParameter2::Exact(expected)]);
+            }
+        }
+    }
+
+    #[test]
+    fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(1, -1),
+            Point2::from_values(2, 0),
+            Point2::from_values(4, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let third = (Real::one() / Real::from(3_i8)).unwrap();
+            let BezierParameter2::Algebraic(first_parameter) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/2) must remain algebraic");
+            };
+            let BezierParameter2::Algebraic(second_parameter) =
+                algebraic_parameter(vec![-third, Real::zero(), Real::one()])
+            else {
+                unreachable!("sqrt(1/3) must remain algebraic");
+            };
+            let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                        .unwrap(),
+                ),
+            ))
+            .unwrap();
+            let start = RationalBezierIntersectionPointEvidence2::Algebraic(
+                horizontal
+                    .point_at_algebraic_parameter(&first_parameter, &policy)
+                    .unwrap(),
+            );
+            let end = RationalBezierIntersectionPointEvidence2::Algebraic(
+                horizontal
+                    .point_at_algebraic_parameter(&second_parameter, &policy)
+                    .unwrap(),
+            );
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
+            else {
+                panic!("the independent horizontal chord must construct");
+            };
+            for chord in [chord.clone(), chord.reversed()] {
+                let finite = match chord.parallel_intersections(&parallel, &policy).unwrap() {
+                    Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::Contacts(finite),
+                    ) => finite,
+                    result => panic!("the finite chord relation must be decided: {result:?}"),
+                };
+                assert!(finite.is_empty());
+
+                let Classification::Decided(BezierAlgebraicChordParallelIntersections2::Contacts(
+                    extended,
+                )) = chord
+                    .parallel_intersections_with_incident_ray(
+                        &parallel,
+                        &Real::one(),
+                        BezierParameterRayDirection2::Increasing,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the affine chord-support relation must be decided");
+                };
+                let [contact] = extended.as_slice() else {
+                    panic!("only the finite-target/chord-extension contact must survive");
+                };
+                assert_eq!(contact.parallel_parameter().as_exact(), Some(&half));
             }
         }
     }

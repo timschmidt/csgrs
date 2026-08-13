@@ -3635,7 +3635,7 @@ pub(crate) struct RetainedRationalCornerArc2<'a> {
     support: CircularArc2,
 }
 
-struct RetainedRationalOffsetEvaluator2 {
+struct RationalArcOffsetEvaluator2 {
     offset: RationalBezier2,
     canonical_source: RationalBezier2,
 }
@@ -3724,48 +3724,20 @@ impl ExactCornerArc2<'_> {
         }
     }
 
-    fn retained_rational_evaluator(
-        &self,
-        operation: CurveOperation2,
-        family: CurveFamily2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Option<&RationalBezier2>> {
-        let Self::RetainedRational(retained) = self else {
-            return Ok(None);
-        };
-        let [evaluator] = retained
-            .source
-            .rational_evaluators_for_operation(policy, operation)?
-        else {
-            return Err(ExactCurveError::invalid(
-                operation,
-                family,
-                CurveError::Topology(
-                    "retained circular carrier did not promote to one rational evaluator".into(),
-                ),
-            ));
-        };
-        Ok(Some(evaluator))
-    }
-
-    /// Materializes the exact concentric image of a retained rational arc.
+    /// Materializes the exact concentric image of any certified circular arc.
     ///
     /// An affine radial scale maps every rational Bezier control point while
     /// preserving its homogeneous weight and local parameter. This gives the
     /// analytic-parallel/rational intersection authority a finite exact arc
     /// offset carrier without adding a separate arc/parallel solver.
-    fn retained_rational_offset_evaluator(
+    fn rational_offset_evaluator(
         &self,
         source_radius: &Real,
         signed_radius: &Real,
         operation: CurveOperation2,
         family: CurveFamily2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<RetainedRationalOffsetEvaluator2>> {
-        let Some(_authored_source) = self.retained_rational_evaluator(operation, family, policy)?
-        else {
-            return Ok(None);
-        };
+    ) -> ExactCurveResult<RationalArcOffsetEvaluator2> {
         let decomposition = match self
             .support()
             .rational_bezier_decomposition_with_policy(policy)
@@ -3797,10 +3769,10 @@ impl ExactCornerArc2<'_> {
             .collect();
         let offset = RationalBezier2::try_new(control_points, canonical_source.weights().to_vec())
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-        Ok(Some(RetainedRationalOffsetEvaluator2 {
+        Ok(RationalArcOffsetEvaluator2 {
             offset,
             canonical_source,
-        }))
+        })
     }
 }
 
@@ -4152,7 +4124,9 @@ fn fillet_carrier_pair_supports_extension(
             ExactCornerCarrier2::Arc(_) | ExactCornerCarrier2::RetainedRationalArc(_)
         )
     };
-    (is_affine_line(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
+    (is_affine_line(previous) && is_arc(next))
+        || (is_arc(previous) && is_affine_line(next))
+        || (is_affine_line(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_affine_line(next))
         || (is_arc(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
         || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_arc(next))
@@ -6541,20 +6515,13 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            let Some(offset_arc) = arc.retained_rational_offset_evaluator(
+            let offset_arc = arc.rational_offset_evaluator(
                 source_radius,
                 signed_radius,
                 CurveOperation2::Fillet,
                 arc_family,
                 policy,
-            )?
-            else {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    arc_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            };
+            )?;
             let (analytic_source, analytic_support) = analytic;
             let analytic_source = analytic_source
                 .retained()
@@ -7174,20 +7141,13 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            let Some(offset_arc) = arc.retained_rational_offset_evaluator(
+            let offset_arc = arc.rational_offset_evaluator(
                 source_radius,
                 signed_radius,
                 CurveOperation2::Fillet,
                 arc_family,
                 policy,
-            )?
-            else {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    arc_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            };
+            )?;
             let contacts = retained_fillet_cusp_rational_contacts(
                 cusp,
                 &offset_arc.offset,
@@ -7813,13 +7773,6 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Arc { .. })
         | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
-            if mode == CurveCornerMode2::TrimOrExtend {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
             let (
                 chord_source,
                 chord_support,
@@ -7956,20 +7909,13 @@ fn fillet_offset_centers(
                 return Ok(centers);
             }
 
-            let Some(offset_arc) = arc.retained_rational_offset_evaluator(
+            let offset_arc = arc.rational_offset_evaluator(
                 source_radius,
                 signed_radius,
                 CurveOperation2::Fillet,
                 arc_family,
                 policy,
-            )?
-            else {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    arc_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            };
+            )?;
             let center_parallel =
                 offset_arc
                     .offset
@@ -7984,9 +7930,26 @@ fn fillet_offset_centers(
             } else {
                 (chord_support, false)
             };
-            let contacts = match intersection_chord
-                .parallel_intersections(&center_parallel, policy)
-                .map_err(|cause| {
+            let arc_is_previous = !chord_is_previous;
+            let intersection_result = if mode == CurveCornerMode2::TrimOrExtend {
+                let (anchor, direction) = if arc_is_previous {
+                    (Real::one(), crate::BezierParameterRayDirection2::Increasing)
+                } else {
+                    (
+                        Real::zero(),
+                        crate::BezierParameterRayDirection2::Decreasing,
+                    )
+                };
+                intersection_chord.parallel_intersections_with_incident_ray(
+                    &center_parallel,
+                    &anchor,
+                    direction,
+                    policy,
+                )
+            } else {
+                intersection_chord.parallel_intersections(&center_parallel, policy)
+            };
+            let contacts = match intersection_result.map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
                 })? {
                 Classification::Decided(
@@ -8650,13 +8613,6 @@ fn fillet_cut_from_center(
                     }));
                 }
                 {
-                    if mode != CurveCornerMode2::TrimOnly {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            crate::UncertaintyReason::Unsupported,
-                        ));
-                    }
                     let parameter = retained_parameter
                         .ok_or_else(|| {
                             ExactCurveError::blocked(
@@ -8674,14 +8630,17 @@ fn fillet_cut_from_center(
                                 crate::UncertaintyReason::Unsupported,
                             )
                         })?;
-                    if !bezier_trim_parameter_is_interior(
+                    let Some(placement) = bezier_corner_parameter_placement(
                         &parameter,
+                        previous,
+                        mode,
                         CurveOperation2::Fillet,
                         family,
                         policy,
-                    )? {
+                    )?
+                    else {
                         return Ok(None);
-                    }
+                    };
                     let radial_scale = (*source_radius / signed_radius).map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
                     })?;
@@ -8706,7 +8665,7 @@ fn fillet_cut_from_center(
                     return Ok(Some(CornerCut2 {
                         point,
                         parameter: Some(CurveRegionParameter2::from_bezier(parameter)),
-                        placement: CornerPlacement2::Trim,
+                        placement,
                     }));
                 }
             };
@@ -10700,6 +10659,139 @@ fn validate_subcurve_range(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn selected_inverse_square_parameter(
+        denominator: i8,
+        policy: &CurveContext,
+    ) -> BezierParameter2 {
+        let polynomial = match crate::BezierParameterPolynomial::try_new_power_basis(
+            vec![-Real::one(), Real::zero(), Real::from(denominator)],
+            policy,
+        )
+        .expect("the selected inverse-square polynomial is valid")
+        {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                panic!("the selected inverse-square polynomial must decide: {reason:?}")
+            }
+        };
+        let roots = match polynomial
+            .isolate_unit_interval_roots(policy)
+            .expect("the selected inverse-square roots isolate")
+        {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => {
+                panic!("the selected inverse-square root must decide: {reason:?}")
+            }
+        };
+        let [parameter] = roots.as_slice() else {
+            panic!("one positive inverse-square root must lie in the unit interval")
+        };
+        parameter.clone()
+    }
+
+    #[test]
+    fn native_arc_and_nonrepresented_chord_share_extension_projection() {
+        let radius = (Real::one() / Real::from(100_i16)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected_parameter = selected_inverse_square_parameter(2, &policy);
+            let diagonal = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let corner = crate::rational_bezier_general::exact_contact_point_evidence(
+                &diagonal,
+                &selected_parameter,
+                &policy,
+            )
+            .unwrap()
+            .expect("the selected corner retains exact evidence");
+            let translated = |point: &RationalBezierIntersectionPointEvidence2, x, y| {
+                match crate::BezierAlgebraicChord2::translated_endpoint(
+                    point,
+                    &Real::from(x),
+                    &Real::from(y),
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        panic!("the selected translation must decide: {reason:?}")
+                    }
+                }
+            };
+            let previous = crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                translated(&corner, 0, -4),
+                corner,
+                crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveY,
+                &policy,
+            );
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let selected_coordinate = half.sqrt().unwrap();
+            let arc_start = Point2::new(selected_coordinate.clone(), selected_coordinate.clone());
+            let arc_end = Point2::new(
+                &selected_coordinate + Real::one(),
+                &selected_coordinate + Real::one(),
+            );
+            let arc_center = Point2::new(
+                selected_coordinate.clone(),
+                &selected_coordinate + Real::one(),
+            );
+            let arc = CircularArc2::try_from_center(arc_start, arc_end.clone(), arc_center, false)
+                .expect("the native quarter circle is valid");
+            let closing = match crate::BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(arc_end),
+                previous.start().clone(),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    panic!("the closing selected chord must decide: {reason:?}")
+                }
+            };
+            assert!(closing.exact_line().is_none());
+            assert!(closing.strict_provenance_support_line(&policy).is_none());
+            assert!(closing.certified_unit_tangent().is_none());
+
+            for reversed in [false, true] {
+                let solve = |mode| {
+                    if reversed {
+                        solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AlgebraicChord(&closing.reversed()),
+                            ExactCornerCarrier2::Arc(&arc.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::RationalBezier,
+                            CurveFamily2::CircularArc,
+                            &policy,
+                        )
+                    } else {
+                        solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Arc(&arc),
+                            ExactCornerCarrier2::AlgebraicChord(&closing),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::CircularArc,
+                            CurveFamily2::RationalBezier,
+                            &policy,
+                        )
+                    }
+                };
+                let trim = solve(CurveCornerMode2::TrimOnly)
+                    .expect("the native arc/chord trim solve must complete");
+                let extended = solve(CurveCornerMode2::TrimOrExtend)
+                    .expect("the native arc/chord extension solve must complete");
+                assert!(trim.candidate_count() > 0);
+                assert!(extended.candidate_count() > trim.candidate_count());
+            }
+        }
+    }
 
     #[test]
     fn represented_rational_corner_extension_materializes_before_its_pole() {
