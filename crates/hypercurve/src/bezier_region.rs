@@ -2371,12 +2371,14 @@ fn retained_corner_fragment_extension(
     keep_before_cut: bool,
     operation: CurveOperation2,
     policy: &CurveContext,
-) -> ExactCurveResult<BezierSplitFragment2> {
+) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
     if let Some(replacement) = replacement {
         let curve = match replacement {
             CornerReplacement2::Curve(curve) => curve,
             CornerReplacement2::AnalyticParallel(fragment) => {
-                return Ok(BezierSplitFragment2::AnalyticParallel(fragment.clone()));
+                return Ok(vec![BezierSplitFragment2::AnalyticParallel(
+                    fragment.clone(),
+                )]);
             }
         };
         let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
@@ -2397,13 +2399,23 @@ fn retained_corner_fragment_extension(
             Real::zero()
         };
         if parameter.as_exact() == Some(&replacement_cut) {
-            return Ok(replacement);
+            return Ok(vec![replacement]);
         }
         return retained_corner_fragment_trim(
             &replacement,
             CurveRegionParameter2::from_bezier(parameter),
             cut_point,
             None,
+            keep_before_cut,
+            operation,
+            policy,
+        )
+        .map(|fragment| vec![fragment]);
+    }
+    if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
+        return retained_cusp_fragment_extension(
+            fragment,
+            parameter,
             keep_before_cut,
             operation,
             policy,
@@ -2427,7 +2439,7 @@ fn retained_corner_fragment_extension(
         return crate::BezierAlgebraicChord2::from_ordered_parameter_range(
             chord, start, end, policy,
         )
-        .map(BezierSplitFragment2::AlgebraicChord)
+        .map(|chord| vec![BezierSplitFragment2::AlgebraicChord(chord)])
         .map_err(|cause| curve_region_edit_error(operation, cause));
     }
 
@@ -2466,11 +2478,11 @@ fn retained_corner_fragment_extension(
     {
         let line = LineSeg2::try_new(start.clone(), end.clone())
             .map_err(|cause| curve_region_edit_error(operation, cause))?;
-        return Ok(BezierSplitFragment2::Materialized {
+        return Ok(vec![BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
             end: BezierParameter2::Exact(Real::one()),
             curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
-        });
+        }]);
     }
     retained_chord_on_certified_line(
         source
@@ -2481,6 +2493,145 @@ fn retained_corner_fragment_extension(
         operation,
         policy,
     )
+    .map(|fragment| vec![fragment])
+}
+
+fn retained_cusp_fragment_extension(
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    parameter: CurveRegionParameter2,
+    keep_before_cut: bool,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+    fragment
+        .validate_policy(policy)
+        .map_err(|cause| curve_region_edit_error(operation, cause))?;
+    let complementary_cut = parameter.is_algebraic_cusp_complement();
+    let cut = parameter.as_algebraic_cusp().cloned().ok_or_else(|| {
+        ExactCurveError::blocked(
+            operation,
+            CurveFamily2::RationalBezier,
+            UncertaintyReason::Unsupported,
+        )
+    })?;
+    let compare =
+        |first: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+         second: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
+            first
+                .cmp_by_refinement(second, policy)
+                .map_err(|cause| curve_region_edit_error(operation, cause))
+                .and_then(|order| match order {
+                    Classification::Decided(order) => Ok(order),
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        operation,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    )),
+                })
+        };
+    let zero = crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero());
+    let one = crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one());
+    let start = fragment.start_parameter().clone();
+    let end = fragment.end_parameter().clone();
+    let cut_side = if complementary_cut {
+        None
+    } else {
+        let start_order = compare(&cut, &start)?;
+        let end_order = compare(&cut, &end)?;
+        match (start_order, end_order) {
+            (std::cmp::Ordering::Less, std::cmp::Ordering::Less) => Some(false),
+            (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater) => Some(true),
+            _ => {
+                return Err(curve_region_edit_error(
+                    operation,
+                    CurveError::Topology(
+                        "a selected-circle extension cut did not lie outside its authored span"
+                            .into(),
+                    ),
+                ));
+            }
+        }
+    };
+    let base = fragment.semicircle().clone();
+    let complement = base.complementary_half();
+    let mut result = Vec::with_capacity(3);
+    let mut push = |semicircle: &crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+                    range_start: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+                    range_end: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+                    reversed: bool|
+     -> ExactCurveResult<()> {
+        match compare(&range_start, &range_end)? {
+            std::cmp::Ordering::Less => result.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    semicircle.clone(),
+                    range_start,
+                    range_end,
+                    reversed,
+                    policy,
+                ),
+            )),
+            std::cmp::Ordering::Equal => {}
+            std::cmp::Ordering::Greater => {
+                return Err(curve_region_edit_error(
+                    operation,
+                    CurveError::Topology(
+                        "a selected-circle extension produced a descending stored range".into(),
+                    ),
+                ));
+            }
+        }
+        Ok(())
+    };
+
+    match (fragment.is_reversed(), keep_before_cut, cut_side) {
+        (false, true, Some(true)) => push(&base, start, cut, false)?,
+        (false, true, Some(false)) => {
+            push(&base, start, one.clone(), false)?;
+            push(&complement, zero.clone(), one.clone(), false)?;
+            push(&base, zero.clone(), cut, false)?;
+        }
+        (false, true, None) => {
+            push(&base, start, one.clone(), false)?;
+            push(&complement, zero.clone(), cut, false)?;
+        }
+        (false, false, Some(false)) => push(&base, cut, end, false)?,
+        (false, false, Some(true)) => {
+            push(&base, cut, one.clone(), false)?;
+            push(&complement, zero.clone(), one.clone(), false)?;
+            push(&base, zero.clone(), end, false)?;
+        }
+        (false, false, None) => {
+            push(&complement, cut, one.clone(), false)?;
+            push(&base, zero.clone(), end, false)?;
+        }
+        (true, true, Some(false)) => push(&base, cut, end, true)?,
+        (true, true, Some(true)) => {
+            push(&base, zero.clone(), end, true)?;
+            push(&complement, zero.clone(), one.clone(), true)?;
+            push(&base, cut, one.clone(), true)?;
+        }
+        (true, true, None) => {
+            push(&base, zero.clone(), end, true)?;
+            push(&complement, cut, one.clone(), true)?;
+        }
+        (true, false, Some(true)) => push(&base, start, cut, true)?,
+        (true, false, Some(false)) => {
+            push(&base, zero.clone(), cut, true)?;
+            push(&complement, zero.clone(), one.clone(), true)?;
+            push(&base, start, one.clone(), true)?;
+        }
+        (true, false, None) => {
+            push(&complement, zero, cut, true)?;
+            push(&base, start, one, true)?;
+        }
+    }
+    if result.is_empty() {
+        return Err(curve_region_edit_error(
+            operation,
+            CurveError::Topology("a selected-circle extension collapsed to one point".into()),
+        ));
+    }
+    Ok(result)
 }
 
 fn retained_corner_fragment_trim(
@@ -9819,8 +9970,8 @@ impl CurveRegion2 {
         } else if let Some(replacement) = previous_replacement {
             Some(replacement)
         } else {
-            Some(vec![match previous_cut.placement {
-                CornerPlacement2::Trim => retained_corner_fragment_trim(
+            Some(match previous_cut.placement {
+                CornerPlacement2::Trim => vec![retained_corner_fragment_trim(
                     &boundary_loop.fragments()[previous_index],
                     previous_cut.parameter,
                     &previous_cut.point,
@@ -9831,8 +9982,10 @@ impl CurveRegion2 {
                     true,
                     operation,
                     policy,
-                )?,
-                CornerPlacement2::Corner => boundary_loop.fragments()[previous_index].clone(),
+                )?],
+                CornerPlacement2::Corner => {
+                    vec![boundary_loop.fragments()[previous_index].clone()]
+                }
                 CornerPlacement2::Extension => retained_corner_fragment_extension(
                     &boundary_loop.fragments()[previous_index],
                     previous_cut.parameter,
@@ -9842,7 +9995,7 @@ impl CurveRegion2 {
                     operation,
                     policy,
                 )?,
-            }])
+            })
         };
         let next_trim = if same_fragment
             && (middle_trim.is_some() || next_cut.placement != CornerPlacement2::Trim)
@@ -9851,8 +10004,8 @@ impl CurveRegion2 {
         } else if let Some(replacement) = next_replacement {
             Some(replacement)
         } else {
-            Some(vec![match next_cut.placement {
-                CornerPlacement2::Trim => retained_corner_fragment_trim(
+            Some(match next_cut.placement {
+                CornerPlacement2::Trim => vec![retained_corner_fragment_trim(
                     &boundary_loop.fragments()[next_index],
                     next_cut.parameter,
                     &next_cut.point,
@@ -9863,8 +10016,10 @@ impl CurveRegion2 {
                     false,
                     operation,
                     policy,
-                )?,
-                CornerPlacement2::Corner => boundary_loop.fragments()[next_index].clone(),
+                )?],
+                CornerPlacement2::Corner => {
+                    vec![boundary_loop.fragments()[next_index].clone()]
+                }
                 CornerPlacement2::Extension => retained_corner_fragment_extension(
                     &boundary_loop.fragments()[next_index],
                     next_cut.parameter,
@@ -9874,7 +10029,7 @@ impl CurveRegion2 {
                     operation,
                     policy,
                 )?,
-            }])
+            })
         };
 
         let mut fragments = Vec::with_capacity(fragment_count + inserted.len());
@@ -12330,6 +12485,15 @@ impl CurveRegion2 {
             return Ok(());
         }
         if cut.placement != CornerPlacement2::Extension {
+            return Ok(());
+        }
+
+        if matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+            && cut.parameter.is_algebraic_cusp()
+        {
+            // The retained parameter already names either the authored half
+            // or its complementary chart. Reconstruction expands that exact
+            // chart path into the required half-circle fragment sequence.
             return Ok(());
         }
 
@@ -23335,58 +23499,195 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let region = nonrepresented_chord_selected_circle_corner_region(&policy, reversed);
-                let outcome = region
-                    .fillet_loop_vertex_by_radius(
-                        0,
-                        if reversed { 2 } else { 1 },
-                        radius.clone(),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
-                    .unwrap_or_else(|error| {
-                        panic!(
-                            "nonrepresented chord/selected-circle fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
+                let mut trim_count = None;
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    let outcome = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            if reversed { 2 } else { 1 },
+                            radius.clone(),
+                            mode,
+                            &policy,
                         )
-                    });
-                assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(
-                    outcome.value.candidate_count() > 0,
-                    "policy={policy:?}, reversed={reversed}, outcome={:?}",
-                    outcome.value
-                );
-                for_each_corner_region(&outcome.value, |filleted| {
-                    let fragments = filleted.boundary_loops()[0].fragments();
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "nonrepresented chord/selected-circle fillet: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(
-                        fragments
-                            .iter()
-                            .filter(|fragment| matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                            ))
-                            .count()
-                            >= 2
+                        outcome.value.candidate_count() > 0,
+                        "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
+                        outcome.value
                     );
-                    let mut chord_adjacencies = 0;
-                    for (index, fragment) in fragments.iter().enumerate() {
-                        let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = fragment else {
-                            continue;
-                        };
-                        for adjacent in [
-                            &fragments[(index + fragments.len() - 1) % fragments.len()],
-                            &fragments[(index + 1) % fragments.len()],
-                        ] {
-                            let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                    if mode == CurveCornerMode2::TrimOnly {
+                        trim_count = Some(outcome.value.candidate_count());
+                    } else {
+                        assert!(
+                            outcome.value.candidate_count()
+                                > trim_count.expect("the trim result runs first"),
+                            "extension must retain the complementary selected-circle branch"
+                        );
+                    }
+                    for_each_corner_region(&outcome.value, |filleted| {
+                        let fragments = filleted.boundary_loops()[0].fragments();
+                        assert!(
+                            fragments
+                                .iter()
+                                .filter(|fragment| matches!(
+                                    fragment,
+                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                                ))
+                                .count()
+                                >= 2
+                        );
+                        let mut chord_adjacencies = 0;
+                        for (index, fragment) in fragments.iter().enumerate() {
+                            let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = fragment
+                            else {
                                 continue;
                             };
-                            if circle.certified_adjacent_chord_is_endpoint_only(chord, &policy)
-                                == Ok(Classification::Decided(true))
-                            {
-                                chord_adjacencies += 1;
+                            for adjacent in [
+                                &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                &fragments[(index + 1) % fragments.len()],
+                            ] {
+                                let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                                    continue;
+                                };
+                                if circle.certified_adjacent_chord_is_endpoint_only(chord, &policy)
+                                    == Ok(Classification::Decided(true))
+                                {
+                                    chord_adjacencies += 1;
+                                }
                             }
                         }
+                        assert!(chord_adjacencies > 0);
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_extension_reconstructs_every_half_chart_path() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_source =
+                RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();
+            let center_parameter = positive_inverse_sqrt_parameter(2, &policy);
+            let center = crate::rational_bezier_general::exact_contact_point_evidence(
+                &center_source,
+                &center_parameter,
+                &policy,
+            )
+            .unwrap()
+            .expect("the selected reconstruction center retains exact evidence");
+            let Classification::Decided(Some(circle)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                    &center,
+                    (1, 0),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected reconstruction circle must construct");
+            };
+            let parameter = |numerator, denominator| {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                    (Real::from(numerator) / Real::from(denominator)).unwrap(),
+                )
+            };
+            let endpoint = |fragment: &BezierSplitFragment2, start| {
+                let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment else {
+                    panic!("a selected-circle extension must remain on selected circles");
+                };
+                match fragment.endpoint_point_evidence(start, &policy).unwrap() {
+                    Classification::Decided(Some(point)) => point,
+                    result => panic!("selected-circle endpoint evidence: {result:?}"),
+                }
+            };
+            for reversed in [false, true] {
+                let Classification::Decided(source) =
+                    crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                        circle.clone(),
+                        parameter(1, 4),
+                        parameter(3, 4),
+                        reversed,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the selected source span must construct");
+                };
+                for keep_before_cut in [false, true] {
+                    let mut base_counts = Vec::new();
+                    for cut in [parameter(1, 8), parameter(7, 8)] {
+                        let expected_cut =
+                            match cut.coincident_point_evidence(&circle, &policy).unwrap() {
+                                Classification::Decided(Some(point)) => point,
+                                result => panic!("base cut evidence: {result:?}"),
+                            };
+                        let fragments = retained_cusp_fragment_extension(
+                            &source,
+                            CurveRegionParameter2::from_algebraic_cusp(cut),
+                            keep_before_cut,
+                            CurveOperation2::Fillet,
+                            &policy,
+                        )
+                        .unwrap();
+                        base_counts.push(fragments.len());
+                        for pair in fragments.windows(2) {
+                            assert_eq!(
+                                endpoint(&pair[0], false)
+                                    .same_point(&endpoint(&pair[1], true), &policy),
+                                Classification::Decided(true),
+                            );
+                        }
+                        let terminal = if keep_before_cut {
+                            endpoint(fragments.last().unwrap(), false)
+                        } else {
+                            endpoint(fragments.first().unwrap(), true)
+                        };
+                        assert_eq!(
+                            terminal.same_point(&expected_cut, &policy),
+                            Classification::Decided(true),
+                        );
                     }
-                    assert!(chord_adjacencies > 0);
-                });
+                    base_counts.sort_unstable();
+                    assert_eq!(base_counts, vec![1, 3]);
+
+                    let complement = circle.complementary_half();
+                    let cut = parameter(1, 2);
+                    let expected_cut =
+                        match cut.coincident_point_evidence(&complement, &policy).unwrap() {
+                            Classification::Decided(Some(point)) => point,
+                            result => panic!("complement cut evidence: {result:?}"),
+                        };
+                    let fragments = retained_cusp_fragment_extension(
+                        &source,
+                        CurveRegionParameter2::from_algebraic_cusp_complement(cut),
+                        keep_before_cut,
+                        CurveOperation2::Fillet,
+                        &policy,
+                    )
+                    .unwrap();
+                    assert_eq!(fragments.len(), 2);
+                    assert_eq!(
+                        endpoint(&fragments[0], false)
+                            .same_point(&endpoint(&fragments[1], true), &policy),
+                        Classification::Decided(true),
+                    );
+                    let terminal = if keep_before_cut {
+                        endpoint(fragments.last().unwrap(), false)
+                    } else {
+                        endpoint(fragments.first().unwrap(), true)
+                    };
+                    assert_eq!(
+                        terminal.same_point(&expected_cut, &policy),
+                        Classification::Decided(true),
+                    );
+                }
             }
         }
     }

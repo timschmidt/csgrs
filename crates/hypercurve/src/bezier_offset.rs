@@ -2948,6 +2948,7 @@ struct BezierAlgebraicCuspSemicircleChordParameterMapData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
     chord: BezierAlgebraicChord2,
     system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2,
+    finite_chord_domain: bool,
     policy: CurveContext,
 }
 
@@ -3973,6 +3974,7 @@ struct BezierChordNormalDenseTargetGeometry2 {
 impl BezierChordNormalProjectiveTargetSystem2 {
     fn contact_parameters(
         &self,
+        domain: SelectedThirdAxisDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
         match self {
@@ -3980,11 +3982,15 @@ impl BezierChordNormalProjectiveTargetSystem2 {
                 &system.map,
                 &system.source_representations,
                 &system.incidence,
+                domain,
                 policy,
             ),
-            Self::Dense(system) => {
-                chord_normal_dense_expression_parameters(&system.map, &system.incidence, policy)
-            }
+            Self::Dense(system) => chord_normal_dense_expression_parameters(
+                &system.map,
+                &system.incidence,
+                domain,
+                policy,
+            ),
         }
     }
 
@@ -4016,11 +4022,13 @@ impl BezierChordNormalProjectiveTargetSystem2 {
                 &system.map,
                 &system.source_representations,
                 &system.selected_half_plane,
+                SelectedThirdAxisDomain2::UnitInterval,
                 policy,
             ),
             Self::Dense(system) => chord_normal_dense_expression_parameters(
                 &system.map,
                 &system.selected_half_plane,
+                SelectedThirdAxisDomain2::UnitInterval,
                 policy,
             ),
         }
@@ -4071,13 +4079,19 @@ impl BezierChordNormalProjectiveTargetSystem2 {
                 &system.map,
                 &system.source_representations,
                 &system.angular_tangent,
+                SelectedThirdAxisDomain2::UnitInterval,
                 policy,
             ),
             Self::Dense(system) => {
                 let Some(angular_tangent) = system.angular_tangent.as_ref() else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                chord_normal_dense_expression_parameters(&system.map, angular_tangent, policy)
+                chord_normal_dense_expression_parameters(
+                    &system.map,
+                    angular_tangent,
+                    SelectedThirdAxisDomain2::UnitInterval,
+                    policy,
+                )
             }
         }
     }
@@ -4665,6 +4679,7 @@ fn represented_dense_value_refined(
 fn selected_dense_last_axis_parameters(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     if polynomial.dimensions().len() != sources.len() + 1 {
@@ -4813,10 +4828,10 @@ fn selected_dense_last_axis_parameters(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let isolated = if square_free {
+    let isolated = if square_free && matches!(domain, SelectedThirdAxisDomain2::UnitInterval) {
         polynomial.isolate_square_free_unit_interval_roots(policy)?
     } else {
-        polynomial.isolate_unit_interval_roots(policy)?
+        domain.isolate(&polynomial, policy)?
     };
     Ok(isolated.map(BezierAlgebraicFiberProjection2::Parameters))
 }
@@ -16429,6 +16444,15 @@ impl BezierAlgebraicCuspSemicircle2 {
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        self.axis_chord_intersections_in_domain(chord, true, policy)
+    }
+
+    fn axis_chord_intersections_in_domain(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         chord.validate_policy(policy)?;
         let Some(direction) = chord.certified_axis_direction() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -16505,43 +16529,47 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let start_sign = match self.axis_chord_contact_minus_point_sign_cached(
-                chord,
-                &system,
-                support,
-                chord.start(),
-                &mut start_system,
-                direction,
-                branch,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let chord_location = if clip_to_finite_chord {
+                let start_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                    chord,
+                    &system,
+                    support,
+                    chord.start(),
+                    &mut start_system,
+                    direction,
+                    branch,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end_sign = match self.axis_chord_contact_minus_point_sign_cached(
+                    chord,
+                    &system,
+                    support,
+                    chord.end(),
+                    &mut end_system,
+                    direction,
+                    branch,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
+                    continue;
                 }
-            };
-            let end_sign = match self.axis_chord_contact_minus_point_sign_cached(
-                chord,
-                &system,
-                support,
-                chord.end(),
-                &mut end_system,
-                direction,
-                branch,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                match (start_sign, end_sign) {
+                    (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
                 }
-            };
-            if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
-                continue;
-            }
-            let chord_location = match (start_sign, end_sign) {
-                (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
-                (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
-                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
             };
             let tangent_cross_sign = match branch {
                 0 => RealSign::Zero,
@@ -16595,6 +16623,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         direction: system.direction,
                     },
                 ),
+                finite_chord_domain: clip_to_finite_chord,
                 policy: *policy,
             }),
         };
@@ -16609,6 +16638,15 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn oblique_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        self.oblique_chord_intersections_in_domain(chord, true, policy)
+    }
+
+    fn oblique_chord_intersections_in_domain(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         let system = match self.oblique_chord_system(chord, policy)? {
@@ -16682,25 +16720,29 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let start_sign = match radical_sign(&system.point_minus_start, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let chord_location = if clip_to_finite_chord {
+                let start_sign = match radical_sign(&system.point_minus_start, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end_sign = match radical_sign(&system.point_minus_end, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
+                    continue;
                 }
-            };
-            let end_sign = match radical_sign(&system.point_minus_end, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                match (start_sign, end_sign) {
+                    (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
                 }
-            };
-            if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
-                continue;
-            }
-            let chord_location = match (start_sign, end_sign) {
-                (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
-                (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
-                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
             };
             let tangent_cross_sign = match branch {
                 0 => RealSign::Zero,
@@ -16741,6 +16783,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(
                     system.retained,
                 ),
+                finite_chord_domain: clip_to_finite_chord,
                 policy: *policy,
             }),
         };
@@ -16755,6 +16798,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn retained_offset_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         let system = match self.retained_offset_chord_system(chord, policy)? {
@@ -16819,25 +16863,29 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let start_sign = match nested_sign(&system.point_minus_start, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let chord_location = if clip_to_finite_chord {
+                let start_sign = match nested_sign(&system.point_minus_start, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end_sign = match nested_sign(&system.point_minus_end, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
+                    continue;
                 }
-            };
-            let end_sign = match nested_sign(&system.point_minus_end, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                match (start_sign, end_sign) {
+                    (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
                 }
-            };
-            if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
-                continue;
-            }
-            let chord_location = match (start_sign, end_sign) {
-                (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
-                (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
-                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
             };
             let tangent_cross_sign = match branch {
                 0 => RealSign::Zero,
@@ -16878,6 +16926,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RetainedOffset(
                     system.retained,
                 ),
+                finite_chord_domain: clip_to_finite_chord,
                 policy: *policy,
             }),
         };
@@ -16897,6 +16946,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn selected_radial_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         let system = match self.selected_radial_chord_system(chord, policy)? {
@@ -16961,25 +17011,29 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let start_sign = match nested_sign(&system.point_minus_start, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let chord_location = if clip_to_finite_chord {
+                let start_sign = match nested_sign(&system.point_minus_start, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end_sign = match nested_sign(&system.point_minus_end, branch)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
+                    continue;
                 }
-            };
-            let end_sign = match nested_sign(&system.point_minus_end, branch)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                match (start_sign, end_sign) {
+                    (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
                 }
-            };
-            if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
-                continue;
-            }
-            let chord_location = match (start_sign, end_sign) {
-                (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
-                (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
-                _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
             };
             let tangent_cross_sign = match branch {
                 0 => RealSign::Zero,
@@ -17020,6 +17074,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 system: BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(
                     system.retained,
                 ),
+                finite_chord_domain: clip_to_finite_chord,
                 policy: *policy,
             }),
         };
@@ -17042,7 +17097,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         chord: &BezierAlgebraicChord2,
         line: &LineSeg2,
-        line_is_finite_chord: bool,
+        line_parameter_is_chord_parameter: bool,
+        clip_to_finite_chord: bool,
         retained_orientation_reversed: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
@@ -17141,7 +17197,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             } else {
                 tangent_cross_sign
             };
-            if line_is_finite_chord {
+            if line_parameter_is_chord_parameter && clip_to_finite_chord {
                 match in_closed_unit_interval(&line_parameter, policy) {
                     Some(true) => {}
                     Some(false) => continue,
@@ -17185,7 +17241,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let point = RationalBezierIntersectionPointEvidence2::Exact(point);
-            let chord_parameter = if line_is_finite_chord {
+            let chord_parameter = if line_parameter_is_chord_parameter && clip_to_finite_chord {
                 match compare_reals(&line_parameter, &zero, policy) {
                     Some(std::cmp::Ordering::Equal) => chord.start_parameter(),
                     Some(_) => match compare_reals(&line_parameter, &one, policy) {
@@ -17199,7 +17255,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
                     }
                 }
-            } else {
+            } else if clip_to_finite_chord {
                 match chord.parameter_at_certified_point(point.clone(), policy)? {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) => continue,
@@ -17207,6 +17263,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
+            } else {
+                chord.parameter_at_certified_support_point(point.clone(), policy)?
             };
             contacts.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                 cusp_parameter,
@@ -17233,6 +17291,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         chord: &BezierAlgebraicChord2,
         line: &LineSeg2,
+        finite_chord_domain: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         let Some(BezierParameter2::Algebraic(center_parameter)) = self.selected_frame_parameter()
@@ -17465,6 +17524,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         line: line.clone(),
                     },
                 ),
+                finite_chord_domain,
                 policy: *policy,
             }),
         };
@@ -17480,7 +17540,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         chord: &BezierAlgebraicChord2,
         intersections: BezierAlgebraicCuspSemicircleChordIntersections2,
-        line_is_finite_chord: bool,
+        line_parameter_is_chord_parameter: bool,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
         let BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
@@ -17495,11 +17556,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         let mut retained = Vec::with_capacity(contacts.len());
         for contact in contacts {
             let (cusp_parameter, correlated_point) = parameter_map.contact_evidence(&contact);
-            let point = if line_is_finite_chord
+            let point = if line_parameter_is_chord_parameter
                 && contact.chord_location == BezierAlgebraicCuspSemicircleContactLocation2::Start
             {
                 chord.start().clone()
-            } else if line_is_finite_chord
+            } else if line_parameter_is_chord_parameter
                 && contact.chord_location == BezierAlgebraicCuspSemicircleContactLocation2::End
             {
                 chord.end().clone()
@@ -17518,19 +17579,16 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierAlgebraicCuspSemicircleContactLocation2::Interior => correlated_point,
                 }
             };
-            let chord_parameter_result =
-                chord.parameter_at_certified_point(point.clone(), policy)?;
-            let chord_parameter = match chord_parameter_result {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) if !line_is_finite_chord => continue,
-                Classification::Decided(None) => {
-                    return Err(CurveError::Topology(
-                        "selected-fiber circle/line contact was outside its exact chord".into(),
-                    ));
+            let chord_parameter = if clip_to_finite_chord {
+                match chord.parameter_at_certified_point(point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+            } else {
+                chord.parameter_at_certified_support_point(point.clone(), policy)?
             };
             retained.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                 cusp_parameter,
@@ -17548,9 +17606,15 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         chord: &BezierAlgebraicChord2,
         system: BezierChordNormalProjectiveTargetSystem2,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
-        let candidates = match system.contact_parameters(policy)? {
+        let domain = if clip_to_finite_chord {
+            SelectedThirdAxisDomain2::UnitInterval
+        } else {
+            SelectedThirdAxisDomain2::AffineLine
+        };
+        let candidates = match system.contact_parameters(domain, policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
                 candidates
             }
@@ -17601,28 +17665,32 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let chord_location = match candidate.cmp_by_refinement(&zero, policy)? {
-                Classification::Decided(std::cmp::Ordering::Equal) => {
-                    BezierAlgebraicCuspSemicircleContactLocation2::Start
-                }
-                Classification::Decided(std::cmp::Ordering::Greater) => {
-                    match candidate.cmp_by_refinement(&one, policy)? {
-                        Classification::Decided(std::cmp::Ordering::Equal) => {
-                            BezierAlgebraicCuspSemicircleContactLocation2::End
-                        }
-                        Classification::Decided(std::cmp::Ordering::Less) => {
-                            BezierAlgebraicCuspSemicircleContactLocation2::Interior
-                        }
-                        Classification::Decided(std::cmp::Ordering::Greater) => continue,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
+            let chord_location = if clip_to_finite_chord {
+                match candidate.cmp_by_refinement(&zero, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    }
+                    Classification::Decided(std::cmp::Ordering::Greater) => {
+                        match candidate.cmp_by_refinement(&one, policy)? {
+                            Classification::Decided(std::cmp::Ordering::Equal) => {
+                                BezierAlgebraicCuspSemicircleContactLocation2::End
+                            }
+                            Classification::Decided(std::cmp::Ordering::Less) => {
+                                BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                            }
+                            Classification::Decided(std::cmp::Ordering::Greater) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
                         }
                     }
+                    Classification::Decided(std::cmp::Ordering::Less) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
-                Classification::Decided(std::cmp::Ordering::Less) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+            } else {
+                BezierAlgebraicCuspSemicircleContactLocation2::Interior
             };
             let tangent_cross_sign = match system.tangent_cross_sign(&candidate, policy)? {
                 Classification::Decided(sign) => sign,
@@ -17662,6 +17730,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
                         system.into_parameter_map_system(),
                     ),
+                finite_chord_domain: clip_to_finite_chord,
                 policy: *policy,
             }),
         };
@@ -17733,6 +17802,53 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
+    /// Returns a finite exact parameterization of `line` that contains the
+    /// complete selected circle. This lets bounded rational and selected-fiber
+    /// solvers enumerate an affine carrier without inventing a numeric extent.
+    fn affine_line_cover(
+        &self,
+        line: &LineSeg2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<LineSeg2>> {
+        let bounds = match self.conservative_bounds(policy)? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (delta_x, delta_y) = line.delta();
+        let x_sign = real_sign(&delta_x, policy);
+        let y_sign = real_sign(&delta_y, policy);
+        let (origin, delta, first_bound, second_bound) = match (x_sign, y_sign) {
+            (Some(RealSign::Positive | RealSign::Negative), _) => {
+                (line.start().x(), &delta_x, bounds.min_x(), bounds.max_x())
+            }
+            (_, Some(RealSign::Positive | RealSign::Negative)) => {
+                (line.start().y(), &delta_y, bounds.min_y(), bounds.max_y())
+            }
+            (Some(RealSign::Zero), Some(RealSign::Zero)) => {
+                return Err(CurveError::ZeroLengthLine);
+            }
+            _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let first = ((first_bound - origin) / delta)?;
+        let second = ((second_bound - origin) / delta)?;
+        let ordering = match compare_reals(&first, &second, policy) {
+            Some(ordering) => ordering,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        };
+        let (lower, upper) = if ordering == std::cmp::Ordering::Greater {
+            (second, first)
+        } else {
+            (first, second)
+        };
+        let cover = LineSeg2::try_new(
+            line.point_at(lower - Real::one()),
+            line.point_at(upper + Real::one()),
+        )?;
+        Ok(Classification::Decided(cover))
+    }
+
     /// Intersects this selected semicircle with any finite retained chord for
     /// which an exact support kernel is available.
     ///
@@ -17748,22 +17864,47 @@ impl BezierAlgebraicCuspSemicircle2 {
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
+        self.chord_intersections_in_domain(chord, true, policy)
+    }
+
+    /// Intersects this selected semicircle with the complete affine support of
+    /// `chord`. Returned chord parameters intentionally retain the same
+    /// monotone carrier coordinate outside the authored finite endpoints.
+    pub(crate) fn chord_support_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
+        self.chord_intersections_in_domain(chord, false, policy)
+    }
+
+    fn chord_intersections_in_domain(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
         chord.validate_policy(policy)?;
-        let broad_phase_refinements: &[usize] = if self.uses_selected_chord_normal_frame() {
-            &[0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-        } else {
-            &[0]
-        };
-        for &refinement_steps in broad_phase_refinements {
-            if let (Classification::Decided(circle_bounds), Classification::Decided(chord_bounds)) = (
-                self.conservative_bounds_refined(refinement_steps, policy)?,
-                chord.conservative_bounds_refined(refinement_steps, policy)?,
-            ) && circle_bounds.overlaps(&chord_bounds, &CurveContext::STRICT)
-                == Classification::Decided(false)
-            {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                ));
+        if clip_to_finite_chord {
+            let broad_phase_refinements: &[usize] = if self.uses_selected_chord_normal_frame() {
+                &[0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+            } else {
+                &[0]
+            };
+            for &refinement_steps in broad_phase_refinements {
+                if let (
+                    Classification::Decided(circle_bounds),
+                    Classification::Decided(chord_bounds),
+                ) = (
+                    self.conservative_bounds_refined(refinement_steps, policy)?,
+                    chord.conservative_bounds_refined(refinement_steps, policy)?,
+                ) && circle_bounds.overlaps(&chord_bounds, &CurveContext::STRICT)
+                    == Classification::Decided(false)
+                {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+                    ));
+                }
             }
         }
         if self.data.frame.rational().is_some() && chord.certified_axis_direction().is_some() {
@@ -17773,7 +17914,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "algebraic-circle-chord-kernel",
                 "axis-correlated-fast-path",
             );
-            return match self.axis_chord_intersections(chord, policy)? {
+            return match self.axis_chord_intersections_in_domain(
+                chord,
+                clip_to_finite_chord,
+                policy,
+            )? {
                 Classification::Decided(intersections) => {
                     self.retain_chord_intersections(chord, intersections, policy)
                 }
@@ -17781,9 +17926,9 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
         }
 
-        let exact_finite_line = chord.exact_line();
-        let line_is_finite_chord = exact_finite_line.is_some();
-        let certified_support_line = exact_finite_line
+        let exact_line = chord.exact_line();
+        let line_parameter_is_chord_parameter = exact_line.is_some();
+        let certified_support_line = exact_line
             .is_none()
             .then(|| chord.strict_provenance_support_line(policy))
             .flatten();
@@ -17797,7 +17942,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 && start.at_end != end.at_end
                 && start.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
         );
-        if exact_finite_line.is_none()
+        if exact_line.is_none()
             && certified_support_line.is_none()
             && retained_offset_support
             && self.data.frame.rational().is_some()
@@ -17808,14 +17953,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "algebraic-circle-chord-kernel",
                 "retained-normal-offset",
             );
-            return match self.retained_offset_chord_intersections(chord, policy)? {
+            return match self.retained_offset_chord_intersections(
+                chord,
+                clip_to_finite_chord,
+                policy,
+            )? {
                 Classification::Decided(intersections) => {
                     self.retain_chord_intersections(chord, intersections, policy)
                 }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
-        let Some(line) = exact_finite_line.or(certified_support_line) else {
+        let Some(line) = exact_line.or(certified_support_line) else {
             if self.uses_selected_chord_normal_frame() {
                 let system = match self.chord_normal_projective_chord_system(chord, policy)? {
                     Classification::Decided(Some(system)) => system,
@@ -17832,9 +17981,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "algebraic-circle-chord-kernel",
                     "chord-normal-projective",
                 );
-                return match self
-                    .chord_normal_projective_chord_intersections(chord, system, policy)?
-                {
+                return match self.chord_normal_projective_chord_intersections(
+                    chord,
+                    system,
+                    clip_to_finite_chord,
+                    policy,
+                )? {
                     Classification::Decided(intersections) => {
                         self.retain_chord_intersections(chord, intersections, policy)
                     }
@@ -17848,7 +18000,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "algebraic-circle-chord-kernel",
                     "selected-radial-algebraic-support",
                 );
-                return match self.selected_radial_chord_intersections(chord, policy)? {
+                return match self.selected_radial_chord_intersections(
+                    chord,
+                    clip_to_finite_chord,
+                    policy,
+                )? {
                     Classification::Decided(intersections) => {
                         self.retain_chord_intersections(chord, intersections, policy)
                     }
@@ -17861,7 +18017,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "algebraic-circle-chord-kernel",
                 "general-algebraic-oblique",
             );
-            return match self.oblique_chord_intersections(chord, policy)? {
+            return match self.oblique_chord_intersections_in_domain(
+                chord,
+                clip_to_finite_chord,
+                policy,
+            )? {
                 Classification::Decided(intersections) => {
                     self.retain_chord_intersections(chord, intersections, policy)
                 }
@@ -17872,7 +18032,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "algebraic-circle-chord-kernel",
-            if line_is_finite_chord {
+            if line_parameter_is_chord_parameter && clip_to_finite_chord {
                 "exact-oblique-rational-line"
             } else {
                 "certified-oblique-support-line"
@@ -17891,7 +18051,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "algebraic-circle-chord-kernel",
                 "represented-parallel-normal-line",
             );
-            let retained_line = (!line_is_finite_chord)
+            let retained_line = (!line_parameter_is_chord_parameter)
                 .then(|| chord.retained_support().exact_line())
                 .flatten();
             let retained_orientation_reversed =
@@ -17899,7 +18059,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             return self.represented_parallel_normal_line_intersections(
                 chord,
                 retained_line.as_ref().unwrap_or(&line),
-                line_is_finite_chord,
+                line_parameter_is_chord_parameter,
+                clip_to_finite_chord,
                 retained_orientation_reversed,
                 policy,
             );
@@ -17916,19 +18077,45 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "algebraic-circle-chord-kernel",
                 "selected-fiber-line",
             );
-            return match self.selected_parallel_normal_line_intersections(chord, &line, policy)? {
+            let solve_line = if line_parameter_is_chord_parameter && clip_to_finite_chord {
+                Cow::Borrowed(&line)
+            } else {
+                match self.affine_line_cover(&line, policy)? {
+                    Classification::Decided(line) => Cow::Owned(line),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+            return match self.selected_parallel_normal_line_intersections(
+                chord,
+                solve_line.as_ref(),
+                clip_to_finite_chord,
+                policy,
+            )? {
                 Classification::Decided(intersections) => self
                     .retain_selected_fiber_line_intersections(
                         chord,
                         intersections,
-                        line_is_finite_chord,
+                        line_parameter_is_chord_parameter && clip_to_finite_chord,
+                        clip_to_finite_chord,
                         policy,
                     ),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
+        let solve_line = if line_parameter_is_chord_parameter && clip_to_finite_chord {
+            Cow::Borrowed(&line)
+        } else {
+            match self.affine_line_cover(&line, policy)? {
+                Classification::Decided(line) => Cow::Owned(line),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
         let rational_line = RationalBezier2::try_new(
-            vec![line.start().clone(), line.end().clone()],
+            vec![solve_line.start().clone(), solve_line.end().clone()],
             vec![Real::one(), Real::one()],
         )?;
         let (intersections, parameter_map) =
@@ -17976,28 +18163,34 @@ impl BezierAlgebraicCuspSemicircle2 {
                         .expect("an interior selected-circle/line contact retains its map")
                         .contact_parameter_with_chord_tangent(&contact, chord)
                 });
-            let point = if contact.other_parameter.as_exact().is_some_and(|parameter| {
-                compare_reals(parameter, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal)
-            }) {
+            let point = if line_parameter_is_chord_parameter
+                && clip_to_finite_chord
+                && contact.other_parameter.as_exact().is_some_and(|parameter| {
+                    compare_reals(parameter, &Real::zero(), policy)
+                        == Some(std::cmp::Ordering::Equal)
+                }) {
                 chord.start().clone()
-            } else if contact.other_parameter.as_exact().is_some_and(|parameter| {
-                compare_reals(parameter, &Real::one(), policy) == Some(std::cmp::Ordering::Equal)
-            }) {
+            } else if line_parameter_is_chord_parameter
+                && clip_to_finite_chord
+                && contact.other_parameter.as_exact().is_some_and(|parameter| {
+                    compare_reals(parameter, &Real::one(), policy)
+                        == Some(std::cmp::Ordering::Equal)
+                })
+            {
                 chord.end().clone()
             } else {
                 contact.point.clone()
             };
-            let chord_parameter = match chord.parameter_at_certified_point(point.clone(), policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) if !line_is_finite_chord => continue,
-                Classification::Decided(None) => {
-                    return Err(CurveError::Topology(
-                        "selected-circle/line contact was outside its retained exact chord".into(),
-                    ));
+            let chord_parameter = if clip_to_finite_chord {
+                match chord.parameter_at_certified_point(point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+            } else {
+                chord.parameter_at_certified_support_point(point.clone(), policy)?
             };
             retained.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                 cusp_parameter,
@@ -21839,27 +22032,28 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
-        let candidates = match system.contact_parameters(policy)? {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-                candidates
-            }
-            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-                return Ok(self
-                    .chord_normal_projective_replay_rational_circle_component(
-                        other, &system, policy,
-                    )?
-                    .map(|intersections| (intersections, None)));
-            }
-            Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
-                return Ok(Classification::Decided((
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                    None,
-                )));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates =
+            match system.contact_parameters(SelectedThirdAxisDomain2::UnitInterval, policy)? {
+                Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
+                    candidates,
+                )) => candidates,
+                Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
+                    return Ok(self
+                        .chord_normal_projective_replay_rational_circle_component(
+                            other, &system, policy,
+                        )?
+                        .map(|intersections| (intersections, None)));
+                }
+                Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
+                    return Ok(Classification::Decided((
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                        None,
+                    )));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
             let selected = match system.selected_half_plane_sign(&candidate, policy)? {
@@ -21952,6 +22146,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let candidates = match selected_dense_last_axis_parameters(
             &system.incidence,
             &system.sources,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
         )? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -28360,7 +28555,9 @@ impl BezierAlgebraicCuspChordPoint2 {
         let shared_domain = map.data.chord.shares_retained_support(chord)
             && map.data.chord.shares_retained_support(other.chord());
         if shared_domain {
-            if let BezierAlgebraicChordParameterStorage2::Endpoint { at_end, .. } = &other.data {
+            if map.data.finite_chord_domain
+                && let BezierAlgebraicChordParameterStorage2::Endpoint { at_end, .. } = &other.data
+            {
                 return Ok(Classification::Decided(if *at_end {
                     std::cmp::Ordering::Less
                 } else {
@@ -33773,6 +33970,7 @@ fn selected_trivariate_third_axis_is_identically_zero(
 #[derive(Clone, Copy)]
 enum SelectedThirdAxisDomain2<'a> {
     UnitInterval,
+    AffineLine,
     IncidentRay {
         anchor: &'a Real,
         direction: BezierParameterRayDirection2,
@@ -33788,6 +33986,41 @@ impl SelectedThirdAxisDomain2<'_> {
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
         match self {
             Self::UnitInterval => polynomial.isolate_unit_interval_roots(policy),
+            Self::AffineLine => {
+                let zero = Real::zero();
+                let mut decreasing = match polynomial.isolate_incident_ray_roots(
+                    &zero,
+                    BezierParameterRayDirection2::Decreasing,
+                    policy,
+                )? {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                decreasing.reverse();
+                match real_sign(&polynomial.evaluate(&zero), policy) {
+                    Some(RealSign::Zero) => {
+                        decreasing.push(BezierParameter2::Exact(zero.clone()));
+                    }
+                    Some(RealSign::Negative | RealSign::Positive) => {}
+                    None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                    }
+                }
+                let increasing = match polynomial.isolate_incident_ray_roots(
+                    &zero,
+                    BezierParameterRayDirection2::Increasing,
+                    policy,
+                )? {
+                    Classification::Decided(parameters) => parameters,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                decreasing.extend(increasing);
+                Ok(Classification::Decided(decreasing))
+            }
             Self::IncidentRay {
                 anchor,
                 direction,
@@ -37699,6 +37932,7 @@ fn quadrivariate_axis_coefficient(
 fn selected_quadrivariate_fourth_axis_parameters(
     polynomial: &QuadrivariatePolynomial2,
     source_parameters: [&BezierParameter2; 3],
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Option<Classification<BezierAlgebraicFiberProjection2>>> {
     let defining = |parameter: &BezierParameter2| match parameter {
@@ -37807,8 +38041,8 @@ fn selected_quadrivariate_fourth_axis_parameters(
         }
     };
     Ok(Some(
-        polynomial
-            .isolate_unit_interval_roots(policy)?
+        domain
+            .isolate(&polynomial, policy)?
             .map(BezierAlgebraicFiberProjection2::Parameters),
     ))
 }
@@ -39048,6 +39282,7 @@ fn dense_two_positive_square_root_transverse_root(
 fn chord_normal_dense_expression_parameters(
     map: &BezierChordNormalDenseMapSystem2,
     expression: &BezierDenseTwoSquareRootExpression2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let Some(projection) = expression.projection(
@@ -39060,6 +39295,7 @@ fn chord_normal_dense_expression_parameters(
     let candidates = match selected_dense_last_axis_parameters(
         &projection,
         &map.source_representations,
+        domain,
         policy,
     )? {
         Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -39191,6 +39427,7 @@ fn chord_normal_projective_expression_parameters(
     map: &BezierChordNormalProjectiveMapSystem2,
     source_representations: &[AlgebraicRootRepresentation; 3],
     expression: &BezierQuadrivariateTwoSquareRootExpression2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let source_parameters = [
@@ -39205,15 +39442,18 @@ fn chord_normal_projective_expression_parameters(
     ) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let projected = if let Some(projected) =
-        selected_quadrivariate_fourth_axis_parameters(&projection, source_parameters, policy)?
-    {
+    let projected = if let Some(projected) = selected_quadrivariate_fourth_axis_parameters(
+        &projection,
+        source_parameters,
+        domain,
+        policy,
+    )? {
         projected
     } else {
         let Some(projection) = projection.to_dense() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        selected_dense_last_axis_parameters(&projection, source_representations, policy)?
+        selected_dense_last_axis_parameters(&projection, source_representations, domain, policy)?
     };
     let candidates = match projected {
         Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -78954,6 +79194,39 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts
                 )
             ));
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+            ) = semicircle
+                .chord_support_intersections(&clipped, &policy)
+                .unwrap()
+            else {
+                panic!("the affine chord support must retain the exterior circle contact");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("expected one selected-half support contact, got {contacts:?}");
+            };
+            assert_eq!(contact.tangent_cross_sign, RealSign::Negative);
+            let start_order = contact
+                .chord_parameter
+                .cmp_by_refinement(&clipped.start_parameter(), &policy)
+                .unwrap();
+            let end_order = contact
+                .chord_parameter
+                .cmp_by_refinement(&clipped.end_parameter(), &policy)
+                .unwrap();
+            assert!(
+                matches!(
+                    (start_order, end_order),
+                    (
+                        Classification::Decided(std::cmp::Ordering::Less),
+                        Classification::Decided(std::cmp::Ordering::Less)
+                    ) | (
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    )
+                ),
+                "the affine support contact must lie on an exterior ray",
+            );
         }
     }
 
@@ -79297,6 +79570,35 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts
                 )
             ));
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+            ) = semicircle
+                .chord_support_intersections(&clipped, &policy)
+                .unwrap()
+            else {
+                panic!("the independent affine support must meet the selected circle");
+            };
+            assert!(!contacts.is_empty());
+            for contact in contacts {
+                let start_order = contact
+                    .chord_parameter
+                    .cmp_by_refinement(&clipped.start_parameter(), &policy)
+                    .unwrap();
+                let end_order = contact
+                    .chord_parameter
+                    .cmp_by_refinement(&clipped.end_parameter(), &policy)
+                    .unwrap();
+                assert!(matches!(
+                    (start_order, end_order),
+                    (
+                        Classification::Decided(std::cmp::Ordering::Less),
+                        Classification::Decided(std::cmp::Ordering::Less)
+                    ) | (
+                        Classification::Decided(std::cmp::Ordering::Greater),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    )
+                ));
+            }
         }
     }
 
@@ -87379,8 +87681,14 @@ mod conversion_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
-                chord_normal_projective_expression_parameters(&map, &sources, &expression, &policy)
-                    .unwrap()
+                chord_normal_projective_expression_parameters(
+                    &map,
+                    &sources,
+                    &expression,
+                    SelectedThirdAxisDomain2::UnitInterval,
+                    &policy,
+                )
+                .unwrap()
             else {
                 panic!("the authored two-radical sheet must project exactly")
             };
@@ -87420,8 +87728,14 @@ mod conversion_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
-                chord_normal_projective_expression_parameters(&map, &sources, &even, &policy)
-                    .unwrap()
+                chord_normal_projective_expression_parameters(
+                    &map,
+                    &sources,
+                    &even,
+                    SelectedThirdAxisDomain2::UnitInterval,
+                    &policy,
+                )
+                .unwrap()
             else {
                 panic!("the even authored root must survive exact replay")
             };
@@ -87436,6 +87750,7 @@ mod conversion_tests {
                     &map,
                     &sources,
                     &identically_zero,
+                    SelectedThirdAxisDomain2::UnitInterval,
                     &policy,
                 )
                 .unwrap(),
@@ -87638,7 +87953,7 @@ mod conversion_tests {
                 &policy,
                 "dense clipped target",
             );
-            for chord in [disjoint, clipped] {
+            for chord in [disjoint, clipped.clone()] {
                 assert!(chord.exact_line().is_none());
                 assert!(chord.strict_retained_support_line(&policy).is_none());
                 assert!(matches!(
@@ -87656,6 +87971,41 @@ mod conversion_tests {
                             BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts
                         )
                     ));
+                }
+            }
+            for carrier in [clipped.clone(), clipped.reversed()] {
+                let result = circle
+                    .chord_support_intersections(&carrier, &policy)
+                    .unwrap();
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) = result
+                else {
+                    panic!("the dense affine target must retain its circle contacts: {result:?}");
+                };
+                assert!(!contacts.is_empty());
+                for contact in &contacts {
+                    let start = contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                        .unwrap();
+                    let end = contact
+                        .chord_parameter
+                        .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                        .unwrap();
+                    assert!(
+                        matches!(
+                            (start, end),
+                            (
+                                Classification::Decided(std::cmp::Ordering::Less),
+                                Classification::Decided(std::cmp::Ordering::Less)
+                            ) | (
+                                Classification::Decided(std::cmp::Ordering::Greater),
+                                Classification::Decided(std::cmp::Ordering::Greater)
+                            )
+                        ),
+                        "an affine-only dense contact must be on one exterior ray: start={start:?}, end={end:?}, contact={contact:?}",
+                    );
                 }
             }
         }

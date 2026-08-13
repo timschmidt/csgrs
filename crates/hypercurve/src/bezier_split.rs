@@ -52,6 +52,10 @@ enum CurveRegionParameterData2 {
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
     AlgebraicChord(BezierAlgebraicChordParameter2),
     AlgebraicCusp(BezierAlgebraicCuspSemicircleParameter2),
+    /// Parameter on the other oriented half of the same supporting circle.
+    /// This is transient corner-extension evidence; rebuilt fragments retain
+    /// their own ordinary `AlgebraicCusp` carrier domain.
+    AlgebraicCuspComplement(BezierAlgebraicCuspSemicircleParameter2),
 }
 
 impl PartialEq for CurveRegionParameter2 {
@@ -68,6 +72,10 @@ impl PartialEq for CurveRegionParameter2 {
             (
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
+            ) => first.shares_exact_evidence(second),
+            (
+                CurveRegionParameterData2::AlgebraicCuspComplement(first),
+                CurveRegionParameterData2::AlgebraicCuspComplement(second),
             ) => first.shares_exact_evidence(second),
             (
                 CurveRegionParameterData2::SelectedFiber(first),
@@ -91,6 +99,14 @@ impl CurveRegionParameter2 {
         }
     }
 
+    pub(crate) fn from_algebraic_cusp_complement(
+        parameter: BezierAlgebraicCuspSemicircleParameter2,
+    ) -> Self {
+        Self {
+            data: CurveRegionParameterData2::AlgebraicCuspComplement(parameter),
+        }
+    }
+
     pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
         Self {
             data: CurveRegionParameterData2::SelectedFiber(parameter),
@@ -110,7 +126,8 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::Bezier(parameter) => Some(parameter),
             CurveRegionParameterData2::SelectedFiber(_) => None,
             CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_) => None,
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -126,12 +143,31 @@ impl CurveRegionParameter2 {
             CurveRegionParameterData2::AlgebraicCusp(
                 BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
             ) => None,
+            CurveRegionParameterData2::AlgebraicCuspComplement(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
+            ) => Some(parameter),
+            CurveRegionParameterData2::AlgebraicCuspComplement(
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(_),
+            ) => None,
         }
     }
 
     /// Returns true for a compact local cut on an algebraic cusp semicircle.
     pub const fn is_algebraic_cusp(&self) -> bool {
-        matches!(self.data, CurveRegionParameterData2::AlgebraicCusp(_))
+        matches!(
+            self.data,
+            CurveRegionParameterData2::AlgebraicCusp(_)
+                | CurveRegionParameterData2::AlgebraicCuspComplement(_)
+        )
+    }
+
+    /// Returns true when this transient corner cut lies on the other half of
+    /// an algebraic cusp circle's authored parameter chart.
+    pub(crate) const fn is_algebraic_cusp_complement(&self) -> bool {
+        matches!(
+            self.data,
+            CurveRegionParameterData2::AlgebraicCuspComplement(_)
+        )
     }
 
     /// Returns true for a correlated exact point parameter on an algebraic chord.
@@ -160,7 +196,8 @@ impl CurveRegionParameter2 {
 
     pub(crate) fn as_algebraic_cusp(&self) -> Option<&BezierAlgebraicCuspSemicircleParameter2> {
         match &self.data {
-            CurveRegionParameterData2::AlgebraicCusp(parameter) => Some(parameter),
+            CurveRegionParameterData2::AlgebraicCusp(parameter)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(parameter) => Some(parameter),
             CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicChord(_) => {
                 None
             }
@@ -171,9 +208,9 @@ impl CurveRegionParameter2 {
     pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
         match &self.data {
             CurveRegionParameterData2::AlgebraicChord(parameter) => Some(parameter),
-            CurveRegionParameterData2::Bezier(_) | CurveRegionParameterData2::AlgebraicCusp(_) => {
-                None
-            }
+            CurveRegionParameterData2::Bezier(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
             CurveRegionParameterData2::SelectedFiber(_) => None,
         }
     }
@@ -195,6 +232,10 @@ impl CurveRegionParameter2 {
             (
                 CurveRegionParameterData2::AlgebraicCusp(first),
                 CurveRegionParameterData2::AlgebraicCusp(second),
+            ) => first.cmp_by_refinement(second, policy),
+            (
+                CurveRegionParameterData2::AlgebraicCuspComplement(first),
+                CurveRegionParameterData2::AlgebraicCuspComplement(second),
             ) => first.cmp_by_refinement(second, policy),
             (
                 CurveRegionParameterData2::SelectedFiber(first),
@@ -235,7 +276,8 @@ impl CurveRegionParameter2 {
                 Some(Self::from_selected_fiber(parameter.unit_complement()))
             }
             CurveRegionParameterData2::AlgebraicChord(_)
-            | CurveRegionParameterData2::AlgebraicCusp(_) => None,
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
         }
     }
 
@@ -254,6 +296,10 @@ impl CurveRegionParameter2 {
                 CurveRegionParameterData2::AlgebraicCusp(second),
             ) => first.strict_rational_between(second, policy),
             (
+                CurveRegionParameterData2::AlgebraicCuspComplement(first),
+                CurveRegionParameterData2::AlgebraicCuspComplement(second),
+            ) => first.strict_rational_between(second, policy),
+            (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
             ) => first.strict_rational_between_ordered(second, policy),
@@ -270,11 +316,25 @@ impl CurveRegionParameter2 {
                 "an algebraic chord cut has no represented scalar midpoint".into(),
             )),
             (CurveRegionParameterData2::Bezier(_), CurveRegionParameterData2::AlgebraicCusp(_))
-            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_)) => {
-                Err(CurveError::Topology(
-                    "cannot separate parameters from distinct carrier domains".into(),
-                ))
-            }
+            | (
+                CurveRegionParameterData2::Bezier(_),
+                CurveRegionParameterData2::AlgebraicCuspComplement(_),
+            )
+            | (CurveRegionParameterData2::AlgebraicCusp(_), CurveRegionParameterData2::Bezier(_))
+            | (
+                CurveRegionParameterData2::AlgebraicCuspComplement(_),
+                CurveRegionParameterData2::Bezier(_),
+            )
+            | (
+                CurveRegionParameterData2::AlgebraicCusp(_),
+                CurveRegionParameterData2::AlgebraicCuspComplement(_),
+            )
+            | (
+                CurveRegionParameterData2::AlgebraicCuspComplement(_),
+                CurveRegionParameterData2::AlgebraicCusp(_),
+            ) => Err(CurveError::Topology(
+                "cannot separate parameters from distinct carrier domains".into(),
+            )),
             (CurveRegionParameterData2::SelectedFiber(_), _)
             | (_, CurveRegionParameterData2::SelectedFiber(_)) => Err(CurveError::Topology(
                 "selected-fiber separation requires a shared local authority".into(),
