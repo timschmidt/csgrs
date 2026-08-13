@@ -21884,29 +21884,33 @@ mod tests {
         filleted
     }
 
+    fn pair_radial_corner(region: &CurveRegion2) -> (usize, Real) {
+        let fragments = region.boundary_loops()[0].fragments();
+        (0..fragments.len())
+            .find_map(|index| {
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[index];
+                let radial = |fragment: &BezierSplitFragment2| match fragment {
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                        if fragment.semicircle().uses_selected_radial_frame() =>
+                    {
+                        Some(fragment.semicircle().radial_distance().abs())
+                    }
+                    _ => None,
+                };
+                radial(previous)
+                    .or_else(|| radial(next))
+                    .map(|radius| (index, radius))
+            })
+            .expect("the first fillet retains one pair-radial circle")
+    }
+
     #[test]
     fn collapsed_pair_radial_fillet_retains_its_recursive_center() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let filleted = independent_pair_native_fillet(&policy, reversed);
-                let fragments = filleted.boundary_loops()[0].fragments();
-                let (corner, radius) = (0..fragments.len())
-                    .find_map(|index| {
-                        let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
-                        let next = &fragments[index];
-                        let radial = |fragment: &BezierSplitFragment2| match fragment {
-                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
-                                if fragment.semicircle().uses_selected_radial_frame() =>
-                            {
-                                Some(fragment.semicircle().radial_distance().abs())
-                            }
-                            _ => None,
-                        };
-                        radial(previous)
-                            .or_else(|| radial(next))
-                            .map(|radius| (index, radius))
-                    })
-                    .expect("the first fillet retains one pair-radial circle");
+                let (corner, radius) = pair_radial_corner(&filleted);
                 let result = filleted
                     .fillet_loop_vertex_by_radius(
                         0,
@@ -21927,6 +21931,70 @@ mod tests {
                         crate::CurveCornerNoSolution2::DegenerateCandidate,
                     )
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn noncollapsed_pair_radial_fillet_reenters_the_corner_kernel() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let filleted = independent_pair_native_fillet(&policy, reversed);
+                let transform = crate::Similarity2::try_from_real_affine(
+                    Real::zero(),
+                    Real::from(-2_i8),
+                    Real::from(2_i8),
+                    Real::zero(),
+                    Real::from(5_i8),
+                    Real::from(-7_i8),
+                )
+                .expect("the scaled quarter turn is a similarity");
+                let reflected = crate::Similarity2::try_from_real_affine(
+                    Real::from(-3_i8),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::from(3_i8),
+                    Real::from(2_i8),
+                    Real::from(3_i8),
+                )
+                .expect("the scaled reflection is a similarity");
+                let transformed = filleted
+                    .transform_similarity(&transform, &policy)
+                    .expect("the pair-radial fixture transforms exactly");
+                assert_eq!(transformed.certainty, CurveCertainty::Certified);
+                let reflected = filleted
+                    .transform_similarity(&reflected, &policy)
+                    .expect("the pair-radial fixture reflects exactly");
+                assert_eq!(reflected.certainty, CurveCertainty::Certified);
+
+                for (name, region) in [
+                    ("direct", filleted),
+                    ("rotated", transformed.value),
+                    ("reflected", reflected.value),
+                ] {
+                    let (corner, parent_radius) = pair_radial_corner(&region);
+                    let radius = (parent_radius / Real::from(2_i8)).unwrap();
+                    let result = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            radius,
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the noncollapsed {name} pair-radial fillet must remain in the exact kernel: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        result.value,
+                        CurveCornerSolutions2::NoSolution(
+                            crate::CurveCornerNoSolution2::NoTangentCircle,
+                        )
+                    );
+                }
             }
         }
     }
