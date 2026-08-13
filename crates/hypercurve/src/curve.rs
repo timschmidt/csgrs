@@ -8896,12 +8896,18 @@ fn point_on_fillet_offset(
             )),
         };
     }
-    if matches!(support, FilletOffsetCarrier2::AlgebraicCusp { .. }) {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
+    if let FilletOffsetCarrier2::AlgebraicCusp { support, .. } = support {
+        return match support
+            .contains_point(point, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(contains) => Ok(contains),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            )),
+        };
     }
     let residual = match support {
         FilletOffsetCarrier2::Line { support, .. } => {

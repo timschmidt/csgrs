@@ -20783,6 +20783,86 @@ mod tests {
             .expect("the fixture retains its mixed circular corner")
     }
 
+    fn selected_circle_collapsed_arc_offset_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let center_parameter = sqrt_half_algebraic_parameter(policy);
+        let BezierParameter2::Algebraic(center_parameter) = &center_parameter else {
+            unreachable!("the selected center parameter is algebraic")
+        };
+        let center_source =
+            RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 0)], vec![Real::one(); 3])
+                .unwrap();
+        let center = RationalBezierIntersectionPointEvidence2::Algebraic(
+            center_source
+                .point_at_algebraic_parameter(center_parameter, policy)
+                .unwrap(),
+        );
+        let Classification::Decided(Some(circle)) =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                &center,
+                (1, 0),
+                Real::from(2_i8),
+                true,
+                policy,
+            )
+            .unwrap()
+        else {
+            panic!("the radius-two selected circle must construct");
+        };
+        let selected_start = Point2::new(q(5, 2), Real::zero());
+        let join = Point2::new(q(-3, 2), Real::zero());
+        let arc_end = Point2::new(q(-1, 2), Real::one());
+        let half_sqrt_two = q(1, 2).sqrt().unwrap();
+        let arc = RationalQuadraticBezier2::try_new(
+            join.clone(),
+            Point2::new(q(-3, 2), Real::one()),
+            arc_end.clone(),
+            Real::one(),
+            half_sqrt_two,
+            Real::one(),
+        )
+        .unwrap();
+        assert!(matches!(
+            crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
+            Ok(Classification::Decided(Some(_)))
+        ));
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                crate::BezierAlgebraicCuspSemicircleFragment2::full(circle, policy),
+            ),
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::RationalQuadratic(arc),
+            },
+            quadratic_fragment(
+                arc_end.clone(),
+                arc_end.lerp(&selected_start, q(1, 2)),
+                selected_start,
+            ),
+        ];
+        if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().unwrap())
+                .collect();
+        }
+        CurveRegion2::try_new_with_loop_topology(
+            vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![if reversed {
+                CurveBoundaryInteriorSide2::Left
+            } else {
+                CurveBoundaryInteriorSide2::Right
+            }],
+        )
+        .unwrap()
+    }
+
     #[test]
     fn selected_circle_and_retained_rational_arc_fillet_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -20841,6 +20921,36 @@ mod tests {
                         assert!(replay.value.intersection().is_empty());
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_rational_arc_offset_tests_selected_circle_incidence_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_circle_collapsed_arc_offset_region(&policy, reversed);
+                let corner = selected_circle_rational_arc_corner(&region);
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the collapsed arc offset must classify against the selected circle: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::DegenerateCandidate,
+                    )
+                );
             }
         }
     }
