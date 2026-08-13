@@ -47219,7 +47219,7 @@ impl BezierAlgebraicChord2 {
 }
 
 impl BezierAlgebraicChordParameter2 {
-    fn chord(&self) -> &BezierAlgebraicChord2 {
+    pub(crate) fn chord(&self) -> &BezierAlgebraicChord2 {
         match &self.data {
             BezierAlgebraicChordParameterStorage2::Endpoint { chord, .. } => chord,
             BezierAlgebraicChordParameterStorage2::Interior(data) => &data.chord,

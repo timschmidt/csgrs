@@ -4245,6 +4245,8 @@ fn fillet_carrier_pair_supports_extension(
     let is_analytic_parallel = |carrier: &ExactCornerCarrier2<'_>| {
         matches!(carrier, ExactCornerCarrier2::AnalyticParallel(_))
     };
+    let is_bezier =
+        |carrier: &ExactCornerCarrier2<'_>| matches!(carrier, ExactCornerCarrier2::Bezier(_));
     (is_affine_line(previous) && is_arc(next))
         || (is_arc(previous) && is_affine_line(next))
         || (is_arc(previous) && is_arc(next))
@@ -4257,12 +4259,15 @@ fn fillet_carrier_pair_supports_extension(
         || (is_selected_circle(previous) && is_selected_circle(next))
         || (is_selected_circle(previous) && is_analytic_parallel(next))
         || (is_analytic_parallel(previous) && is_selected_circle(next))
-        || (is_affine_line(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
-        || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_affine_line(next))
-        || (is_arc(previous) && matches!(next, ExactCornerCarrier2::Bezier(_)))
-        || (matches!(previous, ExactCornerCarrier2::Bezier(_)) && is_arc(next))
-        || (matches!(previous, ExactCornerCarrier2::Bezier(_))
-            && matches!(next, ExactCornerCarrier2::Bezier(_)))
+        || (is_affine_line(previous) && is_bezier(next))
+        || (is_bezier(previous) && is_affine_line(next))
+        || (is_arc(previous) && is_bezier(next))
+        || (is_bezier(previous) && is_arc(next))
+        || (is_selected_circle(previous) && is_bezier(next))
+        || (is_bezier(previous) && is_selected_circle(next))
+        || (is_analytic_parallel(previous) && is_bezier(next))
+        || (is_bezier(previous) && is_analytic_parallel(next))
+        || (is_bezier(previous) && is_bezier(next))
 }
 
 #[derive(Clone, Copy)]
@@ -11235,6 +11240,189 @@ mod tests {
             panic!("the nonzero selected semicircle must be decided");
         };
         support
+    }
+
+    #[test]
+    fn retained_parallel_and_direct_bezier_share_projective_fillet_extension() {
+        let first = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 0),
+        );
+        let second = QuadraticBezier2::new(
+            Point2::from_values(2, 0),
+            Point2::from_values(2, 1),
+            Point2::from_values(2, 2),
+        );
+        let first_curve = Curve2::from(first.clone());
+        let second_curve = Curve2::from(second.clone());
+        let reversed_first_curve = Curve2::from(first.reversed_with_retained_provenance().unwrap());
+        let reversed_second_curve =
+            Curve2::from(second.reversed_with_retained_provenance().unwrap());
+        let retained = crate::BezierParallelFragment2::from_certified_range(
+            first.parallel_left(Real::zero()).unwrap(),
+            BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            ),
+            false,
+        );
+        let radius = (Real::one() / Real::from(2_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let solve = |retained_source: bool, mode| {
+                    match (retained_source, reversed) {
+                        (false, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Bezier(&first_curve),
+                            ExactCornerCarrier2::Bezier(&second_curve),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (false, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Bezier(&reversed_second_curve),
+                            ExactCornerCarrier2::Bezier(&reversed_first_curve),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (true, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AnalyticParallel(&retained),
+                            ExactCornerCarrier2::Bezier(&second_curve),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (true, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Bezier(&reversed_second_curve),
+                            ExactCornerCarrier2::AnalyticParallel(&retained.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                    }
+                    .expect("the shared parallel-pair extension kernel must decide")
+                };
+                let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
+                let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
+                assert_eq!(
+                    retained_extension.candidate_count(),
+                    direct_extension.candidate_count()
+                );
+                assert!(direct_extension.candidate_count() > 0);
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_direct_bezier_share_projective_fillet_extension() {
+        let source = QuadraticBezier2::new(
+            Point2::new((-Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+            Point2::new(
+                (-Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+            ),
+            Point2::new(
+                (-Real::from(5_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+            ),
+        );
+        let direct = Curve2::from(source.clone());
+        let reversed_direct = Curve2::from(source.reversed_with_retained_provenance().unwrap());
+        let retained = crate::BezierParallelFragment2::from_certified_range(
+            source.parallel_left(Real::zero()).unwrap(),
+            BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            ),
+            false,
+        );
+        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = rationalizable_selected_semicircle(&policy);
+            let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                semicircle,
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                false,
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(fragment) => fragment,
+                Classification::Uncertain(reason) => {
+                    panic!("the selected source half must decide: {reason:?}")
+                }
+            };
+            for reversed in [false, true] {
+                let solve = |retained_source: bool, mode| {
+                    match (retained_source, reversed) {
+                        (false, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment),
+                            ExactCornerCarrier2::Bezier(&direct),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::RationalBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (false, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Bezier(&reversed_direct),
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::RationalBezier,
+                            &policy,
+                        ),
+                        (true, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment),
+                            ExactCornerCarrier2::AnalyticParallel(&retained),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::RationalBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (true, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AnalyticParallel(&retained.reversed()),
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::RationalBezier,
+                            &policy,
+                        ),
+                    }
+                    .expect("the selected-circle/parallel extension kernel must decide")
+                };
+                let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
+                let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
+                assert_eq!(
+                    direct_extension.candidate_count(),
+                    retained_extension.candidate_count()
+                );
+                assert!(direct_extension.candidate_count() > 0);
+            }
+        }
     }
 
     #[test]
