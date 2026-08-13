@@ -42,8 +42,10 @@ pub use jerk_schedule::{
     plan_monotonic_jerk_transition,
 };
 pub use lookahead::{
-    LookaheadFeedPlanningLimits, LookaheadFeedSchedule, LookaheadFeedScheduleReport,
-    LookaheadSpanTransitionReport, PlannedLookaheadFeedSchedule, certify_lookahead_feed_schedule,
+    JerkFeasibleNodeComponent, LookaheadFeedPlanningLimits, LookaheadFeedSchedule,
+    LookaheadFeedScheduleReport, LookaheadSpanTransitionReport,
+    PlannedJerkFeasibleLookaheadSchedule, PlannedLookaheadFeedSchedule,
+    certify_lookahead_feed_schedule, plan_jerk_feasible_lookahead_schedule,
     plan_lookahead_feed_schedule,
 };
 use orthogonal_keepout::{
@@ -532,6 +534,8 @@ pub enum RouteCertificationError {
     ZeroBoundaryFeeds,
     /// Independent replay rejected an internally generated jerk proposal.
     JerkProposalUncertified,
+    /// Exact power-of-two jerk refinement exhausted its caller-owned bound.
+    JerkRefinementBudgetExceeded,
     /// The selected predicate policy could not certify a scalar sign.
     PredicateUnresolved,
 }

@@ -27,6 +27,7 @@ This README describes crate version `0.3.0`.
 | `RectangularPocket`, `RectangularRegion` | Supported exact CAM planning domains |
 | `TangentSpan`, `G1ChainCertificationReport` | Tangency and continuity evidence |
 | `LookaheadFeedPlanningLimits`, `PlannedLookaheadFeedSchedule` | Exact forward/reverse speed-node planning plus replay |
+| `PlannedJerkFeasibleLookaheadSchedule` | Component-local exact jerk refinement plus final node/transition replay |
 | `PlannedMonotonicJerkTransition` | Exact two-phase nonzero-boundary feed transition plus independent replay |
 | `SpecctraRoute`, `SpecctraGridRouteRecords` | In-memory and fixed-grid route exchange |
 | `PcbConstraintSet`, `ToolpathConstraintSet` | Domain-owned Hypersolve residual collections |
@@ -194,6 +195,12 @@ Freeform curved pocket trimming is not inferred from these rectangular APIs.
   feed is positive. Feed changes monotonically, endpoint acceleration is zero,
   and the general multi-phase Hypersolve replay must accept the candidate.
   Rest-to-rest motion remains a separate peak-feed policy.
+- `plan_jerk_feasible_lookahead_schedule` partitions the acceleration-only
+  result at exact zero nodes, then uniformly divides each positive component by
+  two until every adjacent monotonic transition independently certifies. The
+  caller bounds those exact refinement passes; exhaustion fails closed. This
+  preserves every retained stop and relative feed inside a component, but is a
+  deliberately conservative coupling rather than a time-optimal jerk solve.
 
 These are structured proposal and certification helpers, not a global route
 search.

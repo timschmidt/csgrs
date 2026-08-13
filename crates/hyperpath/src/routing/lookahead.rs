@@ -31,6 +31,7 @@ use super::feed::{
     CornerLookaheadJoinClass, CornerLookaheadJoinReport, CornerLookaheadLimitReport,
     FeedPathElement,
 };
+use super::jerk_schedule::{PlannedMonotonicJerkTransition, plan_monotonic_jerk_transition};
 
 /// Exact local lookahead speed proposal for a retained route.
 ///
@@ -103,6 +104,61 @@ impl PlannedLookaheadFeedSchedule {
             .iter()
             .all(CandidateCertificationReport::all_satisfied)
             && self.certification.all_satisfied()
+    }
+}
+
+/// One exact positive-node component refined as a unit for jerk feasibility.
+///
+/// Components are maximal contiguous runs of structurally positive speed
+/// nodes in the acceleration-only schedule. Exact zero nodes separate them,
+/// so scaling one component cannot create motion through a retained stop.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JerkFeasibleNodeComponent {
+    /// First positive node index, inclusive.
+    pub first_node_index: u64,
+    /// Last positive node index, inclusive.
+    pub last_node_index: u64,
+    /// Number of exact divisions by two applied uniformly to this component.
+    pub uniform_halvings: u32,
+}
+
+/// Exact lookahead schedule after bounded component-local jerk refinement.
+///
+/// `acceleration_plan` retains the original forward/reverse proposal. The
+/// final `schedule` can only lower its positive nodes by exact powers of two;
+/// exact zero nodes never move. Caller and lookahead reports replay the final
+/// nodes independently, while every span with at least one positive boundary
+/// retains a fully certified two-phase monotonic transition.
+#[derive(Clone, Debug)]
+pub struct PlannedJerkFeasibleLookaheadSchedule {
+    /// Original exact acceleration-only forward/reverse proposal.
+    pub acceleration_plan: PlannedLookaheadFeedSchedule,
+    /// Maximal positive components and their exact refinement counts.
+    pub positive_node_components: Vec<JerkFeasibleNodeComponent>,
+    /// Final exact feed schedule after component-local refinement.
+    pub schedule: LookaheadFeedSchedule,
+    /// Independent Hypersolve replay of every final caller-owned node ceiling.
+    pub caller_limit_certifications: Vec<CandidateCertificationReport>,
+    /// Independent exact corner and acceleration-transition replay of final nodes.
+    pub lookahead_certification: LookaheadFeedScheduleReport,
+    /// Certified monotonic transition for each nonzero span; zero/zero spans are `None`.
+    pub span_transitions: Vec<Option<PlannedMonotonicJerkTransition>>,
+}
+
+impl PlannedJerkFeasibleLookaheadSchedule {
+    /// Return whether both planning layers and every retained replay succeeded.
+    pub fn all_satisfied(&self) -> bool {
+        self.acceleration_plan.all_satisfied()
+            && self
+                .caller_limit_certifications
+                .iter()
+                .all(CandidateCertificationReport::all_satisfied)
+            && self.lookahead_certification.all_satisfied()
+            && self
+                .span_transitions
+                .iter()
+                .flatten()
+                .all(PlannedMonotonicJerkTransition::all_satisfied)
     }
 }
 
@@ -258,15 +314,7 @@ pub fn plan_lookahead_feed_schedule(
         corner_radii: limits.corner_radii.clone(),
         exit_feed: selected_node_feeds[route.len()].clone(),
     };
-    let caller_node_limits = std::iter::once(&limits.maximum_entry_feed)
-        .chain(limits.maximum_corner_feeds.iter())
-        .chain(std::iter::once(&limits.maximum_exit_feed));
-    let caller_limit_certifications = selected_node_feeds
-        .iter()
-        .cloned()
-        .zip(caller_node_limits.cloned())
-        .map(|(candidate, maximum)| certify_node_limit_candidate(candidate, maximum))
-        .collect::<Vec<_>>();
+    let caller_limit_certifications = certify_caller_node_limits(&selected_node_feeds, limits);
     let certification = certify_lookahead_feed_schedule(
         route,
         spans,
@@ -289,6 +337,144 @@ pub fn plan_lookahead_feed_schedule(
         schedule,
         caller_limit_certifications,
         certification,
+    })
+}
+
+/// Plan exact lookahead nodes and conservatively refine them until every
+/// nonzero-boundary monotonic jerk transition certifies.
+///
+/// The acceleration-only forward/reverse result is partitioned into maximal
+/// contiguous positive-node components separated by exact zero stops. For one
+/// component at a time, the planner tries the exact two-phase monotonic
+/// transition on every adjacent retained span. If any replay fails only because
+/// the proposal exceeds a dynamic limit, every node in that component is
+/// divided by two exactly and the complete component is replayed again.
+/// Relative node feeds inside the component are therefore retained and no zero
+/// node can become positive. The caller bounds the refinement count; exhausting
+/// it fails instead of returning an uncertified schedule.
+///
+/// This is deliberately conservative rather than time-optimal. It couples the
+/// current monotonic transition primitive to lookahead without solving a
+/// floating cubic, sampling a controller trajectory, or treating a sharp
+/// corner as retained blend geometry.
+#[allow(clippy::too_many_arguments)]
+pub fn plan_jerk_feasible_lookahead_schedule(
+    route: &[FeedPathElement],
+    spans: &[TangentSpan],
+    limits: &LookaheadFeedPlanningLimits,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    max_jerk: Real,
+    maximum_component_halvings: u32,
+    policy: PredicatePolicy,
+) -> Result<PlannedJerkFeasibleLookaheadSchedule, RouteCertificationError> {
+    require_positive_jerk(&max_jerk, policy)?;
+    let acceleration_plan = plan_lookahead_feed_schedule(
+        route,
+        spans,
+        limits,
+        max_feed_rate.clone(),
+        max_acceleration.clone(),
+        policy,
+    )?;
+    let mut selected_node_feeds = schedule_node_feeds(&acceleration_plan.schedule);
+    let component_ranges = positive_node_components(&selected_node_feeds, policy)?;
+    let mut positive_node_components = Vec::with_capacity(component_ranges.len());
+
+    for (first_node, last_node) in component_ranges {
+        let first_span = first_node.saturating_sub(1);
+        let last_span = last_node.min(route.len().saturating_sub(1));
+        let mut uniform_halvings = 0_u32;
+        loop {
+            let mut component_certifies = true;
+            for span_index in first_span..=last_span {
+                match plan_span_monotonic_transition(
+                    &route[span_index],
+                    &selected_node_feeds[span_index],
+                    &selected_node_feeds[span_index + 1],
+                    max_feed_rate.clone(),
+                    max_acceleration.clone(),
+                    max_jerk.clone(),
+                    policy,
+                ) {
+                    Ok(Some(_)) => {}
+                    Ok(None) => {
+                        return Err(RouteCertificationError::JerkProposalUncertified);
+                    }
+                    Err(RouteCertificationError::JerkProposalUncertified) => {
+                        component_certifies = false;
+                        break;
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
+            if component_certifies {
+                break;
+            }
+            if uniform_halvings == maximum_component_halvings {
+                return Err(RouteCertificationError::JerkRefinementBudgetExceeded);
+            }
+            for feed in &mut selected_node_feeds[first_node..=last_node] {
+                *feed = (&*feed / Real::from(2))
+                    .map_err(|_| RouteCertificationError::UnsupportedDivision)?;
+            }
+            uniform_halvings += 1;
+        }
+        positive_node_components.push(JerkFeasibleNodeComponent {
+            first_node_index: first_node as u64,
+            last_node_index: last_node as u64,
+            uniform_halvings,
+        });
+    }
+
+    let schedule = schedule_from_node_feeds(
+        &selected_node_feeds,
+        limits.corner_radii.clone(),
+        route.len(),
+    );
+    let caller_limit_certifications = certify_caller_node_limits(&selected_node_feeds, limits);
+    let lookahead_certification = certify_lookahead_feed_schedule(
+        route,
+        spans,
+        &schedule,
+        max_feed_rate.clone(),
+        max_acceleration.clone(),
+        policy,
+    )?;
+    let span_transitions = route
+        .iter()
+        .enumerate()
+        .map(|(index, element)| {
+            plan_span_monotonic_transition(
+                element,
+                &selected_node_feeds[index],
+                &selected_node_feeds[index + 1],
+                max_feed_rate.clone(),
+                max_acceleration.clone(),
+                max_jerk.clone(),
+                policy,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if !caller_limit_certifications
+        .iter()
+        .all(CandidateCertificationReport::all_satisfied)
+        || !lookahead_certification.all_satisfied()
+        || !span_transitions
+            .iter()
+            .flatten()
+            .all(PlannedMonotonicJerkTransition::all_satisfied)
+    {
+        return Err(RouteCertificationError::JerkProposalUncertified);
+    }
+
+    Ok(PlannedJerkFeasibleLookaheadSchedule {
+        acceleration_plan,
+        positive_node_components,
+        schedule,
+        caller_limit_certifications,
+        lookahead_certification,
+        span_transitions,
     })
 }
 
@@ -499,6 +685,101 @@ fn certify_span_transition_candidate(
     certify_problem(problem)
 }
 
+fn schedule_node_feeds(schedule: &LookaheadFeedSchedule) -> Vec<Real> {
+    std::iter::once(schedule.entry_feed.clone())
+        .chain(schedule.corner_feeds.iter().cloned())
+        .chain(std::iter::once(schedule.exit_feed.clone()))
+        .collect()
+}
+
+fn schedule_from_node_feeds(
+    node_feeds: &[Real],
+    corner_radii: Vec<Real>,
+    route_len: usize,
+) -> LookaheadFeedSchedule {
+    LookaheadFeedSchedule {
+        entry_feed: node_feeds[0].clone(),
+        corner_feeds: node_feeds[1..route_len].to_vec(),
+        corner_radii,
+        exit_feed: node_feeds[route_len].clone(),
+    }
+}
+
+fn positive_node_components(
+    node_feeds: &[Real],
+    policy: PredicatePolicy,
+) -> Result<Vec<(usize, usize)>, RouteCertificationError> {
+    let mut components = Vec::new();
+    let mut node_index = 0;
+    while node_index < node_feeds.len() {
+        if !feed_is_positive(&node_feeds[node_index], policy)? {
+            node_index += 1;
+            continue;
+        }
+        let first_node = node_index;
+        while node_index + 1 < node_feeds.len()
+            && feed_is_positive(&node_feeds[node_index + 1], policy)?
+        {
+            node_index += 1;
+        }
+        components.push((first_node, node_index));
+        node_index += 1;
+    }
+    Ok(components)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn plan_span_monotonic_transition(
+    element: &FeedPathElement,
+    start_feed: &Real,
+    end_feed: &Real,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    max_jerk: Real,
+    policy: PredicatePolicy,
+) -> Result<Option<PlannedMonotonicJerkTransition>, RouteCertificationError> {
+    if !feed_is_positive(start_feed, policy)? && !feed_is_positive(end_feed, policy)? {
+        return Ok(None);
+    }
+    plan_monotonic_jerk_transition(
+        element,
+        start_feed.clone(),
+        end_feed.clone(),
+        max_feed_rate,
+        max_acceleration,
+        max_jerk,
+        policy,
+    )
+    .map(Some)
+}
+
+fn feed_is_positive(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<bool, RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
+        Some(Sign::Zero) => Ok(false),
+        Some(Sign::Positive) => Ok(true),
+        None => Err(RouteCertificationError::PredicateUnresolved),
+    }
+}
+
+fn certify_caller_node_limits(
+    selected_node_feeds: &[Real],
+    limits: &LookaheadFeedPlanningLimits,
+) -> Vec<CandidateCertificationReport> {
+    let caller_node_limits = std::iter::once(&limits.maximum_entry_feed)
+        .chain(limits.maximum_corner_feeds.iter())
+        .chain(std::iter::once(&limits.maximum_exit_feed));
+    selected_node_feeds
+        .iter()
+        .cloned()
+        .zip(caller_node_limits.cloned())
+        .map(|(candidate, maximum)| certify_node_limit_candidate(candidate, maximum))
+        .collect()
+}
+
 fn certify_node_limit_candidate(
     candidate_feed: Real,
     maximum_feed: Real,
@@ -581,6 +862,18 @@ fn require_positive_acceleration(
     match classify_real_sign(value, policy).value() {
         Some(Sign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
         Some(Sign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
+        Some(Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
+    }
+}
+
+fn require_positive_jerk(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative) => Err(RouteCertificationError::NegativeJerk),
+        Some(Sign::Zero) => Err(RouteCertificationError::ZeroJerk),
         Some(Sign::Positive) => Ok(()),
         None => Err(RouteCertificationError::PredicateUnresolved),
     }

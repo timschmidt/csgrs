@@ -134,16 +134,17 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, plan_lookahead_feed_schedule,
-    plan_monotonic_jerk_transition, rectangular_beads, rectangular_pocket_link_graph,
-    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
-    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
-    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
-    specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
-    specctra_grid_via_record, subtract_rectangular_region, tangent_alignment_problem,
-    tangent_cross, tangent_dot, tangent_norm_squared,
+    parse_specctra_grid_trace_records, plan_jerk_feasible_lookahead_schedule,
+    plan_lookahead_feed_schedule, plan_monotonic_jerk_transition, rectangular_beads,
+    rectangular_pocket_link_graph, rectangular_pocket_rings, rectangular_rest_material_graph,
+    rectangular_serpentine_infill_graph, rectangular_support_footprint,
+    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
+    specctra_grid_route_rule_record, specctra_grid_trace_record, specctra_grid_via_record,
+    subtract_rectangular_region, tangent_alignment_problem, tangent_cross, tangent_dot,
+    tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -9364,6 +9365,204 @@ fn monotonic_jerk_planner_rejects_stationary_or_uncertified_transitions() {
 }
 
 #[test]
+fn jerk_feasible_lookahead_refines_one_g1_component_exactly() {
+    let first = strict_segment!(p(0, 0), p(1, 0));
+    let second = strict_segment!(p(1, 0), p(2, 0));
+    let route = vec![
+        FeedPathElement::Line(first.clone()),
+        FeedPathElement::Line(second.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&first),
+        TangentSpan::from_line_segment(&second),
+    ];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(8)],
+        corner_radii: vec![Real::zero()],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    let planned = plan_jerk_feasible_lookahead_schedule(
+        &route,
+        &spans,
+        &limits,
+        r(8),
+        r(64),
+        r(1),
+        3,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(planned.acceleration_plan.schedule.corner_feeds, vec![r(8)]);
+    assert_eq!(planned.schedule.corner_feeds, vec![r(1)]);
+    assert_eq!(planned.positive_node_components.len(), 1);
+    assert_eq!(planned.positive_node_components[0].first_node_index, 1);
+    assert_eq!(planned.positive_node_components[0].last_node_index, 1);
+    assert_eq!(planned.positive_node_components[0].uniform_halvings, 3);
+    assert_eq!(planned.span_transitions.len(), 2);
+    assert!(planned.span_transitions.iter().all(Option::is_some));
+    assert!(planned.all_satisfied());
+}
+
+#[test]
+fn jerk_feasible_lookahead_preserves_exact_corner_stops() {
+    let first = strict_segment!(p(0, 0), p(1, 0));
+    let second = strict_segment!(p(1, 0), p(1, 1));
+    let route = vec![
+        FeedPathElement::Line(first.clone()),
+        FeedPathElement::Line(second.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&first),
+        TangentSpan::from_line_segment(&second),
+    ];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(8)],
+        corner_radii: vec![Real::zero()],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    let planned = plan_jerk_feasible_lookahead_schedule(
+        &route,
+        &spans,
+        &limits,
+        r(8),
+        r(64),
+        r(1),
+        3,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(planned.acceleration_plan.schedule.corner_feeds, vec![r(0)]);
+    assert_eq!(planned.schedule.corner_feeds, vec![r(0)]);
+    assert!(planned.positive_node_components.is_empty());
+    assert!(planned.span_transitions.iter().all(Option::is_none));
+    assert!(planned.all_satisfied());
+}
+
+#[test]
+fn jerk_feasible_lookahead_keeps_constant_positive_feed_without_refinement() {
+    let line = strict_segment!(p(0, 0), p(1, 0));
+    let route = vec![FeedPathElement::Line(line.clone())];
+    let spans = vec![TangentSpan::from_line_segment(&line)];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: r(8),
+        maximum_corner_feeds: vec![],
+        corner_radii: vec![],
+        maximum_exit_feed: r(8),
+    };
+
+    let planned = plan_jerk_feasible_lookahead_schedule(
+        &route,
+        &spans,
+        &limits,
+        r(8),
+        r(1),
+        r(1),
+        0,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(planned.schedule.entry_feed, r(8));
+    assert_eq!(planned.schedule.exit_feed, r(8));
+    assert_eq!(planned.positive_node_components.len(), 1);
+    assert_eq!(planned.positive_node_components[0].first_node_index, 0);
+    assert_eq!(planned.positive_node_components[0].last_node_index, 1);
+    assert_eq!(planned.positive_node_components[0].uniform_halvings, 0);
+    assert!(planned.span_transitions[0].is_some());
+    assert!(planned.all_satisfied());
+}
+
+#[test]
+fn jerk_feasible_lookahead_refines_stop_separated_components_independently() {
+    let first = strict_segment!(p(0, 0), p(1, 0));
+    let second = strict_segment!(p(1, 0), p(2, 0));
+    let third = strict_segment!(p(2, 0), p(2, 1));
+    let fourth = strict_segment!(p(2, 1), p(2, 2));
+    let route = vec![
+        FeedPathElement::Line(first.clone()),
+        FeedPathElement::Line(second.clone()),
+        FeedPathElement::Line(third.clone()),
+        FeedPathElement::Line(fourth.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&first),
+        TangentSpan::from_line_segment(&second),
+        TangentSpan::from_line_segment(&third),
+        TangentSpan::from_line_segment(&fourth),
+    ];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(8), r(8), r(4)],
+        corner_radii: vec![Real::zero(); 3],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    let planned = plan_jerk_feasible_lookahead_schedule(
+        &route,
+        &spans,
+        &limits,
+        r(8),
+        r(64),
+        r(1),
+        3,
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(
+        planned.acceleration_plan.schedule.corner_feeds,
+        vec![r(8), r(0), r(4)]
+    );
+    assert_eq!(planned.schedule.corner_feeds, vec![r(1), r(0), r(1)]);
+    assert_eq!(planned.positive_node_components.len(), 2);
+    assert_eq!(planned.positive_node_components[0].uniform_halvings, 3);
+    assert_eq!(planned.positive_node_components[1].uniform_halvings, 2);
+    assert!(planned.span_transitions.iter().all(Option::is_some));
+    assert!(planned.all_satisfied());
+}
+
+#[test]
+fn jerk_feasible_lookahead_fails_closed_at_refinement_bound() {
+    let first = strict_segment!(p(0, 0), p(1, 0));
+    let second = strict_segment!(p(1, 0), p(2, 0));
+    let route = vec![
+        FeedPathElement::Line(first.clone()),
+        FeedPathElement::Line(second.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&first),
+        TangentSpan::from_line_segment(&second),
+    ];
+    let limits = LookaheadFeedPlanningLimits {
+        maximum_entry_feed: Real::zero(),
+        maximum_corner_feeds: vec![r(8)],
+        corner_radii: vec![Real::zero()],
+        maximum_exit_feed: Real::zero(),
+    };
+
+    assert_eq!(
+        plan_jerk_feasible_lookahead_schedule(
+            &route,
+            &spans,
+            &limits,
+            r(8),
+            r(64),
+            r(1),
+            2,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::JerkRefinementBudgetExceeded
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = strict_segment!(p(0, 0), p(10, 0));
     let meander =
@@ -12550,6 +12749,58 @@ proptest! {
 
         prop_assert_eq!(report.elements[0].route_length.clone(), r(total_length));
         prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn jerk_feasible_lookahead_generated_single_spans_replay_exactly(
+        length in 1_i16..=20,
+        entry_limit in 0_i16..=20,
+        exit_limit in 0_i16..=20,
+        max_feed in 1_i16..=20,
+        acceleration in 1_i16..=20,
+        jerk in 1_i16..=20,
+    ) {
+        let line = strict_segment!(p(0, 0), p(i64::from(length), 0));
+        let route = vec![FeedPathElement::Line(line.clone())];
+        let spans = vec![TangentSpan::from_line_segment(&line)];
+        let limits = LookaheadFeedPlanningLimits {
+            maximum_entry_feed: r(i64::from(entry_limit)),
+            maximum_corner_feeds: vec![],
+            corner_radii: vec![],
+            maximum_exit_feed: r(i64::from(exit_limit)),
+        };
+        let planned = plan_jerk_feasible_lookahead_schedule(
+            &route,
+            &spans,
+            &limits,
+            r(i64::from(max_feed)),
+            r(i64::from(acceleration)),
+            r(i64::from(jerk)),
+            32,
+            PredicatePolicy::STRICT,
+        ).unwrap();
+
+        prop_assert!(planned.all_satisfied());
+        prop_assert_eq!(planned.span_transitions.len(), 1);
+        let has_positive_boundary = planned.schedule.entry_feed != Real::zero()
+            || planned.schedule.exit_feed != Real::zero();
+        prop_assert_eq!(planned.span_transitions[0].is_some(), has_positive_boundary);
+        prop_assert!(matches!(
+            compare_reals(
+                &planned.schedule.entry_feed,
+                &planned.acceleration_plan.schedule.entry_feed,
+                PredicatePolicy::STRICT,
+            ).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
+        prop_assert!(matches!(
+            compare_reals(
+                &planned.schedule.exit_feed,
+                &planned.acceleration_plan.schedule.exit_feed,
+                PredicatePolicy::STRICT,
+            ).value(),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ));
     }
 
     #[test]
