@@ -209,7 +209,7 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
 }
 
 #[test]
-fn rational_point_image_retains_real_coefficient_root_expression() {
+fn rational_point_image_transforms_exact_real_linear_root() {
     let conic =
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
     let parameter = isolate(
@@ -221,26 +221,51 @@ fn rational_point_image_retains_real_coefficient_root_expression() {
         .point_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
 
-    assert_eq!(
-        point.status(),
-        BezierAlgebraicImageStatus::RetainedRationalExpression
-    );
-    assert!(!point.parameter().is_valid());
-    assert!(point.x().is_none());
-    assert!(point.y().is_none());
-    assert_eq!(point.retained_parameter(), Some(&parameter));
-    let (x_numerator, y_numerator, denominator) = point
-        .retained_coordinate_polynomials()
-        .expect("the exact rational point expression is retained");
-    assert!(!x_numerator.is_empty());
-    assert!(!y_numerator.is_empty());
-    assert!(!denominator.is_empty());
+    assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+    assert!(point.parameter().is_valid());
+    let exact_parameter = point
+        .parameter()
+        .exact_rational_witness()
+        .expect("a linear exact-Real polynomial has an exact point witness");
+    assert_eq!(exact_parameter, &(Real::one() / Real::pi()).unwrap());
+    let Classification::Decided(exact_point) = conic.point_at(exact_parameter.clone(), &policy())
+    else {
+        panic!("the exact parameter must evaluate to an affine conic point");
+    };
     assert!(
         point
-            .message()
+            .x()
             .unwrap()
-            .contains("Real-coefficient rational point expression")
+            .representation()
+            .unwrap()
+            .exact_rational_witness()
+            .is_some()
     );
+    assert!(
+        point
+            .y()
+            .unwrap()
+            .representation()
+            .unwrap()
+            .exact_rational_witness()
+            .is_some()
+    );
+    assert_eq!(
+        point
+            .x()
+            .unwrap()
+            .compare_to_real(exact_point.x(), &CurveContext::APPROXIMATE_512),
+        Classification::Decided(std::cmp::Ordering::Equal),
+    );
+    assert_eq!(
+        point
+            .y()
+            .unwrap()
+            .compare_to_real(exact_point.y(), &CurveContext::APPROXIMATE_512),
+        Classification::Decided(std::cmp::Ordering::Equal),
+    );
+    assert!(point.retained_parameter().is_none());
+    assert!(point.message().is_none());
 }
 
 #[test]

@@ -530,6 +530,32 @@ impl RationalBezierAlgebraicPointImage2 {
             .as_ref()
     }
 
+    /// Materializes both exact coordinate representations from whichever
+    /// point authority was retained. Authored rational expressions stay lazy
+    /// until a tensor kernel actually needs Cartesian coordinates.
+    pub(crate) fn represented_coordinates(
+        &self,
+        policy: &CurveContext,
+    ) -> Option<[AlgebraicRootRepresentation; 2]> {
+        let resolved = self.resolved(policy)?;
+        if let (Some(x), Some(y)) = (resolved.x(), resolved.y()) {
+            return Some([x.representation()?.clone(), y.representation()?.clone()]);
+        }
+        let expression = resolved.data.retained_expression.as_ref()?;
+        let image = rational_point_image_from_power_basis(
+            &expression.parameter,
+            expression.x_numerator.clone(),
+            expression.y_numerator.clone(),
+            expression.denominator.clone(),
+            policy,
+        )
+        .ok()?;
+        Some([
+            image.x()?.representation()?.clone(),
+            image.y()?.representation()?.clone(),
+        ])
+    }
+
     pub(crate) fn parametric_source_bounds(
         &self,
         policy: &CurveContext,
