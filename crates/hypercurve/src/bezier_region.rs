@@ -22913,6 +22913,159 @@ mod tests {
     }
 
     #[test]
+    fn independent_oblique_chord_pair_fillet_crosses_a_shared_field_algebraic_chord_exactly() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let region = independent_oblique_chord_pair_corner_region(&policy, false);
+            let parameter = positive_inverse_sqrt_parameter(3, &policy);
+            let endpoint = |x: Real, y: Real| {
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(x.clone(), y.clone()),
+                        Point2::new(x, y + Real::one()),
+                    ],
+                    vec![Real::one(); 2],
+                )
+                .unwrap();
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &source, &parameter, &policy,
+                )
+                .unwrap()
+                .expect("the shared-field chord endpoint retains exact evidence")
+            };
+            let extended = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    Real::one(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("the independent chord pair has exact extended fillets");
+            let mut exercised = 0;
+            let mut crossings = 0;
+            for_each_corner_region(&extended.value, |filleted| {
+                let Some(circle) =
+                    filleted.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .find_map(|fragment| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_chord_normal_frame() =>
+                            {
+                                Some(fragment.semicircle())
+                            }
+                            _ => None,
+                        })
+                else {
+                    return;
+                };
+                exercised += 1;
+                let bounds =
+                    |point| match crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                        &point, 16, &policy,
+                    ) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(reason) => {
+                            panic!("the projective chord fixture must refine: {reason:?}")
+                        }
+                    };
+                let center = match circle.center_point_evidence(&policy).unwrap() {
+                    Classification::Decided(center) => bounds(center),
+                    Classification::Uncertain(reason) => {
+                        panic!("the chord-normal center must be exact: {reason:?}")
+                    }
+                };
+                let selected_midpoint = match circle
+                    .point_evidence_at(&(Real::one() / Real::from(2_i8)).unwrap(), &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(point) => bounds(point),
+                    Classification::Uncertain(reason) => {
+                        panic!("the selected-half midpoint must be exact: {reason:?}")
+                    }
+                };
+                let midpoint = |lower: &Real, upper: &Real| {
+                    (lower.to_f64_lossy().unwrap() + upper.to_f64_lossy().unwrap()) * 0.5
+                };
+                let center_x = midpoint(center.min().x(), center.max().x());
+                let center_y = midpoint(center.min().y(), center.max().y());
+                let selected_y = midpoint(selected_midpoint.min().y(), selected_midpoint.max().y());
+                let shared_root = 1.0 / 3.0_f64.sqrt();
+                let quarter_grid = (center_y - shared_root) * 4.0;
+                let y_numerator = if selected_y >= center_y {
+                    quarter_grid.ceil() as i64
+                } else {
+                    quarter_grid.floor() as i64
+                };
+                let y = (Real::from(y_numerator) / Real::from(4_i8)).unwrap();
+                let x = center_x.round() as i64;
+                let chord = match crate::BezierAlgebraicChord2::try_new(
+                    endpoint(Real::from(x - 2), y.clone()),
+                    endpoint(Real::from(x + 2), y),
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(chord) => chord,
+                    Classification::Uncertain(reason) => {
+                        panic!("the shared-field horizontal chord must construct: {reason:?}")
+                    }
+                };
+                assert!(chord.exact_line().is_none());
+                assert!(chord.strict_provenance_support_line(&policy).is_none());
+                let carrier = if policy == CurveContext::APPROXIMATE_512 {
+                    chord.reversed()
+                } else {
+                    chord
+                };
+                let contacts = match circle.chord_intersections(&carrier, &policy).unwrap() {
+                        Classification::Decided(
+                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
+                                contacts,
+                            ),
+                        ) => contacts,
+                        Classification::Decided(
+                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
+                        ) => panic!("the selected-side chord must cross the chord-normal circle"),
+                        result => panic!(
+                            "the chord-normal circle must meet its shared-field algebraic chord: {result:?}"
+                        ),
+                };
+                crossings += 1;
+                assert!(!contacts.is_empty());
+                for contact in contacts {
+                    assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+                    assert_eq!(
+                        contact
+                            .chord_parameter
+                            .cmp_by_refinement(&carrier.start_parameter(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Greater)
+                    );
+                    assert_eq!(
+                        contact
+                            .chord_parameter
+                            .cmp_by_refinement(&carrier.end_parameter(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Less)
+                    );
+                    let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(point) =
+                        contact.point
+                    else {
+                        panic!("the contact must retain its projective chord map")
+                    };
+                    assert!(matches!(
+                        point.conservative_bounds_refined(16, &policy),
+                        Classification::Decided(_)
+                    ));
+                }
+            });
+            assert!(exercised > 0);
+            assert!(crossings > 0);
+        }
+    }
+
+    #[test]
     fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
         for radius in [
             (Real::one() / Real::from(100_i16)).unwrap(),
