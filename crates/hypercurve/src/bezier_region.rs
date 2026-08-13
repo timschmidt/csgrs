@@ -23158,6 +23158,58 @@ mod tests {
     }
 
     #[test]
+    fn nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain() {
+        let radius = q(1, 10);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
+                let corner = if reversed { 2 } else { 1 };
+                let trim = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the finite nonlinear endpoint fillet must decide")
+                    .into_value();
+                let extended = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        radius.clone(),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the nonlinear algebraic endpoint fillet domain must decide: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(extended.value.candidate_count() > trim.candidate_count());
+                for_each_corner_region(&extended.value, |edited| {
+                    let fragments = edited.boundary_loops()[0].fragments();
+                    assert!(fragments.iter().any(|fragment| matches!(
+                        fragment,
+                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                            | BezierSplitFragment2::AnalyticParallel(_)
+                    )));
+                    assert!(fragments.iter().any(|fragment| matches!(
+                        fragment,
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            | BezierSplitFragment2::Materialized {
+                                curve: BezierSubcurve2::RationalQuadratic(_),
+                                ..
+                            }
+                    )));
+                });
+            }
+        }
+    }
+
+    #[test]
     fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let region = independent_field_algebraic_chord_region(&policy, false);

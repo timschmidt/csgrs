@@ -858,6 +858,13 @@ impl BezierParameterInterval {
     pub const fn end(&self) -> &Real {
         &self.end
     }
+
+    pub(crate) fn unit_complement(&self) -> Self {
+        Self {
+            start: Real::one() - &self.end,
+            end: Real::one() - &self.start,
+        }
+    }
 }
 
 impl BezierAlgebraicParameter2 {
