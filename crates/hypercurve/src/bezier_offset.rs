@@ -1448,6 +1448,7 @@ fn rational_overlap_parameter_for_exact_cusp(
             first_cusp_parameter,
             second_cusp_parameter,
             *branch,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
         )? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -14213,6 +14214,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             &system.incidence_projection,
             first_parameter,
             second_parameter,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
             |candidate, projected_root_certified| {
                 algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
@@ -20331,6 +20333,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             first_parameter,
             second_parameter,
             branch,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
         )? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
@@ -20352,6 +20355,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             first_parameter,
             second_parameter,
             branch,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
         )? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
@@ -22113,6 +22117,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &system.incidence_projection,
                 first_parameter,
                 second_parameter,
+                SelectedThirdAxisDomain2::UnitInterval,
                 policy,
             )? {
                 Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
@@ -33765,14 +33770,51 @@ fn selected_trivariate_third_axis_is_identically_zero(
     Ok(Classification::Decided(true))
 }
 
-/// Eliminates two retained selected roots and isolates every unit-interval
-/// candidate on the third tensor axis.  The projection is enumeration only;
-/// callers must replay their unsquared authored predicate at each returned
-/// triple before admitting topology.
+#[derive(Clone, Copy)]
+enum SelectedThirdAxisDomain2<'a> {
+    UnitInterval,
+    IncidentRay {
+        anchor: &'a Real,
+        direction: BezierParameterRayDirection2,
+        barrier: Option<&'a BezierParameter2>,
+    },
+}
+
+impl SelectedThirdAxisDomain2<'_> {
+    fn isolate(
+        self,
+        polynomial: &BezierParameterPolynomial,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        match self {
+            Self::UnitInterval => polynomial.isolate_unit_interval_roots(policy),
+            Self::IncidentRay {
+                anchor,
+                direction,
+                barrier,
+            } => {
+                let parameters =
+                    match polynomial.isolate_incident_ray_roots(anchor, direction, policy)? {
+                        Classification::Decided(parameters) => parameters,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)
+            }
+        }
+    }
+}
+
+/// Eliminates two retained selected roots and isolates every candidate on the
+/// requested third-axis domain. The projection is enumeration only; callers
+/// must replay their unsquared authored predicate at each returned triple
+/// before admitting topology.
 fn selected_trivariate_third_axis_parameters(
     polynomial: &TrivariatePolynomial2,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let defining = |parameter: &BezierParameter2| match parameter {
@@ -33934,7 +33976,8 @@ fn selected_trivariate_third_axis_parameters(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    if first_axis_is_independent
+    if matches!(domain, SelectedThirdAxisDomain2::UnitInterval)
+        && first_axis_is_independent
         && polynomial.degree() > MAX_DIRECT_SELECTED_PAIR_NORM_ISOLATION_DEGREE
         && let BezierParameter2::Algebraic(second_parameter) = second_parameter
     {
@@ -33955,8 +33998,8 @@ fn selected_trivariate_third_axis_parameters(
             ResultantParameterProjection::Degenerate => BezierAlgebraicFiberProjection2::Degenerate,
         }));
     }
-    Ok(polynomial
-        .isolate_unit_interval_roots(policy)?
+    Ok(domain
+        .isolate(&polynomial, policy)?
         .map(BezierAlgebraicFiberProjection2::Parameters))
 }
 
@@ -34007,6 +34050,7 @@ fn selected_projected_trivariate_third_axis_parameters(
     projection: &TrivariatePolynomial2,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
     mut replay: impl FnMut(&BezierParameter2, bool) -> CurveResult<Classification<RealSign>>,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
@@ -34014,6 +34058,7 @@ fn selected_projected_trivariate_third_axis_parameters(
         projection,
         first_parameter,
         second_parameter,
+        domain,
         policy,
     )? {
         Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -34091,6 +34136,7 @@ fn selected_pair_square_root_expression_third_axis_parameters(
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     branch: i8,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     let Some(projection) = expression.projection(radicand) else {
@@ -34106,10 +34152,12 @@ fn selected_pair_square_root_expression_third_axis_parameters(
         first_parameter,
         second_parameter,
         branch,
+        domain,
         policy,
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
     radicand: &TrivariatePolynomial2,
@@ -34117,12 +34165,14 @@ fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     branch: i8,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
     selected_projected_trivariate_third_axis_parameters(
         projection,
         first_parameter,
         second_parameter,
+        domain,
         policy,
         |candidate, projected_root_certified| {
             algebraic_cusp_projected_trivariate_square_root_sum_sign(
@@ -34458,6 +34508,7 @@ fn selected_trivariate_third_axis_constraint(
         polynomial,
         first_parameter,
         second_parameter,
+        SelectedThirdAxisDomain2::UnitInterval,
         &CurveContext::STRICT,
     )? {
         Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
@@ -42522,6 +42573,87 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        self.parallel_intersections_in_domain(
+            parallel,
+            &system,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )
+    }
+
+    /// Replays this finite chord and its complete affine support against the
+    /// authored analytic span plus one regular incident projective ray.
+    ///
+    /// This is the `TrimOrExtend` domain for a chord/parallel corner. The
+    /// selected-pair incidence system is built once; finite and exterior roots
+    /// differ only in final-axis isolation and chord-domain clipping. The ray
+    /// stops before its first source pole or tangent-speed zero.
+    pub(crate) fn parallel_intersections_with_incident_ray(
+        &self,
+        parallel: &BezierParallel2,
+        anchor: &Real,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
+        self.validate_policy(policy)?;
+        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let barrier = match parallel.incident_ray_regular_barrier(anchor, direction, policy)? {
+            Classification::Decided(barrier) => barrier,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let finite = match self.parallel_intersections_in_domain(
+            parallel,
+            &system,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let exterior = match self.parallel_intersections_in_domain(
+            parallel,
+            &system,
+            SelectedThirdAxisDomain2::IncidentRay {
+                anchor,
+                direction,
+                barrier: barrier.as_ref(),
+            },
+            policy,
+        )? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(match (finite, exterior) {
+            (
+                BezierAlgebraicChordParallelIntersections2::Contacts(mut finite),
+                BezierAlgebraicChordParallelIntersections2::Contacts(exterior),
+            ) => {
+                finite.extend(exterior);
+                BezierAlgebraicChordParallelIntersections2::Contacts(finite)
+            }
+            _ => BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+        }))
+    }
+
+    fn parallel_intersections_in_domain(
+        &self,
+        parallel: &BezierParallel2,
+        system: &BezierAlgebraicChordIndependentParallelIncidence2,
+        domain: SelectedThirdAxisDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
+        let retain_finite_chord = matches!(domain, SelectedThirdAxisDomain2::UnitInterval);
         let projected = match &system.equation {
             BezierAlgebraicChordIndependentParallelEquation2::Direct(incidence) => {
                 selected_pair_square_root_expression_third_axis_parameters(
@@ -42530,6 +42662,7 @@ impl BezierAlgebraicChord2 {
                     &system.first_parameter,
                     &system.second_parameter,
                     1,
+                    domain,
                     policy,
                 )?
             }
@@ -42563,6 +42696,7 @@ impl BezierAlgebraicChord2 {
                             &system.first_parameter,
                             &system.second_parameter,
                             1,
+                            domain,
                             policy,
                         )?
                     }
@@ -42577,6 +42711,7 @@ impl BezierAlgebraicChord2 {
                 incidence_projection,
                 &system.first_parameter,
                 &system.second_parameter,
+                domain,
                 policy,
                 |candidate, projected_root_certified| {
                     algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
@@ -42616,38 +42751,42 @@ impl BezierAlgebraicChord2 {
             let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                 BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy),
             );
-            let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => continue,
-                Classification::Uncertain(_) => {
-                    if independent_parameter_map.is_none() {
-                        independent_parameter_map = Some(
-                            match self
-                                .independent_parallel_parameter_map(parallel, &system, policy)?
-                            {
-                                Classification::Decided(map) => map,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            },
-                        );
-                    }
-                    match self.parameter_at_independent_parallel_incidence_candidate(
-                        point.clone(),
-                        independent_parameter_map
-                            .as_ref()
-                            .expect("the independent parallel parameter map was initialized"),
-                        &system,
-                        &candidate,
-                        policy,
-                    )? {
-                        Classification::Decided(Some(parameter)) => parameter,
-                        Classification::Decided(None) => continue,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
+            let chord_parameter = if retain_finite_chord {
+                match self.parameter_at_certified_point(point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(_) => {
+                        if independent_parameter_map.is_none() {
+                            independent_parameter_map = Some(
+                                match self
+                                    .independent_parallel_parameter_map(parallel, system, policy)?
+                                {
+                                    Classification::Decided(map) => map,
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
+                                },
+                            );
+                        }
+                        match self.parameter_at_independent_parallel_incidence_candidate(
+                            point.clone(),
+                            independent_parameter_map
+                                .as_ref()
+                                .expect("the independent parallel parameter map was initialized"),
+                            system,
+                            &candidate,
+                            policy,
+                        )? {
+                            Classification::Decided(Some(parameter)) => parameter,
+                            Classification::Decided(None) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
                         }
                     }
                 }
+            } else {
+                self.parameter_at_certified_support_point(point.clone(), policy)?
             };
             let source_cross = match trivariate_parameter_triple_sign_by_refinement(
                 &system.tangent_cross,
@@ -44428,6 +44567,7 @@ impl BezierAlgebraicChord2 {
             &difference.radical,
             &system.first_parameter,
             &system.second_parameter,
+            SelectedThirdAxisDomain2::UnitInterval,
             policy,
         )? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
@@ -92275,6 +92415,45 @@ mod conversion_tests {
                 panic!("the retracing quadratic has one distinct circle contact");
             };
             assert_eq!(parameter.as_exact(), Some(&half));
+        }
+    }
+
+    #[test]
+    fn selected_third_axis_incident_domain_stops_before_the_regular_barrier() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (coefficients, anchor, direction, barrier, expected) in [
+                (
+                    vec![Real::from(6_i8), Real::from(-5_i8), Real::one()],
+                    Real::one(),
+                    BezierParameterRayDirection2::Increasing,
+                    (Real::from(5_i8) / Real::from(2_i8)).unwrap(),
+                    Real::from(2_i8),
+                ),
+                (
+                    vec![Real::from(2_i8), Real::from(3_i8), Real::one()],
+                    Real::zero(),
+                    BezierParameterRayDirection2::Decreasing,
+                    (-Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                    Real::from(-1_i8),
+                ),
+            ] {
+                let Classification::Decided(polynomial) =
+                    BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap()
+                else {
+                    panic!("the exact quadratic projection must construct");
+                };
+                let barrier = BezierParameter2::Exact(barrier);
+                let Classification::Decided(parameters) = (SelectedThirdAxisDomain2::IncidentRay {
+                    anchor: &anchor,
+                    direction,
+                    barrier: Some(&barrier),
+                })
+                .isolate(&polynomial, &policy)
+                .unwrap() else {
+                    panic!("the barrier-bounded incident projection must be decided");
+                };
+                assert_eq!(parameters, vec![BezierParameter2::Exact(expected)]);
+            }
         }
     }
 

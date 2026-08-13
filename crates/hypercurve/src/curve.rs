@@ -8061,13 +8061,6 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Parallel { .. })
         | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
-            if mode == CurveCornerMode2::TrimOrExtend {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    previous_family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
-            }
             let (chord_support, parallel_source, analytic_support, chord_is_previous) =
                 match (previous, next) {
                     (
@@ -8096,12 +8089,29 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            let intersections = match chord_support
-                .parallel_intersections(analytic_support, policy)
-                .map_err(|cause| {
+            let analytic_is_previous = !chord_is_previous;
+            let intersection_result = if mode == CurveCornerMode2::TrimOrExtend {
+                let (anchor, direction) = parallel_source
+                    .incident_domain(analytic_is_previous)
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            analytic_family,
+                            crate::UncertaintyReason::Unsupported,
+                        )
+                    })?;
+                chord_support.parallel_intersections_with_incident_ray(
+                    analytic_support,
+                    &anchor,
+                    direction,
+                    policy,
+                )
+            } else {
+                chord_support.parallel_intersections(analytic_support, policy)
+            };
+            let intersections = match intersection_result.map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
-                })?
-            {
+                })? {
                 Classification::Decided(
                     crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
                         contacts,
@@ -8124,7 +8134,6 @@ fn fillet_offset_centers(
                     ));
                 }
             };
-            let analytic_is_previous = !chord_is_previous;
             let analytic_support_reverses_source = parallel_source.support_reverses_source(
                 analytic_support,
                 analytic_family,

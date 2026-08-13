@@ -331,21 +331,25 @@ fn parameter_range_promotes_represented_rational_boundary() {
 }
 
 #[test]
-fn parameter_range_rejects_equal_or_out_of_domain_boundaries() {
+fn parameter_range_rejects_equal_and_accepts_affine_extension_boundaries() {
     let midpoint = BezierParameter2::Exact(q(1, 2));
     assert_eq!(
         BezierParameterRange2::try_new(midpoint.clone(), midpoint, &policy()).unwrap_err(),
         CurveError::InvalidBezierRange
     );
-    assert_eq!(
+    let extension = decided(
         BezierParameterRange2::try_new(
             BezierParameter2::Exact(r(-1)),
             BezierParameter2::Exact(r(1)),
             &policy(),
         )
-        .unwrap_err(),
-        CurveError::InvalidBezierParameter
+        .unwrap(),
     );
+    let (start, end) = extension
+        .exact_endpoints()
+        .expect("represented affine extension boundaries stay exact");
+    assert_eq!(start, &r(-1));
+    assert_eq!(end, &r(1));
 }
 
 #[test]
