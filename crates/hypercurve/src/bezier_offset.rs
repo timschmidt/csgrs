@@ -575,10 +575,10 @@ enum BezierAlgebraicCuspSemicircleRationalParameterMapSystem2 {
         radius_squared_denominator: TrivariatePolynomial2,
     },
     /// Direct homogeneous chord-pair center with two retained positive speed
-    /// radicals.  Pointer identity is the compact rebuilt-map authority; the
-    /// tensors themselves remain immutable and shared by every contact.
+    /// radicals. Compact and rank-independent maps share this one angular
+    /// authority; their immutable tensors are allocation-shared by contacts.
     ChordNormalProjective {
-        system: Arc<BezierChordNormalProjectiveMapSystem2>,
+        system: BezierChordNormalRationalParameterMapSystem2,
     },
     /// Rank-independent Cartesian frame selected under STRICT.  The target
     /// curve parameter remains its own retained algebraic root; angular order
@@ -3849,7 +3849,7 @@ struct BezierChordNormalProjectiveIntersectionSystem2 {
     selected_half_plane: BezierQuadrivariateTwoSquareRootExpression2,
     tangent_cross: BezierQuadrivariateTwoSquareRootExpression2,
     angular_tangent: BezierQuadrivariateTwoSquareRootExpression2,
-    geometry: BezierChordNormalProjectiveTargetGeometry2,
+    geometry: Option<BezierChordNormalProjectiveTargetGeometry2>,
 }
 
 /// Rank-independent form of the same chord-normal projective authority.
@@ -3873,13 +3873,20 @@ struct BezierChordNormalDenseIntersectionSystem2 {
     incidence: BezierDenseTwoSquareRootExpression2,
     selected_half_plane: BezierDenseTwoSquareRootExpression2,
     tangent_cross: BezierDenseTwoSquareRootExpression2,
-    geometry: BezierChordNormalDenseTargetGeometry2,
+    angular_tangent: Option<BezierDenseTwoSquareRootExpression2>,
+    geometry: Option<BezierChordNormalDenseTargetGeometry2>,
 }
 
 #[derive(Debug)]
-enum BezierChordNormalProjectiveChordSystem2 {
+enum BezierChordNormalProjectiveTargetSystem2 {
     Compact(BezierChordNormalProjectiveIntersectionSystem2),
     Dense(BezierChordNormalDenseIntersectionSystem2),
+}
+
+#[derive(Debug)]
+enum BezierChordNormalRationalParameterMapSystem2 {
+    Compact(Arc<BezierChordNormalProjectiveMapSystem2>),
+    Dense(Arc<BezierChordNormalDenseMapSystem2>),
 }
 
 #[derive(Clone, Debug)]
@@ -3962,7 +3969,7 @@ struct BezierChordNormalDenseTargetGeometry2 {
     common_denominator: DenseTensorPolynomial,
 }
 
-impl BezierChordNormalProjectiveChordSystem2 {
+impl BezierChordNormalProjectiveTargetSystem2 {
     fn contact_parameters(
         &self,
         policy: &CurveContext,
@@ -3996,6 +4003,25 @@ impl BezierChordNormalProjectiveChordSystem2 {
                     .map
                     .expression_sign(&system.selected_half_plane, target, policy)
             }
+        }
+    }
+
+    fn selected_half_plane_parameters(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        match self {
+            Self::Compact(system) => chord_normal_projective_expression_parameters(
+                &system.map,
+                &system.source_representations,
+                &system.selected_half_plane,
+                policy,
+            ),
+            Self::Dense(system) => chord_normal_dense_expression_parameters(
+                &system.map,
+                &system.selected_half_plane,
+                policy,
+            ),
         }
     }
 
@@ -4035,20 +4061,118 @@ impl BezierChordNormalProjectiveChordSystem2 {
         }
     }
 
+    fn angular_tangent_parameters(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
+        match self {
+            Self::Compact(system) => chord_normal_projective_expression_parameters(
+                &system.map,
+                &system.source_representations,
+                &system.angular_tangent,
+                policy,
+            ),
+            Self::Dense(system) => {
+                let Some(angular_tangent) = system.angular_tangent.as_ref() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                chord_normal_dense_expression_parameters(&system.map, angular_tangent, policy)
+            }
+        }
+    }
+
+    fn angular_tangent_sign(
+        &self,
+        target: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        match self {
+            Self::Compact(system) => {
+                system
+                    .map
+                    .expression_sign(&system.angular_tangent, target, policy)
+            }
+            Self::Dense(system) => {
+                let Some(angular_tangent) = system.angular_tangent.as_ref() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                system.map.expression_sign(angular_tangent, target, policy)
+            }
+        }
+    }
+
+    fn rational_parameter_map_system(&self) -> BezierChordNormalRationalParameterMapSystem2 {
+        match self {
+            Self::Compact(system) => {
+                BezierChordNormalRationalParameterMapSystem2::Compact(system.map.clone())
+            }
+            Self::Dense(system) => {
+                BezierChordNormalRationalParameterMapSystem2::Dense(system.map.clone())
+            }
+        }
+    }
+
     fn into_parameter_map_system(self) -> BezierChordNormalProjectiveChordParameterMapSystem2 {
         match self {
             Self::Compact(system) => BezierChordNormalProjectiveChordParameterMapSystem2::Compact(
                 BezierChordNormalCompactChordParameterMapSystem2 {
                     projective: system.map,
-                    geometry: system.geometry,
+                    geometry: system
+                        .geometry
+                        .expect("a chord target retains its compact point map"),
                 },
             ),
             Self::Dense(system) => BezierChordNormalProjectiveChordParameterMapSystem2::Dense(
                 BezierChordNormalDenseChordParameterMapSystem2 {
                     projective: system.map,
-                    geometry: system.geometry,
+                    geometry: system
+                        .geometry
+                        .expect("a chord target retains its dense point map"),
                 },
             ),
+        }
+    }
+}
+
+impl BezierChordNormalRationalParameterMapSystem2 {
+    fn shares_storage(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Compact(first), Self::Compact(second)) => Arc::ptr_eq(first, second),
+            (Self::Dense(first), Self::Dense(second)) => Arc::ptr_eq(first, second),
+            (Self::Compact(_), Self::Dense(_)) | (Self::Dense(_), Self::Compact(_)) => false,
+        }
+    }
+
+    fn diameter_parameter_sign(
+        &self,
+        target: &BezierParameter2,
+        denominator: &Real,
+        radial_coefficient: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        match self {
+            Self::Compact(system) => {
+                let Some(predicate) = system.diameter.scale(denominator).and_then(|diameter| {
+                    system
+                        .radius_squared_denominator
+                        .scale(radial_coefficient)
+                        .and_then(|radius| diameter.subtract(&radius))
+                }) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                system.expression_sign(&predicate, target, policy)
+            }
+            Self::Dense(system) => {
+                let Some(predicate) = system.diameter.scale(denominator).and_then(|diameter| {
+                    system
+                        .radius_squared_denominator
+                        .scale(radial_coefficient)
+                        .and_then(|radius| diameter.subtract(&radius))
+                }) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                system.expression_sign(&predicate, target, policy)
+            }
         }
     }
 }
@@ -17421,7 +17545,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn chord_normal_projective_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
-        system: BezierChordNormalProjectiveChordSystem2,
+        system: BezierChordNormalProjectiveTargetSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
         let candidates = match system.contact_parameters(policy)? {
@@ -20706,6 +20830,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         frame_source: BezierChordNormalProjectiveFrameSource2,
         target_coordinates: Vec<AlgebraicRootRepresentation>,
+        retain_geometry: bool,
         target: F,
     ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveIntersectionSystem2>>>
     where
@@ -20969,13 +21094,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 selected_half_plane,
                 tangent_cross,
                 angular_tangent,
-                geometry: BezierChordNormalProjectiveTargetGeometry2 {
+                geometry: retain_geometry.then_some(BezierChordNormalProjectiveTargetGeometry2 {
                     point_x,
                     point_y,
                     center_x,
                     center_y,
                     common_denominator,
-                },
+                }),
             })
         })();
         Ok(Classification::Decided(system))
@@ -20985,7 +21110,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveIntersectionSystem2>>> {
+    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveTargetSystem2>>> {
         let frame_source = match self.chord_normal_projective_frame_source(policy)? {
             Classification::Decided(Some(frame_source)) => frame_source,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -21021,28 +21146,57 @@ impl BezierAlgebraicCuspSemicircle2 {
             &polynomial_multiply(&polynomial_derivative(&target_y), &target_weight),
             &polynomial_multiply(&target_y, &polynomial_derivative(&target_weight)),
         );
-        self.chord_normal_projective_target_system(frame_source, Vec::new(), move |_| {
-            let axis = |coefficients: &[Real]| {
-                QuadrivariatePolynomial2::from_axis_polynomial(coefficients, 3)
-            };
-            Ok(Some(BezierChordNormalProjectiveTarget2 {
-                x: axis(&target_x).ok_or_else(|| {
-                    CurveError::Topology("a rational target exceeded its tensor budget".into())
-                })?,
-                y: axis(&target_y).ok_or_else(|| {
-                    CurveError::Topology("a rational target exceeded its tensor budget".into())
-                })?,
-                weight: axis(&target_weight).ok_or_else(|| {
-                    CurveError::Topology("a rational target exceeded its tensor budget".into())
-                })?,
-                tangent_x: axis(&target_tangent_x).ok_or_else(|| {
-                    CurveError::Topology("a rational tangent exceeded its tensor budget".into())
-                })?,
-                tangent_y: axis(&target_tangent_y).ok_or_else(|| {
-                    CurveError::Topology("a rational tangent exceeded its tensor budget".into())
-                })?,
-            }))
-        })
+        match self.chord_normal_projective_target_system(
+            frame_source.clone(),
+            Vec::new(),
+            false,
+            |_| {
+                let axis = |coefficients: &[Real]| {
+                    QuadrivariatePolynomial2::from_axis_polynomial(coefficients, 3)
+                };
+                let (Some(x), Some(y), Some(weight), Some(tangent_x), Some(tangent_y)) = (
+                    axis(&target_x),
+                    axis(&target_y),
+                    axis(&target_weight),
+                    axis(&target_tangent_x),
+                    axis(&target_tangent_y),
+                ) else {
+                    return Ok(None);
+                };
+                Ok(Some(BezierChordNormalProjectiveTarget2 {
+                    x,
+                    y,
+                    weight,
+                    tangent_x,
+                    tangent_y,
+                }))
+            },
+        )? {
+            Classification::Decided(Some(system)) => {
+                return Ok(Classification::Decided(Some(
+                    BezierChordNormalProjectiveTargetSystem2::Compact(system),
+                )));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        Ok(self
+            .chord_normal_dense_target_system(frame_source, Vec::new(), true, |_, rank| {
+                let target_axis = rank.checked_sub(1)?;
+                let axis = |coefficients: &[Real]| {
+                    DenseTensorPolynomial::from_axis_polynomial(rank, target_axis, coefficients)
+                };
+                Some(BezierChordNormalDenseTarget2 {
+                    x: axis(&target_x)?,
+                    y: axis(&target_y)?,
+                    weight: axis(&target_weight)?,
+                    tangent_x: axis(&target_tangent_x)?,
+                    tangent_y: axis(&target_tangent_y)?,
+                })
+            })?
+            .map(|system| system.map(BezierChordNormalProjectiveTargetSystem2::Dense)))
     }
 
     fn chord_normal_compact_chord_system(
@@ -21069,6 +21223,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.chord_normal_projective_target_system(
             frame_source,
             target_coordinates,
+            true,
             |coordinates| {
                 let [start_x, start_y, end_x, end_y]: [QuadrivariatePolynomial2; 4] =
                     match coordinates.try_into() {
@@ -21116,10 +21271,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         frame_source: BezierChordNormalProjectiveFrameSource2,
         target_coordinates: Vec<AlgebraicRootRepresentation>,
+        rational_target: bool,
         target: F,
     ) -> CurveResult<Classification<Option<BezierChordNormalDenseIntersectionSystem2>>>
     where
-        F: FnOnce(Vec<DenseTensorPolynomial>) -> Option<BezierChordNormalDenseTarget2>,
+        F: FnOnce(Vec<DenseTensorPolynomial>, usize) -> Option<BezierChordNormalDenseTarget2>,
     {
         let BezierChordNormalProjectiveFrameSource2 {
             first_support,
@@ -21157,7 +21313,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             weight,
             tangent_x,
             tangent_y,
-        }) = target(target_coordinates)
+        }) = target(target_coordinates, sources.len() + 1)
         else {
             return Ok(Classification::Decided(None));
         };
@@ -21301,6 +21457,17 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .multiply_rational(&denominator)?
                 .scale(&(-self.turn_sign()))?
                 .reduced(&sources)?;
+            let angular_tangent = if rational_target {
+                Some(
+                    radial_x
+                        .multiply_rational(&tangent_y)?
+                        .subtract(&radial_y.multiply_rational(&tangent_x)?)?
+                        .multiply_rational(&denominator)?
+                        .reduced(&sources)?,
+                )
+            } else {
+                None
+            };
             let source_representations = sources.clone();
             let map = Arc::new(BezierChordNormalDenseMapSystem2 {
                 source_representations,
@@ -21314,13 +21481,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 incidence,
                 selected_half_plane,
                 tangent_cross,
-                geometry: BezierChordNormalDenseTargetGeometry2 {
+                angular_tangent,
+                geometry: (!rational_target).then_some(BezierChordNormalDenseTargetGeometry2 {
                     point_x,
                     point_y,
                     center_x,
                     center_y,
                     common_denominator,
-                },
+                }),
             })
         })();
         Ok(Classification::Decided(system))
@@ -21347,50 +21515,54 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             }
         }
-        self.chord_normal_dense_target_system(frame_source, target_coordinates, |coordinates| {
-            let [start_x, start_y, end_x, end_y]: [DenseTensorPolynomial; 4] =
-                coordinates.try_into().ok()?;
-            let rank = start_x.dimensions().len();
-            let target_axis = rank.checked_sub(1)?;
-            let one_minus = DenseTensorPolynomial::from_axis_polynomial(
-                rank,
-                target_axis,
-                &[Real::one(), Real::from(-1_i8)],
-            )?;
-            let parameter = DenseTensorPolynomial::from_axis_polynomial(
-                rank,
-                target_axis,
-                &[Real::zero(), Real::one()],
-            )?;
-            let weight =
-                DenseTensorPolynomial::from_axis_polynomial(rank, target_axis, &[Real::one()])?;
-            let x = start_x
-                .multiply(&one_minus)?
-                .add(&end_x.multiply(&parameter)?)?;
-            let y = start_y
-                .multiply(&one_minus)?
-                .add(&end_y.multiply(&parameter)?)?;
-            let tangent_x = end_x.subtract(&start_x)?;
-            let tangent_y = end_y.subtract(&start_y)?;
-            Some(BezierChordNormalDenseTarget2 {
-                x,
-                y,
-                weight,
-                tangent_x,
-                tangent_y,
-            })
-        })
+        self.chord_normal_dense_target_system(
+            frame_source,
+            target_coordinates,
+            false,
+            |coordinates, rank| {
+                let [start_x, start_y, end_x, end_y]: [DenseTensorPolynomial; 4] =
+                    coordinates.try_into().ok()?;
+                let target_axis = rank.checked_sub(1)?;
+                let one_minus = DenseTensorPolynomial::from_axis_polynomial(
+                    rank,
+                    target_axis,
+                    &[Real::one(), Real::from(-1_i8)],
+                )?;
+                let parameter = DenseTensorPolynomial::from_axis_polynomial(
+                    rank,
+                    target_axis,
+                    &[Real::zero(), Real::one()],
+                )?;
+                let weight =
+                    DenseTensorPolynomial::from_axis_polynomial(rank, target_axis, &[Real::one()])?;
+                let x = start_x
+                    .multiply(&one_minus)?
+                    .add(&end_x.multiply(&parameter)?)?;
+                let y = start_y
+                    .multiply(&one_minus)?
+                    .add(&end_y.multiply(&parameter)?)?;
+                let tangent_x = end_x.subtract(&start_x)?;
+                let tangent_y = end_y.subtract(&start_y)?;
+                Some(BezierChordNormalDenseTarget2 {
+                    x,
+                    y,
+                    weight,
+                    tangent_x,
+                    tangent_y,
+                })
+            },
+        )
     }
 
     fn chord_normal_projective_chord_system(
         &self,
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveChordSystem2>>> {
+    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveTargetSystem2>>> {
         match self.chord_normal_compact_chord_system(chord, policy)? {
             Classification::Decided(Some(system)) => {
                 return Ok(Classification::Decided(Some(
-                    BezierChordNormalProjectiveChordSystem2::Compact(system),
+                    BezierChordNormalProjectiveTargetSystem2::Compact(system),
                 )));
             }
             Classification::Decided(None) => {}
@@ -21400,7 +21572,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         Ok(self
             .chord_normal_dense_chord_system(chord, policy)?
-            .map(|system| system.map(BezierChordNormalProjectiveChordSystem2::Dense)))
+            .map(|system| system.map(BezierChordNormalProjectiveTargetSystem2::Dense)))
     }
 
     fn represented_rational_system(
@@ -21566,18 +21738,10 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn chord_normal_projective_replay_rational_circle_component(
         &self,
         other: &RationalBezier2,
-        system: &BezierChordNormalProjectiveIntersectionSystem2,
+        system: &BezierChordNormalProjectiveTargetSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let roots = |expression: &BezierQuadrivariateTwoSquareRootExpression2| {
-            chord_normal_projective_expression_parameters(
-                &system.map,
-                &system.source_representations,
-                expression,
-                policy,
-            )
-        };
-        let selected_roots = match roots(&system.selected_half_plane)? {
+        let selected_roots = match system.selected_half_plane_parameters(policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
             Classification::Decided(
                 BezierAlgebraicFiberProjection2::IdenticallyZero
@@ -21591,7 +21755,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let angular_roots = match roots(&system.angular_tangent)? {
+        let angular_roots = match system.angular_tangent_parameters(policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) => roots,
             Classification::Decided(
                 BezierAlgebraicFiberProjection2::IdenticallyZero
@@ -21636,7 +21800,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 curve: other.clone(),
                 system:
                     BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
-                        system: system.map.clone(),
+                        system: system.rational_parameter_map_system(),
                     },
                 policy: *policy,
                 represented_rational_values: Mutex::new(Vec::new()),
@@ -21651,23 +21815,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 if boundary.selected_relation {
                     Ok(Classification::Decided(RealSign::Zero))
                 } else {
-                    system.map.expression_sign(
-                        &system.selected_half_plane,
-                        &boundary.parameter,
-                        policy,
-                    )
+                    system.selected_half_plane_sign(&boundary.parameter, policy)
                 }
             },
-            |boundary| {
-                system
-                    .map
-                    .expression_sign(&system.map.diameter, &boundary.parameter, policy)
-            },
-            |parameter| {
-                system
-                    .map
-                    .expression_sign(&system.angular_tangent, parameter, policy)
-            },
+            |boundary| system.diameter_sign(&boundary.parameter, policy),
+            |parameter| system.angular_tangent_sign(parameter, policy),
         )
     }
 
@@ -21675,7 +21827,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &RationalBezier2,
         retain_parameter_map: bool,
-        system: BezierChordNormalProjectiveIntersectionSystem2,
+        system: BezierChordNormalProjectiveTargetSystem2,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -21683,12 +21835,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             Option<BezierAlgebraicCuspSemicircleRationalParameterMap2>,
         )>,
     > {
-        let candidates = match chord_normal_projective_expression_parameters(
-            &system.map,
-            &system.source_representations,
-            &system.incidence,
-            policy,
-        )? {
+        let candidates = match system.contact_parameters(policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
                 candidates
             }
@@ -21711,52 +21858,38 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let selected =
-                match system
-                    .map
-                    .expression_sign(&system.selected_half_plane, &candidate, policy)?
-                {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let selected = match system.selected_half_plane_sign(&candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let location = match selected {
                 RealSign::Negative => continue,
                 RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                RealSign::Zero => {
-                    match system
-                        .map
-                        .expression_sign(&system.map.diameter, &candidate, policy)?
-                    {
-                        Classification::Decided(RealSign::Positive) => {
-                            BezierAlgebraicCuspSemicircleContactLocation2::Start
-                        }
-                        Classification::Decided(RealSign::Negative) => {
-                            BezierAlgebraicCuspSemicircleContactLocation2::End
-                        }
-                        Classification::Decided(RealSign::Zero) => {
-                            return Err(CurveError::Topology(
-                                "a nonzero chord-normal circle contact had zero local diameter"
-                                    .into(),
-                            ));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
+                RealSign::Zero => match system.diameter_sign(&candidate, policy)? {
+                    Classification::Decided(RealSign::Positive) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::Start
                     }
-                }
-            };
-            let tangent_cross_sign =
-                match system
-                    .map
-                    .expression_sign(&system.tangent_cross, &candidate, policy)?
-                {
-                    Classification::Decided(sign) => sign,
+                    Classification::Decided(RealSign::Negative) => {
+                        BezierAlgebraicCuspSemicircleContactLocation2::End
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "a nonzero chord-normal circle contact had zero local diameter".into(),
+                        ));
+                    }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
-                };
+                },
+            };
+            let tangent_cross_sign = match system.tangent_cross_sign(&candidate, policy)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
@@ -21780,7 +21913,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     curve: other.clone(),
                     system:
                         BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
-                            system: system.map,
+                            system: system.rational_parameter_map_system(),
                         },
                     policy: *policy,
                     represented_rational_values: Mutex::new(Vec::new()),
@@ -23869,7 +24002,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                     system: second,
                 },
-            ) => self.data.curve == other.data.curve && Arc::ptr_eq(first, second),
+            ) => self.data.curve == other.data.curve && first.shares_storage(second),
             (
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented { .. },
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField { .. }
@@ -24080,17 +24213,12 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             }
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                 system,
-            } => {
-                let Some(predicate) = system.diameter.scale(&denominator).and_then(|diameter| {
-                    system
-                        .radius_squared_denominator
-                        .scale(&radial_coefficient)
-                        .and_then(|radius| diameter.subtract(&radius))
-                }) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                system.expression_sign(&predicate, &contact.other_parameter, policy)?
-            }
+            } => system.diameter_parameter_sign(
+                &contact.other_parameter,
+                &denominator,
+                &radial_coefficient,
+                policy,
+            )?,
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented { frame } => {
                 represented_circle_diameter_predicate_sign(
                     frame,
@@ -87172,143 +87300,126 @@ mod conversion_tests {
         }
     }
 
-    #[test]
-    fn dense_chord_normal_tangency_retains_a_finite_endpoint() {
+    fn dense_chord_normal_point(
+        denominator: i8,
+        x: Vec<Real>,
+        y: Vec<Real>,
+        policy: &CurveContext,
+        label: &'static str,
+    ) -> RationalBezierIntersectionPointEvidence2 {
+        let BezierParameter2::Algebraic(parameter) = algebraic_parameter(vec![
+            -(Real::one() / Real::from(denominator)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]) else {
+            panic!("the selected square root must remain algebraic");
+        };
+        RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                parameter.clone(),
+                parameter_representation(&parameter, policy),
+                x,
+                y,
+                vec![Real::one()],
+                label,
+            ),
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn dense_chord_normal_chord(
+        start_denominator: i8,
+        start_x: Vec<Real>,
+        start_y: Vec<Real>,
+        end_denominator: i8,
+        end_x: Vec<Real>,
+        end_y: Vec<Real>,
+        policy: &CurveContext,
+        label: &'static str,
+    ) -> BezierAlgebraicChord2 {
+        match BezierAlgebraicChord2::try_new(
+            dense_chord_normal_point(start_denominator, start_x, start_y, policy, label),
+            dense_chord_normal_point(end_denominator, end_x, end_y, policy, label),
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                panic!("the dense selected chord must construct: {reason:?}")
+            }
+        }
+    }
+
+    fn dense_chord_normal_unit_semicircle(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2 {
         use crate::classify::LineSide::{Left, Right};
 
-        let selected = |denominator: i8| {
-            let BezierParameter2::Algebraic(parameter) = algebraic_parameter(vec![
-                -(Real::one() / Real::from(denominator)).unwrap(),
-                Real::zero(),
-                Real::one(),
-            ]) else {
-                panic!("the selected square root must remain algebraic");
-            };
-            parameter
-        };
-        let point = |parameter: BezierAlgebraicParameter2,
-                     x: Vec<Real>,
-                     y: Vec<Real>,
-                     policy: &CurveContext,
-                     label| {
-            RationalBezierIntersectionPointEvidence2::Algebraic(
-                RationalBezierAlgebraicPointImage2::from_retained_expression(
-                    parameter.clone(),
-                    parameter_representation(&parameter, policy),
-                    x,
-                    y,
-                    vec![Real::one()],
-                    label,
-                ),
-            )
-        };
+        let first = dense_chord_normal_chord(
+            2,
+            vec![Real::zero(), Real::from(-1_i8)],
+            vec![Real::from(-1_i8)],
+            3,
+            vec![Real::zero(), Real::one()],
+            vec![Real::from(-1_i8)],
+            policy,
+            "dense horizontal support",
+        );
+        let second = dense_chord_normal_chord(
+            5,
+            vec![Real::one()],
+            vec![Real::zero(), Real::from(-1_i8)],
+            7,
+            vec![Real::one()],
+            vec![Real::zero(), Real::one()],
+            policy,
+            "dense vertical support",
+        );
+        let center = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(
+            BezierAlgebraicChordPairPoint2::new(
+                first.parallel_left_retained(Real::one(), policy).unwrap(),
+                second.parallel_left_retained(Real::one(), policy).unwrap(),
+                [Left, Right],
+                [Right, Left],
+                policy,
+            ),
+        );
+        match BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+            center,
+            first,
+            Real::one(),
+            true,
+            policy,
+        )
+        .unwrap()
+        {
+            Classification::Decided(Some(circle)) => circle,
+            result => panic!("the dense chord-normal circle must construct: {result:?}"),
+        }
+    }
 
+    #[test]
+    fn dense_chord_normal_tangency_retains_a_finite_endpoint() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // Four independent selected endpoint fields retain the two source
             // lines y=-1 and x=1. Their unit left offsets meet at the origin,
             // but the chord-normal frame deliberately keeps all four authored
             // fields instead of materializing that cancellation.
-            let first = match BezierAlgebraicChord2::try_new(
-                point(
-                    selected(2),
-                    vec![Real::zero(), Real::from(-1_i8)],
-                    vec![Real::from(-1_i8)],
-                    &policy,
-                    "dense tangent first support start",
-                ),
-                point(
-                    selected(3),
-                    vec![Real::zero(), Real::one()],
-                    vec![Real::from(-1_i8)],
-                    &policy,
-                    "dense tangent first support end",
-                ),
-                &policy,
-            )
-            .unwrap()
-            {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    panic!("the first dense tangent support must construct: {reason:?}")
-                }
-            };
-            let second = match BezierAlgebraicChord2::try_new(
-                point(
-                    selected(5),
-                    vec![Real::one()],
-                    vec![Real::zero(), Real::from(-1_i8)],
-                    &policy,
-                    "dense tangent second support start",
-                ),
-                point(
-                    selected(7),
-                    vec![Real::one()],
-                    vec![Real::zero(), Real::one()],
-                    &policy,
-                    "dense tangent second support end",
-                ),
-                &policy,
-            )
-            .unwrap()
-            {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    panic!("the second dense tangent support must construct: {reason:?}")
-                }
-            };
-            let first_offset = first.parallel_left_retained(Real::one(), &policy).unwrap();
-            let second_offset = second.parallel_left_retained(Real::one(), &policy).unwrap();
-            let center = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(
-                BezierAlgebraicChordPairPoint2::new(
-                    first_offset,
-                    second_offset,
-                    [Left, Right],
-                    [Right, Left],
-                    &policy,
-                ),
-            );
-            let circle =
-                match BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
-                    center,
-                    first,
-                    Real::one(),
-                    true,
-                    &policy,
-                )
-                .unwrap()
-                {
-                    Classification::Decided(Some(circle)) => circle,
-                    result => panic!("the dense chord-normal circle must construct: {result:?}"),
-                };
+            let circle = dense_chord_normal_unit_semicircle(&policy);
 
             // The selected clockwise half touches x=1 at (1,0). Keep that
             // contact at one finite chord endpoint; APPROXIMATE_512 reverses
             // the carrier so both endpoint orientations replay the same even
             // projected root without changing construction evidence.
-            let target = match BezierAlgebraicChord2::try_new(
-                point(
-                    selected(11),
-                    vec![Real::one()],
-                    vec![Real::zero()],
-                    &policy,
-                    "dense tangent target contact",
-                ),
-                point(
-                    selected(13),
-                    vec![Real::one()],
-                    vec![Real::from(2_i8)],
-                    &policy,
-                    "dense tangent target extent",
-                ),
+            let target = dense_chord_normal_chord(
+                11,
+                vec![Real::one()],
+                vec![Real::zero()],
+                13,
+                vec![Real::one()],
+                vec![Real::from(2_i8)],
                 &policy,
-            )
-            .unwrap()
-            {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    panic!("the finite dense tangent chord must construct: {reason:?}")
-                }
-            };
+                "dense tangent target",
+            );
             assert!(target.exact_line().is_none());
             assert!(target.strict_retained_support_line(&policy).is_none());
             let target = if policy == CurveContext::APPROXIMATE_512 {
@@ -87355,6 +87466,152 @@ mod conversion_tests {
                     BezierChordNormalProjectiveChordParameterMapSystem2::Dense(_)
                 )
             ));
+        }
+    }
+
+    #[test]
+    fn dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = dense_chord_normal_unit_semicircle(&policy);
+            let disjoint = dense_chord_normal_chord(
+                17,
+                vec![Real::from(-2_i8)],
+                vec![Real::zero()],
+                19,
+                vec![Real::zero()],
+                vec![Real::from(2_i8)],
+                &policy,
+                "dense disjoint target",
+            );
+            let clipped = dense_chord_normal_chord(
+                23,
+                vec![-half.clone()],
+                vec![Real::zero()],
+                29,
+                vec![Real::zero()],
+                vec![Real::zero()],
+                &policy,
+                "dense clipped target",
+            );
+            for chord in [disjoint, clipped] {
+                assert!(chord.exact_line().is_none());
+                assert!(chord.strict_retained_support_line(&policy).is_none());
+                assert!(matches!(
+                    circle
+                        .chord_normal_projective_chord_system(&chord, &policy)
+                        .unwrap(),
+                    Classification::Decided(Some(BezierChordNormalProjectiveTargetSystem2::Dense(
+                        _
+                    )))
+                ));
+                for carrier in [chord.clone(), chord.reversed()] {
+                    assert!(matches!(
+                        circle.chord_intersections(&carrier, &policy).unwrap(),
+                        Classification::Decided(
+                            BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts
+                        )
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dense_chord_normal_retains_rational_contacts_and_circle_components() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let secant = RationalBezier2::try_new(
+            vec![
+                Point2::new(half.clone(), Real::from(-2_i8)),
+                Point2::new(half, Real::from(2_i8)),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let quarter_circle = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = dense_chord_normal_unit_semicircle(&policy);
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                Some(parameter_map),
+            )) = circle
+                .rational_intersections_with_parameter_map(&secant, &policy)
+                .unwrap()
+            else {
+                panic!("the dense rational secant must complete");
+            };
+            assert_eq!(contacts.len(), 2);
+            assert!(matches!(
+                &parameter_map.data.system,
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
+                    system: BezierChordNormalRationalParameterMapSystem2::Dense(_),
+                }
+            ));
+            for contact in &contacts {
+                assert_eq!(
+                    contact.location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                );
+                assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+                let cusp_parameter = parameter_map.contact_parameter(contact);
+                let Classification::Decided(Some(point)) = cusp_parameter
+                    .coincident_point_evidence(&circle, &policy)
+                    .unwrap()
+                else {
+                    panic!("the dense rational map must replay its contact point");
+                };
+                assert_eq!(
+                    point.same_point(&contact.point, &policy),
+                    Classification::Decided(true),
+                );
+            }
+            assert!(matches!(
+                circle
+                    .chord_normal_projective_rational_system(&quarter_circle, &policy)
+                    .unwrap(),
+                Classification::Decided(Some(BezierChordNormalProjectiveTargetSystem2::Dense(_)))
+            ));
+            for (target, orientation) in [
+                (
+                    quarter_circle.clone(),
+                    RationalBezierOverlapOrientation2::Reversed,
+                ),
+                (
+                    quarter_circle.reversed(),
+                    RationalBezierOverlapOrientation2::Same,
+                ),
+            ] {
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                ) = circle.rational_intersections(&target, &policy).unwrap()
+                else {
+                    panic!("the dense supporting-circle component must complete");
+                };
+                let [overlap] = overlaps.as_slice() else {
+                    panic!("the selected quarter must retain one monotone overlap cell");
+                };
+                assert_eq!(overlap.orientation(), orientation);
+                assert!(matches!(
+                    overlap
+                        .cusp_start_parameter()
+                        .parameter_bracket(16, &policy),
+                    Ok(Classification::Decided(_))
+                ));
+                assert!(matches!(
+                    overlap.cusp_end_parameter().parameter_bracket(16, &policy),
+                    Ok(Classification::Decided(_))
+                ));
+            }
         }
     }
 
