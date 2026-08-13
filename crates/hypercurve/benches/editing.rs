@@ -545,26 +545,6 @@ fn bench_native_arc_chamfer_solvers(iterations: u32) -> CurveResult<()> {
         .expect("line-arc benchmark region must promote")
         .into_value();
 
-    if corner_lane_enabled("curve_region_line_arc_parameter_chamfer") {
-        let started = Instant::now();
-        let mut loops = 0_usize;
-        for _ in 0..iterations {
-            let Classification::Decided(chamfered) = black_box(&region)
-                .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), next_sweep.clone(), &policy)
-                .expect("line-arc region parameter chamfer must remain exact")
-                .into_value()
-            else {
-                panic!("line-arc region parameter chamfer must remain decided");
-            };
-            loops += black_box(chamfered).boundary_loops().len();
-        }
-        let elapsed = started.elapsed();
-        println!(
-            "curve_region_line_arc_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
-            elapsed / iterations
-        );
-    }
-
     if corner_lane_enabled("curve_region_line_arc_design_chamfer") {
         let started = Instant::now();
         let mut loops = 0_usize;
@@ -757,34 +737,6 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
             .expect("line-arc fillet benchmark region must promote")
             .into_value();
 
-    if corner_lane_enabled("curve_region_line_arc_parameter_fillet") {
-        let started = Instant::now();
-        let mut loops = 0_usize;
-        for _ in 0..iterations {
-            let Classification::Decided(filleted) = black_box(&line_arc_region)
-                .fillet_loop_vertex_by_parameters(
-                    0,
-                    1,
-                    line_arc_previous_parameter.clone(),
-                    line_arc_next_sweep.clone(),
-                    &line_arc_center,
-                    false,
-                    &policy,
-                )
-                .expect("line-arc region parameter fillet must remain exact")
-                .into_value()
-            else {
-                panic!("line-arc region parameter fillet must remain decided");
-            };
-            loops += black_box(filleted).boundary_loops().len();
-        }
-        let elapsed = started.elapsed();
-        println!(
-            "curve_region_line_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
-            elapsed / iterations
-        );
-    }
-
     if corner_lane_enabled("curve_region_line_arc_design_fillet") {
         let started = Instant::now();
         let mut loops = 0_usize;
@@ -821,34 +773,6 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         CurveRegion2::try_from_native_material_contours(vec![arc_arc_contour], &policy)
             .expect("arc-arc fillet benchmark region must promote")
             .into_value();
-
-    if corner_lane_enabled("curve_region_arc_arc_parameter_fillet") {
-        let started = Instant::now();
-        let mut loops = 0_usize;
-        for _ in 0..iterations {
-            let Classification::Decided(filleted) = black_box(&arc_arc_region)
-                .fillet_loop_vertex_by_parameters(
-                    0,
-                    1,
-                    previous_sweep.clone(),
-                    next_sweep.clone(),
-                    &arc_arc_center,
-                    false,
-                    &policy,
-                )
-                .expect("arc-arc region parameter fillet must remain exact")
-                .into_value()
-            else {
-                panic!("arc-arc region parameter fillet must remain decided");
-            };
-            loops += black_box(filleted).boundary_loops().len();
-        }
-        let elapsed = started.elapsed();
-        println!(
-            "curve_region_arc_arc_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
-            elapsed / iterations
-        );
-    }
 
     if corner_lane_enabled("curve_region_arc_arc_design_fillet") {
         let started = Instant::now();
@@ -2462,46 +2386,6 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         );
     }
 
-    if corner_lane_enabled("curve_region_parameter_chamfer") {
-        let started = Instant::now();
-        let mut chamfered_loops = 0_usize;
-        for _ in 0..iterations {
-            let Classification::Decided(chamfered) = black_box(&region)
-                .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &policy)
-                .expect("benchmark chamfer must remain exact")
-                .into_value()
-            else {
-                panic!("CurveRegion2 line chamfer benchmark became uncertain");
-            };
-            chamfered_loops += black_box(chamfered).boundary_loops().len();
-        }
-        let elapsed = started.elapsed();
-        println!(
-            "curve_region_parameter_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={chamfered_loops}",
-            elapsed / iterations
-        );
-    }
-
-    if corner_lane_enabled("curve_region_parameter_fillet") {
-        let started = Instant::now();
-        let mut filleted_loops = 0_usize;
-        for _ in 0..iterations {
-            let Classification::Decided(filleted) = black_box(&region)
-                .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)
-                .expect("benchmark fillet must remain exact")
-                .into_value()
-            else {
-                panic!("CurveRegion2 line fillet benchmark became uncertain");
-            };
-            filleted_loops += black_box(filleted).boundary_loops().len();
-        }
-        let elapsed = started.elapsed();
-        println!(
-            "curve_region_parameter_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={filleted_loops}",
-            elapsed / iterations
-        );
-    }
-
     if corner_lane_enabled("curve_region_design_chamfer") {
         let started = Instant::now();
         let mut chamfered_loops = 0_usize;
@@ -2596,12 +2480,19 @@ fn bench_higher_order_curve_edits(iterations: u32) {
     let started = Instant::now();
     let mut region_chamfer_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(chamfered) = region
-            .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &policy)
+        let CurveCornerSolutions2::Unique(chamfered) = region
+            .chamfer_loop_vertex_by_setbacks(
+                0,
+                1,
+                q(1, 2),
+                q(1, 2),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .expect("higher-order region chamfer must remain exact")
             .into_value()
         else {
-            panic!("higher-order region chamfer benchmark became uncertain");
+            panic!("higher-order region chamfer benchmark must remain unique");
         };
         region_chamfer_loops += black_box(chamfered.boundary_loops().len());
     }
@@ -2614,14 +2505,20 @@ fn bench_higher_order_curve_edits(iterations: u32) {
     let started = Instant::now();
     let mut region_fillet_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(filleted) = region
-            .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &p(3, 1), false, &policy)
+        let filleted = region
+            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
             .expect("higher-order region fillet must remain exact")
-            .into_value()
-        else {
-            panic!("higher-order region fillet benchmark became uncertain");
+            .into_value();
+        region_fillet_loops += match black_box(filleted) {
+            CurveCornerSolutions2::Unique(filleted) => filleted.boundary_loops().len(),
+            CurveCornerSolutions2::Multiple(filleted) => filleted
+                .iter()
+                .map(|candidate| candidate.boundary_loops().len())
+                .sum(),
+            CurveCornerSolutions2::NoSolution(reason) => {
+                panic!("higher-order region fillet lost every solution: {reason:?}")
+            }
         };
-        region_fillet_loops += black_box(filleted.boundary_loops().len());
     }
     let elapsed = started.elapsed();
     println!(

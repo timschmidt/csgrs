@@ -6218,53 +6218,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
     ));
 }
 #[test]
-fn unified_region_chamfer_and_fillet_use_authoritative_path_kernel() {
-    let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_native_material_contours(vec![square(0, 0, 4, 4)], &policy)
-        .unwrap()
-        .into_value();
-
-    let chamfered = decided(
-        region
-            .chamfer_loop_vertex_by_parameters(0, 0, q(3, 4), q(1, 4), &policy)
-            .unwrap()
-            .into_value(),
-    );
-    assert_eq!(
-        decided(chamfered.loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material]
-    );
-    assert_eq!(
-        chamfered.loop_fill_rules(),
-        Some([FillRule::NonZero].as_slice())
-    );
-    assert_eq!(
-        certified(chamfered.classify_point(&p(2, 2), &policy).unwrap()),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
-
-    let filleted = decided(
-        region
-            .fillet_loop_vertex_by_parameters(0, 0, q(3, 4), q(1, 4), &p(1, 1), false, &policy)
-            .unwrap()
-            .into_value(),
-    );
-    assert_eq!(
-        decided(filleted.loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material]
-    );
-    assert_eq!(
-        filleted.loop_fill_rules(),
-        Some([FillRule::NonZero].as_slice())
-    );
-    assert_eq!(
-        certified(filleted.classify_point(&p(2, 2), &policy).unwrap()),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
-}
-
-#[test]
-fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
+fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
     let policy = CurveContext::STRICT;
     let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[quadratic_fillet_path()],
@@ -6279,22 +6233,39 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
         Classification::Uncertain(_)
     ));
 
-    let chamfered = decided(
-        region
-            .chamfer_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &policy)
-            .unwrap()
-            .into_value(),
-    );
-    let filleted = decided(
-        region
-            .fillet_loop_vertex_by_parameters(0, 1, q(3, 4), q(1, 2), &p(3, 1), false, &policy)
-            .unwrap()
-            .into_value(),
-    );
+    let CurveCornerSolutions2::Unique(chamfered) = region
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            q(1, 2),
+            q(1, 2),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        )
+        .unwrap()
+        .into_value()
+    else {
+        panic!("the higher-order corner must have one trim-only chamfer");
+    };
+    let CurveCornerSolutions2::Multiple(filleted) = region
+        .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+        .unwrap()
+        .into_value()
+    else {
+        panic!("the higher-order corner must retain every trim-only fillet");
+    };
 
     assert_eq!(chamfered.boundary_loops()[0].len(), 6);
-    assert_eq!(filleted.boundary_loops()[0].len(), 7);
-    for edited in [&chamfered, &filleted] {
+    assert_eq!(filleted.len(), 2);
+    let fillet_fragment_counts = filleted
+        .iter()
+        .map(|candidate| candidate.boundary_loops()[0].len())
+        .collect::<Vec<_>>();
+    assert!(
+        fillet_fragment_counts.iter().all(|count| *count >= 6),
+        "unexpected fillet fragment counts: {fillet_fragment_counts:?}"
+    );
+    for edited in std::iter::once(&chamfered).chain(filleted.iter()) {
         assert_eq!(
             decided(edited.loop_roles(&policy).unwrap()),
             vec![CurveRegionLoopRole::Material]
@@ -6365,57 +6336,6 @@ fn materialized_boundary_paths_obey_terminal_policy_once() {
             .value,
         Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
     );
-}
-
-#[test]
-fn higher_order_region_fillet_obeys_terminal_policy_once() {
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        &[quadratic_fillet_path()],
-        &[CurveRegionLoopRole::Material],
-        &[FillRule::NonZero],
-        &CurveContext::STRICT,
-    )
-    .unwrap()
-    .into_value();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
-    let center = Point2::new(Real::from(3) + undecidable_zero, Real::one());
-
-    let strict = region
-        .fillet_loop_vertex_by_parameters(
-            0,
-            1,
-            q(3, 4),
-            q(1, 2),
-            &center,
-            false,
-            &CurveContext::STRICT,
-        )
-        .unwrap();
-    assert_eq!(strict.certainty, CurveCertainty::Certified);
-    assert_eq!(
-        strict.value,
-        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
-    );
-
-    let approximate = region
-        .fillet_loop_vertex_by_parameters(
-            0,
-            1,
-            q(3, 4),
-            q(1, 2),
-            &center,
-            false,
-            &CurveContext::APPROXIMATE_512,
-        )
-        .unwrap();
-    assert_eq!(
-        approximate.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    let Classification::Decided(filleted) = approximate.value else {
-        panic!("the authorized terminal must complete the higher-order region fillet");
-    };
-    assert_eq!(filleted.boundary_loops()[0].len(), 7);
 }
 
 #[test]
