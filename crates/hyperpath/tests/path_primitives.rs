@@ -39,19 +39,20 @@ use hyperlimit::{
     Certainty, Point2, PredicateOutcome, PredicatePolicy, SegmentIntersection, compare_reals,
 };
 use hyperpath::{
-    AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
-    BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
-    BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
-    ClearanceStatus, CornerLookaheadJoinClass, CubicBezier, CubicPythagoreanHodograph,
-    CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass, CurveArrangementLoopRoleBlocker,
-    CurveArrangementLoopRoleClass, DrillBoardClearanceReport, ExplicitArcArrangementClass,
-    ExplicitArcIntersectionClass, ExplicitArcOverlapClass, ExplicitArcPointClassification,
-    ExplicitArcSweepClass, ExplicitArcTangentClass, ExplicitCircleRelationClass,
-    ExplicitCircularArc, FeedPathElement, HigherOrderBezier, HigherOrderBezierError,
-    InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal, JerkRampSpanProposal,
-    LineArcArrangementEventClass, LineArrangementCellFaceClass, LineArrangementError,
-    LineArrangementEventClass, LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
-    LineCubicBezierAlgebraicBreakpointDomain, LineCubicBezierAlgebraicBreakpointOrderClass,
+    AccelerationLimitedFeedProfileClass, AffineSpanAxisProjection, ArcDirection, ArcOffsetError,
+    Axis, AxisMotionLimits, BeadFillAxis, BezierOffsetError, BezierParameter, BezierParameterError,
+    BoardContourError, BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc,
+    CircularArcError, ClearanceStatus, CornerLookaheadJoinClass, CubicBezier,
+    CubicPythagoreanHodograph, CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass,
+    CurveArrangementLoopRoleBlocker, CurveArrangementLoopRoleClass, DrillBoardClearanceReport,
+    ExplicitArcArrangementClass, ExplicitArcIntersectionClass, ExplicitArcOverlapClass,
+    ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitArcTangentClass,
+    ExplicitCircleRelationClass, ExplicitCircularArc, FeedPathElement, HigherOrderBezier,
+    HigherOrderBezierError, InfillGraphError, JerkLimitedFeedTimeReport, JerkRampPhaseProposal,
+    JerkRampSpanProposal, LineArcArrangementEventClass, LineArrangementCellFaceClass,
+    LineArrangementError, LineArrangementEventClass, LineCubicAlgebraicPointDomain,
+    LineCubicAlgebraicRootDomain, LineCubicBezierAlgebraicBreakpointDomain,
+    LineCubicBezierAlgebraicBreakpointOrderClass,
     LineCubicBezierAlgebraicBreakpointSequenceBlocker,
     LineCubicBezierAlgebraicBreakpointSequenceClass,
     LineCubicBezierAlgebraicBreakpointSequenceSource,
@@ -99,22 +100,23 @@ use hyperpath::{
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
     audit_specctra_trace_rule_clearances, certify_acceleration_limited_feed_time,
-    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
-    certify_cubic_ph_inverse_length, certify_differential_pair_skew, certify_g1_chain,
-    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
-    certify_quintic_ph_g1_smoothing, certify_quintic_ph_g1_smoothing_between,
-    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    certify_via_fabrication_policy, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_circular_pad_obround_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    certify_acceleration_limited_feed_time_for_path, certify_axis_projected_motion_limits,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
+    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
+    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
+    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
+    certify_quintic_ph_g1_smoothing_between, certify_quintic_ph_inverse_length,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, certify_via_fabrication_policy,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
     check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
     check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
@@ -134,17 +136,17 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, plan_jerk_feasible_lookahead_schedule,
-    plan_lookahead_feed_schedule, plan_monotonic_jerk_transition, rectangular_beads,
-    rectangular_pocket_link_graph, rectangular_pocket_rings, rectangular_rest_material_graph,
-    rectangular_serpentine_infill_graph, rectangular_support_footprint,
-    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
-    specctra_grid_route_rule_record, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region, tangent_alignment_problem, tangent_cross, tangent_dot,
-    tangent_norm_squared,
+    parse_specctra_grid_trace_records, plan_axis_projected_motion_limits,
+    plan_jerk_feasible_lookahead_schedule, plan_lookahead_feed_schedule,
+    plan_monotonic_jerk_transition, rectangular_beads, rectangular_pocket_link_graph,
+    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
+    specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
+    specctra_grid_via_record, subtract_rectangular_region, tangent_alignment_problem,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -8463,6 +8465,123 @@ fn corner_lookahead_limits_reject_invalid_inputs_and_uncertified_joins() {
 }
 
 #[test]
+fn affine_axis_projection_selects_and_replays_distinct_exact_bottlenecks() {
+    let projections = vec![
+        AffineSpanAxisProjection {
+            absolute_axis_derivatives: vec![rq(3, 5), rq(4, 5)],
+        },
+        AffineSpanAxisProjection {
+            absolute_axis_derivatives: vec![Real::zero(), Real::one()],
+        },
+    ];
+    let axis_limits = vec![
+        AxisMotionLimits {
+            maximum_velocity: r(6),
+            maximum_acceleration: r(8),
+            maximum_jerk: r(10),
+        },
+        AxisMotionLimits {
+            maximum_velocity: r(12),
+            maximum_acceleration: r(9),
+            maximum_jerk: r(21),
+        },
+    ];
+
+    let planned =
+        plan_axis_projected_motion_limits(&projections, &axis_limits, PredicatePolicy::STRICT)
+            .unwrap();
+
+    assert_eq!(planned.maximum_path_feed, r(10));
+    assert_eq!(planned.maximum_path_acceleration, r(9));
+    assert_eq!(planned.maximum_path_jerk, rq(50, 3));
+    assert_eq!(planned.feed_bottleneck.span_index, 0);
+    assert_eq!(planned.feed_bottleneck.axis_index, 0);
+    assert_eq!(planned.acceleration_bottleneck.span_index, 1);
+    assert_eq!(planned.acceleration_bottleneck.axis_index, 1);
+    assert_eq!(planned.jerk_bottleneck.span_index, 0);
+    assert_eq!(planned.jerk_bottleneck.axis_index, 0);
+    assert_eq!(planned.certification.rows.len(), 4);
+    assert!(
+        planned
+            .certification
+            .rows
+            .iter()
+            .all(|row| row.certification.rows.len() == 3)
+    );
+    assert_eq!(planned.bottleneck_certification.rows.len(), 3);
+    assert!(planned.all_satisfied());
+
+    let unsafe_candidate = certify_axis_projected_motion_limits(
+        &projections,
+        &axis_limits,
+        r(11),
+        r(9),
+        r(16),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(!unsafe_candidate.all_satisfied());
+    assert!(
+        unsafe_candidate.rows[0]
+            .certification
+            .has_certified_violation()
+    );
+}
+
+#[test]
+fn affine_axis_projection_rejects_empty_mismatched_negative_and_stationary_inputs() {
+    let axes = vec![
+        AxisMotionLimits {
+            maximum_velocity: r(1),
+            maximum_acceleration: r(2),
+            maximum_jerk: r(3),
+        },
+        AxisMotionLimits {
+            maximum_velocity: r(4),
+            maximum_acceleration: r(5),
+            maximum_jerk: r(6),
+        },
+    ];
+    assert_eq!(
+        plan_axis_projected_motion_limits(&[], &axes, PredicatePolicy::STRICT).unwrap_err(),
+        RouteCertificationError::EmptyAxisProjection
+    );
+    assert_eq!(
+        plan_axis_projected_motion_limits(
+            &[AffineSpanAxisProjection {
+                absolute_axis_derivatives: vec![r(1)],
+            }],
+            &axes,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::AxisProjectionShapeMismatch
+    );
+    assert_eq!(
+        plan_axis_projected_motion_limits(
+            &[AffineSpanAxisProjection {
+                absolute_axis_derivatives: vec![r(-1), r(1)],
+            }],
+            &axes,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeAxisProjection
+    );
+    assert_eq!(
+        plan_axis_projected_motion_limits(
+            &[AffineSpanAxisProjection {
+                absolute_axis_derivatives: vec![Real::zero(), Real::zero()],
+            }],
+            &axes,
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::DegenerateAxisProjection
+    );
+}
+
+#[test]
 fn lookahead_feed_schedule_certifies_local_corner_and_span_speed_nodes() {
     let line0 = strict_segment!(p(0, 0), p(10, 0));
     let line1 = strict_segment!(p(10, 0), p(10, 20));
@@ -12564,6 +12683,39 @@ proptest! {
         prop_assert_eq!(report.peak_feed_rate, r(peak_feed));
         prop_assert_eq!(report.peak_acceleration, r(peak_acceleration));
         prop_assert!(report.certification.all_satisfied());
+    }
+
+    #[test]
+    fn affine_axis_projection_generated_exact_bottleneck_replays(
+        derivative_numerator in 1_i16..=12,
+        derivative_denominator in 1_i16..=12,
+        feed in 1_i16..=30,
+        acceleration in 1_i16..=30,
+        jerk in 1_i16..=30,
+    ) {
+        let derivative = rq(
+            i64::from(derivative_numerator),
+            i64::from(derivative_denominator),
+        );
+        let expected_feed = r(i64::from(feed));
+        let expected_acceleration = r(i64::from(acceleration));
+        let expected_jerk = r(i64::from(jerk));
+        let planned = plan_axis_projected_motion_limits(
+            &[AffineSpanAxisProjection {
+                absolute_axis_derivatives: vec![derivative.clone()],
+            }],
+            &[AxisMotionLimits {
+                maximum_velocity: &derivative * &expected_feed,
+                maximum_acceleration: &derivative * &expected_acceleration,
+                maximum_jerk: &derivative * &expected_jerk,
+            }],
+            PredicatePolicy::STRICT,
+        ).unwrap();
+
+        prop_assert!(planned.all_satisfied());
+        prop_assert_eq!(&planned.maximum_path_feed, &expected_feed);
+        prop_assert_eq!(&planned.maximum_path_acceleration, &expected_acceleration);
+        prop_assert_eq!(&planned.maximum_path_jerk, &expected_jerk);
     }
 
     #[test]

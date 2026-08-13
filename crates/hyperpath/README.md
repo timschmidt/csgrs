@@ -26,6 +26,7 @@ This README describes crate version `0.3.0`.
 | `PcbBoardOutline`, pad and via types | Board geometry and fabrication intent |
 | `RectangularPocket`, `RectangularRegion` | Supported exact CAM planning domains |
 | `TangentSpan`, `G1ChainCertificationReport` | Tangency and continuity evidence |
+| `AffineSpanAxisProjection`, `PlannedAxisProjectedMotionLimits` | Exact dense-axis velocity/acceleration/jerk projection plus bottleneck replay |
 | `LookaheadFeedPlanningLimits`, `PlannedLookaheadFeedSchedule` | Exact forward/reverse speed-node planning plus replay |
 | `PlannedJerkFeasibleLookaheadSchedule` | Component-local exact jerk refinement plus final node/transition replay |
 | `PlannedMonotonicJerkTransition` | Exact two-phase nonzero-boundary feed transition plus independent replay |
@@ -184,6 +185,12 @@ Freeform curved pocket trimming is not inferred from these rectangular APIs.
   `certify_acceleration_limited_feed_time` cover common route/toolpath checks.
 - Path-wide feed APIs certify constant, acceleration-limited, symmetric
   jerk-limited, and corner-lookahead schedules with per-join evidence.
+  `plan_axis_projected_motion_limits` converts exact constant `|dq_i/ds|`
+  values for any number of dense axes and affine spans into route-wide scalar
+  velocity, acceleration, and jerk limits. Every span/axis inequality and the
+  three selected bottleneck equalities replay through Hypersolve. Curved or
+  nonlinear kinematics require their higher-derivative terms to be certified
+  separately and cannot claim this affine result.
   `plan_lookahead_feed_schedule` applies exact squared-speed forward/reverse
   reachability, caller node ceilings, tangent class, and retained corner radius,
   then independently replays the proposal through Hypersolve. A zero radius at

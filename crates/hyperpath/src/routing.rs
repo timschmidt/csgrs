@@ -23,11 +23,17 @@ use crate::offset::{LineOffsetError, OffsetSide, offset_axis_aligned_segment};
 use crate::segment::{Axis, LinePathSegment};
 use crate::solve::{constant_feed_time_equation, differential_pair_skew_equation};
 
+mod axis_projection;
 mod feed;
 mod jerk_schedule;
 mod lookahead;
 mod orthogonal_keepout;
 
+pub use axis_projection::{
+    AffineSpanAxisProjection, AxisMotionLimits, AxisProjectedMotionLimitsReport,
+    AxisProjectionBottleneck, AxisProjectionRowReport, PlannedAxisProjectedMotionLimits,
+    certify_axis_projected_motion_limits, plan_axis_projected_motion_limits,
+};
 pub use feed::{
     CornerLookaheadJoinClass, CornerLookaheadJoinReport, CornerLookaheadLimitReport,
     FeedPathElement, JerkLimitedFeedTimeReport, certify_acceleration_limited_feed_time_for_path,
@@ -536,6 +542,16 @@ pub enum RouteCertificationError {
     JerkProposalUncertified,
     /// Exact power-of-two jerk refinement exhausted its caller-owned bound.
     JerkRefinementBudgetExceeded,
+    /// No affine spans or no dense axis limits were supplied for projection.
+    EmptyAxisProjection,
+    /// An affine projection vector did not match the dense axis-limit count.
+    AxisProjectionShapeMismatch,
+    /// An absolute affine axis derivative was structurally negative.
+    NegativeAxisProjection,
+    /// An affine span had no structurally positive machine-axis derivative.
+    DegenerateAxisProjection,
+    /// Independent replay rejected internally selected affine axis limits.
+    AxisProjectionProposalUncertified,
     /// The selected predicate policy could not certify a scalar sign.
     PredicateUnresolved,
 }
