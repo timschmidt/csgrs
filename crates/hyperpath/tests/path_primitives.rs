@@ -8561,6 +8561,59 @@ fn lookahead_feed_schedule_reports_corner_and_transition_violations() {
 }
 
 #[test]
+fn lookahead_zero_radius_represents_an_unblended_exact_stop() {
+    let line0 = strict_segment!(p(0, 0), p(1, 0));
+    let line1 = strict_segment!(p(1, 0), p(1, 1));
+    let route = vec![
+        FeedPathElement::Line(line0.clone()),
+        FeedPathElement::Line(line1.clone()),
+    ];
+    let spans = vec![
+        TangentSpan::from_line_segment(&line0),
+        TangentSpan::from_line_segment(&line1),
+    ];
+    let stopped = LookaheadFeedSchedule {
+        entry_feed: Real::zero(),
+        corner_feeds: vec![Real::zero()],
+        corner_radii: vec![Real::zero()],
+        exit_feed: Real::zero(),
+    };
+    let stopped_report = certify_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &stopped,
+        r(10),
+        r(10),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(
+        stopped_report.corners.joins[0].class,
+        CornerLookaheadJoinClass::RadiusLimitedCorner
+    );
+    assert!(stopped_report.all_satisfied());
+
+    let moving = LookaheadFeedSchedule {
+        corner_feeds: vec![r(1)],
+        ..stopped
+    };
+    let moving_report = certify_lookahead_feed_schedule(
+        &route,
+        &spans,
+        &moving,
+        r(10),
+        r(10),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert!(
+        moving_report.corners.joins[0]
+            .certification
+            .has_certified_violation()
+    );
+}
+
+#[test]
 fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
     let line = strict_segment!(p(0, 0), p(10, 0));
     let route = vec![FeedPathElement::Line(line.clone())];

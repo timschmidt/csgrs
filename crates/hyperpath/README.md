@@ -180,7 +180,10 @@ Freeform curved pocket trimming is not inferred from these rectangular APIs.
 - `certify_differential_pair_skew`, `certify_constant_feed_time`, and
   `certify_acceleration_limited_feed_time` cover common route/toolpath checks.
 - Path-wide feed APIs certify constant, acceleration-limited, symmetric
-  jerk-limited, and corner-lookahead schedules with per-join evidence.
+  jerk-limited, and corner-lookahead schedules with per-join evidence. In a
+  `LookaheadFeedSchedule`, zero corner radius explicitly represents an
+  unblended stop and certifies only with zero corner feed; retained blends use
+  positive radii.
 
 These are structured proposal and certification helpers, not a global route
 search.

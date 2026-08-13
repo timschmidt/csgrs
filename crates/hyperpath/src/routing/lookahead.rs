@@ -33,16 +33,19 @@ use super::feed::{
 /// Exact local lookahead speed proposal for a retained route.
 ///
 /// `corner_feeds` and `corner_radii` are indexed by adjacent-span join, so
-/// both vectors must have `route.len() - 1` entries. Entry and exit feed are
-/// attached to the path endpoints. This keeps controller lookahead state as
-/// explicit retained data rather than hiding it in sampled machine positions.
+/// both vectors must have `route.len() - 1` entries. A zero radius explicitly
+/// denotes an unblended source corner and therefore certifies only with zero
+/// corner feed; a positive radius denotes a retained geometric blend. Entry
+/// and exit feed are attached to the path endpoints. This keeps controller
+/// lookahead state as explicit retained data rather than hiding it in sampled
+/// machine positions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LookaheadFeedSchedule {
     /// Exact candidate feed at the route entry.
     pub entry_feed: Real,
     /// Exact candidate feed at each adjacent-span join.
     pub corner_feeds: Vec<Real>,
-    /// Exact retained blend radius at each adjacent-span join.
+    /// Exact retained blend radius, or zero for an unblended exact stop.
     pub corner_radii: Vec<Real>,
     /// Exact candidate feed at the route exit.
     pub exit_feed: Real,
@@ -132,7 +135,7 @@ pub fn certify_lookahead_feed_schedule(
         require_nonnegative_feed(feed, policy)?;
     }
     for radius in &schedule.corner_radii {
-        require_positive_corner_radius(radius, policy)?;
+        require_nonnegative_corner_radius(radius, policy)?;
     }
     require_positive_feed(&max_feed_rate, policy)?;
     require_positive_acceleration(&max_acceleration, policy)?;
@@ -386,14 +389,13 @@ fn require_positive_acceleration(
     }
 }
 
-fn require_positive_corner_radius(
+fn require_nonnegative_corner_radius(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RouteCertificationError> {
     match classify_real_sign(value, policy).value() {
         Some(Sign::Negative) => Err(RouteCertificationError::NegativeCornerRadius),
-        Some(Sign::Zero) => Err(RouteCertificationError::ZeroCornerRadius),
-        Some(Sign::Positive) => Ok(()),
+        Some(Sign::Zero | Sign::Positive) => Ok(()),
         None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }
