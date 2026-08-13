@@ -3344,25 +3344,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     });
                 }
                 let parallel = first.geometry.parallel();
-                let mut intersections = Vec::with_capacity(2);
-                match &pair.context {
-                    RegionCarrierPairContext::ParallelPair => intersections.push((
-                        parallel
-                            .parallel_intersections(second.geometry.parallel(), &self.data.policy),
-                        false,
-                    )),
+                let intersection = match &pair.context {
+                    RegionCarrierPairContext::ParallelPair => parallel
+                        .parallel_intersections(second.geometry.parallel(), &self.data.policy),
                     RegionCarrierPairContext::ParallelSameImage => {
-                        intersections.push((
-                            parallel.parallel_intersections(
-                                second.geometry.parallel(),
-                                &self.data.policy,
-                            ),
-                            false,
-                        ));
-                        intersections.push((self.parallel_self_intersections(parallel), true));
+                        // The pair kernel saturates the identity component and
+                        // replays every residual off-diagonal contact.  Adding
+                        // the unordered self result would publish each fitting
+                        // crossing twice.
+                        parallel
+                            .parallel_intersections(second.geometry.parallel(), &self.data.policy)
                     }
                     RegionCarrierPairContext::ParallelSelf => {
-                        intersections.push((self.parallel_self_intersections(parallel), true));
+                        self.parallel_self_intersections(parallel)
                     }
                     RegionCarrierPairContext::Bezier(_)
                     | RegionCarrierPairContext::BezierSelf
@@ -3372,62 +3366,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     | RegionCarrierPairContext::CuspRational { .. }
                     | RegionCarrierPairContext::CuspParallel { .. }
                     | RegionCarrierPairContext::CuspPair => unreachable!(),
-                }
-                let mut contacts = Vec::new();
-                let mut overlaps = Vec::new();
-                let mut blockers = Vec::new();
-                for (intersection, self_contacts) in intersections {
-                    let result = match intersection
-                        .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-                    {
-                        Classification::Decided(result) => result,
-                        Classification::Uncertain(reason) => {
-                            blockers.push(RegionPairBlocker::Uncertain(reason));
-                            continue;
-                        }
-                    };
-                    for contact in result.contacts() {
-                        let (mut first_parameter, mut second_parameter) = (
+                };
+                let result = match intersection
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                {
+                    Classification::Decided(result) => result,
+                    Classification::Uncertain(reason) => {
+                        return Ok(RegionPairResult {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+                        });
+                    }
+                };
+                let contacts = result
+                    .contacts()
+                    .iter()
+                    .map(|contact| {
+                        RegionPairContactEvidence::direct_bezier(
                             contact.first_parameter().clone(),
                             contact.second_parameter().clone(),
-                        );
-                        let mut tangent_cross_sign = contact.tangent_cross_sign();
-                        let mut first_region_parameter =
-                            CurveRegionParameter2::from_bezier(first_parameter.clone());
-                        let mut second_region_parameter =
-                            CurveRegionParameter2::from_bezier(second_parameter.clone());
-                        if self_contacts
-                            && pair.first_carrier_index != pair.second_carrier_index
-                            && !(parameter_in_carrier(
-                                &first_region_parameter,
-                                first,
-                                &self.data.policy,
-                            )? && parameter_in_carrier(
-                                &second_region_parameter,
-                                second,
-                                &self.data.policy,
-                            )?)
-                        {
-                            std::mem::swap(&mut first_parameter, &mut second_parameter);
-                            std::mem::swap(
-                                &mut first_region_parameter,
-                                &mut second_region_parameter,
-                            );
-                            tangent_cross_sign = tangent_cross_sign.map(|sign| match sign {
-                                RealSign::Positive => RealSign::Negative,
-                                RealSign::Negative => RealSign::Positive,
-                                RealSign::Zero => RealSign::Zero,
-                            });
-                        }
-                        contacts.push(RegionPairContactEvidence::direct_bezier(
-                            first_parameter,
-                            second_parameter,
                             None,
                             contact.is_certified_transverse(),
-                            tangent_cross_sign,
-                        ));
-                    }
-                    overlaps.extend(result.overlaps().iter().flat_map(|overlap| {
+                            contact.tangent_cross_sign(),
+                        )
+                    })
+                    .collect();
+                let overlaps = result
+                    .overlaps()
+                    .iter()
+                    .flat_map(|overlap| {
                         parameter_component_region_overlap_sources(
                             result.component_overlaps(),
                             overlap,
@@ -3444,13 +3412,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ),
                             orientation: overlap.orientation(),
                         })
-                    }));
-                    if !result.parameter_components().is_empty() {
-                        blockers.push(RegionPairBlocker::PointImageParameterComponent);
-                    }
-                    if !result.is_complete() {
-                        blockers.push(RegionPairBlocker::IncompleteReplay);
-                    }
+                    })
+                    .collect();
+                let mut blockers = Vec::with_capacity(2);
+                if !result.parameter_components().is_empty() {
+                    blockers.push(RegionPairBlocker::PointImageParameterComponent);
+                }
+                if !result.is_complete() {
+                    blockers.push(RegionPairBlocker::IncompleteReplay);
                 }
                 Ok(RegionPairResult {
                     contacts,
