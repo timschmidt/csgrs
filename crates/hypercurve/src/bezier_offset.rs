@@ -6471,12 +6471,14 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
         point: RationalBezierIntersectionPointEvidence2,
         policy: CurveContext,
     },
-    /// Exact angular transport on one selected supporting circle.
+    /// Exact angular transport on one selected supporting circle chart.
     ///
-    /// `half_angle` is `tan(theta / 2)` in the semicircle's increasing local
-    /// parameter direction. The target parameter is the corresponding
-    /// Mobius transform of `source`; `point` retains the same construction as
-    /// a center-relative rotation of the source point.
+    /// `half_angle` is the coefficient of the positive-orientation Mobius
+    /// transform of `source`. On the source half it is the physical
+    /// `tan(theta / 2)`. On the complementary half it is that value's negative
+    /// reciprocal; zero names the diameter antipode. `point` retains the
+    /// physical center-relative rotation independently of this compact chart
+    /// coordinate.
     Chamfer {
         semicircle: BezierAlgebraicCuspSemicircle2,
         source: BezierAlgebraicCuspSemicircleParameter2,
@@ -33452,6 +33454,62 @@ fn cusp_chamfer_parameter_value(
     Ok(Classification::Decided((numerator / denominator)?))
 }
 
+/// Chooses the finite half-circle chart for one physical angular transport.
+///
+/// The source and target chart coordinates are related projectively. A pole
+/// in the source-half affine coordinate is an ordinary finite point on the
+/// complementary chart, so chart selection must sign the retained Mobius
+/// denominator before asking the ordinary parameter-order predicate.
+fn cusp_chamfer_parameter_uses_complement(
+    source: &BezierAlgebraicCuspSemicircleParameter2,
+    physical_half_angle: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let denominator_coefficient = Real::from(-2_i8) * physical_half_angle;
+    let denominator_constant = Real::one() + physical_half_angle;
+    let denominator = match cusp_parameter_affine_expression_sign(
+        source,
+        &denominator_coefficient,
+        &denominator_constant,
+        policy,
+    )? {
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Decided(true));
+        }
+        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let numerator = match cusp_parameter_affine_expression_sign(
+        source,
+        &(Real::one() - physical_half_angle),
+        physical_half_angle,
+        policy,
+    )? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let denominator_minus_numerator = match cusp_parameter_affine_expression_sign(
+        source,
+        &(-(Real::one() + physical_half_angle)),
+        &Real::one(),
+        policy,
+    )? {
+        Classification::Decided(sign) => sign,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let agrees_with_denominator = |sign| sign == RealSign::Zero || sign == denominator;
+    Ok(Classification::Decided(
+        !agrees_with_denominator(numerator)
+            || !agrees_with_denominator(denominator_minus_numerator),
+    ))
+}
+
 fn cusp_chamfer_parameter_bracket(
     source: &BezierAlgebraicCuspSemicircleParameter2,
     half_angle: &Real,
@@ -55264,24 +55322,29 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         )))
     }
 
-    /// Returns the unique interior point at an authored chord-distance from
-    /// one traversal endpoint of this retained half-circle fragment.
+    /// Returns the unique point in one requested angular direction at an
+    /// authored chord-distance from a traversal endpoint.
     ///
     /// On the rational half-circle chart, adding an angle with
     /// `q = tan(theta/2)` is a degree-one Mobius map. The chord setback `s`
     /// fixes `q^2 = s^2 / (4 r^2-s^2)`, so no resultant or root allocation is
-    /// needed. Represented endpoints stay represented; mapped endpoints keep
-    /// their original point field and one exact center-relative rotation.
+    /// needed. `outward` selects the incident extension direction; the other
+    /// direction is returned only when it is a strict authored-span trim.
+    /// Represented endpoints stay represented; mapped endpoints keep their
+    /// original point field and one exact center-relative rotation. A result
+    /// on the other half-circle chart sets the final tuple member.
     pub(crate) fn endpoint_chord_setback_cut(
         &self,
         start_endpoint: bool,
         setback: &Real,
+        outward: bool,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<
             Option<(
                 BezierAlgebraicCuspSemicircleParameter2,
                 RationalBezierIntersectionPointEvidence2,
+                bool,
             )>,
         >,
     > {
@@ -55291,33 +55354,120 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let remaining = Real::from(4_i8) * radius_squared - setback * setback;
         match real_sign(&remaining, policy) {
             Some(RealSign::Positive) => {}
-            // A diameter-length cut reaches only the antipode. Since the
-            // corner is already one boundary of this closed half-circle
-            // subrange, that antipode can never be a strict interior cut.
-            Some(RealSign::Zero | RealSign::Negative) => {
+            // Both angular directions meet at the diameter antipode. It can
+            // never be a strict trim from a boundary of this half-circle, but
+            // it is the terminal exact extension point on the other chart.
+            Some(RealSign::Zero) => {
+                if !outward {
+                    return Ok(Classification::Decided(None));
+                }
+                return self.endpoint_chord_setback_parameter(start_endpoint, None, true, policy);
+            }
+            Some(RealSign::Negative) => {
                 return Ok(Classification::Decided(None));
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         let half_angle_magnitude = (setback / remaining.sqrt()?)?;
         let source_start = start_endpoint != self.data.reversed;
-        let half_angle = if source_start {
+        let interior_half_angle = if source_start {
             half_angle_magnitude
         } else {
             -half_angle_magnitude
         };
+        let physical_half_angle = if outward {
+            -interior_half_angle
+        } else {
+            interior_half_angle
+        };
         let source = self.endpoint_parameter(start_endpoint);
+        let complementary =
+            match cusp_chamfer_parameter_uses_complement(source, &physical_half_angle, policy)? {
+                Classification::Decided(complementary) => complementary,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let candidate = match self.endpoint_chord_setback_parameter(
+            start_endpoint,
+            Some(&physical_half_angle),
+            complementary,
+            policy,
+        )? {
+            Classification::Decided(Some(candidate)) => candidate,
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(None));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if outward {
+            return Ok(Classification::Decided(Some(candidate)));
+        }
+        let (parameter, point, complementary) = candidate;
+        if complementary {
+            return Ok(Classification::Decided(None));
+        }
 
+        let compare = |boundary: &BezierAlgebraicCuspSemicircleParameter2| {
+            parameter.cmp_by_refinement(boundary, policy)
+        };
+        let start = match compare(&self.data.start)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match compare(&self.data.end)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if start != std::cmp::Ordering::Greater || end != std::cmp::Ordering::Less {
+            return Ok(Classification::Decided(None));
+        }
+        Ok(Classification::Decided(Some((parameter, point, false))))
+    }
+
+    fn endpoint_chord_setback_parameter(
+        &self,
+        start_endpoint: bool,
+        physical_half_angle: Option<&Real>,
+        complementary: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<
+            Option<(
+                BezierAlgebraicCuspSemicircleParameter2,
+                RationalBezierIntersectionPointEvidence2,
+                bool,
+            )>,
+        >,
+    > {
+        let source = self.endpoint_parameter(start_endpoint);
+        let target_semicircle = if complementary {
+            self.data.semicircle.complementary_half()
+        } else {
+            self.data.semicircle.clone()
+        };
+        let chart_half_angle = match physical_half_angle {
+            Some(half_angle) if complementary => (-Real::one() / half_angle.clone())?,
+            Some(half_angle) => half_angle.clone(),
+            None => Real::zero(),
+        };
         let represented = source.represented_rational_value(policy)?;
         let (parameter, point) = match represented {
             Classification::Decided(Some(source)) => {
-                let parameter = match cusp_chamfer_parameter_value(&source, &half_angle, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let point = match self.data.semicircle.point_at(&parameter, policy)? {
+                let parameter =
+                    match cusp_chamfer_parameter_value(&source, &chart_half_angle, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                let point = match target_semicircle.point_at(&parameter, policy)? {
                     Classification::Decided(point) => {
                         RationalBezierIntersectionPointEvidence2::Algebraic(point)
                     }
@@ -55348,12 +55498,18 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let half_angle_squared = &half_angle * &half_angle;
-                let rotation_denominator = Real::one() + &half_angle_squared;
-                let radial_scale = ((Real::one() - &half_angle_squared) / &rotation_denominator)?;
-                let perpendicular_scale =
-                    (self.data.semicircle.turn_sign() * Real::from(2_i8) * &half_angle
-                        / &rotation_denominator)?;
+                let (radial_scale, perpendicular_scale) = match physical_half_angle {
+                    Some(half_angle) => {
+                        let half_angle_squared = half_angle * half_angle;
+                        let rotation_denominator = Real::one() + &half_angle_squared;
+                        (
+                            ((Real::one() - &half_angle_squared) / &rotation_denominator)?,
+                            (self.data.semicircle.turn_sign() * Real::from(2_i8) * half_angle
+                                / &rotation_denominator)?,
+                        )
+                    }
+                    None => (Real::from(-1_i8), Real::zero()),
+                };
                 let point = RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
                     BezierAlgebraicCuspChordDerivedPoint2::rotated_from_mapped_source(
                         source_data.clone(),
@@ -55364,9 +55520,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 );
                 let parameter = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
                     BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
-                        semicircle: self.data.semicircle.clone(),
+                        semicircle: target_semicircle,
                         source: source.clone(),
-                        half_angle,
+                        half_angle: chart_half_angle,
                         point: point.clone(),
                         policy: *policy,
                     },
@@ -55377,26 +55533,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-
-        let compare = |boundary: &BezierAlgebraicCuspSemicircleParameter2| {
-            parameter.cmp_by_refinement(boundary, policy)
-        };
-        let start = match compare(&self.data.start)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match compare(&self.data.end)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if start != std::cmp::Ordering::Greater || end != std::cmp::Ordering::Less {
-            return Ok(Classification::Decided(None));
-        }
-        Ok(Classification::Decided(Some((parameter, point))))
+        Ok(Classification::Decided(Some((
+            parameter,
+            point,
+            complementary,
+        ))))
     }
 
     /// Verifies one authored fragment endpoint against the circle equation,

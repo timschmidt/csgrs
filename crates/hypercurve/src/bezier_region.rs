@@ -24201,6 +24201,79 @@ mod tests {
                         Classification::Decided(true),
                     );
                 }
+
+                // Generate the same extension cuts through the corner
+                // solver's compact angular transport. Small setbacks remain
+                // on the authored half, larger setbacks cross the chart
+                // boundary, and a diameter setback lands at the antipode.
+                for start_endpoint in [false, true] {
+                    let trim = source
+                        .endpoint_chord_setback_cut(
+                            start_endpoint,
+                            &(Real::one() / Real::from(10_i8)).unwrap(),
+                            false,
+                            &policy,
+                        )
+                        .unwrap();
+                    let Classification::Decided(Some((_, _, false))) = trim else {
+                        panic!(
+                            "the inward selected-circle setback must be a base-chart trim: policy={policy:?}, reversed={reversed}, start={start_endpoint}, result={trim:?}"
+                        );
+                    };
+                    for (setback, expected_complement) in [
+                        ((Real::one() / Real::from(10_i8)).unwrap(), false),
+                        (Real::one(), true),
+                        (Real::from(2_i8), true),
+                    ] {
+                        let result = source
+                            .endpoint_chord_setback_cut(start_endpoint, &setback, true, &policy)
+                            .unwrap();
+                        let Classification::Decided(Some((cut, point, complementary))) = result
+                        else {
+                            panic!(
+                                "the selected-circle extension cut must construct: policy={policy:?}, reversed={reversed}, start={start_endpoint}, setback={setback:?}, result={result:?}"
+                            );
+                        };
+                        assert_eq!(complementary, expected_complement);
+                        let target = if complementary {
+                            circle.complementary_half()
+                        } else {
+                            circle.clone()
+                        };
+                        let replay = match cut.coincident_point_evidence(&target, &policy).unwrap()
+                        {
+                            Classification::Decided(Some(point)) => point,
+                            result => panic!("extension point replay: {result:?}"),
+                        };
+                        assert_eq!(
+                            replay.same_point(&point, &policy),
+                            Classification::Decided(true),
+                        );
+                        let parameter = if complementary {
+                            CurveRegionParameter2::from_algebraic_cusp_complement(cut)
+                        } else {
+                            CurveRegionParameter2::from_algebraic_cusp(cut)
+                        };
+                        let keep_before_cut = !start_endpoint;
+                        let fragments = retained_cusp_fragment_extension(
+                            &source,
+                            parameter,
+                            keep_before_cut,
+                            CurveOperation2::Chamfer,
+                            &policy,
+                        )
+                        .unwrap();
+                        let terminal = if keep_before_cut {
+                            endpoint(fragments.last().unwrap(), false)
+                        } else {
+                            endpoint(fragments.first().unwrap(), true)
+                        };
+                        assert_eq!(
+                            terminal.same_point(&point, &policy),
+                            Classification::Decided(true),
+                        );
+                    }
+                }
             }
         }
     }

@@ -2943,6 +2943,41 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
                     })
             );
 
+            let extended = rounded()
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("retained selected-circle chamfers must expose incident extensions");
+            assert_eq!(extended.certainty, CurveCertainty::Certified);
+            assert!(
+                extended.value.candidate_count() > 1,
+                "the trim and extension branches must both survive: policy={policy:?}, cusp_is_next={cusp_is_next}, result={:?}",
+                extended.value,
+            );
+            let diameter = q(1, 5);
+            let (previous_setback, next_setback) = if cusp_is_next {
+                (setback.clone(), diameter)
+            } else {
+                (diameter, setback.clone())
+            };
+            let antipodal = rounded()
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    previous_setback,
+                    next_setback,
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("a diameter setback must retain the selected-circle antipode");
+            assert_eq!(antipodal.certainty, CurveCertainty::Certified);
+            assert!(antipodal.value.candidate_count() > 0);
+
             // Re-enter at the newly created cusp/chord junction. The first
             // exact angular cut is now the corner parameter for the second.
             let repeated = first
@@ -2962,6 +2997,22 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             assert_eq!(
                 repeated.boundary_loops()[0].fragments().len(),
                 fragments.len() + 2
+            );
+            let repeated_extended = first
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    cusp_index + 1,
+                    repeated_setback.clone(),
+                    repeated_setback.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .expect("a mapped selected-circle chamfer must extend without promotion");
+            assert_eq!(repeated_extended.certainty, CurveCertainty::Certified);
+            assert!(
+                repeated_extended.value.candidate_count() > 1,
+                "mapped trim and extension branches must both survive: policy={policy:?}, cusp_is_next={cusp_is_next}, result={:?}",
+                repeated_extended.value,
             );
             for (point, expected) in [
                 (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),

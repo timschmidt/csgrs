@@ -3922,7 +3922,7 @@ impl<'a> ExactCornerCarrier2<'a> {
                 operation,
                 CurveOperation2::Chamfer | CurveOperation2::Fillet
             ),
-            Self::AlgebraicCusp(_) => false,
+            Self::AlgebraicCusp(_) => operation == CurveOperation2::Chamfer,
         }
     }
 }
@@ -9953,13 +9953,6 @@ fn algebraic_cusp_chamfer_cuts(
     fragment
         .validate_policy(policy)
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
-    if mode != CurveCornerMode2::TrimOnly {
-        return Err(ExactCurveError::blocked(
-            operation,
-            family,
-            crate::UncertaintyReason::Unsupported,
-        ));
-    }
     let start_endpoint = !previous;
     let corner_parameter = fragment.endpoint_parameter(start_endpoint).clone();
     let corner = match fragment
@@ -9989,27 +9982,38 @@ fn algebraic_cusp_chamfer_cuts(
             overflow: Vec::new(),
         });
     }
-    let cut = match fragment
-        .endpoint_chord_setback_cut(start_endpoint, setback, policy)
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    {
-        Classification::Decided(cut) => cut,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(operation, family, reason));
+    let mut cuts = CornerCuts2::default();
+    for (outward, placement) in [
+        (false, CornerPlacement2::Trim),
+        (true, CornerPlacement2::Extension),
+    ] {
+        if outward && mode != CurveCornerMode2::TrimOrExtend {
+            continue;
         }
-    };
-    let Some((parameter, point)) = cut else {
-        return Ok(CornerCuts2::default());
-    };
-    Ok(CornerCuts2 {
-        first: Some(CornerCut2 {
-            parameter: Some(CurveRegionParameter2::from_algebraic_cusp(parameter)),
+        let cut = match fragment
+            .endpoint_chord_setback_cut(start_endpoint, setback, outward, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(cut) => cut,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        let Some((parameter, point, complementary)) = cut else {
+            continue;
+        };
+        let parameter = if complementary {
+            CurveRegionParameter2::from_algebraic_cusp_complement(parameter)
+        } else {
+            CurveRegionParameter2::from_algebraic_cusp(parameter)
+        };
+        cuts.push(CornerCut2 {
+            parameter: Some(parameter),
             point,
-            placement: CornerPlacement2::Trim,
-        }),
-        second: None,
-        overflow: Vec::new(),
-    })
+            placement,
+        });
+    }
+    Ok(cuts)
 }
 
 #[allow(clippy::too_many_arguments)]
