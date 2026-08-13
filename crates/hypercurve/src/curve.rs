@@ -3516,6 +3516,18 @@ pub(crate) struct RetainedDeferredArcFilletContact2 {
     pub(crate) source_radius: Real,
     pub(crate) signed_center_radius: Real,
     pub(crate) arc_is_previous: bool,
+    /// Exact source-circle chart parameter inherited from the affine radial
+    /// offset map. `None` retains the older deferred-search path used when the
+    /// center solver did not traverse the circular carrier itself.
+    pub(crate) contact_seed: Option<RetainedArcFilletContactSeed2>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct RetainedArcFilletContactSeed2 {
+    /// `None` names the authored circular span; `Some(i)` names complement
+    /// projective cell `i` in traversal order.
+    pub(crate) complement_span: Option<usize>,
+    pub(crate) parameter: BezierParameter2,
 }
 
 impl FilletCorner2 {
@@ -3639,6 +3651,90 @@ pub(crate) struct RetainedRationalCornerArc2<'a> {
 struct RationalArcOffsetEvaluator2 {
     offset: RationalBezier2,
     canonical_source: RationalBezier2,
+    support: CircularArc2,
+}
+
+/// Decomposes the complementary sweep of one certified circular support into
+/// exact projective cells. Quarter turns avoid the midpoint radical required
+/// by a generic major-arc construction and give both center solving and
+/// retained publication the same full-circle domain authority.
+pub(crate) fn retained_arc_complement_projective_spans(
+    support: &CircularArc2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<RationalQuadraticBezier2>> {
+    use crate::segment::ArcSweepPointLocation2;
+
+    let mut current = support.end().clone();
+    let target = support.start();
+    let mut spans = Vec::with_capacity(4);
+    for _ in 0..4 {
+        if &current == target {
+            return Ok(spans);
+        }
+        let radial = current.delta_from(support.center());
+        let next_radial = if support.is_clockwise() {
+            (radial.1, -radial.0)
+        } else {
+            (-radial.1, radial.0)
+        };
+        let next = support.center().translated(next_radial.0, next_radial.1);
+        let quarter = CircularArc2::new_with_certified_radius(
+            current.clone(),
+            next.clone(),
+            support.center().clone(),
+            support.radius_squared(),
+            support.is_clockwise(),
+            None,
+        );
+        let reaches_target = match quarter.strict_sweep_point_location(target, policy) {
+            Classification::Decided(
+                ArcSweepPointLocation2::Interior | ArcSweepPointLocation2::Endpoint,
+            ) => true,
+            Classification::Decided(ArcSweepPointLocation2::Outside) => false,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        let cell = if reaches_target {
+            CircularArc2::new_with_certified_radius(
+                current,
+                target.clone(),
+                support.center().clone(),
+                support.radius_squared(),
+                support.is_clockwise(),
+                None,
+            )
+        } else {
+            quarter
+        };
+        let decomposition = match decompose_circular_arc(&cell, policy)
+            .map_err(|error| error.with_operation(operation))?
+        {
+            Classification::Decided(decomposition) => decomposition,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        };
+        spans.extend(
+            decomposition
+                .spans()
+                .iter()
+                .map(|span| span.curve().clone()),
+        );
+        if reaches_target {
+            return Ok(spans);
+        }
+        current = next;
+    }
+    Err(ExactCurveError::invalid(
+        operation,
+        family,
+        CurveError::Topology(
+            "an exact circular complement did not close within one revolution".into(),
+        ),
+    ))
 }
 
 impl ExactCornerArc2<'_> {
@@ -3770,9 +3866,18 @@ impl ExactCornerArc2<'_> {
             .collect();
         let offset = RationalBezier2::try_new(control_points, canonical_source.weights().to_vec())
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+        let support = CircularArc2::new_with_certified_radius(
+            offset.start().clone(),
+            offset.end().clone(),
+            center.clone(),
+            signed_radius * signed_radius,
+            self.support().is_clockwise(),
+            None,
+        );
         Ok(RationalArcOffsetEvaluator2 {
             offset,
             canonical_source,
+            support,
         })
     }
 }
@@ -4140,6 +4245,8 @@ fn fillet_carrier_pair_supports_extension(
     (is_affine_line(previous) && is_arc(next))
         || (is_arc(previous) && is_affine_line(next))
         || (is_arc(previous) && is_arc(next))
+        || (is_arc(previous) && is_selected_circle(next))
+        || (is_selected_circle(previous) && is_arc(next))
         || (is_affine_line(previous) && is_selected_circle(next))
         || (is_selected_circle(previous) && is_affine_line(next))
         || (is_selected_circle(previous) && is_selected_circle(next))
@@ -5041,13 +5148,19 @@ fn solve_carrier_fillet_corner(
                                 next_family,
                             )
                         };
+                    let deferred_arc_frame = center
+                        .retained_anchor_evidence
+                        .as_ref()
+                        .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+                        .map(|deferred| {
+                            (deferred.arc_is_previous, deferred.contact_seed.is_some())
+                        });
                     let prefer_parallel_frame = center
                         .retained_anchor_evidence
                         .as_ref()
                         .is_some_and(|evidence| {
                             evidence.center_parallel.is_some()
                                 || evidence.source_direction.is_some()
-                                || evidence.deferred_arc_contact.is_some()
                         });
                     let force_chord_normal = mode == CurveCornerMode2::TrimOrExtend
                         && matches!(
@@ -5069,6 +5182,11 @@ fn solve_carrier_fillet_corner(
                         policy,
                     )?;
                     let frame_is_preferred = |frame: &RetainedFilletFrame2| {
+                        if let Some((arc_is_previous, contact_is_preselected)) = deferred_arc_frame
+                        {
+                            return (frame.anchor_is_previous == arc_is_previous)
+                                == contact_is_preselected;
+                        }
                         if force_chord_normal {
                             return matches!(
                                 &frame.radial_frame,
@@ -5538,8 +5656,10 @@ fn retained_fillet_parameter_component_overlap_is_positive(
 fn retained_fillet_cusp_rational_contacts(
     cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
     rational: &RationalBezier2,
-    include_start: bool,
-    include_end: bool,
+    include_cusp_start: bool,
+    include_cusp_end: bool,
+    include_rational_start: bool,
+    include_rational_end: bool,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<RetainedFilletCuspRationalContacts2> {
@@ -5605,6 +5725,25 @@ fn retained_fillet_cusp_rational_contacts(
     };
     let mut retained = Vec::with_capacity(contacts.len());
     for contact in contacts {
+        let other_at_boundary = |boundary: Real| {
+            contact
+                .other_parameter
+                .cmp_by_refinement(&BezierParameter2::Exact(boundary), policy)
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))
+                .and_then(|order| match order {
+                    Classification::Decided(order) => Ok(order == std::cmp::Ordering::Equal),
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    )),
+                })
+        };
+        if (!include_rational_start && other_at_boundary(Real::zero())?)
+            || (!include_rational_end && other_at_boundary(Real::one())?)
+        {
+            continue;
+        }
         let cusp_parameter = match contact.location {
             crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Start => {
                 crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
@@ -5626,7 +5765,12 @@ fn retained_fillet_cusp_rational_contacts(
             }
         };
         match cusp
-            .contains_parameter(&cusp_parameter, include_start, include_end, policy)
+            .contains_parameter(
+                &cusp_parameter,
+                include_cusp_start,
+                include_cusp_end,
+                policy,
+            )
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
             Classification::Decided(true) => retained.push(RetainedFilletCuspRationalContact2 {
@@ -6061,6 +6205,7 @@ fn fillet_offset_centers(
                         source_radius: (*source_radius).clone(),
                         signed_center_radius: signed_radius.clone(),
                         arc_is_previous: !bezier_is_previous,
+                        contact_seed: None,
                     }),
                 });
                 let bezier_parameter = CurveRegionParameter2::from_bezier(parameter);
@@ -7180,11 +7325,117 @@ fn fillet_offset_centers(
                 arc_family,
                 policy,
             )?;
+            if mode == CurveCornerMode2::TrimOrExtend {
+                let complementary_cusp = cusp.semicircle().complementary_half();
+                let cusp_charts = [
+                    (
+                        crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                            cusp.semicircle().clone(),
+                            policy,
+                        ),
+                        false,
+                        true,
+                        true,
+                    ),
+                    (
+                        crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                            complementary_cusp,
+                            policy,
+                        ),
+                        true,
+                        false,
+                        false,
+                    ),
+                ];
+                let complement_spans = retained_arc_complement_projective_spans(
+                    &offset_arc.support,
+                    CurveOperation2::Fillet,
+                    arc_family,
+                    policy,
+                )?;
+                let mut arc_cells = Vec::with_capacity(complement_spans.len() + 1);
+                arc_cells.push((offset_arc.offset.clone(), true, true, None));
+                let complement_count = complement_spans.len();
+                arc_cells.extend(
+                    complement_spans
+                        .into_iter()
+                        .enumerate()
+                        .map(|(index, span)| {
+                            (
+                                RationalBezier2::from(span),
+                                false,
+                                index + 1 != complement_count,
+                                Some(index),
+                            )
+                        }),
+                );
+                for (cusp_chart, complementary, include_cusp_start, include_cusp_end) in
+                    &cusp_charts
+                {
+                    for (arc_cell, include_arc_start, include_arc_end, complement_span) in
+                        &arc_cells
+                    {
+                        let contacts = retained_fillet_cusp_rational_contacts(
+                            cusp_chart,
+                            arc_cell,
+                            *include_cusp_start,
+                            *include_cusp_end,
+                            *include_arc_start,
+                            *include_arc_end,
+                            cusp_family,
+                            policy,
+                        )?;
+                        if !contacts.overlap_ranges.is_empty() {
+                            centers.coincident = true;
+                            return Ok(centers);
+                        }
+                        for contact in contacts.contacts {
+                            let cusp_parameter = if *complementary {
+                                CurveRegionParameter2::from_algebraic_cusp_complement(
+                                    contact.cusp_parameter,
+                                )
+                            } else {
+                                CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter)
+                            };
+                            let (previous_parameter, next_parameter) = if arc_is_previous {
+                                (None, Some(cusp_parameter))
+                            } else {
+                                (Some(cusp_parameter), None)
+                            };
+                            centers.push(FilletCenterWitness2 {
+                                point: contact.point,
+                                previous_parameter,
+                                next_parameter,
+                                retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                                    cross: None,
+                                    dot: None,
+                                    center_parallel: None,
+                                    source_direction: None,
+                                    canonical_anchor_curve: None,
+                                    deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
+                                        support: arc.support().clone(),
+                                        source_radius: source_radius.clone(),
+                                        signed_center_radius: signed_radius.clone(),
+                                        arc_is_previous,
+                                        contact_seed: Some(RetainedArcFilletContactSeed2 {
+                                            complement_span: *complement_span,
+                                            parameter: contact.other_parameter,
+                                        }),
+                                    }),
+                                }),
+                            });
+                        }
+                    }
+                }
+                return Ok(centers);
+            }
             let contacts = retained_fillet_cusp_rational_contacts(
                 cusp,
                 &offset_arc.offset,
                 false,
                 false,
+                true,
+                true,
                 cusp_family,
                 policy,
             )?;
@@ -7240,6 +7491,8 @@ fn fillet_offset_centers(
             let contacts = retained_fillet_cusp_rational_contacts(
                 cusp,
                 &rational_line,
+                true,
+                true,
                 true,
                 true,
                 previous_family,
