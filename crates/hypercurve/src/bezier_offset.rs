@@ -517,6 +517,12 @@ struct BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMapData2 {
     diameter: BezierAlgebraicCuspTwoTermExpression2,
     radius_squared_denominator: BivariatePolynomial,
     speed_squared: BivariatePolynomial,
+    /// Circle tangent crossed with the rational tangent, under the map's
+    /// common positive selected-fiber scale.
+    tangent_cross: BezierAlgebraicCuspTwoTermExpression2,
+    /// Circle radius crossed with the rational tangent. The circle turn sign
+    /// converts this into the corresponding tangent dot product.
+    angular_tangent: BezierAlgebraicCuspTwoTermExpression2,
     policy: CurveContext,
 }
 
@@ -8840,6 +8846,24 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                         .collect(),
                     map.data.curve.weights().to_vec(),
                 )?;
+                let orientation_scale = Real::from(if transform.reverses_orientation() {
+                    -1_i8
+                } else {
+                    1_i8
+                });
+                let transformed_cross =
+                    |expression: &BezierAlgebraicCuspTwoTermExpression2| {
+                        BezierAlgebraicCuspTwoTermExpression2 {
+                            rational: bivariate_scale(
+                                expression.rational.clone(),
+                                &orientation_scale,
+                            ),
+                            radical: bivariate_scale(
+                                expression.radical.clone(),
+                                &orientation_scale,
+                            ),
+                        }
+                    };
                 let transformed_map =
                     BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
                         data: Arc::new(
@@ -8852,6 +8876,8 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                                     .radius_squared_denominator
                                     .clone(),
                                 speed_squared: map.data.speed_squared.clone(),
+                                tangent_cross: transformed_cross(&map.data.tangent_cross),
+                                angular_tangent: transformed_cross(&map.data.angular_tangent),
                                 policy: map.data.policy,
                             },
                         ),
@@ -20879,6 +20905,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     diameter: system.diameter,
                     radius_squared_denominator: system.radius_squared_denominator,
                     speed_squared: system.speed_squared,
+                    tangent_cross: system.tangent_cross,
+                    angular_tangent: system.angular_tangent,
                     policy: *policy,
                 },
             ),
@@ -21046,7 +21074,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     curve: other.clone(),
                     diameter: system.diameter,
                     radius_squared_denominator: system.radius_squared_denominator,
-                    speed_squared: system.speed_squared,
+                    speed_squared: system.speed_squared.clone(),
+                    tangent_cross: system.tangent_cross.clone(),
+                    angular_tangent: system.angular_tangent.clone(),
                     policy: *policy,
                 },
             ),
@@ -24303,37 +24333,12 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
                 map,
                 other_parameter,
                 ..
-            } => {
-                map.validate_policy(policy)?;
-                let system = match map
-                    .data
-                    .semicircle
-                    .selected_parallel_normal_rational_system(&map.data.curve, policy)?
-                {
-                    Classification::Decided(system) => system,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let sign = match other_parameter.radical_sum_sign(
-                    &system.angular_tangent,
-                    &system.speed_squared,
-                    policy,
-                )? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                // The circle tangent is turn*J(radius), while
-                // angular_tangent signs radius x rational_tangent.
-                let tangent_scale = if map.data.semicircle.is_clockwise() {
-                    RealSign::Positive
-                } else {
-                    RealSign::Negative
-                };
-                Ok(Classification::Decided(product_sign(sign, tangent_scale)))
-            }
+            } => map.tangent_cross_dot_linear_combination_sign(
+                other_parameter,
+                &Real::zero(),
+                &Real::one(),
+                policy,
+            ),
             _ => unreachable!("a selected-fiber contact owns its mapped-data variant"),
         }
     }
@@ -24708,6 +24713,38 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
             ));
         }
         Ok(())
+    }
+
+    /// Signs one exact linear combination of the selected-circle tangent
+    /// crossed and dotted with the mapped rational tangent. Both retained
+    /// terms use the same positive speed scale, so angular consumers can
+    /// replay the original contact without rebuilding its intersection
+    /// system or promoting its selected parameter.
+    fn tangent_cross_dot_linear_combination_sign(
+        &self,
+        other_parameter: &BezierAlgebraicSelectedFiberParameter2,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        let tangent_scale = Real::from(if self.data.semicircle.is_clockwise() {
+            1_i8
+        } else {
+            -1_i8
+        });
+        let dot_scale = dot_scale * tangent_scale;
+        let expression = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_add(
+                &bivariate_scale(self.data.tangent_cross.rational.clone(), cross_scale),
+                &bivariate_scale(self.data.angular_tangent.rational.clone(), &dot_scale),
+            ),
+            radical: bivariate_add(
+                &bivariate_scale(self.data.tangent_cross.radical.clone(), cross_scale),
+                &bivariate_scale(self.data.angular_tangent.radical.clone(), &dot_scale),
+            ),
+        };
+        other_parameter.radical_sum_sign(&expression, &self.data.speed_squared, policy)
     }
 
     fn contact_order_to_real(
@@ -53938,6 +53975,159 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         ))))
     }
 
+    /// Replays an exactly parameterized endpoint of a parallel-normal circle
+    /// against another retained parallel tangent. The rational semicircle
+    /// chart expresses its tangent as `a*U + b*left_normal(U)`; rotating the
+    /// requested cross/dot form back onto the two source tangents avoids both
+    /// unit-speed radicals and any circle-pair reconstruction.
+    #[allow(clippy::too_many_arguments)]
+    fn exact_endpoint_tangent_cross_dot_retained_parallel(
+        &self,
+        start_endpoint: bool,
+        parallel: &BezierParallel2,
+        parameter: &BezierParameter2,
+        source_direction: RealSign,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<RealSign>>> {
+        let BezierAlgebraicCuspSemicircleParameter2::Exact(endpoint) =
+            self.endpoint_parameter(start_endpoint)
+        else {
+            return Ok(None);
+        };
+        let Some(frame) = self.data.semicircle.data.frame.parallel_normal() else {
+            return Ok(None);
+        };
+        if frame.policy != *policy {
+            return Err(CurveError::Topology(
+                "a selected-circle endpoint tangent crossed predicate policies".into(),
+            ));
+        }
+        match in_closed_unit_interval(endpoint, policy) {
+            Some(true) => {}
+            Some(false) => return Err(CurveError::InvalidBezierParameter),
+            None => {
+                return Ok(Some(Classification::Uncertain(UncertaintyReason::Ordering)));
+            }
+        }
+        let radial_orientation = match real_sign(self.data.semicircle.radial_distance(), policy) {
+            Some(RealSign::Positive) => 1_i8,
+            Some(RealSign::Negative) => -1_i8,
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "a selected circle retained a zero signed radius".into(),
+                ));
+            }
+            None => {
+                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
+            }
+        } * if self.data.reversed { -1_i8 } else { 1_i8 };
+        let turn = if self.data.semicircle.is_clockwise() {
+            -1_i8
+        } else {
+            1_i8
+        };
+        let radial = Real::one() - Real::from(2_i8) * endpoint;
+        let tangential = Real::from(2_i8) * endpoint * (Real::one() - endpoint);
+        let tangent_source_scale = Real::from(-turn * radial_orientation) * radial;
+        let tangent_normal_scale = Real::from(-radial_orientation) * tangential;
+        let source_cross_scale =
+            cross_scale * &tangent_source_scale + dot_scale * &tangent_normal_scale;
+        let source_dot_scale =
+            dot_scale * tangent_source_scale - cross_scale * tangent_normal_scale;
+        Ok(Some(
+            frame
+                .center_support
+                .source_tangent_pair_cross_dot_linear_combination_sign(
+                    &frame.center_parameter,
+                    parallel,
+                    parameter,
+                    &source_cross_scale,
+                    &source_dot_scale,
+                    policy,
+                )?
+                .map(|sign| product_sign(sign, source_direction)),
+        ))
+    }
+
+    /// General endpoint/parallel tangent authority for independently authored
+    /// selected fields. Each tangent is retained as two certified-distinct
+    /// point evidences, then the shared algebraic-chord predicate signs the
+    /// requested cross/dot combination without adjoining either field.
+    #[allow(clippy::too_many_arguments)]
+    fn endpoint_tangent_cross_dot_retained_parallel_by_chords(
+        &self,
+        start_endpoint: bool,
+        parallel: &BezierParallel2,
+        parameter: &BezierParameter2,
+        source_direction: RealSign,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RealSign>>> {
+        let point = match self.endpoint_point_evidence(start_endpoint, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let support = match self.endpoint_tangent_support_point(start_endpoint, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let circle_tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+            point, support, policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let anchor_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            BezierAnalyticParallelPoint2::new(parallel.clone(), parameter.clone(), policy),
+        );
+        let tangent_distance = match source_direction {
+            RealSign::Positive => Real::one(),
+            RealSign::Negative => -Real::one(),
+            RealSign::Zero => {
+                return Err(CurveError::Topology(
+                    "retained parallel endpoint supplied a zero traversal direction".into(),
+                ));
+            }
+        };
+        let anchor_support = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                parallel.clone(),
+                parameter.clone(),
+                tangent_distance,
+                policy,
+            ),
+        );
+        let anchor_tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+            anchor_point,
+            anchor_support,
+            policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(circle_tangent
+            .tangent_cross_dot_linear_combination_sign(
+                &anchor_tangent,
+                cross_scale,
+                dot_scale,
+                policy,
+            )?
+            .map(Some))
+    }
+
     /// Replays a selected circle/curve contact after the curve side has been
     /// promoted and offset as an analytic parallel.
     ///
@@ -53959,15 +54149,37 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 "retained parallel endpoint supplied a zero traversal direction".into(),
             ));
         }
+        if let Some(sign) = self.exact_endpoint_tangent_cross_dot_retained_parallel(
+            start_endpoint,
+            parallel,
+            parameter,
+            source_direction,
+            &Real::one(),
+            &Real::zero(),
+            policy,
+        )? {
+            return Ok(sign.map(Some));
+        }
+        let fallback = || {
+            self.endpoint_tangent_cross_dot_retained_parallel_by_chords(
+                start_endpoint,
+                parallel,
+                parameter,
+                source_direction,
+                &Real::one(),
+                &Real::zero(),
+                policy,
+            )
+        };
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) =
             self.endpoint_parameter(start_endpoint)
         else {
-            return Ok(Classification::Decided(None));
+            return fallback();
         };
         let source_circle = data.semicircle_carrier();
         let circle_factor = match self.tangent_orientation_factor_from(source_circle, policy)? {
             Classification::Decided(Some(factor)) => factor,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Decided(None) => return fallback(),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
@@ -53985,7 +54197,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         BezierParallelSource2::Rational(source) if source == &map.data.curve
                     )
                 {
-                    return Ok(Classification::Decided(None));
+                    return fallback();
                 }
                 (other_parameter, *tangent_cross_sign, source_direction)
             }
@@ -53996,7 +54208,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 ..
             } => {
                 if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
-                    return Ok(Classification::Decided(None));
+                    return fallback();
                 }
                 let mapped_scale = match map
                     .data
@@ -54019,12 +54231,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     product_sign(source_direction, mapped_scale),
                 )
             }
-            _ => return Ok(Classification::Decided(None)),
+            _ => return fallback(),
         };
         match selected_parameter.cmp_bezier_parameter(parameter, policy)? {
             Classification::Decided(std::cmp::Ordering::Equal) => {}
             Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {
-                return Ok(Classification::Decided(None));
+                return fallback();
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -54061,33 +54273,84 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 "retained parallel endpoint supplied a zero traversal direction".into(),
             ));
         }
+        if let Some(sign) = self.exact_endpoint_tangent_cross_dot_retained_parallel(
+            start_endpoint,
+            parallel,
+            parameter,
+            source_direction,
+            cross_scale,
+            dot_scale,
+            policy,
+        )? {
+            return Ok(sign.map(Some));
+        }
+        let fallback = || {
+            self.endpoint_tangent_cross_dot_retained_parallel_by_chords(
+                start_endpoint,
+                parallel,
+                parameter,
+                source_direction,
+                cross_scale,
+                dot_scale,
+                policy,
+            )
+        };
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) =
             self.endpoint_parameter(start_endpoint)
         else {
-            return Ok(Classification::Decided(None));
+            return fallback();
         };
         let source_circle = data.semicircle_carrier();
         let circle_factor = match self.tangent_orientation_factor_from(source_circle, policy)? {
             Classification::Decided(Some(factor)) => factor,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Decided(None) => return fallback(),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
         let sign = match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
+                map,
+                other_parameter,
+                ..
+            } => {
+                if map.data.policy != *policy
+                    || !matches!(
+                        parallel.source(),
+                        BezierParallelSource2::Rational(source) if source == &map.data.curve
+                    )
+                {
+                    return fallback();
+                }
+                match other_parameter.cmp_bezier_parameter(parameter, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {}
+                    Classification::Decided(
+                        std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
+                    ) => return fallback(),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                map.tangent_cross_dot_linear_combination_sign(
+                    other_parameter,
+                    cross_scale,
+                    dot_scale,
+                    policy,
+                )?
+            }
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                 map,
                 other_parameter,
                 ..
             } => {
                 if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
-                    return Ok(Classification::Decided(None));
+                    return fallback();
                 }
                 match other_parameter.cmp_bezier_parameter(parameter, policy)? {
                     Classification::Decided(std::cmp::Ordering::Equal) => {}
                     Classification::Decided(
                         std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
-                    ) => return Ok(Classification::Decided(None)),
+                    ) => return fallback(),
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -54101,13 +54364,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
                 if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
-                    return Ok(Classification::Decided(None));
+                    return fallback();
                 }
                 match contact.parallel_parameter.same_value(parameter, policy)? {
                     Classification::Decided(true) => {}
-                    Classification::Decided(false) => {
-                        return Ok(Classification::Decided(None));
-                    }
+                    Classification::Decided(false) => return fallback(),
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -54122,7 +54383,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         policy,
                     )?
             }
-            _ => return Ok(Classification::Decided(None)),
+            _ => return fallback(),
         };
         let sign = match sign {
             Classification::Decided(sign) => sign,
@@ -60877,6 +61138,37 @@ impl BezierParallel2 {
                 }
             };
         Ok(Classification::Decided((cross, dot)))
+    }
+
+    /// Signs one linear combination of the cross and dot products of two
+    /// retained source tangents. Both normalized tangent products share the
+    /// same positive denominator, so the homogeneous source numerators are a
+    /// complete exact authority even when each parameter is algebraic.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn source_tangent_pair_cross_dot_linear_combination_sign(
+        &self,
+        parameter: &BezierParameter2,
+        other: &Self,
+        other_parameter: &BezierParameter2,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let first = self.differential()?;
+        let second = other.differential()?;
+        let cross = bivariate_subtract(
+            &bivariate_outer_product(&first.tangent_x, &second.tangent_y),
+            &bivariate_outer_product(&first.tangent_y, &second.tangent_x),
+        );
+        let dot = bivariate_add(
+            &bivariate_outer_product(&first.tangent_x, &second.tangent_x),
+            &bivariate_outer_product(&first.tangent_y, &second.tangent_y),
+        );
+        let expression = bivariate_add(
+            &bivariate_scale(cross, cross_scale),
+            &bivariate_scale(dot, dot_scale),
+        );
+        signed_bivariate_at_parameter_pair(&expression, parameter, other_parameter, policy)
     }
 
     /// Returns the same exact parallel image with traversal direction reversed.
@@ -97243,6 +97535,11 @@ mod conversion_tests {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .unwrap();
+        let independent_parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
 
@@ -97341,6 +97638,32 @@ mod conversion_tests {
                 bounds.contains_point(&Point2::from_values(0, 0), &policy),
                 Classification::Decided(false),
             );
+
+            // This independent analytic parallel does not share the
+            // intersection map that authored the selected endpoint. The
+            // retained-chord authority must still decide their exact tangent
+            // relation without adjoining either selected field.
+            let fragment = BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                circle.clone(),
+                BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                cusp_parameter,
+                false,
+                &policy,
+            );
+            assert!(matches!(
+                fragment
+                    .endpoint_tangent_cross_dot_linear_combination_retained_parallel(
+                        false,
+                        &independent_parallel,
+                        &BezierParameter2::Exact(half.clone()),
+                        RealSign::Positive,
+                        &Real::one(),
+                        &Real::zero(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(Some(RealSign::Positive | RealSign::Negative)),
+            ));
         }
     }
 

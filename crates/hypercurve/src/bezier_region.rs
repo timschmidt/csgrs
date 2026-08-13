@@ -10709,21 +10709,13 @@ impl CurveRegion2 {
             };
             RationalBezier2::from(span.curve().clone())
         };
-        let point = crate::rational_bezier_general::exact_contact_point_evidence(
-            &canonical_source,
-            &seed.parameter,
-            policy,
-        )
-        .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-        .ok_or_else(|| {
-            ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::Unsupported,
-            )
-        })?;
-        arc_cut.parameter = CurveRegionParameter2::from_bezier(seed.parameter.clone());
-        arc_cut.point = point.clone();
+        // The center solve already certified this projective parameter and
+        // `fillet_cut_from_center` mapped its exact center point radially back
+        // to the source circle. Reuse both pieces of evidence, including the
+        // compact selected-fiber parameter, rather than solving the same
+        // incidence again in a larger field.
+        let point = arc_cut.point.clone();
+        arc_cut.parameter = seed.parameter.clone();
 
         let Some(span_index) = seed.complement_span else {
             arc_cut.placement = CornerPlacement2::Trim;
@@ -10735,7 +10727,10 @@ impl CurveRegion2 {
         arc_cut.placement = CornerPlacement2::Extension;
         let boundary_order = |boundary: Real| {
             seed.parameter
-                .cmp_by_refinement(&BezierParameter2::Exact(boundary), policy)
+                .cmp_by_refinement(
+                    &CurveRegionParameter2::from_bezier(BezierParameter2::Exact(boundary)),
+                    policy,
+                )
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))
                 .and_then(|order| match order {
                     Classification::Decided(order) => Ok(order),
@@ -10759,19 +10754,13 @@ impl CurveRegion2 {
             let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
             let (range, start, end) = if keep_before {
                 (
-                    CurveRegionParameterRange2::new_validated(
-                        zero,
-                        CurveRegionParameter2::from_bezier(seed.parameter.clone()),
-                    ),
+                    CurveRegionParameterRange2::new_validated(zero, seed.parameter.clone()),
                     RationalBezierIntersectionPointEvidence2::Exact(span.start().clone()),
                     point.clone(),
                 )
             } else {
                 (
-                    CurveRegionParameterRange2::new_validated(
-                        CurveRegionParameter2::from_bezier(seed.parameter.clone()),
-                        one,
-                    ),
+                    CurveRegionParameterRange2::new_validated(seed.parameter.clone(), one),
                     point.clone(),
                     RationalBezierIntersectionPointEvidence2::Exact(span.end().clone()),
                 )
@@ -20853,6 +20842,152 @@ mod tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn selected_parallel_normal_circle_and_line_fillet_retains_contact_fiber() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let upper = Point2::new(Real::zero(), half.clone());
+        let lower = Point2::new(Real::zero(), -half.clone());
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_support = QuadraticBezier2::from_line_segment(
+                crate::LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap(),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            let Classification::Decided(Some(circle)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    center_support,
+                    sqrt_half_algebraic_parameter(&policy),
+                    three_halves.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected source circle must construct");
+            };
+            let vertical =
+                RationalBezier2::try_new(vec![p(0, -1), p(0, 1)], vec![Real::one(), Real::one()])
+                    .unwrap();
+            let Classification::Decided((intersections, parameter_map)) = circle
+                .rational_intersections_with_parameter_map(&vertical, &policy)
+                .unwrap()
+            else {
+                panic!("the source-circle endpoint cuts must be exact");
+            };
+            let contacts = match intersections {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
+                    contacts,
+                ) => {
+                    let parameter_map = parameter_map
+                        .as_ref()
+                        .expect("ordinary interior contacts retain their circle map");
+                    contacts
+                        .iter()
+                        .map(|contact| {
+                            (
+                                parameter_map.contact_parameter(contact),
+                                contact.point.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                }
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                    contacts,
+                ) => contacts
+                    .iter()
+                    .map(|contact| (contact.cusp_parameter(), contact.point_evidence()))
+                    .collect::<Vec<_>>(),
+                other => panic!("the transverse source line must have isolated contacts: {other:?}"),
+            };
+            let parameter_at = |point: &Point2| {
+                contacts
+                    .iter()
+                    .find(|(_, evidence)| {
+                        evidence.same_point(
+                            &RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                            &policy,
+                        ) == Classification::Decided(true)
+                    })
+                    .map(|(parameter, _)| parameter.clone())
+                    .expect("the represented source-circle endpoint must be retained")
+            };
+            let upper_parameter = parameter_at(&upper);
+            let lower_parameter = parameter_at(&lower);
+            let order = match upper_parameter
+                .cmp_by_refinement(&lower_parameter, &policy)
+                .unwrap()
+            {
+                Classification::Decided(order) => order,
+                Classification::Uncertain(reason) => {
+                    panic!("the source-circle endpoint order must decide: {reason:?}")
+                }
+            };
+            let (start, end, reversed) = if order.is_lt() {
+                (upper_parameter, lower_parameter, false)
+            } else {
+                (lower_parameter, upper_parameter, true)
+            };
+            let Classification::Decided(circle_fragment) =
+                crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    circle, start, end, reversed, &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected source-circle interval must construct");
+            };
+            let right_lower = Point2::new(Real::from(4_i8), -half.clone());
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(circle_fragment),
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                            crate::LineSeg2::try_new(lower.clone(), right_lower.clone()).unwrap(),
+                        )),
+                    },
+                    quadratic_fragment(right_lower, p(2, 0), upper.clone()),
+                ],
+                &policy,
+            )
+            .expect("the selected-circle/line fixture closes exactly");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let result = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    half.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "the selected-fiber circle/line contact must fillet: policy={policy:?}, error={error:?}"
+                    )
+                });
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let mut retained_selected_cut = false;
+            for_each_corner_region(&result.value, |filleted| {
+                retained_selected_cut |= filleted.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)));
+            });
+            assert!(
+                retained_selected_cut,
+                "the exact rational line cut must remain in its selected contact fiber"
+            );
         }
     }
 
