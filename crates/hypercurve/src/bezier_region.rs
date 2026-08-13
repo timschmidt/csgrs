@@ -9736,47 +9736,17 @@ impl CurveRegion2 {
         mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
-        if let Some(solutions) = self.retained_chamfer_solutions(
+        self.solve_chamfer_loop_vertex(
             loop_index,
-            vertex_index,
-            previous_setback.clone(),
-            next_setback.clone(),
-            mode,
-            policy,
-        )? {
-            return Ok(solutions);
-        }
-        let paths =
-            match self.materialized_boundary_paths_for_edit(CurveOperation2::Chamfer, policy)? {
-                Classification::Decided(paths) => paths,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Chamfer,
-                        CurveFamily2::Line,
-                        reason,
-                    ));
-                }
-            };
-        let path = paths.get(loop_index).ok_or_else(|| {
-            curve_region_edit_error(CurveOperation2::Chamfer, CurveError::InvalidCurveRange)
-        })?;
-        let solutions = path.chamfer_vertex_by_setbacks_raw(
             vertex_index,
             previous_setback,
             next_setback,
             mode,
             policy,
-        )?;
-        self.rebuild_corner_path_solutions(
-            &paths,
-            loop_index,
-            solutions,
-            CurveOperation2::Chamfer,
-            policy,
         )
     }
 
-    fn retained_chamfer_solutions(
+    fn solve_chamfer_loop_vertex(
         &self,
         loop_index: usize,
         vertex_index: usize,
@@ -9784,7 +9754,7 @@ impl CurveRegion2 {
         next_setback: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         let Some(boundary_loop) = self.data.boundary_loops.get(loop_index) else {
             return Err(curve_region_edit_error(
                 CurveOperation2::Chamfer,
@@ -9816,7 +9786,13 @@ impl CurveRegion2 {
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::SelectedFiber(_) => None,
-            _ => return Ok(None),
+            _ => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Chamfer,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
         };
         let next_top_level = match next_fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
@@ -9828,7 +9804,13 @@ impl CurveRegion2 {
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::SelectedFiber(_) => None,
-            _ => return Ok(None),
+            _ => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Chamfer,
+                    CurveFamily2::RationalBezier,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
         };
         let previous_family = previous_top_level
             .as_ref()
@@ -10072,7 +10054,7 @@ impl CurveRegion2 {
             self.rebuild_retained_chamfer(loop_index, vertex_index, previous_cut, next_cut, policy)
                 .map(Some)
         })?;
-        Ok(Some(compact_optional_corner_solutions(solutions)))
+        Ok(compact_optional_corner_solutions(solutions))
     }
 
     fn rebuild_retained_chamfer(
@@ -10378,43 +10360,17 @@ impl CurveRegion2 {
         mode: CurveCornerMode2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
-        if let Some(solutions) =
-            self.retained_fillet_solutions(loop_index, vertex_index, radius.clone(), mode, policy)?
-        {
-            return Ok(solutions);
-        }
-        let paths =
-            match self.materialized_boundary_paths_for_edit(CurveOperation2::Fillet, policy)? {
-                Classification::Decided(paths) => paths,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        CurveFamily2::Line,
-                        reason,
-                    ));
-                }
-            };
-        let path = paths.get(loop_index).ok_or_else(|| {
-            curve_region_edit_error(CurveOperation2::Fillet, CurveError::InvalidCurveRange)
-        })?;
-        let solutions = path.fillet_vertex_by_radius_raw(vertex_index, radius, mode, policy)?;
-        self.rebuild_corner_path_solutions(
-            &paths,
-            loop_index,
-            solutions,
-            CurveOperation2::Fillet,
-            policy,
-        )
+        self.solve_fillet_loop_vertex(loop_index, vertex_index, radius, mode, policy)
     }
 
-    fn retained_fillet_solutions(
+    fn solve_fillet_loop_vertex(
         &self,
         loop_index: usize,
         vertex_index: usize,
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         let Some(boundary_loop) = self.data.boundary_loops.get(loop_index) else {
             return Err(curve_region_edit_error(
                 CurveOperation2::Fillet,
@@ -10481,7 +10437,11 @@ impl CurveRegion2 {
             && !previous_is_selected
             && !previous_is_endpoint_images
         {
-            return Ok(None);
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            ));
         }
         if next_curve.is_none()
             && !next_is_cusp
@@ -10490,7 +10450,11 @@ impl CurveRegion2 {
             && !next_is_selected
             && !next_is_endpoint_images
         {
-            return Ok(None);
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            ));
         }
         let previous_family = previous_curve
             .as_ref()
@@ -10505,9 +10469,9 @@ impl CurveRegion2 {
             policy,
         )?;
         if radius_sign == RealSign::Zero {
-            return Ok(Some(CurveCornerSolutions2::NoSolution(
+            return Ok(CurveCornerSolutions2::NoSolution(
                 crate::CurveCornerNoSolution2::ZeroDesignValue,
-            )));
+            ));
         }
         let previous_selected = match previous_fragment {
             BezierSplitFragment2::SelectedFiber(fragment) => {
@@ -10753,7 +10717,7 @@ impl CurveRegion2 {
             )
             .map(Some)
         })?;
-        Ok(Some(compact_optional_corner_solutions(solutions)))
+        Ok(compact_optional_corner_solutions(solutions))
     }
 
     fn retained_deferred_arc_contact_on_rational(
@@ -13293,28 +13257,6 @@ impl CurveRegion2 {
             paths.push(path);
         }
         Ok(Classification::Decided(paths))
-    }
-
-    fn rebuild_corner_path_solutions(
-        &self,
-        paths: &[CurvePath2],
-        loop_index: usize,
-        solutions: CurveCornerSolutions2<CurvePath2>,
-        operation: CurveOperation2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
-        let rebuild = |path: CurvePath2| -> ExactCurveResult<Self> {
-            let family = path.curves()[0].family();
-            let mut edited_paths = paths.to_vec();
-            edited_paths[loop_index] = path;
-            match self.rebuild_after_materialized_path_edit(edited_paths, operation, policy)? {
-                Classification::Decided(region) => Ok(region),
-                Classification::Uncertain(reason) => {
-                    Err(ExactCurveError::blocked(operation, family, reason))
-                }
-            }
-        };
-        try_map_corner_solutions(solutions, rebuild)
     }
 
     /// Materializes every retained boundary loop as an exact top-level path.
