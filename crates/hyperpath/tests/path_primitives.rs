@@ -134,16 +134,16 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, plan_lookahead_feed_schedule, rectangular_beads,
-    rectangular_pocket_link_graph, rectangular_pocket_rings, rectangular_rest_material_graph,
-    rectangular_serpentine_infill_graph, rectangular_support_footprint,
-    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_route_rule_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
-    specctra_grid_route_rule_record, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region, tangent_alignment_problem, tangent_cross, tangent_dot,
-    tangent_norm_squared,
+    parse_specctra_grid_trace_records, plan_lookahead_feed_schedule,
+    plan_monotonic_jerk_transition, rectangular_beads, rectangular_pocket_link_graph,
+    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
+    specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
+    specctra_grid_via_record, subtract_rectangular_region, tangent_alignment_problem,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -9237,6 +9237,133 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
 }
 
 #[test]
+fn monotonic_jerk_planner_certifies_acceleration_and_deceleration() {
+    let element = FeedPathElement::Line(strict_segment!(p(0, 0), p(12, 0)));
+    let accelerating = plan_monotonic_jerk_transition(
+        &element,
+        r(2),
+        r(4),
+        r(4),
+        r(1),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(accelerating.phases.len(), 2);
+    assert_eq!(accelerating.phases[0].path_length, rq(14, 3));
+    assert_eq!(accelerating.phases[1].path_length, rq(22, 3));
+    assert_eq!(accelerating.phases[0].ramp.start_feed, r(2));
+    assert_eq!(accelerating.phases[0].ramp.end_feed, r(3));
+    assert_eq!(accelerating.phases[0].ramp.start_acceleration, r(0));
+    assert_eq!(accelerating.phases[0].ramp.end_acceleration, r(1));
+    assert_eq!(accelerating.phases[0].ramp.traversal_time, r(2));
+    assert_eq!(accelerating.phases[1].ramp.end_feed, r(4));
+    assert_eq!(accelerating.phases[1].ramp.end_acceleration, r(0));
+    assert!(accelerating.all_satisfied());
+
+    let decelerating = plan_monotonic_jerk_transition(
+        &element,
+        r(4),
+        r(2),
+        r(4),
+        r(1),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+    assert_eq!(decelerating.phases[0].path_length, rq(22, 3));
+    assert_eq!(decelerating.phases[1].path_length, rq(14, 3));
+    assert_eq!(decelerating.phases[0].ramp.end_acceleration, r(-1));
+    assert_eq!(decelerating.phases[1].ramp.start_acceleration, r(-1));
+    assert!(decelerating.all_satisfied());
+}
+
+#[test]
+fn monotonic_jerk_planner_keeps_equal_positive_feed_constant() {
+    let element = FeedPathElement::Line(strict_segment!(p(0, 0), p(10, 0)));
+    let planned = plan_monotonic_jerk_transition(
+        &element,
+        r(2),
+        r(2),
+        r(2),
+        r(1),
+        r(1),
+        PredicatePolicy::STRICT,
+    )
+    .unwrap();
+
+    assert_eq!(planned.phases.len(), 2);
+    assert!(planned.phases.iter().all(|phase| {
+        phase.path_length == r(5)
+            && phase.ramp.start_feed == r(2)
+            && phase.ramp.end_feed == r(2)
+            && phase.ramp.start_acceleration == r(0)
+            && phase.ramp.end_acceleration == r(0)
+            && phase.ramp.traversal_time == rq(5, 2)
+    }));
+    assert!(planned.all_satisfied());
+}
+
+#[test]
+fn monotonic_jerk_planner_rejects_stationary_or_uncertified_transitions() {
+    let element = FeedPathElement::Line(strict_segment!(p(0, 0), p(1, 0)));
+    let degenerate = FeedPathElement::Line(strict_segment!(p(0, 0), p(0, 0)));
+    assert_eq!(
+        plan_monotonic_jerk_transition(
+            &degenerate,
+            r(1),
+            r(1),
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::UnsupportedRouteGeometry
+    );
+    assert_eq!(
+        plan_monotonic_jerk_transition(
+            &element,
+            Real::zero(),
+            Real::zero(),
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::ZeroBoundaryFeeds
+    );
+    assert_eq!(
+        plan_monotonic_jerk_transition(
+            &element,
+            Real::zero(),
+            r(10),
+            r(10),
+            r(50),
+            r(1_000),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::JerkProposalUncertified
+    );
+    assert_eq!(
+        plan_monotonic_jerk_transition(
+            &element,
+            r(-1),
+            r(1),
+            r(1),
+            r(1),
+            r(1),
+            PredicatePolicy::STRICT,
+        )
+        .unwrap_err(),
+        RouteCertificationError::NegativeFeedRate
+    );
+}
+
+#[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = strict_segment!(p(0, 0), p(10, 0));
     let meander =
@@ -12423,6 +12550,40 @@ proptest! {
 
         prop_assert_eq!(report.elements[0].route_length.clone(), r(total_length));
         prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn monotonic_jerk_planner_generated_boundaries_replay_exactly(
+        start_feed in 0_i16..=20,
+        end_feed in 0_i16..=20,
+        phase_time in 1_i16..=12,
+    ) {
+        prop_assume!(start_feed != 0 || end_feed != 0);
+        let start_feed = i64::from(start_feed);
+        let end_feed = i64::from(end_feed);
+        let phase_time = i64::from(phase_time);
+        let length = (start_feed + end_feed) * phase_time;
+        let feed_limit = start_feed.max(end_feed);
+        let dynamic_limit = (end_feed - start_feed).abs().max(1);
+        let element = FeedPathElement::Line(strict_segment!(p(0, 0), p(length, 0)));
+        let planned = plan_monotonic_jerk_transition(
+            &element,
+            r(start_feed),
+            r(end_feed),
+            r(feed_limit),
+            r(dynamic_limit),
+            r(dynamic_limit),
+            PredicatePolicy::STRICT,
+        ).unwrap();
+
+        prop_assert_eq!(planned.phases.len(), 2);
+        prop_assert_eq!(planned.phases[0].ramp.start_feed.clone(), r(start_feed));
+        prop_assert_eq!(planned.phases[1].ramp.end_feed.clone(), r(end_feed));
+        prop_assert_eq!(planned.phases[0].ramp.start_acceleration.clone(), Real::zero());
+        prop_assert_eq!(planned.phases[1].ramp.end_acceleration.clone(), Real::zero());
+        prop_assert_eq!(planned.phases[0].ramp.traversal_time.clone(), r(phase_time));
+        prop_assert_eq!(planned.phases[1].ramp.traversal_time.clone(), r(phase_time));
+        prop_assert!(planned.all_satisfied());
     }
 
     #[test]

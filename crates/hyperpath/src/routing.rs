@@ -37,8 +37,9 @@ pub use feed::{
 pub use jerk_schedule::{
     JerkRampElementPhaseReport, JerkRampFeedScheduleReport, JerkRampPhaseProposal,
     JerkRampPhaseReport, JerkRampSpanProposal, JerkRampSpanReport,
-    MultiPhaseJerkRampFeedScheduleReport, certify_jerk_ramp_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule,
+    MultiPhaseJerkRampFeedScheduleReport, PlannedMonotonicJerkTransition,
+    certify_jerk_ramp_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    plan_monotonic_jerk_transition,
 };
 pub use lookahead::{
     LookaheadFeedPlanningLimits, LookaheadFeedSchedule, LookaheadFeedScheduleReport,
@@ -527,6 +528,10 @@ pub enum RouteCertificationError {
     UnsupportedRadical,
     /// Independent replay rejected the internally generated lookahead proposal.
     LookaheadProposalUncertified,
+    /// Both boundary feeds were zero for a transition that requires motion.
+    ZeroBoundaryFeeds,
+    /// Independent replay rejected an internally generated jerk proposal.
+    JerkProposalUncertified,
     /// The selected predicate policy could not certify a scalar sign.
     PredicateUnresolved,
 }

@@ -114,6 +114,31 @@ pub struct MultiPhaseJerkRampFeedScheduleReport {
     pub elements: Vec<JerkRampElementPhaseReport>,
 }
 
+/// Conservative zero-acceleration-boundary transition and its independent
+/// multi-phase replay.
+///
+/// The transition uses the complete retained element for a monotonic change
+/// from one nonnegative feed to another. It consists of two equal-time
+/// constant-jerk phases whose shared acceleration is signed. Both profile
+/// endpoints have exactly zero acceleration and the feed never overshoots the
+/// two requested boundary values.
+#[derive(Clone, Debug)]
+pub struct PlannedMonotonicJerkTransition {
+    /// Exact two-phase proposal in traversal order.
+    pub phases: Vec<JerkRampPhaseProposal>,
+    /// Independent replay of requested boundaries and monotonic shared feed.
+    pub construction_certification: CandidateCertificationReport,
+    /// Independent Hypersolve replay of both phases, their sum, and continuity.
+    pub certification: JerkRampElementPhaseReport,
+}
+
+impl PlannedMonotonicJerkTransition {
+    /// Return whether every local, continuity, and retained-length row replayed.
+    pub fn all_satisfied(&self) -> bool {
+        self.construction_certification.all_satisfied() && self.certification.all_satisfied()
+    }
+}
+
 impl JerkRampFeedScheduleReport {
     /// Return whether every span proposal satisfies the exact replay rows.
     pub fn all_satisfied(&self) -> bool {
@@ -165,6 +190,108 @@ impl MultiPhaseJerkRampFeedScheduleReport {
             .iter()
             .position(|element| !element.all_satisfied())
     }
+}
+
+/// Plan and certify a monotonic jerk-limited transition over one retained
+/// element.
+///
+/// Let `v0` and `v1` be nonnegative boundary feeds with `v0 + v1 > 0` and let
+/// `L` be the exact retained element length. Each of the two phases has exact
+/// duration
+///
+/// `T = L / (v0 + v1)`.
+///
+/// The first phase changes acceleration from zero to
+/// `a = (v1 - v0) / T`; the second changes it back to zero. Their shared feed
+/// is `(v0 + v1) / 2`, and their exact lengths are
+/// `T*(5*v0 + v1)/6` and `L` minus that first length. This consumes the whole
+/// span without a feed overshoot, works for acceleration, deceleration, and
+/// equal positive feeds, and leaves zero acceleration for adjacent profiles.
+///
+/// A positive-length span with both boundary feeds zero requires an internal
+/// peak and is deliberately rejected here; a rest-to-rest proposer owns that
+/// separate policy. The returned proposal is released only if
+/// [`certify_multi_phase_jerk_ramp_feed_schedule`] independently certifies its
+/// phase kinematics, feed/acceleration/jerk limits, length sum, and continuity.
+pub fn plan_monotonic_jerk_transition(
+    element: &FeedPathElement,
+    start_feed: Real,
+    end_feed: Real,
+    max_feed_rate: Real,
+    max_acceleration: Real,
+    max_jerk: Real,
+    policy: PredicatePolicy,
+) -> Result<PlannedMonotonicJerkTransition, RouteCertificationError> {
+    require_nonnegative_feed(&start_feed, policy)?;
+    require_nonnegative_feed(&end_feed, policy)?;
+    require_positive_feed(&max_feed_rate, policy)?;
+    require_positive_acceleration(&max_acceleration, policy)?;
+    require_positive_jerk(&max_jerk, policy)?;
+
+    let path_length = element_length(element, policy)?;
+    require_positive_length(&path_length, policy)?;
+    let feed_sum = &start_feed + &end_feed;
+    match classify_real_sign(&feed_sum, policy).value() {
+        Some(Sign::Zero) => return Err(RouteCertificationError::ZeroBoundaryFeeds),
+        Some(Sign::Positive) => {}
+        Some(Sign::Negative) => return Err(RouteCertificationError::NegativeFeedRate),
+        None => return Err(RouteCertificationError::PredicateUnresolved),
+    }
+
+    let phase_time =
+        (&path_length / &feed_sum).map_err(|_| RouteCertificationError::UnsupportedDivision)?;
+    let shared_feed =
+        (&feed_sum / Real::from(2)).map_err(|_| RouteCertificationError::UnsupportedDivision)?;
+    let shared_acceleration = ((&end_feed - &start_feed) / &phase_time)
+        .map_err(|_| RouteCertificationError::UnsupportedDivision)?;
+    let first_length = (&phase_time * (Real::from(5) * &start_feed + &end_feed) / Real::from(6))
+        .map_err(|_| RouteCertificationError::UnsupportedDivision)?;
+    let second_length = &path_length - &first_length;
+    let phases = vec![
+        JerkRampPhaseProposal {
+            path_length: first_length,
+            ramp: JerkRampSpanProposal {
+                start_feed: start_feed.clone(),
+                end_feed: shared_feed.clone(),
+                start_acceleration: Real::zero(),
+                end_acceleration: shared_acceleration.clone(),
+                traversal_time: phase_time.clone(),
+            },
+        },
+        JerkRampPhaseProposal {
+            path_length: second_length,
+            ramp: JerkRampSpanProposal {
+                start_feed: shared_feed,
+                end_feed: end_feed.clone(),
+                start_acceleration: shared_acceleration,
+                end_acceleration: Real::zero(),
+                traversal_time: phase_time,
+            },
+        },
+    ];
+    let construction_certification =
+        certify_monotonic_transition_construction(&phases, start_feed.clone(), end_feed.clone());
+    let mut report = certify_multi_phase_jerk_ramp_feed_schedule(
+        std::slice::from_ref(element),
+        std::slice::from_ref(&phases),
+        max_feed_rate,
+        max_acceleration,
+        max_jerk,
+        policy,
+    )?;
+    if !construction_certification.all_satisfied() || !report.all_satisfied() {
+        return Err(RouteCertificationError::JerkProposalUncertified);
+    }
+    let certification = report
+        .elements
+        .pop()
+        .ok_or(RouteCertificationError::JerkProposalUncertified)?;
+
+    Ok(PlannedMonotonicJerkTransition {
+        phases,
+        construction_certification,
+        certification,
+    })
 }
 
 /// Certify a retained per-span constant-jerk feed schedule.
@@ -413,6 +540,75 @@ fn certify_phase_continuity(pair: &[JerkRampPhaseProposal]) -> CandidateCertific
     certify_problem(problem)
 }
 
+fn certify_monotonic_transition_construction(
+    phases: &[JerkRampPhaseProposal],
+    requested_start_feed: Real,
+    requested_end_feed: Real,
+) -> CandidateCertificationReport {
+    let mut problem = Problem::default();
+    let start_feed =
+        problem.add_variable("transition_start_feed", phases[0].ramp.start_feed.clone());
+    let shared_feed =
+        problem.add_variable("transition_shared_feed", phases[0].ramp.end_feed.clone());
+    let end_feed = problem.add_variable("transition_end_feed", phases[1].ramp.end_feed.clone());
+    let start_acceleration = problem.add_variable(
+        "transition_start_acceleration",
+        phases[0].ramp.start_acceleration.clone(),
+    );
+    let end_acceleration = problem.add_variable(
+        "transition_end_acceleration",
+        phases[1].ramp.end_acceleration.clone(),
+    );
+    let first_time = problem.add_variable(
+        "transition_first_time",
+        phases[0].ramp.traversal_time.clone(),
+    );
+    let second_time = problem.add_variable(
+        "transition_second_time",
+        phases[1].ramp.traversal_time.clone(),
+    );
+    let start = Expr::symbol(start_feed.into(), "transition_start_feed");
+    let shared = Expr::symbol(shared_feed.into(), "transition_shared_feed");
+    let end = Expr::symbol(end_feed.into(), "transition_end_feed");
+    let delta = end.clone() - start.clone();
+    problem.add_constraint(Constraint::equality(
+        "monotonic transition requested start feed",
+        start.clone() - Expr::real(requested_start_feed),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "monotonic transition requested end feed",
+        end.clone() - Expr::real(requested_end_feed),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "monotonic transition zero start acceleration",
+        Expr::symbol(start_acceleration.into(), "transition_start_acceleration"),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "monotonic transition zero end acceleration",
+        Expr::symbol(end_acceleration.into(), "transition_end_acceleration"),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "monotonic transition equal phase time",
+        Expr::symbol(first_time.into(), "transition_first_time")
+            - Expr::symbol(second_time.into(), "transition_second_time"),
+    ));
+    problem.add_constraint(Constraint {
+        name: "monotonic transition shared feed after start".to_string(),
+        kind: ConstraintKind::GreaterOrEqual,
+        residual: (shared.clone() - start.clone()) * delta.clone(),
+        weight: Real::one(),
+        active: true,
+    });
+    problem.add_constraint(Constraint {
+        name: "monotonic transition shared feed before end".to_string(),
+        kind: ConstraintKind::GreaterOrEqual,
+        residual: (end - shared) * delta,
+        weight: Real::one(),
+        active: true,
+    });
+    certify_problem(problem)
+}
+
 fn element_length(
     element: &FeedPathElement,
     _policy: PredicatePolicy,
@@ -603,6 +799,17 @@ fn require_nonnegative_feed(
     match classify_real_sign(value, policy).value() {
         Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
         Some(Sign::Zero | Sign::Positive) => Ok(()),
+        None => Err(RouteCertificationError::PredicateUnresolved),
+    }
+}
+
+fn require_positive_length(
+    value: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RouteCertificationError> {
+    match classify_real_sign(value, policy).value() {
+        Some(Sign::Negative | Sign::Zero) => Err(RouteCertificationError::UnsupportedRouteGeometry),
+        Some(Sign::Positive) => Ok(()),
         None => Err(RouteCertificationError::PredicateUnresolved),
     }
 }

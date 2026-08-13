@@ -224,8 +224,8 @@ pub use routing::{
     MeanderKeepoutPlacementReport, MeanderObstacle, MeanderPlacementCandidate,
     MeanderPlacementReport, MeanderPlacementSlot, MultiDetourMeander,
     MultiPhaseJerkRampFeedScheduleReport, NonUniformDetourMeander, ObstacleAwareDetourMeander,
-    PlannedLookaheadFeedSchedule, RouteCertificationError, SingleDetourMeander,
-    alternating_detour_meander, certify_acceleration_limited_feed_time,
+    PlannedLookaheadFeedSchedule, PlannedMonotonicJerkTransition, RouteCertificationError,
+    SingleDetourMeander, alternating_detour_meander, certify_acceleration_limited_feed_time,
     certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
     certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
     certify_differential_pair_skew, certify_jerk_ramp_feed_schedule, certify_length_extension,
@@ -235,7 +235,7 @@ pub use routing::{
     classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
     keepout_aware_detour_meander, length_match_problem, multi_detour_meander,
     nonuniform_detour_meander, obstacle_aware_detour_meander, plan_lookahead_feed_schedule,
-    single_detour_meander,
+    plan_monotonic_jerk_transition, single_detour_meander,
 };
 pub use segment::{
     Axis, LinePathSegment, LinePathSegmentError, LinePathSegmentFacts, SegmentParameterOrder,

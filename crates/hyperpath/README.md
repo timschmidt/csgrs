@@ -27,6 +27,7 @@ This README describes crate version `0.3.0`.
 | `RectangularPocket`, `RectangularRegion` | Supported exact CAM planning domains |
 | `TangentSpan`, `G1ChainCertificationReport` | Tangency and continuity evidence |
 | `LookaheadFeedPlanningLimits`, `PlannedLookaheadFeedSchedule` | Exact forward/reverse speed-node planning plus replay |
+| `PlannedMonotonicJerkTransition` | Exact two-phase nonzero-boundary feed transition plus independent replay |
 | `SpecctraRoute`, `SpecctraGridRouteRecords` | In-memory and fixed-grid route exchange |
 | `PcbConstraintSet`, `ToolpathConstraintSet` | Domain-owned Hypersolve residual collections |
 
@@ -188,6 +189,11 @@ Freeform curved pocket trimming is not inferred from these rectangular APIs.
   a true corner permits only zero feed; an exact G1 join can remain moving, a
   reversal always stops, and callers can impose a stop at any join with a zero
   feed ceiling.
+- `plan_monotonic_jerk_transition` constructs a conservative two-phase
+  constant-jerk profile across one retained element when at least one boundary
+  feed is positive. Feed changes monotonically, endpoint acceleration is zero,
+  and the general multi-phase Hypersolve replay must accept the candidate.
+  Rest-to-rest motion remains a separate peak-feed policy.
 
 These are structured proposal and certification helpers, not a global route
 search.
