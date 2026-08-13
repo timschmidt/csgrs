@@ -635,6 +635,9 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalContact2 {
     pub(crate) other_parameter: BezierParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
     pub(crate) tangent_cross_sign: RealSign,
+    /// Exact circle-tangent dot rational-tangent sign when the intersection
+    /// kernel already evaluated the corresponding angular predicate.
+    pub(crate) tangent_dot_sign: Option<RealSign>,
     pub(crate) location: BezierAlgebraicCuspSemicircleContactLocation2,
 }
 
@@ -21830,6 +21833,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: candidate,
                 point,
                 tangent_cross_sign,
+                tangent_dot_sign: None,
                 location,
             });
         }
@@ -23164,6 +23168,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: candidate,
                 point,
                 tangent_cross_sign,
+                tangent_dot_sign: None,
                 location,
             });
         }
@@ -23290,6 +23295,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: candidate,
                 point,
                 tangent_cross_sign,
+                tangent_dot_sign: None,
                 location,
             });
         }
@@ -23534,6 +23540,35 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
+                // A line/circle corner publication needs the companion dot
+                // sign as well as the already-retained cross sign. The
+                // selected-radial system owns this angular predicate now;
+                // retaining its one-word result avoids replaying a general
+                // circle-pair solve after the center has been selected.
+                let tangent_dot_sign = if other.degree() == 1 {
+                    match algebraic_cusp_trivariate_square_root_sum_sign(
+                        &system.angular_tangent,
+                        &system.discriminant,
+                        first_parameter,
+                        second_parameter,
+                        &candidate,
+                        system.branch,
+                        &CurveContext::STRICT,
+                    )? {
+                        Classification::Decided(sign) => Some(if self.is_clockwise() {
+                            sign
+                        } else {
+                            product_sign(sign, RealSign::Negative)
+                        }),
+                        // This sign may become persistent angular authority.
+                        // An APPROXIMATE_512 terminal is predicate evidence,
+                        // not a reusable exact tangent relation; decline the
+                        // fast path and retain the general publication kernel.
+                        Classification::Uncertain(_) => None,
+                    }
+                } else {
+                    None
+                };
                 let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {
                     Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => {
@@ -23544,6 +23579,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     other_parameter: candidate,
                     point,
                     tangent_cross_sign,
+                    tangent_dot_sign,
                     location,
                 });
             }
@@ -23796,6 +23832,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: candidate,
                 point,
                 tangent_cross_sign,
+                tangent_dot_sign: None,
                 location,
             });
         }
@@ -24132,6 +24169,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 other_parameter: boundary.parameter.clone(),
                 point,
                 tangent_cross_sign: RealSign::Zero,
+                tangent_dot_sign: None,
                 location,
             });
         }
@@ -56547,11 +56585,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// Classifies exact incidence of any retained affine point on this finite
     /// selected-circle fragment. Circle and diameter-side predicates consume
     /// the point's native evidence; no Cartesian compositum is constructed.
-    pub(crate) fn contains_point_evidence(
+    fn incident_point_chord_side(
         &self,
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
+    ) -> CurveResult<Classification<Option<crate::classify::LineSide>>> {
         self.validate_policy(policy)?;
         let residual = match self
             .data
@@ -56564,8 +56602,17 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         if residual != RealSign::Zero {
-            return Ok(Classification::Decided(false));
+            return Ok(Classification::Decided(None));
         }
+        Ok(self.endpoint_chord_side(point, policy)?.map(Some))
+    }
+
+    fn endpoint_chord_side(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::classify::LineSide>> {
+        self.validate_policy(policy)?;
         let start = match self.endpoint_point_evidence(true, policy)? {
             Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
@@ -56584,16 +56631,48 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        Ok(
-            selected_circle_endpoint_chord_side(&start, &end, point, policy)?.map(|side| {
-                let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
-                if clockwise {
-                    side != crate::classify::LineSide::Right
-                } else {
-                    side != crate::classify::LineSide::Left
-                }
-            }),
-        )
+        selected_circle_endpoint_chord_side(&start, &end, point, policy)
+    }
+
+    pub(crate) fn contains_point_evidence(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        Ok(self.incident_point_chord_side(point, policy)?.map(|side| {
+            let Some(side) = side else {
+                return false;
+            };
+            let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
+            if clockwise {
+                side != crate::classify::LineSide::Right
+            } else {
+                side != crate::classify::LineSide::Left
+            }
+        }))
+    }
+
+    /// Proves strict finite-fragment interior for a point whose incidence on
+    /// this supporting circle has already been certified by its constructor.
+    ///
+    /// A circle and its endpoint chord meet only at the two endpoints. Once
+    /// incidence on this retained circle is exact, the strict interior chord
+    /// side excludes both endpoint contacts without comparing independently
+    /// represented angular parameters. Callers must retain the circle-contact
+    /// certificate; arbitrary point evidence must use `contains_point_evidence`.
+    pub(crate) fn certified_incident_point_evidence_is_strict_interior(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        Ok(self.endpoint_chord_side(point, policy)?.map(|side| {
+            let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
+            side == if clockwise {
+                crate::classify::LineSide::Left
+            } else {
+                crate::classify::LineSide::Right
+            }
+        }))
     }
 
     pub(crate) fn contains_parameter(

@@ -5879,7 +5879,9 @@ fn retained_fillet_cusp_rational_contacts(
                     CurveRegionParameter2::from_bezier(contact.other_parameter),
                     cusp_parameter,
                     contact.point,
-                    None,
+                    contact
+                        .tangent_dot_sign
+                        .map(|dot| (contact.tangent_cross_sign, dot)),
                 )?;
             }
         }
@@ -7528,13 +7530,11 @@ fn fillet_offset_centers(
                     selected_tangent_relation,
                 } = contact;
                 let native_line = line_source.native_line().is_some();
+                let center_parameter = construction_parameter
+                    .or_else(|| other_parameter.as_bezier_parameter().cloned());
                 let line_parameter = native_line.then_some(other_parameter);
-                let retained_anchor_evidence = match (
-                    native_line,
-                    construction_parameter,
-                    selected_tangent_relation,
-                ) {
-                    (true, Some(parameter), Some((mut cross, mut dot))) => {
+                let retained_anchor_evidence = match (center_parameter, selected_tangent_relation) {
+                    (Some(parameter), Some((mut cross, mut dot))) => {
                         if cusp_support_reverses_source {
                             cross = reverse_fillet_sign(cross);
                             dot = reverse_fillet_sign(dot);
@@ -7553,7 +7553,7 @@ fn fillet_offset_centers(
                             deferred_arc_contact: None,
                         })
                     }
-                    (true, None, Some(_)) => {
+                    (None, Some(_)) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
                             cusp_family,
@@ -9282,12 +9282,23 @@ fn fillet_cut_from_center(
                         crate::UncertaintyReason::Unsupported,
                     )
                 })?;
+            let strict_support_interior = if complementary {
+                Classification::Decided(false)
+            } else {
+                support
+                    .certified_incident_point_evidence_is_strict_interior(center, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?
+            };
             let placement = if complementary {
                 if mode == CurveCornerMode2::TrimOrExtend {
                     CornerPlacement2::Extension
                 } else {
                     return Ok(None);
                 }
+            } else if strict_support_interior == Classification::Decided(true) {
+                CornerPlacement2::Trim
             } else {
                 match source
                     .contains_parameter(&parameter, false, false, policy)

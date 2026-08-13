@@ -22248,91 +22248,210 @@ mod tests {
         }
     }
 
+    fn pair_native_crossing_cutter(
+        filleted: &CurveRegion2,
+        analytic_bottom: bool,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
+        let pair_fragment = filleted.boundary_loops()[0]
+            .fragments()
+            .iter()
+            .find_map(|fragment| match fragment {
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                    if fragment.semicircle().uses_selected_radial_frame() =>
+                {
+                    Some(fragment)
+                }
+                _ => None,
+            })
+            .expect("the fillet retains its pair-native circle");
+        let pair_circle = pair_fragment.semicircle();
+        let parameter_bounds =
+            |parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+             refinement_steps| {
+                let bracket = retained_corner_decision(
+                    parameter
+                        .parameter_bracket(refinement_steps, policy)
+                        .expect("the pair-native parameter refines exactly"),
+                    CurveOperation2::Boolean,
+                )
+                .unwrap();
+                match bracket {
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
+                        parameter,
+                    ) => (parameter.clone(), parameter),
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
+                        interval,
+                    ) => (interval.start().clone(), interval.end().clone()),
+                }
+            };
+        let interior_window = [8_usize, 16, 32, 64, 128]
+            .into_iter()
+            .find_map(|refinement_steps| {
+                let (_, start_upper) =
+                    parameter_bounds(pair_fragment.start_parameter(), refinement_steps);
+                let (end_lower, _) =
+                    parameter_bounds(pair_fragment.end_parameter(), refinement_steps);
+                (compare_reals(&start_upper, &end_lower, &CurveContext::STRICT)
+                    == Some(Ordering::Less))
+                .then_some((start_upper, end_lower))
+            })
+            .expect("the pair-native fragment has a separated exact interior");
+        let third = Real::from(3_i8);
+        let first_parameter =
+            ((Real::from(2_i8) * &interior_window.0 + &interior_window.1) / &third).unwrap();
+        let second_parameter =
+            ((&interior_window.0 + Real::from(2_i8) * &interior_window.1) / third).unwrap();
+        let point_at = |parameter: &Real| {
+            retained_corner_decision(
+                pair_circle
+                    .point_evidence_at(parameter, policy)
+                    .expect("an interior pair-native point remains exact"),
+                CurveOperation2::Boolean,
+            )
+            .unwrap()
+        };
+        let first_point = point_at(&first_parameter);
+        let second_point = point_at(&second_parameter);
+        let crossing_axis = [8_usize, 16, 32, 64, 128]
+            .into_iter()
+            .find_map(|refinement_steps| {
+                let first = retained_corner_decision(
+                    crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                        &first_point,
+                        refinement_steps,
+                        policy,
+                    ),
+                    CurveOperation2::Boolean,
+                )
+                .unwrap();
+                let second = retained_corner_decision(
+                    crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                        &second_point,
+                        refinement_steps,
+                        policy,
+                    ),
+                    CurveOperation2::Boolean,
+                )
+                .unwrap();
+                let separated_coordinate =
+                    |first_upper: &Real,
+                     first_lower: &Real,
+                     second_upper: &Real,
+                     second_lower: &Real| {
+                        if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
+                            == Some(Ordering::Less)
+                        {
+                            Some(((first_upper + second_lower) / Real::from(2_i8)).unwrap())
+                        } else if compare_reals(second_upper, first_lower, &CurveContext::STRICT)
+                            == Some(Ordering::Less)
+                        {
+                            Some(((second_upper + first_lower) / Real::from(2_i8)).unwrap())
+                        } else {
+                            None
+                        }
+                    };
+                separated_coordinate(
+                    first.max().x(),
+                    first.min().x(),
+                    second.max().x(),
+                    second.min().x(),
+                )
+                .map(|coordinate| (true, coordinate))
+                .or_else(|| {
+                    separated_coordinate(
+                        first.max().y(),
+                        first.min().y(),
+                        second.max().y(),
+                        second.min().y(),
+                    )
+                    .map(|coordinate| (false, coordinate))
+                })
+            })
+            .expect("two distinct interior circle points separate on one exact axis");
+        let center = retained_corner_decision(
+            pair_circle
+                .center_point_evidence(policy)
+                .expect("the pair-native center remains exact"),
+            CurveOperation2::Boolean,
+        )
+        .unwrap();
+        let bounds = retained_corner_decision(
+            crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(&center, 8, policy),
+            CurveOperation2::Boolean,
+        )
+        .unwrap();
+        let two = Real::from(2_i8);
+        let margin = pair_circle.radial_distance().abs() * &two + Real::one();
+        let left = bounds.min().x() - &margin;
+        let right = bounds.max().x() + &margin;
+        let bottom = bounds.min().y() - &margin;
+        let top = bounds.max().y() + &margin;
+        let line = |start, end| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(start, end).unwrap(),
+            )),
+        };
+        let vertices = if crossing_axis.0 {
+            [
+                Point2::new(crossing_axis.1.clone(), top.clone()),
+                Point2::new(crossing_axis.1, bottom.clone()),
+                Point2::new(right.clone(), bottom),
+                Point2::new(right, top),
+            ]
+        } else {
+            [
+                Point2::new(left.clone(), crossing_axis.1.clone()),
+                Point2::new(right.clone(), crossing_axis.1),
+                Point2::new(right, top.clone()),
+                Point2::new(left, top),
+            ]
+        };
+        let crossing_source = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(vertices[0].clone(), vertices[1].clone()).unwrap(),
+        );
+        let crossing = if analytic_bottom {
+            let Classification::Decided(crossing) = crate::BezierParallelFragment2::try_new(
+                crossing_source.parallel_left(Real::zero()).unwrap(),
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                policy,
+            )
+            .unwrap() else {
+                panic!("the retained line cutter has a decided range");
+            };
+            BezierSplitFragment2::AnalyticParallel(crossing)
+        } else {
+            line(vertices[0].clone(), vertices[1].clone())
+        };
+        CurveRegion2::try_new_with_loop_topology(
+            vec![
+                CurveRegionBoundaryLoop2::new(
+                    vec![
+                        crossing,
+                        line(vertices[1].clone(), vertices[2].clone()),
+                        line(vertices[2].clone(), vertices[3].clone()),
+                        line(vertices[3].clone(), vertices[0].clone()),
+                    ],
+                    policy,
+                )
+                .expect("the crossing cutter closes exactly"),
+            ],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![CurveBoundaryInteriorSide2::Left],
+        )
+        .expect("the crossing cutter has authored topology")
+    }
+
     #[test]
     fn independent_pair_native_fillet_crosses_a_boolean_cutter() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let filleted = independent_pair_native_fillet(&policy, reversed);
-                let pair_circle = filleted.boundary_loops()[0]
-                    .fragments()
-                    .iter()
-                    .find_map(|fragment| match fragment {
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
-                            if fragment.semicircle().uses_selected_radial_frame() =>
-                        {
-                            Some(fragment.semicircle())
-                        }
-                        _ => None,
-                    })
-                    .expect("the fillet retains its pair-native circle");
-                let center = retained_corner_decision(
-                    pair_circle
-                        .center_point_evidence(&policy)
-                        .expect("the pair-native center remains exact"),
-                    CurveOperation2::Boolean,
-                )
-                .unwrap();
-                let bounds = retained_corner_decision(
-                    crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
-                        &center, 8, &policy,
-                    ),
-                    CurveOperation2::Boolean,
-                )
-                .unwrap();
-                let two = Real::from(2_i8);
-                let crossing_y = ((bounds.min().y() + bounds.max().y()) / &two).unwrap();
-                let margin = pair_circle.radial_distance().abs() * &two + Real::one();
-                let left = bounds.min().x() - &margin;
-                let right = bounds.max().x() + &margin;
-                let top = bounds.max().y() + &margin;
-                let line = |start, end| BezierSplitFragment2::Materialized {
-                    start: BezierParameter2::Exact(Real::zero()),
-                    end: BezierParameter2::Exact(Real::one()),
-                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                        LineSeg2::try_new(start, end).unwrap(),
-                    )),
-                };
-                let lower_left = Point2::new(left.clone(), crossing_y.clone());
-                let lower_right = Point2::new(right.clone(), crossing_y);
-                let upper_right = Point2::new(right, top.clone());
-                let upper_left = Point2::new(left, top);
-                let bottom_source = QuadraticBezier2::from_line_segment(
-                    LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap(),
-                );
                 for analytic_bottom in [false, true] {
-                    let bottom = if analytic_bottom {
-                        let Classification::Decided(bottom) =
-                            crate::BezierParallelFragment2::try_new(
-                                bottom_source.parallel_left(Real::zero()).unwrap(),
-                                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
-                                &policy,
-                            )
-                            .unwrap()
-                        else {
-                            panic!("the retained line cutter has a decided range");
-                        };
-                        BezierSplitFragment2::AnalyticParallel(bottom)
-                    } else {
-                        line(lower_left.clone(), lower_right.clone())
-                    };
-                    let cutter = CurveRegion2::try_new_with_loop_topology(
-                        vec![
-                            CurveRegionBoundaryLoop2::new(
-                                vec![
-                                    bottom,
-                                    line(lower_right.clone(), upper_right.clone()),
-                                    line(upper_right.clone(), upper_left.clone()),
-                                    line(upper_left.clone(), lower_left.clone()),
-                                ],
-                                &policy,
-                            )
-                            .expect("the crossing cutter closes exactly"),
-                        ],
-                        vec![CurveRegionLoopRole::Material],
-                        vec![FillRule::NonZero],
-                        vec![CurveBoundaryInteriorSide2::Left],
-                    )
-                    .expect("the crossing cutter has authored topology");
+                    let cutter = pair_native_crossing_cutter(&filleted, analytic_bottom, &policy);
                     let evidence = filleted
                         .intersect_region(&cutter, &policy)
                         .expect("the crossing carrier pairs return retained evidence");
@@ -22352,6 +22471,140 @@ mod tests {
                     assert!(!booleans.value.intersection().is_empty());
                     assert!(!booleans.value.difference().is_empty());
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let pair_native = independent_pair_native_fillet(&policy, reversed);
+                let cutter = pair_native_crossing_cutter(&pair_native, false, &policy);
+                let booleans = pair_native
+                    .boolean_regions(&cutter, &policy)
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the pair-native cutter must publish its retained corner: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(booleans.certainty, CurveCertainty::Certified);
+                let clipped = booleans.value.intersection();
+                let fragment_kinds = clipped
+                    .boundary_loops()
+                    .iter()
+                    .map(|boundary| {
+                        boundary
+                            .fragments()
+                            .iter()
+                            .map(|fragment| match fragment {
+                                BezierSplitFragment2::Materialized { .. } => "materialized",
+                                BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+                                    "endpoint-images"
+                                }
+                                BezierSplitFragment2::AnalyticParallel(_) => "parallel",
+                                BezierSplitFragment2::AlgebraicChord(_) => "chord",
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                    if fragment.semicircle().uses_selected_radial_frame() =>
+                                {
+                                    "pair-circle"
+                                }
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "circle",
+                                BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
+                                BezierSplitFragment2::Unresolved { .. } => "unresolved",
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
+                let (loop_index, corner, parent_radius) = clipped
+                    .boundary_loops()
+                    .iter()
+                    .enumerate()
+                    .find_map(|(loop_index, boundary)| {
+                        let fragments = boundary.fragments();
+                        (0..fragments.len()).find_map(|corner| {
+                            let previous =
+                                &fragments[(corner + fragments.len() - 1) % fragments.len()];
+                            let next = &fragments[corner];
+                            let pair_radius = |fragment: &BezierSplitFragment2| match fragment {
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                    if fragment.semicircle().uses_selected_radial_frame() =>
+                                {
+                                    Some(fragment.semicircle().radial_distance().abs())
+                                }
+                                _ => None,
+                            };
+                            let retained_line = |fragment: &BezierSplitFragment2| {
+                                matches!(
+                                    fragment,
+                                    BezierSplitFragment2::AlgebraicChord(_)
+                                        | BezierSplitFragment2::Materialized { .. }
+                                )
+                            };
+                            if retained_line(previous) {
+                                pair_radius(next)
+                            } else if retained_line(next) {
+                                pair_radius(previous)
+                            } else {
+                                None
+                            }
+                            .map(|radius| (loop_index, corner, radius))
+                        })
+                    })
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "the clipped region retains a pair-radial/line corner: {fragment_kinds:?}"
+                        )
+                    });
+                let radius = (parent_radius / Real::from(100_i16)).unwrap();
+                let result = clipped
+                    .fillet_loop_vertex_by_radius(
+                        loop_index,
+                        corner,
+                        radius,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the retained pair-radial/line corner must fillet exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                for_each_corner_region(&result.value, |filleted| {
+                    let fragments = filleted
+                        .boundary_loops()
+                        .iter()
+                        .flat_map(|boundary| boundary.fragments());
+                    assert!(
+                        fragments
+                            .clone()
+                            .filter(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                            ))
+                            .count()
+                            >= 2,
+                        "the recursively authored fillet and its circular parent must both remain exact"
+                    );
+                    assert!(
+                        fragments
+                            .filter(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                    if fragment.semicircle().uses_selected_radial_frame()
+                            ))
+                            .count()
+                            >= 1,
+                        "the original pair-native carrier must retain its pair-contact authority"
+                    );
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the third-generation fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert!(replay.value.intersection().is_empty());
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                });
             }
         }
     }
