@@ -521,6 +521,79 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
         .filter(|axis| *axis != eliminated_axis)
         .collect::<Vec<_>>();
 
+    // A tensor linear in the eliminated variable has a closed-form norm for
+    // a quadratic source constraint.  For
+    //
+    //     g(x) = c0 + c1*x + c2*x^2,   f(x) = A + B*x,
+    //
+    // `Res(g,f) = c2*A^2 - c1*A*B + c0*B^2`.  Constructing those retained-
+    // axis tensor products directly avoids evaluating and interpolating a
+    // multidimensional integer grid.  This case is especially common after
+    // quotient-ring reduction of represented geometry: selected quadratic
+    // source fields remain linear in the incidence tensor even when several
+    // other fields and a high-degree output axis are present.
+    if degrees[eliminated_axis] == 1 && constraint_degree == 2 {
+        let Some(a) = tensor_axis_coefficient(polynomial, eliminated_axis, 0) else {
+            return report(
+                TensorConstraintResultantStatus::DimensionOverflow,
+                Vec::new(),
+                None,
+                None,
+                Some("linear tensor-resultant constant fiber exceeded its shape budget".to_owned()),
+            );
+        };
+        let Some(b) = tensor_axis_coefficient(polynomial, eliminated_axis, 1) else {
+            return report(
+                TensorConstraintResultantStatus::DimensionOverflow,
+                Vec::new(),
+                None,
+                None,
+                Some(
+                    "linear tensor-resultant coefficient fiber exceeded its shape budget"
+                        .to_owned(),
+                ),
+            );
+        };
+        let Some(resultant) = a
+            .multiply(&a)
+            .and_then(|a_squared| a_squared.scale(&constraint[2]))
+            .and_then(|a_squared| {
+                a.multiply(&b)
+                    .and_then(|product| product.scale(&constraint[1]))
+                    .and_then(|product| a_squared.subtract(&product))
+            })
+            .and_then(|retained| {
+                b.multiply(&b)
+                    .and_then(|b_squared| b_squared.scale(&constraint[0]))
+                    .and_then(|b_squared| retained.add(&b_squared))
+            })
+        else {
+            return report(
+                TensorConstraintResultantStatus::DimensionOverflow,
+                Vec::new(),
+                None,
+                None,
+                Some("closed-form linear tensor resultant exceeded its shape budget".to_owned()),
+            );
+        };
+        let degree_bounds = retained_axes
+            .iter()
+            .map(|axis| degrees[*axis].saturating_mul(2))
+            .collect::<Vec<_>>();
+        // Convolution already has exactly the conservative resultant shape.
+        // Do not certify and trim every retained coefficient here: callers
+        // immediately reduce still-selected axes in their quotient rings,
+        // and forcing zero decisions on the unreduced arithmetic DAG can cost
+        // more than the elimination itself.
+        return report(
+            TensorConstraintResultantStatus::Constructed,
+            degree_bounds,
+            Some(resultant),
+            None,
+            None,
+        );
+    }
+
     // When only one retained axis remains, construct its exact quotient-ring
     // norm directly. This avoids reconstructing a high-degree univariate
     // resultant from an exact integer sample grid and keeps every coefficient
@@ -731,6 +804,27 @@ fn checked_coefficient_count(dimensions: &[usize]) -> Option<usize> {
     dimensions
         .iter()
         .try_fold(1_usize, |count, dimension| count.checked_mul(*dimension))
+}
+
+fn tensor_axis_coefficient(
+    polynomial: &DenseTensorPolynomial,
+    axis: usize,
+    power: usize,
+) -> Option<DenseTensorPolynomial> {
+    if axis >= polynomial.dimensions.len() || power >= polynomial.dimensions[axis] {
+        return None;
+    }
+    let mut dimensions = polynomial.dimensions.clone();
+    dimensions.remove(axis);
+    let count = checked_coefficient_count(&dimensions)?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(count).ok()?;
+    for index in 0..count {
+        let mut source = exponents(&dimensions, index);
+        source.insert(axis, power);
+        coefficients.push(polynomial.coefficient(&source)?.clone());
+    }
+    DenseTensorPolynomial::try_new(dimensions, coefficients)
 }
 
 fn flat_index(dimensions: &[usize], exponents: &[usize]) -> usize {
