@@ -1938,8 +1938,9 @@ impl CurvePath2 {
     /// zero. A positive-dimensional exterior correspondence and any algebraic
     /// center or trim that a public path cannot retain remain explicit
     /// blockers for this API and are delegated to retained-region
-    /// reconstruction. Spline spans and retained rational circles are
-    /// trim-only.
+    /// reconstruction. Spline spans remain trim-only. Retained rational
+    /// circles use their certified native support for extension and collapse
+    /// only the extended source fragment to [`CircularArc2`].
     pub fn fillet_vertex_by_radius(
         &self,
         vertex_index: usize,
@@ -3813,6 +3814,25 @@ impl<'a> ExactCornerCarrier2<'a> {
     }
 }
 
+fn retained_rational_arc_support(
+    curve: &Curve2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CircularArc2>> {
+    let support = match curve.geometry() {
+        CurveGeometry2::RationalQuadraticBezier(conic) => {
+            rational_quadratic_circular_arc(conic, policy)
+        }
+        CurveGeometry2::RationalBezier(rational) => rational_bezier_circular_arc(rational, policy),
+        _ => return Ok(None),
+    }
+    .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?;
+    Ok(match support {
+        Classification::Decided(support) => support,
+        Classification::Uncertain(_) => None,
+    })
+}
+
 pub(crate) fn exact_corner_carrier<'a>(
     curve: &'a Curve2,
     previous: bool,
@@ -3835,22 +3855,12 @@ pub(crate) fn exact_corner_carrier<'a>(
     let bezier = || ExactCornerCarrier2::Bezier(curve);
     Ok(match curve.geometry() {
         CurveGeometry2::CircularArc(arc) => Some(ExactCornerCarrier2::Arc(arc)),
-        CurveGeometry2::RationalQuadraticBezier(conic) => {
-            match rational_quadratic_circular_arc(conic, policy)
-                .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-            {
-                Classification::Decided(Some(support)) => Some(retained(support)),
-                Classification::Decided(None) | Classification::Uncertain(_) => Some(bezier()),
-            }
-        }
-        CurveGeometry2::RationalBezier(rational) => {
-            match rational_bezier_circular_arc(rational, policy)
-                .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-            {
-                Classification::Decided(Some(support)) => Some(retained(support)),
-                Classification::Decided(None) | Classification::Uncertain(_) => Some(bezier()),
-            }
-        }
+        CurveGeometry2::RationalQuadraticBezier(_) | CurveGeometry2::RationalBezier(_) => Some(
+            match retained_rational_arc_support(curve, operation, policy)? {
+                Some(support) => retained(support),
+                None => bezier(),
+            },
+        ),
         CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::CubicBezier(_) => Some(bezier()),
         CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_) => {
             let fragments = match curve
@@ -4129,6 +4139,7 @@ fn fillet_carrier_pair_supports_extension(
     };
     (is_affine_line(previous) && is_arc(next))
         || (is_arc(previous) && is_affine_line(next))
+        || (is_arc(previous) && is_arc(next))
         || (is_affine_line(previous) && is_selected_circle(next))
         || (is_selected_circle(previous) && is_affine_line(next))
         || (is_selected_circle(previous) && is_selected_circle(next))
@@ -10547,6 +10558,26 @@ fn materialize_corner_cut(
                     _ => Curve2::from(extended),
                 })
             } else if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+                Ok(Curve2::from(if previous {
+                    CircularArc2::new_with_certified_radius(
+                        arc.start().clone(),
+                        point.clone(),
+                        arc.center().clone(),
+                        arc.radius_squared(),
+                        arc.is_clockwise(),
+                        None,
+                    )
+                } else {
+                    CircularArc2::new_with_certified_radius(
+                        point.clone(),
+                        arc.end().clone(),
+                        arc.center().clone(),
+                        arc.radius_squared(),
+                        arc.is_clockwise(),
+                        None,
+                    )
+                }))
+            } else if let Some(arc) = retained_rational_arc_support(curve, operation, policy)? {
                 Ok(Curve2::from(if previous {
                     CircularArc2::new_with_certified_radius(
                         arc.start().clone(),

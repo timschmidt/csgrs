@@ -1,8 +1,9 @@
 use hypercurve::{
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
-    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
+    BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
+    CurveContext, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveError,
+    CurveFamily2, CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
+    RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{ContourPointLocation, CurveCertainty};
 use hyperreal::CertifiedRealEquality;
@@ -1394,35 +1395,28 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                 CertifiedRealEquality::Equal { .. }
             ));
 
-            for operation in [CurveOperation2::Chamfer, CurveOperation2::Fillet] {
-                let blocked = match operation {
-                    CurveOperation2::Chamfer => path
-                        .chamfer_vertex_by_setbacks(
-                            1,
-                            q(1, 2),
-                            q(1, 2),
-                            CurveCornerMode2::TrimOrExtend,
-                            &policy,
-                        )
-                        .map(|_| ()),
-                    CurveOperation2::Fillet => path
-                        .fillet_vertex_by_radius(
-                            1,
-                            q(1, 2),
-                            CurveCornerMode2::TrimOrExtend,
-                            &policy,
-                        )
-                        .map(|_| ()),
-                    _ => unreachable!(),
-                };
-                assert!(matches!(
-                    blocked,
-                    Err(ExactCurveError::Blocked(blocker))
-                        if blocker.operation() == operation
-                            && blocker.family() == *family
-                            && blocker.reason() == UncertaintyReason::Unsupported
-                ));
-            }
+            let blocked = path
+                .chamfer_vertex_by_setbacks(
+                    1,
+                    q(1, 2),
+                    q(1, 2),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .map(|_| ());
+            assert!(matches!(
+                blocked,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.operation() == CurveOperation2::Chamfer
+                        && blocker.family() == *family
+                        && blocker.reason() == UncertaintyReason::Unsupported
+            ));
+
+            let extended = path
+                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+                .expect("the retained circular conic shares full-circle fillet support")
+                .into_value();
+            assert_eq!(extended.candidate_count(), 3);
 
             assert_eq!(
                 path.chamfer_vertex_by_setbacks(
@@ -1447,6 +1441,119 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                 .into_value(),
                 CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
             );
+        }
+    }
+}
+
+#[test]
+fn retained_circular_conic_pairs_extend_on_native_supports() {
+    let previous = CircularArc2::try_from_center(p(-1, -1), p(0, 0), p(0, -1), true).unwrap();
+    let next = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let retained = |arc: &CircularArc2, elevated: bool| {
+        let conic = arc
+            .rational_bezier_decomposition(&CurveContext::STRICT)
+            .unwrap()
+            .into_value()
+            .spans()[0]
+            .curve()
+            .clone();
+        if elevated {
+            Curve2::from(RationalBezier2::from(conic).elevated_to_degree(5).unwrap())
+        } else {
+            Curve2::from(conic)
+        }
+    };
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for elevated in [false, true] {
+            for reversed in [false, true] {
+                let path = CurvePath2::try_new(vec![
+                    retained(&previous, elevated),
+                    retained(&next, elevated),
+                ])
+                .unwrap();
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().into_value()
+                } else {
+                    path
+                };
+                let trim = path
+                    .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                    .unwrap()
+                    .into_value();
+                assert_eq!(trim.candidate_count(), 1);
+                let extended = path
+                    .fillet_vertex_by_radius(
+                        1,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "retained circular supports must extend: policy={policy:?}, elevated={elevated}, reversed={reversed}, error={error:?}"
+                        )
+                    })
+                    .into_value();
+                assert_eq!(extended.candidate_count(), 2);
+
+                let boundary_path = CurvePath2::try_new(vec![
+                    retained(&previous, elevated),
+                    retained(&next, elevated),
+                    Curve2::from(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+                    Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, -1)).unwrap()),
+                    Curve2::from(LineSeg2::try_new(p(-2, -1), p(-1, -1)).unwrap()),
+                ])
+                .unwrap();
+                let boundary_path = if reversed {
+                    boundary_path.reversed(&policy).unwrap().into_value()
+                } else {
+                    boundary_path
+                };
+                let region = CurveRegion2::try_from_boundary_paths(&[boundary_path], &policy)
+                    .unwrap()
+                    .into_value();
+                let fragments = region.boundary_loops()[0].fragments();
+                let corner = (0..fragments.len())
+                    .find(|index| {
+                        let is_rational_arc = |fragment: &BezierSplitFragment2| {
+                            matches!(
+                                fragment,
+                                BezierSplitFragment2::Materialized {
+                                    curve: BezierSubcurve2::RationalQuadratic(_)
+                                        | BezierSubcurve2::Rational(_),
+                                    ..
+                                }
+                            )
+                        };
+                        is_rational_arc(&fragments[(index + fragments.len() - 1) % fragments.len()])
+                            && is_rational_arc(&fragments[*index])
+                    })
+                    .expect("the retained circular pair stays adjacent in CurveRegion2");
+                let trim = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap();
+                let extended = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "CurveRegion2 retained circular supports must extend: policy={policy:?}, elevated={elevated}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert!(extended.value.candidate_count() > trim.value.candidate_count());
+            }
         }
     }
 }
