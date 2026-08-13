@@ -16,6 +16,7 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
+use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
 use crate::root_isolation::polynomial_div_rem;
 
@@ -519,6 +520,78 @@ pub fn resultant_tensor_polynomial_univariate_constraint(
     let retained_axes = (0..polynomial.dimensions.len())
         .filter(|axis| *axis != eliminated_axis)
         .collect::<Vec<_>>();
+
+    // When only one retained axis remains, construct its exact quotient-ring
+    // norm directly. This avoids reconstructing a high-degree univariate
+    // resultant from an exact integer sample grid and keeps every coefficient
+    // in compact primitive-integer form. The bounded determinant dimension is
+    // the selected source degree, not the retained fiber degree.
+    if retained_axes.len() == 1 {
+        let retained_axis = retained_axes[0];
+        let retained_count = polynomial.dimensions[retained_axis];
+        let mut fiber_coefficients = Vec::new();
+        if fiber_coefficients
+            .try_reserve_exact(retained_count)
+            .is_err()
+        {
+            return report(
+                TensorConstraintResultantStatus::AllocationFailed,
+                vec![
+                    polynomial.dimensions[retained_axis]
+                        .saturating_sub(1)
+                        .saturating_mul(constraint_degree),
+                ],
+                None,
+                None,
+                Some("direct quotient-ring fiber storage could not be reserved".to_owned()),
+            );
+        }
+        for retained_power in 0..retained_count {
+            let mut fiber = Vec::new();
+            if fiber
+                .try_reserve_exact(polynomial.dimensions[eliminated_axis])
+                .is_err()
+            {
+                return report(
+                    TensorConstraintResultantStatus::AllocationFailed,
+                    vec![
+                        polynomial.dimensions[retained_axis]
+                            .saturating_sub(1)
+                            .saturating_mul(constraint_degree),
+                    ],
+                    None,
+                    None,
+                    Some("direct quotient-ring source fiber could not be reserved".to_owned()),
+                );
+            }
+            for eliminated_power in 0..polynomial.dimensions[eliminated_axis] {
+                let mut exponents = vec![0; polynomial.dimensions.len()];
+                exponents[eliminated_axis] = eliminated_power;
+                exponents[retained_axis] = retained_power;
+                fiber.push(
+                    polynomial
+                        .coefficient(&exponents)
+                        .cloned()
+                        .unwrap_or_else(Real::zero),
+                );
+            }
+            fiber_coefficients.push(fiber);
+        }
+        if let Some(coefficients) =
+            quotient_ring_fiber_resultant_polynomial(&constraint, &fiber_coefficients, 8)
+        {
+            let degree = coefficients.len().saturating_sub(1);
+            let resultant = DenseTensorPolynomial::try_new(vec![coefficients.len()], coefficients)
+                .expect("a direct univariate quotient-ring norm has a valid dense shape");
+            return report(
+                TensorConstraintResultantStatus::Constructed,
+                vec![degree],
+                Some(resultant),
+                None,
+                None,
+            );
+        }
+    }
     let Some(degree_bounds) = retained_axes
         .iter()
         .map(|axis| degrees[*axis].checked_mul(constraint_degree))
@@ -950,6 +1023,29 @@ mod tests {
         assert_eq!(
             square_free_part(polynomial.coefficients().to_vec(), PredicatePolicy::STRICT).unwrap(),
             vec![real(-6), Real::zero(), Real::one()]
+        );
+    }
+
+    #[test]
+    fn final_axis_quotient_norm_preserves_a_quadratic_source_fiber() {
+        // P(x,t)=t²+x*t+1 over x²-2 has norm
+        // (t²+1)²-2t²=t⁴+1. The final-axis shortcut must retain the same
+        // exact univariate eliminant without grid interpolation.
+        let polynomial = DenseTensorPolynomial::try_new(
+            vec![2, 3],
+            vec![real(1), real(0), real(1), real(0), real(1), real(0)],
+        )
+        .unwrap();
+        let report = resultant_tensor_polynomial_univariate_constraint(
+            &polynomial,
+            &[real(-2), real(0), real(1)],
+            0,
+            PredicatePolicy::MAX_REFINEMENT_PRECISION,
+        );
+        assert_eq!(report.status, TensorConstraintResultantStatus::Constructed);
+        assert_eq!(
+            report.resultant.unwrap().coefficients(),
+            &[real(1), real(0), real(0), real(0), real(1)]
         );
     }
 

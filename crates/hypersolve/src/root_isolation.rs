@@ -20,7 +20,9 @@ use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
-use crate::integer_interpolation::primitive_integer_polynomial_gcd;
+use crate::integer_interpolation::{
+    primitive_integer_polynomial_gcd, primitive_integer_polynomials_are_coprime_modular,
+};
 use crate::model::{ConstraintKind, Problem};
 use crate::symbolic::{Expr, SymbolId};
 
@@ -1757,6 +1759,9 @@ pub(crate) fn polynomial_gcd(
 ) -> Option<Vec<Real>> {
     left = trim_polynomial(left, policy)?;
     right = trim_polynomial(right, policy)?;
+    if primitive_integer_polynomials_are_coprime_modular(&left, &right) == Some(true) {
+        return Some(vec![Real::one()]);
+    }
     if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
         return gcd_monic_normalize(gcd, policy);
     }

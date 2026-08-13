@@ -1,5 +1,5 @@
 use hyperreal::{Rational, Real};
-use num::{BigInt, Integer, One, Zero};
+use num::{BigInt, Integer, One, ToPrimitive, Zero};
 
 pub(crate) fn primitive_integer_polynomial(polynomial: &[Real]) -> Option<Vec<Real>> {
     let rationals = polynomial
@@ -33,6 +33,105 @@ pub(crate) fn primitive_integer_polynomial_gcd(left: &[Real], right: &[Real]) ->
             .map(Real::from)
             .collect(),
     )
+}
+
+/// Certifies coprimality over `Q[x]` through a degree-preserving modular
+/// image. A gcd of one modulo any good prime proves the primitive integer
+/// polynomials are coprime in characteristic zero. Failure to find such a
+/// prime is inconclusive and deliberately returns `false`.
+pub(crate) fn primitive_integer_polynomials_are_coprime_modular(
+    left: &[Real],
+    right: &[Real],
+) -> Option<bool> {
+    let left = primitive_integer_coefficients(left)?;
+    let right = primitive_integer_coefficients(right)?;
+    if is_zero_integer_polynomial(&left) || is_zero_integer_polynomial(&right) {
+        return Some(false);
+    }
+    for prime in [65_521_u64, 65_519, 65_497, 65_479] {
+        let reduce = |polynomial: &[BigInt]| {
+            let modulus = BigInt::from(prime);
+            polynomial
+                .iter()
+                .map(|coefficient| coefficient.mod_floor(&modulus).to_u64())
+                .collect::<Option<Vec<_>>>()
+        };
+        let (Some(left_modular), Some(right_modular)) = (reduce(&left), reduce(&right)) else {
+            continue;
+        };
+        if left_modular.last() == Some(&0) || right_modular.last() == Some(&0) {
+            continue;
+        }
+        if modular_polynomial_gcd_degree(left_modular, right_modular, prime) == Some(0) {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+fn modular_polynomial_gcd_degree(
+    mut left: Vec<u64>,
+    mut right: Vec<u64>,
+    prime: u64,
+) -> Option<usize> {
+    modular_trim(&mut left);
+    modular_trim(&mut right);
+    while !modular_is_zero(&right) {
+        let remainder = modular_polynomial_remainder(left, &right, prime)?;
+        left = right;
+        right = remainder;
+    }
+    modular_trim(&mut left);
+    Some(left.len().saturating_sub(1))
+}
+
+fn modular_polynomial_remainder(
+    mut dividend: Vec<u64>,
+    divisor: &[u64],
+    prime: u64,
+) -> Option<Vec<u64>> {
+    if modular_is_zero(divisor) {
+        return None;
+    }
+    modular_trim(&mut dividend);
+    let divisor_degree = divisor.len().checked_sub(1)?;
+    let inverse = modular_power(*divisor.last()?, prime.checked_sub(2)?, prime);
+    while !modular_is_zero(&dividend) && dividend.len() >= divisor.len() {
+        let shift = dividend.len() - divisor.len();
+        let scale = dividend.last()?.checked_mul(inverse)? % prime;
+        for (index, coefficient) in divisor.iter().enumerate().take(divisor_degree + 1) {
+            let product = scale.checked_mul(*coefficient)? % prime;
+            let target = shift + index;
+            dividend[target] = (dividend[target] + prime - product) % prime;
+        }
+        modular_trim(&mut dividend);
+    }
+    Some(dividend)
+}
+
+fn modular_power(mut base: u64, mut exponent: u64, modulus: u64) -> u64 {
+    let mut result = 1_u64;
+    while exponent != 0 {
+        if exponent & 1 != 0 {
+            result = result * base % modulus;
+        }
+        base = base * base % modulus;
+        exponent >>= 1;
+    }
+    result
+}
+
+fn modular_trim(polynomial: &mut Vec<u64>) {
+    while polynomial.len() > 1 && polynomial.last() == Some(&0) {
+        polynomial.pop();
+    }
+    if polynomial.is_empty() {
+        polynomial.push(0);
+    }
+}
+
+fn modular_is_zero(polynomial: &[u64]) -> bool {
+    polynomial.iter().all(|coefficient| *coefficient == 0)
 }
 
 fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
@@ -194,6 +293,35 @@ mod tests {
         assert_eq!(
             primitive_integer_polynomial_gcd(&left, &right),
             Some(vec![real(-2), real(1)])
+        );
+    }
+
+    #[test]
+    fn modular_image_certifies_coprimality_without_integer_coefficient_growth() {
+        let mut left = vec![Real::zero(); 129];
+        left[0] = real(1);
+        left[128] = real(1);
+        let mut right = vec![Real::zero(); 128];
+        right[0] = real(3);
+        right[127] = real(128);
+        assert_eq!(
+            primitive_integer_polynomials_are_coprime_modular(&left, &right),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn modular_image_never_certifies_polynomials_with_a_shared_factor() {
+        let shared = [real(-2), real(1)];
+        let left = [real(-6), real(1), real(1)];
+        let right = [real(-2), real(1), real(-2), real(1)];
+        assert_eq!(
+            primitive_integer_polynomials_are_coprime_modular(&left, &right),
+            Some(false)
+        );
+        assert_eq!(
+            primitive_integer_polynomial_gcd(&left, &right),
+            Some(shared.to_vec())
         );
     }
 
