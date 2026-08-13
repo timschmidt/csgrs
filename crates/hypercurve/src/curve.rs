@@ -4652,7 +4652,9 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 };
                 match crate::classify::real_sign(&signed_radius, policy) {
                     Some(RealSign::Zero) => Ok(FilletOffsetCarrier2::Point {
-                        point: support.center(),
+                        point: RationalBezierIntersectionPointEvidence2::Exact(
+                            support.center().clone(),
+                        ),
                     }),
                     Some(RealSign::Positive | RealSign::Negative) => {
                         Ok(FilletOffsetCarrier2::Arc {
@@ -4686,11 +4688,22 @@ impl<'a> PreparedFilletCarrier2<'a> {
                         })? {
                         Classification::Decided(Some(support)) => support,
                         Classification::Decided(None) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                family,
-                                crate::UncertaintyReason::Boundary,
-                            ));
+                            let point = match source
+                                .semicircle()
+                                .center_point_evidence(policy)
+                                .map_err(|cause| {
+                                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                                })? {
+                                Classification::Decided(point) => point,
+                                Classification::Uncertain(reason) => {
+                                    return Err(ExactCurveError::blocked(
+                                        CurveOperation2::Fillet,
+                                        family,
+                                        reason,
+                                    ));
+                                }
+                            };
+                            return Ok(FilletOffsetCarrier2::Point { point });
                         }
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
@@ -4769,7 +4782,7 @@ enum FilletOffsetCarrier2<'a, 'b> {
         signed_radius: Real,
     },
     Point {
-        point: &'b Point2,
+        point: RationalBezierIntersectionPointEvidence2,
     },
     Parallel {
         source: FilletParallelSource2<'a>,
@@ -6123,8 +6136,8 @@ fn fillet_offset_centers(
     match (previous, next) {
         (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
             let (point, other) = match (previous, next) {
-                (FilletOffsetCarrier2::Point { point }, other) => (*point, other),
-                (other, FilletOffsetCarrier2::Point { point }) => (*point, other),
+                (FilletOffsetCarrier2::Point { point }, other) => (point, other),
+                (other, FilletOffsetCarrier2::Point { point }) => (point, other),
                 _ => unreachable!(),
             };
             let other_family = if matches!(previous, FilletOffsetCarrier2::Point { .. }) {
@@ -8865,73 +8878,102 @@ fn fillet_offset_centers(
 }
 
 fn point_on_fillet_offset(
-    point: &Point2,
+    point: &RationalBezierIntersectionPointEvidence2,
     support: &FilletOffsetCarrier2<'_, '_>,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    if let FilletOffsetCarrier2::Parallel { support, .. } = support {
-        return match support
-            .contains_point(point, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
-            Classification::Decided(contains) => Ok(contains),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            )),
-        };
-    }
-    if let FilletOffsetCarrier2::AlgebraicChord { support, .. } = support {
-        return match support
-            .contains_point(point, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
-            Classification::Decided(contains) => Ok(contains),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            )),
-        };
-    }
-    if let FilletOffsetCarrier2::AlgebraicCusp { support, .. } = support {
-        return match support
-            .contains_point(point, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
-            Classification::Decided(contains) => Ok(contains),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            )),
-        };
-    }
-    let residual = match support {
-        FilletOffsetCarrier2::Line { support, .. } => {
-            let (dx, dy) = support.delta();
-            let from_start = point.delta_from(support.start());
-            &dx * &from_start.1 - &dy * &from_start.0
-        }
+    let decided = |classification| match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    };
+    match support {
+        FilletOffsetCarrier2::Point { point: other } => decided(point.same_point(other, policy)),
         FilletOffsetCarrier2::Arc {
             source,
             signed_radius,
             ..
-        } => point.distance_squared(source.support().center()) - signed_radius * signed_radius,
-        FilletOffsetCarrier2::Point { point: other } => point.distance_squared(other),
-        FilletOffsetCarrier2::Parallel { .. } => unreachable!(),
-        FilletOffsetCarrier2::AlgebraicChord { .. } => unreachable!(),
-        FilletOffsetCarrier2::AlgebraicCusp { .. } => unreachable!(),
-    };
-    crate::classify::is_zero(&residual, policy).ok_or_else(|| {
-        ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            crate::UncertaintyReason::RealSign,
+        } => match crate::bezier_offset::retained_point_circle_incidence_sign(
+            point,
+            source.support().center(),
+            &(signed_radius * signed_radius),
+            policy,
         )
-    })
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(RealSign::Zero) => Ok(true),
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => Ok(false),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                reason,
+            )),
+        },
+        FilletOffsetCarrier2::Line { support, .. } => {
+            if let Some(point) = point.as_exact() {
+                let (dx, dy) = support.delta();
+                let from_start = point.delta_from(support.start());
+                return crate::classify::is_zero(
+                    &(&dx * &from_start.1 - &dy * &from_start.0),
+                    policy,
+                )
+                .ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::RealSign,
+                    )
+                });
+            }
+            let chord = match crate::BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(support.start().clone()),
+                RationalBezierIntersectionPointEvidence2::Exact(support.end().clone()),
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            let side = chord
+                .oriented_support_side(point, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?;
+            decided(side.map(|side| side == LineSide::On))
+        }
+        FilletOffsetCarrier2::Parallel { support, .. } => decided(
+            support
+                .contains_point_evidence(point, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?,
+        ),
+        FilletOffsetCarrier2::AlgebraicChord { support, .. } => decided(
+            support
+                .contains_point_evidence(point, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?,
+        ),
+        FilletOffsetCarrier2::AlgebraicCusp { support, .. } => decided(
+            support
+                .contains_point_evidence(point, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                })?,
+        ),
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

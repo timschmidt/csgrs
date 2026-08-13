@@ -11822,15 +11822,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            return Ok(
-                selected_circle_endpoint_chord_side(&start, &end, point, policy)?.map(|side| {
-                    if self.is_clockwise() {
-                        side != crate::classify::LineSide::Right
-                    } else {
-                        side != crate::classify::LineSide::Left
-                    }
-                }),
-            );
+            return Ok(selected_circle_endpoint_chord_side(
+                &start,
+                &end,
+                &RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                policy,
+            )?
+            .map(|side| {
+                if self.is_clockwise() {
+                    side != crate::classify::LineSide::Right
+                } else {
+                    side != crate::classify::LineSide::Left
+                }
+            }));
         }
         let frame = &self.data.frame.rational_required()?.data;
         let (center_x, center_y) = self
@@ -43522,6 +43526,32 @@ impl BezierAlgebraicChord2 {
         evaluator.contains_exact_point(point, policy)
     }
 
+    /// Classifies exact incidence of retained point evidence on this finite
+    /// chord through the same support-side and monotone-parameter authority as
+    /// chord/chord intersection.
+    pub(crate) fn contains_point_evidence(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        let support = match BezierAlgebraicChordSupportPredicate2::try_new(self, policy)? {
+            Classification::Decided(support) => support,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        match support.oriented_side(point, policy)? {
+            Classification::Decided(crate::classify::LineSide::On) => self
+                .parameter_at_certified_point(point.clone(), policy)
+                .map(|parameter| parameter.map(|parameter| parameter.is_some())),
+            Classification::Decided(
+                crate::classify::LineSide::Left | crate::classify::LineSide::Right,
+            ) => Ok(Classification::Decided(false)),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     /// Returns this chord's half-open winding contribution to a forward ray.
     pub(crate) fn forward_ray_winding_delta(
         &self,
@@ -48592,6 +48622,115 @@ pub(crate) fn algebraic_point_distance_squared_at_most(
     }
 }
 
+/// Signs one retained affine point's squared-distance residual against a
+/// represented circle without flattening the point's selected field.
+///
+/// A directly retained rational expression is evaluated in its own quotient
+/// field. More deeply nested point carriers use convergent exact enclosures;
+/// only APPROXIMATE_512 may turn a terminal overlap into equality.
+pub(crate) fn retained_point_circle_incidence_sign(
+    point: &RationalBezierIntersectionPointEvidence2,
+    center: &Point2,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    match point {
+        RationalBezierIntersectionPointEvidence2::Exact(point) => {
+            return Ok(
+                real_sign(&(point.distance_squared(center) - radius_squared), policy).map_or(
+                    Classification::Uncertain(UncertaintyReason::RealSign),
+                    Classification::Decided,
+                ),
+            );
+        }
+        RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+            let point = match point.predicate_evaluator(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let (x, y, denominator) = point.coordinate_polynomials();
+            let dx = polynomial_subtract(x, &polynomial_scale(denominator, center.x()));
+            let dy = polynomial_subtract(y, &polynomial_scale(denominator, center.y()));
+            let residual = polynomial_subtract(
+                &polynomial_add(
+                    &polynomial_multiply(&dx, &dx),
+                    &polynomial_multiply(&dy, &dy),
+                ),
+                &polynomial_scale(
+                    &polynomial_multiply(denominator, denominator),
+                    radius_squared,
+                ),
+            );
+            return signed_coefficients_at_parameter(residual, point.retained_parameter(), policy);
+        }
+        RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
+            return point.circle_residual_sign_to_exact(center, radius_squared, policy);
+        }
+        RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+        | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+        | RationalBezierIntersectionPointEvidence2::Similarity(_) => {}
+    }
+
+    let radius = BezierAlgebraicChordRealInterval2 {
+        lower: radius_squared.clone(),
+        upper: radius_squared.clone(),
+    };
+    let exact = |value: &Real| BezierAlgebraicChordRealInterval2 {
+        lower: value.clone(),
+        upper: value.clone(),
+    };
+    let mut terminal_refined = false;
+    for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        let Classification::Decided(bounds) =
+            algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
+        else {
+            continue;
+        };
+        terminal_refined |= refinement_steps == 512;
+        let delta = |axis, coordinate| {
+            BezierAlgebraicChordRealInterval2::from_axis(&bounds, axis).subtract(&exact(coordinate))
+        };
+        let Some(residual) = delta(Axis2::X, center.x())
+            .square(&CurveContext::STRICT)
+            .and_then(|x| {
+                delta(Axis2::Y, center.y())
+                    .square(&CurveContext::STRICT)
+                    .map(|y| x.add(&y).subtract(&radius))
+            })
+        else {
+            continue;
+        };
+        let zero = Real::zero();
+        if compare_reals(&residual.lower, &zero, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Greater)
+        {
+            return Ok(Classification::Decided(RealSign::Positive));
+        }
+        if compare_reals(&residual.upper, &zero, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Less)
+        {
+            return Ok(Classification::Decided(RealSign::Negative));
+        }
+        if compare_reals(&residual.lower, &zero, &CurveContext::STRICT)
+            == Some(std::cmp::Ordering::Equal)
+            && compare_reals(&residual.upper, &zero, &CurveContext::STRICT)
+                == Some(std::cmp::Ordering::Equal)
+        {
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
+    }
+    if terminal_refined && policy.permits_approximate_512() {
+        policy.observe_approximate_512();
+        Ok(Classification::Decided(RealSign::Zero))
+    } else {
+        Ok(Classification::Uncertain(UncertaintyReason::Ordering))
+    }
+}
+
 /// Signs one exact retained point projection relative to an algebraic query
 /// point without forcing their independent scalar fields into a compositum.
 ///
@@ -53183,7 +53322,7 @@ impl BezierAlgebraicChordPairPoint2 {
 fn selected_circle_endpoint_chord_side(
     start: &RationalBezierIntersectionPointEvidence2,
     end: &RationalBezierIntersectionPointEvidence2,
-    point: &Point2,
+    point: &RationalBezierIntersectionPointEvidence2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<crate::classify::LineSide>> {
     let chord = match BezierAlgebraicChord2::try_new(start.clone(), end.clone(), policy)? {
@@ -53198,10 +53337,7 @@ fn selected_circle_endpoint_chord_side(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    support.oriented_side(
-        &RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
-        policy,
-    )
+    support.oriented_side(point, policy)
 }
 
 #[allow(dead_code)]
@@ -56066,6 +56202,58 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
+    /// Classifies exact incidence of any retained affine point on this finite
+    /// selected-circle fragment. Circle and diameter-side predicates consume
+    /// the point's native evidence; no Cartesian compositum is constructed.
+    pub(crate) fn contains_point_evidence(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        let residual = match self
+            .data
+            .semicircle
+            .retained_point_incidence_sign(point, policy)?
+        {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if residual != RealSign::Zero {
+            return Ok(Classification::Decided(false));
+        }
+        let start = match self.endpoint_point_evidence(true, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match self.endpoint_point_evidence(false, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(
+            selected_circle_endpoint_chord_side(&start, &end, point, policy)?.map(|side| {
+                let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
+                if clockwise {
+                    side != crate::classify::LineSide::Right
+                } else {
+                    side != crate::classify::LineSide::Left
+                }
+            }),
+        )
+    }
+
     pub(crate) fn contains_parameter(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
@@ -56221,7 +56409,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let line_side = match selected_circle_endpoint_chord_side(&start, &end, origin, policy)? {
+        let line_side = match selected_circle_endpoint_chord_side(
+            &start,
+            &end,
+            &RationalBezierIntersectionPointEvidence2::Exact(origin.clone()),
+            policy,
+        )? {
             Classification::Decided(side) => side,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -61625,6 +61818,79 @@ impl BezierParallel2 {
                 BezierParallelIncidence2::EntireCurve => true,
                 BezierParallelIncidence2::Parameters(parameters) => !parameters.is_empty(),
             }))
+    }
+
+    /// Classifies a retained algebraic point against this complete analytic
+    /// parallel. The point's selected field becomes the query axis of the
+    /// existing exact parallel fiber system; the parallel itself remains an
+    /// unevaluated normal-offset carrier.
+    pub(crate) fn contains_point_evidence(
+        &self,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let RationalBezierIntersectionPointEvidence2::Algebraic(point) = point else {
+            return match point {
+                RationalBezierIntersectionPointEvidence2::Exact(point) => {
+                    self.contains_point(point, policy)
+                }
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                | RationalBezierIntersectionPointEvidence2::Similarity(_) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                }
+                RationalBezierIntersectionPointEvidence2::Algebraic(_) => unreachable!(),
+            };
+        };
+        let point = match point.predicate_evaluator(policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let endpoint = |parameter: Real| -> CurveResult<
+            Classification<RationalBezierIntersectionPointEvidence2>,
+        > {
+            Ok(match self.point_at(&parameter, policy)? {
+                Classification::Decided(point) => {
+                    Classification::Decided(RationalBezierIntersectionPointEvidence2::Exact(point))
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            })
+        };
+        let start = match endpoint(Real::zero())? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let end = match endpoint(Real::one())? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let range =
+            CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            ));
+        let ray = match BezierParallelAlgebraicRay2::try_new(
+            self.clone(),
+            range,
+            false,
+            [start, end],
+            policy,
+        )? {
+            Classification::Decided(ray) => ray,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        ray.contains_point(&point, policy)
     }
 
     fn source_circle_polynomial(

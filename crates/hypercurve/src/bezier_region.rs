@@ -20530,8 +20530,10 @@ mod tests {
     enum SelectedCircleFilletNeighbor2 {
         RationalArc(i8),
         ElevatedRationalArc(i8),
+        ConcentricRationalArc,
         SelectedCircle,
         AnalyticParallel(bool),
+        DirectLine,
         DirectBezier,
     }
 
@@ -20608,6 +20610,26 @@ mod tests {
                     start: BezierParameter2::Exact(Real::zero()),
                     end: BezierParameter2::Exact(Real::one()),
                     curve,
+                }
+            }
+            SelectedCircleFilletNeighbor2::ConcentricRationalArc => {
+                let arc = RationalQuadraticBezier2::try_new(
+                    join.clone(),
+                    Point2::new(&alpha - Real::one(), Real::one()),
+                    arc_end.clone(),
+                    Real::one(),
+                    half_sqrt_two,
+                    Real::one(),
+                )
+                .expect("the concentric quarter circle has a valid homogeneous gauge");
+                assert!(matches!(
+                    crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
+                    Ok(Classification::Decided(Some(_)))
+                ));
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::RationalQuadratic(arc),
                 }
             }
             SelectedCircleFilletNeighbor2::SelectedCircle => {
@@ -20689,6 +20711,15 @@ mod tests {
                     )),
                 }
             }
+            SelectedCircleFilletNeighbor2::DirectLine => BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    join.clone(),
+                    join.lerp(&arc_end, q(1, 2)),
+                    arc_end.clone(),
+                )),
+            },
         };
         let mut fragments = vec![
             BezierSplitFragment2::AlgebraicCuspSemicircle(
@@ -20951,6 +20982,118 @@ mod tests {
                         crate::CurveCornerNoSolution2::DegenerateCandidate,
                     )
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_selected_circle_offset_retains_its_exact_center() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::RationalArc(1),
+                    reversed,
+                );
+                let corner = selected_circle_rational_arc_corner(&region);
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the collapsed selected circle must retain its center: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::NoTangentCircle,
+                    )
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_concentric_offsets_compare_retained_and_represented_centers() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::ConcentricRationalArc,
+                    reversed,
+                );
+                let corner = selected_circle_rational_arc_corner(&region);
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "concentric collapsed offsets must preserve their common center: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::DegenerateCandidate,
+                    )
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_selected_circle_center_classifies_every_neighbor_carrier() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (name, neighbor) in [
+                (
+                    "selected-circle",
+                    SelectedCircleFilletNeighbor2::SelectedCircle,
+                ),
+                (
+                    "retained-parallel",
+                    SelectedCircleFilletNeighbor2::AnalyticParallel(true),
+                ),
+                ("line", SelectedCircleFilletNeighbor2::DirectLine),
+                ("direct-bezier", SelectedCircleFilletNeighbor2::DirectBezier),
+            ] {
+                for reversed in [false, true] {
+                    let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
+                    let corner = if reversed { 2 } else { 1 };
+                    let result = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            Real::one(),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the collapsed selected-circle center must classify against {name}: policy={policy:?}, reversed={reversed}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        result.value,
+                        CurveCornerSolutions2::NoSolution(
+                            crate::CurveCornerNoSolution2::NoTangentCircle,
+                        ),
+                        "policy={policy:?}, reversed={reversed}, neighbor={name}"
+                    );
+                }
             }
         }
     }
@@ -24187,6 +24330,35 @@ mod tests {
                         assert!(chord_adjacencies > 0);
                     });
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_selected_circle_center_classifies_nonrepresented_chord() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonrepresented_chord_selected_circle_corner_region(&policy, reversed);
+                let outcome = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        if reversed { 2 } else { 1 },
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the collapsed selected center must classify on the retained chord: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    outcome.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::NoTangentCircle,
+                    )
+                );
             }
         }
     }
