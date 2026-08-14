@@ -60470,6 +60470,46 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             )>,
         >,
     > {
+        self.endpoint_chord_setback_cut_internal(start_endpoint, setback, outward, true, policy)
+    }
+
+    /// Returns the same exact setback point on the supporting circle without
+    /// clipping it to this representation fragment. CurveRegion uses this only
+    /// after proving that an adjacent smooth run may own the inward cut; the
+    /// run rebinder still rejects points outside that finite authored domain.
+    pub(crate) fn endpoint_chord_setback_support_cut(
+        &self,
+        start_endpoint: bool,
+        setback: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<
+            Option<(
+                BezierAlgebraicCuspSemicircleParameter2,
+                RationalBezierIntersectionPointEvidence2,
+                bool,
+            )>,
+        >,
+    > {
+        self.endpoint_chord_setback_cut_internal(start_endpoint, setback, false, false, policy)
+    }
+
+    fn endpoint_chord_setback_cut_internal(
+        &self,
+        start_endpoint: bool,
+        setback: &Real,
+        outward: bool,
+        clip_inward_to_fragment: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<
+            Option<(
+                BezierAlgebraicCuspSemicircleParameter2,
+                RationalBezierIntersectionPointEvidence2,
+                bool,
+            )>,
+        >,
+    > {
         self.validate_policy(policy)?;
         let radius_squared =
             self.data.semicircle.radial_distance() * self.data.semicircle.radial_distance();
@@ -60480,7 +60520,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             // never be a strict trim from a boundary of this half-circle, but
             // it is the terminal exact extension point on the other chart.
             Some(RealSign::Zero) => {
-                if !outward {
+                if !outward && clip_inward_to_fragment {
                     return Ok(Classification::Decided(None));
                 }
                 return self.endpoint_chord_setback_parameter(start_endpoint, None, true, policy);
@@ -60524,7 +60564,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if outward {
+        if outward || !clip_inward_to_fragment {
             return Ok(Classification::Decided(Some(candidate)));
         }
         let (parameter, point, complementary) = candidate;

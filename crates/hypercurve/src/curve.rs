@@ -1870,6 +1870,8 @@ impl CurvePath2 {
             previous_sign,
             next_sign,
             mode,
+            false,
+            false,
             previous.family(),
             next.family(),
             policy,
@@ -3835,6 +3837,8 @@ pub(crate) fn solve_exact_chamfer_corner(
     previous_sign: RealSign,
     next_sign: RealSign,
     mode: CurveCornerMode2,
+    previous_logical_run: bool,
+    next_logical_run: bool,
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
@@ -3850,25 +3854,34 @@ pub(crate) fn solve_exact_chamfer_corner(
         previous_sign,
         true,
         mode,
+        previous_logical_run,
         CurveOperation2::Chamfer,
         previous_family,
         policy,
-    )?;
+    );
+    if matches!(&previous_cuts, Ok(cuts) if cuts.is_empty()) {
+        return Ok(CurveCornerSolutions2::NoSolution(
+            CurveCornerNoSolution2::OutsideTrimDomain,
+        ));
+    }
     let next_cuts = corner_chamfer_cuts(
         next,
         next_setback,
         next_sign,
         false,
         mode,
+        next_logical_run,
         CurveOperation2::Chamfer,
         next_family,
         policy,
-    )?;
-    let empty_reason = if previous_cuts.is_empty() || next_cuts.is_empty() {
-        CurveCornerNoSolution2::OutsideTrimDomain
-    } else {
-        CurveCornerNoSolution2::DegenerateCandidate
-    };
+    );
+    if matches!(&next_cuts, Ok(cuts) if cuts.is_empty()) {
+        return Ok(CurveCornerSolutions2::NoSolution(
+            CurveCornerNoSolution2::OutsideTrimDomain,
+        ));
+    }
+    let previous_cuts = previous_cuts?;
+    let next_cuts = next_cuts?;
     let mut candidates = CornerSolutionAccumulator::Empty;
     for previous in previous_cuts.iter() {
         for next in next_cuts.iter() {
@@ -3888,7 +3901,7 @@ pub(crate) fn solve_exact_chamfer_corner(
             }
         }
     }
-    Ok(candidates.finish(empty_reason))
+    Ok(candidates.finish(CurveCornerNoSolution2::DegenerateCandidate))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -9830,6 +9843,7 @@ fn corner_chamfer_cuts(
     setback_sign: RealSign,
     previous: bool,
     mode: CurveCornerMode2,
+    logical_run: bool,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
@@ -9923,6 +9937,7 @@ fn corner_chamfer_cuts(
             setback_sign,
             previous,
             mode,
+            logical_run,
             operation,
             family,
             policy,
@@ -9937,6 +9952,7 @@ fn algebraic_cusp_chamfer_cuts(
     setback_sign: RealSign,
     previous: bool,
     mode: CurveCornerMode2,
+    logical_run: bool,
     operation: CurveOperation2,
     family: CurveFamily2,
     policy: &CurveContext,
@@ -9985,7 +10001,19 @@ fn algebraic_cusp_chamfer_cuts(
             .endpoint_chord_setback_cut(start_endpoint, setback, outward, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         {
-            Classification::Decided(cut) => cut,
+            Classification::Decided(Some(cut)) => Some(cut),
+            Classification::Decided(None) if logical_run && !outward => {
+                match fragment
+                    .endpoint_chord_setback_support_cut(start_endpoint, setback, policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                {
+                    Classification::Decided(cut) => cut,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(operation, family, reason));
+                    }
+                }
+            }
+            Classification::Decided(None) => None,
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(operation, family, reason));
             }
@@ -11287,6 +11315,8 @@ mod tests {
                 RealSign::Positive,
                 RealSign::Zero,
                 CurveCornerMode2::TrimOrExtend,
+                false,
+                false,
                 previous.family(),
                 next.family(),
                 &policy,
