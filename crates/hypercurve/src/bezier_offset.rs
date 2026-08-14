@@ -35316,6 +35316,32 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         ))
     }
 
+    /// Recognizes two local parameters joined by this exact coincident-circle
+    /// map. This is structural endpoint evidence: no scalar or point equality
+    /// predicate is needed when a retained boundary crosses independent circle
+    /// frames through the map that authored its second endpoint.
+    fn maps_parameter_evidence(
+        &self,
+        source_semicircle: &BezierAlgebraicCuspSemicircle2,
+        source_parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        target_semicircle: &BezierAlgebraicCuspSemicircle2,
+        target_parameter: &BezierAlgebraicCuspSemicircleParameter2,
+    ) -> bool {
+        let source_first = if self.semicircle(true) == source_semicircle
+            && self.semicircle(false) == target_semicircle
+        {
+            true
+        } else if self.semicircle(false) == source_semicircle
+            && self.semicircle(true) == target_semicircle
+        {
+            false
+        } else {
+            return false;
+        };
+        self.map_parameter(source_parameter, source_first)
+            .shares_exact_evidence(target_parameter)
+    }
+
     fn endpoint_location(
         endpoint: BezierAlgebraicCuspSemicirclePairEndpoint2,
         first: bool,
@@ -36887,6 +36913,19 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 }
             }
             (Self::Exact(_), Self::Mapped(_)) | (Self::Mapped(_), Self::Exact(_)) => false,
+        }
+    }
+
+    fn pair_overlap_evidence(&self) -> Option<&BezierAlgebraicCuspSemicirclePairOverlap2> {
+        let Self::Mapped(parameter) = self else {
+            return None;
+        };
+        match parameter.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { overlap, .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                overlap, ..
+            } => Some(overlap),
+            _ => None,
         }
     }
 
@@ -61120,10 +61159,63 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         other: &Self,
         other_start_endpoint: bool,
     ) -> bool {
-        self.data.semicircle == other.data.semicircle
-            && self
-                .endpoint_parameter(start_endpoint)
-                .shares_exact_evidence(other.endpoint_parameter(other_start_endpoint))
+        let parameter = self.endpoint_parameter(start_endpoint);
+        let other_parameter = other.endpoint_parameter(other_start_endpoint);
+        if self.data.semicircle == other.data.semicircle
+            && parameter.shares_exact_evidence(other_parameter)
+        {
+            return true;
+        }
+        self.endpoint_pair_overlap_source(start_endpoint, other, other_start_endpoint)
+            .is_some()
+    }
+
+    /// Returns which endpoint is the source of an exact coincident-circle
+    /// parameter map. `true` names `self`; `false` names `other`. This lets a
+    /// smooth run solve in the ancestral parameter frame instead of rebuilding
+    /// the same contact in a descendant chart and later asking STRICT to prove
+    /// equality between independently formed radical expressions.
+    pub(crate) fn endpoint_pair_overlap_source(
+        &self,
+        start_endpoint: bool,
+        other: &Self,
+        other_start_endpoint: bool,
+    ) -> Option<bool> {
+        let parameter = self.endpoint_parameter(start_endpoint);
+        let other_parameter = other.endpoint_parameter(other_start_endpoint);
+        let mapped_endpoint =
+            |source_semicircle,
+             source_parameter,
+             target_semicircle,
+             target_parameter: &BezierAlgebraicCuspSemicircleParameter2| {
+                target_parameter
+                    .pair_overlap_evidence()
+                    .is_some_and(|overlap| {
+                        overlap.maps_parameter_evidence(
+                            source_semicircle,
+                            source_parameter,
+                            target_semicircle,
+                            target_parameter,
+                        )
+                    })
+            };
+        if mapped_endpoint(
+            &self.data.semicircle,
+            parameter,
+            &other.data.semicircle,
+            other_parameter,
+        ) {
+            Some(true)
+        } else if mapped_endpoint(
+            &other.data.semicircle,
+            other_parameter,
+            &self.data.semicircle,
+            parameter,
+        ) {
+            Some(false)
+        } else {
+            None
+        }
     }
 
     pub(crate) fn contains_point(
