@@ -11706,6 +11706,14 @@ fn parameter_between(
     end: &CurveRegionParameter2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    // A retained endpoint already carries the carrier's exact local
+    // authority.  Accept that identity directly: deciding whether the same
+    // endpoint lies on the correct side of the opposite, independently
+    // selected endpoint is unnecessary and may require a primitive element
+    // that the compact cusp representation deliberately avoids.
+    if parameter == start || parameter == end {
+        return Ok(true);
+    }
     let lower = decided_parameter_cmp(parameter, start, policy)?;
     let upper = decided_parameter_cmp(parameter, end, policy)?;
     Ok(!lower.is_lt() && !upper.is_gt())

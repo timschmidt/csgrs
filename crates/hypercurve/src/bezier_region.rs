@@ -4119,12 +4119,13 @@ fn exact_offset_span_from_algebraic_chord(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let direction = match chord.axis_direction(policy)? {
-        Classification::Decided(direction) => direction,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    // Axis translation is only a specialization.  Reuse it when the chord
+    // already carries a STRICT construction certificate; do not run an
+    // equality predicate merely to decide whether the complete normalized
+    // chord carrier is allowed.  Besides avoiding an unrelated selected-field
+    // ordering blocker, this prevents APPROXIMATE_512 from becoming persistent
+    // axis-alignment evidence.
+    let direction = chord.certified_axis_direction();
     if let Some(direction) = direction {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -5704,6 +5705,45 @@ fn append_exact_offset_join(
     };
     let inward = exact_sign_product(turn_sign, distance_sign) == RealSign::Positive;
     #[cfg(feature = "dispatch-trace")]
+    if inward {
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-inner-join-tangents",
+            match (previous_tangent, next_tangent) {
+                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::Vector(_)) => "vector-vector",
+                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::ChordContact { .. }) => {
+                    "vector-chord-contact"
+                }
+                (ExactOffsetTangent2::ChordContact { .. }, ExactOffsetTangent2::Vector(_)) => {
+                    "chord-contact-vector"
+                }
+                (
+                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                ) => "selected-circle-selected-circle",
+                (
+                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                    ExactOffsetTangent2::Vector(_),
+                ) => "selected-circle-vector",
+                (
+                    ExactOffsetTangent2::Vector(_),
+                    ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                ) => "vector-selected-circle",
+                (
+                    ExactOffsetTangent2::AlgebraicChord(_),
+                    ExactOffsetTangent2::AlgebraicChord(_),
+                ) => "algebraic-chord-algebraic-chord",
+                (ExactOffsetTangent2::AlgebraicChord(_), ExactOffsetTangent2::Vector(_)) => {
+                    "algebraic-chord-vector"
+                }
+                (ExactOffsetTangent2::Vector(_), ExactOffsetTangent2::AlgebraicChord(_)) => {
+                    "vector-algebraic-chord"
+                }
+                _ => "other-retained-pair",
+            },
+        );
+    }
+    #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
         "curve-region-exact-offset-join",
@@ -6650,8 +6690,20 @@ fn append_exact_miter_join(
     if let Some(result) =
         append_retained_support_miter_join(fragments, previous, next, distance, limit, policy)
     {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "curve-region-exact-offset-miter",
+            "retained-support",
+        );
         return result;
     }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        "curve-region-exact-offset-miter",
+        "represented-vector-fallback",
+    );
     let (
         Some(ExactOffsetTangent2::Vector(previous_tangent)),
         Some(ExactOffsetTangent2::Vector(next_tangent)),
@@ -6891,13 +6943,17 @@ fn exact_offset_span_retained_tangent_support(
         span.fragments.first()
     } else {
         span.fragments.last()
-    }?;
-    if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+    };
+    if let Some(BezierSplitFragment2::AlgebraicChord(chord)) = fragment {
         // The offset span itself is the authoritative finite subset of this
         // tangent support. Reuse it so a later miter intersection retains the
         // same support identity used by Boolean regularization.
         return Some(Ok(Classification::Decided(chord.clone())));
     }
+    // A carrier may collapse its finite offset image while still retaining an
+    // authored endpoint tangent for the adjacent inner join.  The tangent is
+    // the supporting-line authority; absence of an emitted finite fragment
+    // must not suppress it before the complete retained miter path runs.
     let tangent = if at_start {
         span.start_tangent.as_ref()
     } else {
@@ -6922,21 +6978,74 @@ fn append_retained_support_miter_join(
     let previous_support = exact_offset_span_retained_tangent_support(previous, false, policy)?;
     let next_support = exact_offset_span_retained_tangent_support(next, true, policy)?;
     Some((|| {
-        let previous_support = match previous_support? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let previous_support = match previous_support {
+            Err(error) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-error",
+                    "previous-support",
+                );
+                return Err(error);
             }
+            Ok(classification) => match classification {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-exact-offset-miter-blocker",
+                        "previous-support",
+                    );
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
         };
-        let next_support = match next_support? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let next_support = match next_support {
+            Err(error) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-error",
+                    "next-support",
+                );
+                return Err(error);
             }
+            Ok(classification) => match classification {
+                Classification::Decided(chord) => chord,
+                Classification::Uncertain(reason) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-exact-offset-miter-blocker",
+                        "next-support",
+                    );
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
         };
-        let miter = match previous_support.supporting_line_intersection(&next_support, policy)? {
+        let support_intersection =
+            match previous_support.supporting_line_intersection(&next_support, policy) {
+                Ok(intersection) => intersection,
+                Err(error) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-exact-offset-miter-error",
+                        "support-intersection",
+                    );
+                    return Err(error);
+                }
+            };
+        let miter = match support_intersection {
             Classification::Decided(Some(point)) => point,
             Classification::Decided(None) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter",
+                    "parallel-supports",
+                );
                 return append_exact_algebraic_line_join(
                     fragments,
                     &previous.offset_end,
@@ -6948,6 +7057,12 @@ fn append_retained_support_miter_join(
                 );
             }
             Classification::Uncertain(reason) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-blocker",
+                    "support-intersection",
+                );
                 return Ok(Classification::Uncertain(reason));
             }
         };
@@ -7070,16 +7185,34 @@ fn append_retained_support_miter_join(
             exact_offset_parallel_line_tangent_contact(previous, false, BezierEndpoint::Start)
                 .into_iter()
                 .collect();
-        match append_retained_support_miter_leg(
+        let previous_leg = match append_retained_support_miter_leg(
             fragments,
             &previous_support,
             previous.offset_end.clone(),
             miter.clone(),
             previous_contacts,
             policy,
-        )? {
+        ) {
+            Ok(classification) => classification,
+            Err(error) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-error",
+                    "previous-leg",
+                );
+                return Err(error);
+            }
+        };
+        match previous_leg {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-blocker",
+                    "previous-leg",
+                );
                 return Ok(Classification::Uncertain(reason));
             }
         }
@@ -7087,14 +7220,34 @@ fn append_retained_support_miter_join(
             exact_offset_parallel_line_tangent_contact(next, true, BezierEndpoint::End)
                 .into_iter()
                 .collect();
-        append_retained_support_miter_leg(
+        let next_leg = match append_retained_support_miter_leg(
             fragments,
             &next_support,
             miter,
             next.offset_start.clone(),
             next_contacts,
             policy,
-        )
+        ) {
+            Ok(classification) => classification,
+            Err(error) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-offset-miter-error",
+                    "next-leg",
+                );
+                return Err(error);
+            }
+        };
+        #[cfg(feature = "dispatch-trace")]
+        if matches!(next_leg, Classification::Uncertain(_)) {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-miter-blocker",
+                "next-leg",
+            );
+        }
+        Ok(next_leg)
     })())
 }
 
@@ -7416,16 +7569,11 @@ fn exact_selected_circle_pair_tangent_cross_and_dot(
     second_start: bool,
     policy: &CurveContext,
 ) -> Classification<(RealSign, Option<RealSign>)> {
-    let direct_cross =
-        match first.endpoint_pair_tangent_cross(first_start, second, second_start, policy) {
-            Ok(Classification::Decided(cross)) => cross,
-            Ok(Classification::Uncertain(reason)) => {
-                return Classification::Uncertain(reason);
-            }
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-        };
-    if let Some(cross @ (RealSign::Negative | RealSign::Positive)) = direct_cross {
-        return Classification::Decided((cross, None));
+    match first.endpoint_pair_tangent_cross_and_dot(first_start, second, second_start, policy) {
+        Ok(Classification::Decided(Some(relation))) => return Classification::Decided(relation),
+        Ok(Classification::Decided(None)) => {}
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     }
     match first.endpoint_pair_tangent_cross_and_dot_source_circle(
         first_source,
@@ -7438,12 +7586,87 @@ fn exact_selected_circle_pair_tangent_cross_and_dot(
         Ok(Classification::Decided(Some((cross, dot)))) => {
             Classification::Decided((cross, Some(dot)))
         }
-        Ok(Classification::Decided(None)) if direct_cross == Some(RealSign::Zero) => {
-            Classification::Decided((RealSign::Zero, None))
-        }
         Ok(Classification::Decided(None)) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
+            let fallback = exact_selected_circle_pair_tangent_cross_and_dot_by_chords(
+                first,
+                first_start,
+                second,
+                second_start,
+                policy,
+            );
+            match fallback {
+                Classification::Decided(Some((cross, dot))) => {
+                    Classification::Decided((cross, dot))
+                }
+                Classification::Decided(None) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            }
         }
+        Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+/// General exact tangent relation for selected-circle endpoints whose
+/// construction maps do not share one specialized pair authority.
+///
+/// Each endpoint can already publish a certified-distinct point one unit
+/// along its traversal tangent. Retaining those two witness chords lets the
+/// complete chord predicates sign cross and dot without adjoining either
+/// circle center field or materializing a tangent vector.
+fn exact_selected_circle_pair_tangent_cross_and_dot_by_chords(
+    first: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    first_start: bool,
+    second: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    second_start: bool,
+    policy: &CurveContext,
+) -> Classification<Option<(RealSign, Option<RealSign>)>> {
+    let tangent_chord = |fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+                         at_start: bool|
+     -> CurveResult<Classification<Option<crate::BezierAlgebraicChord2>>> {
+        let point = match fragment.endpoint_point_evidence(at_start, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let support = match fragment.endpoint_tangent_support_point(at_start, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+            point, support, policy,
+        )
+        .map(|classification| classification.map(Some))
+    };
+    let first = match tangent_chord(first, first_start) {
+        Ok(Classification::Decided(Some(chord))) => chord,
+        Ok(Classification::Decided(None)) => return Classification::Decided(None),
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let second = match tangent_chord(second, second_start) {
+        Ok(Classification::Decided(Some(chord))) => chord,
+        Ok(Classification::Decided(None)) => return Classification::Decided(None),
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    let cross = match first.tangent_cross_sign(&second, policy) {
+        Ok(Classification::Decided(cross)) => cross,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if cross != RealSign::Zero {
+        return Classification::Decided(Some((cross, None)));
+    }
+    match first.tangent_dot_sign(&second, policy) {
+        Ok(Classification::Decided(dot)) => Classification::Decided(Some((cross, Some(dot)))),
         Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
         Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
@@ -21884,6 +22107,69 @@ mod tests {
         filleted
     }
 
+    #[test]
+    fn pair_native_offset_join_tangents_remain_exact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = independent_pair_native_fillet(&policy, reversed);
+                let distance = (pair_radial_corner(&region).1 / Real::from(200_i16)).unwrap();
+                let signed_left_distance = if reversed { -distance } else { distance };
+                let spans = match exact_offset_span_runs_from_boundary_loop(
+                    &region.boundary_loops()[0],
+                    &signed_left_distance,
+                    &policy,
+                )
+                .expect("the pair-native offset spans are valid")
+                {
+                    Classification::Decided(spans) => {
+                        spans.into_iter().map(|(span, _)| span).collect::<Vec<_>>()
+                    }
+                    Classification::Uncertain(reason) => panic!(
+                        "the pair-native offset spans must decide: policy={policy:?}, reversed={reversed}, reason={reason:?}"
+                    ),
+                };
+                let mut selected_circle_pairs = 0;
+                for span_index in 0..spans.len() {
+                    let next_index = (span_index + 1) % spans.len();
+                    let Some((previous, next)) = spans[span_index]
+                        .end_tangent
+                        .as_ref()
+                        .zip(spans[next_index].start_tangent.as_ref())
+                    else {
+                        continue;
+                    };
+                    let selected_circle_pair = matches!(
+                        (previous, next),
+                        (
+                            ExactOffsetTangent2::SelectedCircularEndpoint { .. },
+                            ExactOffsetTangent2::SelectedCircularEndpoint { .. }
+                        )
+                    );
+                    if selected_circle_pair {
+                        selected_circle_pairs += 1;
+                    }
+                    let cross = exact_offset_tangent_cross_sign(previous, next, &policy);
+                    let Classification::Decided(cross) = cross else {
+                        panic!(
+                            "every pair-native offset join cross sign must decide: policy={policy:?}, reversed={reversed}, span={span_index}, selected_circle_pair={selected_circle_pair}, result={cross:?}"
+                        );
+                    };
+                    if cross == RealSign::Zero {
+                        let opposite = exact_offset_tangents_are_opposite(previous, next, &policy);
+                        assert!(
+                            matches!(opposite, Classification::Decided(_)),
+                            "every smooth pair-native offset join dot sign must decide: policy={policy:?}, reversed={reversed}, span={span_index}, selected_circle_pair={selected_circle_pair}, result={opposite:?}"
+                        );
+                    }
+                }
+                assert!(
+                    selected_circle_pairs > 0,
+                    "the recursive fillet must exercise a selected-circle pair join"
+                );
+            }
+        }
+    }
+
     fn pair_radial_corner(region: &CurveRegion2) -> (usize, Real) {
         let fragments = region.boundary_loops()[0].fragments();
         (0..fragments.len())
@@ -22475,6 +22761,66 @@ mod tests {
         }
     }
 
+    fn assert_pair_native_boolean_boundary_offsets_exactly(policy: CurveContext, reversed: bool) {
+        let pair_native = independent_pair_native_fillet(&policy, reversed);
+        let cutter = pair_native_crossing_cutter(&pair_native, false, &policy);
+        let booleans = pair_native
+            .boolean_regions(&cutter, &policy)
+            .expect("the pair-native cutter publishes one exact intersection");
+        let clipped = booleans.value.intersection();
+        let parent_radius = clipped
+            .boundary_loops()
+            .iter()
+            .flat_map(|boundary| boundary.fragments())
+            .find_map(|fragment| match fragment {
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                    if fragment.semicircle().uses_selected_radial_frame() =>
+                {
+                    Some(fragment.semicircle().radial_distance().abs())
+                }
+                _ => None,
+            })
+            .expect("the Boolean boundary retains its pair-native circle");
+        let distance = (parent_radius / Real::from(200_i16)).unwrap();
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset_work = || clipped.offset(distance, &OffsetCornerStyle2::Bevel, &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let offset = hyperreal::dispatch_trace::with_recording(offset_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let offset = offset_work();
+        #[cfg(feature = "dispatch-trace")]
+        let trace = hyperreal::dispatch_trace::take_trace();
+        let offset = offset.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!("the Boolean-fragmented pair-native boundary must offset: {error:?}; {trace:?}");
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("the Boolean-fragmented pair-native boundary must offset: {error:?}");
+        });
+        assert_eq!(offset.certainty, CurveCertainty::Certified);
+        assert!(!offset.value.is_empty());
+    }
+
+    #[test]
+    fn pair_native_boolean_boundary_offsets_exactly_strict_forward() {
+        assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::STRICT, false);
+    }
+
+    #[test]
+    fn pair_native_boolean_boundary_offsets_exactly_strict_reversed() {
+        assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::STRICT, true);
+    }
+
+    #[test]
+    fn pair_native_boolean_boundary_offsets_exactly_approximate_forward() {
+        assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, false);
+    }
+
+    #[test]
+    fn pair_native_boolean_boundary_offsets_exactly_approximate_reversed() {
+        assert_pair_native_boolean_boundary_offsets_exactly(CurveContext::APPROXIMATE_512, true);
+    }
+
     #[test]
     fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -22557,6 +22903,78 @@ mod tests {
                         )
                     });
                 let radius = (parent_radius / Real::from(100_i16)).unwrap();
+                let chamfer = clipped
+                    .chamfer_loop_vertex_by_setbacks(
+                        loop_index,
+                        corner,
+                        radius.clone(),
+                        radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the retained pair-radial/line corner must chamfer exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(chamfer.certainty, CurveCertainty::Certified);
+                for_each_corner_region(&chamfer.value, |chamfered| {
+                    assert!(
+                        chamfered
+                            .boundary_loops()
+                            .iter()
+                            .flat_map(|boundary| boundary.fragments())
+                            .any(|fragment| matches!(
+                                fragment,
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                    if fragment.semicircle().uses_selected_radial_frame()
+                            )),
+                        "the chamfer must retain its pair-native circular parent"
+                    );
+                    let replay = chamfered
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the third-generation chamfer re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert!(replay.value.intersection().is_empty());
+                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                });
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let offset_distance = (radius.clone() / Real::from(2_i8)).unwrap();
+                #[cfg(feature = "dispatch-trace")]
+                let offset_result = hyperreal::dispatch_trace::with_recording(|| {
+                    clipped.offset(offset_distance, &OffsetCornerStyle2::Bevel, &policy)
+                });
+                #[cfg(not(feature = "dispatch-trace"))]
+                let offset_result =
+                    clipped.offset(offset_distance, &OffsetCornerStyle2::Bevel, &policy);
+                #[cfg(feature = "dispatch-trace")]
+                if let Err(error) = &offset_result {
+                    panic!(
+                        "the retained pair-native Boolean boundary must offset exactly: policy={policy:?}, reversed={reversed}, error={error:?}, trace={:?}",
+                        hyperreal::dispatch_trace::take_trace(),
+                    );
+                }
+                let offset = offset_result.unwrap_or_else(|error| {
+                        panic!(
+                            "the retained pair-native Boolean boundary must offset exactly: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(offset.certainty, CurveCertainty::Certified);
+                assert!(!offset.value.is_empty());
+                assert!(
+                    offset
+                        .value
+                        .boundary_loops()
+                        .iter()
+                        .flat_map(|boundary| boundary.fragments())
+                        .any(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame()
+                        )),
+                    "the offset must retain its pair-native circular authority"
+                );
                 let result = clipped
                     .fillet_loop_vertex_by_radius(
                         loop_index,
