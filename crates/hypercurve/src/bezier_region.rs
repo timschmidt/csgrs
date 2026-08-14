@@ -10385,6 +10385,8 @@ impl CurveRegion2 {
         )?;
         let next_carrier =
             next_source.exact_carrier(next_fragment, false, CurveOperation2::Chamfer, policy)?;
+        let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
+        let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
         if mode == CurveCornerMode2::TrimOrExtend
             && (!previous_carrier.supports_extension(CurveOperation2::Chamfer)
                 || !next_carrier.supports_extension(CurveOperation2::Chamfer))
@@ -10463,10 +10465,37 @@ impl CurveRegion2 {
             {
                 return Ok(None);
             }
+            let previous_replacement =
+                match (previous_retained_arc.as_ref(), previous_cut.placement) {
+                    (Some(support), CornerPlacement2::Extension) => {
+                        Some(Self::retained_arc_chamfer_extension_fragments(
+                            support,
+                            &previous_cut,
+                            true,
+                            policy,
+                        )?)
+                    }
+                    _ => None,
+                };
+            let next_replacement = match (next_retained_arc.as_ref(), next_cut.placement) {
+                (Some(support), CornerPlacement2::Extension) => {
+                    Some(Self::retained_arc_chamfer_extension_fragments(
+                        support, &next_cut, false, policy,
+                    )?)
+                }
+                _ => None,
+            };
             if fragment_count == 1
                 && (previous_cut.placement == CornerPlacement2::Extension
                     || next_cut.placement == CornerPlacement2::Extension)
             {
+                if previous_replacement.is_some() || next_replacement.is_some() {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Chamfer,
+                        CurveFamily2::CircularArc,
+                        UncertaintyReason::Unsupported,
+                    ));
+                }
                 self.canonicalize_retained_single_fragment_extension_cuts(
                     previous_fragment,
                     &mut previous_cut,
@@ -10475,20 +10504,24 @@ impl CurveRegion2 {
                     policy,
                 )?;
             } else {
-                self.canonicalize_retained_corner_cut(
-                    &boundary_loop.fragments()[previous_cut_index],
-                    &mut previous_cut,
-                    true,
-                    CurveOperation2::Chamfer,
-                    policy,
-                )?;
-                self.canonicalize_retained_corner_cut(
-                    &boundary_loop.fragments()[next_cut_index],
-                    &mut next_cut,
-                    false,
-                    CurveOperation2::Chamfer,
-                    policy,
-                )?;
+                if previous_replacement.is_none() {
+                    self.canonicalize_retained_corner_cut(
+                        &boundary_loop.fragments()[previous_cut_index],
+                        &mut previous_cut,
+                        true,
+                        CurveOperation2::Chamfer,
+                        policy,
+                    )?;
+                }
+                if next_replacement.is_none() {
+                    self.canonicalize_retained_corner_cut(
+                        &boundary_loop.fragments()[next_cut_index],
+                        &mut next_cut,
+                        false,
+                        CurveOperation2::Chamfer,
+                        policy,
+                    )?;
+                }
             }
             if fragment_count == 1
                 && !retained_single_fragment_corner_cuts_are_separated(
@@ -10507,6 +10540,8 @@ impl CurveRegion2 {
                 next_cut_index,
                 previous_cut,
                 next_cut,
+                previous_replacement,
+                next_replacement,
                 policy,
             )
             .map(Some)
@@ -10521,6 +10556,8 @@ impl CurveRegion2 {
         next_index: usize,
         previous_cut: CornerTrimCut2,
         next_cut: CornerTrimCut2,
+        previous_replacement: Option<Vec<BezierSplitFragment2>>,
+        next_replacement: Option<Vec<BezierSplitFragment2>>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let chord = if let (Some(previous_point), Some(next_point)) =
@@ -10560,11 +10597,74 @@ impl CurveRegion2 {
             previous_cut,
             next_cut,
             vec![chord],
-            None,
-            None,
+            previous_replacement,
+            next_replacement,
             CurveOperation2::Chamfer,
             policy,
         )
+    }
+
+    fn retained_arc_chamfer_extension_fragments(
+        support: &CircularArc2,
+        cut: &CornerTrimCut2,
+        previous: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let point = cut.point.as_exact().ok_or_else(|| {
+            ExactCurveError::blocked(
+                CurveOperation2::Chamfer,
+                CurveFamily2::CircularArc,
+                UncertaintyReason::Unsupported,
+            )
+        })?;
+        let retained = if previous {
+            CircularArc2::new_with_certified_radius(
+                support.start().clone(),
+                point.clone(),
+                support.center().clone(),
+                support.radius_squared(),
+                support.is_clockwise(),
+                None,
+            )
+        } else {
+            CircularArc2::new_with_certified_radius(
+                point.clone(),
+                support.end().clone(),
+                support.center().clone(),
+                support.radius_squared(),
+                support.is_clockwise(),
+                None,
+            )
+        };
+        Self::materialized_corner_arc_fragments(&retained, CurveOperation2::Chamfer, policy)
+    }
+
+    fn materialized_corner_arc_fragments(
+        arc: &CircularArc2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        let decomposition = match crate::arc_bezier::decompose_circular_arc(arc, policy)
+            .map_err(|error| error.with_operation(operation))?
+        {
+            Classification::Decided(decomposition) => decomposition,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+        Ok(decomposition
+            .spans()
+            .iter()
+            .map(|span| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
+            })
+            .collect())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -12487,34 +12587,21 @@ impl CurveRegion2 {
                 deferred.support.is_clockwise(),
                 None,
             );
-            let materialize = |arc: &CircularArc2| {
-                let decomposition = match crate::arc_bezier::decompose_circular_arc(arc, policy)? {
-                    Classification::Decided(decomposition) => decomposition,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            CurveFamily2::CircularArc,
-                            reason,
-                        ));
-                    }
-                };
-                Ok(decomposition
-                    .spans()
-                    .iter()
-                    .map(|span| BezierSplitFragment2::Materialized {
-                        start: BezierParameter2::Exact(Real::zero()),
-                        end: BezierParameter2::Exact(Real::one()),
-                        curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
-                    })
-                    .collect::<Vec<_>>())
-            };
-            let replacement = Some(materialize(&retained_arc)?);
+            let replacement = Some(Self::materialized_corner_arc_fragments(
+                &retained_arc,
+                CurveOperation2::Fillet,
+                policy,
+            )?);
             if deferred.arc_is_previous {
                 *previous_replacement = replacement;
             } else {
                 *next_replacement = replacement;
             }
-            return materialize(&fillet);
+            return Self::materialized_corner_arc_fragments(
+                &fillet,
+                CurveOperation2::Fillet,
+                policy,
+            );
         }
         let has_deferred_arc_contact = deferred_arc_contact.is_some();
         if !has_deferred_arc_contact
@@ -12532,25 +12619,7 @@ impl CurveRegion2 {
                 clockwise,
                 None,
             );
-            let decomposition = match crate::arc_bezier::decompose_circular_arc(&arc, policy)? {
-                Classification::Decided(decomposition) => decomposition,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        CurveFamily2::CircularArc,
-                        reason,
-                    ));
-                }
-            };
-            return Ok(decomposition
-                .spans()
-                .iter()
-                .map(|span| BezierSplitFragment2::Materialized {
-                    start: BezierParameter2::Exact(Real::zero()),
-                    end: BezierParameter2::Exact(Real::one()),
-                    curve: BezierSubcurve2::RationalQuadratic(span.curve().clone()),
-                })
-                .collect());
+            return Self::materialized_corner_arc_fragments(&arc, CurveOperation2::Fillet, policy);
         }
 
         {
@@ -21713,6 +21782,107 @@ mod tests {
                         assert_eq!(replay.certainty, CurveCertainty::Certified);
                         assert_eq!(replay.value.union().boundary_loops().len(), 2);
                         assert!(replay.value.intersection().is_empty());
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_retained_rational_arc_chamfer_extend_exactly() {
+        let rational_extension = Point2::new(
+            q(-1, 2) - (Real::from(399_i16).sqrt().unwrap() / Real::from(200_i16)).unwrap(),
+            q(1, 200),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for homogeneous_scale in [1_i8, 2_i8] {
+                for elevated in [false, true] {
+                    for reversed in [false, true] {
+                        let neighbor = if elevated {
+                            SelectedCircleFilletNeighbor2::ElevatedRationalArc(homogeneous_scale)
+                        } else {
+                            SelectedCircleFilletNeighbor2::RationalArc(homogeneous_scale)
+                        };
+                        let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
+                        let corner = selected_circle_rational_arc_corner(&region);
+                        let trim = region
+                            .chamfer_loop_vertex_by_setbacks(
+                                0,
+                                corner,
+                                q(1, 10),
+                                q(1, 10),
+                                CurveCornerMode2::TrimOnly,
+                                &policy,
+                            )
+                            .expect("the mixed circular corner has a finite chamfer");
+                        let extended = region
+                            .chamfer_loop_vertex_by_setbacks(
+                                0,
+                                corner,
+                                q(1, 10),
+                                q(1, 10),
+                                CurveCornerMode2::TrimOrExtend,
+                                &policy,
+                            )
+                            .unwrap_or_else(|error| {
+                                panic!(
+                                    "the mixed circular chamfer must extend exactly: policy={policy:?}, scale={homogeneous_scale}, elevated={elevated}, reversed={reversed}, error={error:?}"
+                                )
+                            });
+                        assert_eq!(extended.certainty, CurveCertainty::Certified);
+                        assert!(
+                            extended.value.candidate_count() > trim.value.candidate_count(),
+                            "both full circular supports must contribute exterior chamfer cuts"
+                        );
+                        let mut retained_rational_extension = false;
+                        for_each_corner_region(&extended.value, |chamfered| {
+                            assert_eq!(
+                                chamfered
+                                    .classify_point(&p(0, 0), &policy)
+                                    .expect("the extended mixed chamfer remains classifiable")
+                                    .into_value(),
+                                Classification::Decided(RegionPointLocation::Inside),
+                            );
+                            retained_rational_extension |= chamfered.boundary_loops()[0]
+                                .fragments()
+                                .iter()
+                                .any(|fragment| match fragment {
+                                    BezierSplitFragment2::Materialized { curve, .. } => {
+                                        [curve.start(), curve.end()].iter().any(|point| {
+                                            point
+                                                .distance_squared(&rational_extension)
+                                                .certified_eq_until(&Real::zero(), -4096)
+                                                .as_bool()
+                                                == Some(true)
+                                        })
+                                    }
+                                    _ => false,
+                                });
+                            if homogeneous_scale == 1 && !elevated && !reversed {
+                                let replay = chamfered
+                                    .boolean_regions(
+                                        &selected_fillet_disjoint_square(&policy),
+                                        &policy,
+                                    )
+                                    .expect(
+                                        "the retained circular chamfer re-enters the Boolean kernel",
+                                    );
+                                assert_eq!(
+                                    replay.certainty,
+                                    if policy == CurveContext::STRICT {
+                                        CurveCertainty::Certified
+                                    } else {
+                                        CurveCertainty::Approximate512Consumed
+                                    }
+                                );
+                                assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                                assert!(replay.value.intersection().is_empty());
+                            }
+                        });
+                        assert!(
+                            retained_rational_extension,
+                            "an exact candidate must retain the rational-circle extension"
+                        );
                     }
                 }
             }

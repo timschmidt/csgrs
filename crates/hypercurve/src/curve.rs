@@ -3627,6 +3627,13 @@ impl<'a> ExactCornerCarrier2<'a> {
         }
     }
 
+    pub(crate) fn retained_rational_arc_support(&self) -> Option<&CircularArc2> {
+        match self {
+            Self::RetainedRationalArc(arc) => Some(&arc.support),
+            _ => None,
+        }
+    }
+
     pub(crate) fn supports_extension(&self, operation: CurveOperation2) -> bool {
         match self {
             Self::Line(_) | Self::PromotedLine(_) | Self::Arc(_) => true,
@@ -3640,7 +3647,8 @@ impl<'a> ExactCornerCarrier2<'a> {
                             | CurveGeometry2::RationalBezier(_)
                     )
             }
-            Self::RetainedRationalArc(_) | Self::NativeBezierSpan(_) => false,
+            Self::RetainedRationalArc(_) => operation == CurveOperation2::Chamfer,
+            Self::NativeBezierSpan(_) => false,
             Self::AlgebraicChord(_) => true,
             Self::AnalyticParallel(_) => matches!(
                 operation,

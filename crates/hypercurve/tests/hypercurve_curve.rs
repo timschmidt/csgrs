@@ -1166,22 +1166,58 @@ fn retained_circular_conics_share_the_native_corner_kernel() {
                 CertifiedRealEquality::Equal { .. }
             ));
 
-            let blocked = path
-                .chamfer_vertex_by_setbacks(
-                    1,
-                    q(1, 2),
-                    q(1, 2),
-                    CurveCornerMode2::TrimOrExtend,
-                    &policy,
-                )
-                .map(|_| ());
-            assert!(matches!(
-                blocked,
-                Err(ExactCurveError::Blocked(blocker))
-                    if blocker.operation() == CurveOperation2::Chamfer
-                        && blocker.family() == *family
-                        && blocker.reason() == UncertaintyReason::Unsupported
-            ));
+            for reversed in [false, true] {
+                let extension_source = if reversed {
+                    path.reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                let extended = extension_source
+                    .chamfer_vertex_by_setbacks(
+                        1,
+                        q(1, 2),
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the retained circular conic must share full-circle chamfer support: policy={policy:?}, family={family:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(extended.value.candidate_count() > 1);
+                let validates_candidate = |candidate: &CurvePath2| {
+                    assert!(candidate.curves().iter().all(|curve| {
+                        [curve.start(), curve.end()].iter().all(|point| {
+                            point
+                                .distance_squared(&p(0, 0))
+                                .certified_eq_until(&Real::zero(), -4096)
+                                .as_bool()
+                                != Some(true)
+                        })
+                    }));
+                    candidate
+                        .curves()
+                        .iter()
+                        .any(|curve| matches!(curve.geometry(), CurveGeometry2::CircularArc(_)))
+                };
+                let mut retained_native_extension = false;
+                match &extended.value {
+                    CurveCornerSolutions2::Unique(candidate) => {
+                        retained_native_extension |= validates_candidate(candidate);
+                    }
+                    CurveCornerSolutions2::Multiple(candidates) => {
+                        for candidate in candidates {
+                            retained_native_extension |= validates_candidate(candidate);
+                        }
+                    }
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the retained circular chamfer must have candidates: {reason:?}")
+                    }
+                }
+                assert!(retained_native_extension);
+            }
 
             let extended = path
                 .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)

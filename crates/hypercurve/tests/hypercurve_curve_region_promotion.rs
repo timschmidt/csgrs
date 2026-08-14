@@ -1153,6 +1153,132 @@ fn unified_region_corners_use_rational_circular_carriers() {
 }
 
 #[test]
+fn retained_circular_regions_chamfer_over_the_full_support() {
+    let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
+    let conic = native_arc
+        .rational_bezier_decomposition(&CurveContext::STRICT)
+        .unwrap()
+        .into_value()
+        .spans()[0]
+        .curve()
+        .clone();
+    let elevated = RationalBezier2::from(conic.clone())
+        .elevated_to_degree(5)
+        .unwrap();
+    let carriers = [Curve2::from(conic), Curve2::from(elevated)];
+    let extension_y = -(Real::from(15_i8).sqrt().unwrap() / Real::from(8_i8)).unwrap();
+    let extension_point = Point2::new(q(1, 8), extension_y);
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for carrier in &carriers {
+            let path = CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap()),
+                carrier.clone(),
+                Curve2::from(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+                Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                let corner = if reversed { 3 } else { 1 };
+                let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                    .unwrap()
+                    .into_value();
+                let trim_count = source
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        corner,
+                        q(1, 2),
+                        q(1, 2),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the retained circular corner has one finite chamfer")
+                    .value
+                    .candidate_count();
+                let extended = source
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        corner,
+                        q(1, 2),
+                        q(1, 2),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the retained circular region must extend its chamfer exactly: policy={policy:?}, family={:?}, reversed={reversed}, error={error:?}",
+                            carrier.family(),
+                        )
+                    });
+                assert_eq!(extended.certainty, CurveCertainty::Certified);
+                assert!(extended.value.candidate_count() > trim_count);
+                let validates_candidate = |candidate: &CurveRegion2| {
+                    assert_eq!(
+                        certified(
+                            candidate
+                                .classify_point(&Point2::new(q(-1, 1), q(1, 2)), &policy)
+                                .unwrap()
+                        ),
+                        Classification::Decided(RegionPointLocation::Inside),
+                    );
+                    assert!(
+                        candidate.boundary_loops()[0]
+                            .fragments()
+                            .iter()
+                            .all(|fragment| match fragment {
+                                BezierSplitFragment2::Materialized { curve, .. } => {
+                                    [curve.start(), curve.end()].iter().all(|point| {
+                                        point
+                                            .distance_squared(&p(0, 0))
+                                            .certified_eq_until(&Real::zero(), -4096)
+                                            .as_bool()
+                                            != Some(true)
+                                    })
+                                }
+                                _ => true,
+                            })
+                    );
+                    candidate.boundary_loops()[0].fragments().iter().any(
+                        |fragment| match fragment {
+                            BezierSplitFragment2::Materialized { curve, .. } => {
+                                [curve.start(), curve.end()].iter().any(|point| {
+                                    point
+                                        .distance_squared(&extension_point)
+                                        .certified_eq_until(&Real::zero(), -4096)
+                                        .as_bool()
+                                        == Some(true)
+                                })
+                            }
+                            _ => false,
+                        },
+                    )
+                };
+                let mut retained_extension = false;
+                match &extended.value {
+                    CurveCornerSolutions2::Unique(candidate) => {
+                        retained_extension |= validates_candidate(candidate);
+                    }
+                    CurveCornerSolutions2::Multiple(candidates) => {
+                        for candidate in candidates {
+                            retained_extension |= validates_candidate(candidate);
+                        }
+                    }
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the retained circular chamfer must have candidates: {reason:?}")
+                    }
+                }
+                assert!(retained_extension);
+            }
+        }
+    }
+}
+
+#[test]
 fn unified_region_corners_use_represented_bezier_incidence() {
     let path = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
