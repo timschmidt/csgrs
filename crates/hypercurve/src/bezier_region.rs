@@ -2200,23 +2200,48 @@ fn rebind_retained_cusp_run_cut(
         if chart_relation != Some(complementary) {
             continue;
         }
-        match candidate
+        let parameter_placement = match candidate
             .contains_parameter(&parameter, false, false, policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
         {
-            Classification::Decided(true) => {
-                cut.parameter = CurveRegionParameter2::from_algebraic_cusp(parameter);
-                cut.placement = CornerPlacement2::Trim;
-                return Ok(Some(index));
+            Classification::Decided(true) => Classification::Decided(Some(CornerPlacement2::Trim)),
+            Classification::Decided(false) => {
+                let include_start = previous == candidate.is_reversed();
+                candidate
+                    .contains_parameter(&parameter, include_start, !include_start, policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+                    .map(|contains| contains.then_some(CornerPlacement2::Corner))
             }
-            Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    CurveFamily2::CircularArc,
-                    reason,
-                ));
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        };
+        let placement = match parameter_placement {
+            Classification::Decided(placement) => placement,
+            Classification::Uncertain(parameter_reason) => {
+                use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::{
+                    End, Exterior, Interior, Start,
+                };
+                match candidate
+                    .certified_incident_point_evidence_location(&parameter, &cut.point, policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+                {
+                    Classification::Decided(Interior) => Some(CornerPlacement2::Trim),
+                    Classification::Decided(Start) if previous => Some(CornerPlacement2::Corner),
+                    Classification::Decided(End) if !previous => Some(CornerPlacement2::Corner),
+                    Classification::Decided(Start | End | Exterior) => None,
+                    Classification::Uncertain(_) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::CircularArc,
+                            parameter_reason,
+                        ));
+                    }
+                }
             }
+        };
+        if let Some(placement) = placement {
+            cut.parameter = CurveRegionParameter2::from_algebraic_cusp(parameter);
+            cut.placement = placement;
+            return Ok(Some(index));
         }
     }
     Ok(None)
@@ -10492,6 +10517,7 @@ impl CurveRegion2 {
             &radius,
             radius_sign,
             solve_mode,
+            has_smooth_run,
             previous_family,
             next_family,
             policy,
@@ -20660,19 +20686,17 @@ mod tests {
         .expect("the mixed exact loop has authored topology")
     }
 
-    fn split_selected_circle_neighbor_region(
+    fn split_selected_circle_region(
         policy: &CurveContext,
-        neighbor: SelectedCircleFilletNeighbor2,
+        region: &CurveRegion2,
+        split: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
         reversed: bool,
     ) -> CurveRegion2 {
-        let region = selected_circle_neighbor_region(policy, neighbor, false);
         let source = region.boundary_loops()[0].fragments();
         let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = &source[0] else {
             panic!("the mixed fixture starts on its selected circle")
         };
         assert!(!circle.is_reversed());
-        let split =
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(q(99, 100));
         let fragment = |start, end| match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
             circle.semicircle().clone(),
             start,
@@ -20717,6 +20741,20 @@ mod tests {
             vec![interior_side],
         )
         .expect("the split selected-circle fixture has authored topology")
+    }
+
+    fn split_selected_circle_neighbor_region(
+        policy: &CurveContext,
+        neighbor: SelectedCircleFilletNeighbor2,
+        split: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        split_selected_circle_region(
+            policy,
+            &selected_circle_neighbor_region(policy, neighbor, false),
+            split,
+            reversed,
+        )
     }
 
     fn selected_circle_direct_line_region_from_support(
@@ -21724,7 +21762,14 @@ mod tests {
                 ("bezier", SelectedCircleFilletNeighbor2::DirectBezier),
             ] {
                 for reversed in [false, true] {
-                    let region = split_selected_circle_neighbor_region(&policy, neighbor, reversed);
+                    let region = split_selected_circle_neighbor_region(
+                        &policy,
+                        neighbor,
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(q(
+                            99, 100,
+                        )),
+                        reversed,
+                    );
                     let source_fragments = region.boundary_loops()[0].fragments();
                     let source_circle_fragments = source_fragments
                         .iter()
@@ -21775,6 +21820,121 @@ mod tests {
                         );
                     });
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_fillet_owns_exact_smooth_run_seam_endpoint() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = selected_circle_neighbor_region(
+                &policy,
+                SelectedCircleFilletNeighbor2::DirectLine,
+                false,
+            );
+            let BezierSplitFragment2::AlgebraicCuspSemicircle(source_circle) =
+                &source.boundary_loops()[0].fragments()[0]
+            else {
+                panic!("the endpoint fixture starts on its selected circle")
+            };
+            let baseline = source
+                .fillet_loop_vertex_by_radius(0, 1, q(1, 10), CurveCornerMode2::TrimOnly, &policy)
+                .expect("the unsplit selected-circle/line fillet is exact");
+            let CurveCornerSolutions2::Unique(baseline) = baseline.value else {
+                panic!("the unsplit selected-circle/line corner has one exact fillet")
+            };
+            let split = baseline.boundary_loops()[0]
+                .fragments()
+                .iter()
+                .find_map(|fragment| {
+                    let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment else {
+                        return None;
+                    };
+                    match source_circle
+                        .semicircle()
+                        .shared_frame_chart_relation(fragment.semicircle(), &policy)
+                    {
+                        Classification::Decided(Some(false)) => {
+                            assert!(!fragment.is_reversed());
+                            Some(fragment.end_parameter().clone())
+                        }
+                        Classification::Decided(Some(true) | None) => None,
+                        Classification::Uncertain(reason) => {
+                            panic!("the retained source circle relation must decide: {reason:?}")
+                        }
+                    }
+                })
+                .expect("the baseline fillet retains its exact source-circle cut");
+            assert_eq!(
+                source_circle
+                    .contains_parameter(&split, false, false, &policy)
+                    .expect("the baseline cut compares to its source range"),
+                Classification::Decided(true),
+            );
+
+            for reversed in [false, true] {
+                let region =
+                    split_selected_circle_region(&policy, &source, split.clone(), reversed);
+                let source_circle_fragments = region.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .filter(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(source_circle_fragments.len(), 2);
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        2,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the exact selected-circle seam endpoint must remain admissible: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(
+                    result.certainty,
+                    if policy == CurveContext::STRICT {
+                        CurveCertainty::Certified
+                    } else {
+                        CurveCertainty::Approximate512Consumed
+                    },
+                );
+                let owns_seam_endpoint = |filleted: &CurveRegion2| {
+                    source_circle_fragments
+                        .iter()
+                        .filter(|source| {
+                            filleted.boundary_loops()[0]
+                                .fragments()
+                                .iter()
+                                .any(|fragment| fragment == **source)
+                        })
+                        .count()
+                        == 1
+                };
+                assert!(
+                    match &result.value {
+                        CurveCornerSolutions2::Unique(filleted) => owns_seam_endpoint(filleted),
+                        CurveCornerSolutions2::Multiple(filleted) => {
+                            filleted.iter().any(owns_seam_endpoint)
+                        }
+                        CurveCornerSolutions2::NoSolution(_) => false,
+                    },
+                    "one retained-side fragment must own the exact seam endpoint"
+                );
+                for_each_corner_region(&result.value, |filleted| {
+                    assert_eq!(
+                        filleted
+                            .classify_point(&p(0, 0), &policy)
+                            .expect("the seam-endpoint fillet remains classifiable")
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Inside),
+                    );
+                });
             }
         }
     }

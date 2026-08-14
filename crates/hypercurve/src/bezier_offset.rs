@@ -8235,6 +8235,17 @@ pub struct BezierAlgebraicCuspSemicircleFragment2 {
     data: Arc<BezierAlgebraicCuspSemicircleFragmentData2>,
 }
 
+/// Exact location of a caller-certified incident point on one retained
+/// selected-circle fragment. Endpoint names follow fragment traversal rather
+/// than the ascending local parameter range.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum BezierAlgebraicCuspSemicircleIncidentLocation2 {
+    Exterior,
+    Start,
+    Interior,
+    End,
+}
+
 /// One-word exact straight chord whose endpoints may remain algebraic.
 ///
 /// The endpoint images are retained independently. In particular, this does
@@ -20601,6 +20612,22 @@ impl BezierAlgebraicCuspSemicircle2 {
         radial: (Real, Real),
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRetainedChordIntersections2>> {
+        // Give an unoriented affine support one deterministic solve frame.
+        // Reversing an authored line must not rebuild the same irrational
+        // circle contact through a distinct scalar expression graph.
+        let canonical_order = policy.strict_predicate_pass(|| {
+            match compare_reals(line.start().x(), line.end().x(), policy) {
+                Some(std::cmp::Ordering::Equal) => {
+                    compare_reals(line.start().y(), line.end().y(), policy)
+                }
+                order => order,
+            }
+        });
+        let canonical_reversed = canonical_order == Some(std::cmp::Ordering::Greater);
+        let canonical_line = canonical_reversed
+            .then(|| LineSeg2::new_unchecked(line.end().clone(), line.start().clone()));
+        let line = canonical_line.as_ref().unwrap_or(line);
+        let retained_orientation_reversed = retained_orientation_reversed ^ canonical_reversed;
         let turn = Real::from(if self.is_clockwise() { -1_i8 } else { 1_i8 });
         let angular = (-(&turn * &radial.1), &turn * &radial.0);
         let radius_squared = Real::dot2_refs([&radial.0, &radial.1], [&radial.0, &radial.1]);
@@ -20648,6 +20675,14 @@ impl BezierAlgebraicCuspSemicircle2 {
         let one = Real::one();
         let mut contacts = Vec::with_capacity(candidates.len());
         for (point, line_parameter, tangent_cross_sign) in candidates {
+            let chord_line_parameter = (line_parameter_is_chord_parameter && clip_to_finite_chord)
+                .then(|| {
+                    if canonical_reversed {
+                        &one - &line_parameter
+                    } else {
+                        line_parameter.clone()
+                    }
+                });
             let tangent_cross_sign = if retained_orientation_reversed {
                 match tangent_cross_sign {
                     RealSign::Positive => RealSign::Negative,
@@ -20657,8 +20692,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             } else {
                 tangent_cross_sign
             };
-            if line_parameter_is_chord_parameter && clip_to_finite_chord {
-                match in_closed_unit_interval(&line_parameter, policy) {
+            if let Some(line_parameter) = &chord_line_parameter {
+                match in_closed_unit_interval(line_parameter, policy) {
                     Some(true) => {}
                     Some(false) => continue,
                     None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -20701,7 +20736,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let point = RationalBezierIntersectionPointEvidence2::Exact(point);
-            let chord_parameter = if line_parameter_is_chord_parameter && clip_to_finite_chord {
+            let chord_parameter = if let Some(line_parameter) = chord_line_parameter {
                 match compare_reals(&line_parameter, &zero, policy) {
                     Some(std::cmp::Ordering::Equal) => chord.start_parameter(),
                     Some(_) => match compare_reals(&line_parameter, &one, policy) {
@@ -61196,6 +61231,66 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 crate::classify::LineSide::Right
             }
         }))
+    }
+
+    /// Locates a point whose incidence on this supporting circle is already
+    /// certified. The endpoint chord decides interior versus endpoint without
+    /// comparing independently reconstructed angular values. At an endpoint,
+    /// one decided inequality against the opposite endpoint is enough to
+    /// identify the equal endpoint exactly.
+    pub(crate) fn certified_incident_point_evidence_location(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        point: &RationalBezierIntersectionPointEvidence2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleIncidentLocation2>> {
+        let side = match policy.strict_predicate_pass(|| self.endpoint_chord_side(point, policy))? {
+            Classification::Decided(side) => side,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if side != crate::classify::LineSide::On {
+            let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
+            let interior_side = if clockwise {
+                crate::classify::LineSide::Left
+            } else {
+                crate::classify::LineSide::Right
+            };
+            return Ok(Classification::Decided(if side == interior_side {
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Interior
+            } else {
+                BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
+            }));
+        }
+
+        let start = policy.strict_predicate_pass(|| {
+            parameter.cmp_by_refinement(self.endpoint_parameter(true), policy)
+        })?;
+        let end = policy.strict_predicate_pass(|| {
+            parameter.cmp_by_refinement(self.endpoint_parameter(false), policy)
+        })?;
+        use BezierAlgebraicCuspSemicircleIncidentLocation2::{End, Start};
+        Ok(match (start, end) {
+            (Classification::Decided(std::cmp::Ordering::Equal), _) => {
+                Classification::Decided(Start)
+            }
+            (_, Classification::Decided(std::cmp::Ordering::Equal)) => Classification::Decided(End),
+            (Classification::Decided(_), Classification::Uncertain(_)) => {
+                Classification::Decided(End)
+            }
+            (Classification::Uncertain(_), Classification::Decided(_)) => {
+                Classification::Decided(Start)
+            }
+            (Classification::Uncertain(reason), Classification::Uncertain(_)) => {
+                Classification::Uncertain(reason)
+            }
+            (Classification::Decided(_), Classification::Decided(_)) => {
+                return Err(CurveError::Topology(
+                    "a certified selected-circle endpoint had no endpoint parameter".into(),
+                ));
+            }
+        })
     }
 
     pub(crate) fn contains_parameter(

@@ -1999,6 +1999,7 @@ impl CurvePath2 {
             &radius,
             radius_sign,
             mode,
+            false,
             previous.family(),
             next.family(),
             policy,
@@ -3897,6 +3898,7 @@ pub(crate) fn solve_exact_fillet_corner(
     radius: &Real,
     radius_sign: RealSign,
     mode: CurveCornerMode2,
+    retain_selected_circle_endpoints: bool,
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
@@ -3939,6 +3941,7 @@ pub(crate) fn solve_exact_fillet_corner(
         next,
         radius,
         mode,
+        retain_selected_circle_endpoints,
         previous_family,
         next_family,
         policy,
@@ -4819,6 +4822,7 @@ fn solve_carrier_fillet_corner(
     next: ExactCornerCarrier2<'_>,
     radius: &Real,
     mode: CurveCornerMode2,
+    retain_selected_circle_endpoints: bool,
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
@@ -4865,6 +4869,7 @@ fn solve_carrier_fillet_corner(
                 deferred_arc_is_previous == Some(true),
                 true,
                 mode,
+                retain_selected_circle_endpoints,
                 previous_family,
                 policy,
             )?
@@ -4879,6 +4884,7 @@ fn solve_carrier_fillet_corner(
                 deferred_arc_is_previous == Some(false),
                 false,
                 mode,
+                retain_selected_circle_endpoints,
                 next_family,
                 policy,
             )?
@@ -8744,6 +8750,7 @@ fn fillet_cut_from_center(
     deferred_arc_contact: bool,
     previous: bool,
     mode: CurveCornerMode2,
+    retain_selected_circle_endpoints: bool,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
@@ -9076,6 +9083,12 @@ fn fillet_cut_from_center(
                     })?;
                 match source_contains {
                     Classification::Decided(true) => CornerPlacement2::Trim,
+                    Classification::Decided(false)
+                        if retain_selected_circle_endpoints
+                            && mode == CurveCornerMode2::TrimOrExtend =>
+                    {
+                        CornerPlacement2::Extension
+                    }
                     Classification::Decided(false) => {
                         let endpoint_order = |endpoint| {
                             parameter
@@ -9105,6 +9118,31 @@ fn fillet_cut_from_center(
                             CornerPlacement2::Extension
                         } else {
                             return Ok(None);
+                        }
+                    }
+                    Classification::Uncertain(reason) if retain_selected_circle_endpoints => {
+                        use crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::{
+                            End, Exterior, Interior, Start,
+                        };
+                        match support
+                            .certified_incident_point_evidence_location(&parameter, center, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                            })? {
+                            Classification::Decided(Interior) => CornerPlacement2::Trim,
+                            Classification::Decided(Start | End | Exterior)
+                                if mode == CurveCornerMode2::TrimOrExtend =>
+                            {
+                                CornerPlacement2::Extension
+                            }
+                            Classification::Decided(Start | End | Exterior) => return Ok(None),
+                            Classification::Uncertain(_) => {
+                                return Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    family,
+                                    reason,
+                                ));
+                            }
                         }
                     }
                     Classification::Uncertain(reason) => {
@@ -11145,6 +11183,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::CircularArc,
                             &policy,
@@ -11156,6 +11195,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::CircularArc,
                             CurveFamily2::RationalBezier,
                             &policy,
@@ -11411,6 +11451,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11421,6 +11462,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11431,6 +11473,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11441,6 +11484,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11509,6 +11553,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11519,6 +11564,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
                             &policy,
@@ -11529,6 +11575,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11539,6 +11586,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
                             &policy,
@@ -11607,6 +11655,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::Line,
                             &policy,
@@ -11617,6 +11666,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::Line,
                             CurveFamily2::RationalBezier,
                             &policy,
@@ -11627,6 +11677,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
                             &policy,
@@ -11637,6 +11688,7 @@ mod tests {
                             &radius,
                             RealSign::Positive,
                             mode,
+                            false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
                             &policy,
