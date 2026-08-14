@@ -515,6 +515,7 @@ impl<T> PolicyClassificationCache<T> {
         let _ = self.certified.set(value);
     }
 
+    #[cfg(test)]
     pub(crate) fn certified(&self) -> Option<&T> {
         self.certified.get()
     }

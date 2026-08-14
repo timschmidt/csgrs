@@ -681,20 +681,6 @@ fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement(
         ),
         Classification::Decided(_)
     ));
-
-    let offset = decided(
-        source
-            .offset_with_certified_segmentation(Real::one(), &sharp_offset(), &options, &policy)
-            .unwrap()
-            .into_value(),
-    );
-
-    assert!(!offset.region().is_empty());
-    assert!(offset.evidence().used_exact_authoritative_path());
-    assert!(!offset.evidence().lossy_boundary());
-    assert_eq!(offset.evidence().max_source_chord_error(), &q(1, 32));
-    assert!(offset.evidence().loop_evidence().is_empty());
-    assert!(offset.region().has_algebraic_fragments());
 }
 
 #[test]

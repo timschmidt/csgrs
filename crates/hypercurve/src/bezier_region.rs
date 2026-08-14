@@ -58,14 +58,14 @@ use crate::{
     BezierArrangementTraversal2, BezierEndpoint, BezierEndpointPointImage2,
     BezierFlatteningOptions, BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
-    BezierParallelSource2, BezierParallelVerificationOptions, BezierParameter2,
-    BezierParameterRange2, BezierRetainedLinearOverlapTraversal2,
-    BezierRetainedRationalOverlapTraversal2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    CircularArc2, Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2,
-    CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2, CurveError,
-    CurveFamily2, CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome,
-    CurvePath2, CurvePathIntersectionContact2, CurveRegionParameter2, CurveRegionParameterRange2,
-    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
+    BezierParallelSource2, BezierParameter2, BezierParameterRange2,
+    BezierRetainedLinearOverlapTraversal2, BezierRetainedRationalOverlapTraversal2,
+    BezierSplitFragment2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2,
+    ContourPointLocation, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
+    CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
+    CurvePathIntersectionContact2, CurveRegionParameter2, CurveRegionParameterRange2, CurveResult,
+    ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
     QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
     RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
     RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
@@ -324,56 +324,6 @@ pub struct CurveRegionCertifiedSegmentationResult2 {
     evidence: CurveRegionCertifiedSegmentationEvidence2,
 }
 
-/// Evidence for a general-curve offset routed through exact-scalar certified segmentation.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSegmentedOffsetEvidence2 {
-    used_exact_authoritative_path: bool,
-    max_source_chord_error: Real,
-    loop_evidence: Vec<CurveRegionSegmentationLoopEvidence2>,
-    lossy_boundary: bool,
-}
-
-/// A unified offset region with retained certified source-segmentation evidence.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionSegmentedOffsetResult2 {
-    region: CurveRegion2,
-    evidence: CurveRegionSegmentedOffsetEvidence2,
-}
-
-/// Per-loop evidence for a certified polynomial/rational parallel boundary.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedParallelLoopEvidence2 {
-    role: CurveRegionLoopRole,
-    fill_rule: FillRule,
-    signed_left_distance: Real,
-    source_curve_count: usize,
-    output_curve_count: usize,
-    exact_source_curve_count: usize,
-    approximated_source_curve_count: usize,
-    verification_leaf_count: usize,
-}
-
-/// Evidence for the strongest completed lane of a general curved-region offset.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedParallelOffsetEvidence2 {
-    used_exact_authoritative_path: bool,
-    used_certified_parallel_path: bool,
-    used_segmented_source_fallback: bool,
-    max_parallel_fit_error: Real,
-    max_output_chord_error: Real,
-    certified_pre_regularization_boundary_error: Option<Real>,
-    final_boundary_hausdorff_certified: bool,
-    loop_evidence: Vec<CurveRegionCertifiedParallelLoopEvidence2>,
-    fallback_evidence: Option<CurveRegionSegmentedOffsetEvidence2>,
-}
-
-/// Unified region produced by exact native, certified parallel, or explicit fallback offsetting.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCertifiedParallelOffsetResult2 {
-    region: CurveRegion2,
-    evidence: CurveRegionCertifiedParallelOffsetEvidence2,
-}
-
 impl CurveRegionArrangement2 {
     /// Returns the materialized unified region, if role assignment succeeded.
     pub const fn region(&self) -> Option<&CurveRegion2> {
@@ -503,165 +453,6 @@ impl CurveRegionCertifiedSegmentationResult2 {
 
     /// Consumes the result into its line-only region and evidence.
     pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedSegmentationEvidence2) {
-        (self.region, self.evidence)
-    }
-}
-
-impl CurveRegionSegmentedOffsetEvidence2 {
-    /// Returns true when the authoritative exact offset completed without segmentation.
-    pub const fn used_exact_authoritative_path(&self) -> bool {
-        self.used_exact_authoritative_path
-    }
-
-    /// Returns the certified curve-to-source-chord error budget.
-    pub const fn max_source_chord_error(&self) -> &Real {
-        &self.max_source_chord_error
-    }
-
-    /// Returns source-loop segmentation evidence.
-    pub fn loop_evidence(&self) -> &[CurveRegionSegmentationLoopEvidence2] {
-        &self.loop_evidence
-    }
-
-    /// Returns whether the operation crossed an explicitly lossy segmentation boundary.
-    pub const fn lossy_boundary(&self) -> bool {
-        self.lossy_boundary
-    }
-}
-
-impl CurveRegionSegmentedOffsetResult2 {
-    /// Returns the unified offset region.
-    pub const fn region(&self) -> &CurveRegion2 {
-        &self.region
-    }
-
-    /// Returns the exact-fast-path or certified-segmentation evidence.
-    pub const fn evidence(&self) -> &CurveRegionSegmentedOffsetEvidence2 {
-        &self.evidence
-    }
-
-    /// Consumes the result and returns the unified offset region.
-    pub fn into_region(self) -> CurveRegion2 {
-        self.region
-    }
-
-    /// Consumes the result into geometry and evidence.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionSegmentedOffsetEvidence2) {
-        (self.region, self.evidence)
-    }
-}
-
-impl CurveRegionCertifiedParallelLoopEvidence2 {
-    /// Returns the retained material/hole role.
-    pub const fn role(&self) -> CurveRegionLoopRole {
-        self.role
-    }
-
-    /// Returns the authored fill rule.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.fill_rule
-    }
-
-    /// Returns the signed distance applied along traversal-left normals.
-    pub const fn signed_left_distance(&self) -> &Real {
-        &self.signed_left_distance
-    }
-
-    /// Returns the number of authored source curves.
-    pub const fn source_curve_count(&self) -> usize {
-        self.source_curve_count
-    }
-
-    /// Returns the number of output exact or fitted curves.
-    pub const fn output_curve_count(&self) -> usize {
-        self.output_curve_count
-    }
-
-    /// Returns how many source curves retained an exact parallel carrier.
-    pub const fn exact_source_curve_count(&self) -> usize {
-        self.exact_source_curve_count
-    }
-
-    /// Returns how many source curves required certified polynomial fitting.
-    pub const fn approximated_source_curve_count(&self) -> usize {
-        self.approximated_source_curve_count
-    }
-
-    /// Returns the aggregate conservative-verifier leaf count.
-    pub const fn verification_leaf_count(&self) -> usize {
-        self.verification_leaf_count
-    }
-}
-
-impl CurveRegionCertifiedParallelOffsetEvidence2 {
-    /// Returns whether the authoritative exact offset kernel completed the operation.
-    pub const fn used_exact_authoritative_path(&self) -> bool {
-        self.used_exact_authoritative_path
-    }
-
-    /// Returns whether verified polynomial/rational parallels supplied the output boundary.
-    pub const fn used_certified_parallel_path(&self) -> bool {
-        self.used_certified_parallel_path
-    }
-
-    /// Returns whether completion required the legacy source-chord fallback.
-    pub const fn used_segmented_source_fallback(&self) -> bool {
-        self.used_segmented_source_fallback
-    }
-
-    /// Returns the requested per-span bound to each exact analytic parallel.
-    pub const fn max_parallel_fit_error(&self) -> &Real {
-        &self.max_parallel_fit_error
-    }
-
-    /// Returns the requested chord bound used to regularize the produced path.
-    pub const fn max_output_chord_error(&self) -> &Real {
-        &self.max_output_chord_error
-    }
-
-    /// Returns the directed analytic-parallel-to-emitted-chord bound before regularization.
-    ///
-    /// `None` identifies the weaker source-chord fallback. Arrangement
-    /// regularization may remove raw offset branches, so this value is not
-    /// promoted to a Hausdorff certificate for the final region boundary.
-    pub const fn certified_pre_regularization_boundary_error(&self) -> Option<&Real> {
-        self.certified_pre_regularization_boundary_error.as_ref()
-    }
-
-    /// Returns whether the final regularized boundary itself has a Hausdorff certificate.
-    pub const fn final_boundary_hausdorff_certified(&self) -> bool {
-        self.final_boundary_hausdorff_certified
-    }
-
-    /// Returns per-loop exact/fitted construction evidence.
-    pub fn loop_evidence(&self) -> &[CurveRegionCertifiedParallelLoopEvidence2] {
-        &self.loop_evidence
-    }
-
-    /// Returns the legacy fallback evidence when that lane was required.
-    pub const fn fallback_evidence(&self) -> Option<&CurveRegionSegmentedOffsetEvidence2> {
-        self.fallback_evidence.as_ref()
-    }
-}
-
-impl CurveRegionCertifiedParallelOffsetResult2 {
-    /// Returns the regularized unified offset region.
-    pub const fn region(&self) -> &CurveRegion2 {
-        &self.region
-    }
-
-    /// Returns construction and certification evidence.
-    pub const fn evidence(&self) -> &CurveRegionCertifiedParallelOffsetEvidence2 {
-        &self.evidence
-    }
-
-    /// Consumes the result and returns its region.
-    pub fn into_region(self) -> CurveRegion2 {
-        self.region
-    }
-
-    /// Consumes the result into geometry and evidence.
-    pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedParallelOffsetEvidence2) {
         (self.region, self.evidence)
     }
 }
@@ -3526,40 +3317,6 @@ fn canonicalize_retained_extension_on_finite_envelope(
     previous_cut.replacement = Some(replacement.clone());
     next_cut.replacement = Some(replacement);
     Ok(())
-}
-
-fn wrap_segmented_parallel_fallback(
-    segmented: Classification<CurveRegionSegmentedOffsetResult2>,
-    max_parallel_fit_error: &Real,
-    max_output_chord_error: &Real,
-) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
-    match segmented {
-        Classification::Decided(segmented) => {
-            let (region, fallback_evidence) = segmented.into_parts();
-            Ok(Classification::Decided(
-                CurveRegionCertifiedParallelOffsetResult2 {
-                    region,
-                    evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                        used_exact_authoritative_path: fallback_evidence
-                            .used_exact_authoritative_path(),
-                        used_certified_parallel_path: false,
-                        used_segmented_source_fallback: !fallback_evidence
-                            .used_exact_authoritative_path(),
-                        max_parallel_fit_error: max_parallel_fit_error.clone(),
-                        max_output_chord_error: max_output_chord_error.clone(),
-                        certified_pre_regularization_boundary_error: fallback_evidence
-                            .used_exact_authoritative_path()
-                            .then(Real::zero),
-                        final_boundary_hausdorff_certified: fallback_evidence
-                            .used_exact_authoritative_path(),
-                        loop_evidence: Vec::new(),
-                        fallback_evidence: Some(fallback_evidence),
-                    },
-                },
-            ))
-        }
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
 }
 
 fn push_native_offset_component(
@@ -13676,299 +13433,6 @@ impl CurveRegion2 {
         regularized
             .map(Classification::Decided)
             .map_err(|error| error.with_operation(CurveOperation2::Offset))
-    }
-
-    /// Offsets arbitrary materialized curve families through certified exact-scalar segmentation.
-    ///
-    /// [`Self::offset`] first attempts the authoritative exact kernel with no
-    /// loss. Only when that kernel reports `Unsupported` is each retained
-    /// Bezier or rational span subdivided until its control hull certifies the
-    /// requested source-curve chord error. The emitted vertices remain
-    /// [`Real`] values, and the resulting line topology is offset and
-    /// regularized by the exact native kernel. The evidence explicitly marks
-    /// this as a lossy boundary: the certificate bounds source-to-chord error,
-    /// not Hausdorff error of the final parallel curve.
-    pub fn offset_with_certified_segmentation(
-        &self,
-        distance: Real,
-        corner_style: &OffsetCornerStyle2,
-        options: &BezierFlatteningOptions,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionSegmentedOffsetResult2>>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.offset_with_certified_segmentation_raw(distance, corner_style, options, attempt)
-        })
-    }
-
-    fn offset_with_certified_segmentation_raw(
-        &self,
-        distance: Real,
-        corner_style: &OffsetCornerStyle2,
-        options: &BezierFlatteningOptions,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<CurveRegionSegmentedOffsetResult2>> {
-        match self.offset_raw(distance.clone(), corner_style, policy)? {
-            Classification::Decided(region) => {
-                return Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
-                    region,
-                    evidence: CurveRegionSegmentedOffsetEvidence2 {
-                        used_exact_authoritative_path: true,
-                        max_source_chord_error: options.max_error().clone(),
-                        loop_evidence: Vec::new(),
-                        lossy_boundary: false,
-                    },
-                }));
-            }
-            Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-
-        let segmented = match self.segment_certified_raw(options, policy)? {
-            Classification::Decided(segmented) => segmented,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let (segmented_source, segmentation_evidence) = segmented.into_parts();
-        let region = match segmented_source.offset_raw(distance, corner_style, policy)? {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(CurveRegionSegmentedOffsetResult2 {
-            region,
-            evidence: CurveRegionSegmentedOffsetEvidence2 {
-                used_exact_authoritative_path: false,
-                max_source_chord_error: segmentation_evidence.max_source_chord_error,
-                loop_evidence: segmentation_evidence.loop_evidence,
-                lossy_boundary: segmentation_evidence.lossy_boundary,
-            },
-        }))
-    }
-
-    /// Offsets general smooth polynomial boundaries through certified analytic parallels.
-    ///
-    /// The method first preserves any result from the authoritative exact
-    /// offset kernel. Otherwise it constructs exact PH or conservatively
-    /// verified Blend2D parallels for every smooth boundary path, chordizes
-    /// those *output* curves with a separate certificate, and regularizes the
-    /// resulting line arrangement.
-    /// The pre-regularization directed bound is
-    /// `parallel_fit_error + output_chord_error`. Because regularization can
-    /// remove raw branches, the result does not promote that into a Hausdorff
-    /// claim for the final topology.
-    /// Authored corners and unsupported curve families fall back to
-    /// [`Self::offset_with_certified_segmentation`]; that fallback is identified
-    /// explicitly and does not claim a final parallel Hausdorff bound.
-    pub fn offset_with_certified_bezier_parallel(
-        &self,
-        distance: Real,
-        corner_style: &OffsetCornerStyle2,
-        parallel_options: &BezierParallelVerificationOptions,
-        output_flattening: &BezierFlatteningOptions,
-        fallback_source_flattening: &BezierFlatteningOptions,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Classification<CurveRegionCertifiedParallelOffsetResult2>>>
-    {
-        resolve_certified_operation(policy, |attempt| {
-            self.offset_with_certified_bezier_parallel_raw(
-                distance,
-                corner_style,
-                parallel_options,
-                output_flattening,
-                fallback_source_flattening,
-                attempt,
-            )
-        })
-    }
-
-    fn offset_with_certified_bezier_parallel_raw(
-        &self,
-        distance: Real,
-        corner_style: &OffsetCornerStyle2,
-        parallel_options: &BezierParallelVerificationOptions,
-        output_flattening: &BezierFlatteningOptions,
-        fallback_source_flattening: &BezierFlatteningOptions,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<CurveRegionCertifiedParallelOffsetResult2>> {
-        match self.offset_raw(distance.clone(), corner_style, policy)? {
-            Classification::Decided(region) => {
-                return Ok(Classification::Decided(
-                    CurveRegionCertifiedParallelOffsetResult2 {
-                        region,
-                        evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                            used_exact_authoritative_path: true,
-                            used_certified_parallel_path: false,
-                            used_segmented_source_fallback: false,
-                            max_parallel_fit_error: Real::zero(),
-                            max_output_chord_error: Real::zero(),
-                            certified_pre_regularization_boundary_error: Some(Real::zero()),
-                            final_boundary_hausdorff_certified: true,
-                            loop_evidence: Vec::new(),
-                            fallback_evidence: None,
-                        },
-                    },
-                ));
-            }
-            Classification::Uncertain(UncertaintyReason::Unsupported) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-
-        let paths =
-            match self.materialized_boundary_paths_for_edit(CurveOperation2::Offset, policy)? {
-                Classification::Decided(paths) => paths,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let roles = match self
-            .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let filled_sides = match self
-            .filled_side_is_left_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(sides) => sides,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let fill_rules = self
-            .loop_fill_rules()
-            .map_or_else(|| vec![FillRule::EvenOdd; paths.len()], <[_]>::to_vec);
-        if paths.len() != roles.len()
-            || paths.len() != filled_sides.len()
-            || paths.len() != fill_rules.len()
-        {
-            return Err(curve_region_edit_error(
-                CurveOperation2::Offset,
-                CurveError::Topology(
-                    "certified parallel semantics do not match boundary loops".into(),
-                ),
-            ));
-        }
-
-        let mut parallel_paths = Vec::with_capacity(paths.len());
-        let mut loop_evidence = Vec::with_capacity(paths.len());
-        let mut needs_fallback = false;
-        for (((path, role), filled_side_is_left), fill_rule) in paths
-            .iter()
-            .zip(roles.iter())
-            .zip(filled_sides.iter())
-            .zip(fill_rules.iter())
-        {
-            let signed_left_distance = if *filled_side_is_left {
-                Real::zero() - &distance
-            } else {
-                distance.clone()
-            };
-            let parallel = match path.approximate_parallel_blend2d_certified(
-                signed_left_distance.clone(),
-                parallel_options,
-                policy,
-            )? {
-                Classification::Decided(parallel) => parallel,
-                Classification::Uncertain(
-                    UncertaintyReason::Unsupported | UncertaintyReason::Boundary,
-                ) => {
-                    needs_fallback = true;
-                    break;
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            loop_evidence.push(CurveRegionCertifiedParallelLoopEvidence2 {
-                role: *role,
-                fill_rule: *fill_rule,
-                signed_left_distance,
-                source_curve_count: parallel.source_curve_count(),
-                output_curve_count: parallel.output_curve_count(),
-                exact_source_curve_count: parallel.exact_source_curve_count(),
-                approximated_source_curve_count: parallel.approximated_source_curve_count(),
-                verification_leaf_count: parallel.verification_leaf_count(),
-            });
-            parallel_paths.push(parallel.into_path());
-        }
-
-        if needs_fallback {
-            return wrap_segmented_parallel_fallback(
-                self.offset_with_certified_segmentation_raw(
-                    distance,
-                    corner_style,
-                    fallback_source_flattening,
-                    policy,
-                )?,
-                parallel_options.max_error(),
-                output_flattening.max_error(),
-            );
-        }
-
-        let parallel_region = Self::try_from_boundary_paths_with_loop_semantics_raw(
-            &parallel_paths,
-            roles.as_ref(),
-            &fill_rules,
-            policy,
-            Some(filled_sides.as_ref().to_vec()),
-        )?;
-        let segmented = match parallel_region.segment_certified_raw(output_flattening, policy)? {
-            Classification::Decided(segmented) => segmented,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let segmented_region = segmented.region();
-        let native = segmented_region
-            .data
-            .line_image_region
-            .certified()
-            .and_then(Option::as_ref)
-            .expect("certified segmentation always installs native line topology");
-        let mut material_components = Vec::new();
-        let mut void_components = Vec::new();
-        for contour in native.material_contours() {
-            material_components.push(regularize_native_contour_with_curve_region(
-                contour, policy,
-            )?);
-        }
-        for contour in native.hole_contours() {
-            void_components.push(regularize_native_contour_with_curve_region(
-                contour, policy,
-            )?);
-        }
-        let regularized =
-            regularize_native_offset_regions(material_components, void_components, policy)?;
-        let certified_pre_regularization_boundary_error =
-            parallel_options.max_error() + output_flattening.max_error();
-        Ok(Classification::Decided(
-            CurveRegionCertifiedParallelOffsetResult2 {
-                region: regularized,
-                evidence: CurveRegionCertifiedParallelOffsetEvidence2 {
-                    used_exact_authoritative_path: false,
-                    used_certified_parallel_path: true,
-                    used_segmented_source_fallback: false,
-                    max_parallel_fit_error: parallel_options.max_error().clone(),
-                    max_output_chord_error: output_flattening.max_error().clone(),
-                    certified_pre_regularization_boundary_error: Some(
-                        certified_pre_regularization_boundary_error,
-                    ),
-                    final_boundary_hausdorff_certified: false,
-                    loop_evidence,
-                    fallback_evidence: None,
-                },
-            },
-        ))
     }
 
     fn region_from_line_role_evidence(
@@ -26824,57 +26288,23 @@ mod tests {
         ));
 
         let collapse_distance = -Real::one() + &undecidable_zero;
-        let strict_segmented_offset = region
-            .offset_with_certified_segmentation(
-                collapse_distance.clone(),
-                &OffsetCornerStyle2::Round,
-                &flattening,
-                &CurveContext::STRICT,
-            )
-            .unwrap();
-        assert_eq!(strict_segmented_offset.certainty, CurveCertainty::Certified);
-        assert!(matches!(
-            strict_segmented_offset.value,
-            Classification::Uncertain(_)
-        ));
-        let approximate_segmented_offset = region
-            .offset_with_certified_segmentation(
-                collapse_distance.clone(),
-                &OffsetCornerStyle2::Round,
-                &flattening,
-                &CurveContext::APPROXIMATE_512,
-            )
-            .unwrap();
-        assert_eq!(
-            approximate_segmented_offset.certainty,
-            CurveCertainty::Approximate512Consumed
+        let strict_offset = region.offset(
+            collapse_distance.clone(),
+            &OffsetCornerStyle2::Round,
+            &CurveContext::STRICT,
         );
-        assert!(matches!(
-            approximate_segmented_offset.value,
-            Classification::Decided(_)
-        ));
-
-        let parallel =
-            BezierParallelVerificationOptions::try_new(Real::one(), 4, &CurveContext::STRICT)
-                .unwrap();
-        let approximate_parallel_offset = region
-            .offset_with_certified_bezier_parallel(
+        assert!(matches!(strict_offset, Err(ExactCurveError::Blocked(_))));
+        let approximate_offset = region
+            .offset(
                 collapse_distance,
                 &OffsetCornerStyle2::Round,
-                &parallel,
-                &flattening,
-                &flattening,
                 &CurveContext::APPROXIMATE_512,
             )
             .unwrap();
         assert_eq!(
-            approximate_parallel_offset.certainty,
+            approximate_offset.certainty,
             CurveCertainty::Approximate512Consumed
         );
-        assert!(matches!(
-            approximate_parallel_offset.value,
-            Classification::Decided(_)
-        ));
     }
 
     fn quadratic_fragment(start: Point2, control: Point2, end: Point2) -> BezierSplitFragment2 {

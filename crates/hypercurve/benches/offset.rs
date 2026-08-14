@@ -2,14 +2,14 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParallelFragment2,
-    BezierParallelIntersectionCandidates2, BezierParallelPairIntersectionCandidates2,
-    BezierParallelVerificationOptions, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2,
-    BulgeVertex2, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelIntersectionCandidates2,
+    BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
+    BezierSplitFragment2, BezierSubcurve2, BulgeVertex2, CircularArc2, Classification, Contour2,
+    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2,
+    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -992,78 +992,24 @@ fn curve_region_bezier_offset_fixture() -> Result<CurveRegion2, Box<dyn std::err
     .into_value())
 }
 
-fn bench_curve_region_bezier_offset_lanes(
+fn bench_curve_region_bezier_exact_offset(
     iterations: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Keep lane-local lazy source caches so no later adapter inherits warm
-    // role or side evidence from the direct lane.
-    let exact_source = curve_region_bezier_offset_fixture()?;
-    let certified_source = curve_region_bezier_offset_fixture()?;
-    let fallback_source = curve_region_bezier_offset_fixture()?;
+    let source = curve_region_bezier_offset_fixture()?;
     let policy = CurveContext::STRICT;
-    let verification = BezierParallelVerificationOptions::try_new(q(1, 20), 16, &policy)?;
-    let flattening = BezierFlatteningOptions::try_new(q(1, 20), 16, &policy)?;
 
     let started = Instant::now();
-    let mut exact_loops = 0_usize;
+    let mut loops = 0_usize;
     for _ in 0..iterations {
-        let result = exact_source
+        let result = source
             .offset(q(1, 10), &OffsetCornerStyle2::Round, &policy)?
             .into_value();
-        exact_loops += black_box(result.boundary_loops().len());
+        loops += black_box(result.boundary_loops().len());
     }
-    let exact_elapsed = started.elapsed();
+    let elapsed = started.elapsed();
     println!(
-        "curve_region_bezier_parallel_exact: {iterations} iterations in {exact_elapsed:?} ({:?}/iter), loops={exact_loops}",
-        exact_elapsed / iterations
-    );
-
-    let started = Instant::now();
-    let mut certified_loops = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(result) = certified_source
-            .offset_with_certified_bezier_parallel(
-                q(1, 10),
-                &OffsetCornerStyle2::Round,
-                &verification,
-                &flattening,
-                &flattening,
-                &policy,
-            )?
-            .into_value()
-        else {
-            panic!("certified CurveRegion2 Bezier offset became uncertain");
-        };
-        assert!(result.evidence().used_exact_authoritative_path());
-        certified_loops += black_box(result.region().boundary_loops().len());
-    }
-    let certified_elapsed = started.elapsed();
-    println!(
-        "curve_region_bezier_parallel_exact_via_certified_adapter: {iterations} iterations in {certified_elapsed:?} ({:?}/iter), loops={certified_loops}",
-        certified_elapsed / iterations
-    );
-
-    let started = Instant::now();
-    let mut fallback_loops = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(result) = fallback_source
-            .offset_with_certified_segmentation(
-                q(1, 10),
-                &OffsetCornerStyle2::Round,
-                &flattening,
-                &policy,
-            )?
-            .into_value()
-        else {
-            panic!("segmented CurveRegion2 Bezier offset became uncertain");
-        };
-        assert!(result.evidence().used_exact_authoritative_path());
-        fallback_loops += black_box(result.region().boundary_loops().len());
-    }
-    let fallback_elapsed = started.elapsed();
-    println!(
-        "curve_region_bezier_parallel_exact_via_segmentation_adapter: {iterations} iterations in {fallback_elapsed:?} ({:?}/iter), loops={fallback_loops}",
-        fallback_elapsed / iterations
+        "curve_region_bezier_parallel_exact: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={loops}",
+        elapsed / iterations
     );
     Ok(())
 }
@@ -1247,7 +1193,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-intersection" => bench_bezier_parallel_intersection_lanes()?,
             "bezier-pair-general" => bench_bezier_parallel_pair_general_contact()?,
             "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
-            "curve-region-exact" => bench_curve_region_bezier_offset_lanes(10)?,
+            "curve-region-exact" => bench_curve_region_bezier_exact_offset(10)?,
             "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
             "curve-region-algebraic-partition" => {
                 bench_curve_region_algebraic_partition_offset_lanes(20, None, false)?
@@ -1313,7 +1259,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_bezier_parallel_cusp_isolation(100)?;
     bench_exact_ph_offset_construction(1_000)?;
     bench_certified_bezier_parallel_construction(100)?;
-    bench_curve_region_bezier_offset_lanes(10)?;
+    bench_curve_region_bezier_exact_offset(10)?;
 
     Ok(())
 }

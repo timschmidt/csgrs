@@ -148,12 +148,11 @@ rational Béziers. Regular non-PH spans try a Levien-style cubic, then Blend2D
 quadratic construction, and are accepted only by an exact-scalar conservative
 same-parameter bound.
 
-`CurveRegion2::offset_with_certified_bezier_parallel` uses those paths for
-smooth joins, separately chord-certifies the produced path, and regularizes the
-line arrangement. Its evidence limits the summed bound to the raw
-pre-regularization boundary; branch removal is not mislabeled as a Hausdorff
-certificate for final topology. Corners and unsupported families use the
-existing source-chord fallback, whose weaker guarantee remains explicit.
+`CurvePath2::approximate_parallel_blend2d_certified` exposes those paths as an
+explicit approximation adapter. It does not participate in
+`CurveRegion2::offset`: region offset topology is owned only by the exact
+analytic-parallel/arrangement engine, and unsupported exact carriers remain
+explicit blockers rather than being replaced by source chords.
 
 A release run on the same development machine measured:
 

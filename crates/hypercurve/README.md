@@ -211,11 +211,11 @@ exact signatures.
   try_from_native_material_contours, try_from_native_boundary_contours,
   try_from_boundary_paths, classify_point, signed_depth, signed_area,
   filled_area, boundary_profiles, materialized_boundary_paths,
-  segment_certified, offset, offset_with_certified_segmentation,
-  offset_with_certified_bezier_parallel}` is the mixed-family region API.
-  `offset` is the authoritative exact operation and takes an explicit
-  `OffsetCornerStyle2`; the certified methods are opt-in lossy adapters used
-  only when the exact kernel reports an unsupported carrier.
+  segment_certified, offset}` is the mixed-family region API. `offset` is the
+  sole region offset operation and takes an explicit `OffsetCornerStyle2`;
+  unsupported exact carriers remain explicit blockers. `segment_certified`
+  is a separate lossy output adapter and never participates in offset
+  topology.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
   intersection topology or regularized union, intersection, difference, and
   xor results. `BooleanOp` selects an operation; batched
