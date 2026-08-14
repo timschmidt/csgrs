@@ -51332,6 +51332,17 @@ fn represented_point_evidence_coordinates(
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         });
     }
+    if let RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) = point {
+        return match point.predicate_point_evidence(policy)? {
+            Classification::Decided(Some(point)) => {
+                represented_point_evidence_coordinates(&point, policy)
+            }
+            Classification::Decided(None) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        };
+    }
     if let RationalBezierIntersectionPointEvidence2::Similarity(point) = point {
         if point.data.policy != *policy {
             return Err(CurveError::Topology(
@@ -52593,11 +52604,45 @@ fn retained_point_evidence_equality_by_refinement(
             return Classification::Decided(true);
         }
     }
+    if let Some(equal) = represented_point_evidence_equality(first, second, policy) {
+        return Classification::Decided(equal);
+    }
     if terminal_refined && policy.permits_approximate_512() {
         policy.observe_approximate_512();
         Classification::Decided(true)
     } else {
         Classification::Uncertain(UncertaintyReason::Predicate)
+    }
+}
+
+/// Compares two retained affine points through their final exact algebraic
+/// coordinate representations.
+///
+/// Carrier-native incidence and interval separation remain the fast paths.
+/// This cold fallback is the common authority for equality cases whose boxes
+/// converge to the same point without ever becoming singleton `Real` boxes.
+/// `represented_roots_equal` applies the requested terminal policy, including
+/// APPROXIMATE_512 only after exact root comparison is exhausted.
+fn represented_point_evidence_equality(
+    first: &RationalBezierIntersectionPointEvidence2,
+    second: &RationalBezierIntersectionPointEvidence2,
+    policy: &CurveContext,
+) -> Option<bool> {
+    let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) = (
+        represented_point_evidence_coordinates(first, policy),
+        represented_point_evidence_coordinates(second, policy),
+    ) else {
+        return None;
+    };
+    let x = crate::bezier_arrangement::represented_roots_equal(&first[0], &second[0], policy);
+    if x == Some(false) {
+        return Some(false);
+    }
+    let y = crate::bezier_arrangement::represented_roots_equal(&first[1], &second[1], policy);
+    match (x, y) {
+        (Some(true), Some(true)) => Some(true),
+        (_, Some(false)) => Some(false),
+        _ => None,
     }
 }
 
@@ -55122,14 +55167,15 @@ impl BezierAnalyticParallelPoint2 {
         Arc::ptr_eq(&self.data, &other.data)
     }
 
-    /// Re-enters the ordinary one-parameter algebraic point authority when
-    /// this carrier is exactly a selected point on its rational source.
+    /// Re-enters the ordinary point authority when this retained analytic
+    /// point has an exact Cartesian or one-parameter algebraic form.
     ///
     /// This is a predicate-only normalization: the retained analytic point
-    /// remains authoritative.  It lets point/parallel incidence reuse the
-    /// existing selected-fiber ray kernel without constructing a second
-    /// two-parallel field or weakening equality under APPROXIMATE_512.
-    fn zero_frame_point_evidence(
+    /// remains authoritative. Exact parameters can evaluate any regular
+    /// zero-tangent-displacement parallel directly; zero-frame algebraic
+    /// parameters reuse the source's one-field point image. Both avoid a
+    /// second two-parallel field without weakening equality under policy.
+    fn predicate_point_evidence(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
@@ -55137,6 +55183,17 @@ impl BezierAnalyticParallelPoint2 {
             return Err(CurveError::Topology(
                 "analytic-parallel point entered a predicate under a different policy".into(),
             ));
+        }
+        match self.represented_point(policy)? {
+            Classification::Decided(Some(point)) => {
+                return Ok(Classification::Decided(Some(
+                    RationalBezierIntersectionPointEvidence2::Exact(point),
+                )));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
         let strict_zero =
             |value: &Real| real_sign(value, &CurveContext::STRICT) == Some(RealSign::Zero);
@@ -55471,7 +55528,7 @@ impl BezierSimilarityPoint2 {
             source @ (RationalBezierIntersectionPointEvidence2::Exact(_)
             | RationalBezierIntersectionPointEvidence2::Algebraic(_)) => source.clone(),
             RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
-                match point.zero_frame_point_evidence(policy)? {
+                match point.predicate_point_evidence(policy)? {
                     Classification::Decided(Some(point)) => point,
                     Classification::Decided(None) => {
                         return Ok(Classification::Decided(None));
@@ -55786,6 +55843,79 @@ impl BezierAlgebraicChordPairPoint2 {
                 policy: policy.retained_object_policy(),
             }),
         }
+    }
+
+    /// Classifies this exact supporting-line intersection against one finite
+    /// analytic parallel without flattening either selected endpoint field.
+    ///
+    /// The point belongs to both retained supporting lines, including when it
+    /// lies beyond either finite witness chord. Intersecting either complete
+    /// support with the finite parallel therefore gives a complete membership
+    /// test. If one projection is positive-dimensional, the other retained
+    /// line is nonparallel by construction and remains an independent exact
+    /// authority.
+    fn incidence_on_parallel(
+        &self,
+        parallel: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if !self.accepts_policy(policy) {
+            return Err(CurveError::Topology(
+                "correlated chord point entered parallel incidence under a different policy".into(),
+            ));
+        }
+        if let Classification::Decided(Some(point)) = self.exact_represented_point(policy)? {
+            return parallel.contains_point(&point, policy);
+        }
+
+        let query = RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(self.clone());
+        let mut uncertainty = None;
+        for chord in [&self.data.first, &self.data.second] {
+            let system = match chord.independent_parallel_incidence_system(parallel, policy)? {
+                Classification::Decided(system) => system,
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                    continue;
+                }
+            };
+            let intersections = match chord.parallel_intersections_in_domain(
+                parallel,
+                &system,
+                SelectedThirdAxisDomain2::UnitInterval,
+                false,
+                policy,
+            )? {
+                Classification::Decided(intersections) => intersections,
+                Classification::Uncertain(reason) => {
+                    uncertainty.get_or_insert(reason);
+                    continue;
+                }
+            };
+            let BezierAlgebraicChordParallelIntersections2::Contacts(contacts) = intersections
+            else {
+                uncertainty.get_or_insert(UncertaintyReason::Boundary);
+                continue;
+            };
+            let mut contact_uncertainty = None;
+            for contact in contacts {
+                match query.same_point(contact.point(), policy) {
+                    Classification::Decided(true) => {
+                        return Ok(Classification::Decided(true));
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        contact_uncertainty.get_or_insert(reason);
+                    }
+                }
+            }
+            if contact_uncertainty.is_none() {
+                return Ok(Classification::Decided(false));
+            }
+            uncertainty = uncertainty.or(contact_uncertainty);
+        }
+        Ok(Classification::Uncertain(
+            uncertainty.unwrap_or(UncertaintyReason::Predicate),
+        ))
     }
 
     fn translated(
@@ -65489,7 +65619,7 @@ impl BezierParallel2 {
                     self.contains_point(point, policy)
                 }
                 RationalBezierIntersectionPointEvidence2::AnalyticParallel(point) => {
-                    return match point.zero_frame_point_evidence(policy)? {
+                    return match point.predicate_point_evidence(policy)? {
                         Classification::Decided(Some(point)) => {
                             self.contains_point_evidence(&point, policy)
                         }
@@ -65510,8 +65640,10 @@ impl BezierParallel2 {
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     };
                 }
-                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
+                    point.incidence_on_parallel(self, policy)
+                }
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
@@ -94724,6 +94856,47 @@ mod conversion_tests {
         {
             Classification::Decided(Some(circle)) => circle,
             result => panic!("the dense chord-normal circle must construct: {result:?}"),
+        }
+    }
+
+    #[test]
+    fn analytic_parallel_classifies_correlated_chord_pair_points() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = dense_chord_normal_unit_semicircle(&policy);
+            let Classification::Decided(
+                center @ RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_),
+            ) = circle.center_point_evidence(&policy).unwrap()
+            else {
+                panic!("the dense chord-normal center must retain its chord pair");
+            };
+            let RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(pair) = &center else {
+                unreachable!()
+            };
+            assert!(matches!(
+                pair.exact_represented_point(&policy).unwrap(),
+                Classification::Decided(None)
+            ));
+
+            let parallel_line = |y: i8| {
+                QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(Point2::from_values(-2, y), Point2::from_values(2, y))
+                        .unwrap(),
+                )
+                .parallel_left(Real::zero())
+                .unwrap()
+            };
+            assert_eq!(
+                parallel_line(0)
+                    .contains_point_evidence(&center, &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+            assert_eq!(
+                parallel_line(1)
+                    .contains_point_evidence(&center, &policy)
+                    .unwrap(),
+                Classification::Decided(false),
+            );
         }
     }
 

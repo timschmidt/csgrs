@@ -1907,14 +1907,17 @@ fn retained_fragment_endpoint_evidence(
                 },
                 None => None,
             };
-            let retained_point = point.is_none().then(|| {
-                crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+            let retained_point = Some(match &point {
+                Some(point) => {
+                    crate::RationalBezierIntersectionPointEvidence2::Exact(point.clone())
+                }
+                None => crate::RationalBezierIntersectionPointEvidence2::AnalyticParallel(
                     crate::BezierAnalyticParallelPoint2::new(
                         fragment.parallel().clone(),
                         parameter.clone(),
                         policy,
                     ),
-                )
+                ),
             });
             Ok(RetainedEndpointEvidence {
                 point,
@@ -21065,6 +21068,131 @@ mod tests {
         }
     }
 
+    fn correlated_chord_pair_normal_circle(
+        policy: &CurveContext,
+    ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
+        let selected_point = |start: Point2, end: Point2, denominator| {
+            let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
+                .expect("the selected chord endpoint source is finite");
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source,
+                &positive_inverse_sqrt_parameter(denominator, policy),
+                policy,
+            )
+            .expect("the selected chord endpoint has exact evidence")
+            .expect("the selected chord endpoint remains representable")
+        };
+        let chord = |start, end| match crate::BezierAlgebraicChord2::try_new(start, end, policy)
+            .expect("the retained center support is valid")
+        {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => {
+                panic!("the retained center support must decide: {reason:?}")
+            }
+        };
+        let horizontal = chord(
+            selected_point(p(0, -1), p(-1, -1), 2),
+            selected_point(p(0, -1), p(1, -1), 3),
+        );
+        let vertical = chord(
+            selected_point(p(1, 0), p(1, -1), 5),
+            selected_point(p(1, 0), p(1, 1), 7),
+        );
+        let first = horizontal
+            .parallel_left_retained(Real::one(), policy)
+            .expect("the horizontal center support offsets exactly");
+        let second = vertical
+            .parallel_left_retained(Real::one(), policy)
+            .expect("the vertical center support offsets exactly");
+        let center = match first
+            .supporting_line_intersection(&second, policy)
+            .expect("the retained center supports intersect exactly")
+        {
+            Classification::Decided(Some(
+                center @ RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_),
+            )) => center,
+            result => panic!("the selected center must retain its chord pair: {result:?}"),
+        };
+        match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+            center,
+            horizontal,
+            Real::one(),
+            true,
+            policy,
+        )
+        .expect("the chord-pair-normal circle is exact")
+        {
+            Classification::Decided(Some(circle)) => circle,
+            result => panic!("the chord-pair-normal circle must construct: {result:?}"),
+        }
+    }
+
+    fn correlated_chord_pair_collapse_region(
+        policy: &CurveContext,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let circle = correlated_chord_pair_normal_circle(policy);
+        let start = p(0, 1);
+        let join = p(0, -1);
+        assert_eq!(
+            circle
+                .start_point_evidence(policy)
+                .expect("the selected start point is exact")
+                .map(|point| point.same_point(&start.clone().into(), policy)),
+            Classification::Decided(Classification::Decided(true)),
+        );
+        assert_eq!(
+            circle
+                .end_point_evidence(policy)
+                .expect("the selected end point is exact")
+                .map(|point| point.same_point(&join.clone().into(), policy)),
+            Classification::Decided(Classification::Decided(true)),
+        );
+        let line_end = p(-2, -1);
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(join.clone(), line_end.clone()).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .expect("the incident analytic line is regular");
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        let Classification::Decided(parallel) =
+            crate::BezierParallelFragment2::try_new(parallel, range, policy)
+                .expect("the incident analytic line range is valid")
+        else {
+            panic!("the incident analytic line must construct");
+        };
+        let mut fragments = vec![
+            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                crate::BezierAlgebraicCuspSemicircleFragment2::full(circle, policy),
+            ),
+            BezierSplitFragment2::AnalyticParallel(parallel),
+            quadratic_fragment(line_end, p(-2, 1), start),
+        ];
+        if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| fragment.reversed().expect("the retained loop reverses"))
+                .collect();
+        }
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the chord-pair/parallel loop closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![if reversed {
+                CurveBoundaryInteriorSide2::Left
+            } else {
+                CurveBoundaryInteriorSide2::Right
+            }],
+        )
+        .expect("the chord-pair/parallel loop has authored topology")
+    }
+
     fn selected_parallel_normal_circle(
         policy: &CurveContext,
     ) -> crate::bezier_offset::BezierAlgebraicCuspSemicircle2 {
@@ -21526,6 +21654,53 @@ mod tests {
                         )
                     );
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn collapsed_chord_pair_center_classifies_an_analytic_parallel() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = correlated_chord_pair_collapse_region(&policy, reversed);
+                let fragments = region.boundary_loops()[0].fragments();
+                let corner = (0..fragments.len())
+                    .find(|index| {
+                        matches!(
+                            (
+                                &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                &fragments[*index],
+                            ),
+                            (
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                                BezierSplitFragment2::AnalyticParallel(_),
+                            ) | (
+                                BezierSplitFragment2::AnalyticParallel(_),
+                                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                            )
+                        )
+                    })
+                    .expect("the retained circle/parallel corner is present");
+                let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        Real::one(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the collapsed chord-pair center must classify against its analytic parallel: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    result.value,
+                    CurveCornerSolutions2::NoSolution(
+                        crate::CurveCornerNoSolution2::DegenerateCandidate,
+                    )
+                );
             }
         }
     }
