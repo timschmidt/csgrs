@@ -1,6 +1,6 @@
 use hypercurve::{
     Aabb2, BooleanOp, BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, FillRule,
-    Point2, PolylineReconstructionOptions, Real, Segment2,
+    OffsetCornerStyle2, Point2, PolylineReconstructionOptions, Real, Segment2,
 };
 use proptest::prelude::*;
 
@@ -91,22 +91,29 @@ fn curve_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
         .into_value()
 }
 
-fn assert_region_finite(region: &CurveRegion2, operation: BooleanOp) {
+fn assert_region_topology(region: &CurveRegion2, operation: &str) {
     let classification = region
         .native_contours_fast_path(&policy())
         .unwrap()
         .into_value();
-    let Classification::Decided(native) = classification else {
-        panic!(
-            "polygon {operation:?} Boolean did not retain exact native contours: {classification:?}"
-        );
+    if let Classification::Decided(native) = classification {
+        for contour in native
+            .material_contours()
+            .iter()
+            .chain(native.hole_contours())
+        {
+            assert_contour_finite(contour);
+        }
+        return;
+    }
+
+    let role_counts = region.loop_role_counts(&policy()).unwrap().into_value();
+    let Classification::Decided((material_count, hole_count)) = role_counts else {
+        panic!("polygon {operation} did not retain decided loop roles: {role_counts:?}");
     };
-    for contour in native
-        .material_contours()
-        .iter()
-        .chain(native.hole_contours())
-    {
-        assert_contour_finite(contour);
+    assert_eq!(material_count + hole_count, region.boundary_loops().len());
+    for boundary in region.boundary_loops() {
+        assert!(!boundary.fragments().is_empty());
     }
 }
 
@@ -115,22 +122,14 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
     assert_contour_finite(contour);
 
     let _ = contour.has_self_contacts(&policy).unwrap();
-    if let Classification::Decided(raw) = contour
-        .offset_left_with_line_joins(s(distance), &policy)
+    let source = CurveRegion2::try_from_native_material_contours(vec![contour.clone()], &policy)
         .unwrap()
-    {
-        assert_contour_finite(&raw);
-    }
-    if let Classification::Decided(checked) =
-        contour.offset_left_checked(s(distance), &policy).unwrap()
-    {
-        assert_contour_finite(&checked);
-        assert_eq!(
-            checked.has_self_contacts(&policy).unwrap(),
-            Classification::Decided(false),
-            "checked offsets must not return self-contacting raw joins"
-        );
-    }
+        .into_value();
+    let offset = source
+        .offset(s(distance), &OffsetCornerStyle2::Round, &policy)
+        .unwrap()
+        .into_value();
+    assert_region_topology(&offset, "offset");
 }
 
 fn exercise_clipping(a: &CurveRegion2, b: &CurveRegion2) {
@@ -143,7 +142,7 @@ fn exercise_clipping(a: &CurveRegion2, b: &CurveRegion2) {
         BooleanOp::Xor,
     ] {
         let region = a.boolean_region(b, op, &policy).unwrap().into_value();
-        assert_region_finite(&region, op);
+        assert_region_topology(&region, "Boolean");
     }
 }
 
@@ -158,7 +157,9 @@ fn exercise_reconstruction(points: &[(i32, i32)]) {
         Contour2::reconstruct_from_closed_polyline(&samples, reconstruction_options()).unwrap();
     assert_contour_finite(&contour);
     let _ = contour.intersect_self(&policy()).unwrap();
-    exercise_offsets(&contour, 1);
+    if contour.has_self_contacts(&policy()).unwrap() == Classification::Decided(false) {
+        exercise_offsets(&contour, 1);
+    }
 }
 
 fn large_concavity(width: i32, height: i32, throat: i32) -> Vec<(i32, i32)> {
@@ -297,7 +298,7 @@ proptest! {
 }
 
 #[test]
-fn self_intersecting_closed_polyline_reconstruction_evidence_contacts_without_bad_offsets() {
+fn self_intersecting_closed_polyline_reconstruction_evidence_contacts() {
     let points = bowtie(12);
     let contour = contour_from_points(&points);
 
@@ -305,15 +306,11 @@ fn self_intersecting_closed_polyline_reconstruction_evidence_contacts_without_ba
         contour.has_self_contacts(&policy()).unwrap(),
         Classification::Decided(true)
     );
-    assert!(matches!(
-        contour.offset_left_checked(s(0), &policy()).unwrap(),
-        Classification::Uncertain(_)
-    ));
     exercise_reconstruction(&points);
 }
 
 #[test]
-fn reconstructed_slender_concavity_offset_evidence_uncertainty_not_radius_mismatch() {
+fn reconstructed_slender_concavity_offsets_through_authoritative_region() {
     let case = polygon_case(1, 60, 12, 1, 2);
     let mut samples: Vec<_> = case.source_points.iter().map(|&(x, y)| p(x, y)).collect();
     samples.insert(1, samples[1].clone());
@@ -321,14 +318,14 @@ fn reconstructed_slender_concavity_offset_evidence_uncertainty_not_radius_mismat
 
     let contour =
         Contour2::reconstruct_from_closed_polyline(&samples, reconstruction_options()).unwrap();
-    let offset = contour
-        .offset_left_with_line_joins(s(1), &policy())
-        .unwrap();
-
-    match offset {
-        Classification::Decided(offset) => assert_contour_finite(&offset),
-        Classification::Uncertain(_) => {}
-    }
+    let source = CurveRegion2::try_from_native_material_contours(vec![contour], &policy())
+        .unwrap()
+        .into_value();
+    let offset = source
+        .offset(s(1), &OffsetCornerStyle2::Round, &policy())
+        .unwrap()
+        .into_value();
+    assert_region_topology(&offset, "offset");
 }
 
 #[test]

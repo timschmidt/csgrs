@@ -516,23 +516,29 @@ fn benchmark_contour_offset(runner: &Runner) {
         .expect("valid hypercurve capsule contour");
     let cavalier_contour = cavalier_polyline(&points, Some(&bulges));
     let policy = CurveContext::STRICT;
-    let distance = real(5.0);
+    let distance = -real(5.0);
+    let hypercurve_region =
+        CurveRegion2::try_from_native_material_contours(vec![hypercurve_contour], &policy)
+            .expect("valid hypercurve capsule region")
+            .into_value();
 
-    let hypercurve_offset = hypercurve_contour
-        .offset_left_checked(distance.clone(), &policy)
+    let hypercurve_offset = hypercurve_region
+        .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
         .expect("hypercurve capsule offset completes");
-    assert!(matches!(hypercurve_offset, Classification::Decided(_)));
+    assert!(!hypercurve_offset.value.is_empty());
     assert!(!cavalier_contour.parallel_offset(5.0).is_empty());
 
     let name = "line_arc_offset/capsule_inward";
     runner.measure(name, "hypercurve", || {
-        let result = hypercurve_contour
-            .offset_left_checked(distance.clone(), &policy)
+        let result = hypercurve_region
+            .offset(distance.clone(), &OffsetCornerStyle2::Round, &policy)
             .expect("hypercurve capsule offset completes");
-        let Classification::Decided(result) = result else {
-            panic!("hypercurve capsule offset became uncertain");
-        };
-        result.len()
+        result
+            .value
+            .boundary_loops()
+            .iter()
+            .map(|boundary| boundary.fragments().len())
+            .sum::<usize>()
     });
     runner.measure(name, "cavalier_contours", || {
         cavalier_contour

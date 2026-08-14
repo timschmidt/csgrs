@@ -5,11 +5,10 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelIntersectionCandidates2,
     BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, BulgeVertex2, CircularArc2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2,
-    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
-    Similarity2,
+    BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
+    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -22,10 +21,6 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn q(numerator: i32, denominator: i32) -> Real {
     (s(numerator) / s(denominator)).expect("nonzero benchmark denominator")
-}
-
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
-    BulgeVertex2::new(p(x, y), s(bulge))
 }
 
 fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
@@ -272,85 +267,6 @@ fn bench_curve_string_square_cap_outline(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_square_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_contour_joined_offset(iterations: u32) -> CurveResult<()> {
-    let contour = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(10, 0, 0),
-        vertex(10, 7, 0),
-        vertex(0, 7, 0),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = contour.offset_left_with_line_joins(s(1), &policy)?
-        else {
-            panic!("contour_joined_offset became uncertain during benchmark");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "contour_joined_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_contour_checked_offset(iterations: u32) -> CurveResult<()> {
-    let contour = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(10, 0, 0),
-        vertex(10, 7, 0),
-        vertex(0, 7, 0),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = contour.offset_left_checked(s(1), &policy)? else {
-            panic!("contour_checked_offset became uncertain during benchmark");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "contour_checked_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_contour_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
-    let contour = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(10, 0, 0),
-        vertex(10, 7, 0),
-        vertex(0, 7, 0),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = contour.offset_left_checked(s(1), &policy)? else {
-            panic!("contour_checked_offset benchmark became uncertain");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "contour_checked_offset_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -1251,9 +1167,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     bench_curve_string_round_cap_outline_evidence(100_000)?;
     bench_curve_string_butt_cap_outline(100_000)?;
     bench_curve_string_square_cap_outline(100_000)?;
-    bench_contour_joined_offset(100_000)?;
-    bench_contour_checked_offset(100_000)?;
-    bench_contour_checked_offset_evidence(100_000)?;
     bench_exact_bezier_parallel_construction(100_000)?;
     bench_exact_bezier_parallel_evaluation(10_000)?;
     bench_bezier_parallel_cusp_isolation(100)?;

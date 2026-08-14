@@ -291,37 +291,6 @@ impl CurveString2 {
 }
 
 impl Contour2 {
-    /// Returns a left offset of this closed contour with straight-line joins.
-    ///
-    /// Line-line corners are mitered at the exact supporting-line intersection
-    /// whenever that relation can be classified. Joins that cannot be mitered
-    /// are connected by a circular arc centered at the original shared vertex.
-    /// The returned contour is checked for closure, but this method deliberately
-    /// does not trim self-intersections or resolve collapsed regions; those
-    /// operations belong to the later full offset pipeline described by profile-offset construction.
-    pub fn offset_left_with_line_joins(
-        &self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        if is_zero(&distance, policy) == Some(true) {
-            return Ok(Classification::Decided(self.clone()));
-        }
-
-        let offsets = match offset_segments_left(self.segments(), &distance, policy)? {
-            Classification::Decided(offsets) => offsets,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let joined =
-            match joined_offset_segments(self.segments(), &offsets, true, None, &distance, policy)?
-            {
-                Classification::Decided(joined) => joined,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        Ok(checked_joined_contour(joined, self.fill_rule())
-            .map(|offset| offset.retain_left_offset_from(self, distance, policy)))
-    }
-
     pub(crate) fn offset_left_with_corner_style(
         &self,
         distance: Real,
@@ -390,33 +359,6 @@ impl Contour2 {
                     .all(|join| matches!(join, OffsetJoin::Connected | OffsetJoin::Miter(_)))
             })
         })
-    }
-
-    /// Returns a raw joined left offset, rejecting self-contacting output.
-    ///
-    /// This method does not trim self-intersections. It runs the joined offset
-    /// construction and then classifies the result with
-    /// [`Contour2::has_self_contacts`]. A detected self contact is reported as
-    /// explicit uncertainty so callers do not mistake an untrimmed raw offset
-    /// for a regularized contour. This matches the standard offset-curve
-    /// treatment of self-intersections and extraneous loops as a separate
-    /// trimming stage, not a property of the primitive parallel curve itself.
-    pub fn offset_left_checked(
-        &self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        let offset = match self.offset_left_with_line_joins(distance, policy)? {
-            Classification::Decided(offset) => offset,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        match offset.has_self_contacts(policy)? {
-            Classification::Decided(false) => Ok(Classification::Decided(offset)),
-            Classification::Decided(true) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
     }
 }
 

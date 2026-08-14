@@ -441,7 +441,7 @@ impl PlineBooleanScene {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum OffsetMode {
     Offset,
-    RawOffset,
+    HypercurveOffset,
     RawOffsetSegments,
     Outline,
 }
@@ -450,7 +450,7 @@ impl OffsetMode {
     fn label(self) -> &'static str {
         match self {
             Self::Offset => "Offset",
-            Self::RawOffset => "Raw Offset",
+            Self::HypercurveOffset => "Hypercurve Offset",
             Self::RawOffsetSegments => "Raw Offset Segments",
             Self::Outline => "Open Outline",
         }
@@ -529,7 +529,7 @@ impl PlineOffsetScene {
                         .show_ui(ui, |ui| {
                             for mode in [
                                 OffsetMode::Offset,
-                                OffsetMode::RawOffset,
+                                OffsetMode::HypercurveOffset,
                                 OffsetMode::RawOffsetSegments,
                                 OffsetMode::Outline,
                             ] {
@@ -595,7 +595,7 @@ impl PlineOffsetScene {
     fn build_offset_state(&self) -> Result<Vec<Polyline>, String> {
         let source = &self.polylines[0];
         match self.mode {
-            OffsetMode::RawOffset => Ok(source.raw_offset(self.offset)?.into_iter().collect()),
+            OffsetMode::HypercurveOffset => source.hypercurve_offset(self.offset),
             OffsetMode::RawOffsetSegments => source.raw_offset_segments(self.offset),
             OffsetMode::Outline => Ok(source
                 .outline(self.offset.abs().max(0.001), OffsetCap::Round)?

@@ -5,10 +5,10 @@ use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
     ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
-    ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
-    CurveContext, CurvePath2, CurvePreviewOptions, CurveRegion2, CurveRegionLoopRole, CurveString2,
-    FillRule, LineSeg2, OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
-    Segment2,
+    ContourSplitMarkers, CubicBezier2, Curve2, CurveContext, CurveGeometry2,
+    CurveIntersectionPairBlockerKind2, CurvePath2, CurvePreviewOptions, CurveRegion2,
+    CurveRegionLoopRole, CurveString2, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
 };
 use serde::{Deserialize, Serialize};
 
@@ -667,18 +667,6 @@ impl Polyline {
     }
 
     #[cfg(test)]
-    pub fn offset_checked(&self, distance: f64) -> Result<Option<Self>, String> {
-        let contour = self.to_contour()?;
-        let distance = real_checked(distance, "offset distance")?;
-        match preview(|context| contour.offset_left_checked(distance, context))
-            .map_err(|e| e.to_string())?
-        {
-            Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
-            Classification::Uncertain(_) => Ok(None),
-        }
-    }
-
-    #[cfg(test)]
     pub fn offset_for_display(&self, distance: f64) -> Result<Option<Self>, String> {
         Ok(self.offsets_for_display(distance)?.into_iter().next())
     }
@@ -693,28 +681,39 @@ impl Polyline {
             return Ok(shape_from_geo(&buffered).into_polylines());
         }
 
-        Ok(self.raw_offset(distance)?.into_iter().collect())
+        self.hypercurve_offset(distance)
     }
 
-    pub fn raw_offset(&self, distance: f64) -> Result<Option<Self>, String> {
-        let distance = real_checked(distance, "offset distance")?;
+    pub fn hypercurve_offset(&self, distance: f64) -> Result<Vec<Self>, String> {
         if self.is_closed {
             let contour = self.to_contour()?;
-            match preview(|context| contour.offset_left_with_line_joins(distance, context))
-                .map_err(|e| e.to_string())?
-            {
-                Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
-                Classification::Uncertain(_) => Ok(None),
-            }
+            let filled_distance = real_checked(
+                left_offset_buffer_distance(self, distance),
+                "offset distance",
+            )?;
+            let offset = preview(|context| {
+                let source = CurveRegion2::try_from_native_material_contours(
+                    vec![contour.clone()],
+                    context,
+                )?
+                .into_value();
+                source.offset(filled_distance.clone(), &OffsetCornerStyle2::Round, context)
+            })
+            .map_err(|error| error.to_string())?
+            .into_value();
+            Ok(Shape::from_curve_region(&offset)?
+                .map(Shape::into_polylines)
+                .unwrap_or_default())
         } else {
             let curve = self.to_curve_string()?;
+            let distance = real_checked(distance, "offset distance")?;
             match preview(|context| curve.offset_left_with_line_joins(distance, context))
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(curve) => {
-                    Ok(Some(Self::from_segments(curve.segments(), false)))
+                    Ok(vec![Self::from_segments(curve.segments(), false)])
                 }
-                Classification::Uncertain(_) => Ok(None),
+                Classification::Uncertain(_) => Ok(Vec::new()),
             }
         }
     }
@@ -1769,13 +1768,9 @@ mod tests {
     const GEOM_EPS: f64 = 1e-7;
 
     #[test]
-    fn display_offset_clips_default_article_shape_instead_of_showing_raw_self_contacts() {
+    fn display_offset_clips_default_article_shape() {
         let source = default_article_polyline();
 
-        assert!(
-            source.offset_checked(1.0).unwrap().is_none(),
-            "the raw hypercurve offset should be recognized as needing clipping"
-        );
         assert!(source.offset_for_display(1.0).unwrap().is_some());
         assert_valid_offset_set(&source.offsets_for_display(1.0).unwrap(), true);
     }

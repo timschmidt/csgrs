@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveString2, LineSeg2,
-    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
+    CircularArc2, Classification, CurveContext, CurveString2, LineSeg2, OffsetCap, Point2, Real,
+    Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -13,10 +13,6 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
-}
-
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
-    BulgeVertex2::new(p(x, y), s(bulge))
 }
 
 fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
@@ -581,79 +577,6 @@ fn curve_string_square_cap_outline_rejects_self_contacting_input() {
 
     assert_eq!(
         curve.offset_outline_square_caps(s(1), &policy()).unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
-fn contour_offset_miters_closed_rectangle_inward() {
-    let rectangle = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(4, 0, 0),
-        vertex(4, 4, 0),
-        vertex(0, 4, 0),
-    ])
-    .unwrap();
-    let Classification::Decided(offset) = rectangle
-        .offset_left_with_line_joins(s(1), &policy())
-        .unwrap()
-    else {
-        panic!("rectangle offset should be decided");
-    };
-
-    assert_eq!(offset.len(), 4);
-    assert_line(&offset.segments()[0], p(1, 1), p(3, 1));
-    assert_line(&offset.segments()[1], p(3, 1), p(3, 3));
-    assert_line(&offset.segments()[2], p(3, 3), p(1, 3));
-    assert_line(&offset.segments()[3], p(1, 3), p(1, 1));
-}
-
-#[test]
-fn contour_joined_offset_rejects_collapsed_line_miter() {
-    let rectangle = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(2, 0, 0),
-        vertex(2, 2, 0),
-        vertex(0, 2, 0),
-    ])
-    .unwrap();
-
-    assert_eq!(
-        rectangle
-            .offset_left_with_line_joins(s(1), &policy())
-            .unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
-fn contour_checked_offset_accepts_simple_rectangle() {
-    let rectangle = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(6, 0, 0),
-        vertex(6, 6, 0),
-        vertex(0, 6, 0),
-    ])
-    .unwrap();
-
-    let Classification::Decided(offset) = rectangle.offset_left_checked(s(1), &policy()).unwrap()
-    else {
-        panic!("simple rectangle checked offset should be decided");
-    };
-    assert_eq!(offset.len(), 4);
-}
-#[test]
-fn contour_checked_offset_rejects_self_contacting_result() {
-    let bowtie = Contour2::from_bulge_vertices(&[
-        vertex(0, 0, 0),
-        vertex(4, 4, 0),
-        vertex(0, 4, 0),
-        vertex(4, 0, 0),
-    ])
-    .unwrap();
-
-    assert_eq!(
-        bowtie.offset_left_checked(s(0), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
