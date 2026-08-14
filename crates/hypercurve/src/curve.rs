@@ -5082,6 +5082,13 @@ impl FilletCenters2 {
             .chain(self.second.iter())
             .chain(self.overflow.iter())
     }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut FilletCenterWitness2> {
+        self.first
+            .iter_mut()
+            .chain(self.second.iter_mut())
+            .chain(self.overflow.iter_mut())
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -5198,8 +5205,44 @@ fn solve_carrier_fillet_corner(
                             FilletOffsetCarrier2::Arc { .. }
                         )
                     );
+                    let cusp_and_line = matches!(
+                        (&previous_offset, &next_offset),
+                        (
+                            FilletOffsetCarrier2::AlgebraicCusp { .. },
+                            FilletOffsetCarrier2::Line { .. }
+                        )
+                    ) || matches!(
+                        (&previous_offset, &next_offset),
+                        (
+                            FilletOffsetCarrier2::Line { .. },
+                            FilletOffsetCarrier2::AlgebraicCusp { .. }
+                        )
+                    );
                     let (first, first_is_previous, first_family, second, second_family) =
-                        if (previous_is_cusp && !next_is_cusp) || previous_chord_anchors_on_next_arc
+                        if cusp_and_line {
+                            // The line is transiently lowered to a chord for
+                            // center incidence. Keep the selected circle as
+                            // the reconstruction anchor so its mapped radial
+                            // field remains authoritative.
+                            if previous_is_cusp {
+                                (
+                                    &previous_offset,
+                                    true,
+                                    previous_family,
+                                    &next_offset,
+                                    next_family,
+                                )
+                            } else {
+                                (
+                                    &next_offset,
+                                    false,
+                                    next_family,
+                                    &previous_offset,
+                                    previous_family,
+                                )
+                            }
+                        } else if (previous_is_cusp && !next_is_cusp)
+                            || previous_chord_anchors_on_next_arc
                         {
                             (
                                 &next_offset,
@@ -5319,10 +5362,8 @@ fn solve_carrier_fillet_corner(
 
 struct RetainedFilletCuspRationalContact2 {
     other_parameter: CurveRegionParameter2,
-    construction_parameter: Option<BezierParameter2>,
     cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
     point: RationalBezierIntersectionPointEvidence2,
-    selected_tangent_relation: Option<(RealSign, RealSign)>,
 }
 
 struct RetainedFilletCuspRationalContacts2 {
@@ -5797,8 +5838,7 @@ fn retained_fillet_cusp_rational_contacts(
     let mut retain_contact =
         |other_parameter: CurveRegionParameter2,
          cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-         point: RationalBezierIntersectionPointEvidence2,
-         selected_tangent_relation: Option<(RealSign, RealSign)>| {
+         point: RationalBezierIntersectionPointEvidence2| {
             let other_at_boundary = |boundary: &CurveRegionParameter2| {
                 other_parameter
                     .cmp_by_refinement(boundary, policy)
@@ -5831,10 +5871,8 @@ fn retained_fillet_cusp_rational_contacts(
                 Classification::Decided(true) => {
                     retained.push(RetainedFilletCuspRationalContact2 {
                         other_parameter,
-                        construction_parameter: None,
                         cusp_parameter,
                         point,
-                        selected_tangent_relation,
                     });
                     Ok(())
                 }
@@ -5879,9 +5917,6 @@ fn retained_fillet_cusp_rational_contacts(
                     CurveRegionParameter2::from_bezier(contact.other_parameter),
                     cusp_parameter,
                     contact.point,
-                    contact
-                        .tangent_dot_sign
-                        .map(|dot| (contact.tangent_cross_sign, dot)),
                 )?;
             }
         }
@@ -5889,27 +5924,12 @@ fn retained_fillet_cusp_rational_contacts(
             contacts,
         ) => {
             for contact in contacts {
-                let tangent_dot = match contact
-                    .tangent_dot_sign(policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            reason,
-                        ));
-                    }
-                };
                 retain_contact(
                     CurveRegionParameter2::from_selected_fiber(
                         contact.other_parameter().clone(),
                     ),
                     contact.cusp_parameter(),
                     contact.point_evidence(),
-                    Some((contact.tangent_cross_sign(), tangent_dot)),
                 )?;
             }
         }
@@ -5992,7 +6012,6 @@ fn retained_fillet_cusp_rational_contacts(
                 crate::UncertaintyReason::Unsupported,
             )
         })?;
-        contact.construction_parameter = Some(parameter);
     }
     Ok(RetainedFilletCuspRationalContacts2 {
         contacts: retained,
@@ -7459,122 +7478,121 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
         | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Line { .. }) => {
-            let (line, line_source, cusp_source, cusp, line_is_previous) = match (previous, next) {
-                (
-                    FilletOffsetCarrier2::Line {
-                        source, support, ..
-                    },
-                    FilletOffsetCarrier2::AlgebraicCusp {
-                        source: cusp_source,
-                        support: cusp,
-                    },
-                ) => (support, source, cusp_source, cusp, true),
-                (
-                    FilletOffsetCarrier2::AlgebraicCusp {
-                        source: cusp_source,
-                        support: cusp,
-                    },
-                    FilletOffsetCarrier2::Line {
-                        source, support, ..
-                    },
-                ) => (support, source, cusp_source, cusp, false),
-                _ => unreachable!(),
-            };
-            let cusp_family = if line_is_previous {
-                next_family
-            } else {
+            let (line_source, line_support, line_signed_distance, line_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::Line {
+                            source,
+                            support,
+                            signed_distance,
+                            ..
+                        },
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source: _,
+                            support: _,
+                        },
+                    ) => (source, support, signed_distance, true),
+                    (
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source: _,
+                            support: _,
+                        },
+                        FilletOffsetCarrier2::Line {
+                            source,
+                            support,
+                            signed_distance,
+                            ..
+                        },
+                    ) => (source, support, signed_distance, false),
+                    _ => unreachable!(),
+                };
+            // Lower every represented line to the authoritative chord cell.
+            // TrimOnly selects its finite domain; TrimOrExtend selects both
+            // selected-circle charts and the complete affine support. Keeping
+            // those policies in one cell prevents the old rational-line fast
+            // path from reaching a different exactness decision. Final cut
+            // publication still uses the original line carrier.
+            let line_family = if line_is_previous {
                 previous_family
+            } else {
+                next_family
             };
-            let cusp_support_reverses_source = retained_fillet_cusp_support_reverses_source(
-                cusp_source,
-                cusp,
-                cusp_family,
-                policy,
-            )?;
-            let rational_line = RationalBezier2::try_new(
-                vec![line.start().clone(), line.end().clone()],
-                vec![Real::one(), Real::one()],
-            )
-            .map_err(|cause| {
-                ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
-            })?;
-            let contacts = retained_fillet_cusp_rational_contacts(
-                cusp,
-                &rational_line,
-                true,
-                true,
-                true,
-                true,
-                cusp_family,
-                policy,
-            )?;
-            if contacts.coincident {
-                return Err(ExactCurveError::invalid(
+            let source_chord = match line_source.algebraic_chord() {
+                Some(source) => source.clone(),
+                None => algebraic_chord_from_line_support(
+                    line_source
+                        .native_line()
+                        .expect("a represented line carrier retains one source line"),
                     CurveOperation2::Fillet,
+                    line_family,
+                    policy,
+                )?,
+            };
+            let retained_support = source_chord
+                .parallel_left_retained(line_signed_distance.clone(), policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                })?;
+            // Keep canonical-Real line endpoints as the intersection hot
+            // path while retaining the procedural normal-offset support as
+            // ancestry. The former selects the compact selected-fiber line
+            // kernel; the latter is the exact tangent relation needed when a
+            // recursively selected terminal circle is reconstructed.
+            let support_chord = retained_support
+                .chord_between_certified_ordered_support_points(
+                    RationalBezierIntersectionPointEvidence2::Exact(line_support.start().clone()),
+                    RationalBezierIntersectionPointEvidence2::Exact(line_support.end().clone()),
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, line_family, cause)
+                })?;
+            let promoted = FilletOffsetCarrier2::AlgebraicChord {
+                source: &source_chord,
+                support: support_chord,
+                signed_distance: line_signed_distance.clone(),
+            };
+            let mut promoted_centers = if line_is_previous {
+                fillet_offset_centers(&promoted, next, mode, previous_family, next_family, policy)
+            } else {
+                fillet_offset_centers(
+                    previous,
+                    &promoted,
+                    mode,
                     previous_family,
-                    CurveError::Topology(
-                        "a nonzero selected fillet offset circle overlapped a line".into(),
-                    ),
-                ));
-            }
-            let center_parallel = BezierParallel2::from_source(
-                crate::BezierParallelSource2::Rational(rational_line),
-                Real::zero(),
-            );
-            for contact in contacts.contacts {
-                let RetainedFilletCuspRationalContact2 {
-                    other_parameter,
-                    construction_parameter,
-                    cusp_parameter,
-                    point,
-                    selected_tangent_relation,
-                } = contact;
-                let native_line = line_source.native_line().is_some();
-                let center_parameter = construction_parameter
-                    .or_else(|| other_parameter.as_bezier_parameter().cloned());
-                let line_parameter = native_line.then_some(other_parameter);
-                let retained_anchor_evidence = match (center_parameter, selected_tangent_relation) {
-                    (Some(parameter), Some((mut cross, mut dot))) => {
-                        if cusp_support_reverses_source {
-                            cross = reverse_fillet_sign(cross);
-                            dot = reverse_fillet_sign(dot);
-                        }
-                        Some(RetainedFilletAnchorEvidence2 {
-                            // The rational map reports cusp x line; the line
-                            // supplies the retained radial frame.
-                            cross: Some(reverse_fillet_sign(cross)),
-                            dot: Some(dot),
-                            center_parallel: Some(RetainedFilletCenterParallel2 {
-                                support: center_parallel.clone(),
-                                parameter: Some(parameter),
-                            }),
-                            source_direction: Some(RealSign::Positive),
-                            canonical_anchor_curve: None,
-                            deferred_arc_contact: None,
-                        })
-                    }
-                    (None, Some(_)) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            cusp_family,
-                            crate::UncertaintyReason::Unsupported,
-                        ));
-                    }
-                    _ => None,
-                };
-                let cusp_parameter = CurveRegionParameter2::from_algebraic_cusp(cusp_parameter);
-                let (previous_parameter, next_parameter) = if line_is_previous {
-                    (line_parameter, Some(cusp_parameter))
+                    next_family,
+                    policy,
+                )
+            }?;
+            // An algebraic-chord source can transfer the transient offset
+            // chord's certified order directly back to its authored support.
+            // A native line instead retains the selected-fiber scalar used by
+            // its public parameter domain. In both cases parallel translation
+            // preserves the affine coordinate without a new point-equality
+            // solve.
+            for center in promoted_centers.iter_mut() {
+                let line_parameter = if line_is_previous {
+                    center.previous_parameter.as_ref()
                 } else {
-                    (Some(cusp_parameter), line_parameter)
+                    center.next_parameter.as_ref()
                 };
-                centers.push(FilletCenterWitness2 {
-                    point,
-                    previous_parameter,
-                    next_parameter,
-                    retained_anchor_evidence,
+                let selected_line_parameter = line_parameter
+                    .and_then(CurveRegionParameter2::as_algebraic_chord)
+                    .and_then(|parameter| parameter.point().as_algebraic_cusp_chord())
+                    .and_then(|point| point.selected_fiber_line_parameter())
+                    .map(CurveRegionParameter2::from_selected_fiber);
+                let retained_line_parameter = selected_line_parameter.or_else(|| {
+                    line_source
+                        .algebraic_chord()
+                        .and_then(|_| line_parameter.cloned())
                 });
+                if line_is_previous {
+                    center.previous_parameter = retained_line_parameter;
+                } else {
+                    center.next_parameter = retained_line_parameter;
+                }
             }
+            return Ok(promoted_centers);
         }
         (
             FilletOffsetCarrier2::AlgebraicCusp {
@@ -8999,6 +9017,7 @@ fn fillet_cut_from_center(
                 return algebraic_chord_fillet_cut_from_center(
                     source,
                     center,
+                    retained_parameter,
                     unit_x,
                     unit_y,
                     signed_distance,
@@ -9300,11 +9319,12 @@ fn fillet_cut_from_center(
             } else if strict_support_interior == Classification::Decided(true) {
                 CornerPlacement2::Trim
             } else {
-                match source
+                let source_contains = source
                     .contains_parameter(&parameter, false, false, policy)
                     .map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })? {
+                    })?;
+                match source_contains {
                     Classification::Decided(true) => CornerPlacement2::Trim,
                     Classification::Decided(false) => {
                         let endpoint_order = |endpoint| {
@@ -9324,8 +9344,10 @@ fn fillet_cut_from_center(
                                     }
                                 })
                         };
-                        if endpoint_order(source.start_parameter())? == std::cmp::Ordering::Equal
-                            || endpoint_order(source.end_parameter())? == std::cmp::Ordering::Equal
+                        let start_order = endpoint_order(source.start_parameter())?;
+                        let end_order = endpoint_order(source.end_parameter())?;
+                        if start_order == std::cmp::Ordering::Equal
+                            || end_order == std::cmp::Ordering::Equal
                         {
                             return Ok(None);
                         }
@@ -9353,24 +9375,49 @@ fn fillet_cut_from_center(
             } else {
                 (support.semicircle(), source.semicircle())
             };
-            let point = match parameter
-                .concentric_offset_point_evidence(support_semicircle, source_semicircle, policy)
-                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-            {
-                Classification::Decided(Some(point)) => point,
-                Classification::Decided(None) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        crate::UncertaintyReason::Unsupported,
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        family,
-                        reason,
-                    ));
+            let point = if let (Some(center), Some(support_center)) = (
+                center.as_exact(),
+                support_semicircle
+                    .exact_rational_center(policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?,
+            ) {
+                // The selected offset contact and circle center already live
+                // in canonical Real. Replay the concentric radial map there
+                // instead of wrapping the same coordinates in a selected
+                // point image that reconstruction would immediately have to
+                // eliminate again.
+                let radial_scale = (source_semicircle.radial_distance()
+                    / support_semicircle.radial_distance())
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
+                })?;
+                let radial = center.delta_from(&support_center);
+                RationalBezierIntersectionPointEvidence2::Exact(
+                    support_center.translated(&radial.0 * &radial_scale, &radial.1 * radial_scale),
+                )
+            } else {
+                match parameter
+                    .concentric_offset_point_evidence(support_semicircle, source_semicircle, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })? {
+                    Classification::Decided(Some(point)) => point,
+                    Classification::Decided(None) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            crate::UncertaintyReason::Unsupported,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            family,
+                            reason,
+                        ));
+                    }
                 }
             };
             Ok(Some(CornerCut2 {
@@ -9390,6 +9437,7 @@ fn fillet_cut_from_center(
 fn algebraic_chord_fillet_cut_from_center(
     source: &crate::BezierAlgebraicChord2,
     center: &RationalBezierIntersectionPointEvidence2,
+    retained_parameter: Option<&CurveRegionParameter2>,
     unit_x: &Real,
     unit_y: &Real,
     signed_distance: &Real,
@@ -9415,6 +9463,43 @@ fn algebraic_chord_fillet_cut_from_center(
             ));
         }
     };
+    if let Some(retained_parameter) = retained_parameter
+        && retained_parameter.is_selected_fiber()
+    {
+        let Some(placement) = curve_region_corner_parameter_placement(
+            retained_parameter,
+            previous,
+            mode,
+            CurveOperation2::Fillet,
+            family,
+            policy,
+        )?
+        else {
+            return Ok(None);
+        };
+        let parameter = source
+            .parameter_at_certified_support_point(point.clone(), policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
+        return Ok(Some(CornerCut2 {
+            point,
+            parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+            placement,
+        }));
+    }
+    if let Some(retained_parameter) =
+        retained_parameter.and_then(CurveRegionParameter2::as_algebraic_chord)
+    {
+        return algebraic_chord_corner_cut_from_parallel_parameter(
+            source,
+            point,
+            retained_parameter,
+            previous,
+            mode,
+            CurveOperation2::Fillet,
+            family,
+            policy,
+        );
+    }
     algebraic_chord_corner_cut_from_support_point(
         source,
         point,
@@ -9424,6 +9509,65 @@ fn algebraic_chord_fillet_cut_from_center(
         family,
         policy,
     )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn algebraic_chord_corner_cut_from_parallel_parameter(
+    source: &crate::BezierAlgebraicChord2,
+    point: RationalBezierIntersectionPointEvidence2,
+    retained_parameter: &crate::bezier_offset::BezierAlgebraicChordParameter2,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CornerCut2>> {
+    let retained_chord = retained_parameter.chord();
+    let reversed = retained_chord
+        .retained_normal_offset_tangent_reversal_to(source)
+        .ok_or_else(|| {
+            ExactCurveError::invalid(
+                operation,
+                family,
+                CurveError::Topology(
+                    "a retained fillet contact did not descend from its source chord".into(),
+                ),
+            )
+        })?;
+    let compare = |boundary| {
+        retained_parameter
+            .cmp_by_refinement(boundary, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))
+            .and_then(|order| match order {
+                Classification::Decided(order) => Ok(order),
+                Classification::Uncertain(reason) => {
+                    Err(ExactCurveError::blocked(operation, family, reason))
+                }
+            })
+    };
+    let start = retained_chord.start_parameter();
+    let end = retained_chord.end_parameter();
+    let start_order = compare(&start)?;
+    let end_order = compare(&end)?;
+    let extends_toward_higher_parameter = previous != reversed;
+    let placement = if start_order.is_gt() && end_order.is_lt() {
+        CornerPlacement2::Trim
+    } else if mode == CurveCornerMode2::TrimOrExtend
+        && ((extends_toward_higher_parameter && end_order.is_gt())
+            || (!extends_toward_higher_parameter && start_order.is_lt()))
+    {
+        CornerPlacement2::Extension
+    } else {
+        return Ok(None);
+    };
+    let parameter = source
+        .parameter_at_certified_support_point(point.clone(), policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+    Ok(Some(CornerCut2 {
+        point,
+        parameter: Some(CurveRegionParameter2::from_algebraic_chord(parameter)),
+        placement,
+    }))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -11818,6 +11962,112 @@ mod tests {
                     retained_extension.candidate_count()
                 );
                 assert!(direct_extension.candidate_count() > 0);
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_native_line_share_projective_fillet_extension() {
+        let start = Point2::new((-Real::one() / Real::from(2_i8)).unwrap(), Real::zero());
+        let end = Point2::new(
+            (-Real::from(5_i8) / Real::from(2_i8)).unwrap(),
+            Real::zero(),
+        );
+        let line = LineSeg2::try_new(start.clone(), end.clone()).unwrap();
+        let reversed_line = line.reversed();
+        let direct = Curve2::from(QuadraticBezier2::new(
+            start,
+            Point2::new(
+                (-Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+            ),
+            end,
+        ));
+        let reversed_direct = Curve2::from(match direct.geometry() {
+            CurveGeometry2::QuadraticBezier(source) => {
+                source.reversed_with_retained_provenance().unwrap()
+            }
+            _ => unreachable!(),
+        });
+        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = rationalizable_selected_semicircle(&policy);
+            let fragment = match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                semicircle,
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+                false,
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(fragment) => fragment,
+                Classification::Uncertain(reason) => {
+                    panic!("the selected source half must decide: {reason:?}")
+                }
+            };
+            for reversed in [false, true] {
+                let solve = |native: bool, mode| {
+                    match (native, reversed) {
+                        (true, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment),
+                            ExactCornerCarrier2::Line(&line),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::RationalBezier,
+                            CurveFamily2::Line,
+                            &policy,
+                        ),
+                        (true, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Line(&reversed_line),
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::Line,
+                            CurveFamily2::RationalBezier,
+                            &policy,
+                        ),
+                        (false, false) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment),
+                            ExactCornerCarrier2::Bezier(&direct),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::RationalBezier,
+                            CurveFamily2::QuadraticBezier,
+                            &policy,
+                        ),
+                        (false, true) => solve_exact_fillet_corner(
+                            ExactCornerCarrier2::Bezier(&reversed_direct),
+                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            &radius,
+                            RealSign::Positive,
+                            mode,
+                            CurveFamily2::QuadraticBezier,
+                            CurveFamily2::RationalBezier,
+                            &policy,
+                        ),
+                    }
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the selected-circle/line extension kernel must decide: policy={policy:?}, reversed={reversed}, native={native}, mode={mode:?}, error={error:?}"
+                        )
+                    })
+                };
+                let direct_trim = solve(false, CurveCornerMode2::TrimOnly);
+                let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
+                let native_trim = solve(true, CurveCornerMode2::TrimOnly);
+                let native_extension = solve(true, CurveCornerMode2::TrimOrExtend);
+                assert_eq!(native_trim.candidate_count(), direct_trim.candidate_count());
+                assert_eq!(
+                    native_extension.candidate_count(),
+                    direct_extension.candidate_count(),
+                    "the native fast path must enumerate both selected-circle charts",
+                );
+                assert!(native_extension.candidate_count() > native_trim.candidate_count());
             }
         }
     }

@@ -10688,7 +10688,7 @@ impl CurveRegion2 {
             if !candidate_valid {
                 return Ok(None);
             }
-            self.rebuild_retained_corner(
+            let rebuilt = self.rebuild_retained_corner(
                 loop_index,
                 vertex_index,
                 previous_cut,
@@ -10698,8 +10698,8 @@ impl CurveRegion2 {
                 next_replacement,
                 CurveOperation2::Fillet,
                 policy,
-            )
-            .map(Some)
+            )?;
+            Ok(Some(rebuilt))
         })?;
         Ok(compact_optional_corner_solutions(solutions))
     }
@@ -12071,15 +12071,36 @@ impl CurveRegion2 {
         candidate_valid: &mut bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        // Prefer the ordinary exact-Real arc authority whenever every retained
+        // point already has a STRICT standalone witness.  This is not an
+        // approximation or a field flattening: algebraic images enter only
+        // when both Cartesian coordinates reduce exactly to the canonical
+        // scalar.  Genuinely selected or correlated points continue through
+        // the procedural circle publisher below.
+        let exact_point = |point: &RationalBezierIntersectionPointEvidence2| match point {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Some(point.clone()),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                point.exact_rational_point(&CurveContext::STRICT)
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+            | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+        };
+        let represented_previous = exact_point(&previous_cut.point);
+        let represented_next = exact_point(&next_cut.point);
+        let represented_center = exact_point(&center);
         let deferred_arc_contact = retained_frame
             .as_ref()
             .and_then(|frame| frame.anchor_evidence.as_ref())
             .and_then(|evidence| evidence.deferred_arc_contact.as_ref());
         if let (Some(deferred), Some(previous_point), Some(next_point), Some(center)) = (
             deferred_arc_contact,
-            previous_cut.point.as_exact(),
-            next_cut.point.as_exact(),
-            center.as_exact(),
+            represented_previous.as_ref(),
+            represented_next.as_ref(),
+            represented_center.as_ref(),
         ) {
             let fillet = CircularArc2::new_with_certified_radius(
                 previous_point.clone(),
@@ -12142,9 +12163,9 @@ impl CurveRegion2 {
         let has_deferred_arc_contact = deferred_arc_contact.is_some();
         if !has_deferred_arc_contact
             && let (Some(previous_point), Some(next_point), Some(center)) = (
-                previous_cut.point.as_exact(),
-                next_cut.point.as_exact(),
-                center.as_exact(),
+                represented_previous.as_ref(),
+                represented_next.as_ref(),
+                represented_center.as_ref(),
             )
         {
             let arc = CircularArc2::new_with_certified_radius(
@@ -12470,7 +12491,8 @@ impl CurveRegion2 {
                 ..
             } = other_fragment
                 && line.retained_exact_line_image().is_some()
-                && other_cut.parameter.as_algebraic_chord().is_some()
+                && (other_cut.parameter.as_algebraic_chord().is_some()
+                    || other_cut.parameter.is_selected_fiber())
             {
                 let support = retained_algebraic_line_support(
                     line.retained_exact_line_image()
@@ -20963,10 +20985,9 @@ mod tests {
             SelectedCircleFilletNeighbor2::DirectLine => BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(Real::zero()),
                 end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                    join.clone(),
-                    join.lerp(&arc_end, q(1, 2)),
-                    arc_end.clone(),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(join.clone(), arc_end.clone())
+                        .expect("the neighboring exact line is nondegenerate"),
                 )),
             },
         };
@@ -21560,7 +21581,11 @@ mod tests {
                                 "the collapsed selected-circle center must classify against {name}: policy={policy:?}, reversed={reversed}, error={error:?}"
                             )
                         });
-                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        result.certainty,
+                        CurveCertainty::Certified,
+                        "policy={policy:?}, reversed={reversed}, neighbor={name}"
+                    );
                     assert_eq!(
                         result.value,
                         CurveCornerSolutions2::NoSolution(
@@ -21937,6 +21962,58 @@ mod tests {
                         });
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_promoted_line_extend_through_the_chord_support_cell() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let promoted_line = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::DirectLine,
+                    reversed,
+                );
+                let retained_line = selected_circle_neighbor_region(
+                    &policy,
+                    SelectedCircleFilletNeighbor2::AnalyticParallel(false),
+                    reversed,
+                );
+                let corner = if reversed { 2 } else { 1 };
+                let solve = |region: &CurveRegion2, mode| {
+                    region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            corner,
+                            q(1, 10),
+                            mode,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "the selected-circle/line support must extend exactly: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
+                            )
+                        })
+                };
+                let promoted_extension = solve(&promoted_line, CurveCornerMode2::TrimOrExtend);
+                let retained_extension = solve(&retained_line, CurveCornerMode2::TrimOrExtend);
+                assert_eq!(promoted_extension.certainty, CurveCertainty::Certified);
+                assert_eq!(retained_extension.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    promoted_extension.value.candidate_count(),
+                    retained_extension.value.candidate_count(),
+                    "the represented fast path must enumerate both circle charts and both affine rays",
+                );
+                assert!(promoted_extension.value.candidate_count() > 1);
+                for_each_corner_region(&promoted_extension.value, |filleted| {
+                    assert!(filleted.boundary_loops()[0].fragments().iter().any(
+                        |fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                        )
+                    ));
+                });
             }
         }
     }

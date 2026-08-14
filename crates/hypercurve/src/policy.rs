@@ -31,8 +31,32 @@ std::thread_local! {
     /// the observation frame explicitly rather than relying on this scope.
     static APPROXIMATE_512_CONSUMED: Cell<bool> = const { Cell::new(false) };
 
+    /// Temporarily suppresses terminal approximation while preserving the
+    /// caller's retained-object policy identity. Composite kernels use this
+    /// to exhaust their complete STRICT dispatch graph before a local fast
+    /// path is allowed to consume APPROXIMATE_512.
+    static STRICT_PREDICATE_PASS: Cell<bool> = const { Cell::new(false) };
+
     /// Lossy tolerances scoped to an explicit preview adapter.
     static ACTIVE_PREVIEW_TOLERANCE: Cell<Option<PreviewTolerance>> = const { Cell::new(None) };
+}
+
+struct StrictPredicatePass {
+    prior: bool,
+}
+
+impl StrictPredicatePass {
+    fn begin() -> Self {
+        Self {
+            prior: STRICT_PREDICATE_PASS.with(|active| active.replace(true)),
+        }
+    }
+}
+
+impl Drop for StrictPredicatePass {
+    fn drop(&mut self) {
+        STRICT_PREDICATE_PASS.with(|active| active.set(self.prior));
+    }
 }
 
 struct OperationObservation {
@@ -237,8 +261,8 @@ impl CurveContext {
     pub const APPROXIMATE_512: Self = Self(APPROXIMATE_512_CONTEXT);
 
     /// Return the selected Hyperlimit predicate policy.
-    pub const fn predicate_policy(self) -> hypersolve::PredicatePolicy {
-        if self.0 & APPROXIMATE_512_CONTEXT == 0 {
+    pub fn predicate_policy(self) -> hypersolve::PredicatePolicy {
+        if !self.permits_approximate_512() {
             hypersolve::PredicatePolicy::STRICT
         } else {
             hypersolve::PredicatePolicy::APPROXIMATE_512
@@ -246,8 +270,18 @@ impl CurveContext {
     }
 
     #[inline]
-    pub(crate) const fn permits_approximate_512(&self) -> bool {
-        self.0 & APPROXIMATE_512_CONTEXT != 0
+    pub(crate) fn permits_approximate_512(&self) -> bool {
+        self.0 & APPROXIMATE_512_CONTEXT != 0 && !STRICT_PREDICATE_PASS.with(Cell::get)
+    }
+
+    /// Evaluate one complete kernel pass with terminal approximation disabled
+    /// while retaining this context's object-replay authority.
+    pub(crate) fn strict_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T {
+        if self.0 & APPROXIMATE_512_CONTEXT == 0 {
+            return evaluate();
+        }
+        let _pass = StrictPredicatePass::begin();
+        evaluate()
     }
 
     const fn with_edge_preview(self) -> Self {
@@ -260,6 +294,10 @@ impl CurveContext {
     }
 
     pub(crate) fn observe_approximate_512(&self) {
+        debug_assert!(
+            !STRICT_PREDICATE_PASS.with(Cell::get),
+            "a strict predicate pass cannot consume APPROXIMATE_512"
+        );
         APPROXIMATE_512_CONSUMED.with(|consumed| consumed.set(true));
     }
 
@@ -770,6 +808,40 @@ mod tests {
             CurvePreviewOptions::try_strict(f64::NAN, 0.0),
             Err(crate::CurveError::InvalidPreviewOptions)
         );
+    }
+
+    #[test]
+    fn strict_predicate_pass_preserves_retained_policy_identity_and_restores_nesting() {
+        let approximate = CurveContext::APPROXIMATE_512;
+        assert_eq!(
+            approximate.predicate_policy(),
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        );
+        assert!(approximate.permits_approximate_512());
+
+        approximate.strict_predicate_pass(|| {
+            assert_eq!(
+                approximate.predicate_policy(),
+                hyperlimit::PredicatePolicy::STRICT
+            );
+            assert!(!approximate.permits_approximate_512());
+            assert!(approximate.accepts_retained_policy(CurveContext::APPROXIMATE_512));
+
+            approximate.strict_predicate_pass(|| {
+                assert_eq!(
+                    approximate.predicate_policy(),
+                    hyperlimit::PredicatePolicy::STRICT
+                );
+                assert!(!approximate.permits_approximate_512());
+            });
+            assert!(!approximate.permits_approximate_512());
+        });
+
+        assert_eq!(
+            approximate.predicate_policy(),
+            hyperlimit::PredicatePolicy::APPROXIMATE_512
+        );
+        assert!(approximate.permits_approximate_512());
     }
 
     #[test]

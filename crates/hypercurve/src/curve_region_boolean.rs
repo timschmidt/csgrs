@@ -8822,35 +8822,75 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
     fn carrier_bounds_are_outside_other_region(&self, carrier_index: usize) -> bool {
         let carrier = &self.data.carriers[carrier_index];
-        let Classification::Decided(carrier_bounds) = carrier
-            .bounds
-            .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy))
-        else {
-            return false;
-        };
-        let mut other_bounds = None::<Aabb2>;
-        for other in &self.data.carriers {
-            if other.operand == carrier.operand {
-                continue;
-            }
-            let Classification::Decided(bounds) = other
+        let coarse_bounds_are_separated = || {
+            let Classification::Decided(carrier_bounds) = carrier
                 .bounds
-                .get_or_init(|| other.geometry.certified_outer_bounds(&self.data.policy))
+                .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy))
             else {
                 return false;
             };
-            other_bounds = Some(match other_bounds {
-                None => bounds.clone(),
-                Some(accumulated) => match accumulated.union(bounds, &self.data.policy) {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(_) => return false,
-                },
-            });
-        }
-        other_bounds.is_none_or(|other_bounds| {
-            carrier_bounds.overlaps(&other_bounds, &self.data.policy)
-                == Classification::Decided(false)
-        })
+            let mut other_bounds = None::<Aabb2>;
+            for other in &self.data.carriers {
+                if other.operand == carrier.operand {
+                    continue;
+                }
+                let Classification::Decided(bounds) = other
+                    .bounds
+                    .get_or_init(|| other.geometry.certified_outer_bounds(&self.data.policy))
+                else {
+                    return false;
+                };
+                other_bounds = Some(match other_bounds {
+                    None => bounds.clone(),
+                    Some(accumulated) => match accumulated.union(bounds, &self.data.policy) {
+                        Classification::Decided(bounds) => bounds,
+                        Classification::Uncertain(_) => return false,
+                    },
+                });
+            }
+            other_bounds.is_none_or(|other_bounds| {
+                carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                    == Classification::Decided(false)
+            })
+        };
+        coarse_bounds_are_separated()
+            || [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+                .into_iter()
+                .any(|refinement_steps| {
+                    let Classification::Decided(carrier_bounds) = carrier
+                        .geometry
+                        .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
+                    else {
+                        return false;
+                    };
+                    let mut other_bounds = None::<Aabb2>;
+                    for other in &self.data.carriers {
+                        if other.operand == carrier.operand {
+                            continue;
+                        }
+                        let other_result = other
+                            .geometry
+                            .certified_outer_bounds_refined(refinement_steps, &self.data.policy);
+                        let Classification::Decided(bounds) = other_result else {
+                            return false;
+                        };
+                        other_bounds = Some(match other_bounds {
+                            None => bounds,
+                            Some(accumulated) => {
+                                let Classification::Decided(bounds) =
+                                    accumulated.union(&bounds, &self.data.policy)
+                                else {
+                                    return false;
+                                };
+                                bounds
+                            }
+                        });
+                    }
+                    other_bounds.is_none_or(|other_bounds| {
+                        carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                            == Classification::Decided(false)
+                    })
+                })
     }
 
     fn fragment_representative(
@@ -12523,6 +12563,33 @@ impl RegionCarrierGeometry {
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             },
             Self::AlgebraicCuspSemicircle(fragment) => match fragment.conservative_bounds() {
+                Ok(bounds) => bounds,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+        }
+    }
+
+    fn certified_outer_bounds_refined(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> Classification<Aabb2> {
+        match self {
+            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, policy),
+            Self::AnalyticParallel(parallel) => match parallel.conservative_bounds(policy) {
+                Ok(bounds) => bounds,
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            },
+            Self::AlgebraicChord(chord) => {
+                match chord.conservative_bounds_refined(refinement_steps, policy) {
+                    Ok(bounds) => bounds,
+                    Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                }
+            }
+            Self::AlgebraicCuspSemicircle(fragment) => match fragment
+                .semicircle()
+                .conservative_bounds_refined(refinement_steps, policy)
+            {
                 Ok(bounds) => bounds,
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             },
