@@ -10476,15 +10476,7 @@ impl CurveRegion2 {
         )?;
         let next_carrier =
             next_source.exact_carrier(next_fragment, false, CurveOperation2::Fillet, policy)?;
-        let selected_circle_pair = matches!(
-            (previous_fragment, next_fragment),
-            (
-                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-            )
-        );
-        let has_smooth_run = selected_circle_pair
-            && mode == CurveCornerMode2::TrimOnly
+        let has_smooth_run = mode == CurveCornerMode2::TrimOnly
             && (retained_cusp_smooth_run_neighbor(boundary_loop, previous_index, true, policy)?
                 .is_some()
                 || retained_cusp_smooth_run_neighbor(boundary_loop, next_index, false, policy)?
@@ -20668,6 +20660,65 @@ mod tests {
         .expect("the mixed exact loop has authored topology")
     }
 
+    fn split_selected_circle_neighbor_region(
+        policy: &CurveContext,
+        neighbor: SelectedCircleFilletNeighbor2,
+        reversed: bool,
+    ) -> CurveRegion2 {
+        let region = selected_circle_neighbor_region(policy, neighbor, false);
+        let source = region.boundary_loops()[0].fragments();
+        let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = &source[0] else {
+            panic!("the mixed fixture starts on its selected circle")
+        };
+        assert!(!circle.is_reversed());
+        let split =
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(q(99, 100));
+        let fragment = |start, end| match crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+            circle.semicircle().clone(),
+            start,
+            end,
+            false,
+            policy,
+        )
+        .expect("the authored selected-circle split is exact")
+        {
+            Classification::Decided(fragment) => {
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+            }
+            Classification::Uncertain(reason) => {
+                panic!("the authored selected-circle split must decide: {reason:?}")
+            }
+        };
+        let mut fragments = vec![
+            fragment(circle.start_parameter().clone(), split.clone()),
+            fragment(split, circle.end_parameter().clone()),
+        ];
+        fragments.extend(source[1..].iter().cloned());
+        let interior_side = if reversed {
+            fragments = fragments
+                .into_iter()
+                .rev()
+                .map(|fragment| {
+                    fragment
+                        .reversed()
+                        .expect("the split fixture reverses exactly")
+                })
+                .collect();
+            CurveBoundaryInteriorSide2::Left
+        } else {
+            CurveBoundaryInteriorSide2::Right
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy)
+            .expect("the split selected-circle fixture closes exactly");
+        CurveRegion2::try_new_with_loop_topology(
+            vec![boundary],
+            vec![CurveRegionLoopRole::Material],
+            vec![FillRule::NonZero],
+            vec![interior_side],
+        )
+        .expect("the split selected-circle fixture has authored topology")
+    }
+
     fn selected_circle_direct_line_region_from_support(
         support: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
         policy: &CurveContext,
@@ -21656,6 +21707,74 @@ mod tests {
                         )
                     ));
                 });
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (name, neighbor) in [
+                ("line", SelectedCircleFilletNeighbor2::DirectLine),
+                ("arc", SelectedCircleFilletNeighbor2::RationalArc(1)),
+                (
+                    "analytic-parallel",
+                    SelectedCircleFilletNeighbor2::AnalyticParallel(true),
+                ),
+                ("bezier", SelectedCircleFilletNeighbor2::DirectBezier),
+            ] {
+                for reversed in [false, true] {
+                    let region = split_selected_circle_neighbor_region(&policy, neighbor, reversed);
+                    let source_fragments = region.boundary_loops()[0].fragments();
+                    let source_circle_fragments = source_fragments
+                        .iter()
+                        .filter(|fragment| {
+                            matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                        })
+                        .collect::<Vec<_>>();
+                    assert_eq!(source_circle_fragments.len(), 2);
+                    let result = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        2,
+                        q(1, 10),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                                "the selected-circle/{name} fillet must cross its authored smooth seam: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let consumes_seam = |filleted: &CurveRegion2| {
+                        !source_circle_fragments.iter().any(|source| {
+                            filleted.boundary_loops()[0]
+                                .fragments()
+                                .iter()
+                                .any(|fragment| fragment == *source)
+                        })
+                    };
+                    assert!(
+                        match &result.value {
+                            CurveCornerSolutions2::Unique(filleted) => consumes_seam(filleted),
+                            CurveCornerSolutions2::Multiple(filleted) => {
+                                filleted.iter().any(consumes_seam)
+                            }
+                            CurveCornerSolutions2::NoSolution(_) => false,
+                        },
+                        "at least one exact mixed-family candidate must consume the selected-circle seam"
+                    );
+                    for_each_corner_region(&result.value, |filleted| {
+                        assert_eq!(
+                            filleted
+                                .classify_point(&p(0, 0), &policy)
+                                .expect("the one-sided smooth-run fillet remains classifiable")
+                                .into_value(),
+                            Classification::Decided(RegionPointLocation::Inside),
+                        );
+                    });
+                }
             }
         }
     }
