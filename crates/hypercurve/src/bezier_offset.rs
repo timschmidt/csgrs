@@ -10505,6 +10505,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self.data.radial_distance
     }
 
+    /// Reports whether this selected circle can enter rational-image-only
+    /// accelerators without discarding a retained center frame.
+    pub(crate) fn has_rational_frame(&self) -> bool {
+        self.data.frame.rational().is_some()
+    }
+
     /// Returns whether traversal follows the clockwise half circle.
     pub(crate) fn is_clockwise(&self) -> bool {
         self.data.clockwise
@@ -35763,6 +35769,186 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         map.retained_contact_parameter_for_side(contact, *first)
     }
 
+    /// Recovers the exact center-relative radial stored by the translated
+    /// circle-pair lane, transporting it through any enclosing similarity.
+    /// Translation cancels completely; the linear image is all that angular
+    /// parameter comparison needs.
+    fn translated_pair_contact_radial(
+        &self,
+    ) -> Option<(
+        BezierAlgebraicCuspSemicircle2,
+        [Real; 2],
+        BezierAlgebraicCuspSemicircleContactLocation2,
+    )> {
+        let Self::Mapped(data) = self else {
+            return None;
+        };
+        match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
+                map,
+                contact,
+                first,
+            } => {
+                let (_, represented) = map.represented_contact_data(contact)?;
+                let (semicircle, parameter, location) = if *first {
+                    (
+                        &map.data.first_semicircle,
+                        &represented.first_parameter,
+                        contact.first_location,
+                    )
+                } else {
+                    (
+                        &map.data.second_semicircle,
+                        &represented.second_parameter,
+                        contact.second_location,
+                    )
+                };
+                let BezierRepresentedCircleContactParameterData2::ExactContactRadial(radial) =
+                    parameter
+                else {
+                    return None;
+                };
+                Some((semicircle.clone(), radial.clone(), location))
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
+                semicircle,
+                source,
+                point,
+                ..
+            } => {
+                let (_, radial, location) = source.translated_pair_contact_radial()?;
+                let RationalBezierIntersectionPointEvidence2::Similarity(point) = point else {
+                    return None;
+                };
+                let radial = point
+                    .data
+                    .transform
+                    .transform_vector_coordinates(&radial[0], &radial[1]);
+                Some((semicircle.clone(), [radial.0, radial.1], location))
+            }
+            _ => None,
+        }
+    }
+
+    /// Orders two translated pair contacts on concentric copies of one exact
+    /// selected-circle frame. Their shared center and start radial cancel;
+    /// only the two retained exact radial vectors and traversal turn remain.
+    fn translated_pair_contact_order(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Option<Classification<std::cmp::Ordering>> {
+        let (first_circle, first_radial, first_location) = self.translated_pair_contact_radial()?;
+        let (second_circle, second_radial, second_location) =
+            other.translated_pair_contact_radial()?;
+        if !first_circle
+            .data
+            .frame
+            .shares_storage(&second_circle.data.frame)
+            || first_circle.is_clockwise() != second_circle.is_clockwise()
+        {
+            return None;
+        }
+        let radius_product_sign = match (
+            real_sign(first_circle.radial_distance(), policy),
+            real_sign(second_circle.radial_distance(), policy),
+        ) {
+            (
+                Some(first @ (RealSign::Positive | RealSign::Negative)),
+                Some(second @ (RealSign::Positive | RealSign::Negative)),
+            ) => product_sign(first, second),
+            _ => {
+                return Some(Classification::Uncertain(UncertaintyReason::RealSign));
+            }
+        };
+        let radial_cross =
+            &first_radial[0] * &second_radial[1] - &first_radial[1] * &second_radial[0];
+        let cross = match real_sign(&radial_cross, policy) {
+            Some(sign) => product_sign(sign, radius_product_sign),
+            None => return Some(Classification::Uncertain(UncertaintyReason::Predicate)),
+        };
+        let turn = if first_circle.is_clockwise() {
+            RealSign::Negative
+        } else {
+            RealSign::Positive
+        };
+        Some(Classification::Decided(match product_sign(cross, turn) {
+            RealSign::Positive => std::cmp::Ordering::Less,
+            RealSign::Negative => std::cmp::Ordering::Greater,
+            RealSign::Zero => {
+                let radial_dot =
+                    &first_radial[0] * &second_radial[0] + &first_radial[1] * &second_radial[1];
+                match real_sign(&radial_dot, policy)
+                    .map(|sign| product_sign(sign, radius_product_sign))
+                {
+                    Some(RealSign::Positive) => std::cmp::Ordering::Equal,
+                    Some(RealSign::Negative) => match (first_location, second_location) {
+                        (
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                            BezierAlgebraicCuspSemicircleContactLocation2::End,
+                        ) => std::cmp::Ordering::Less,
+                        (
+                            BezierAlgebraicCuspSemicircleContactLocation2::End,
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                        ) => std::cmp::Ordering::Greater,
+                        _ => {
+                            return Some(Classification::Uncertain(UncertaintyReason::Predicate));
+                        }
+                    },
+                    Some(RealSign::Zero) | None => {
+                        return Some(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                }
+            }
+        }))
+    }
+
+    fn translated_pair_or_exact_order(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Option<Classification<std::cmp::Ordering>> {
+        if let Some(order) = self.translated_pair_contact_order(other, policy) {
+            return Some(order);
+        }
+        let endpoint_order = |location, parameter: &Real| {
+            if parameter == &Real::zero() {
+                Some(match location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start => {
+                        std::cmp::Ordering::Equal
+                    }
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                    | BezierAlgebraicCuspSemicircleContactLocation2::End => {
+                        std::cmp::Ordering::Greater
+                    }
+                })
+            } else if parameter == &Real::one() {
+                Some(match location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start
+                    | BezierAlgebraicCuspSemicircleContactLocation2::Interior => {
+                        std::cmp::Ordering::Less
+                    }
+                    BezierAlgebraicCuspSemicircleContactLocation2::End => std::cmp::Ordering::Equal,
+                })
+            } else {
+                None
+            }
+        };
+        if let Some((_, _, location)) = self.translated_pair_contact_radial()
+            && let Self::Exact(parameter) = other
+        {
+            return endpoint_order(location, parameter).map(Classification::Decided);
+        }
+        if let Some((_, _, location)) = other.translated_pair_contact_radial()
+            && let Self::Exact(parameter) = self
+        {
+            return endpoint_order(location, parameter)
+                .map(std::cmp::Ordering::reverse)
+                .map(Classification::Decided);
+        }
+        None
+    }
+
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if self
             .evidence_policy()
@@ -37049,6 +37235,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         }
         if self.shares_exact_local_parameter_authority(other) {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        if let Some(Classification::Decided(order)) =
+            self.translated_pair_contact_order(other, policy)
+        {
+            return Ok(Classification::Decided(order));
         }
         if let Self::Mapped(data) = self
             && let BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
@@ -60996,6 +61187,31 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let before_end = matches!(end, std::cmp::Ordering::Less)
             || include_end && end == std::cmp::Ordering::Equal;
         Ok(Classification::Decided(after_start && before_end))
+    }
+
+    /// Uses translated pair radials to classify a strict trim-domain contact
+    /// before the general endpoint-chord predicate constructs point fields.
+    /// `None` leaves every other parameter family to that complete fallback.
+    pub(crate) fn translated_pair_parameter_is_strict_interior(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<bool>>> {
+        self.validate_policy(policy)?;
+        let Some(start) = parameter.translated_pair_or_exact_order(&self.data.start, policy) else {
+            return Ok(None);
+        };
+        let Some(end) = parameter.translated_pair_or_exact_order(&self.data.end, policy) else {
+            return Ok(None);
+        };
+        Ok(Some(match (start, end) {
+            (Classification::Decided(start), Classification::Decided(end)) => {
+                Classification::Decided(start.is_gt() && end.is_lt())
+            }
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                Classification::Uncertain(reason)
+            }
+        }))
     }
 
     /// Applies the representation-independent half-open vertex rule used by

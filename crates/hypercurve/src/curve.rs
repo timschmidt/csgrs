@@ -4784,6 +4784,7 @@ struct FilletCenters2 {
     second: Option<FilletCenterWitness2>,
     overflow: Vec<FilletCenterWitness2>,
     coincident: bool,
+    outside_domain: bool,
 }
 
 impl FilletCenters2 {
@@ -4846,6 +4847,7 @@ fn solve_carrier_fillet_corner(
             next_family,
             policy,
         )?;
+        saw_outside_domain |= centers.outside_domain;
         if centers.coincident {
             saw_degenerate = true;
             continue;
@@ -5252,6 +5254,9 @@ fn retained_fillet_pair_contact_rational_point(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<RationalBezierIntersectionPointEvidence2>> {
+    if !support.has_rational_frame() {
+        return Ok(None);
+    }
     let center = support
         .center_point_image(policy)
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
@@ -7358,13 +7363,11 @@ fn fillet_offset_centers(
                             })? {
                             Classification::Decided(true) => {}
                             Classification::Decided(false) => return Ok(None),
-                            Classification::Uncertain(reason) => {
-                                return Err(ExactCurveError::blocked(
-                                    CurveOperation2::Fillet,
-                                    family,
-                                    reason,
-                                ));
-                            }
+                            // This is only a conservative fast rejection. The
+                            // authoritative cut classifier below owns every
+                            // case this cheaper parameter predicate cannot
+                            // decide exactly.
+                            Classification::Uncertain(_) => {}
                         }
                     }
                 }
@@ -7441,27 +7444,38 @@ fn fillet_offset_centers(
                                     continue;
                                 }
                                 let mut tangent_cross = contact.tangent_cross_sign;
-                                let mut tangent_dot = match parameter_map
-                                    .tangent_dot_sign(&contact, policy)
-                                    .map_err(|cause| {
-                                        ExactCurveError::invalid(
-                                            CurveOperation2::Fillet,
-                                            previous_family,
-                                            cause,
-                                        )
-                                    })? {
-                                    Classification::Decided(sign) => sign,
-                                    Classification::Uncertain(reason) => {
-                                        return Err(ExactCurveError::blocked(
-                                            CurveOperation2::Fillet,
-                                            previous_family,
-                                            reason,
-                                        ));
-                                    }
+                                // A transverse contact's oriented cross sign
+                                // alone selects the one- or two-half fillet
+                                // sweep. Do not ask the represented pair for
+                                // an independent high-degree dot predicate
+                                // unless the tangents are parallel.
+                                let mut tangent_dot = if tangent_cross == RealSign::Zero {
+                                    Some(
+                                        match parameter_map
+                                            .tangent_dot_sign(&contact, policy)
+                                            .map_err(|cause| {
+                                                ExactCurveError::invalid(
+                                                    CurveOperation2::Fillet,
+                                                    previous_family,
+                                                    cause,
+                                                )
+                                            })? {
+                                            Classification::Decided(sign) => sign,
+                                            Classification::Uncertain(reason) => {
+                                                return Err(ExactCurveError::blocked(
+                                                    CurveOperation2::Fillet,
+                                                    previous_family,
+                                                    reason,
+                                                ));
+                                            }
+                                        },
+                                    )
+                                } else {
+                                    None
                                 };
                                 if reverse_pair_relation {
                                     tangent_cross = reverse_fillet_sign(tangent_cross);
-                                    tangent_dot = reverse_fillet_sign(tangent_dot);
+                                    tangent_dot = tangent_dot.map(reverse_fillet_sign);
                                 }
                                 let previous_parameter =
                                     parameter_map.first_contact_parameter(&contact);
@@ -7509,7 +7523,7 @@ fn fillet_offset_centers(
                                     point,
                                     Some(RetainedFilletAnchorEvidence2 {
                                         cross: Some(tangent_cross),
-                                        dot: Some(tangent_dot),
+                                        dot: tangent_dot,
                                         center_parallel: None,
                                         source_direction: None,
                                         canonical_anchor_curve: None,
@@ -7517,6 +7531,8 @@ fn fillet_offset_centers(
                                     }),
                                 )? {
                                     centers.push(witness);
+                                } else {
+                                    centers.outside_domain = true;
                                 }
                             }
                         }
@@ -7572,6 +7588,8 @@ fn fillet_offset_centers(
                                     None,
                                 )? {
                                     centers.push(witness);
+                                } else {
+                                    centers.outside_domain = true;
                                 }
                             }
                         }
@@ -9025,11 +9043,19 @@ fn fillet_cut_from_center(
             let strict_support_interior = if complementary {
                 Classification::Decided(false)
             } else {
-                support
-                    .certified_incident_point_evidence_is_strict_interior(center, policy)
+                let translated_pair_interior = source
+                    .translated_pair_parameter_is_strict_interior(&parameter, policy)
                     .map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })?
+                    })?;
+                match translated_pair_interior {
+                    Some(Classification::Decided(interior)) => Classification::Decided(interior),
+                    Some(Classification::Uncertain(_)) | None => support
+                        .certified_incident_point_evidence_is_strict_interior(center, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })?,
+                }
             };
             let placement = if complementary {
                 if mode == CurveCornerMode2::TrimOrExtend {

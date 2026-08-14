@@ -11600,13 +11600,17 @@ impl CurveRegion2 {
                 UncertaintyReason::Predicate,
             )
         })?;
-        let tangent_dot = relation.dot.ok_or_else(|| {
-            ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                CurveFamily2::CircularArc,
-                UncertaintyReason::Predicate,
-            )
-        })?;
+        let tangent_dot = match (tangent_cross, relation.dot) {
+            (_, Some(dot)) => dot,
+            (RealSign::Positive | RealSign::Negative, None) => RealSign::Zero,
+            (RealSign::Zero, None) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    UncertaintyReason::Predicate,
+                ));
+            }
+        };
         if !frame.anchor_is_previous {
             tangent_cross = exact_sign_reverse(tangent_cross);
         }
@@ -21920,6 +21924,55 @@ mod tests {
             .expect("the first fillet retains one pair-radial circle")
     }
 
+    fn pair_radial_crossing_corner(region: &CurveRegion2, policy: &CurveContext) -> (usize, usize) {
+        for (loop_index, boundary) in region.boundary_loops().iter().enumerate() {
+            let fragments = boundary.fragments();
+            for corner in 0..fragments.len() {
+                let (
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(previous),
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(next),
+                ) = (
+                    &fragments[(corner + fragments.len() - 1) % fragments.len()],
+                    &fragments[corner],
+                )
+                else {
+                    continue;
+                };
+                if !previous.semicircle().uses_selected_radial_frame()
+                    || !next.semicircle().uses_selected_radial_frame()
+                {
+                    continue;
+                }
+                let crossing = match previous
+                    .semicircle()
+                    .pair_intersections(next.semicircle(), policy)
+                    .expect("adjacent pair-native supports compare exactly")
+                {
+                    Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                            contacts,
+                            ..
+                        },
+                    )
+                    | Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(contacts),
+                    ) => contacts
+                        .iter()
+                        .any(|contact| contact.tangent_cross_sign != RealSign::Zero),
+                    Classification::Decided(
+                        crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts
+                        | crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(_),
+                    )
+                    | Classification::Uncertain(_) => false,
+                };
+                if crossing {
+                    return (loop_index, corner);
+                }
+            }
+        }
+        panic!("the lens retains one pair-native/pair-native corner");
+    }
+
     #[test]
     fn collapsed_pair_radial_fillet_retains_its_recursive_center() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -22002,12 +22055,17 @@ mod tests {
                                 "the noncollapsed {name} pair-radial fillet must remain in the exact kernel: policy={policy:?}, reversed={reversed}, error={error:?}"
                             )
                         });
-                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        result.certainty,
+                        CurveCertainty::Certified,
+                        "the noncollapsed {name} result must not consume the approximate terminal: policy={policy:?}, reversed={reversed}"
+                    );
                     assert_eq!(
                         result.value,
                         CurveCornerSolutions2::NoSolution(
-                            crate::CurveCornerNoSolution2::NoTangentCircle,
-                        )
+                            crate::CurveCornerNoSolution2::OutsideTrimDomain,
+                        ),
+                        "the noncollapsed {name} contact lies outside its trim domain: policy={policy:?}, reversed={reversed}"
                     );
                 }
             }
@@ -22751,6 +22809,312 @@ mod tests {
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     assert!(replay.value.intersection().is_empty());
                     assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet() {
+        for reversed in [false, true] {
+            let construction_policy = CurveContext::STRICT;
+            let pair_native = independent_pair_native_fillet(&construction_policy, reversed);
+            let cutter = pair_native_crossing_cutter(&pair_native, true, &construction_policy);
+            let clipped = pair_native
+                .boolean_regions(&cutter, &construction_policy)
+                .expect("the analytic cutter must publish its retained corner")
+                .into_value()
+                .intersection()
+                .clone();
+            let (loop_index, corner, parent_radius) = clipped
+                .boundary_loops()
+                .iter()
+                .enumerate()
+                .find_map(|(loop_index, boundary)| {
+                    let fragments = boundary.fragments();
+                    (0..fragments.len()).find_map(|corner| {
+                        let previous = &fragments[(corner + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[corner];
+                        let pair_radius = |fragment: &BezierSplitFragment2| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame() =>
+                            {
+                                Some(fragment.semicircle().radial_distance().abs())
+                            }
+                            _ => None,
+                        };
+                        let analytic = |fragment: &BezierSplitFragment2| {
+                            matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                        };
+                        if analytic(previous) {
+                            pair_radius(next)
+                        } else if analytic(next) {
+                            pair_radius(previous)
+                        } else {
+                            None
+                        }
+                        .map(|radius| (loop_index, corner, radius))
+                    })
+                })
+                .expect("the clipped region retains a pair-radial/analytic corner");
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let result = clipped
+                    .fillet_loop_vertex_by_radius(
+                        loop_index,
+                        corner,
+                        (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the pair-radial/analytic corner must fillet exactly");
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(result.value.candidate_count() > 0);
+                for_each_corner_region(&result.value, |filleted| {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the pair-radial/analytic fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        replay.value.union().boundary_loops().len(),
+                        filleted.boundary_loops().len() + 1
+                    );
+                    assert!(replay.value.intersection().is_empty());
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet() {
+        for reversed in [false, true] {
+            let construction_policy = CurveContext::STRICT;
+            let pair_native = independent_pair_native_fillet(&construction_policy, reversed);
+            let exact_cutter =
+                pair_native_crossing_cutter(&pair_native, false, &construction_policy);
+            let exact_fragments = exact_cutter.boundary_loops()[0].fragments();
+            let vertices = exact_fragments
+                .iter()
+                .map(|fragment| {
+                    retained_fragment_endpoint_evidence(fragment, true, &construction_policy)
+                        .expect("the reference cutter endpoint is exact")
+                        .point
+                        .expect("the reference cutter endpoint is represented")
+                })
+                .collect::<Vec<_>>();
+            let parameter = positive_inverse_sqrt_parameter(2, &construction_policy);
+            let BezierParameter2::Algebraic(parameter) = parameter else {
+                panic!("the translated cutter parameter remains algebraic");
+            };
+            let source = RationalBezier2::try_new(
+                vec![
+                    vertices[0].clone(),
+                    vertices[0].translated(Real::zero(), Real::one()),
+                ],
+                vec![Real::one(); 2],
+            )
+            .expect("the translated cutter point source is rational");
+            let selected = RationalBezierIntersectionPointEvidence2::Algebraic(
+                source
+                    .point_at_algebraic_parameter(&parameter, &construction_policy)
+                    .expect("the translated cutter point is exact"),
+            );
+            let selected_vertices = vertices
+                .iter()
+                .map(|vertex| {
+                    retained_corner_decision(
+                        crate::BezierAlgebraicChord2::translated_endpoint(
+                            &selected,
+                            &(vertex.x() - vertices[0].x()),
+                            &(vertex.y() - vertices[0].y()),
+                            &construction_policy,
+                        )
+                        .expect("the selected cutter vertex translates exactly"),
+                        CurveOperation2::Boolean,
+                    )
+                    .expect("the selected cutter vertex is decided")
+                })
+                .collect::<Vec<_>>();
+            let fragments = (0..selected_vertices.len())
+                .map(|index| {
+                    let chord = retained_corner_decision(
+                        crate::BezierAlgebraicChord2::try_new(
+                            selected_vertices[index].clone(),
+                            selected_vertices[(index + 1) % selected_vertices.len()].clone(),
+                            &construction_policy,
+                        )
+                        .expect("the selected cutter chord is valid"),
+                        CurveOperation2::Boolean,
+                    )
+                    .expect("the selected cutter chord is decided");
+                    BezierSplitFragment2::AlgebraicChord(chord)
+                })
+                .collect();
+            let cutter = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(fragments, &construction_policy)
+                        .expect("the selected cutter closes exactly"),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("the selected cutter has authored topology");
+            let clipped = pair_native
+                .boolean_regions(&cutter, &construction_policy)
+                .expect("the selected cutter must publish its retained corner")
+                .into_value()
+                .intersection()
+                .clone();
+            let (loop_index, corner, parent_radius) = clipped
+                .boundary_loops()
+                .iter()
+                .enumerate()
+                .find_map(|(loop_index, boundary)| {
+                    let fragments = boundary.fragments();
+                    (0..fragments.len()).find_map(|corner| {
+                        let previous = &fragments[(corner + fragments.len() - 1) % fragments.len()];
+                        let next = &fragments[corner];
+                        let pair_radius = |fragment: &BezierSplitFragment2| match fragment {
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                                if fragment.semicircle().uses_selected_radial_frame() =>
+                            {
+                                Some(fragment.semicircle().radial_distance().abs())
+                            }
+                            _ => None,
+                        };
+                        let chord = |fragment: &BezierSplitFragment2| {
+                            matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
+                        };
+                        if chord(previous) {
+                            pair_radius(next)
+                        } else if chord(next) {
+                            pair_radius(previous)
+                        } else {
+                            None
+                        }
+                        .map(|radius| (loop_index, corner, radius))
+                    })
+                })
+                .expect("the clipped region retains a pair-radial/algebraic-chord corner");
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let result = clipped
+                    .fillet_loop_vertex_by_radius(
+                        loop_index,
+                        corner,
+                        (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the pair-radial/algebraic-chord corner must fillet exactly");
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(result.value.candidate_count() > 0);
+                for_each_corner_region(&result.value, |filleted| {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect(
+                            "the pair-radial/algebraic-chord fillet re-enters the Boolean kernel",
+                        );
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        replay.value.union().boundary_loops().len(),
+                        filleted.boundary_loops().len() + 1
+                    );
+                    assert!(replay.value.intersection().is_empty());
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn translated_pair_native_circles_fillet_after_boolean_crossing() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let filleted = independent_pair_native_fillet(&policy, reversed);
+                let circle = filleted.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .find_map(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                            if fragment.semicircle().uses_selected_radial_frame() =>
+                        {
+                            Some(fragment.semicircle().clone())
+                        }
+                        _ => None,
+                    })
+                    .expect("the source fillet retains its pair-native circle");
+                let radius = circle.radial_distance().abs();
+                let boundary = CurveRegionBoundaryLoop2::new(
+                    vec![
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(
+                            crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                                circle.clone(),
+                                &policy,
+                            ),
+                        ),
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(
+                            crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                                circle.complementary_half(),
+                                &policy,
+                            ),
+                        ),
+                    ],
+                    &policy,
+                )
+                .expect("the pair-native disk closes exactly");
+                let disk = CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![if circle.is_clockwise() {
+                        CurveBoundaryInteriorSide2::Right
+                    } else {
+                        CurveBoundaryInteriorSide2::Left
+                    }],
+                )
+                .expect("the pair-native disk has authored topology");
+                let transform = crate::Similarity2::try_from_real_affine(
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    (&radius / Real::from(2_i8)).unwrap(),
+                    Real::zero(),
+                )
+                .expect("the pair-native disk translation is a similarity");
+                let shifted = disk
+                    .transform_similarity(&transform, &policy)
+                    .expect("the second pair-native disk translates exactly")
+                    .into_value();
+                let lens = disk
+                    .boolean_region(&shifted, BooleanOp::Intersection, &policy)
+                    .expect("translated pair-native disks must intersect exactly")
+                    .into_value();
+                let (loop_index, corner) = pair_radial_crossing_corner(&lens, &policy);
+                let result = lens
+                    .fillet_loop_vertex_by_radius(
+                        loop_index,
+                        corner,
+                        (radius / Real::from(1_000_i16)).unwrap(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .expect("the translated pair-native circle corner must fillet exactly");
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(
+                    result.value.candidate_count() > 0,
+                    "the crossing pair-native circles must have a finite fillet: {:?}",
+                    result.value
+                );
+                for_each_corner_region(&result.value, |filleted| {
+                    let replay = filleted
+                        .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+                        .expect("the translated pair-radial fillet re-enters the Boolean kernel");
+                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        replay.value.union().boundary_loops().len(),
+                        filleted.boundary_loops().len() + 1
+                    );
+                    assert!(replay.value.intersection().is_empty());
                 });
             }
         }
