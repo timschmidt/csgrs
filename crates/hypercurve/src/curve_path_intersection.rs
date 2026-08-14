@@ -6,11 +6,10 @@ use std::sync::OnceLock;
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::policy::resolve_certified_operation;
 use crate::{
-    BezierArrangementGraph2, BezierParameter2, BezierSplitMaterialization2, BooleanOp,
-    Classification, Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
-    CurveOperation2, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult,
-    ExactCurveError, ExactCurveResult, FillRule, UncertaintyReason,
+    BezierArrangementGraph2, BezierParameter2, BezierSplitMaterialization2, Classification, Curve2,
+    CurveContext, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2,
+    CurveOutcome, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, UncertaintyReason,
 };
 
 /// One path-pair contact with authored curve and span indices.
@@ -140,59 +139,6 @@ impl CurvePath2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePathIntersectionTopology2> {
         CurvePathIntersectionContext::try_new(self, other, policy)?.build_topology()
-    }
-
-    /// Computes one exact regularized Boolean region immediately.
-    pub fn boolean_region(
-        &self,
-        other: &Self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveRegion2>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.boolean_region_raw(
-                other,
-                operation,
-                first_interior_side,
-                second_interior_side,
-                attempt,
-            )
-        })
-    }
-
-    pub(crate) fn boolean_region_raw(
-        &self,
-        other: &Self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegion2> {
-        let role = [CurveRegionLoopRole::Material];
-        let fill_rule = [FillRule::EvenOdd];
-        let first = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
-            std::slice::from_ref(self),
-            &role,
-            &fill_rule,
-            policy,
-            Some(vec![
-                first_interior_side == CurveBoundaryInteriorSide2::Left,
-            ]),
-        )
-        .map_err(|error| error.with_operation(CurveOperation2::Boolean))?;
-        let second = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
-            std::slice::from_ref(other),
-            &role,
-            &fill_rule,
-            policy,
-            Some(vec![
-                second_interior_side == CurveBoundaryInteriorSide2::Left,
-            ]),
-        )
-        .map_err(|error| error.with_operation(CurveOperation2::Boolean))?;
-        first.boolean_region_raw(&second, operation, policy)
     }
 }
 

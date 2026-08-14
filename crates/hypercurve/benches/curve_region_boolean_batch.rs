@@ -202,15 +202,25 @@ fn clipped_region(
     interior_side: CurveBoundaryInteriorSide2,
     policy: &CurveContext,
 ) -> CurveRegion2 {
-    path.boolean_region(
-        &clip,
-        BooleanOp::Intersection,
-        interior_side,
-        CurveBoundaryInteriorSide2::Left,
-        policy,
-    )
-    .unwrap()
-    .into_value()
+    let promote = |path: &CurvePath2, interior_side| {
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            std::slice::from_ref(path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+            &[interior_side],
+            policy,
+        )
+        .unwrap()
+        .into_value()
+    };
+    promote(path, interior_side)
+        .boolean_region(
+            &promote(&clip, CurveBoundaryInteriorSide2::Left),
+            BooleanOp::Intersection,
+            policy,
+        )
+        .unwrap()
+        .into_value()
 }
 
 fn conic_overlap_regions(

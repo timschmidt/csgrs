@@ -39,6 +39,40 @@ fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
     CurvePath2::try_new(curves).unwrap()
 }
 
+fn path_region(
+    path: &CurvePath2,
+    interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        std::slice::from_ref(path),
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+        &[interior_side],
+        policy,
+    )
+    .unwrap()
+    .into_value()
+}
+
+fn boolean_paths(
+    first: &CurvePath2,
+    second: &CurvePath2,
+    operation: BooleanOp,
+    first_interior_side: CurveBoundaryInteriorSide2,
+    second_interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    path_region(first, first_interior_side, policy)
+        .boolean_region(
+            &path_region(second, second_interior_side, policy),
+            operation,
+            policy,
+        )
+        .unwrap()
+        .into_value()
+}
+
 fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(
         &[square_path(min_x, min_y, max_x, max_y)],
@@ -1090,16 +1124,14 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     .unwrap();
     let cutter_path = square_path(-3, 2, 3, 5);
     let policy = CurveContext::STRICT;
-    let algebraic = curved
-        .boolean_region(
-            &cutter_path,
-            BooleanOp::Difference,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+    let algebraic = boolean_paths(
+        &curved,
+        &cutter_path,
+        BooleanOp::Difference,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &policy,
+    );
     assert!(algebraic.has_algebraic_fragments());
 
     let disjoint = square(10, 0, 12, 2);
@@ -1151,26 +1183,22 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     ])
     .unwrap();
     let policy = CurveContext::STRICT;
-    let narrow = curved
-        .boolean_region(
-            &square_path(-3, -1, 3, 2),
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .unwrap()
-        .into_value();
-    let wide = curved
-        .boolean_region(
-            &square_path(-3, -1, 3, 3),
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+    let narrow = boolean_paths(
+        &curved,
+        &square_path(-3, -1, 3, 2),
+        BooleanOp::Intersection,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &policy,
+    );
+    let wide = boolean_paths(
+        &curved,
+        &square_path(-3, -1, 3, 3),
+        BooleanOp::Intersection,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &policy,
+    );
     assert!(narrow.has_algebraic_fragments());
     assert!(wide.has_algebraic_fragments());
     let results = narrow.boolean_regions(&wide, &policy).unwrap().value;
@@ -1234,31 +1262,27 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
     ])
     .unwrap();
     let policy = CurveContext::STRICT;
-    let narrow = quadratic
-        .boolean_region(
-            &square_path(-3, -1, 3, 2),
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+    let narrow = boolean_paths(
+        &quadratic,
+        &square_path(-3, -1, 3, 2),
+        BooleanOp::Intersection,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &policy,
+    );
     assert!(narrow.has_algebraic_fragments());
     for (cubic, interior_side) in [
         (&cubic, CurveBoundaryInteriorSide2::Left),
         (&reversed_cubic, CurveBoundaryInteriorSide2::Right),
     ] {
-        let wide = cubic
-            .boolean_region(
-                &square_path(-3, -1, 3, 3),
-                BooleanOp::Intersection,
-                interior_side,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
+        let wide = boolean_paths(
+            cubic,
+            &square_path(-3, -1, 3, 3),
+            BooleanOp::Intersection,
+            interior_side,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
         assert!(wide.has_algebraic_fragments());
 
         let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
@@ -1317,31 +1341,27 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let narrow = quadratic
-            .boolean_region(
-                &square_path(-3, -1, 3, 2),
-                BooleanOp::Intersection,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
+        let narrow = boolean_paths(
+            &quadratic,
+            &square_path(-3, -1, 3, 2),
+            BooleanOp::Intersection,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
         assert!(narrow.has_algebraic_fragments());
         for (wide_path, interior_side) in [
             (&reparameterized, CurveBoundaryInteriorSide2::Left),
             (&reversed_reparameterized, CurveBoundaryInteriorSide2::Right),
         ] {
-            let wide = wide_path
-                .boolean_region(
-                    &square_path(-3, -1, 3, 3),
-                    BooleanOp::Intersection,
-                    interior_side,
-                    CurveBoundaryInteriorSide2::Left,
-                    &policy,
-                )
-                .unwrap()
-                .into_value();
+            let wide = boolean_paths(
+                wide_path,
+                &square_path(-3, -1, 3, 3),
+                BooleanOp::Intersection,
+                interior_side,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            );
             assert!(wide.has_algebraic_fragments());
 
             let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
@@ -1422,26 +1442,22 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
     );
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let narrow = polynomial
-            .boolean_region(
-                &narrow_clip,
-                BooleanOp::Intersection,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
-        let wide = reparameterized
-            .boolean_region(
-                &wide_clip,
-                BooleanOp::Intersection,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
+        let narrow = boolean_paths(
+            &polynomial,
+            &narrow_clip,
+            BooleanOp::Intersection,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
+        let wide = boolean_paths(
+            &reparameterized,
+            &wide_clip,
+            BooleanOp::Intersection,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
         assert!(narrow.has_algebraic_fragments());
 
         let evidence = narrow.intersect_region(&wide, &policy).unwrap();
@@ -1553,16 +1569,14 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                 .flat_map(|materialization| materialization.fragments())
                 .any(|fragment| fragment.is_algebraic_endpoint_images())
         );
-        let narrow = first
-            .boolean_region(
-                &narrow_clip,
-                BooleanOp::Intersection,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
+        let narrow = boolean_paths(
+            &first,
+            &narrow_clip,
+            BooleanOp::Intersection,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
         assert!(!narrow.has_algebraic_fragments());
         assert_eq!(
             narrow
@@ -1590,16 +1604,14 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                     .flat_map(|materialization| materialization.fragments())
                     .any(|fragment| fragment.is_algebraic_endpoint_images())
             );
-            let wide = wide_path
-                .boolean_region(
-                    &wide_clip,
-                    BooleanOp::Intersection,
-                    interior_side,
-                    CurveBoundaryInteriorSide2::Left,
-                    &policy,
-                )
-                .unwrap()
-                .into_value();
+            let wide = boolean_paths(
+                wide_path,
+                &wide_clip,
+                BooleanOp::Intersection,
+                interior_side,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            );
             assert!(!wide.has_algebraic_fragments());
 
             let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();

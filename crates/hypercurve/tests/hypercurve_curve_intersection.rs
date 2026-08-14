@@ -5,8 +5,9 @@ use hypercurve::{
 };
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurveGeometry2, CurvePath2, LineSeg2, Point2, RationalBezier2,
-    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2, Real,
+    CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, Point2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -49,6 +50,40 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
     }
+}
+
+fn path_region(
+    path: &CurvePath2,
+    interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        std::slice::from_ref(path),
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::EvenOdd],
+        &[interior_side],
+        policy,
+    )
+    .expect("test path must define an exact region")
+    .into_value()
+}
+
+fn boolean_paths(
+    first: &CurvePath2,
+    second: &CurvePath2,
+    operation: BooleanOp,
+    first_interior_side: CurveBoundaryInteriorSide2,
+    second_interior_side: CurveBoundaryInteriorSide2,
+    policy: &CurveContext,
+) -> CurveRegion2 {
+    path_region(first, first_interior_side, policy)
+        .boolean_region(
+            &path_region(second, second_interior_side, policy),
+            operation,
+            policy,
+        )
+        .expect("test region Boolean must complete exactly")
+        .into_value()
 }
 
 fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
@@ -341,7 +376,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 }
 
 #[test]
-fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
+fn promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary() {
     let parameterized_bottom = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
             vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
@@ -377,21 +412,19 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
         BezierParameter2::Algebraic(_)
     ));
 
-    let region = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+    let region = boolean_paths(
+        &first,
+        &second,
+        BooleanOp::Union,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
     assert_eq!(region.boundary_loops().len(), 1);
 }
 
 #[test]
-fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
+fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
     let partial_parabola = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
             vec![
@@ -440,16 +473,14 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
         BezierParameter2::Algebraic(_)
     ));
 
-    let region = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+    let region = boolean_paths(
+        &first,
+        &second,
+        BooleanOp::Union,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
     assert!(matches!(
         region
             .materialized_boundary_paths(&CurveContext::STRICT)
@@ -460,19 +491,23 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
 }
 
 #[test]
-fn path_boolean_surfaces_report_terminal_use_and_preserve_strict_rejection() {
+fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
     let first = symbolic_rectangle_path(Real::pi() + Real::e());
     let second = symbolic_rectangle_path(Real::e() + Real::pi());
     let approximate = CurveContext::APPROXIMATE_512;
 
-    let strict = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        )
+    let strict_first = path_region(
+        &first,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
+    let strict_second = path_region(
+        &second,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
+    let strict = strict_first
+        .boolean_region(&strict_second, BooleanOp::Union, &CurveContext::STRICT)
         .unwrap_err();
     assert!(matches!(
         strict,
@@ -480,15 +515,11 @@ fn path_boolean_surfaces_report_terminal_use_and_preserve_strict_rejection() {
             if blocker.operation() == CurveOperation2::Boolean
     ));
 
-    let region = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &approximate,
-        )
-        .expect("materialized path Boolean must report the same terminal");
+    let approximate_first = path_region(&first, CurveBoundaryInteriorSide2::Left, &approximate);
+    let approximate_second = path_region(&second, CurveBoundaryInteriorSide2::Left, &approximate);
+    let region = approximate_first
+        .boolean_region(&approximate_second, BooleanOp::Union, &approximate)
+        .expect("region Boolean must report the shared terminal");
     assert_eq!(region.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(region.value.boundary_loops().len(), 1);
 }
@@ -740,7 +771,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
 }
 
 #[test]
-fn path_boolean_resolves_partial_same_circle_arc_boundaries() {
+fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
     let first = CurvePath2::try_new(vec![
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap()),
         Curve2::from(LineSeg2::try_new(p(-5, 0), p(5, 0)).unwrap()),
@@ -783,16 +814,14 @@ fn path_boolean_resolves_partial_same_circle_arc_boundaries() {
         (BooleanOp::Xor, &first_area - &second_area),
     ];
     for (operation, expected_area) in cases {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &CurveContext::STRICT,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"));
-        let region = region.into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        );
         assert!(
             region
                 .boundary_loops()
@@ -839,7 +868,7 @@ fn closed_under_curve(curve: Curve2, lower_y: i32) -> CurvePath2 {
 }
 
 #[test]
-fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
+fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
     let policy = CurveContext::STRICT;
     let source = Curve2::new(CurveGeometry2::CubicBezier(CubicBezier2::new(
         p(0, 0),
@@ -875,16 +904,14 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Right,
-                CurveBoundaryInteriorSide2::Right,
-                &policy,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"));
-        let region = region.into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Right,
+            CurveBoundaryInteriorSide2::Right,
+            &policy,
+        );
         assert!(
             region
                 .boundary_loops()
@@ -974,16 +1001,14 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
             (BooleanOp::Difference, r(0)),
             (BooleanOp::Xor, r(0)),
         ] {
-            let region = first
-                .boolean_region(
-                    second,
-                    operation,
-                    CurveBoundaryInteriorSide2::Left,
-                    second_side,
-                    &policy,
-                )
-                .unwrap()
-                .into_value();
+            let region = boolean_paths(
+                &first,
+                second,
+                operation,
+                CurveBoundaryInteriorSide2::Left,
+                second_side,
+                &policy,
+            );
             assert_eq!(
                 decided(region.signed_area(&policy).unwrap().into_value()),
                 Some(expected_area),
@@ -1034,7 +1059,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
 }
 
 #[test]
-fn path_boolean_resolves_partial_reversed_shared_line_boundaries() {
+fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
     let first = rectangle(0, 0, 2, 4);
     let second = rectangle(2, 1, 4, 3);
     let evidence = first
@@ -1060,16 +1085,14 @@ fn path_boolean_resolves_partial_reversed_shared_line_boundaries() {
         (BooleanOp::Xor, r(12)),
     ];
     for (operation, expected_area) in cases {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &CurveContext::STRICT,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} region: {error:?}"))
-            .into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        );
         assert_eq!(
             decided(
                 region
@@ -1083,7 +1106,7 @@ fn path_boolean_resolves_partial_reversed_shared_line_boundaries() {
 }
 
 #[test]
-fn path_boolean_materializes_exact_regularized_operation_matrix() {
+fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
     let policy = CurveContext::STRICT;
@@ -1095,16 +1118,14 @@ fn path_boolean_materializes_exact_regularized_operation_matrix() {
     ];
 
     for (operation, expected_area) in cases {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            )
-            .unwrap()
-            .into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        );
         assert!(
             region
                 .boundary_loops()
@@ -1117,16 +1138,14 @@ fn path_boolean_materializes_exact_regularized_operation_matrix() {
         );
     }
 
-    let direct = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+    let direct = boolean_paths(
+        &first,
+        &second,
+        BooleanOp::Union,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &policy,
+    );
     assert_eq!(
         decided(direct.signed_area(&policy).unwrap().into_value()),
         Some(r(7))
@@ -1134,7 +1153,7 @@ fn path_boolean_materializes_exact_regularized_operation_matrix() {
 }
 
 #[test]
-fn path_boolean_consumes_complete_shared_boundaries() {
+fn promoted_region_boolean_consumes_complete_shared_boundaries() {
     let first = rectangle(0, 0, 2, 2);
     let second = first.clone();
     let evidence = first
@@ -1150,16 +1169,14 @@ fn path_boolean_consumes_complete_shared_boundaries() {
     ];
 
     for (operation, expected_area) in cases {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &CurveContext::STRICT,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"))
-            .into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        );
         assert_eq!(
             decided(
                 region
@@ -1173,7 +1190,7 @@ fn path_boolean_consumes_complete_shared_boundaries() {
 }
 
 #[test]
-fn path_boolean_preserves_disjoint_exact_conic_boundaries() {
+fn promoted_region_boolean_preserves_disjoint_exact_conic_boundaries() {
     let circle = |center_x: i32| {
         CurvePath2::try_new(vec![Curve2::from(
             CircularArc2::try_from_center(
@@ -1188,33 +1205,29 @@ fn path_boolean_preserves_disjoint_exact_conic_boundaries() {
     };
     let first = circle(0);
     let second = circle(4);
-    let union = first
-        .boolean_region(
-            &second,
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+    let union = boolean_paths(
+        &first,
+        &second,
+        BooleanOp::Union,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
     assert_eq!(union.boundary_loops().len(), 2);
 
-    let intersection = first
-        .boolean_region(
-            &second,
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .into_value();
+    let intersection = boolean_paths(
+        &first,
+        &second,
+        BooleanOp::Intersection,
+        CurveBoundaryInteriorSide2::Left,
+        CurveBoundaryInteriorSide2::Left,
+        &CurveContext::STRICT,
+    );
     assert!(intersection.is_empty());
 }
 
 #[test]
-fn path_boolean_traverses_overlapping_circles_with_exact_radical_splits() {
+fn promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits() {
     let circle = |center_x: i32| {
         CurvePath2::try_new(vec![Curve2::from(
             CircularArc2::try_from_center(
@@ -1241,16 +1254,14 @@ fn path_boolean_traverses_overlapping_circles_with_exact_radical_splits() {
     }));
 
     for operation in [BooleanOp::Union, BooleanOp::Intersection] {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &CurveContext::STRICT,
-            )
-            .unwrap()
-            .into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        );
         assert_eq!(region.boundary_loops().len(), 1);
         assert!(!region.boundary_loops()[0].has_algebraic_fragments());
     }
@@ -1282,16 +1293,14 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     );
 
     for operation in [BooleanOp::Difference, BooleanOp::Xor] {
-        let region = first
-            .boolean_region(
-                &second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &CurveContext::STRICT,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"))
-            .into_value();
+        let region = boolean_paths(
+            &first,
+            &second,
+            operation,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurveContext::STRICT,
+        );
         assert!(region.has_algebraic_fragments());
         assert_eq!(
             region
@@ -1444,16 +1453,14 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ] {
-            let _region = source
-                .boolean_region(
-                    &cutter,
-                    operation,
-                    CurveBoundaryInteriorSide2::Left,
-                    CurveBoundaryInteriorSide2::Left,
-                    &policy,
-                )
-                .unwrap_or_else(|error| panic!("{family:?} {operation:?}: {error:?}"))
-                .into_value();
+            let _region = boolean_paths(
+                &source,
+                &cutter,
+                operation,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            );
         }
     }
 }
