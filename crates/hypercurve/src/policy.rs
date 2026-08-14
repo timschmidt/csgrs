@@ -297,6 +297,15 @@ impl CurveContext {
     pub(crate) const fn strict_counterpart(&self) -> Self {
         Self(self.0 & EDGE_PREVIEW_CONTEXT)
     }
+
+    /// Whether this requested policy may replay an object retained under
+    /// `retained`. Certified STRICT evidence remains valid for an
+    /// APPROXIMATE_512 caller; approximate construction evidence never
+    /// answers a STRICT request.
+    #[inline]
+    pub(crate) const fn accepts_retained_policy(&self, retained: Self) -> bool {
+        retained.0 == self.0 || retained.0 == self.strict_counterpart().0
+    }
 }
 
 /// One retained result from a bounded, policy-aware operation cache.
@@ -888,6 +897,22 @@ mod tests {
         )
         .unwrap();
         assert_eq!(upgraded, Classification::Decided(&8));
+    }
+
+    #[test]
+    fn requested_policy_reuses_only_equally_or_more_exact_retained_evidence() {
+        assert!(CurveContext::STRICT.accepts_retained_policy(CurveContext::STRICT));
+        assert!(
+            CurveContext::APPROXIMATE_512.accepts_retained_policy(CurveContext::APPROXIMATE_512)
+        );
+        assert!(CurveContext::APPROXIMATE_512.accepts_retained_policy(CurveContext::STRICT));
+        assert!(!CurveContext::STRICT.accepts_retained_policy(CurveContext::APPROXIMATE_512));
+
+        let strict_preview = CurveContext::STRICT.with_edge_preview();
+        let approximate_preview = CurveContext::APPROXIMATE_512.with_edge_preview();
+        assert!(approximate_preview.accepts_retained_policy(strict_preview));
+        assert!(!strict_preview.accepts_retained_policy(approximate_preview));
+        assert!(!CurveContext::APPROXIMATE_512.accepts_retained_policy(strict_preview));
     }
 
     #[test]

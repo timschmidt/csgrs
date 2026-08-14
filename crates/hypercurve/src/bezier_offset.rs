@@ -1025,7 +1025,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
-        if self.map_policy() != *policy {
+        if !policy.accepts_retained_policy(self.map_policy()) {
             return Err(CurveError::Topology(
                 "mapped cusp overlap was replayed under a different predicate policy".into(),
             ));
@@ -1085,7 +1085,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         parameter.validate_policy(policy)?;
-        if self.map_policy() != *policy {
+        if !policy.accepts_retained_policy(self.map_policy()) {
             return Err(CurveError::Topology(
                 "mapped cusp overlap was replayed under a different predicate policy".into(),
             ));
@@ -1135,7 +1135,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 &self.parameter_map
                 && let Some((source, contact)) = data.coincident_rational_source()
             {
-                if source.data.policy != *policy {
+                if !policy.accepts_retained_policy(source.data.policy) {
                     return Err(CurveError::Topology(
                         "mapped rational source used a different predicate policy".into(),
                     ));
@@ -1226,7 +1226,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             }
 
             if let Some((source, start, evidence_policy)) = data.coincident_pair_endpoint_source() {
-                if evidence_policy != *policy {
+                if !policy.accepts_retained_policy(evidence_policy) {
                     return Err(CurveError::Topology(
                         "cusp-pair overlap endpoint was replayed under a different predicate policy"
                             .into(),
@@ -1328,7 +1328,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
             }
 
             if let Some(source) = data.coincident_tangent_source() {
-                if source.policy() != *policy {
+                if !policy.accepts_retained_policy(source.policy()) {
                     return Err(CurveError::Topology(
                         "mapped tangent source used a different predicate policy".into(),
                     ));
@@ -1896,7 +1896,9 @@ fn rational_parallel_parameter_orientation_at_cut(
     source_is_rational: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<RationalBezierOverlapOrientation2>>> {
-    if rational.data.policy != *policy || parallel.data.policy != *policy {
+    if !policy.accepts_retained_policy(rational.data.policy)
+        || !policy.accepts_retained_policy(parallel.data.policy)
+    {
         return Err(CurveError::Topology(
             "cross-map cusp parameterization comparison used a different predicate policy".into(),
         ));
@@ -2141,7 +2143,9 @@ fn parallel_parameters_are_complementary_at_cut(
     orientation: RationalBezierOverlapOrientation2,
     construction_policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    if first.data.policy != *construction_policy || second.data.policy != *construction_policy {
+    if !construction_policy.accepts_retained_policy(first.data.policy)
+        || !construction_policy.accepts_retained_policy(second.data.policy)
+    {
         return Err(CurveError::Topology(
             "parallel cusp diameter comparison used a different predicate policy".into(),
         ));
@@ -2377,7 +2381,9 @@ fn rational_parameters_are_complementary_at_cut(
     shared_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    if first.data.policy != *policy || second.data.policy != *policy {
+    if !policy.accepts_retained_policy(first.data.policy)
+        || !policy.accepts_retained_policy(second.data.policy)
+    {
         return Err(CurveError::Topology(
             "rational cusp diameter comparison used a different predicate policy".into(),
         ));
@@ -2429,7 +2435,9 @@ fn rational_parallel_diameter_relation_at_cut(
     opposite: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    if rational.data.policy != *policy || parallel.data.policy != *policy {
+    if !policy.accepts_retained_policy(rational.data.policy)
+        || !policy.accepts_retained_policy(parallel.data.policy)
+    {
         return Err(CurveError::Topology(
             "cross-map cusp diameter comparison used a different predicate policy".into(),
         ));
@@ -3109,7 +3117,7 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
 
 impl BezierAlgebraicSelectedFiberParameter2 {
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.authority.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.authority.data.policy) {
             return Err(CurveError::Topology(
                 "a selected-fiber scalar crossed predicate policies".into(),
             ));
@@ -7673,7 +7681,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 let (_, chord, cross, policy, reversed) =
                     source.coincident_chord_tangent_source()?;
-                if policy != overlap.data.policy {
+                if !overlap.data.policy.accepts_retained_policy(policy) {
                     return None;
                 }
                 Some((
@@ -7887,7 +7895,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         else {
             return None;
         };
-        if source_policy != *policy {
+        if !policy.accepts_retained_policy(source_policy) {
             return Some(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Some(analytic_parallel_point_bounds_refined(
@@ -7912,7 +7920,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         policy: &CurveContext,
     ) -> Option<Classification<Aabb2>> {
         let (map, contact, first, _) = self.coincident_pair_source()?;
-        if map.data.policy != *policy {
+        if !policy.accepts_retained_policy(map.data.policy) {
             return Some(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         let bracket = match if first {
@@ -8236,6 +8244,15 @@ pub(crate) enum BezierAlgebraicChordAxisDirection2 {
 }
 
 impl BezierAlgebraicChordAxisDirection2 {
+    const fn cardinal_components(self) -> (i8, i8) {
+        match self {
+            Self::PositiveX => (1, 0),
+            Self::NegativeX => (-1, 0),
+            Self::PositiveY => (0, 1),
+            Self::NegativeY => (0, -1),
+        }
+    }
+
     const fn from_cardinal_components(x: i8, y: i8) -> Option<Self> {
         match (x, y) {
             (1, 0) => Some(Self::PositiveX),
@@ -9441,7 +9458,7 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                         "a selected-circle similarity lost its exact transform provenance".into(),
                     ));
                 };
-                if point.data.policy != *policy {
+                if !policy.accepts_retained_policy(point.data.policy) {
                     return Err(CurveError::Topology(
                         "a selected-circle similarity point crossed predicate policies".into(),
                     ));
@@ -10586,7 +10603,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if let Some(frame) = self.data.frame.selected_radial() {
-            if frame.policy != *policy {
+            if !policy.accepts_retained_policy(frame.policy) {
                 return Err(CurveError::Topology(
                     "a selected radial circle crossed predicate policies".into(),
                 ));
@@ -10617,7 +10634,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if let Some(frame) = self.data.frame.chord_normal() {
-            if frame.policy != *policy {
+            if !policy.accepts_retained_policy(frame.policy) {
                 return Err(CurveError::Topology(
                     "a chord-normal selected circle crossed predicate policies".into(),
                 ));
@@ -10642,7 +10659,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             .frame
             .parallel_normal()
             .expect("every non-rational selected-circle frame is parallel-normal");
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a parallel-normal selected circle crossed predicate policies".into(),
             ));
@@ -10747,7 +10764,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if let Some(frame) = self.data.frame.selected_radial() {
-            if frame.policy != *policy {
+            if !policy.accepts_retained_policy(frame.policy) {
                 return Err(CurveError::Topology(
                     "a selected radial circle crossed predicate policies".into(),
                 ));
@@ -10763,7 +10780,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         if let Some(frame) = self.data.frame.chord_normal() {
-            if frame.policy != *policy {
+            if !policy.accepts_retained_policy(frame.policy) {
                 return Err(CurveError::Topology(
                     "a chord-normal selected circle crossed predicate policies".into(),
                 ));
@@ -10775,7 +10792,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             .frame
             .parallel_normal()
             .expect("every non-rational selected-circle frame is parallel-normal");
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a parallel-normal selected circle crossed predicate policies".into(),
             ));
@@ -10831,7 +10848,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.parallel_normal() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected parallel contact crossed predicate policies".into(),
             ));
@@ -10963,11 +10980,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         companion_source: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleParameter2>>> {
         let Some(frame) = self.data.frame.selected_radial() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected pair contact crossed predicate policies".into(),
             ));
@@ -10980,7 +10997,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if map.data.policy != *policy {
+        if !policy.accepts_retained_policy(map.data.policy) {
             return Err(CurveError::Topology(
                 "a selected pair contact map crossed predicate policies".into(),
             ));
@@ -11058,17 +11075,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             match parameter.order_to_real(&boundary, policy)? {
                 Classification::Decided(order) if order == expected => {}
                 Classification::Decided(_) => {
-                    return Err(CurveError::Topology(
-                        "a certified pair fillet contact lay outside its selected circle half"
-                            .into(),
-                    ));
+                    return Ok(Classification::Decided(None));
                 }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
         }
-        Ok(Classification::Decided(parameter))
+        Ok(Classification::Decided(Some(parameter)))
     }
 
     /// Retains a general round-join endpoint on a selected chord normal.
@@ -11186,7 +11200,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.chord_normal() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected chord-normal pair contact crossed predicate policies".into(),
             ));
@@ -11280,7 +11294,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.parallel_normal() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected chord/parallel-normal contact crossed predicate policies".into(),
             ));
@@ -11374,7 +11388,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.selected_radial() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a retained chord contact crossed selected-radial policies".into(),
             ));
@@ -11954,7 +11968,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if parallel.data.policy != *construction_policy {
+        if !parallel.accepts_policy(construction_policy) {
             return Err(CurveError::Topology(
                 "a displaced point entered circle incidence under a different policy".into(),
             ));
@@ -12557,7 +12571,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a non-radial selected circle entered the pair-radial frame system".into(),
             )
         })?;
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a pair-radial selected circle crossed predicate policies".into(),
             ));
@@ -12577,7 +12591,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     policy: transport_policy,
                     ..
                 } => {
-                    if *transport_policy != *policy {
+                    if !policy.accepts_retained_policy(*transport_policy) {
                         return Err(CurveError::Topology(
                             "a pair-radial similarity crossed predicate policies".into(),
                         ));
@@ -12592,7 +12606,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                             "a pair-radial similarity lost its exact transform provenance".into(),
                         ));
                     };
-                    if point.data.policy != *policy {
+                    if !policy.accepts_retained_policy(point.data.policy) {
                         return Err(CurveError::Topology(
                             "a pair-radial similarity point crossed predicate policies".into(),
                         ));
@@ -12603,7 +12617,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 _ => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
             }
         };
-        if pair_map.data.policy != *policy || !(-1..=1).contains(&pair_contact.branch) {
+        if !policy.accepts_retained_policy(pair_map.data.policy)
+            || !(-1..=1).contains(&pair_contact.branch)
+        {
             return Err(CurveError::Topology(
                 "a pair-radial frame lost its authored pair policy or branch".into(),
             ));
@@ -12817,7 +12833,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.chord_normal() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a represented chord-normal frame crossed predicate policies".into(),
             ));
@@ -13658,7 +13674,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a rational selected-circle frame entered the parallel-normal system".into(),
             )
         })?;
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a parallel-normal selected circle crossed predicate policies".into(),
             ));
@@ -13825,7 +13841,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a rational selected-circle frame entered the two-normal system".into(),
             )
         })?;
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a parallel-normal selected circle crossed predicate policies".into(),
             ));
@@ -16658,7 +16674,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                 tangent_cross_source: system.tangent_cross_source,
                                 tangent_dot_source: system.tangent_dot_source,
                             },
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                         represented_rational_values: Mutex::new(Vec::new()),
                     }),
                 },
@@ -16680,7 +16696,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::Represented {
                                 system,
                             },
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                         represented_rational_values: Mutex::new(Vec::new()),
                     }),
                 },
@@ -16775,7 +16791,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     radius_squared_denominator,
                     speed_squared,
                 },
-                policy: *policy,
+                policy: policy.retained_object_policy(),
                 represented_rational_values: Mutex::new(Vec::new()),
             }),
         }
@@ -18125,7 +18141,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             _ => return Ok(Classification::Decided(None)),
         };
-        if parallel.data.policy != *policy {
+        if !parallel.accepts_policy(policy) {
             return Err(CurveError::Topology(
                 "a displaced chord endpoint entered circle incidence under a different policy"
                     .into(),
@@ -20219,7 +20235,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.parallel_normal() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a represented parallel-normal circle crossed predicate policies".into(),
             ));
@@ -22178,7 +22194,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ),
                 ),
             }
-        } else if let Classification::Decided(parameter) = candidate
+        } else if let Classification::Decided(Some(parameter)) = candidate
             .certified_selected_pair_contact_parameter(parent, &relation.pair_map.data.policy)?
         {
             // The tangent lies on the companion support that authored this
@@ -24019,7 +24035,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     diameter: diameter.clone(),
                     radius_squared_denominator,
                 },
-                policy: *policy,
+                policy: policy.retained_object_policy(),
                 represented_rational_values: Mutex::new(Vec::new()),
             }),
         };
@@ -24385,7 +24401,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         },
                         radius_squared_denominator,
                     },
-                    policy: *policy,
+                    policy: policy.retained_object_policy(),
                     represented_rational_values: Mutex::new(Vec::new()),
                 }),
             })
@@ -24405,7 +24421,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some(frame) = self.data.frame.chord_normal() else {
             return Ok(Classification::Decided(None));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a chord-normal projective system crossed predicate policies".into(),
             ));
@@ -25600,7 +25616,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                         system: system.rational_parameter_map_system(),
                     },
-                policy: *policy,
+                policy: policy.retained_object_policy(),
                 represented_rational_values: Mutex::new(Vec::new()),
             }),
         };
@@ -25715,7 +25731,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                             system: system.rational_parameter_map_system(),
                         },
-                    policy: *policy,
+                    policy: policy.retained_object_policy(),
                     represented_rational_values: Mutex::new(Vec::new()),
                 }),
             })
@@ -25841,7 +25857,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     system: BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented {
                         frame: system.frame,
                     },
-                    policy: *policy,
+                    policy: policy.retained_object_policy(),
                     represented_rational_values: Mutex::new(Vec::new()),
                 }),
             })
@@ -26130,7 +26146,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                 diameter: system.diameter,
                                 radius_squared_denominator: system.radius_squared_denominator,
                             },
-                        policy: *policy,
+                        policy: policy.retained_object_policy(),
                         represented_rational_values: Mutex::new(Vec::new()),
                     }),
                 })
@@ -26398,7 +26414,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         ),
                         radius_squared_denominator,
                     },
-                    policy: *policy,
+                    policy: policy.retained_object_policy(),
                     represented_rational_values: Mutex::new(Vec::new()),
                 }),
             })
@@ -26807,7 +26823,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ),
                     radius_squared_denominator,
                 },
-                policy: *policy,
+                policy: policy.retained_object_policy(),
                 represented_rational_values: Mutex::new(Vec::new()),
             }),
         };
@@ -27402,7 +27418,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
     }
 
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "a selected-fiber rational map crossed predicate policies".into(),
             ));
@@ -27624,7 +27640,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     }
 
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "a selected-fiber parallel map crossed predicate policies".into(),
             ));
@@ -28166,7 +28182,7 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "a pair-radial parallel tangent map crossed predicate policies".into(),
             ));
@@ -28559,7 +28575,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "cusp-pair tangent predicate was replayed under a different policy".into(),
             ));
@@ -28674,7 +28690,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         translation_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "a represented selected-radial point crossed predicate policies".into(),
             ));
@@ -28786,7 +28802,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         target_reversed_from_pair_carrier: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "cusp-pair parameter map was replayed under a different predicate policy".into(),
             ));
@@ -28894,7 +28910,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         target_reversed_from_pair_carrier: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "cusp-pair parameter map was replayed under a different predicate policy".into(),
             ));
@@ -29844,7 +29860,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     }
 
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "cusp/chord parameter map was replayed under a different predicate policy".into(),
             ));
@@ -33047,8 +33063,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                                 )
                         )
             );
-        if *transport_policy != *policy
-            || transported_source_point.data.policy != *policy
+        if !policy.accepts_retained_policy(*transport_policy)
+            || !policy.accepts_retained_policy(transported_source_point.data.policy)
             || transported_source_point.data.transform != *transform
             || !transported_base_matches
             || transformed_source_point != transported_point
@@ -33345,7 +33361,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if let Some((map, contact, first)) = self.data.source.direct_pair_map_contact()
             && map.represented_contact_data(contact).is_some()
         {
-            if map.data.policy != *policy {
+            if !policy.accepts_retained_policy(map.data.policy) {
                 return Err(CurveError::Topology(
                     "a represented pair point crossed predicate policies".into(),
                 ));
@@ -35082,7 +35098,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if self
             .evidence_policy()
-            .is_some_and(|evidence_policy| evidence_policy != *policy)
+            .is_some_and(|evidence_policy| !policy.accepts_retained_policy(evidence_policy))
         {
             return Err(CurveError::Topology(
                 "algebraic cusp cut was replayed under a different predicate policy".into(),
@@ -35309,7 +35325,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             });
         }
         if let Some((source, start, source_policy)) = data.coincident_pair_endpoint_source() {
-            if source_policy != *policy {
+            if !policy.accepts_retained_policy(source_policy) {
                 return Err(CurveError::Topology(
                     "algebraic cusp endpoint source used a different predicate policy".into(),
                 ));
@@ -35576,7 +35592,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        if endpoint_policy != *policy {
+        if !policy.accepts_retained_policy(endpoint_policy) {
             return Err(CurveError::Topology(
                 "coincident circle endpoint was replayed under a different predicate policy".into(),
             ));
@@ -45039,7 +45055,8 @@ impl BezierAlgebraicChord2 {
             Axis2::X => Axis2::Y,
             Axis2::Y => Axis2::X,
         };
-        for endpoint in [self.start(), self.end()] {
+        let support = self.retained_support();
+        for endpoint in [support.start(), support.end()] {
             let candidate = match endpoint {
                 RationalBezierIntersectionPointEvidence2::Exact(point) => {
                     Some(match constant_axis {
@@ -45047,13 +45064,16 @@ impl BezierAlgebraicChord2 {
                         Axis2::Y => point.y().clone(),
                     })
                 }
-                RationalBezierIntersectionPointEvidence2::Algebraic(point) => point
-                    .exact_rational_point(policy)
-                    .map(|point| match constant_axis {
-                        Axis2::X => point.x().clone(),
-                        Axis2::Y => point.y().clone(),
-                    }),
+                RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                    point.exact_rational_coordinate(constant_axis == Axis2::X, policy)
+                }
                 RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
+                    match point.exact_axis_coordinate(constant_axis, policy)? {
+                        Classification::Decided(candidate) => candidate,
+                        Classification::Uncertain(_) => None,
+                    }
+                }
+                RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) => {
                     match point.exact_axis_coordinate(constant_axis, policy)? {
                         Classification::Decided(candidate) => candidate,
                         Classification::Uncertain(_) => None,
@@ -45061,7 +45081,6 @@ impl BezierAlgebraicChord2 {
                 }
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
                 | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
                 | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
                 | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
             };
@@ -45077,6 +45096,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionPointEvidence2>> {
         self.validate_policy(policy)?;
+        let strict_axis_direction = self.strict_axis_direction(policy);
         if let Some(line) = self.exact_line()
             && self
                 .data
@@ -45116,56 +45136,16 @@ impl BezierAlgebraicChord2 {
                 RationalBezierIntersectionPointEvidence2::Exact(point),
             ));
         }
-        if self.data.certified_axis_aligned {
-            let constant_axis = match self.data.parameter_axis.axis {
-                Axis2::X => Axis2::Y,
-                Axis2::Y => Axis2::X,
+        if strict_axis_direction.is_some()
+            && let Some(constant_coordinate) = self.exact_axis_support_coordinate(policy)?
+        {
+            let point = match self.data.parameter_axis.axis {
+                Axis2::X => Point2::new(coordinate, constant_coordinate),
+                Axis2::Y => Point2::new(constant_coordinate, coordinate),
             };
-            // A represented endpoint, or one axis-aligned support defining a
-            // correlated chord-pair endpoint, supplies this support's constant
-            // coordinate without adjoining the endpoint fields.
-            let mut constant_coordinate = None;
-            for endpoint in [self.start(), self.end()] {
-                let candidate = match endpoint {
-                    RationalBezierIntersectionPointEvidence2::Exact(point) => {
-                        Classification::Decided(Some(match constant_axis {
-                            Axis2::X => point.x().clone(),
-                            Axis2::Y => point.y().clone(),
-                        }))
-                    }
-                    RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
-                        Classification::Decided(point.exact_rational_point(policy).map(|point| {
-                            match constant_axis {
-                                Axis2::X => point.x().clone(),
-                                Axis2::Y => point.y().clone(),
-                            }
-                        }))
-                    }
-                    RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
-                        point.exact_axis_coordinate(constant_axis, policy)?
-                    }
-                    RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
-                    | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
-                    | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
-                    | RationalBezierIntersectionPointEvidence2::Similarity(_) => {
-                        Classification::Decided(None)
-                    }
-                };
-                if let Classification::Decided(Some(candidate)) = candidate {
-                    constant_coordinate = Some(candidate);
-                    break;
-                }
-            }
-            if let Some(constant_coordinate) = constant_coordinate {
-                let point = match self.data.parameter_axis.axis {
-                    Axis2::X => Point2::new(coordinate, constant_coordinate),
-                    Axis2::Y => Point2::new(constant_coordinate, coordinate),
-                };
-                return Ok(Classification::Decided(
-                    RationalBezierIntersectionPointEvidence2::Exact(point),
-                ));
-            }
+            return Ok(Classification::Decided(
+                RationalBezierIntersectionPointEvidence2::Exact(point),
+            ));
         }
         let support = self.data.source.as_ref().unwrap_or(self);
         let [start, end] =
@@ -45181,7 +45161,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        if self.data.certified_axis_aligned {
+        if strict_axis_direction.is_some() {
             let [start_x, start_y, start_weight] =
                 match algebraic_chord_owned_coordinate_polynomials(&start, policy)? {
                     Classification::Decided(point) => point,
@@ -45332,6 +45312,18 @@ impl BezierAlgebraicChord2 {
         )
     }
 
+    fn strict_axis_direction(
+        &self,
+        policy: &CurveContext,
+    ) -> Option<BezierAlgebraicChordAxisDirection2> {
+        self.certified_axis_direction().or_else(|| {
+            match self.axis_direction(&policy.strict_counterpart()) {
+                Ok(Classification::Decided(Some(direction))) => Some(direction),
+                Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => None,
+            }
+        })
+    }
+
     /// Returns reusable exact unit-tangent evidence for this traversal.
     /// Cardinal chords synthesize it without storage; transformed certified
     /// chords retain one shared two-scalar allocation.
@@ -45385,12 +45377,16 @@ impl BezierAlgebraicChord2 {
         point: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> Classification<crate::classify::LineSide> {
+        // A direction inferred under APPROXIMATE_512 may only terminate the
+        // equality predicate that requested it; it must not become a
+        // construction fact for a later side sign. Recover an axis direction
+        // here only through the strict counterpart (or retained construction
+        // evidence), then use the selected policy solely for the final
+        // coordinate comparison.
+        let strict_axis_direction = self.strict_axis_direction(policy);
         let tangent = self
             .certified_unit_tangent()
-            .or_else(|| match self.axis_direction(policy) {
-                Ok(Classification::Decided(Some(direction))) => Some(direction.unit_tangent()),
-                Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => None,
-            });
+            .or_else(|| strict_axis_direction.map(|direction| direction.unit_tangent()));
         let Some((tangent_x, tangent_y)) = tangent else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
@@ -45400,7 +45396,7 @@ impl BezierAlgebraicChord2 {
         {
             return Classification::Decided(crate::classify::LineSide::On);
         }
-        if let Some(direction) = self.certified_axis_direction()
+        if let Some(direction) = strict_axis_direction
             && let Ok(Some(support_coordinate)) = self.exact_axis_support_coordinate(policy)
         {
             let constant_axis = match direction.axis() {
@@ -46336,7 +46332,7 @@ impl BezierAlgebraicChord2 {
     }
 
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.policy != *policy && self.data.policy != policy.strict_counterpart() {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "algebraic chord was replayed under a different predicate policy".into(),
             ));
@@ -50863,6 +50859,28 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
+    if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(displaced) = first
+        && let Some(source) = displaced.strict_preserved_axis_source(axis, policy)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-parallel-axis-order",
+            "preserved-source-coordinate",
+        );
+        return algebraic_chord_point_coordinate_order(source, second, axis, policy);
+    }
+    if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(displaced) = second
+        && let Some(source) = displaced.strict_preserved_axis_source(axis, policy)
+    {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-chord-parallel-axis-order",
+            "preserved-source-coordinate",
+        );
+        return algebraic_chord_point_coordinate_order(first, source, axis, policy);
+    }
     let use_x = axis == Axis2::X;
     match (first, second) {
         (
@@ -50946,6 +50964,16 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         ) => first.axis_coordinate_order_to_evidence(axis, second, policy),
         (
             RationalBezierIntersectionPointEvidence2::Algebraic(_),
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
+        ) => Ok(second
+            .axis_coordinate_order_to_evidence(axis, first, policy)?
+            .map(std::cmp::Ordering::reverse)),
+        (
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(first),
+            second @ RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
+        ) => first.axis_coordinate_order_to_evidence(axis, second, policy),
+        (
+            first @ RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_),
             RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(second),
         ) => Ok(second
             .axis_coordinate_order_to_evidence(axis, first, policy)?
@@ -51344,7 +51372,7 @@ fn represented_point_evidence_coordinates(
         };
     }
     if let RationalBezierIntersectionPointEvidence2::Similarity(point) = point {
-        if point.data.policy != *policy {
+        if !policy.accepts_retained_policy(point.data.policy) {
             return Err(CurveError::Topology(
                 "similarity point entered a represented predicate under a different policy".into(),
             ));
@@ -51552,7 +51580,7 @@ fn chord_parallel_support_source(
     if !Arc::ptr_eq(&first.data, &second.data)
         || first.at_end == second.at_end
         || first.data.source_point.is_some()
-        || first.data.policy != *policy
+        || !first.accepts_policy(policy)
     {
         return Ok(None);
     }
@@ -52664,6 +52692,27 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
+    let cardinal_axis = if coefficient_y.zero_status() == ZeroStatus::Zero {
+        Some((Axis2::X, origin.x(), coefficient_x))
+    } else if coefficient_x.zero_status() == ZeroStatus::Zero {
+        Some((Axis2::Y, origin.y(), coefficient_y))
+    } else {
+        None
+    };
+    if let Some((axis, coordinate, coefficient)) = cardinal_axis
+        && let Some(sign) = real_sign(coefficient, &CurveContext::STRICT)
+    {
+        return match sign {
+            RealSign::Zero => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
+            RealSign::Positive => {
+                BezierAlgebraicChord2::point_axis_order_to_real(point, axis, coordinate, policy)
+            }
+            RealSign::Negative => Ok(BezierAlgebraicChord2::point_axis_order_to_real(
+                point, axis, coordinate, policy,
+            )?
+            .map(std::cmp::Ordering::reverse)),
+        };
+    }
     let coefficient_x = BezierAlgebraicChordRealInterval2::from_values(
         [coefficient_x.clone()],
         &CurveContext::STRICT,
@@ -53220,10 +53269,15 @@ impl BezierAlgebraicChord2 {
                 Classification::Decided,
             ));
         }
-        if let (Some(first), Some(second)) = (
-            self.certified_unit_tangent(),
-            other.certified_unit_tangent(),
-        ) {
+        let strict_unit_tangent = |chord: &Self| {
+            chord.certified_unit_tangent().or_else(|| {
+                chord
+                    .strict_axis_direction(policy)
+                    .map(|direction| direction.unit_tangent())
+            })
+        };
+        if let (Some(first), Some(second)) = (strict_unit_tangent(self), strict_unit_tangent(other))
+        {
             let cross = Real::diff_of_products(&first.0, &second.1, &first.1, &second.0);
             let dot = &first.0 * &second.0 + &first.1 * &second.1;
             let value = cross_scale * cross + dot_scale * dot;
@@ -54488,6 +54542,10 @@ fn retained_bounds_axis_order_to_real(
 }
 
 impl BezierAlgebraicChordParallelPoint2 {
+    fn accepts_policy(&self, policy: &CurveContext) -> bool {
+        policy.accepts_retained_policy(self.data.policy)
+    }
+
     pub(crate) fn new_pair(
         source: BezierAlgebraicChord2,
         distance: Real,
@@ -54502,7 +54560,7 @@ impl BezierAlgebraicChordParallelPoint2 {
             translation_x,
             translation_y,
             direction: BezierAlgebraicChordUnitDisplacement2::LeftNormal,
-            policy: *policy,
+            policy: policy.retained_object_policy(),
         });
         (
             Self {
@@ -54527,7 +54585,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
-                policy: *policy,
+                policy: policy.retained_object_policy(),
             }),
             at_end,
         }
@@ -54547,7 +54605,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 direction: BezierAlgebraicChordUnitDisplacement2::LeftNormal,
-                policy: *policy,
+                policy: policy.retained_object_policy(),
             }),
             at_end: false,
         }
@@ -54567,7 +54625,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 translation_x: Real::zero(),
                 translation_y: Real::zero(),
                 direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
-                policy: *policy,
+                policy: policy.retained_object_policy(),
             }),
             at_end: false,
         }
@@ -54588,7 +54646,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        if self.data.policy != *policy {
+        if !self.accepts_policy(policy) {
             return Err(CurveError::Topology(
                 "an algebraic chord displacement was represented under a different predicate policy"
                     .into(),
@@ -54681,7 +54739,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         delta_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Self> {
-        if self.data.policy != *policy {
+        if !self.accepts_policy(policy) {
             return Err(CurveError::Topology(
                 "algebraic chord parallel point was translated under a different predicate policy"
                     .into(),
@@ -54695,7 +54753,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 translation_x: &self.data.translation_x + delta_x,
                 translation_y: &self.data.translation_y + delta_y,
                 direction: self.data.direction,
-                policy: *policy,
+                policy: policy.retained_object_policy(),
             }),
             at_end: self.at_end,
         })
@@ -54707,7 +54765,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         policy: &CurveContext,
         cache: &mut BezierAlgebraicCuspSemicircleSimilarityCache2,
     ) -> CurveResult<Classification<Self>> {
-        if self.data.policy != *policy && self.data.policy != policy.strict_counterpart() {
+        if !self.accepts_policy(policy) {
             return Err(CurveError::Topology(
                 "algebraic chord parallel point was transformed under a different predicate policy"
                     .into(),
@@ -54754,7 +54812,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
-        if self.data.policy != *policy || self.data.source.validate_policy(policy).is_err() {
+        if !self.accepts_policy(policy) || self.data.source.validate_policy(policy).is_err() {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         let (Classification::Decided(start), Classification::Decided(end)) = (
@@ -54858,7 +54916,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         semicircle: &BezierAlgebraicCuspSemicircle2,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RealSign>>> {
-        if self.data.policy != *policy
+        if !self.accepts_policy(policy)
             || self.data.source_point.is_some()
             || self.data.direction != BezierAlgebraicChordUnitDisplacement2::LeftNormal
             || self.data.translation_x.zero_status() != ZeroStatus::Zero
@@ -54981,12 +55039,115 @@ impl BezierAlgebraicChordParallelPoint2 {
         Ok(None)
     }
 
+    fn strict_cardinal_axis_shift(&self, axis: Axis2, policy: &CurveContext) -> Option<Real> {
+        // A cardinal source makes each normalized tangent/normal component
+        // exactly -1, 0, or 1. Determine that component under STRICT so an
+        // APPROXIMATE_512 equality never becomes a reusable construction
+        // fact for a later coordinate sign.
+        if !policy.accepts_retained_policy(self.data.policy) {
+            return None;
+        }
+        let direction = self.data.source.strict_axis_direction(policy)?;
+        let (tangent_x, tangent_y) = direction.cardinal_components();
+        let component = match (self.data.direction, axis) {
+            (BezierAlgebraicChordUnitDisplacement2::Tangent, Axis2::X) => tangent_x,
+            (BezierAlgebraicChordUnitDisplacement2::Tangent, Axis2::Y) => tangent_y,
+            (BezierAlgebraicChordUnitDisplacement2::LeftNormal, Axis2::X) => -tangent_y,
+            (BezierAlgebraicChordUnitDisplacement2::LeftNormal, Axis2::Y) => tangent_x,
+        };
+        let mut shift = match axis {
+            Axis2::X => self.data.translation_x.clone(),
+            Axis2::Y => self.data.translation_y.clone(),
+        };
+        match component {
+            1 => shift += &self.data.distance,
+            -1 => shift -= &self.data.distance,
+            _ => {}
+        }
+        Some(shift)
+    }
+
+    fn strict_preserved_axis_source<'a>(
+        &'a self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> Option<&'a RationalBezierIntersectionPointEvidence2> {
+        let shift = self.strict_cardinal_axis_shift(axis, policy)?;
+        (real_sign(&shift, &CurveContext::STRICT) == Some(RealSign::Zero))
+            .then(|| self.source_endpoint())
+    }
+
+    fn exact_axis_coordinate(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        let Some(shift) = self.strict_cardinal_axis_shift(axis, policy) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        };
+        let source = match self.source_endpoint() {
+            RationalBezierIntersectionPointEvidence2::Exact(point) => Some(match axis {
+                Axis2::X => point.x().clone(),
+                Axis2::Y => point.y().clone(),
+            }),
+            RationalBezierIntersectionPointEvidence2::Algebraic(point) => {
+                point.exact_rational_coordinate(axis == Axis2::X, policy)
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(point) => {
+                match point.exact_axis_coordinate(axis, policy)? {
+                    Classification::Decided(coordinate) => coordinate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) => {
+                match point.exact_axis_coordinate(axis, policy)? {
+                    Classification::Decided(coordinate) => coordinate,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+            | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+            | RationalBezierIntersectionPointEvidence2::Similarity(_) => None,
+        };
+        Ok(Classification::Decided(
+            source.map(|coordinate| coordinate + shift),
+        ))
+    }
+
     fn axis_coordinate_order_to_real(
         &self,
         axis: Axis2,
         value: &Real,
         policy: &CurveContext,
     ) -> Classification<std::cmp::Ordering> {
+        // Project cardinal displacement back to the source endpoint before
+        // interval refinement. Besides avoiding a radical, this proves
+        // identities such as "a normal displacement of a vertical chord
+        // preserves y", which finite-width boxes cannot establish in STRICT.
+        if let Some(shift) = self.strict_cardinal_axis_shift(axis, policy) {
+            let source_target = value - shift;
+            if let Ok(Classification::Decided(order)) =
+                BezierAlgebraicChord2::point_axis_order_to_real(
+                    self.source_endpoint(),
+                    axis,
+                    &source_target,
+                    &policy.strict_counterpart(),
+                )
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-parallel-axis-order",
+                    "cardinal-source-projection",
+                );
+                return Classification::Decided(order);
+            }
+        }
         retained_bounds_axis_order_to_real(
             |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
             axis,
@@ -55059,7 +55220,7 @@ impl BezierAnalyticParallelPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<Vec<BezierParameter2>>>> {
-        if self.data.policy != *policy
+        if !policy.accepts_retained_policy(self.data.policy)
             || self.data.parallel.distance().zero_status() != ZeroStatus::Zero
             || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
             || self.data.translation_x.zero_status() != ZeroStatus::Zero
@@ -55179,7 +55340,7 @@ impl BezierAnalyticParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "analytic-parallel point entered a predicate under a different policy".into(),
             ));
@@ -55223,7 +55384,7 @@ impl BezierAnalyticParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Point2>>> {
-        if self.data.policy != *policy
+        if !policy.accepts_retained_policy(self.data.policy)
             || self.data.tangent_distance.zero_status() != ZeroStatus::Zero
         {
             return Ok(Classification::Decided(None));
@@ -55260,7 +55421,7 @@ impl BezierAnalyticParallelPoint2 {
         delta_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Self> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "analytic-parallel point was translated under a different predicate policy".into(),
             ));
@@ -55282,7 +55443,7 @@ impl BezierAnalyticParallelPoint2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         match &self.data.parameter {
@@ -55343,7 +55504,7 @@ impl BezierAnalyticParallelPoint2 {
         radius_squared: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "analytic-parallel point entered a circle predicate under a different policy"
                     .into(),
@@ -55499,7 +55660,7 @@ impl BezierSimilarityPoint2 {
         delta_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Self> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "similarity point was translated under a different predicate policy".into(),
             ));
@@ -55519,7 +55680,7 @@ impl BezierSimilarityPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RationalBezierIntersectionPointEvidence2>>> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "similarity point entered a predicate under a different policy".into(),
             ));
@@ -55576,7 +55737,7 @@ impl BezierSimilarityPoint2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         let source = match algebraic_chord_endpoint_bounds_refined(
@@ -55604,11 +55765,11 @@ impl BezierSimilarityPoint2 {
         other: &RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         if let RationalBezierIntersectionPointEvidence2::Similarity(other) = other
-            && other.data.policy == *policy
+            && policy.accepts_retained_policy(other.data.policy)
             && self.data.transform == other.data.transform
         {
             if self.shares_storage(other) {
@@ -55642,7 +55803,7 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<Real>> {
         self.validate_policy(policy)?;
         if let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(displaced) = point
-            && displaced.data.policy == *policy
+            && displaced.accepts_policy(policy)
             && displaced.data.source == *self
             && displaced.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
             && displaced.data.translation_x.zero_status() == ZeroStatus::Zero
@@ -55824,7 +55985,7 @@ impl BezierAlgebraicChord2 {
 
 impl BezierAlgebraicChordPairPoint2 {
     fn accepts_policy(&self, policy: &CurveContext) -> bool {
-        self.data.policy == *policy || self.data.policy == policy.strict_counterpart()
+        policy.accepts_retained_policy(self.data.policy)
     }
 
     fn new(
@@ -56024,20 +56185,16 @@ impl BezierAlgebraicChordPairPoint2 {
         }
         let mut uncertainty = None;
         for chord in [&self.data.first, &self.data.second] {
-            let constant_coordinate = match chord.axis_direction(policy)? {
-                Classification::Decided(Some(
+            let constant_coordinate = match chord.strict_axis_direction(policy) {
+                Some(
                     BezierAlgebraicChordAxisDirection2::PositiveX
                     | BezierAlgebraicChordAxisDirection2::NegativeX,
-                )) => axis == Axis2::Y,
-                Classification::Decided(Some(
+                ) => axis == Axis2::Y,
+                Some(
                     BezierAlgebraicChordAxisDirection2::PositiveY
                     | BezierAlgebraicChordAxisDirection2::NegativeY,
-                )) => axis == Axis2::X,
-                Classification::Decided(None) => false,
-                Classification::Uncertain(reason) => {
-                    uncertainty.get_or_insert(reason);
-                    false
-                }
+                ) => axis == Axis2::X,
+                None => false,
             };
             if !constant_coordinate {
                 continue;
@@ -56912,7 +57069,7 @@ fn selected_circle_endpoint_chord_side(
 #[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
-        if self.data.policy != *policy {
+        if !policy.accepts_retained_policy(self.data.policy) {
             return Err(CurveError::Topology(
                 "algebraic cusp fragment was replayed under a different predicate policy".into(),
             ));
@@ -57262,7 +57419,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     )));
                 }
                 if let Some(frame) = self.data.semicircle.data.frame.selected_radial() {
-                    if frame.policy != *policy {
+                    if !policy.accepts_retained_policy(frame.policy) {
                         return Err(CurveError::Topology(
                             "a selected-radial tangent support crossed predicate policies".into(),
                         ));
@@ -57294,7 +57451,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     )));
                 }
                 if let Some(frame) = self.data.semicircle.data.frame.chord_normal() {
-                    if frame.policy != *policy {
+                    if !policy.accepts_retained_policy(frame.policy) {
                         return Err(CurveError::Topology(
                             "a chord-normal tangent support crossed predicate policies".into(),
                         ));
@@ -57321,7 +57478,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     .frame
                     .parallel_normal()
                     .expect("every non-rational selected-circle frame is parallel-normal");
-                if frame.policy != *policy {
+                if !policy.accepts_retained_policy(frame.policy) {
                     return Err(CurveError::Topology(
                         "a selected-circle tangent support crossed predicate policies".into(),
                     ));
@@ -57474,7 +57631,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             self.data.semicircle.data.frame.chord_normal(),
             self.endpoint_parameter(start_endpoint),
         ) {
-            if frame.policy != *policy {
+            if !policy.accepts_retained_policy(frame.policy) {
                 return Err(CurveError::Topology(
                     "a chord-normal endpoint tangent crossed predicate policies".into(),
                 ));
@@ -57524,7 +57681,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        if map_policy != *policy {
+        if !policy.accepts_retained_policy(map_policy) {
             return Err(CurveError::Topology(
                 "circle/chord tangent authority was replayed under a different predicate policy"
                     .into(),
@@ -57685,7 +57842,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 transported_reversed,
             )) = data.coincident_selected_pair_contact()
             {
-                if selected_policy != *policy || map.data.policy != *policy {
+                if !policy.accepts_retained_policy(selected_policy)
+                    || !policy.accepts_retained_policy(map.data.policy)
+                {
                     return Err(CurveError::Topology(
                         "a retained pair tangent crossed predicate policies".into(),
                     ));
@@ -57695,7 +57854,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         "a selected pair contact lost its pair-radial frame".into(),
                     ));
                 };
-                if frame.policy != *policy {
+                if !policy.accepts_retained_policy(frame.policy) {
                     return Err(CurveError::Topology(
                         "a selected pair tangent frame crossed predicate policies".into(),
                     ));
@@ -57801,7 +57960,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let Some(frame) = self.data.semicircle.data.frame.selected_radial() else {
             return Ok(Classification::Decided(None));
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a pair-radial start tangent crossed predicate policies".into(),
             ));
@@ -57945,7 +58104,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let Some(frame) = self.data.semicircle.data.frame.parallel_normal() else {
             return Ok(None);
         };
-        if frame.policy != *policy {
+        if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected-circle endpoint tangent crossed predicate policies".into(),
             ));
@@ -58137,7 +58296,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 tangent_cross_sign,
                 ..
             } => {
-                if map.data.policy != *policy
+                if !policy.accepts_retained_policy(map.data.policy)
                     || !matches!(
                         parallel.source(),
                         BezierParallelSource2::Rational(source) if source == &map.data.curve
@@ -58153,7 +58312,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 tangent_cross_sign,
                 ..
             } => {
-                if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
+                if !policy.accepts_retained_policy(map.data.policy)
+                    || parallel.source() != map.data.parallel.source()
+                {
                     return fallback();
                 }
                 let mapped_scale = match map
@@ -58260,7 +58421,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 other_parameter,
                 ..
             } => {
-                if map.data.policy != *policy
+                if !policy.accepts_retained_policy(map.data.policy)
                     || !matches!(
                         parallel.source(),
                         BezierParallelSource2::Rational(source) if source == &map.data.curve
@@ -58289,7 +58450,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 other_parameter,
                 ..
             } => {
-                if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
+                if !policy.accepts_retained_policy(map.data.policy)
+                    || parallel.source() != map.data.parallel.source()
+                {
                     return fallback();
                 }
                 match other_parameter.cmp_bezier_parameter(parameter, policy)? {
@@ -58309,7 +58472,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 )?
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
-                if map.data.policy != *policy || parallel.source() != map.data.parallel.source() {
+                if !policy.accepts_retained_policy(map.data.policy)
+                    || parallel.source() != map.data.parallel.source()
+                {
                     return fallback();
                 }
                 match contact.parallel_parameter.same_value(parameter, policy)? {
@@ -59101,7 +59266,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 else {
                     return None;
                 };
-                (policy == self.data.policy && data.semicircle_carrier() == &self.data.semicircle)
+                (self.data.policy.accepts_retained_policy(policy)
+                    && data.semicircle_carrier() == &self.data.semicircle)
                     .then(|| (parallel.clone(), parameter.clone()))
             }
         }
@@ -83511,14 +83677,7 @@ mod conversion_tests {
             let booleans = retained_region
                 .boolean_regions(&rational_region, &policy)
                 .unwrap();
-            assert_eq!(
-                booleans.certainty,
-                if policy == CurveContext::STRICT {
-                    CurveCertainty::Certified
-                } else {
-                    CurveCertainty::Approximate512Consumed
-                }
-            );
+            assert_eq!(booleans.certainty, CurveCertainty::Certified);
             assert!(!booleans.value.union().is_empty());
             assert!(!booleans.value.intersection().is_empty());
             assert!(!booleans.value.difference().is_empty());
@@ -83959,6 +84118,84 @@ mod conversion_tests {
                     contacts
                 )) if contacts.len() == 1 && contacts[0].tangent_cross_sign() == RealSign::Zero
             ));
+        }
+    }
+
+    #[test]
+    fn cardinal_algebraic_parallel_projects_source_coordinates_exactly() {
+        for requested in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&requested, |policy| {
+                let BezierParameter2::Algebraic(parameter) = algebraic_parameter(vec![
+                    -(Real::one() / Real::from(2_i8)).unwrap(),
+                    Real::zero(),
+                    Real::one(),
+                ]) else {
+                    unreachable!("sqrt(1/2) must remain algebraic");
+                };
+                let endpoint = |height: i8| {
+                    RationalBezierIntersectionPointEvidence2::Algebraic(
+                        RationalBezier2::try_new(
+                            vec![
+                                Point2::new(Real::from(12), Real::from(height)),
+                                Point2::new(Real::from(13), Real::from(height)),
+                            ],
+                            vec![Real::one(); 2],
+                        )
+                        .unwrap()
+                        .point_at_algebraic_parameter(&parameter, policy)
+                        .unwrap(),
+                    )
+                };
+                let Classification::Decided(vertical) =
+                    BezierAlgebraicChord2::try_new(endpoint(0), endpoint(4), policy).unwrap()
+                else {
+                    panic!("the selected vertical chord must construct exactly");
+                };
+                assert_eq!(vertical.certified_axis_direction(), None);
+                assert_eq!(
+                    vertical
+                        .axis_direction(&policy.strict_counterpart())
+                        .unwrap(),
+                    Classification::Decided(Some(BezierAlgebraicChordAxisDirection2::PositiveY))
+                );
+                let parallel = vertical
+                    .parallel_left_retained(-Real::one(), policy)
+                    .unwrap();
+                let RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(point) =
+                    parallel.start()
+                else {
+                    panic!("the selected parallel endpoint must stay retained");
+                };
+                assert_eq!(
+                    point.exact_axis_coordinate(Axis2::Y, policy).unwrap(),
+                    Classification::Decided(Some(Real::zero()))
+                );
+                assert_eq!(
+                    BezierAlgebraicChord2::point_axis_order_to_real(
+                        parallel.start(),
+                        Axis2::Y,
+                        &Real::zero(),
+                        policy,
+                    )
+                    .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                let Classification::Decided(horizontal) = BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
+                    RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(1, 0)),
+                    policy,
+                )
+                .unwrap() else {
+                    panic!("the exact horizontal support must construct");
+                };
+                assert_eq!(
+                    horizontal
+                        .oriented_support_side(parallel.start(), policy)
+                        .unwrap(),
+                    Classification::Decided(crate::classify::LineSide::On)
+                );
+            });
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
         }
     }
 

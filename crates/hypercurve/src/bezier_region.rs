@@ -11877,7 +11877,20 @@ impl CurveRegion2 {
                 .certified_selected_pair_contact_parameter(companion_circle, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
             {
-                Classification::Decided(parameter) => parameter,
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => {
+                    // The retained pair contact belongs to the other rational
+                    // half-chart. Fall back to the exact full-circle selector,
+                    // which owns complementary-half and diameter assignment.
+                    return Self::retained_concentric_cusp_fillet_fragments(
+                        frame,
+                        fillet,
+                        companion,
+                        anchor_cut,
+                        companion_cut,
+                        policy,
+                    );
+                }
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
