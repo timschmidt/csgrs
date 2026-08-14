@@ -229,84 +229,6 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 4),
-        line_segment(4, 4, 8, 4),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let result = curve.chamfer_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy)?;
-        let Classification::Decided(chamfered) = result else {
-            panic!("line-line chamfer benchmark became uncertain");
-        };
-        total_segments += black_box(chamfered.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_arc_chamfer(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1))?),
-        Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1))?),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let result = curve.chamfer_vertex_by_parameters(1, q(5, 7), q(2, 7), &policy)?;
-        let Classification::Decided(chamfered) = result else {
-            panic!("arc-arc chamfer benchmark became uncertain");
-        };
-        total_segments += black_box(chamfered.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_arc_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 4),
-        line_segment(4, 4, 8, 4),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let result =
-            curve.fillet_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)?;
-        let Classification::Decided(filleted) = result else {
-            panic!("line-line fillet benchmark became uncertain");
-        };
-        total_segments += black_box(filleted.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn bench_line_curve_corner_solvers(iterations: u32) {
     let path = CurvePath2::try_new(vec![
         Curve2::from(line(0, 0, 4, 0)),
@@ -1934,54 +1856,6 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
-    let previous_arc = CircularArc2::try_from_center(
-        Point2::new(s(3), q(13, 3)),
-        p(5, 3),
-        Point2::new(s(3), q(13, 6)),
-        false,
-    )?;
-    let next_arc = CircularArc2::try_from_center(
-        p(5, 3),
-        Point2::new(q(9, 2), q(5, 2)),
-        Point2::new(q(13, 2), s(1)),
-        true,
-    )?;
-    let policy = CurveContext::STRICT;
-    let Classification::Decided(previous_param) = previous_arc.sweep_fraction(&p(3, 0), &policy)?
-    else {
-        panic!("previous arc fillet parameter must be decided");
-    };
-    let Classification::Decided(next_param) = next_arc.sweep_fraction(&p(4, 1), &policy)? else {
-        panic!("next arc fillet parameter must be decided");
-    };
-    let curve = CurveString2::try_new(vec![Segment2::Arc(previous_arc), Segment2::Arc(next_arc)])?;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let result = curve.fillet_vertex_by_parameters(
-            1,
-            previous_param.clone(),
-            next_param.clone(),
-            &p(3, 1),
-            false,
-            &policy,
-        )?;
-        let Classification::Decided(filleted) = result else {
-            panic!("arc-arc fillet benchmark became uncertain");
-        };
-        total_segments += black_box(filleted.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_arc_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn bench_arc_extension(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![Segment2::Arc(CircularArc2::try_from_center(
         p(1, 0),
@@ -2561,10 +2435,6 @@ fn main() -> CurveResult<()> {
     bench_point_arc_trim(iterations)?;
     bench_curve_intersection_trim(iterations)?;
     bench_region_trim(iterations)?;
-    bench_line_chamfer(iterations)?;
-    bench_arc_chamfer(iterations)?;
-    bench_line_fillet(iterations)?;
-    bench_arc_fillet(iterations)?;
     bench_line_curve_corner_solvers(iterations);
     bench_native_arc_chamfer_solvers(iterations)?;
     bench_native_arc_fillet_solvers(iterations)?;

@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    BulgeVertex2, Classification, CurveContext, CurveRegion2, CurveString2, CurveStringEndpoint2,
-    CurveStringTrimPoint2, FillRule, Point2, Real,
+    BulgeVertex2, Classification, Curve2, CurveContext, CurveCornerMode2, CurvePath2, CurveRegion2,
+    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, Point2, Real, Segment2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -105,15 +105,29 @@ fuzz_target!(|data: &[u8]| {
         let _ = curve.trim_inside_region(&region, &policy);
     }
 
-    let _ = curve.chamfer_vertex_by_parameters(1, q(data[14]), q(data[15]), &policy);
-    let _ = curve.fillet_vertex_by_parameters(
-        1,
-        q(data[14]),
-        q(data[15]),
-        &point(data[6], data[7]),
-        data[8] & 1 == 0,
-        &policy,
-    );
+    let curves = curve
+        .segments()
+        .iter()
+        .map(|segment| match segment {
+            Segment2::Line(line) => Curve2::from(line.clone()),
+            Segment2::Arc(arc) => Curve2::from(arc.clone()),
+        })
+        .collect();
+    if let Ok(path) = CurvePath2::try_new(curves) {
+        let _ = path.chamfer_vertex_by_setbacks(
+            1,
+            q(data[14]),
+            q(data[15]),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        );
+        let _ = path.fillet_vertex_by_radius(
+            1,
+            q(data[14]),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        );
+    }
 
     if let Ok(Classification::Decided(linked)) =
         CurveString2::link_connected_endpoints(&curve, &curve, &policy)

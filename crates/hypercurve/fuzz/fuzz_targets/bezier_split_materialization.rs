@@ -108,7 +108,8 @@ fuzz_target!(|data: &[u8]| {
                 }
                 BezierSplitFragment2::AnalyticParallel(_)
                 | BezierSplitFragment2::AlgebraicChord(_)
-                | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                | BezierSplitFragment2::SelectedFiber(_) => {
                     panic!("splitting an authored quadratic produced an unrelated carrier")
                 }
             }
