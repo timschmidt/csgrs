@@ -1721,6 +1721,96 @@ fn rational_chamfer_materializes_the_incident_projective_cell() {
 }
 
 #[test]
+fn spline_chamfer_materializes_only_the_incident_extension_cell() {
+    let knots = || vec![r(0), r(0), r(0), r(1), r(1), r(1)];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let polynomial = Curve2::try_polynomial_bspline(
+            2,
+            vec![p(-1, 1), Point2::new(-q(1, 2), Real::zero()), p(0, 0)],
+            knots(),
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let rational = Curve2::try_nurbs(
+            2,
+            vec![p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1)],
+            vec![Real::one(), q(1, 2), q(1, 4)],
+            knots(),
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        for (source, line_end, setback, expected) in [
+            (
+                polynomial,
+                p(0, 3),
+                Real::from(2_i8).sqrt().unwrap(),
+                p(1, 1),
+            ),
+            (
+                rational,
+                p(1, 12),
+                Real::from(68_i8).sqrt().unwrap(),
+                p(3, 9),
+            ),
+        ] {
+            let family = source.family();
+            let corner = source.end().clone();
+            let path = CurvePath2::try_new(vec![
+                source,
+                Curve2::from(LineSeg2::try_new(corner, line_end).unwrap()),
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.clone().reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                let (previous_setback, next_setback) = if reversed {
+                    (Real::zero(), setback.clone())
+                } else {
+                    (setback.clone(), Real::zero())
+                };
+                let result = path
+                    .chamfer_vertex_by_setbacks(
+                        1,
+                        previous_setback,
+                        next_setback,
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the spline incident cell must extend: policy={policy:?}, family={family:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(edited) = result.into_value() else {
+                    panic!("the spline extension chamfer must be unique");
+                };
+                assert_eq!(edited.curves().len(), 4);
+                assert_eq!(
+                    edited
+                        .curves()
+                        .iter()
+                        .filter(|curve| curve.family() == family)
+                        .count(),
+                    1,
+                );
+                assert!(
+                    edited
+                        .curves()
+                        .iter()
+                        .any(|curve| { curve.start() == &expected || curve.end() == &expected })
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn line_parabola_mixed_exact_algebraic_fillet_requires_retained_region() {
     let half = q(1, 2);
     let radius = q(299, 125);
@@ -2441,6 +2531,90 @@ fn direct_bezier_pair_fillet_materializes_both_incident_extensions() {
                 }
                 CurveCornerSolutions2::NoSolution(reason) => {
                     panic!("the exact projective Bezier fillet was lost: {reason:?}")
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell() {
+    let knots = || vec![r(0), r(0), r(0), r(1), r(1), r(1)];
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+            let spline = match family {
+                CurveFamily2::PolynomialBSpline => Curve2::try_polynomial_bspline(
+                    2,
+                    vec![p(-2, 0), p(-1, 0), p(0, 0)],
+                    knots(),
+                    &policy,
+                ),
+                CurveFamily2::Nurbs => Curve2::try_nurbs(
+                    2,
+                    vec![p(-2, 0), p(-1, 0), p(0, 0)],
+                    vec![Real::one(); 3],
+                    knots(),
+                    &policy,
+                ),
+                _ => unreachable!(),
+            }
+            .unwrap()
+            .into_value();
+            let path = CurvePath2::try_new(vec![
+                spline,
+                Curve2::from(LineSeg2::try_new(p(0, 0), p(0, 2)).unwrap()),
+            ])
+            .unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.clone().reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                let result = path
+                    .fillet_vertex_by_radius(
+                        1,
+                        Real::one(),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the spline incident cell must fillet: policy={policy:?}, family={family:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let has_expected = |candidate: &CurvePath2| {
+                    candidate.curves().len() == 4
+                        && candidate
+                            .curves()
+                            .iter()
+                            .filter(|curve| curve.family() == family)
+                            .count()
+                            == 1
+                        && candidate.curves().iter().any(|curve| {
+                            matches!(
+                                curve.geometry(),
+                                CurveGeometry2::CircularArc(arc) if arc.center() == &p(1, -1)
+                            )
+                        })
+                        && candidate
+                            .curves()
+                            .iter()
+                            .any(|curve| curve.start() == &p(1, 0) || curve.end() == &p(1, 0))
+                        && candidate
+                            .curves()
+                            .iter()
+                            .any(|curve| curve.start() == &p(0, -1) || curve.end() == &p(0, -1))
+                };
+                match result.into_value() {
+                    CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(&candidate)),
+                    CurveCornerSolutions2::Multiple(candidates) => {
+                        assert!(candidates.iter().any(has_expected));
+                    }
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the spline projective fillet was lost: {reason:?}")
+                    }
                 }
             }
         }

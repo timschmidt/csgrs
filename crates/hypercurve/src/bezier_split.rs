@@ -1589,6 +1589,16 @@ impl QuadraticBezier2 {
             let (_, right) = self.split_at_exact(start.clone());
             return Ok(right);
         }
+        if compare_reals(end, &Real::zero(), policy) == Some(Ordering::Equal) {
+            // The usual split-at-end construction computes `start / end`.
+            // An exterior interval `[start, 0]` is perfectly finite, so use
+            // the equivalent split-at-start chart and avoid manufacturing a
+            // projective pole at the represented endpoint.
+            let (_, right) = self.split_at_exact(start.clone());
+            let local_end = ((end - start) / (Real::one() - start))?;
+            let (middle, _) = right.split_at_exact(local_end);
+            return Ok(middle);
+        }
 
         let (left, _) = self.split_at_exact(end.clone());
         let local_start = (start.clone() / end.clone())?;
@@ -1706,6 +1716,12 @@ impl CubicBezier2 {
         if compare_reals(end, &Real::one(), policy) == Some(Ordering::Equal) {
             let (_, right) = self.split_at_exact(start.clone());
             return Ok(right);
+        }
+        if compare_reals(end, &Real::zero(), policy) == Some(Ordering::Equal) {
+            let (_, right) = self.split_at_exact(start.clone());
+            let local_end = ((end - start) / (Real::one() - start))?;
+            let (middle, _) = right.split_at_exact(local_end);
+            return Ok(middle);
         }
 
         let (left, _) = self.split_at_exact(end.clone());
