@@ -2102,6 +2102,126 @@ fn compact_optional_corner_solutions<T>(
     }
 }
 
+fn retained_cusp_smooth_run_neighbor(
+    boundary: &CurveRegionBoundaryLoop2,
+    index: usize,
+    previous: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<usize>> {
+    let fragments = boundary.fragments();
+    if fragments.len() <= 1 {
+        return Ok(None);
+    }
+    let next_index = if previous {
+        (index + fragments.len() - 1) % fragments.len()
+    } else {
+        (index + 1) % fragments.len()
+    };
+    let (
+        BezierSplitFragment2::AlgebraicCuspSemicircle(source),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(next),
+    ) = (&fragments[index], &fragments[next_index])
+    else {
+        return Ok(None);
+    };
+    source
+        .validate_policy(policy)
+        .and_then(|()| next.validate_policy(policy))
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
+    if (source.semicircle().is_clockwise() ^ source.is_reversed())
+        != (next.semicircle().is_clockwise() ^ next.is_reversed())
+    {
+        return Ok(None);
+    }
+    match source
+        .semicircle()
+        .shared_frame_chart_relation(next.semicircle(), policy)
+    {
+        Classification::Decided(Some(_)) => Ok(Some(next_index)),
+        Classification::Decided(None) => Ok(None),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            CurveFamily2::CircularArc,
+            reason,
+        )),
+    }
+}
+
+/// Rebinds one full-support selected-circle contact to the exact fragment in
+/// the contiguous smooth run that owns it. This turns a representation-chart
+/// extension into an authored trim without admitting a true curve extension.
+fn rebind_retained_cusp_run_cut(
+    boundary: &CurveRegionBoundaryLoop2,
+    immediate_index: usize,
+    previous: bool,
+    cut: &mut CornerTrimCut2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<usize>> {
+    if cut.placement != CornerPlacement2::Extension {
+        return Ok(Some(immediate_index));
+    }
+    let BezierSplitFragment2::AlgebraicCuspSemicircle(immediate) =
+        &boundary.fragments()[immediate_index]
+    else {
+        return Ok(None);
+    };
+    let Some(parameter) = cut.parameter.as_algebraic_cusp().cloned() else {
+        return Ok(None);
+    };
+    let complementary = cut.parameter.is_algebraic_cusp_complement();
+    let mut index = immediate_index;
+    for _ in 1..boundary.fragments().len() {
+        let Some(next_index) =
+            retained_cusp_smooth_run_neighbor(boundary, index, previous, policy)?
+        else {
+            return Ok(None);
+        };
+        if next_index == immediate_index {
+            return Ok(None);
+        }
+        index = next_index;
+        let BezierSplitFragment2::AlgebraicCuspSemicircle(candidate) = &boundary.fragments()[index]
+        else {
+            unreachable!("the smooth selected-circle neighbor was checked")
+        };
+        let chart_relation = match immediate
+            .semicircle()
+            .shared_frame_chart_relation(candidate.semicircle(), policy)
+        {
+            Classification::Decided(relation) => relation,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        };
+        if chart_relation != Some(complementary) {
+            continue;
+        }
+        match candidate
+            .contains_parameter(&parameter, false, false, policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+        {
+            Classification::Decided(true) => {
+                cut.parameter = CurveRegionParameter2::from_algebraic_cusp(parameter);
+                cut.placement = CornerPlacement2::Trim;
+                return Ok(Some(index));
+            }
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    reason,
+                ));
+            }
+        }
+    }
+    Ok(None)
+}
+
 fn retained_corner_decision<T>(
     decision: Classification<T>,
     operation: CurveOperation2,
@@ -10031,8 +10151,15 @@ impl CurveRegion2 {
                 }
             }
         };
+        let fragment_count = self.data.boundary_loops[loop_index].fragments().len();
+        let previous_index = if vertex_index == 0 {
+            fragment_count - 1
+        } else {
+            vertex_index - 1
+        };
         self.rebuild_retained_corner(
             loop_index,
+            previous_index,
             vertex_index,
             previous_cut,
             next_cut,
@@ -10048,7 +10175,8 @@ impl CurveRegion2 {
     fn rebuild_retained_corner(
         &self,
         loop_index: usize,
-        vertex_index: usize,
+        previous_index: usize,
+        next_index: usize,
         previous_cut: CornerTrimCut2,
         next_cut: CornerTrimCut2,
         inserted: Vec<BezierSplitFragment2>,
@@ -10059,12 +10187,6 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Self> {
         let boundary_loop = &self.data.boundary_loops[loop_index];
         let fragment_count = boundary_loop.fragments().len();
-        let previous_index = if vertex_index == 0 {
-            fragment_count - 1
-        } else {
-            vertex_index - 1
-        };
-        let next_index = vertex_index;
         let same_fragment = previous_index == next_index;
         if same_fragment && (previous_replacement.is_some() || next_replacement.is_some()) {
             return Err(ExactCurveError::blocked(
@@ -10194,7 +10316,7 @@ impl CurveRegion2 {
                     fragments.extend(previous_trim);
                 }
             }
-        } else if vertex_index == 0 {
+        } else if previous_index > next_index {
             fragments.extend(inserted);
             fragments.extend(next_trim.expect("a distinct next fragment is retained"));
             fragments.extend(
@@ -10354,12 +10476,30 @@ impl CurveRegion2 {
         )?;
         let next_carrier =
             next_source.exact_carrier(next_fragment, false, CurveOperation2::Fillet, policy)?;
+        let selected_circle_pair = matches!(
+            (previous_fragment, next_fragment),
+            (
+                BezierSplitFragment2::AlgebraicCuspSemicircle(_),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            )
+        );
+        let has_smooth_run = selected_circle_pair
+            && mode == CurveCornerMode2::TrimOnly
+            && (retained_cusp_smooth_run_neighbor(boundary_loop, previous_index, true, policy)?
+                .is_some()
+                || retained_cusp_smooth_run_neighbor(boundary_loop, next_index, false, policy)?
+                    .is_some());
+        let solve_mode = if has_smooth_run {
+            CurveCornerMode2::TrimOrExtend
+        } else {
+            mode
+        };
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
             next_carrier,
             &radius,
             radius_sign,
-            mode,
+            solve_mode,
             previous_family,
             next_family,
             policy,
@@ -10373,6 +10513,35 @@ impl CurveRegion2 {
                         UncertaintyReason::Unsupported,
                     )
                 })?;
+            let mut previous_cut_index = previous_index;
+            let mut next_cut_index = next_index;
+            if has_smooth_run {
+                let Some(index) = rebind_retained_cusp_run_cut(
+                    boundary_loop,
+                    previous_index,
+                    true,
+                    &mut previous_cut,
+                    policy,
+                )?
+                else {
+                    return Ok(None);
+                };
+                previous_cut_index = index;
+                let Some(index) = rebind_retained_cusp_run_cut(
+                    boundary_loop,
+                    next_index,
+                    false,
+                    &mut next_cut,
+                    policy,
+                )?
+                else {
+                    return Ok(None);
+                };
+                next_cut_index = index;
+                if previous_cut_index == next_cut_index {
+                    return Ok(None);
+                }
+            }
             let deferred_arc_is_previous = retained_frame
                 .as_ref()
                 .and_then(|frame| frame.anchor_evidence.as_ref())
@@ -10393,7 +10562,7 @@ impl CurveRegion2 {
             } else {
                 if deferred_arc_is_previous != Some(true) {
                     self.canonicalize_retained_corner_cut(
-                        &boundary_loop.fragments()[previous_index],
+                        &boundary_loop.fragments()[previous_cut_index],
                         &mut previous_cut,
                         true,
                         CurveOperation2::Fillet,
@@ -10402,7 +10571,7 @@ impl CurveRegion2 {
                 }
                 if deferred_arc_is_previous != Some(false) {
                     self.canonicalize_retained_corner_cut(
-                        &boundary_loop.fragments()[next_index],
+                        &boundary_loop.fragments()[next_cut_index],
                         &mut next_cut,
                         false,
                         CurveOperation2::Fillet,
@@ -10425,8 +10594,8 @@ impl CurveRegion2 {
             let mut next_replacement = None;
             let mut candidate_valid = true;
             let inserted = Self::retained_fillet_fragments(
-                previous_fragment,
-                next_fragment,
+                &boundary_loop.fragments()[previous_cut_index],
+                &boundary_loop.fragments()[next_cut_index],
                 &mut previous_cut,
                 &mut next_cut,
                 center,
@@ -10435,8 +10604,12 @@ impl CurveRegion2 {
                 &radius,
                 mode,
                 false,
-                previous_source.promoted_parallel(),
-                next_source.promoted_parallel(),
+                (previous_cut_index == previous_index)
+                    .then(|| previous_source.promoted_parallel())
+                    .flatten(),
+                (next_cut_index == next_index)
+                    .then(|| next_source.promoted_parallel())
+                    .flatten(),
                 &mut previous_replacement,
                 &mut next_replacement,
                 &mut candidate_valid,
@@ -10447,7 +10620,8 @@ impl CurveRegion2 {
             }
             let rebuilt = self.rebuild_retained_corner(
                 loop_index,
-                vertex_index,
+                previous_cut_index,
+                next_cut_index,
                 previous_cut,
                 next_cut,
                 inserted,
@@ -23094,7 +23268,7 @@ mod tests {
                     .fillet_loop_vertex_by_radius(
                         loop_index,
                         corner,
-                        (radius / Real::from(1_000_i16)).unwrap(),
+                        (radius / Real::from(10_i8)).unwrap(),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -23102,8 +23276,33 @@ mod tests {
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(
                     result.value.candidate_count() > 0,
-                    "the crossing pair-native circles must have a finite fillet: {:?}",
+                    "the crossing pair-native circles must fillet across their smooth chart seam: {:?}",
                     result.value
+                );
+                let source_fragments = lens.boundary_loops()[loop_index].fragments();
+                let consumes_smooth_seam = |filleted: &CurveRegion2| {
+                    let retained = source_fragments
+                        .iter()
+                        .filter(|source| {
+                            filleted.boundary_loops().iter().any(|boundary| {
+                                boundary
+                                    .fragments()
+                                    .iter()
+                                    .any(|fragment| fragment == *source)
+                            })
+                        })
+                        .count();
+                    retained < source_fragments.len() - 2
+                };
+                assert!(
+                    match &result.value {
+                        CurveCornerSolutions2::Unique(filleted) => consumes_smooth_seam(filleted),
+                        CurveCornerSolutions2::Multiple(filleted) => {
+                            filleted.iter().any(consumes_smooth_seam)
+                        }
+                        CurveCornerSolutions2::NoSolution(_) => false,
+                    },
+                    "at least one exact candidate must consume more than the two incident fragments"
                 );
                 for_each_corner_region(&result.value, |filleted| {
                     let replay = filleted

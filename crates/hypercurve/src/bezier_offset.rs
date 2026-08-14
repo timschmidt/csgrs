@@ -10511,6 +10511,42 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.data.frame.rational().is_some()
     }
 
+    /// Classifies two parameter charts retained on the same selected-circle
+    /// frame. `Some(false)` is the same half chart, `Some(true)` is its
+    /// complementary half, and `None` leaves unrelated frames to the general
+    /// geometry authority.
+    pub(crate) fn shared_frame_chart_relation(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Classification<Option<bool>> {
+        if self.data.clockwise != other.data.clockwise
+            || !self.data.frame.shares_storage(&other.data.frame)
+        {
+            return Classification::Decided(None);
+        }
+        let same = compare_reals(
+            &self.data.radial_distance,
+            &other.data.radial_distance,
+            policy,
+        );
+        if same == Some(std::cmp::Ordering::Equal) {
+            return Classification::Decided(Some(false));
+        }
+        let complementary = compare_reals(
+            &self.data.radial_distance,
+            &-other.data.radial_distance.clone(),
+            policy,
+        );
+        if complementary == Some(std::cmp::Ordering::Equal) {
+            Classification::Decided(Some(true))
+        } else if same.is_some() && complementary.is_some() {
+            Classification::Decided(None)
+        } else {
+            Classification::Uncertain(UncertaintyReason::Ordering)
+        }
+    }
+
     /// Returns whether traversal follows the clockwise half circle.
     pub(crate) fn is_clockwise(&self) -> bool {
         self.data.clockwise

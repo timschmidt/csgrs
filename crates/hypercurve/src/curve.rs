@@ -5073,10 +5073,13 @@ fn solve_carrier_fillet_corner(
         }
     }
 
-    let empty_reason = if saw_outside_domain {
-        CurveCornerNoSolution2::OutsideTrimDomain
-    } else if saw_degenerate {
+    // An in-domain candidate that collapses is more specific than unrelated
+    // support intersections outside the authored trims. In particular, it
+    // must not be relabeled as an extendable trim-domain miss.
+    let empty_reason = if saw_degenerate {
         CurveCornerNoSolution2::DegenerateCandidate
+    } else if saw_outside_domain {
+        CurveCornerNoSolution2::OutsideTrimDomain
     } else {
         CurveCornerNoSolution2::NoTangentCircle
     };
