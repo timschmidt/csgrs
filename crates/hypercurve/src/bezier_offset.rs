@@ -32858,6 +32858,60 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
         }
     }
 
+    fn rational_contact_source(&self) -> Option<(&RationalBezier2, CurveContext)> {
+        let Self::Mapped { parameter, .. } = self else {
+            return None;
+        };
+        match parameter.coincident_base_data() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, .. } => {
+                Some((&map.data.curve, map.data.policy))
+            }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
+                map,
+                ..
+            } => Some((&map.data.curve, map.data.policy)),
+            _ => None,
+        }
+    }
+
+    /// Recognizes a coordinate that is constant on the same retained
+    /// rational contact carrier. The two selected-fiber parameters may be
+    /// unrelated algebraic roots; the rational Bernstein control net proves
+    /// the coordinate identity without comparing either root.
+    fn common_rational_constant_axis(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> Option<std::cmp::Ordering> {
+        let ((first, first_policy), (second, second_policy)) = (
+            self.rational_contact_source()?,
+            other.rational_contact_source()?,
+        );
+        if !policy.accepts_retained_policy(first_policy)
+            || !policy.accepts_retained_policy(second_policy)
+            || first != second
+        {
+            return None;
+        }
+        let value = match axis {
+            Axis2::X => first.control_points().first()?.x(),
+            Axis2::Y => first.control_points().first()?.y(),
+        };
+        first
+            .control_points()
+            .iter()
+            .all(|point| {
+                let coordinate = match axis {
+                    Axis2::X => point.x(),
+                    Axis2::Y => point.y(),
+                };
+                compare_reals(coordinate, value, &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Equal)
+            })
+            .then_some(std::cmp::Ordering::Equal)
+    }
+
     fn conservative_bounds_refined(
         &self,
         refinement_steps: usize,
@@ -32998,6 +33052,96 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 translation_y: &self.data.translation_y + translation_y,
             }),
         }
+    }
+
+    /// Returns the retained source point when this affine derivation is the
+    /// identity. Keeping that provenance visible lets coordinate predicates
+    /// reuse the source carrier's exact constant-coordinate and shared-field
+    /// proofs instead of comparing two reconstructed interval boxes.
+    fn identity_source_point(
+        &self,
+        policy: &CurveContext,
+    ) -> Option<&RationalBezierIntersectionPointEvidence2> {
+        self.data.source.validate_policy(policy).ok()?;
+        if self.data.radial_scale != Real::one()
+            || self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+            || self.data.translation_x.zero_status() != ZeroStatus::Zero
+            || self.data.translation_y.zero_status() != ZeroStatus::Zero
+        {
+            return None;
+        }
+        match &self.data.source {
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                point: Some(point), ..
+            } => Some(point),
+            BezierAlgebraicCuspDerivedPointSource2::Chord(_)
+            | BezierAlgebraicCuspDerivedPointSource2::Mapped { point: None, .. } => None,
+        }
+    }
+
+    /// Orders equal concentric radial images through their retained source
+    /// points. For `Q=C+a(P-C)+T`, two images with the same `C`, `a`, and `T`
+    /// satisfy `Q2-Q1=a(P2-P1)`, so the selected center field cancels before
+    /// any coordinate representation is constructed.
+    fn common_radial_source_axis_order(
+        &self,
+        other: &Self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<std::cmp::Ordering>> {
+        self.data.source.validate_policy(policy)?;
+        other.data.source.validate_policy(policy)?;
+        if self.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+            || other.data.perpendicular_scale.zero_status() != ZeroStatus::Zero
+            || self.data.radial_scale != other.data.radial_scale
+            || self.data.translation_x != other.data.translation_x
+            || self.data.translation_y != other.data.translation_y
+            || self.data.source.semicircle() != other.data.source.semicircle()
+        {
+            return Ok(None);
+        }
+        let scale_sign = match real_sign(&self.data.radial_scale, &CurveContext::STRICT) {
+            Some(sign) => sign,
+            None => return Ok(None),
+        };
+        if scale_sign == RealSign::Zero {
+            return Ok(Some(std::cmp::Ordering::Equal));
+        }
+        let order = if let Some(order) =
+            self.data
+                .source
+                .common_rational_constant_axis(&other.data.source, axis, policy)
+        {
+            order
+        } else {
+            let (
+                BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                    point: Some(first), ..
+                },
+                BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                    point: Some(second),
+                    ..
+                },
+            ) = (&self.data.source, &other.data.source)
+            else {
+                return Ok(None);
+            };
+            let source_order = algebraic_chord_point_coordinate_order(
+                first,
+                second,
+                axis,
+                &policy.strict_counterpart(),
+            );
+            let Ok(Classification::Decided(order)) = source_order else {
+                return Ok(None);
+            };
+            order
+        };
+        Ok(Some(if scale_sign == RealSign::Negative {
+            order.reverse()
+        } else {
+            order
+        }))
     }
 
     /// Recognizes the covariant image of the same retained radial derivation.
@@ -50881,6 +51025,24 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         );
         return algebraic_chord_point_coordinate_order(first, source, axis, policy);
     }
+    if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived) = first
+        && !matches!(
+            second,
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+        )
+        && let Some(source) = derived.identity_source_point(policy)
+    {
+        return algebraic_chord_point_coordinate_order(source, second, axis, policy);
+    }
+    if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived) = second
+        && !matches!(
+            first,
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+        )
+        && let Some(source) = derived.identity_source_point(policy)
+    {
+        return algebraic_chord_point_coordinate_order(first, source, axis, policy);
+    }
     let use_x = axis == Axis2::X;
     match (first, second) {
         (
@@ -51049,6 +51211,15 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         ) => {
             if let Some(order) = first.complementary_mapped_axis_order(second, axis, policy)? {
                 return Ok(Classification::Decided(order));
+            }
+            if let Some(order) = first.common_radial_source_axis_order(second, axis, policy)? {
+                return Ok(Classification::Decided(order));
+            }
+            if let (Some(first), Some(second)) = (
+                first.identity_source_point(policy),
+                second.identity_source_point(policy),
+            ) {
+                return algebraic_chord_point_coordinate_order(first, second, axis, policy);
             }
             let first =
                 RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(first.clone());
@@ -86929,10 +87100,13 @@ mod conversion_tests {
             } else {
                 CurveContext::STRICT
             };
-            assert!(matches!(
-                retained_parameter.order_to_real(&half, &other_policy),
-                Err(CurveError::Topology(_))
-            ));
+            assert_eq!(map.data.policy, CurveContext::STRICT);
+            assert_eq!(
+                retained_parameter
+                    .order_to_real(&half, &other_policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
             assert_eq!(
                 retained_parameter.order_to_real(&quarter, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Greater),
