@@ -452,39 +452,6 @@ fn top_level_curve_and_view_expose_exact_higher_derivatives() {
     assert_eq!(derivatives[2].dx(), &r(18));
 }
 #[test]
-fn mixed_curve_path_chamfer_trims_every_public_family_exactly() {
-    let path = CurvePath2::try_new(every_family_open_chain()).unwrap();
-
-    for vertex_index in 1..path.curves().len() {
-        let chamfered = path
-            .chamfer_vertex_by_parameters(vertex_index, q(1, 2), q(1, 2), &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
-        assert_eq!(chamfered.curves().len(), path.curves().len() + 1);
-        assert_eq!(
-            chamfered.curves()[vertex_index - 1].family(),
-            path.curves()[vertex_index - 1].family()
-        );
-        assert_eq!(
-            chamfered.curves()[vertex_index].family(),
-            CurveFamily2::Line
-        );
-        assert_eq!(
-            chamfered.curves()[vertex_index + 1].family(),
-            path.curves()[vertex_index].family()
-        );
-        assert_eq!(
-            chamfered.curves()[vertex_index - 1].end(),
-            chamfered.curves()[vertex_index].start()
-        );
-        assert_eq!(
-            chamfered.curves()[vertex_index].end(),
-            chamfered.curves()[vertex_index + 1].start()
-        );
-    }
-}
-
-#[test]
 fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
     let families = [
         CurveFamily2::Line,
@@ -503,19 +470,20 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
                 linear_family_curve(next_family, true),
             ])
             .unwrap();
-            let filleted = path
-                .fillet_vertex_by_parameters(
+            let CurveCornerSolutions2::Unique(filleted) = path
+                .fillet_vertex_by_radius(
                     1,
-                    q(1, 2),
-                    q(1, 2),
-                    &p(-1, 1),
-                    false,
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
                     &CurveContext::STRICT,
                 )
                 .unwrap_or_else(|error| {
                     panic!("{previous_family:?}/{next_family:?} fillet failed: {error}")
                 })
-                .into_value();
+                .into_value()
+            else {
+                panic!("{previous_family:?}/{next_family:?} fillet was not unique");
+            };
 
             assert_eq!(filleted.curves().len(), 3);
             assert_eq!(filleted.curves()[0].family(), previous_family);
@@ -530,156 +498,26 @@ fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
 }
 
 #[test]
-fn higher_order_curve_path_fillet_obeys_terminal_policy_once() {
-    let path = CurvePath2::try_new(vec![
-        linear_family_curve(CurveFamily2::QuadraticBezier, false),
-        linear_family_curve(CurveFamily2::QuadraticBezier, true),
-    ])
-    .unwrap();
-    let undecidable_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
-    let center = Point2::new(Real::from(-1) + undecidable_zero, Real::one());
-
-    let strict = path
-        .fillet_vertex_by_parameters(1, q(1, 2), q(1, 2), &center, false, &CurveContext::STRICT)
-        .unwrap_err();
-    assert!(matches!(
-        strict,
-        ExactCurveError::Blocked(blocker)
-            if blocker.operation() == CurveOperation2::Fillet
-                && blocker.reason() == hypercurve::UncertaintyReason::RealSign
-    ));
-
-    let approximate = path
-        .fillet_vertex_by_parameters(
-            1,
-            q(1, 2),
-            q(1, 2),
-            &center,
-            false,
-            &CurveContext::APPROXIMATE_512,
-        )
-        .unwrap();
-    assert_eq!(
-        approximate.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    let CurveGeometry2::CircularArc(fillet) = approximate.value.curves()[1].geometry() else {
-        panic!("the exact higher-order fillet must insert a circular arc");
-    };
-    assert_eq!(fillet.center(), &center);
-    for family in [
-        CurveFamily2::Line,
-        CurveFamily2::QuadraticBezier,
-        CurveFamily2::CubicBezier,
-        CurveFamily2::RationalQuadraticBezier,
-        CurveFamily2::RationalBezier,
-        CurveFamily2::PolynomialBSpline,
-        CurveFamily2::Nurbs,
-    ] {
-        let family_path = CurvePath2::try_new(vec![
-            linear_family_curve(family, false),
-            linear_family_curve(family, true),
-        ])
-        .unwrap();
-        let family_fillet = family_path
-            .fillet_vertex_by_parameters(
-                1,
-                q(1, 2),
-                q(1, 2),
-                &center,
-                false,
-                &CurveContext::APPROXIMATE_512,
-            )
-            .unwrap_or_else(|error| panic!("{family:?} terminal fillet failed: {error}"));
-        assert_eq!(
-            family_fillet.certainty,
-            CurveCertainty::Approximate512Consumed,
-            "{family:?} did not report its terminal radius/tangency decision"
-        );
-    }
-
-    let sweep_center = Point2::new(
-        Real::from(3) + ((Real::pi() + Real::e()) - (Real::e() + Real::pi())),
-        Real::one(),
-    );
-    let sweep_source = CurvePath2::try_new(vec![
-        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap()),
-        Curve2::from(QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0))),
-    ])
-    .unwrap();
-    let sweep_fillet = sweep_source
-        .fillet_vertex_by_parameters(
-            1,
-            q(3, 4),
-            q(1, 2),
-            &sweep_center,
-            false,
-            &CurveContext::APPROXIMATE_512,
-        )
-        .unwrap()
-        .into_value();
-    let CurveGeometry2::CircularArc(sweep_arc) = sweep_fillet.curves()[1].geometry() else {
-        panic!("the sweep-sensitive fillet must insert a circular arc");
-    };
-    assert!(matches!(
-        sweep_arc
-            .point_at_sweep_fraction(&q(1, 2), &CurveContext::APPROXIMATE_512)
-            .unwrap(),
-        Classification::Decided(_)
-    ));
-    assert_eq!(
-        sweep_arc
-            .point_at_sweep_fraction(&q(1, 2), &CurveContext::STRICT)
-            .unwrap(),
-        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign),
-        "an approximate-first angular cache must retain the strict blocker"
-    );
-    let mut closed_curves = sweep_fillet.curves().to_vec();
-    closed_curves.extend([
-        Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
-        Curve2::from(LineSeg2::try_new(p(2, -2), p(0, -2)).unwrap()),
-        Curve2::from(LineSeg2::try_new(p(0, -2), p(0, 0)).unwrap()),
-    ]);
-    let closed = CurvePath2::try_new(closed_curves).unwrap();
-    let promoted = CurveRegion2::try_from_boundary_paths(
-        std::slice::from_ref(&closed),
-        &CurveContext::APPROXIMATE_512,
-    )
-    .unwrap();
-    assert_eq!(promoted.certainty, CurveCertainty::Approximate512Consumed);
-    assert!(matches!(
-        CurveRegion2::try_from_boundary_paths(&[closed], &CurveContext::STRICT),
-        Err(ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::RealSign
-    ));
-}
-
-#[test]
 fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
     let source_arc = CircularArc2::try_from_center(p(5, 0), p(5, 2), p(5, 1), true).unwrap();
-    let Classification::Decided(next_parameter) = source_arc
-        .sweep_fraction(&p(4, 1), &CurveContext::STRICT)
-        .unwrap()
-    else {
-        panic!("arc tangent point should have an exact source parameter");
-    };
     let path = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(0, 0), p(5, 0)).unwrap()),
         Curve2::from(source_arc),
     ])
     .unwrap();
 
-    let filleted = path
-        .fillet_vertex_by_parameters(
+    let CurveCornerSolutions2::Unique(filleted) = path
+        .fillet_vertex_by_radius(
             1,
-            q(3, 5),
-            next_parameter,
-            &p(3, 1),
-            false,
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
             &CurveContext::STRICT,
         )
         .unwrap()
-        .into_value();
+        .into_value()
+    else {
+        panic!("the line/arc radius fillet must be unique");
+    };
 
     assert_eq!(
         filleted
@@ -698,29 +536,24 @@ fn mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency() {
     assert_eq!(filleted.curves()[2].start(), &p(4, 1));
 
     let previous_arc = CircularArc2::try_from_center(p(5, 2), p(5, 0), p(5, 1), false).unwrap();
-    let Classification::Decided(previous_parameter) = previous_arc
-        .sweep_fraction(&p(4, 1), &CurveContext::STRICT)
-        .unwrap()
-    else {
-        panic!("previous arc tangent point should have an exact source parameter");
-    };
     let reversed_pair = CurvePath2::try_new(vec![
         Curve2::from(previous_arc),
         Curve2::from(LineSeg2::try_new(p(5, 0), p(0, 0)).unwrap()),
     ])
     .unwrap();
 
-    let reversed_fillet = reversed_pair
-        .fillet_vertex_by_parameters(
+    let CurveCornerSolutions2::Unique(reversed_fillet) = reversed_pair
+        .fillet_vertex_by_radius(
             1,
-            previous_parameter,
-            q(2, 5),
-            &p(3, 1),
-            true,
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
             &CurveContext::STRICT,
         )
         .unwrap()
-        .into_value();
+        .into_value()
+    else {
+        panic!("the reversed arc/line radius fillet must be unique");
+    };
     assert_eq!(
         reversed_fillet.curves()[0].family(),
         CurveFamily2::CircularArc
@@ -739,27 +572,6 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
         Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
     ])
     .unwrap();
-
-    let chamfered = path
-        .as_view()
-        .chamfer_vertex_by_parameters(0, q(1, 2), q(1, 2), &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
-    assert_eq!(chamfered.start(), &p(0, 1));
-    assert_eq!(chamfered.end(), chamfered.start());
-    assert_eq!(chamfered.curves()[0].end(), &p(1, 0));
-
-    let filleted = path
-        .fillet_vertex_by_parameters(0, q(1, 2), q(1, 2), &p(1, 1), false, &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
-    assert_eq!(filleted.start(), &p(0, 1));
-    assert_eq!(filleted.end(), filleted.start());
-    assert_eq!(filleted.curves()[0].family(), CurveFamily2::CircularArc);
-    assert_eq!(filleted.curves()[0].end(), &p(1, 0));
-    CurveRegion2::try_from_boundary_paths(&[filleted], &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
 
     let CurveCornerSolutions2::Unique(solved_chamfer) = path
         .chamfer_vertex_by_setbacks(
@@ -791,50 +603,9 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     };
     assert_eq!(arc.center(), &p(1, 1));
     assert_eq!(arc.end(), &p(1, 0));
-}
-#[test]
-fn mixed_curve_path_corner_edits_reject_invalid_parameters_and_tangency() {
-    let path = CurvePath2::try_new(vec![
-        linear_family_curve(CurveFamily2::Line, false),
-        linear_family_curve(CurveFamily2::Line, true),
-    ])
-    .unwrap();
-
-    let boundary = path
-        .chamfer_vertex_by_parameters(1, r(1), q(1, 2), &CurveContext::STRICT)
-        .unwrap_err();
-    assert_eq!(boundary.operation(), CurveOperation2::Chamfer);
-    assert!(matches!(
-        boundary,
-        ExactCurveError::Invalid {
-            cause: CurveError::InvalidCurveParameter,
-            ..
-        }
-    ));
-
-    let nontangent = path
-        .fillet_vertex_by_parameters(1, q(1, 2), q(1, 2), &p(0, 0), false, &CurveContext::STRICT)
-        .unwrap_err();
-    assert_eq!(nontangent.operation(), CurveOperation2::Fillet);
-    assert!(matches!(
-        nontangent,
-        ExactCurveError::Invalid {
-            cause: CurveError::RadiusMismatch | CurveError::InvalidFilletTangency,
-            ..
-        }
-    ));
-
-    let open_seam = path
-        .chamfer_vertex_by_parameters(0, q(1, 2), q(1, 2), &CurveContext::STRICT)
-        .unwrap_err();
-    assert_eq!(open_seam.operation(), CurveOperation2::Chamfer);
-    assert!(matches!(
-        open_seam,
-        ExactCurveError::Invalid {
-            cause: CurveError::OpenCurvePath,
-            ..
-        }
-    ));
+    CurveRegion2::try_from_boundary_paths(&[solved_fillet], &CurveContext::STRICT)
+        .unwrap()
+        .into_value();
 }
 
 #[test]
@@ -2022,6 +1793,20 @@ fn line_corner_solvers_report_exact_no_solution_and_invalid_options() {
         .into_value(),
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::OutsideTrimDomain)
     );
+    assert!(matches!(
+        path.chamfer_vertex_by_setbacks(
+            0,
+            Real::one(),
+            Real::one(),
+            CurveCornerMode2::TrimOnly,
+            &CurveContext::STRICT,
+        ),
+        Err(ExactCurveError::Invalid {
+            operation: CurveOperation2::Chamfer,
+            cause: CurveError::OpenCurvePath,
+            ..
+        })
+    ));
 
     let tangent_path = CurvePath2::try_new(vec![
         Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
@@ -3105,7 +2890,7 @@ fn automatic_corner_solver_obeys_strict_and_approximate_512_once() {
 
 proptest! {
     #[test]
-    fn exact_line_corner_edits_hold_for_rational_trim_parameters(
+    fn exact_line_corner_design_edits_hold_across_source_lengths(
         radius in 1_i32..32,
         previous_remainder in 1_i32..32,
         next_remainder in 1_i32..32,
@@ -3121,21 +2906,7 @@ proptest! {
             ),
         ])
         .unwrap();
-        let previous_parameter = q(previous_remainder, previous_length);
-        let next_parameter = q(radius, next_length);
-
-        let chamfered = path
-            .chamfer_vertex_by_parameters(
-                1,
-                previous_parameter.clone(),
-                next_parameter.clone(),
-                &CurveContext::STRICT,
-            )
-            .unwrap()
-            .into_value();
-        prop_assert_eq!(chamfered.curves()[0].end(), &p(-radius, 0));
-        prop_assert_eq!(chamfered.curves()[1].end(), &p(0, radius));
-        let CurveCornerSolutions2::Unique(solved_chamfer) = path
+        let CurveCornerSolutions2::Unique(chamfered) = path
             .chamfer_vertex_by_setbacks(
                 1,
                 r(radius),
@@ -3148,24 +2919,10 @@ proptest! {
         else {
             return Err(TestCaseError::fail("line setbacks must solve uniquely"));
         };
-        prop_assert_eq!(&solved_chamfer, &chamfered);
+        prop_assert_eq!(chamfered.curves()[0].end(), &p(-radius, 0));
+        prop_assert_eq!(chamfered.curves()[1].end(), &p(0, radius));
 
-        let filleted = path
-            .fillet_vertex_by_parameters(
-                1,
-                previous_parameter,
-                next_parameter,
-                &p(-radius, radius),
-                false,
-                &CurveContext::STRICT,
-            )
-            .unwrap()
-            .into_value();
-        prop_assert_eq!(filleted.curves()[0].end(), &p(-radius, 0));
-        prop_assert_eq!(filleted.curves()[1].family(), CurveFamily2::CircularArc);
-        prop_assert_eq!(filleted.curves()[1].end(), &p(0, radius));
-        prop_assert_eq!(filleted.curves()[2].start(), &p(0, radius));
-        let CurveCornerSolutions2::Unique(solved_fillet) = path
+        let CurveCornerSolutions2::Unique(filleted) = path
             .fillet_vertex_by_radius(
                 1,
                 r(radius),
@@ -3177,7 +2934,10 @@ proptest! {
         else {
             return Err(TestCaseError::fail("line radius must solve uniquely"));
         };
-        prop_assert_eq!(solved_fillet, filleted);
+        prop_assert_eq!(filleted.curves()[0].end(), &p(-radius, 0));
+        prop_assert_eq!(filleted.curves()[1].family(), CurveFamily2::CircularArc);
+        prop_assert_eq!(filleted.curves()[1].end(), &p(0, radius));
+        prop_assert_eq!(filleted.curves()[2].start(), &p(0, radius));
     }
 
     #[test]

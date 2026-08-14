@@ -270,8 +270,6 @@ pub enum CurveError {
     InvalidCurveParameter,
     /// A native curve trim range is empty, reversed, or outside the source path.
     InvalidCurveRange,
-    /// A requested fillet is not tangent to both retained source curves in traversal order.
-    InvalidFilletTangency,
     /// A certified positive-length overlap has a zero parameter range.
     DegenerateOverlapRange,
     /// A Bezier parameter polynomial is structurally invalid.
@@ -366,12 +364,6 @@ impl fmt::Display for CurveError {
             Self::InvalidBezierRange => write!(f, "Bezier segment range is invalid"),
             Self::InvalidCurveParameter => write!(f, "curve parameter is invalid"),
             Self::InvalidCurveRange => write!(f, "curve trim range is invalid"),
-            Self::InvalidFilletTangency => {
-                write!(
-                    f,
-                    "fillet is not tangent to the source curves in traversal order"
-                )
-            }
             Self::DegenerateOverlapRange => {
                 write!(f, "positive-length overlap has a zero parameter range")
             }

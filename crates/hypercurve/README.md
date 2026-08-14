@@ -199,10 +199,11 @@ exact signatures.
   trim_between_points}` edits connected line/arc strings without owning corner
   construction semantics.
 - `CurvePath2::{try_new, reversed, transform_similarity,
-  chamfer_vertex_by_setbacks, fillet_vertex_by_radius,
-  chamfer_vertex_by_parameters, fillet_vertex_by_parameters, bounds,
-  classify_point, native_bezier_fragments, bezier_boundary_loop}` is the sole
-  connected-curve corner-edit authority and handles general connected curves.
+  chamfer_vertex_by_setbacks, fillet_vertex_by_radius, bounds, classify_point,
+  native_bezier_fragments, bezier_boundary_loop}` is the sole connected-curve
+  corner-edit authority and handles general connected curves. Corner edits
+  enumerate exact solutions from design setbacks or radius; callers do not
+  supply a preselected trim/contact answer.
 - `Contour2::{try_new, try_new_with_fill_rule, from_bulge_vertices,
   signed_area, winding_number, classify_point, point_on_boundary,
   intersect_contour, intersect_self, split_at_intersections,
