@@ -1782,7 +1782,8 @@ impl CurvePath2 {
     /// retained-region caller also uses this kernel for affine algebraic
     /// chords. General rational Beziers extend only through the finite incident
     /// projective cell before their first pole; exact homogeneous subdivision
-    /// materializes that cell without weakening any predicate.
+    /// materializes that cell without weakening any predicate. A one-curve
+    /// closed path materializes its shared retained body exactly once.
     pub fn chamfer_vertex_by_setbacks(
         &self,
         vertex_index: usize,
@@ -1879,20 +1880,6 @@ impl CurvePath2 {
             policy,
         )?;
         try_map_corner_solutions(solutions, |solution| {
-            let previous_trim = materialize_corner_side(
-                previous,
-                &solution.previous,
-                true,
-                CurveOperation2::Chamfer,
-                policy,
-            )?;
-            let next_trim = materialize_corner_side(
-                next,
-                &solution.next,
-                false,
-                CurveOperation2::Chamfer,
-                policy,
-            )?;
             let previous_point = solution.previous.exact_point().cloned().ok_or_else(|| {
                 ExactCurveError::blocked(
                     CurveOperation2::Chamfer,
@@ -1912,6 +1899,30 @@ impl CurvePath2 {
                     ExactCurveError::invalid(CurveOperation2::Chamfer, previous.family(), cause)
                 },
             )?);
+            if previous_index == next_index {
+                return self.with_single_curve_corner_replaced(
+                    previous_index,
+                    &solution.previous,
+                    &solution.next,
+                    chamfer,
+                    CurveOperation2::Chamfer,
+                    policy,
+                );
+            }
+            let previous_trim = materialize_corner_side(
+                previous,
+                &solution.previous,
+                true,
+                CurveOperation2::Chamfer,
+                policy,
+            )?;
+            let next_trim = materialize_corner_side(
+                next,
+                &solution.next,
+                false,
+                CurveOperation2::Chamfer,
+                policy,
+            )?;
             self.with_corner_replaced(
                 vertex_index,
                 previous_index,
@@ -1943,8 +1954,9 @@ impl CurvePath2 {
     /// center or trim that a public path cannot retain remain explicit
     /// blockers for this API and are delegated to retained-region
     /// reconstruction. Spline and NURBS endpoint extensions preserve the
-    /// authored carrier and materialize only the selected incident Bezier cell.
-    /// Retained rational
+    /// authored carrier and materialize only the selected incident Bezier cell;
+    /// a one-curve closed path materializes its shared retained body exactly
+    /// once. Retained rational
     /// circles use their certified native support for extension and collapse
     /// only the extended source fragment to [`CircularArc2`].
     pub fn fillet_vertex_by_radius(
@@ -2011,20 +2023,6 @@ impl CurvePath2 {
             policy,
         )?;
         try_map_corner_solutions(solutions, |solution| {
-            let previous_trim = materialize_corner_side(
-                previous,
-                &solution.previous,
-                true,
-                CurveOperation2::Fillet,
-                policy,
-            )?;
-            let next_trim = materialize_corner_side(
-                next,
-                &solution.next,
-                false,
-                CurveOperation2::Fillet,
-                policy,
-            )?;
             let previous_point = solution.previous.exact_point().cloned().ok_or_else(|| {
                 ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -2054,6 +2052,30 @@ impl CurvePath2 {
                 solution.clockwise,
                 None,
             ));
+            if previous_index == next_index {
+                return self.with_single_curve_corner_replaced(
+                    previous_index,
+                    &solution.previous,
+                    &solution.next,
+                    fillet,
+                    CurveOperation2::Fillet,
+                    policy,
+                );
+            }
+            let previous_trim = materialize_corner_side(
+                previous,
+                &solution.previous,
+                true,
+                CurveOperation2::Fillet,
+                policy,
+            )?;
+            let next_trim = materialize_corner_side(
+                next,
+                &solution.next,
+                false,
+                CurveOperation2::Fillet,
+                policy,
+            )?;
             self.with_corner_replaced(
                 vertex_index,
                 previous_index,
@@ -2088,6 +2110,28 @@ impl CurvePath2 {
         Ok((vertex_index - 1, vertex_index))
     }
 
+    fn with_single_curve_corner_replaced(
+        &self,
+        curve_index: usize,
+        previous_cut: &CornerCut2,
+        next_cut: &CornerCut2,
+        inserted: Curve2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let body = materialize_single_curve_corner_body(
+            &self.data.curves[curve_index],
+            previous_cut,
+            next_cut,
+            operation,
+            policy,
+        )?;
+        let mut curves = Vec::with_capacity(body.curve_count() + 1);
+        curves.push(inserted);
+        body.append_to(&mut curves);
+        Self::try_new_raw(curves, policy).map_err(|error| remap_operation(error, operation))
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn with_corner_replaced(
         &self,
@@ -2108,23 +2152,16 @@ impl CurvePath2 {
         );
         if vertex_index == 0 {
             curves.push(inserted);
-            if previous_index == next_index {
-                MaterializedCornerSide2::append_single_curve_seam(
-                    next_trim,
-                    previous_trim,
-                    &mut curves,
+            debug_assert_ne!(previous_index, next_index);
+            next_trim.append_to(&mut curves);
+            if next_index + 1 < previous_index {
+                curves.extend(
+                    self.data.curves[next_index + 1..previous_index]
+                        .iter()
+                        .cloned(),
                 );
-            } else {
-                next_trim.append_to(&mut curves);
-                if next_index + 1 < previous_index {
-                    curves.extend(
-                        self.data.curves[next_index + 1..previous_index]
-                            .iter()
-                            .cloned(),
-                    );
-                }
-                previous_trim.append_to(&mut curves);
             }
+            previous_trim.append_to(&mut curves);
         } else {
             curves.extend(self.data.curves[..previous_index].iter().cloned());
             previous_trim.append_to(&mut curves);
@@ -10874,39 +10911,160 @@ impl MaterializedCornerSide2 {
             } => curves.extend([extension, source]),
         }
     }
+}
 
-    fn append_single_curve_seam(next: Self, previous: Self, curves: &mut Vec<Curve2>) {
+enum MaterializedCornerBody2 {
+    One(Curve2),
+    Two(Curve2, Curve2),
+    Three(Curve2, Curve2, Curve2),
+}
+
+impl MaterializedCornerBody2 {
+    fn from_spline_sides(next: MaterializedCornerSide2, previous: MaterializedCornerSide2) -> Self {
         match (next, previous) {
-            (Self::One(next), Self::One(previous)) => curves.extend([next, previous]),
             (
-                Self::SplineExtension {
+                MaterializedCornerSide2::SplineExtension {
                     extension,
                     previous: false,
                     ..
                 },
-                Self::One(previous),
-            ) => curves.extend([extension, previous]),
+                MaterializedCornerSide2::One(previous),
+            ) => Self::Two(extension, previous),
             (
-                Self::One(next),
-                Self::SplineExtension {
+                MaterializedCornerSide2::One(next),
+                MaterializedCornerSide2::SplineExtension {
                     extension,
                     previous: true,
                     ..
                 },
-            ) => curves.extend([next, extension]),
+            ) => Self::Two(next, extension),
             (
-                Self::SplineExtension {
+                MaterializedCornerSide2::SplineExtension {
                     source,
                     extension: next_extension,
                     previous: false,
                 },
-                Self::SplineExtension {
+                MaterializedCornerSide2::SplineExtension {
                     extension: previous_extension,
                     previous: true,
                     ..
                 },
-            ) => curves.extend([next_extension, source, previous_extension]),
+            ) => Self::Three(next_extension, source, previous_extension),
             _ => unreachable!("corner sides retain their incident traversal direction"),
+        }
+    }
+
+    const fn curve_count(&self) -> usize {
+        match self {
+            Self::One(_) => 1,
+            Self::Two(_, _) => 2,
+            Self::Three(_, _, _) => 3,
+        }
+    }
+
+    fn append_to(self, curves: &mut Vec<Curve2>) {
+        match self {
+            Self::One(curve) => curves.push(curve),
+            Self::Two(first, second) => curves.extend([first, second]),
+            Self::Three(first, second, third) => curves.extend([first, second, third]),
+        }
+    }
+}
+
+fn materialize_single_curve_corner_body(
+    curve: &Curve2,
+    previous: &CornerCut2,
+    next: &CornerCut2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<MaterializedCornerBody2> {
+    if previous.placement == CornerPlacement2::Extension
+        || next.placement == CornerPlacement2::Extension
+    {
+        if matches!(
+            curve.geometry(),
+            CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_)
+        ) {
+            return Ok(MaterializedCornerBody2::from_spline_sides(
+                materialize_corner_side(curve, next, false, operation, policy)?,
+                materialize_corner_side(curve, previous, true, operation, policy)?,
+            ));
+        }
+        let start = next.exact_parameter().ok_or_else(|| {
+            ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        let end = previous.exact_parameter().ok_or_else(|| {
+            ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        return materialize_affine_corner_subcurve(curve, start, end, operation, policy)
+            .map(MaterializedCornerBody2::One);
+    }
+
+    let parameter = |cut: &CornerCut2| {
+        cut.exact_parameter().cloned().ok_or_else(|| {
+            ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })
+    };
+    let (start, end) = if let CurveGeometry2::CircularArc(arc) = curve.geometry() {
+        (
+            materialized_arc_cut_parameter(curve, arc, next, operation, policy)?,
+            materialized_arc_cut_parameter(curve, arc, previous, operation, policy)?,
+        )
+    } else {
+        (parameter(next)?, parameter(previous)?)
+    };
+    curve
+        .subcurve_with_policy(start, end, policy)
+        .map_err(|error| remap_operation(error, operation))
+        .map(MaterializedCornerBody2::One)
+}
+
+fn materialized_arc_cut_parameter(
+    curve: &Curve2,
+    arc: &CircularArc2,
+    cut: &CornerCut2,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Real> {
+    let sweep_fraction = if let Some(parameter) = cut.exact_parameter() {
+        parameter.clone()
+    } else {
+        let point = cut.exact_point().ok_or_else(|| {
+            ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            )
+        })?;
+        match arc
+            .sweep_fraction_for_incident_point(point, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, curve.family(), reason));
+            }
+        }
+    };
+    match arc
+        .parameter_at_sweep_fraction(&sweep_fraction, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
+    {
+        Classification::Decided(parameter) => Ok(parameter),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, curve.family(), reason))
         }
     }
 }
@@ -10982,6 +11140,39 @@ fn materialize_corner_side(
     })
 }
 
+fn materialize_affine_corner_subcurve(
+    curve: &Curve2,
+    start: &Real,
+    end: &Real,
+    operation: CurveOperation2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Curve2> {
+    let source = match curve.geometry() {
+        CurveGeometry2::QuadraticBezier(source) => BezierSubcurve2::Quadratic(source.clone()),
+        CurveGeometry2::CubicBezier(source) => BezierSubcurve2::Cubic(source.clone()),
+        CurveGeometry2::RationalQuadraticBezier(source) => {
+            BezierSubcurve2::RationalQuadratic(source.clone())
+        }
+        CurveGeometry2::RationalBezier(source) => BezierSubcurve2::Rational(source.clone()),
+        _ => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                curve.family(),
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
+    };
+    match source
+        .subcurve_between_affine_exact(start, end, policy)
+        .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
+    {
+        Classification::Decided(curve) => Ok(Curve2::from(curve)),
+        Classification::Uncertain(reason) => {
+            Err(ExactCurveError::blocked(operation, curve.family(), reason))
+        }
+    }
+}
+
 fn materialize_corner_cut(
     curve: &Curve2,
     cut: &CornerCut2,
@@ -11005,33 +11196,7 @@ fn materialize_corner_cut(
                 // endpoint instead of evaluating an algebraically equivalent
                 // rational parameter and then asking path connectivity to
                 // rediscover the equality.
-                let sweep_fraction = if let Some(parameter) = cut.exact_parameter() {
-                    parameter.clone()
-                } else {
-                    match arc
-                        .sweep_fraction_for_incident_point(point, policy)
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(operation, curve.family(), cause)
-                        })? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                operation,
-                                curve.family(),
-                                reason,
-                            ));
-                        }
-                    }
-                };
-                let parameter = match arc
-                    .parameter_at_sweep_fraction(&sweep_fraction, policy)
-                    .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(operation, curve.family(), reason));
-                    }
-                };
+                let parameter = materialized_arc_cut_parameter(curve, arc, cut, operation, policy)?;
                 let domain = curve.parameter_domain();
                 let (start, end) = if previous {
                     (domain.start().clone(), parameter)
@@ -11158,34 +11323,7 @@ fn materialize_corner_cut(
                 } else {
                     (parameter, domain.end())
                 };
-                let source = match curve.geometry() {
-                    CurveGeometry2::QuadraticBezier(source) => {
-                        BezierSubcurve2::Quadratic(source.clone())
-                    }
-                    CurveGeometry2::CubicBezier(source) => BezierSubcurve2::Cubic(source.clone()),
-                    CurveGeometry2::RationalQuadraticBezier(source) => {
-                        BezierSubcurve2::RationalQuadratic(source.clone())
-                    }
-                    CurveGeometry2::RationalBezier(source) => {
-                        BezierSubcurve2::Rational(source.clone())
-                    }
-                    _ => {
-                        return Err(ExactCurveError::blocked(
-                            operation,
-                            curve.family(),
-                            crate::UncertaintyReason::Unsupported,
-                        ));
-                    }
-                };
-                match source
-                    .subcurve_between_affine_exact(start, end, policy)
-                    .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
-                {
-                    Classification::Decided(curve) => Ok(Curve2::from(curve)),
-                    Classification::Uncertain(reason) => {
-                        Err(ExactCurveError::blocked(operation, curve.family(), reason))
-                    }
-                }
+                materialize_affine_corner_subcurve(curve, start, end, operation, policy)
             } else {
                 Err(ExactCurveError::blocked(
                     operation,
@@ -11298,33 +11436,86 @@ mod tests {
     }
 
     #[test]
-    fn spline_extensions_share_the_authored_single_curve_seam() {
-        let source = Curve2::from(QuadraticBezier2::new(
+    fn represented_single_curve_seam_materializes_one_direct_bezier_interval() {
+        let cubic = CubicBezier2::new(
             Point2::from_values(0, 0),
-            Point2::from_values(1, 1),
             Point2::from_values(2, 0),
-        ));
-        let next_extension = Curve2::from(
-            LineSeg2::try_new(Point2::from_values(-1, 0), source.start().clone()).unwrap(),
+            Point2::from_values(0, 2),
+            Point2::from_values(0, 0),
         );
-        let previous_extension = Curve2::from(
-            LineSeg2::try_new(source.end().clone(), Point2::from_values(3, 0)).unwrap(),
-        );
-        let mut curves = Vec::new();
-        MaterializedCornerSide2::append_single_curve_seam(
-            MaterializedCornerSide2::SplineExtension {
-                source: source.clone(),
-                extension: next_extension.clone(),
-                previous: false,
-            },
-            MaterializedCornerSide2::SplineExtension {
-                source: source.clone(),
-                extension: previous_extension.clone(),
-                previous: true,
-            },
-            &mut curves,
-        );
-        assert_eq!(curves, [next_extension, source, previous_extension]);
+        let source = Curve2::from(cubic.clone());
+        let next_parameter = (Real::one() / Real::from(4_i8)).unwrap();
+        let previous_parameter = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let next_point = cubic.point_at(next_parameter.clone());
+        let previous_point = cubic.point_at(previous_parameter.clone());
+        let next = CornerCut2 {
+            parameter: exact_corner_parameter(next_parameter),
+            point: next_point.clone().into(),
+            placement: CornerPlacement2::Trim,
+        };
+        let previous = CornerCut2 {
+            parameter: exact_corner_parameter(previous_parameter),
+            point: previous_point.clone().into(),
+            placement: CornerPlacement2::Trim,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let MaterializedCornerBody2::One(body) = materialize_single_curve_corner_body(
+                &source,
+                &previous,
+                &next,
+                CurveOperation2::Chamfer,
+                &policy,
+            )
+            .expect("one represented seam interval must materialize once") else {
+                panic!("one direct Bezier seam must remain one exact interval");
+            };
+            assert_eq!(body.family(), CurveFamily2::CubicBezier);
+            assert_eq!(body.start(), &next_point);
+            assert_eq!(body.end(), &previous_point);
+            let CurveGeometry2::CubicBezier(body) = body.geometry() else {
+                unreachable!();
+            };
+            assert_eq!(
+                body.point_at((Real::one() / Real::from(2_i8)).unwrap()),
+                cubic.point_at((Real::one() / Real::from(2_i8)).unwrap())
+            );
+        }
+
+        let next_parameter = (-Real::one() / Real::from(4_i8)).unwrap();
+        let previous_parameter = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+        let next_point = cubic.point_at(next_parameter.clone());
+        let previous_point = cubic.point_at(previous_parameter.clone());
+        let next = CornerCut2 {
+            parameter: exact_corner_parameter(next_parameter),
+            point: next_point.clone().into(),
+            placement: CornerPlacement2::Extension,
+        };
+        let previous = CornerCut2 {
+            parameter: exact_corner_parameter(previous_parameter),
+            point: previous_point.clone().into(),
+            placement: CornerPlacement2::Extension,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let MaterializedCornerBody2::One(body) = materialize_single_curve_corner_body(
+                &source,
+                &previous,
+                &next,
+                CurveOperation2::Chamfer,
+                &policy,
+            )
+            .expect("one direct Bezier exterior seam interval must materialize") else {
+                panic!("one direct Bezier exterior seam must remain one exact interval");
+            };
+            assert_eq!(body.start(), &next_point);
+            assert_eq!(body.end(), &previous_point);
+            let CurveGeometry2::CubicBezier(body) = body.geometry() else {
+                unreachable!();
+            };
+            assert_eq!(
+                body.point_at((Real::one() / Real::from(2_i8)).unwrap()),
+                cubic.point_at((Real::one() / Real::from(2_i8)).unwrap())
+            );
+        }
     }
 
     fn selected_inverse_square_parameter(

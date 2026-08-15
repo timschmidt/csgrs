@@ -60,6 +60,22 @@ fn linear_family_curve(family: CurveFamily2, vertical: bool) -> Curve2 {
     }
 }
 
+fn closed_linear_spline(family: CurveFamily2, policy: &CurveContext) -> Curve2 {
+    let controls = vec![p(0, 0), p(2, 0), p(0, 2), p(0, 0)];
+    let knots = vec![r(0), r(0), r(1), r(2), r(3), r(3)];
+    match family {
+        CurveFamily2::PolynomialBSpline => {
+            Curve2::try_polynomial_bspline(1, controls, knots, policy)
+        }
+        CurveFamily2::Nurbs => {
+            Curve2::try_nurbs(1, controls, vec![r(1), r(2), r(3), r(1)], knots, policy)
+        }
+        _ => unreachable!("the closed linear spline fixture accepts only spline families"),
+    }
+    .unwrap()
+    .into_value()
+}
+
 fn every_family_open_chain() -> Vec<Curve2> {
     vec![
         Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap()),
@@ -606,6 +622,157 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     CurveRegion2::try_from_boundary_paths(&[solved_fillet], &CurveContext::STRICT)
         .unwrap()
         .into_value();
+}
+
+#[test]
+fn one_curve_closed_spline_corner_edits_retain_one_middle_interval() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+            let path = CurvePath2::try_new(vec![closed_linear_spline(family, &policy)]).unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.clone().reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                let (trimmed_previous_point, trimmed_next_point) = if reversed {
+                    (p(1, 0), p(0, 1))
+                } else {
+                    (p(0, 1), p(1, 0))
+                };
+                for (previous, next, previous_point, next_point) in [
+                    (
+                        Real::one(),
+                        Real::one(),
+                        trimmed_previous_point.clone(),
+                        trimmed_next_point.clone(),
+                    ),
+                    (
+                        Real::one(),
+                        Real::zero(),
+                        trimmed_previous_point.clone(),
+                        p(0, 0),
+                    ),
+                    (
+                        Real::zero(),
+                        Real::one(),
+                        p(0, 0),
+                        trimmed_next_point.clone(),
+                    ),
+                ] {
+                    let result = path
+                        .chamfer_vertex_by_setbacks(
+                            0,
+                            previous,
+                            next,
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let CurveCornerSolutions2::Unique(edited) = result.into_value() else {
+                        panic!("the one-curve spline seam must have one chamfer");
+                    };
+                    assert_eq!(edited.curves().len(), 2);
+                    assert_eq!(edited.curves()[0].start(), &previous_point);
+                    assert_eq!(edited.curves()[0].end(), &next_point);
+                    assert_eq!(edited.curves()[1].family(), family);
+                    assert_eq!(edited.curves()[1].start(), &next_point);
+                    assert_eq!(edited.curves()[1].end(), &previous_point);
+                }
+
+                let fillet = path
+                    .fillet_vertex_by_radius(0, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                    .unwrap();
+                assert_eq!(fillet.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(fillet) = fillet.into_value() else {
+                    panic!("the one-curve spline seam must have one fillet");
+                };
+                assert_eq!(fillet.curves().len(), 2);
+                let CurveGeometry2::CircularArc(arc) = fillet.curves()[0].geometry() else {
+                    panic!("the one-curve spline seam must publish one circular fillet");
+                };
+                assert_eq!(arc.center(), &p(1, 1));
+                assert_eq!(arc.start(), &trimmed_previous_point);
+                assert_eq!(arc.end(), &trimmed_next_point);
+                assert_eq!(fillet.curves()[1].family(), family);
+                assert_eq!(fillet.curves()[1].start(), &trimmed_next_point);
+                assert_eq!(fillet.curves()[1].end(), &trimmed_previous_point);
+            }
+        }
+    }
+}
+
+#[test]
+fn one_curve_closed_spline_extensions_materialize_each_cell_once() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for family in [CurveFamily2::PolynomialBSpline, CurveFamily2::Nurbs] {
+            let path = CurvePath2::try_new(vec![closed_linear_spline(family, &policy)]).unwrap();
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.clone().reversed(&policy).unwrap().into_value()
+                } else {
+                    path.clone()
+                };
+                for (previous, next, expected_curve_count) in
+                    [(r(3), r(1), 3), (r(1), r(3), 3), (r(3), r(3), 4)]
+                {
+                    let result = path
+                        .chamfer_vertex_by_setbacks(
+                            0,
+                            previous,
+                            next,
+                            CurveCornerMode2::TrimOrExtend,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let candidates = match result.into_value() {
+                        CurveCornerSolutions2::Unique(edited) => vec![edited],
+                        CurveCornerSolutions2::Multiple(edited) => edited,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("the exterior spline seam chamfer was lost: {reason:?}")
+                        }
+                    };
+                    assert!(
+                        candidates
+                            .iter()
+                            .any(|edited| edited.curves().len() == expected_curve_count),
+                        "the expected one-source seam reconstruction was not published"
+                    );
+                    assert!(candidates.iter().all(|edited| {
+                        edited
+                            .curves()
+                            .iter()
+                            .filter(|curve| curve.family() == family)
+                            .count()
+                            == 1
+                    }));
+                }
+
+                let fillet = path
+                    .fillet_vertex_by_radius(0, r(3), CurveCornerMode2::TrimOrExtend, &policy)
+                    .unwrap();
+                assert_eq!(fillet.certainty, CurveCertainty::Certified);
+                let candidates = match fillet.into_value() {
+                    CurveCornerSolutions2::Unique(edited) => vec![edited],
+                    CurveCornerSolutions2::Multiple(edited) => edited,
+                    CurveCornerSolutions2::NoSolution(reason) => {
+                        panic!("the exterior spline seam fillet was lost: {reason:?}")
+                    }
+                };
+                assert!(candidates.iter().any(|edited| edited.curves().len() == 4));
+                assert!(candidates.iter().all(|edited| {
+                    edited
+                        .curves()
+                        .iter()
+                        .filter(|curve| curve.family() == family)
+                        .count()
+                        == 1
+                }));
+            }
+        }
+    }
 }
 
 #[test]
