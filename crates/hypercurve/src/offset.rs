@@ -7,7 +7,6 @@ use std::cmp::Ordering;
 
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::contour::{Contour2, FillRule};
-use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{Classification, CurveContext, CurveError, CurveResult, Point2, UncertaintyReason};
 
@@ -146,46 +145,6 @@ impl Segment2 {
     }
 }
 
-impl CurveString2 {
-    /// Returns a left offset of this open curve string with straight-line joins.
-    ///
-    /// This is a raw offset-construction layer, not a full offset engine. Each
-    /// source segment is first replaced by its primitive parallel offset. Adjacent
-    /// offset lines are mitered by intersecting their supporting lines; joins
-    /// that cannot be mitered are connected by a circular arc centered at the
-    /// original shared vertex. A complete profile offset pipeline still has to
-    /// classify join style, trim self-intersections, and cap open endpoints.
-    /// profile-offset construction,
-    /// describe this staged primitive, join, and trim structure for
-    /// two-dimensional profile offsets.
-    pub fn offset_left_with_line_joins(
-        &self,
-        distance: Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        if is_zero(&distance, policy) == Some(true) {
-            return Ok(Classification::Decided(self.clone()));
-        }
-
-        let offsets = match offset_segments_left(self.segments(), &distance, policy)? {
-            Classification::Decided(offsets) => offsets,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let joined = match joined_offset_segments(
-            self.segments(),
-            &offsets,
-            false,
-            None,
-            &distance,
-            policy,
-        )? {
-            Classification::Decided(joined) => joined,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        Ok(checked_joined_curve_string(joined))
-    }
-}
-
 impl Contour2 {
     pub(crate) fn offset_left_with_corner_style(
         &self,
@@ -264,12 +223,6 @@ pub(crate) fn scale_from_center(point: &Point2, center: &Point2, scale: &Real) -
         center.x() + (&radius.0 * scale),
         center.y() + (&radius.1 * scale),
     )
-}
-
-fn checked_joined_curve_string(segments: Vec<Segment2>) -> Classification<CurveString2> {
-    CurveString2::try_new(segments)
-        .map(Classification::Decided)
-        .unwrap_or_else(classify_joined_topology_error)
 }
 
 fn checked_joined_contour(

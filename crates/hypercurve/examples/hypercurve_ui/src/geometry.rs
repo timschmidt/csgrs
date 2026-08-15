@@ -705,16 +705,8 @@ impl Polyline {
                 .map(Shape::into_polylines)
                 .unwrap_or_default())
         } else {
-            let curve = self.to_curve_string()?;
-            let distance = real_checked(distance, "offset distance")?;
-            match preview(|context| curve.offset_left_with_line_joins(distance, context))
-                .map_err(|e| e.to_string())?
-            {
-                Classification::Decided(curve) => {
-                    Ok(vec![Self::from_segments(curve.segments(), false)])
-                }
-                Classification::Uncertain(_) => Ok(Vec::new()),
-            }
+            Err("filled-region offset requires a closed shape; use Outline for an open path"
+                .into())
         }
     }
 

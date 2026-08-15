@@ -7,8 +7,8 @@ use hypercurve::{
     BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
     CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveResult, CurveString2, FillRule, LineSeg2, OffsetCap,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -21,10 +21,6 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn q(numerator: i32, denominator: i32) -> Real {
     (s(numerator) / s(denominator)).expect("nonzero benchmark denominator")
-}
-
-fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
-    Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
 fn bench_line_offset(iterations: u32) -> CurveResult<()> {
@@ -60,58 +56,6 @@ fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveRes
     let elapsed = started.elapsed();
     println!(
         "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_joined_offset(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = curve.offset_left_with_line_joins(s(1), &policy)?
-        else {
-            panic!("curve_string_joined_offset became uncertain during benchmark");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_joined_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_round_join_offset(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1))?),
-        line_segment(2, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = curve.offset_left_with_line_joins(s(1), &policy)?
-        else {
-            panic!("curve_string_round_join_offset became uncertain during benchmark");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_round_join_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -1034,8 +978,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / iterations
     );
 
-    bench_curve_string_joined_offset(100_000)?;
-    bench_curve_string_round_join_offset(100_000)?;
     bench_curve_region_path_stroke(100)?;
     bench_exact_bezier_parallel_construction(100_000)?;
     bench_exact_bezier_parallel_evaluation(10_000)?;
