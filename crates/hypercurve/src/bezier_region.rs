@@ -2627,7 +2627,7 @@ fn retained_corner_fragment_extension(
     if let Some(replacement) = replacement {
         let curve = match replacement {
             CornerReplacement2::Curve(curve) => curve,
-            CornerReplacement2::AnalyticParallel(fragment) => {
+            CornerReplacement2::AnalyticParallel { fragment, .. } => {
                 return Ok(vec![BezierSplitFragment2::AnalyticParallel(
                     fragment.clone(),
                 )]);
@@ -3681,6 +3681,8 @@ fn canonicalize_retained_extension_on_finite_envelope(
         }
     };
     let span = &upper - &lower;
+    let source_scale = span.clone();
+    let source_offset = lower.clone();
     let scale = (Real::one() / &span)
         .map_err(|cause| curve_region_edit_error(operation, CurveError::from(cause)))?;
     let offset = ((-lower) / span)
@@ -3756,15 +3758,19 @@ fn canonicalize_retained_extension_on_finite_envelope(
                 .as_bezier_parameter()
                 .cloned()
                 .expect("the canonical next cut is a Bezier parameter");
-            CornerReplacement2::AnalyticParallel(retained_corner_decision(
-                crate::BezierParallelFragment2::try_new(
-                    parallel,
-                    BezierParameterRange2::new_validated(next, previous),
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                operation,
-            )?)
+            CornerReplacement2::AnalyticParallel {
+                fragment: retained_corner_decision(
+                    crate::BezierParallelFragment2::try_new(
+                        parallel,
+                        BezierParameterRange2::new_validated(next, previous),
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                    operation,
+                )?,
+                source_scale,
+                source_offset,
+            }
         }
     };
     previous_cut.replacement = Some(replacement.clone());
@@ -4375,18 +4381,17 @@ fn exact_offset_span_from_algebraic_chord(
             direction,
             policy,
         );
-        let tangent = direction.unit_tangent();
         return Ok(Classification::Decided(ExactOffsetSpan2 {
             fragments: vec![retained_chord_fragment(offset_chord)],
             source_end: chord.end().clone(),
             offset_start,
             offset_end,
-            start_tangent: Some(ExactOffsetTangent2::Vector(tangent.clone())),
-            end_tangent: Some(ExactOffsetTangent2::Vector(tangent)),
+            start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
+            end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
         }));
     }
 
-    let Some(tangent) = chord.certified_unit_tangent() else {
+    if chord.certified_unit_tangent().is_none() {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -4404,15 +4409,14 @@ fn exact_offset_span_from_algebraic_chord(
             start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
             end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
         }));
-    };
+    }
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
         "curve-region-exact-offset-span",
         "certified-oblique-algebraic-chord",
     );
-    let normal_offset = (-(&tangent.1 * distance), &tangent.0 * distance);
-    let offset_chord = match chord.translated(&normal_offset.0, &normal_offset.1, policy)? {
+    let offset_chord = match chord.parallel_left_with_certified_unit_tangent(distance, policy)? {
         Classification::Decided(chord) => chord,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -4425,8 +4429,8 @@ fn exact_offset_span_from_algebraic_chord(
         source_end: chord.end().clone(),
         offset_start,
         offset_end,
-        start_tangent: Some(ExactOffsetTangent2::Vector(tangent.clone())),
-        end_tangent: Some(ExactOffsetTangent2::Vector(tangent)),
+        start_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
+        end_tangent: Some(ExactOffsetTangent2::AlgebraicChord(chord.clone())),
     }))
 }
 
@@ -5164,11 +5168,6 @@ impl RegionCornerCarrier2 {
     ) -> ExactCurveResult<Self> {
         let top_level = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
-            // Preserve the native line-line fillet fast path. Chamfer keeps
-            // the chord carrier so its retained algebraic parameter survives.
-            BezierSplitFragment2::AlgebraicChord(chord) if operation == CurveOperation2::Fillet => {
-                chord.exact_line().map(Curve2::from)
-            }
             BezierSplitFragment2::AlgebraicEndpointImages {
                 source_curve: Some(_),
                 ..
@@ -7546,6 +7545,34 @@ fn exact_algebraic_chord_parallel_factor(
     candidate: &crate::BezierAlgebraicChord2,
     policy: &CurveContext,
 ) -> Classification<RealSign> {
+    if let (Some(first), Some(second)) = (
+        reference.certified_unit_tangent(),
+        candidate.certified_unit_tangent(),
+    ) {
+        let cross = Real::diff_of_products(&first.0, &second.1, &first.1, &second.0);
+        // The represented-unit-vector comparison is only a fast path.  Keep
+        // it certified so an unresolved symbolic cancellation can fall
+        // through to the retained chord relation below instead of consuming
+        // APPROXIMATE_512 before that exact certificate is consulted.
+        match policy.strict_predicate_pass(|| real_sign(&cross, policy)) {
+            Some(RealSign::Zero) => {
+                let dot = Real::dot2_refs([&first.0, &first.1], [&second.0, &second.1]);
+                match policy.strict_predicate_pass(|| real_sign(&dot, policy)) {
+                    Some(sign @ (RealSign::Negative | RealSign::Positive)) => {
+                        return Classification::Decided(sign);
+                    }
+                    Some(RealSign::Zero) => {
+                        return Classification::Uncertain(UncertaintyReason::Boundary);
+                    }
+                    None => {}
+                }
+            }
+            Some(RealSign::Negative | RealSign::Positive) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            None => {}
+        }
+    }
     match reference.tangent_cross_sign(candidate, policy) {
         Ok(Classification::Decided(RealSign::Zero)) => {}
         Ok(Classification::Decided(RealSign::Negative | RealSign::Positive)) => {
@@ -7589,6 +7616,71 @@ fn exact_algebraic_chord_vector_factor(
         Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
         Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
     }
+}
+
+fn exact_algebraic_chord_retained_parallel_relation(
+    chord: &crate::BezierAlgebraicChord2,
+    parallel: &BezierParallel2,
+    parameter: &BezierParameter2,
+    source_direction: RealSign,
+    cross: bool,
+    policy: &CurveContext,
+) -> Classification<RealSign> {
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypercurve",
+        if cross {
+            "curve-region-exact-offset-tangent-cross"
+        } else {
+            "curve-region-exact-offset-tangent-dot"
+        },
+        "algebraic-chord-retained-parallel",
+    );
+    let represented = chord.certified_unit_tangent().or_else(|| {
+        chord
+            .certified_axis_direction()
+            .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
+    });
+    let relation = if let Some(tangent) = represented {
+        match parallel.vector_tangent_cross_and_dot_signs(parameter, &tangent.0, &tangent.1, policy)
+        {
+            Ok(Classification::Decided((cross_sign, dot_sign))) => {
+                if cross {
+                    cross_sign
+                } else {
+                    dot_sign
+                }
+            }
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
+    } else {
+        let zero = Real::zero();
+        let one = Real::one();
+        match chord.tangent_cross_dot_parallel_linear_combination_sign(
+            parallel,
+            parameter,
+            if cross { &one } else { &zero },
+            if cross { &zero } else { &one },
+            policy,
+        ) {
+            Ok(Classification::Decided(relation)) => relation,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
+    };
+    let parallel_scale = match parallel.parallel_derivative_scale_sign(parameter, policy) {
+        Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
+        Ok(Classification::Decided(RealSign::Zero)) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    Classification::Decided(exact_sign_product(
+        relation,
+        exact_sign_product(source_direction, parallel_scale),
+    ))
 }
 
 fn exact_retained_parallel_tangent_cross_and_dot_vector(
@@ -7705,7 +7797,7 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
     source_fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
     at_start: bool,
-    parallel: &BezierParallel2,
+    _parallel: &BezierParallel2,
     source_parallel: &BezierParallel2,
     parameter: &BezierParameter2,
     selected_source_parameter: Option<
@@ -7714,18 +7806,27 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
     source_direction: RealSign,
     policy: &CurveContext,
 ) -> Classification<(RealSign, Option<RealSign>)> {
+    let mut cross_uncertainty = None;
     let cross = match fragment.endpoint_tangent_cross_retained_parallel(
         at_start,
-        parallel,
+        source_parallel,
         parameter,
         source_direction,
         policy,
     ) {
         Ok(Classification::Decided(cross)) => cross,
         Ok(Classification::Uncertain(reason)) => {
-            return Classification::Uncertain(reason);
+            // This is an optional local tangent predicate. Independently
+            // represented source carriers can make it inconclusive even when
+            // the authored carriers retain an exact positive-length overlap;
+            // try that stronger topology certificate below before blocking.
+            cross_uncertainty = Some(reason);
+            None
         }
-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        Err(_) => {
+            cross_uncertainty = Some(UncertaintyReason::Unsupported);
+            None
+        }
     };
     if let Some(cross @ (RealSign::Negative | RealSign::Positive)) = cross {
         return Classification::Decided((cross, None));
@@ -7735,7 +7836,7 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
         let one = Real::one();
         match fragment.endpoint_tangent_cross_dot_linear_combination_retained_parallel(
             at_start,
-            parallel,
+            source_parallel,
             parameter,
             source_direction,
             &zero,
@@ -7765,7 +7866,7 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
             Classification::Decided((RealSign::Zero, Some(dot)))
         }
         Ok(Classification::Decided(None)) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
+            Classification::Uncertain(cross_uncertainty.unwrap_or(UncertaintyReason::Unsupported))
         }
         Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
         Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -7973,6 +8074,39 @@ fn exact_offset_tangent_cross_sign(
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         }
+        (
+            ExactOffsetTangent2::AlgebraicChord(chord),
+            ExactOffsetTangent2::RetainedParallel {
+                parallel,
+                parameter,
+                source_direction,
+                ..
+            },
+        ) => exact_algebraic_chord_retained_parallel_relation(
+            chord,
+            parallel,
+            parameter,
+            *source_direction,
+            true,
+            policy,
+        ),
+        (
+            ExactOffsetTangent2::RetainedParallel {
+                parallel,
+                parameter,
+                source_direction,
+                ..
+            },
+            ExactOffsetTangent2::AlgebraicChord(chord),
+        ) => exact_algebraic_chord_retained_parallel_relation(
+            chord,
+            parallel,
+            parameter,
+            *source_direction,
+            true,
+            policy,
+        )
+        .map(exact_sign_reverse),
         (ExactOffsetTangent2::AlgebraicChord(first), ExactOffsetTangent2::Vector(second)) => {
             match first.tangent_cross_vector_sign(second, policy) {
                 Ok(sign) => sign,
@@ -8049,18 +8183,26 @@ fn exact_offset_tangent_cross_sign(
                 selected_source_parameter,
                 source_direction,
             },
-        ) => exact_selected_circle_retained_parallel_tangent_cross_and_dot(
-            source_fragment,
-            fragment,
-            *at_start,
-            parallel,
-            source_parallel,
-            parameter,
-            selected_source_parameter.as_ref(),
-            *source_direction,
-            policy,
-        )
-        .map(|(cross, _)| cross),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "selected-circle-retained-parallel",
+            );
+            exact_selected_circle_retained_parallel_tangent_cross_and_dot(
+                source_fragment,
+                fragment,
+                *at_start,
+                parallel,
+                source_parallel,
+                parameter,
+                selected_source_parameter.as_ref(),
+                *source_direction,
+                policy,
+            )
+            .map(|(cross, _)| cross)
+        }
         (
             ExactOffsetTangent2::RetainedParallel {
                 parallel,
@@ -8074,18 +8216,26 @@ fn exact_offset_tangent_cross_sign(
                 fragment,
                 at_start,
             },
-        ) => exact_selected_circle_retained_parallel_tangent_cross_and_dot(
-            source_fragment,
-            fragment,
-            *at_start,
-            parallel,
-            source_parallel,
-            parameter,
-            selected_source_parameter.as_ref(),
-            *source_direction,
-            policy,
-        )
-        .map(|(cross, _)| exact_sign_reverse(cross)),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "retained-parallel-selected-circle",
+            );
+            exact_selected_circle_retained_parallel_tangent_cross_and_dot(
+                source_fragment,
+                fragment,
+                *at_start,
+                parallel,
+                source_parallel,
+                parameter,
+                selected_source_parameter.as_ref(),
+                *source_direction,
+                policy,
+            )
+            .map(|(cross, _)| exact_sign_reverse(cross))
+        }
         (
             ExactOffsetTangent2::ChordContact {
                 fragment,
@@ -8193,18 +8343,34 @@ fn exact_offset_tangent_cross_sign(
                 fragment, at_start, ..
             },
             ExactOffsetTangent2::AlgebraicChord(second),
-        ) => fragment
-            .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
-            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "selected-circle-algebraic-chord",
+            );
+            fragment
+                .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 fragment, at_start, ..
             },
-        ) => fragment
-            .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
-            .map(|cross| cross.map(exact_sign_reverse))
-            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        ) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-tangent-cross",
+                "algebraic-chord-selected-circle",
+            );
+            fragment
+                .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
+                .map(|cross| cross.map(exact_sign_reverse))
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
                 source_fragment: first_source,
@@ -8365,6 +8531,38 @@ fn exact_offset_tangents_are_opposite(
             }
             Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        },
+        (
+            ExactOffsetTangent2::AlgebraicChord(chord),
+            ExactOffsetTangent2::RetainedParallel {
+                parallel,
+                parameter,
+                source_direction,
+                ..
+            },
+        )
+        | (
+            ExactOffsetTangent2::RetainedParallel {
+                parallel,
+                parameter,
+                source_direction,
+                ..
+            },
+            ExactOffsetTangent2::AlgebraicChord(chord),
+        ) => match exact_algebraic_chord_retained_parallel_relation(
+            chord,
+            parallel,
+            parameter,
+            *source_direction,
+            false,
+            policy,
+        ) {
+            Classification::Decided(RealSign::Negative) => Classification::Decided(true),
+            Classification::Decided(RealSign::Positive) => Classification::Decided(false),
+            Classification::Decided(RealSign::Zero) => {
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
         },
         (ExactOffsetTangent2::AlgebraicChord(chord), ExactOffsetTangent2::Vector(vector))
         | (ExactOffsetTangent2::Vector(vector), ExactOffsetTangent2::AlgebraicChord(chord)) => {
@@ -11677,34 +11875,87 @@ impl CurveRegion2 {
                 }
             }
         } else {
-            let RetainedFilletRadialFrame2::RepresentedUnitNormal(unit_normal) =
-                &frame.radial_frame
-            else {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    CurveFamily2::RationalBezier,
-                    UncertaintyReason::Unsupported,
-                ));
-            };
-            let line_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
-            let (mut tangent_cross, mut tangent_dot) = match other_parallel
-                .vector_tangent_cross_and_dot_signs(
-                    other_parameter,
-                    &line_tangent.0,
-                    &line_tangent.1,
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
-            {
-                Classification::Decided(signs) => signs,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
+            let relation = |cross: bool| -> ExactCurveResult<RealSign> {
+                let classification = match &frame.radial_frame {
+                    RetainedFilletRadialFrame2::RepresentedUnitNormal(unit_normal) => {
+                        let line_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
+                        other_parallel
+                            .vector_tangent_cross_and_dot_signs(
+                                other_parameter,
+                                &line_tangent.0,
+                                &line_tangent.1,
+                                policy,
+                            )
+                            .map(|classification| {
+                                classification.map(
+                                    |(cross_sign, dot_sign)| {
+                                        if cross { cross_sign } else { dot_sign }
+                                    },
+                                )
+                            })
+                    }
+                    RetainedFilletRadialFrame2::ChordNormal {
+                        anchor,
+                        policy: frame_policy,
+                    } => {
+                        if frame_policy != policy {
+                            return Err(curve_region_edit_error(
+                                CurveOperation2::Fillet,
+                                CurveError::Topology(
+                                    "a chord-normal fillet sweep crossed predicate policies".into(),
+                                ),
+                            ));
+                        }
+                        if let Some(tangent) = anchor.certified_unit_tangent().or_else(|| {
+                            anchor
+                                .certified_axis_direction()
+                                .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
+                        }) {
+                            other_parallel
+                                .vector_tangent_cross_and_dot_signs(
+                                    other_parameter,
+                                    &tangent.0,
+                                    &tangent.1,
+                                    policy,
+                                )
+                                .map(|classification| {
+                                    classification.map(
+                                        |(cross_sign, dot_sign)| {
+                                            if cross { cross_sign } else { dot_sign }
+                                        },
+                                    )
+                                })
+                        } else {
+                            let zero = Real::zero();
+                            let one = Real::one();
+                            anchor.tangent_cross_dot_parallel_linear_combination_sign(
+                                other_parallel,
+                                other_parameter,
+                                if cross { &one } else { &zero },
+                                if cross { &zero } else { &one },
+                                policy,
+                            )
+                        }
+                    }
+                    _ => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            CurveFamily2::RationalBezier,
+                            UncertaintyReason::Unsupported,
+                        ));
+                    }
+                }
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
+                match classification {
+                    Classification::Decided(sign) => Ok(sign),
+                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
                         CurveFamily2::RationalBezier,
                         reason,
-                    ));
+                    )),
                 }
             };
+            let (mut tangent_cross, mut tangent_dot) = (relation(true)?, relation(false)?);
             if other_reversed {
                 tangent_cross = exact_sign_reverse(tangent_cross);
                 tangent_dot = exact_sign_reverse(tangent_dot);
@@ -11857,6 +12108,8 @@ impl CurveRegion2 {
         other_cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record("hypercurve", "curve-region-fillet-parallel", "entered");
         other_cut.parameter = CurveRegionParameter2::from_bezier(other_parameter.clone());
         let (sweep_halves, tangent_cross, tangent_dot) = Self::retained_fillet_sweep(
             frame,
@@ -11866,14 +12119,60 @@ impl CurveRegion2 {
             fillet_clockwise,
             policy,
         )?;
+        #[cfg(feature = "dispatch-trace")]
+        {
+            let sign = |sign| match sign {
+                RealSign::Negative => "negative",
+                RealSign::Zero => "zero",
+                RealSign::Positive => "positive",
+            };
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel-sweep",
+                if sweep_halves == 1 {
+                    "one-half"
+                } else {
+                    "two-halves"
+                },
+            );
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel-cross",
+                sign(tangent_cross),
+            );
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel-dot",
+                sign(tangent_dot),
+            );
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel-anchor",
+                if frame.anchor_is_previous {
+                    "previous"
+                } else {
+                    "next"
+                },
+            );
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel-direction",
+                match (fillet_clockwise, other_reversed) {
+                    (false, false) => "ccw-forward",
+                    (false, true) => "ccw-reversed",
+                    (true, false) => "cw-forward",
+                    (true, true) => "cw-reversed",
+                },
+            );
+        }
         let terminal_circle = if sweep_halves == 2 {
             fillet.complementary_half()
         } else {
             fillet.clone()
         };
-        let fillet_parameter = if tangent_cross == RealSign::Zero {
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
-        } else if terminal_circle.uses_selected_parallel_normal_frame() {
+        let fillet_parameter = if terminal_circle.uses_selected_parallel_normal_frame()
+            || terminal_circle.uses_selected_chord_normal_frame()
+        {
             let derivative_scale = match other_parallel
                 .parallel_derivative_scale_sign(&other_parameter, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
@@ -11896,7 +12195,16 @@ impl CurveRegion2 {
             };
             let traversal_agrees_with_source =
                 (derivative_scale == RealSign::Positive) != other_reversed;
-            let signed_offset_sign = if fillet_clockwise {
+            // `fillet_clockwise` follows the locally published circle from
+            // anchor to companion. Anchoring on the next boundary carrier
+            // reverses that traversal, but it does not reverse the common
+            // offset side on which the center was solved.
+            let common_offset_clockwise = if frame.anchor_is_previous {
+                fillet_clockwise
+            } else {
+                !fillet_clockwise
+            };
+            let signed_offset_sign = if common_offset_clockwise {
                 RealSign::Negative
             } else {
                 RealSign::Positive
@@ -11906,6 +12214,24 @@ impl CurveRegion2 {
             } else {
                 signed_offset_sign
             };
+            #[cfg(feature = "dispatch-trace")]
+            {
+                let sign = |value| match value {
+                    RealSign::Negative => "negative",
+                    RealSign::Zero => "zero",
+                    RealSign::Positive => "positive",
+                };
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-fillet-parallel-derivative-scale",
+                    sign(derivative_scale),
+                );
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-fillet-parallel-other-radial",
+                    sign(other_radial_sign),
+                );
+            }
             let frame_cross = if frame.anchor_is_previous {
                 tangent_cross
             } else {
@@ -11915,6 +12241,11 @@ impl CurveRegion2 {
                 .certified_selected_parallel_contact_parameter(
                     other_parallel.clone(),
                     other_parameter.clone(),
+                    if tangent_cross == RealSign::Zero {
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::End
+                    } else {
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                    },
                     other_radial_sign,
                     frame_cross,
                     tangent_dot,
@@ -11931,7 +12262,15 @@ impl CurveRegion2 {
                     ));
                 }
             }
+        } else if tangent_cross == RealSign::Zero {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
         } else {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel",
+                "general-parameter-map",
+            );
             let parameter_map = match terminal_circle
                 .parallel_parameter_map(other_parallel, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
@@ -11945,6 +12284,12 @@ impl CurveRegion2 {
                     ));
                 }
             };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-fillet-parallel",
+                "parameter-map-decided",
+            );
             parameter_map.certified_interior_tangent_parameter(other_parameter)
         };
         Self::publish_retained_circle_fillet(
@@ -11976,6 +12321,8 @@ impl CurveRegion2 {
         chord_cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record("hypercurve", "curve-region-fillet-chord", "entered");
         let Some(relation) = frame.anchor_evidence.as_ref() else {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
@@ -12025,14 +12372,21 @@ impl CurveRegion2 {
                         frame.radial_distance.clone(),
                         policy,
                     ),
-                RetainedFilletRadialFrame2::ParallelNormal { .. } => terminal_circle
-                    .certified_selected_chord_parallel_normal_contact_parameter(
+                RetainedFilletRadialFrame2::ParallelNormal { .. } => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-fillet-chord-frame",
+                        "parallel-normal",
+                    );
+                    terminal_circle.certified_selected_chord_parallel_normal_contact_parameter(
                         chord.clone(),
                         chord_cut.point.clone(),
                         frame.radial_distance.clone(),
                         tangent_cross,
                         policy,
-                    ),
+                    )
+                }
                 RetainedFilletRadialFrame2::SelectedConcentric { .. } => terminal_circle
                     .certified_selected_chord_retained_contact_parameter(
                         chord.clone(),
@@ -12119,6 +12473,18 @@ impl CurveRegion2 {
             match parameter {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-fillet-chord-parameter",
+                        match reason {
+                            UncertaintyReason::Unsupported => "unsupported",
+                            UncertaintyReason::Predicate => "predicate",
+                            UncertaintyReason::Ordering => "ordering",
+                            UncertaintyReason::RealSign => "real-sign",
+                            UncertaintyReason::Boundary => "boundary",
+                        },
+                    );
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
                         CurveFamily2::RationalBezier,
@@ -12649,6 +13015,27 @@ impl CurveRegion2 {
                         previous_promoted_parallel,
                     )
                 };
+            let canonical_anchor_tangent = if matches!(
+                &frame.radial_frame,
+                RetainedFilletRadialFrame2::ParallelNormal { .. }
+            ) {
+                anchor_cut
+                    .replacement_parallel_fragment()
+                    .zip(anchor_cut.parameter.as_bezier_parameter())
+                    .zip(anchor_cut.replacement_parallel_source_parameter_map())
+                    .map(
+                        |((replacement, parameter), (source_scale, source_offset))| {
+                            (
+                                replacement.parallel().clone(),
+                                parameter.clone(),
+                                source_scale.clone(),
+                                source_offset.clone(),
+                            )
+                        },
+                    )
+            } else {
+                None
+            };
             if let Some(replacement) = frame
                 .anchor_evidence
                 .as_ref()
@@ -12770,6 +13157,21 @@ impl CurveRegion2 {
                         reason,
                     ));
                 }
+            };
+            let fillet = if let Some((support, parameter, source_scale, source_offset)) =
+                canonical_anchor_tangent
+            {
+                fillet
+                    .with_certified_parallel_normal_tangent_authority(
+                        support,
+                        parameter,
+                        source_scale,
+                        source_offset,
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            } else {
+                fillet
             };
             if let Some(deferred) = frame
                 .anchor_evidence
@@ -26099,15 +26501,22 @@ mod tests {
                         let BezierSplitFragment2::AlgebraicCuspSemicircle(fillet) = fragment else {
                             continue;
                         };
-                        for adjacent in [
-                            &fragments[(index + fragments.len() - 1) % fragments.len()],
-                            &fragments[(index + 1) % fragments.len()],
+                        for (adjacent, shared_circle_start) in [
+                            (
+                                &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                true,
+                            ),
+                            (&fragments[(index + 1) % fragments.len()], false),
                         ] {
                             let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                 continue;
                             };
                             assert_eq!(
-                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                fillet.certified_adjacent_chord_is_endpoint_only(
+                                    chord,
+                                    shared_circle_start,
+                                    &policy,
+                                ),
                                 Ok(Classification::Decided(true))
                             );
                             chord_adjacencies += 1;
@@ -26189,15 +26598,22 @@ mod tests {
                                 retained_tangent_relations += 1;
                             }
                         }
-                        for adjacent in [
-                            &fragments[(index + fragments.len() - 1) % fragments.len()],
-                            &fragments[(index + 1) % fragments.len()],
+                        for (adjacent, shared_circle_start) in [
+                            (
+                                &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                true,
+                            ),
+                            (&fragments[(index + 1) % fragments.len()], false),
                         ] {
                             let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                 continue;
                             };
                             assert_eq!(
-                                fillet.certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                fillet.certified_adjacent_chord_is_endpoint_only(
+                                    chord,
+                                    shared_circle_start,
+                                    &policy,
+                                ),
                                 Ok(Classification::Decided(true))
                             );
                             chord_adjacencies += 1;
@@ -26663,16 +27079,22 @@ mod tests {
                                     retained_tangent_relations += 1;
                                 }
                             }
-                            for adjacent in [
-                                &fragments[(index + fragments.len() - 1) % fragments.len()],
-                                &fragments[(index + 1) % fragments.len()],
+                            for (adjacent, shared_circle_start) in [
+                                (
+                                    &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                    true,
+                                ),
+                                (&fragments[(index + 1) % fragments.len()], false),
                             ] {
                                 let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                     continue;
                                 };
                                 assert_eq!(
-                                    fillet
-                                        .certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                    fillet.certified_adjacent_chord_is_endpoint_only(
+                                        chord,
+                                        shared_circle_start,
+                                        &policy,
+                                    ),
                                     Ok(Classification::Decided(true)),
                                     "policy={policy:?}, reversed={reversed}, mode={mode:?}"
                                 );
@@ -26741,15 +27163,21 @@ mod tests {
                             else {
                                 continue;
                             };
-                            for adjacent in [
-                                &fragments[(index + fragments.len() - 1) % fragments.len()],
-                                &fragments[(index + 1) % fragments.len()],
+                            for (adjacent, shared_circle_start) in [
+                                (
+                                    &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                    true,
+                                ),
+                                (&fragments[(index + 1) % fragments.len()], false),
                             ] {
                                 let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                     continue;
                                 };
-                                if circle.certified_adjacent_chord_is_endpoint_only(chord, &policy)
-                                    == Ok(Classification::Decided(true))
+                                if circle.certified_adjacent_chord_is_endpoint_only(
+                                    chord,
+                                    shared_circle_start,
+                                    &policy,
+                                ) == Ok(Classification::Decided(true))
                                 {
                                     chord_adjacencies += 1;
                                 }
@@ -27046,17 +27474,20 @@ mod tests {
                                     retained_tangent_relations += 1;
                                 }
                             }
-                            for adjacent_index in [
-                                (index + fragments.len() - 1) % fragments.len(),
-                                (index + 1) % fragments.len(),
+                            for (adjacent_index, shared_circle_start) in [
+                                ((index + fragments.len() - 1) % fragments.len(), true),
+                                ((index + 1) % fragments.len(), false),
                             ] {
                                 let adjacent = &fragments[adjacent_index];
                                 let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                     continue;
                                 };
                                 assert_eq!(
-                                    fillet
-                                        .certified_adjacent_chord_is_endpoint_only(chord, &policy,),
+                                    fillet.certified_adjacent_chord_is_endpoint_only(
+                                        chord,
+                                        shared_circle_start,
+                                        &policy,
+                                    ),
                                     Ok(Classification::Decided(true)),
                                     "policy={policy:?}, reversed={reversed}, mode={mode:?}, fillet={index}, adjacent={adjacent_index}"
                                 );
@@ -27132,16 +27563,22 @@ mod tests {
                                     retained_tangent_relations += 1;
                                 }
                             }
-                            for adjacent in [
-                                &fragments[(index + fragments.len() - 1) % fragments.len()],
-                                &fragments[(index + 1) % fragments.len()],
+                            for (adjacent, shared_circle_start) in [
+                                (
+                                    &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                    true,
+                                ),
+                                (&fragments[(index + 1) % fragments.len()], false),
                             ] {
                                 let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
                                     continue;
                                 };
                                 assert_eq!(
-                                    fillet
-                                        .certified_adjacent_chord_is_endpoint_only(chord, &policy),
+                                    fillet.certified_adjacent_chord_is_endpoint_only(
+                                        chord,
+                                        shared_circle_start,
+                                        &policy,
+                                    ),
                                     Ok(Classification::Decided(true)),
                                     "policy={policy:?}, reversed={reversed}, mode={mode:?}"
                                 );

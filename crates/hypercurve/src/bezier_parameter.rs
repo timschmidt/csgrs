@@ -2442,6 +2442,49 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
     }
 }
 
+/// Encloses a polynomial value over one retained parameter interval with
+/// certified dyadic rational bounds.
+///
+/// Bernstein convex-hull bounds make this useful for batching many predicates
+/// over the same selected root: callers may refine the root and scalar
+/// precision together without invoking an algebraic GCD for every value.
+pub(crate) fn coefficients_value_interval_on_parameter_interval(
+    coefficients: &[Real],
+    parameter: &BezierParameter2,
+    precision: i32,
+) -> CurveResult<Option<[HyperRational; 2]>> {
+    let restricted = match parameter {
+        BezierParameter2::Exact(parameter) => {
+            vec![evaluate_coefficients(coefficients, parameter)]
+        }
+        BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
+            coefficients,
+            parameter.interval().start(),
+            parameter.interval().end(),
+        ),
+    };
+    let controls =
+        power_to_bernstein_coefficients(&restricted, restricted.len().saturating_sub(1))?;
+    let mut bounds = controls
+        .into_iter()
+        .map(|control| control.certified_dyadic_interval(precision));
+    let Some(Some([mut lower, mut upper])) = bounds.next() else {
+        return Ok(None);
+    };
+    for bound in bounds {
+        let Some([next_lower, next_upper]) = bound else {
+            return Ok(None);
+        };
+        if next_lower < lower {
+            lower = next_lower;
+        }
+        if next_upper > upper {
+            upper = next_upper;
+        }
+    }
+    Ok(Some([lower, upper]))
+}
+
 /// Returns a strict common Bernstein-control sign on `[0, 1]`, if one exists.
 pub(crate) fn univariate_unit_interval_strict_bernstein_sign(
     polynomial: &[Real],

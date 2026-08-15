@@ -3169,20 +3169,37 @@ impl CornerCut2 {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum CornerReplacement2 {
     Curve(BezierSubcurve2),
-    AnalyticParallel(crate::BezierParallelFragment2),
+    AnalyticParallel {
+        fragment: crate::BezierParallelFragment2,
+        /// Maps the replacement parameter back to the authored source:
+        /// `source = scale * replacement + offset`.
+        source_scale: Real,
+        source_offset: Real,
+    },
 }
 
 impl CornerReplacement2 {
     pub(crate) const fn as_curve(&self) -> Option<&BezierSubcurve2> {
         match self {
             Self::Curve(curve) => Some(curve),
-            Self::AnalyticParallel(_) => None,
+            Self::AnalyticParallel { .. } => None,
         }
     }
 
     pub(crate) const fn as_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
         match self {
-            Self::AnalyticParallel(fragment) => Some(fragment),
+            Self::AnalyticParallel { fragment, .. } => Some(fragment),
+            Self::Curve(_) => None,
+        }
+    }
+
+    pub(crate) fn parallel_source_parameter_map(&self) -> Option<(&Real, &Real)> {
+        match self {
+            Self::AnalyticParallel {
+                source_scale,
+                source_offset,
+                ..
+            } => Some((source_scale, source_offset)),
             Self::Curve(_) => None,
         }
     }
@@ -3207,6 +3224,12 @@ impl CornerTrimCut2 {
         self.replacement
             .as_ref()
             .and_then(CornerReplacement2::as_parallel_fragment)
+    }
+
+    pub(crate) fn replacement_parallel_source_parameter_map(&self) -> Option<(&Real, &Real)> {
+        self.replacement
+            .as_ref()
+            .and_then(CornerReplacement2::parallel_source_parameter_map)
     }
 }
 
@@ -4385,8 +4408,29 @@ impl<'a> PreparedFilletCarrier2<'a> {
             }),
             ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
             ExactCornerCarrier2::AlgebraicChord(source) => {
-                let Some(support) = source
-                    .exact_line()
+                let canonical_axis_support = match (
+                    source.certified_axis_direction(),
+                    source
+                        .exact_axis_support_coordinate(policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })?,
+                ) {
+                    (Some(direction), Some(coordinate)) => {
+                        let (unit_x, unit_y) = direction.unit_tangent();
+                        let start = match direction.axis() {
+                            crate::Axis2::X => Point2::new(Real::zero(), coordinate),
+                            crate::Axis2::Y => Point2::new(coordinate, Real::zero()),
+                        };
+                        Some(LineSeg2::new_unchecked(
+                            start.clone(),
+                            start.translated(unit_x, unit_y),
+                        ))
+                    }
+                    _ => None,
+                };
+                let Some(support) = canonical_axis_support
+                    .or_else(|| source.exact_line())
                     .or_else(|| source.strict_provenance_support_line(policy))
                 else {
                     return Ok(Self::AlgebraicChord { source });
@@ -4614,12 +4658,43 @@ impl FilletOffsetCarrier2<'_, '_> {
     ) -> ExactCurveResult<Option<RetainedFilletFrame2>> {
         let (radial_frame, radial_distance) = match self {
             Self::Line {
+                source,
+                support,
                 unit_x,
                 unit_y,
                 signed_distance,
                 ..
             } => {
-                let radial_frame = if let Some(center_frame) = anchor_evidence
+                let radial_frame = if force_chord_normal {
+                    let anchor = if let Some(anchor) = source.algebraic_chord() {
+                        anchor.clone()
+                    } else {
+                        algebraic_chord_from_line_support(
+                            support,
+                            CurveOperation2::Fillet,
+                            family,
+                            policy,
+                        )?
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    if let Some((anchor_x, anchor_y)) = anchor.certified_unit_tangent() {
+                        let dot = &anchor_x * *unit_x + &anchor_y * *unit_y;
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-fillet-chord-frame-orientation",
+                            match crate::classify::real_sign(&dot, policy) {
+                                Some(RealSign::Positive) => "agrees-with-line",
+                                Some(RealSign::Negative) => "reverses-line",
+                                Some(RealSign::Zero) => "orthogonal-to-line",
+                                None => "uncertain",
+                            },
+                        );
+                    }
+                    RetainedFilletRadialFrame2::ChordNormal {
+                        anchor,
+                        policy: *policy,
+                    }
+                } else if let Some(center_frame) = anchor_evidence
                     .as_ref()
                     .and_then(|evidence| evidence.center_parallel.clone())
                 {
@@ -4784,17 +4859,9 @@ impl FilletOffsetCarrier2<'_, '_> {
                 signed_distance,
                 ..
             } => {
-                let radial_frame = match (!force_chord_normal)
-                    .then(|| source.certified_unit_tangent())
-                    .flatten()
-                {
-                    Some((tangent_x, tangent_y)) => {
-                        RetainedFilletRadialFrame2::RepresentedUnitNormal((-tangent_y, tangent_x))
-                    }
-                    None => RetainedFilletRadialFrame2::ChordNormal {
-                        anchor: (*source).clone(),
-                        policy: *policy,
-                    },
+                let radial_frame = RetainedFilletRadialFrame2::ChordNormal {
+                    anchor: (*source).clone(),
+                    policy: *policy,
                 };
                 (radial_frame, -signed_distance.clone())
             }
@@ -5026,6 +5093,14 @@ fn solve_carrier_fillet_corner(
                             FilletOffsetCarrier2::AlgebraicCusp { .. }
                         )
                     );
+                    let extension_line_precedes_chord = mode == CurveCornerMode2::TrimOrExtend
+                        && matches!(
+                            (&previous_offset, &next_offset),
+                            (
+                                FilletOffsetCarrier2::Line { .. },
+                                FilletOffsetCarrier2::AlgebraicChord { .. }
+                            )
+                        );
                     let (first, first_is_previous, first_family, second, second_family) =
                         if cusp_and_line {
                             // The line is transiently lowered to a chord for
@@ -5051,6 +5126,7 @@ fn solve_carrier_fillet_corner(
                             }
                         } else if (previous_is_cusp && !next_is_cusp)
                             || previous_chord_anchors_on_next_arc
+                            || extension_line_precedes_chord
                         {
                             (
                                 &next_offset,
@@ -5093,6 +5169,39 @@ fn solve_carrier_fillet_corner(
                                 FilletOffsetCarrier2::AlgebraicChord { .. }
                             )
                         );
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        let carrier_kind = |carrier: &FilletOffsetCarrier2<'_, '_>| match carrier {
+                            FilletOffsetCarrier2::Line {
+                                source: FilletLinearSource2::Native { .. },
+                                ..
+                            } => "line-native",
+                            FilletOffsetCarrier2::Line {
+                                source: FilletLinearSource2::AlgebraicChord(_),
+                                ..
+                            } => "line-chord",
+                            FilletOffsetCarrier2::Arc { .. } => "arc",
+                            FilletOffsetCarrier2::Point { .. } => "point",
+                            FilletOffsetCarrier2::Parallel { .. } => "parallel",
+                            FilletOffsetCarrier2::AlgebraicCusp { .. } => "algebraic-cusp",
+                            FilletOffsetCarrier2::AlgebraicChord { .. } => "algebraic-chord",
+                        };
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-fillet-previous-carrier",
+                            carrier_kind(&previous_offset),
+                        );
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-fillet-next-carrier",
+                            carrier_kind(&next_offset),
+                        );
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "curve-region-fillet-force-chord-normal",
+                            if force_chord_normal { "yes" } else { "no" },
+                        );
+                    }
                     let first_frame = first.retained_fillet_frame(
                         first_is_previous,
                         center.parameter(first_is_previous),
@@ -5139,6 +5248,27 @@ fn solve_carrier_fillet_corner(
                             first_frame.or(second_frame)
                         }
                     };
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "curve-region-fillet-retained-frame",
+                        match retained_frame.as_ref().map(|frame| &frame.radial_frame) {
+                            Some(RetainedFilletRadialFrame2::RepresentedUnitNormal(_)) => {
+                                "represented-unit-normal"
+                            }
+                            Some(RetainedFilletRadialFrame2::ChordNormal { .. }) => "chord-normal",
+                            Some(RetainedFilletRadialFrame2::ConcentricArc { .. }) => {
+                                "concentric-arc"
+                            }
+                            Some(RetainedFilletRadialFrame2::SelectedConcentric { .. }) => {
+                                "selected-concentric"
+                            }
+                            Some(RetainedFilletRadialFrame2::ParallelNormal { .. }) => {
+                                "parallel-normal"
+                            }
+                            None => "none",
+                        },
+                    );
                     candidates.push(FilletCorner2 {
                         previous: previous_cut,
                         next: next_cut,
@@ -6630,24 +6760,15 @@ fn fillet_offset_centers(
                 }
                 let procedural_affine_contact =
                     mode == CurveCornerMode2::TrimOrExtend && parameter.as_exact().is_none();
-                let (point, line_parameter) = if procedural_affine_contact {
-                    (
-                        analytic_parallel_point_evidence(
-                            support,
-                            &parameter,
-                            CurveOperation2::Fillet,
-                            parallel_family,
-                            policy,
-                        )?,
-                        None,
-                    )
+                let line_parameter = if procedural_affine_contact {
+                    None
                 } else {
                     let contact = if mode == CurveCornerMode2::TrimOrExtend {
                         support.supporting_line_contact_evidence_affine(line, &parameter, policy)
                     } else {
                         support.supporting_line_contact_evidence(line, &parameter, policy)
                     };
-                    match contact.map_err(|cause| {
+                    let (_, line_parameter) = match contact.map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
                     })? {
                         Classification::Decided(contact) => contact,
@@ -6658,8 +6779,22 @@ fn fillet_offset_centers(
                                 reason,
                             ));
                         }
-                    }
+                    };
+                    line_parameter
                 };
+                // The selected center is natively one point of this analytic
+                // parallel. Keep that one-parameter authority and use the
+                // line solve only for its affine cut parameter; publishing an
+                // independent Cartesian algebraic image here would force
+                // later circle/chord replay to prove equality across two
+                // avoidable coordinate constructions.
+                let point = analytic_parallel_point_evidence(
+                    support,
+                    &parameter,
+                    CurveOperation2::Fillet,
+                    parallel_family,
+                    policy,
+                )?;
                 let line_parameter =
                     if line_source.algebraic_chord().is_some() || procedural_affine_contact {
                         None
@@ -6669,7 +6804,7 @@ fn fillet_offset_centers(
                         };
                         Some(CurveRegionParameter2::from_bezier(parameter))
                     };
-                let retained_anchor_evidence = if procedural_affine_contact {
+                let retained_anchor_evidence = {
                     let (mut cross, mut dot) = match support
                         .vector_tangent_cross_and_dot_signs(
                             &parameter,
@@ -6713,8 +6848,6 @@ fn fillet_offset_centers(
                         canonical_anchor_curve: None,
                         deferred_arc_contact: None,
                     })
-                } else {
-                    None
                 };
                 let parallel_parameter = Some(CurveRegionParameter2::from_bezier(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
