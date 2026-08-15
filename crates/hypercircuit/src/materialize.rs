@@ -15,8 +15,8 @@ use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveOutcome,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, CurveString2, ExactCurveError,
-    ExactCurveResult, FillRule, LineSeg2, OffsetCap, Point2 as CurvePoint2, Segment2,
+    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult,
+    FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
 };
 use hyperlattice::Point2;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
@@ -1810,6 +1810,7 @@ fn zone_offset(
         .consume(curve::offset(
             profile,
             distance.clone(),
+            &OffsetCornerStyle2::Round,
             decisions.curve_policy(),
         ))
         .map_err(|error| {
@@ -2700,6 +2701,7 @@ fn materialize_placements(
                         .consume(curve::offset(
                             &local_profile,
                             mask_margin.clone(),
+                            &OffsetCornerStyle2::Round,
                             decisions.curve_policy(),
                         ))
                         .map_err(|error| {
@@ -2730,6 +2732,7 @@ fn materialize_placements(
                             .consume(curve::offset(
                                 &local_profile,
                                 paste_margin.clone(),
+                                &OffsetCornerStyle2::Round,
                                 decisions.curve_policy(),
                             ))
                             .map_err(|error| {
@@ -2964,6 +2967,7 @@ fn graphic_profile(
                         .consume(curve::offset(
                             &profile,
                             half(width)?,
+                            &OffsetCornerStyle2::Round,
                             decisions.curve_policy(),
                         ))
                         .map(Some)
@@ -3035,10 +3039,10 @@ fn stroked_path_profile(
     source: &str,
     decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    let mut segments = points
+    let mut curves = points
         .windows(2)
         .map(|pair| {
-            LineSeg2::try_new(curve_point(&pair[0]), curve_point(&pair[1])).map(Segment2::Line)
+            LineSeg2::try_new(curve_point(&pair[0]), curve_point(&pair[1])).map(Curve2::from)
         })
         .collect::<Result<Vec<_>, _>>()
         .map_err(|error| {
@@ -3051,33 +3055,29 @@ fn stroked_path_profile(
         let last = points
             .last()
             .ok_or_else(|| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
-        segments.push(
+        curves.push(
             LineSeg2::try_new(curve_point(last), curve_point(first))
-                .map(Segment2::Line)
+                .map(Curve2::from)
                 .map_err(|error| {
                     GeometryMaterializationError::InvalidRoute(format!("{source}: {error}"))
                 })?,
         );
     }
-    let centerline = CurveString2::try_new(segments).map_err(|error| {
+    let centerline = CurvePath2::try_new(curves).map_err(|error| {
         GeometryMaterializationError::InvalidRoute(format!("{source}: {error}"))
     })?;
     let half_width = half(width)?;
-    match decisions
-        .classify(|policy| centerline.offset_outline(half_width.clone(), OffsetCap::Round, policy))
-        .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))?
-    {
-        Classification::Decided(contour) => decisions
-            .curve_operation(|policy| {
-                CurveRegion2::try_from_native_contours(vec![contour.clone()], Vec::new(), policy)
-            })
-            .map_err(|error| {
-                GeometryMaterializationError::RouteOutline(format!("{source}: {error}"))
-            }),
-        Classification::Uncertain(reason) => Err(GeometryMaterializationError::RouteOutline(
-            format!("{source}: {reason:?}"),
-        )),
-    }
+    decisions
+        .consume(decisions.curve_operation(|policy| {
+            CurveRegion2::stroke_path(
+                &centerline,
+                half_width.clone(),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+                policy,
+            )
+        }))
+        .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))
 }
 
 fn stroked_polygon_profile(
