@@ -258,13 +258,17 @@ fn main() {
         let sharp = curve::offset(
             black_box(&curve_left),
             Real::one(),
+            &hypercurve::OffsetCornerStyle2::Miter {
+                limit: Real::from(4),
+            },
             &hypercurve::CurveContext::STRICT,
         )
         .expect("offset")
         .into_value();
-        let rounded = curve::offset_rounded(
+        let rounded = curve::offset(
             black_box(&curve_left),
             Real::one(),
+            &hypercurve::OffsetCornerStyle2::Round,
             &hypercurve::CurveContext::STRICT,
         )
         .expect("rounded offset")

@@ -11,8 +11,8 @@ use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
     BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveOutcome,
     CurvePath2, CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2,
-    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RegionPointLocation,
+    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, OffsetCornerStyle2, Point2,
+    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -1564,7 +1564,9 @@ pub fn bspline_path(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = PolynomialSplineCurve2::try_new(degree, points, knots).ok()?;
+    let spline = PolynomialSplineCurve2::try_new(degree, points, knots, &CurveContext::STRICT)
+        .ok()?
+        .into_value();
     CurvePath2::try_new(vec![Curve2::from(spline)]).ok()
 }
 
@@ -1675,24 +1677,17 @@ pub fn hilbert_strings(
     strings.unwrap_or_default()
 }
 
-/// Sharp regularized offset of a native filled region.
+/// Exact regularized offset of a native filled region.
 #[cfg(feature = "offset")]
 pub fn offset(
     input: &CurveRegion2,
     distance: Real,
+    corner_style: &OffsetCornerStyle2,
     policy: &CurveContext,
 ) -> Result<CurveOutcome<CurveRegion2>, crate::errors::CurveOffsetError> {
-    input.offset(distance, policy).map_err(Into::into)
-}
-
-/// Rounded regularized offset of a native filled region.
-#[cfg(feature = "offset")]
-pub fn offset_rounded(
-    input: &CurveRegion2,
-    distance: Real,
-    policy: &CurveContext,
-) -> Result<CurveOutcome<CurveRegion2>, crate::errors::CurveOffsetError> {
-    offset(input, distance, policy)
+    input
+        .offset(distance, corner_style, policy)
+        .map_err(Into::into)
 }
 
 /// Triangulates a filled region as a flat native triangle surface.
