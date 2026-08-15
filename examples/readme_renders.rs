@@ -570,7 +570,11 @@ fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
         .flat_map(|boundary| boundary.fragments())
         .filter_map(|fragment| match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(curve.start().clone()),
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicChord(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::SelectedFiber(_)
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::Unresolved { .. } => None,
         })
         .collect()
