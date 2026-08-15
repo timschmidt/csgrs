@@ -126,7 +126,7 @@ pub use test_intent::{
 
 use csgrs::curve::{self, CurveRegionExt};
 use geometry::{Coord, LineString, MultiPolygon, Polygon, Rect};
-use hypercurve::{CurveContext, CurveRegion2};
+use hypercurve::{CurveContext, CurveRegion2, OffsetCornerStyle2};
 use hyperlattice::Aabb;
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
@@ -292,13 +292,18 @@ impl PcbRegion {
             ]
         });
         Ok(Self::new_with_exact_bounds(
-            curve::offset(&self.region, distance, &CurveContext::STRICT)
-                .map(hypercurve::CurveOutcome::into_value)
-                .map_err(|error| PcbGeometryUncertainty {
-                    operation: "profile-offset".into(),
-                    source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
-                    detail: error.to_string(),
-                })?,
+            curve::offset(
+                &self.region,
+                distance,
+                &OffsetCornerStyle2::Round,
+                &CurveContext::STRICT,
+            )
+            .map(hypercurve::CurveOutcome::into_value)
+            .map_err(|error| PcbGeometryUncertainty {
+                operation: "profile-offset".into(),
+                source: self.metadata.as_ref().map(|metadata| metadata.name.clone()),
+                detail: error.to_string(),
+            })?,
             self.metadata.clone(),
             exact_bounds,
             self.had_non_finite_input,
