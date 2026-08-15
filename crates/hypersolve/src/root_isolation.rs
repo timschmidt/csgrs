@@ -10,7 +10,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use hyperlimit::{PredicatePolicy, compare_reals};
+use hyperlimit::{PredicatePolicy, compare_reals, reciprocal_real};
 use hyperreal::{Rational as HyperRational, Real};
 use num::bigint::Sign;
 use num::{BigInt, One, Zero};
@@ -1765,7 +1765,11 @@ pub(crate) fn polynomial_gcd(
     if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
         return gcd_monic_normalize(gcd, policy);
     }
-    while !is_zero_polynomial(&right, policy)? {
+    loop {
+        let right_is_zero = is_zero_polynomial(&right, policy)?;
+        if right_is_zero {
+            break;
+        }
         let (_, remainder) = polynomial_div_rem(left, &right, policy)?;
         left = right;
         right = trim_polynomial(remainder, policy)?;
@@ -2090,15 +2094,21 @@ pub(crate) fn polynomial_div_rem(
     let mut quotient = vec![Real::zero(); remainder.len() - divisor.len() + 1];
     let divisor_degree = divisor.len() - 1;
     let divisor_leading = divisor.last()?.clone();
+    let divisor_leading_inverse = reciprocal_real(&divisor_leading, policy).ok()?.value()?;
     while remainder.len() >= divisor.len() && !is_zero_polynomial(&remainder, policy)? {
         let degree_delta = remainder.len() - divisor.len();
-        let scale = (remainder.last()?.clone() / divisor_leading.clone()).ok()?;
+        let scale = remainder.last()? * &divisor_leading_inverse;
         quotient[degree_delta] = quotient[degree_delta].clone() + scale.clone();
-        for (index, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree + 1) {
+        for (index, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree) {
             let target = degree_delta + index;
             remainder[target] =
                 remainder[target].clone() - scale.clone() * divisor_coefficient.clone();
         }
+        // The selected quotient coefficient cancels the leading term by
+        // construction. Publish that algebraic identity directly instead of
+        // asking `Real` to rediscover `(a / b) * b == a` through bounded
+        // expression refinement for a general exact denominator.
+        remainder[degree_delta + divisor_degree] = Real::zero();
         remainder = trim_polynomial(remainder, policy)?;
     }
     Some((trim_polynomial(quotient, policy)?, remainder))
@@ -2153,10 +2163,13 @@ fn gcd_monic_normalize(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Op
         });
     }
     let leading = polynomial.last()?.clone();
-    polynomial
-        .into_iter()
-        .map(|coefficient| (coefficient / leading.clone()).ok())
-        .collect()
+    let inverse = reciprocal_real(&leading, policy).ok()?.value()?;
+    Some(
+        polynomial
+            .into_iter()
+            .map(|coefficient| coefficient * &inverse)
+            .collect(),
+    )
 }
 
 fn abs_real(value: &Real) -> Real {

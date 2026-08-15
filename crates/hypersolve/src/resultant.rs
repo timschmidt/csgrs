@@ -8,7 +8,7 @@
 //! pseudo-remainder chain for the subresultant scheduling boundary. Both
 //! constructions remain exact and report uncertain pivot decisions.
 
-use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
+use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, ZeroKnowledge};
 #[cfg(test)]
 use num::Integer;
 use num::{BigInt, One, Zero};
@@ -281,11 +281,14 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
     if degree == 0 || degree > max_source_degree || fiber_coefficients.is_empty() {
         return None;
     }
-    let rational_coefficients = source
+    let Some(rational_coefficients) = source
         .iter()
         .chain(fiber_coefficients.iter().flatten())
         .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()
+    else {
+        return quotient_ring_fiber_resultant_polynomial_real(source, fiber_coefficients, degree);
+    };
     let mut integers = Rational::primitive_bigint_ratio(&rational_coefficients).into_iter();
     let source = integers.by_ref().take(source.len()).collect::<Vec<_>>();
     if source.len() != degree + 1 || source.last().is_none_or(BigInt::is_zero) {
@@ -333,6 +336,112 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
         .map(Real::from)
         .collect::<Vec<_>>();
     primitive_integer_polynomial(&polynomial)
+}
+
+/// Exact-`Real` counterpart of the primitive-integer quotient-ring norm.
+///
+/// The pseudo-reduction and subset determinant use only addition,
+/// subtraction, and multiplication. They therefore remain exact over the
+/// full canonical scalar and need neither coefficient-field division nor a
+/// primitive-element construction. The integer path above remains the hot
+/// representation for rational inputs.
+fn quotient_ring_fiber_resultant_polynomial_real(
+    source: &[Real],
+    fiber_coefficients: &[Vec<Real>],
+    degree: usize,
+) -> Option<Vec<Real>> {
+    if source.len() != degree + 1
+        || source
+            .last()
+            .is_none_or(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        return None;
+    }
+    let relation_degree = fiber_coefficients
+        .iter()
+        .map(|relation| relation.len().saturating_sub(1))
+        .max()?;
+    let matrix_entries = degree.checked_mul(degree)?;
+    let mut polynomial_entries = vec![Vec::<Real>::new(); matrix_entries];
+    for (fiber_power, relation) in fiber_coefficients.iter().enumerate() {
+        let matrix = pseudo_quotient_multiplication_matrix_real(source, relation, relation_degree)?;
+        if matrix.len() != matrix_entries {
+            return None;
+        }
+        for (entry, coefficient) in polynomial_entries.iter_mut().zip(matrix) {
+            if entry.len() <= fiber_power {
+                entry.resize(fiber_power + 1, Real::zero());
+            }
+            entry[fiber_power] = coefficient;
+        }
+    }
+    let mut polynomial = determinant_polynomial_matrix_real(&polynomial_entries, degree)?;
+    while polynomial.len() > 1
+        && polynomial
+            .last()
+            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        polynomial.pop();
+    }
+    Some(polynomial)
+}
+
+fn determinant_polynomial_matrix_real(
+    entries: &[Vec<Real>],
+    dimension: usize,
+) -> Option<Vec<Real>> {
+    if entries.len() != dimension.checked_mul(dimension)? {
+        return None;
+    }
+    let state_count = 1usize.checked_shl(u32::try_from(dimension).ok()?)?;
+    let mut partials = vec![None; state_count];
+    partials[0] = Some(vec![Real::one()]);
+    for mask in 0..state_count {
+        let row = usize::try_from(mask.count_ones()).ok()?;
+        if row == dimension {
+            continue;
+        }
+        let Some(partial) = partials[mask].take() else {
+            continue;
+        };
+        for column in 0..dimension {
+            let column_bit = 1usize.checked_shl(u32::try_from(column).ok()?)?;
+            if mask & column_bit != 0 {
+                continue;
+            }
+            let entry = &entries[row * dimension + column];
+            if entry
+                .iter()
+                .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+            {
+                continue;
+            }
+            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
+            let next_mask = mask | column_bit;
+            let next_length = partial.len().checked_add(entry.len())?.checked_sub(1)?;
+            let next = partials[next_mask].get_or_insert_with(|| vec![Real::zero(); next_length]);
+            if next.len() < next_length {
+                next.resize(next_length, Real::zero());
+            }
+            for (left_power, left) in partial.iter().enumerate() {
+                if left.zero_status() == ZeroKnowledge::Zero {
+                    continue;
+                }
+                for (right_power, right) in entry.iter().enumerate() {
+                    if right.zero_status() == ZeroKnowledge::Zero {
+                        continue;
+                    }
+                    let term = left * right;
+                    if sign_is_negative {
+                        next[left_power + right_power] -= term;
+                    } else {
+                        next[left_power + right_power] += term;
+                    }
+                }
+            }
+        }
+    }
+    partials.pop()?.or_else(|| Some(vec![Real::zero()]))
 }
 
 fn determinant_polynomial_matrix(entries: &[Vec<BigInt>], dimension: usize) -> Option<Vec<BigInt>> {
@@ -596,6 +705,58 @@ fn pseudo_quotient_multiplication_matrix(
         }
         for row in 0..degree {
             matrix[row * degree + column] = std::mem::take(&mut product[row]);
+        }
+    }
+    Some(matrix)
+}
+
+fn pseudo_quotient_multiplication_matrix_real(
+    source: &[Real],
+    relation: &[Real],
+    relation_degree: usize,
+) -> Option<Vec<Real>> {
+    let degree = source.len().checked_sub(1)?;
+    let leading = source.last()?;
+    if leading.zero_status() == ZeroKnowledge::Zero {
+        return None;
+    }
+
+    let mut matrix = vec![Real::zero(); degree.checked_mul(degree)?];
+    if relation.len() == 1 {
+        let mut diagonal = relation[0].clone();
+        for _ in 0..relation_degree {
+            diagonal *= leading;
+        }
+        for index in 0..degree {
+            matrix[index * degree + index] = diagonal.clone();
+        }
+        return Some(matrix);
+    }
+
+    let product_len = degree.checked_add(relation_degree)?;
+    let mut product = vec![Real::zero(); product_len];
+    for column in 0..degree {
+        for (power, coefficient) in relation.iter().enumerate() {
+            product[column + power] = coefficient.clone();
+        }
+        for power in (degree..product_len).rev() {
+            let eliminand = product[power].clone();
+            let shift = power - degree;
+            if leading != &Real::one() {
+                for coefficient in &mut product[..shift] {
+                    *coefficient *= leading;
+                }
+            }
+            for (source_power, coefficient) in source[..degree].iter().enumerate() {
+                let index = shift + source_power;
+                product[index] = leading * &product[index] - coefficient * &eliminand;
+            }
+            // This coefficient cancels algebraically by construction. Publish
+            // the identity rather than asking the scalar DAG to rediscover it.
+            product[power] = Real::zero();
+        }
+        for row in 0..degree {
+            matrix[row * degree + column] = std::mem::replace(&mut product[row], Real::zero());
         }
     }
     Some(matrix)

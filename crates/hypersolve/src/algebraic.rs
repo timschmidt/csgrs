@@ -1604,7 +1604,8 @@ pub fn transform_algebraic_root_affine(
     )
 }
 
-/// Evaluate an exact-rational polynomial at a represented algebraic root.
+/// Evaluate an exact [`Real`]-coefficient polynomial at a represented
+/// algebraic root.
 ///
 /// This is the first consumer-facing scalar operation for
 /// [`AlgebraicRootRepresentation`]. If the root carries an exact rational
@@ -1645,18 +1646,6 @@ pub fn evaluate_polynomial_at_algebraic_root(
             Some("could not trim evaluated polynomial coefficients exactly".to_owned()),
         );
     };
-    if polynomial
-        .iter()
-        .any(|coefficient| coefficient.exact_rational_ref().is_none())
-    {
-        return algebraic_polynomial_evaluation_report(
-            AlgebraicRootPolynomialEvaluationStatus::InvalidPolynomial,
-            None,
-            None,
-            None,
-            Some("polynomial evaluation requires exact-rational coefficients".to_owned()),
-        );
-    }
     if let Some(witness) = root.exact_rational_witness() {
         let value = evaluate_polynomial(&polynomial, witness);
         let Some(sign) = compare_reals(&value, &Real::zero(), policy).value() else {
