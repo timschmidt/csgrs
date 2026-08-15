@@ -2503,6 +2503,67 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel_index: usize,
     ) -> ExactCurveResult<RegionPairResult> {
         let parallel_carrier = &self.data.carriers[parallel_index];
+        if let (Some(start), Some(end)) = (
+            parallel_carrier.start.as_bezier_parameter(),
+            parallel_carrier.end.as_bezier_parameter(),
+        ) {
+            let range = BezierParameterRange2::new_validated(start.clone(), end.clone());
+            let monotonic = chord
+                .parallel_tangent_cross_sign_on_range(parallel, &range, &self.data.policy)
+                .map_err(|cause| self.invalid(parallel_index, cause))?;
+            if matches!(
+                monotonic,
+                Classification::Decided(RealSign::Positive | RealSign::Negative)
+            ) {
+                if self.authored_carriers_are_adjacent(pair) {
+                    // The authored chain already owns one common endpoint. A
+                    // strict support-incidence derivative over the complete
+                    // retained span proves that this is its only contact.
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "adjacent-parallel-monotone-complete",
+                    );
+                    return Ok(RegionPairResult::empty());
+                }
+                let endpoint_side = |parameter: &BezierParameter2| {
+                    let point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                        crate::BezierAnalyticParallelPoint2::new(
+                            parallel.clone(),
+                            parameter.clone(),
+                            &self.data.policy,
+                        ),
+                    );
+                    chord.strict_oriented_side_by_fast_refinement(&point, &self.data.policy)
+                };
+                let sides = [endpoint_side(start), endpoint_side(end)];
+                let sides = match sides {
+                    [Ok(first), Ok(second)] => [first, second],
+                    [Err(cause), _] | [_, Err(cause)] => {
+                        return Err(self.invalid(chord_index, cause));
+                    }
+                };
+                if matches!(
+                    sides,
+                    [
+                        Classification::Decided(LineSide::Left),
+                        Classification::Decided(LineSide::Left)
+                    ] | [
+                        Classification::Decided(LineSide::Right),
+                        Classification::Decided(LineSide::Right)
+                    ]
+                ) {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "parallel-monotone-one-sided",
+                    );
+                    return Ok(RegionPairResult::empty());
+                }
+            }
+        }
         // Carrier representation is structural. Probe it under STRICT so
         // APPROXIMATE_512 remains terminal evidence rather than dispatch.
         if !self.authored_carriers_are_adjacent(pair)

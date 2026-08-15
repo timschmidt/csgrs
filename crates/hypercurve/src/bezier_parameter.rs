@@ -2463,8 +2463,31 @@ pub(crate) fn coefficients_value_interval_on_parameter_interval(
             parameter.interval().end(),
         ),
     };
+    coefficients_dyadic_convex_hull(&restricted, precision)
+}
+
+/// Encloses a polynomial over one represented parameter interval.
+///
+/// Callers that own algebraic range boundaries first pass their certified
+/// outer endpoints here.  The resulting Bernstein convex hull is conservative
+/// for every selected value in that interval and contains no approximate
+/// construction decision.
+pub(crate) fn coefficients_value_interval_on_real_interval(
+    coefficients: &[Real],
+    start: &Real,
+    end: &Real,
+    precision: i32,
+) -> CurveResult<Option<[HyperRational; 2]>> {
+    let restricted = restrict_power_basis_to_interval(coefficients, start, end);
+    coefficients_dyadic_convex_hull(&restricted, precision)
+}
+
+fn coefficients_dyadic_convex_hull(
+    coefficients: &[Real],
+    precision: i32,
+) -> CurveResult<Option<[HyperRational; 2]>> {
     let controls =
-        power_to_bernstein_coefficients(&restricted, restricted.len().saturating_sub(1))?;
+        power_to_bernstein_coefficients(coefficients, coefficients.len().saturating_sub(1))?;
     let mut bounds = controls
         .into_iter()
         .map(|control| control.certified_dyadic_interval(precision));

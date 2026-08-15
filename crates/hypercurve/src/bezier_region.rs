@@ -4021,18 +4021,30 @@ fn exact_offset_span_from_algebraic_endpoint_images(
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let Some(BezierSubcurve2::RationalQuadratic(source_curve)) = source_curve else {
+    let Some(source) = source_curve else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let source_arc = match crate::arc_bezier::rational_quadratic_circular_arc(source_curve, policy)?
-    {
+    let general_offset = || {
+        let parallel = retained_subcurve_parallel(source, Real::zero())?;
+        let fragment = crate::BezierParallelFragment2::from_certified_range(
+            parallel,
+            BezierParameterRange2::new_validated(start.clone(), end.clone()),
+            reversed,
+        );
+        exact_offset_span_from_analytic_parallel(&fragment, distance, policy)
+    };
+    let BezierSubcurve2::RationalQuadratic(source_curve) = source else {
+        return general_offset();
+    };
+    // Circular recognition selects a smaller native carrier, so it must be a
+    // STRICT certificate.  An unresolved or noncircular conic simply rejoins
+    // the complete analytic-parallel path below.
+    let source_arc = match crate::arc_bezier::rational_quadratic_circular_arc(
+        source_curve,
+        &CurveContext::STRICT,
+    )? {
         Classification::Decided(Some(arc)) => arc,
-        Classification::Decided(None) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+        Classification::Decided(None) | Classification::Uncertain(_) => return general_offset(),
     };
     let source_subcurve = BezierSubcurve2::RationalQuadratic(source_curve.clone());
     let source_rational = RationalBezier2::try_from_subcurve(&source_subcurve)?;
@@ -25665,6 +25677,37 @@ mod tests {
                             }
                     )));
                 });
+            }
+        }
+    }
+
+    #[test]
+    fn nonlinear_algebraic_endpoint_images_reenter_exact_offset_kernel() {
+        let distance = q(1, 100);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
+                let offset = region.offset(distance.clone(), &OffsetCornerStyle2::Bevel, &policy);
+                let offset = offset.unwrap_or_else(|error| {
+                    panic!(
+                        "the nonlinear algebraic-endpoint offset must decide: policy={policy:?}, reversed={reversed}, error={error:?}"
+                    )
+                });
+                assert_eq!(offset.certainty, CurveCertainty::Certified);
+                assert!(!offset.value.is_empty());
+                assert_eq!(
+                    offset
+                        .value
+                        .classify_point(&p(2, 2), &policy)
+                        .unwrap()
+                        .value,
+                    Classification::Decided(RegionPointLocation::Outside),
+                );
+                assert!(offset.value.boundary_loops().iter().any(|boundary| {
+                    boundary.fragments().iter().any(|fragment| {
+                        matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                    })
+                }));
             }
         }
     }
