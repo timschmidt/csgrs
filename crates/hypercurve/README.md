@@ -151,10 +151,10 @@ exact signatures.
   and arbitrary-degree weight carriers whose rational-root deflation leaves
   either a power of one irreducible quadratic or a quartic product of two,
   plus certified flattening, fitting, and split materialization.
-- Parallel and offset entry points include `parallel_left`, `parallel_right`,
-  `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
+- Parallel entry points include `parallel_left`, `parallel_right`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and
-  singularity evidence.
+  singularity evidence; exact topology-producing offsets are owned by the
+  unified `CurveRegion2` engine below.
 - `BezierParallel2::{from_source, source, distance, point_at, derivative_at,
   reversed, split_at_exact, subcurve_between_exact, conservative_bounds,
   transform_similarity, point_incidence, supporting_line_incidence,

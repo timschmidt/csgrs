@@ -1,6 +1,6 @@
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
-    BezierOffsetCandidate2, BezierParallelApproximationCurve2, BezierParallelIncidence2,
+    BezierParallelApproximationCurve2, BezierParallelIncidence2,
     BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
     BezierParallelIntersectionSet2, BezierParallelPairIntersectionCandidates2,
     BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionSet2,
@@ -238,13 +238,7 @@ fn quadratic_line_image_fit_offsets_as_exact_line() {
     assert_eq!(fit.line().start(), &p(0, 0));
     assert_eq!(fit.line().end(), &p(2, 0));
 
-    let offset = bezier.offset_left_staged(r(1), &policy()).unwrap();
-    let Classification::Decided(BezierOffsetCandidate2::ExactLineImage { offset, preflight }) =
-        offset
-    else {
-        panic!("line-image quadratic should offset as an exact primitive");
-    };
-    assert!(preflight.is_clear());
+    let offset = fit.offset_left_exact(r(1)).unwrap();
     assert_eq!(offset.line().start(), &p(0, 1));
     assert_eq!(offset.line().end(), &p(2, 1));
 }
@@ -262,13 +256,7 @@ fn rational_quadratic_conic_line_image_fit_offsets_as_exact_line() {
     assert_eq!(fit.line().start(), &p(0, 0));
     assert_eq!(fit.line().end(), &p(2, 0));
 
-    let offset = conic.offset_left_staged(r(1), &policy()).unwrap();
-    let Classification::Decided(BezierOffsetCandidate2::ExactLineImage { offset, preflight }) =
-        offset
-    else {
-        panic!("line-image rational quadratic should offset as an exact primitive");
-    };
-    assert!(preflight.is_clear());
+    let offset = fit.offset_left_exact(r(1)).unwrap();
     assert_eq!(offset.line().start(), &p(0, 1));
     assert_eq!(offset.line().end(), &p(2, 1));
 }
@@ -2981,19 +2969,20 @@ fn generic_cubic_does_not_claim_exact_ph_parallel() {
 }
 
 #[test]
-fn staged_offset_promotes_exact_ph_cubic_before_fitting() {
+fn exact_parallel_promotes_ph_cubic_without_fitting() {
     let source = CubicBezier2::new(
         p(0, 0),
         Point2::new(q(1, 3), r(0)),
         Point2::new(q(2, 3), q(1, 3)),
         Point2::new(q(2, 3), r(1)),
     );
-    let result = source.offset_left_staged(q(1, 5), &policy()).unwrap();
-    let Classification::Decided(BezierOffsetCandidate2::ExactPythagoreanHodograph {
-        offset, ..
-    }) = result
-    else {
-        panic!("staged offset did not select the exact PH lane");
+    let result = source
+        .parallel_left(q(1, 5))
+        .unwrap()
+        .exact_pythagorean_hodograph_offset(&policy())
+        .unwrap();
+    let Classification::Decided(Some(offset)) = result else {
+        panic!("the retained exact parallel did not select the PH lane");
     };
     assert_eq!(offset.distance(), &q(1, 5));
 }
