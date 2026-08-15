@@ -1,13 +1,14 @@
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
-    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedEnvelopeSourceKind, BezierRetainedOverlapEvidence2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveCertainty, CurveContext, CurveError, CurveOutcome,
-    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionFragmentSource2,
-    CurveRegionLineRoleEvidence2, CurveRegionLoopRole, CurveRegionNestingRoleEvidence2,
-    CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
+    BezierAlgebraicChord2, BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
+    BezierArrangementFragment2, BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
+    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionFragmentSource2, CurveRegionLineRoleEvidence2, CurveRegionLoopRole,
+    CurveRegionNestingRoleEvidence2, CurveRegionSignedAreaRoleEvidence2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
+    RegionPointLocation, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -118,20 +119,33 @@ fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
         .unwrap()
 }
 
-fn algebraic_constant_point_image(point: Point2) -> BezierAlgebraicEndpointImage2 {
-    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
-    algebraic_image(&curve)
+fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
+    BezierSplitFragment2::AlgebraicChord(decided(
+        BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(start),
+            RationalBezierIntersectionPointEvidence2::Exact(end),
+            &policy(),
+        )
+        .unwrap(),
+    ))
 }
 
-fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+fn retained_algebraic_endpoint_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
+    let parameter = algebraic_midpoint_parameter();
+    let far = Point2::new(
+        end.x() + (end.x() - start.x()),
+        end.y() + (end.y() - start.y()),
+    );
+    let curve = QuadraticBezier2::new(start, end, far);
+    let end_image = BezierAlgebraicEndpointImage2::quadratic(&curve, &parameter, &policy())
+        .expect("linear midpoint image is exact algebraic evidence");
     BezierSplitFragment2::AlgebraicEndpointImages {
         reversed: false,
-        start: parameter.clone(),
-        end: parameter,
-        source_curve: None,
-        start_image: Some(algebraic_constant_point_image(start)),
-        end_image: Some(algebraic_constant_point_image(end)),
+        start: exact(Real::zero()),
+        end: BezierParameter2::algebraic(parameter),
+        source_curve: BezierSubcurve2::Quadratic(curve),
+        start_image: None,
+        end_image: Some(end_image),
     }
 }
 
@@ -820,10 +834,10 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
     assert_topology_error(CurveRegionBoundaryLoop2::new(
         vec![BezierSplitFragment2::AlgebraicEndpointImages {
             reversed: false,
-            start: parameter.clone(),
+            start: BezierParameter2::Exact(Real::zero()),
             end: parameter,
-            source_curve: Some(hypercurve::BezierSubcurve2::Quadratic(source_curve)),
-            start_image: Some(forged_image.clone()),
+            source_curve: hypercurve::BezierSubcurve2::Quadratic(source_curve),
+            start_image: None,
             end_image: Some(forged_image),
         }],
         &policy(),
@@ -905,16 +919,16 @@ fn retained_region_constructor_rejects_duplicate_boundary_loops() {
 #[test]
 fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers() {
     let outer = retained_loop(vec![
-        retained_algebraic_line_fragment(p(0, 0), p(6, 0)),
-        retained_algebraic_line_fragment(p(6, 0), p(6, 6)),
-        retained_algebraic_line_fragment(p(6, 6), p(0, 6)),
-        retained_algebraic_line_fragment(p(0, 6), p(0, 0)),
+        retained_algebraic_endpoint_line_fragment(p(0, 0), p(6, 0)),
+        retained_algebraic_endpoint_line_fragment(p(6, 0), p(6, 6)),
+        retained_algebraic_endpoint_line_fragment(p(6, 6), p(0, 6)),
+        retained_algebraic_endpoint_line_fragment(p(0, 6), p(0, 0)),
     ]);
     let same_orientation_inner = retained_loop(vec![
-        retained_algebraic_line_fragment(p(2, 2), p(4, 2)),
-        retained_algebraic_line_fragment(p(4, 2), p(4, 4)),
-        retained_algebraic_line_fragment(p(4, 4), p(2, 4)),
-        retained_algebraic_line_fragment(p(2, 4), p(2, 2)),
+        retained_algebraic_endpoint_line_fragment(p(2, 2), p(4, 2)),
+        retained_algebraic_endpoint_line_fragment(p(4, 2), p(4, 4)),
+        retained_algebraic_endpoint_line_fragment(p(4, 4), p(2, 4)),
+        retained_algebraic_endpoint_line_fragment(p(2, 4), p(2, 2)),
     ]);
     let retained = retained_region(vec![outer, same_orientation_inner]);
 
@@ -1048,68 +1062,6 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
-    );
-}
-
-#[test]
-fn retained_line_image_role_evidence_rejects_nonrational_algebraic_endpoint() {
-    let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter());
-    let nonrational_a_curve = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 0));
-    let nonrational_b_curve = QuadraticBezier2::new(p(1, 0), Point2::new(q(3, 2), r(0)), p(2, 0));
-    let nonrational_a = BezierAlgebraicEndpointImage2::quadratic(
-        &nonrational_a_curve,
-        &algebraic_sqrt_half_parameter(),
-        &policy(),
-    )
-    .unwrap();
-    let nonrational_b = BezierAlgebraicEndpointImage2::quadratic(
-        &nonrational_b_curve,
-        &algebraic_sqrt_half_parameter(),
-        &policy(),
-    )
-    .unwrap();
-    let first = BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter.clone(),
-        source_curve: None,
-        start_image: Some(nonrational_a.clone()),
-        end_image: Some(nonrational_b.clone()),
-    };
-    let second = BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter,
-        source_curve: None,
-        start_image: Some(nonrational_b),
-        end_image: Some(nonrational_a),
-    };
-    let graph = graph(vec![
-        BezierArrangementFragment2::new(0, 0, first),
-        BezierArrangementFragment2::new(1, 0, second),
-    ]);
-    let traversal = match graph.traverse_retained_with_tangent_order(&policy()) {
-        Classification::Decided(traversal) => traversal,
-        Classification::Uncertain(reason) => {
-            panic!("nonrational algebraic cycle traversal was uncertain: {reason:?}")
-        }
-    };
-    let retained =
-        match CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value()
-        {
-            Classification::Decided(retained) => retained,
-            Classification::Uncertain(reason) => {
-                panic!("nonrational algebraic cycle retention was uncertain: {reason:?}")
-            }
-        };
-
-    assert_eq!(
-        retained
-            .line_image_role_evidence(&policy())
-            .unwrap()
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
 
@@ -1308,7 +1260,7 @@ fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole
 }
 
 #[test]
-fn retained_signed_area_role_evidence_rejects_zero_area_and_algebraic_loops() {
+fn retained_signed_area_role_evidence_rejects_zero_area_materialized_and_chord_loops() {
     let zero = retained_region(vec![retained_loop(vec![
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
@@ -1345,7 +1297,7 @@ fn retained_signed_area_role_evidence_rejects_zero_area_and_algebraic_loops() {
             .signed_area_role_evidence(&policy())
             .unwrap()
             .into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
 
@@ -1517,74 +1469,6 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
 }
 
 #[test]
-fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampling() {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
-    let p0_right = algebraic_image(&line_midpoint_curve(-1, 0, 1));
-    let p1_right = algebraic_image(&line_midpoint_curve(0, 1, 2));
-    let p1_left = algebraic_image(&line_midpoint_curve(2, 1, 0));
-    let p0_left = algebraic_image(&line_midpoint_curve(1, 0, -1));
-    let first = BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter.clone(),
-        source_curve: None,
-        start_image: Some(p0_right),
-        end_image: Some(p1_right),
-    };
-    let second = BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter,
-        source_curve: None,
-        start_image: Some(p1_left),
-        end_image: Some(p0_left),
-    };
-    let graph = graph(vec![
-        BezierArrangementFragment2::new(0, 0, first),
-        BezierArrangementFragment2::new(1, 0, second),
-    ]);
-    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
-
-    let retained = decided(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-    );
-    let sources = retained.boundary_loops()[0]
-        .arrangement_sources()
-        .expect("graph-built algebraic carrier keeps source provenance");
-    assert_eq!(sources.len(), 2);
-    assert_eq!(sources[0].source_curve_index(), 0);
-    assert_eq!(sources[1].source_curve_index(), 1);
-
-    assert_eq!(retained.len(), 1);
-    assert_eq!(retained.boundary_loops()[0].len(), 2);
-    assert!(retained.has_algebraic_fragments());
-    assert_eq!(decided(retained.signed_area(&policy()).unwrap()), None);
-    let envelope = decided(BezierRetainedEndpointEnvelope2::from_region(
-        &retained,
-        &policy(),
-    ));
-    assert_eq!(envelope.envelope().min(), &p(0, 0));
-    assert_eq!(envelope.envelope().max(), &p(1, 0));
-    assert_eq!(envelope.algebraic_endpoint_count(), 4);
-    assert_eq!(envelope.native_endpoint_count(), 0);
-    assert!(envelope.has_algebraic_endpoints());
-    assert_eq!(
-        envelope.endpoint_source_kinds(),
-        &[
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-        ]
-    );
-    assert_eq!(
-        BezierRetainedCurveEnvelope2::from_region(&retained, &policy()),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
 fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let graph = graph(vec![BezierArrangementFragment2::new(
@@ -1610,12 +1494,13 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
 #[test]
 fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let source = line_midpoint_curve(-1, 0, 1);
     let partial = BezierSplitFragment2::AlgebraicEndpointImages {
         reversed: false,
-        start: parameter.clone(),
+        start: BezierParameter2::Exact(Real::zero()),
         end: parameter,
-        source_curve: None,
-        start_image: Some(algebraic_image(&line_midpoint_curve(-1, 0, 1))),
+        source_curve: BezierSubcurve2::Quadratic(source),
+        start_image: None,
         end_image: None,
     };
 
@@ -1629,9 +1514,9 @@ fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evi
         hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
     let source_only = BezierSplitFragment2::AlgebraicEndpointImages {
         reversed: false,
-        start: parameter.clone(),
+        start: BezierParameter2::Exact(Real::zero()),
         end: parameter,
-        source_curve: Some(source_curve),
+        source_curve,
         start_image: None,
         end_image: None,
     };

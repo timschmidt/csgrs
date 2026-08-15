@@ -645,7 +645,7 @@ fn project_curve_region_loop_to_curve_path(
                 reversed,
                 start,
                 end,
-                source_curve: Some(source),
+                source_curve: source,
                 ..
             } => {
                 let (start, end) = finite_parameter_pair(start, end, policy)?;
@@ -655,10 +655,7 @@ fn project_curve_region_loop_to_curve_path(
                 };
                 if *reversed { curve.reversed() } else { curve }
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: None, ..
-            }
-            | BezierSplitFragment2::AnalyticParallel(_)
+            BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
@@ -821,7 +818,7 @@ fn project_curve_region_loop(
                 reversed,
                 start,
                 end,
-                source_curve: Some(source),
+                source_curve: source,
                 ..
             } => {
                 let start = finite_parameter_representative(start, policy)?;
@@ -841,10 +838,7 @@ fn project_curve_region_loop(
                 };
                 append_bezier_subcurve_samples(&mut points, &subcurve, options, policy, 0)?;
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: None, ..
-            }
-            | BezierSplitFragment2::Unresolved { .. } => {
+            BezierSplitFragment2::Unresolved { .. } => {
                 return Err(CurveError::Topology(
                     "finite projection requires a retained source curve for algebraic fragments"
                         .into(),

@@ -1667,7 +1667,7 @@ impl BezierParameter2 {
     ) -> CurveResult<Classification<BezierParameterInterval>> {
         match self {
             Self::Exact(value) => {
-                BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy)
+                BezierParameterInterval::try_new(value.clone(), value.clone(), policy)
             }
             Self::Algebraic(value) => Ok(Classification::Decided(value.interval().clone())),
         }

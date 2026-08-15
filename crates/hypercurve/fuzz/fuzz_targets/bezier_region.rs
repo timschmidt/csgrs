@@ -1,11 +1,11 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierSplitFragment2,
     Classification, CurveContext, CurveRegion2, CurveRegionBoundaryLoop2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    QuadraticBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -71,49 +71,21 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
     Some(BezierParameter2::algebraic(parameter))
 }
 
-fn algebraic_midpoint_root(policy: &CurveContext) -> Option<BezierAlgebraicParameter2> {
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-        vec![Real::from(-1_i32), Real::from(2_i32)],
-        policy,
-    )
-    .ok()?
-    {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(_) => return None,
-    };
-    let interval =
-        match BezierParameterInterval::try_new(rational(2, 5), rational(3, 5), policy).ok()? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(_) => return None,
-        };
-    match BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).ok()? {
-        Classification::Decided(parameter) => Some(parameter),
-        Classification::Uncertain(_) => None,
-    }
-}
-
-fn constant_point_image(
-    point: Point2,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicEndpointImage2> {
-    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
-    BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy).ok()
-}
-
 fn algebraic_line_fragment(
     start: Point2,
     end: Point2,
     policy: &CurveContext,
 ) -> Option<BezierSplitFragment2> {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
-    Some(BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter,
-        source_curve: None,
-        start_image: Some(constant_point_image(start, policy)?),
-        end_image: Some(constant_point_image(end, policy)?),
-    })
+    Some(BezierSplitFragment2::AlgebraicChord(match BezierAlgebraicChord2::try_new(
+        RationalBezierIntersectionPointEvidence2::Exact(start),
+        RationalBezierIntersectionPointEvidence2::Exact(end),
+        policy,
+    )
+    .ok()?
+    {
+        Classification::Decided(chord) => chord,
+        Classification::Uncertain(_) => return None,
+    }))
 }
 
 fuzz_target!(|data: &[u8]| {

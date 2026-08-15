@@ -275,9 +275,6 @@ impl CurveEnvelopeAccumulator {
                 end_image,
                 ..
             } => {
-                let Some(source_curve) = source_curve else {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                };
                 match retained_algebraic_source_bounds(
                     source_curve,
                     start,

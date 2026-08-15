@@ -436,7 +436,7 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
             reversed: false,
             start,
             end,
-            source_curve: Some(wrong_source),
+            source_curve: wrong_source,
             start_image,
             end_image,
         },
@@ -533,7 +533,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
     else {
         panic!("left algebraic fragment should carry endpoint images");
     };
-    assert!(source_curve.is_some());
+    assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
     assert!(start_image.is_none());
     assert_polynomial_endpoint_image(end_image);
 
@@ -546,7 +546,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
     else {
         panic!("right algebraic fragment should carry endpoint images");
     };
-    assert!(source_curve.is_some());
+    assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
     assert_polynomial_endpoint_image(start_image);
     assert!(end_image.is_none());
 }
@@ -635,7 +635,10 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
     else {
         panic!("rational fragment should carry endpoint images");
     };
-    assert!(source_curve.is_some());
+    assert!(matches!(
+        source_curve,
+        BezierSubcurve2::RationalQuadratic(_)
+    ));
     assert!(start_image.is_none());
     assert_rational_endpoint_image(end_image);
 }
@@ -703,7 +706,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
         };
         assert_eq!(start.as_exact(), Some(&Real::zero()));
         assert!(matches!(end, BezierParameter2::Algebraic(_)));
-        assert!(source_curve.is_some());
+        assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
         assert!(start_image.is_none());
         assert_polynomial_endpoint_image(end_image);
 
@@ -720,7 +723,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
         };
         assert!(matches!(start, BezierParameter2::Algebraic(_)));
         assert_eq!(end.as_exact(), Some(&Real::one()));
-        assert!(source_curve.is_some());
+        assert!(matches!(source_curve, BezierSubcurve2::Quadratic(_)));
         assert_polynomial_endpoint_image(start_image);
         assert!(end_image.is_none());
     }

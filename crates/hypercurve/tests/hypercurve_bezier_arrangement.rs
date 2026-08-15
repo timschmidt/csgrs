@@ -121,7 +121,7 @@ fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
                 reversed: false,
                 start: exact(r(0)),
                 end: algebraic.clone(),
-                source_curve: Some(BezierSubcurve2::Quadratic(source_curve)),
+                source_curve: BezierSubcurve2::Quadratic(source_curve),
                 start_image: None,
                 end_image: Some(forged_image.clone()),
             },
@@ -135,7 +135,11 @@ fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
                 reversed: false,
                 start: exact(r(0)),
                 end: exact(r(1)),
-                source_curve: None,
+                source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(0, 0),
+                    p(1, 0),
+                    p(2, 0),
+                )),
                 start_image: Some(forged_image),
                 end_image: None,
             },
@@ -650,7 +654,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -658,7 +662,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
         reversed: false,
         start: algebraic.clone(),
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
@@ -666,7 +670,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
         reversed: false,
         start: algebraic,
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -698,7 +702,7 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -706,7 +710,7 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(source_downward_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&source_downward_curve, &parameter)),
     }
@@ -716,7 +720,7 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
         reversed: false,
         start: exact(r(0)),
         end: algebraic,
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(source_upward_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&source_upward_curve, &parameter)),
     }
@@ -745,7 +749,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -753,7 +757,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         reversed: false,
         start: algebraic.clone(),
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(first_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&first_curve, &parameter)),
         end_image: None,
     };
@@ -761,7 +765,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
         reversed: false,
         start: algebraic,
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(second_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
         end_image: None,
     };
@@ -788,7 +792,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -796,7 +800,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
         reversed: false,
         start: algebraic.clone(),
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
@@ -804,7 +808,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
         reversed: false,
         start: algebraic,
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -831,7 +835,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -839,7 +843,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
         reversed: false,
         start: algebraic.clone(),
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::RationalQuadratic(upward_curve.clone()),
         start_image: Some(algebraic_rational_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
@@ -847,7 +851,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
         reversed: false,
         start: algebraic,
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::RationalQuadratic(downward_curve.clone()),
         start_image: Some(algebraic_rational_endpoint_image(
             &downward_curve,
             &parameter,
@@ -877,7 +881,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
         reversed: false,
         start: exact(r(0)),
         end: algebraic.clone(),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
         end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
     };
@@ -885,7 +889,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
         reversed: false,
         start: algebraic.clone(),
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Cubic(upward_curve.clone()),
         start_image: Some(algebraic_cubic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
     };
@@ -893,7 +897,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
         reversed: false,
         start: algebraic,
         end: exact(r(1)),
-        source_curve: None,
+        source_curve: BezierSubcurve2::Cubic(downward_curve.clone()),
         start_image: Some(algebraic_cubic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
     };
@@ -2154,32 +2158,6 @@ fn retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges() {
         graph.split_retained_linear_overlaps(&policy()),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
-}
-
-#[test]
-fn retained_overlap_evidence_does_not_sample_algebraic_endpoint_image_fragments() {
-    let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
-    let curve = through_origin_with_midpoint_tangent(1, 0);
-    let fragment = BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: algebraic.clone(),
-        end: algebraic,
-        source_curve: None,
-        start_image: Some(algebraic_endpoint_image(&curve, &parameter)),
-        end_image: Some(algebraic_endpoint_image(&curve, &parameter)),
-    };
-    let graph = graph(vec![
-        hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
-        hypercurve::BezierArrangementFragment2::new(1, 0, fragment),
-    ]);
-
-    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
-        &graph,
-        &policy(),
-    ));
-
-    assert!(evidence.is_empty());
 }
 
 #[test]

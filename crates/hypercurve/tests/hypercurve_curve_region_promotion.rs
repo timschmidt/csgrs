@@ -3778,7 +3778,7 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                             BezierSplitFragment2::AlgebraicEndpointImages {
                                 start,
                                 end,
-                                source_curve: Some(BezierSubcurve2::Quadratic(curve)),
+                                source_curve: BezierSubcurve2::Quadratic(curve),
                                 ..
                             } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
                                 || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))
@@ -3944,7 +3944,7 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
                         BezierSplitFragment2::AlgebraicEndpointImages {
                             start,
                             end,
-                            source_curve: Some(BezierSubcurve2::Quadratic(curve)),
+                            source_curve: BezierSubcurve2::Quadratic(curve),
                             ..
                         } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
                             || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))

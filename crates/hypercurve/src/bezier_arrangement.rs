@@ -504,12 +504,9 @@ fn validate_arrangement_fragment_source_range(
 ) -> CurveResult<()> {
     match fragment.fragment() {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages {
-            start,
-            end,
-            source_curve: Some(_),
-            ..
-        } => match start.cmp_by_interval(end, policy)? {
+        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => match start
+            .cmp_by_interval(end, policy)?
+        {
             Classification::Decided(std::cmp::Ordering::Less) => {}
             Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
                 return Err(CurveError::Topology(
@@ -576,10 +573,7 @@ fn validate_arrangement_fragment_source_range(
                 }
             }
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::Unresolved { .. } => {}
+        BezierSplitFragment2::Unresolved { .. } => {}
     }
 
     let BezierSplitFragment2::AlgebraicEndpointImages {
@@ -597,14 +591,14 @@ fn validate_arrangement_fragment_source_range(
         "start",
         start,
         start_image.as_ref(),
-        source_curve.as_ref(),
+        Some(source_curve),
         policy,
     )?;
     validate_arrangement_algebraic_endpoint_image(
         "end",
         end,
         end_image.as_ref(),
-        source_curve.as_ref(),
+        Some(source_curve),
         policy,
     )
 }
@@ -1169,7 +1163,7 @@ fn retained_endpoint_data(
             let source_start = match retained_endpoint_side_data(
                 start,
                 start_image.as_ref(),
-                source_curve.as_ref(),
+                Some(source_curve),
                 source_start_topology_vertex,
                 scope,
                 policy,
@@ -1182,7 +1176,7 @@ fn retained_endpoint_data(
             let source_end = match retained_endpoint_side_data(
                 end,
                 end_image.as_ref(),
-                source_curve.as_ref(),
+                Some(source_curve),
                 source_end_topology_vertex,
                 scope,
                 policy,

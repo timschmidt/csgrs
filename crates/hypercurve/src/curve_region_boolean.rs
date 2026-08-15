@@ -10064,7 +10064,7 @@ fn build_region_carrier(
             reversed,
             start,
             end,
-            source_curve: Some(curve),
+            source_curve: curve,
             ..
         } => (
             RegionCarrierGeometry::Bezier(curve.clone()),
@@ -10072,10 +10072,7 @@ fn build_region_carrier(
             CurveRegionParameter2::from_bezier(end.clone()),
             *reversed,
         ),
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::Unresolved { .. } => {
+        BezierSplitFragment2::Unresolved { .. } => {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Boolean,
                 CurveFamily2::RationalBezier,

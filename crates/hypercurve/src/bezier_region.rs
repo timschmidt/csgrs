@@ -1345,9 +1345,7 @@ fn validate_retained_fragment_provenance(
             end_image,
             ..
         } => {
-            if source_curve.is_some() {
-                validate_retained_fragment_parameter_order(start, end, policy)?;
-            }
+            validate_retained_fragment_parameter_order(start, end, policy)?;
             validate_retained_source_endpoint_image(
                 start,
                 source_curve,
@@ -1425,7 +1423,7 @@ fn validate_retained_fragment_parameter_order(
 
 fn validate_retained_source_endpoint_image(
     boundary: &BezierParameter2,
-    source_curve: &Option<BezierSubcurve2>,
+    source_curve: &BezierSubcurve2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
     policy: &CurveContext,
 ) -> CurveResult<()> {
@@ -1449,23 +1447,20 @@ fn validate_retained_source_endpoint_image(
                     "retained algebraic endpoint image parameter does not match boundary".into(),
                 ));
             }
-            if !image.is_transformed() && !(source_curve.is_some() && image.is_lazy_first_order()) {
+            if !image.is_transformed() && !image.is_lazy_first_order() {
                 return Err(CurveError::Topology(
                     "retained algebraic endpoint image must be transformed or retain replayable first-order source evidence".into(),
                 ));
             }
-            if let Some(source_curve) = source_curve {
-                let expected = crate::BezierAlgebraicEndpointImage2::from_source_curve(
-                    source_curve,
-                    parameter,
-                    policy,
-                )?;
-                if !image.matches_required_source_evidence(&expected) {
-                    return Err(CurveError::Topology(
-                        "retained algebraic endpoint image does not match retained source curve"
-                            .into(),
-                    ));
-                }
+            let expected = crate::BezierAlgebraicEndpointImage2::from_source_curve(
+                source_curve,
+                parameter,
+                policy,
+            )?;
+            if !image.matches_required_source_evidence(&expected) {
+                return Err(CurveError::Topology(
+                    "retained algebraic endpoint image does not match retained source curve".into(),
+                ));
             }
         }
     }
@@ -1656,27 +1651,17 @@ fn retained_fragment_endpoint_evidence(
             } else {
                 end_image.as_ref()
             };
-            let source = source_curve
-                .as_ref()
-                .map(|source_curve| (source_curve.clone(), parameter.clone()));
+            let source = Some((source_curve.clone(), parameter.clone()));
             let point = retained_endpoint_point_evidence(parameter, image, source_curve, policy)?;
             let algebraic = image.and_then(retained_endpoint_algebraic_evidence);
-            let retained_point = match source_curve {
-                Some(source_curve) => {
-                    let rational = RationalBezier2::try_from_subcurve(source_curve)?;
-                    crate::rational_bezier_general::exact_contact_point_evidence(
-                        &rational, parameter, policy,
-                    )?
-                }
-                None => None,
-            };
-            let analytic_source = source_curve
-                .as_ref()
-                .map(|source_curve| {
-                    retained_subcurve_parallel(source_curve, Real::zero())
-                        .map(|parallel| (parallel, parameter.clone()))
-                })
-                .transpose()?;
+            let rational = RationalBezier2::try_from_subcurve(source_curve)?;
+            let retained_point = crate::rational_bezier_general::exact_contact_point_evidence(
+                &rational, parameter, policy,
+            )?;
+            let analytic_source = Some((
+                retained_subcurve_parallel(source_curve, Real::zero())?,
+                parameter.clone(),
+            ));
             Ok(RetainedEndpointEvidence {
                 point,
                 retained_point,
@@ -1830,7 +1815,7 @@ fn retained_endpoint_algebraic_evidence(
 fn retained_endpoint_point_evidence(
     parameter: &BezierParameter2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
-    source_curve: &Option<BezierSubcurve2>,
+    source_curve: &BezierSubcurve2,
     policy: &CurveContext,
 ) -> CurveResult<Option<Point2>> {
     if let Some(image) = image
@@ -1840,9 +1825,6 @@ fn retained_endpoint_point_evidence(
     }
 
     let BezierParameter2::Exact(value) = parameter else {
-        return Ok(None);
-    };
-    let Some(source_curve) = source_curve else {
         return Ok(None);
     };
     match subcurve_point_at(source_curve, value.clone(), policy) {
@@ -4018,13 +4000,10 @@ fn exact_offset_span_from_algebraic_endpoint_images(
     reversed: bool,
     start: &BezierParameter2,
     end: &BezierParameter2,
-    source_curve: &Option<BezierSubcurve2>,
+    source: &BezierSubcurve2,
     distance: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ExactOffsetSpan2>> {
-    let Some(source) = source_curve else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
     let general_offset = || {
         let parallel = retained_subcurve_parallel(source, Real::zero())?;
         let fragment = crate::BezierParallelFragment2::from_certified_range(
@@ -4177,7 +4156,7 @@ fn exact_offset_span_from_algebraic_endpoint_images(
             reversed,
             start: start.clone(),
             end: end.clone(),
-            source_curve: Some(offset_subcurve),
+            source_curve: offset_subcurve,
             start_image,
             end_image,
         }],
@@ -5359,7 +5338,7 @@ fn promoted_endpoint_image_corner_fragment(
         reversed,
         start,
         end,
-        source_curve: Some(source),
+        source_curve: source,
         ..
     } = fragment
     else {
@@ -5395,7 +5374,7 @@ fn promoted_endpoint_image_corner_chord(
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<crate::BezierAlgebraicChord2>> {
     let BezierSplitFragment2::AlgebraicEndpointImages {
-        source_curve: Some(source),
+        source_curve: source,
         ..
     } = fragment
     else {
@@ -5460,18 +5439,12 @@ impl RegionCornerCarrier2 {
     ) -> ExactCurveResult<Self> {
         let top_level = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => Some(Curve2::from(curve.clone())),
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: Some(_),
-                ..
-            }
+            BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::SelectedFiber(_) => None,
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: None, ..
-            }
-            | BezierSplitFragment2::Unresolved { .. } => {
+            BezierSplitFragment2::Unresolved { .. } => {
                 return Err(ExactCurveError::blocked(
                     operation,
                     CurveFamily2::RationalBezier,
@@ -13614,10 +13587,8 @@ impl CurveRegion2 {
             }
             if !matches!(
                 other_fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages {
-                    source_curve: Some(_),
-                    ..
-                } | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                     | BezierSplitFragment2::AlgebraicChord(_)
                     | BezierSplitFragment2::AnalyticParallel(_)
                     | BezierSplitFragment2::SelectedFiber(_)
@@ -16249,8 +16220,7 @@ impl CurveRegion2 {
                         .iter()
                         .map(|fragment| match fragment {
                             BezierSplitFragment2::AlgebraicEndpointImages {
-                                source_curve: Some(source_curve),
-                                ..
+                                source_curve, ..
                             } => rationalize_retained_subcurve(source_curve).map(Some),
                             _ => Ok(None),
                         })
@@ -16537,7 +16507,7 @@ fn transform_retained_region_fragment(
             reversed,
             start,
             end,
-            source_curve: Some(source),
+            source_curve: source,
             ..
         } => {
             let source =
@@ -16548,7 +16518,7 @@ fn transform_retained_region_fragment(
                 end: end.clone(),
                 start_image: transform_region_endpoint_image(start, &source, policy)?,
                 end_image: transform_region_endpoint_image(end, &source, policy)?,
-                source_curve: Some(source),
+                source_curve: source,
             })
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
@@ -16599,10 +16569,7 @@ fn transform_retained_region_fragment(
                     .map_err(affine_region_error)?,
             ))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::Unresolved { .. } => Err(ExactCurveError::blocked(
+        BezierSplitFragment2::Unresolved { .. } => Err(ExactCurveError::blocked(
             CurveOperation2::Transformation,
             CurveFamily2::RationalBezier,
             UncertaintyReason::Unsupported,
@@ -17096,15 +17063,13 @@ fn retained_line_fragment_endpoints(
             start_image,
             end_image,
         } => {
-            if let Some(source_curve) = source_curve {
-                match subcurve_fit_exact_line_image(source_curve, policy)? {
-                    Classification::Decided(BezierLineImageFitRelation::Fit(_)) => {}
-                    Classification::Decided(BezierLineImageFitRelation::NotLine) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+            match subcurve_fit_exact_line_image(source_curve, policy)? {
+                Classification::Decided(BezierLineImageFitRelation::Fit(_)) => {}
+                Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
             }
             let start = match retained_line_endpoint_point(
@@ -17270,16 +17235,11 @@ fn subcurve_fit_exact_line_image(
 fn retained_line_endpoint_point(
     parameter: &BezierParameter2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
-    source_curve: &Option<BezierSubcurve2>,
+    source_curve: &BezierSubcurve2,
     policy: &CurveContext,
 ) -> Classification<Point2> {
     match parameter {
-        BezierParameter2::Exact(value) => {
-            let Some(source_curve) = source_curve else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            subcurve_point_at(source_curve, value.clone(), policy)
-        }
+        BezierParameter2::Exact(value) => subcurve_point_at(source_curve, value.clone(), policy),
         BezierParameter2::Algebraic(_) => {
             let Some(image) = image else {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
@@ -17470,7 +17430,7 @@ fn retained_loop_sample_point(
             BezierSplitFragment2::AlgebraicEndpointImages {
                 start,
                 end,
-                source_curve: Some(source_curve),
+                source_curve,
                 ..
             } => match start.strict_rational_between(end, policy)? {
                 Classification::Decided(parameter) => {
@@ -17478,15 +17438,6 @@ fn retained_loop_sample_point(
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: None, ..
-            } => {
-                let endpoint = retained_fragment_endpoint_evidence(fragment, true, policy)?;
-                endpoint.point.map_or(
-                    Classification::Uncertain(UncertaintyReason::Boundary),
-                    Classification::Decided,
-                )
-            }
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 fragment.representative_point(policy)?
             }
@@ -18104,7 +18055,7 @@ fn retained_fragment_algebraic_ray_curve(
             start,
             end,
             reversed,
-            source_curve: Some(curve),
+            source_curve: curve,
             ..
         } => (
             RationalBezier2::try_from_subcurve(curve)?,
@@ -18145,10 +18096,7 @@ fn retained_fragment_algebraic_ray_curve(
                 fragment.is_reversed(),
             )
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::AlgebraicChord(_)
+        BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
         | BezierSplitFragment2::Unresolved { .. } => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -19060,12 +19008,7 @@ fn retained_fragment_contains_point(
         BezierSplitFragment2::Materialized { curve, .. } => {
             Ok(subcurve_contains_point(curve, point, policy))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            start,
-            end,
-            source_curve: Some(_),
-            ..
-        } => {
+        BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => {
             let Some(evaluator) = evaluator else {
                 return Err(CurveError::Topology(
                     "retained algebraic source evaluator cache is incomplete".into(),
@@ -19177,10 +19120,7 @@ fn retained_fragment_contains_point(
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             fragment.contains_point(point, policy)
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::Unresolved { .. } => {
+        BezierSplitFragment2::Unresolved { .. } => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
     }
@@ -19213,11 +19153,11 @@ fn retained_circle_tangent_contacts(
             ..
         }
         | BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: Some(BezierSubcurve2::Rational(curve)),
+            source_curve: BezierSubcurve2::Rational(curve),
             ..
         } => curve.retained_circular_conic(),
         BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: Some(BezierSubcurve2::RationalQuadratic(curve)),
+            source_curve: BezierSubcurve2::RationalQuadratic(curve),
             ..
         } => curve.retained_circular_conic(),
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
@@ -19583,7 +19523,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                 reversed,
                 start,
                 end,
-                source_curve: Some(curve),
+                source_curve: curve,
                 ..
             } => (
                 curve,
@@ -19593,10 +19533,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                 )),
                 *reversed,
             ),
-            BezierSplitFragment2::AlgebraicEndpointImages {
-                source_curve: None, ..
-            }
-            | BezierSplitFragment2::AlgebraicChord(_)
+            BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
             | BezierSplitFragment2::Unresolved { .. } => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -19970,7 +19907,7 @@ pub(crate) fn retained_fragment_query_bounds(
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => subcurve_query_bounds(curve, policy),
         BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: Some(curve),
+            source_curve: curve,
             ..
         } => subcurve_query_bounds(curve, policy),
         BezierSplitFragment2::AnalyticParallel(fragment) => fragment
@@ -19986,10 +19923,7 @@ pub(crate) fn retained_fragment_query_bounds(
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
             .conservative_bounds(policy)
             .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
-        BezierSplitFragment2::AlgebraicEndpointImages {
-            source_curve: None, ..
-        }
-        | BezierSplitFragment2::Unresolved { .. } => {
+        BezierSplitFragment2::Unresolved { .. } => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }
     }
@@ -26184,7 +26118,7 @@ mod tests {
             reversed: false,
             start: BezierParameter2::Exact(Real::zero()),
             end: x_parameter.clone(),
-            source_curve: Some(x_source.clone()),
+            source_curve: x_source.clone(),
             start_image: None,
             end_image: Some(endpoint_image(&x_source, &x_parameter)),
         };
@@ -26192,7 +26126,7 @@ mod tests {
             reversed: true,
             start: BezierParameter2::Exact(Real::zero()),
             end: y_parameter.clone(),
-            source_curve: Some(y_source.clone()),
+            source_curve: y_source.clone(),
             start_image: None,
             end_image: Some(endpoint_image(&y_source, &y_parameter)),
         };
@@ -26361,7 +26295,7 @@ mod tests {
             reversed: false,
             start: alpha.clone(),
             end: BezierParameter2::Exact(Real::one()),
-            source_curve: Some(source.clone()),
+            source_curve: source.clone(),
             start_image: Some(
                 BezierAlgebraicEndpointImage2::from_source_curve(&source, alpha_root, policy)
                     .unwrap(),

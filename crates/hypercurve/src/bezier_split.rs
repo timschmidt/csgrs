@@ -470,7 +470,7 @@ pub enum BezierSplitFragment2 {
         /// measurements, such as source-curve envelopes, that can safely
         /// overbound the algebraic subrange without evaluating an algebraic
         /// split point as a floating coordinate.
-        source_curve: Option<BezierSubcurve2>,
+        source_curve: BezierSubcurve2,
         /// Exact point/tangent image when the start boundary is algebraic.
         start_image: Option<BezierAlgebraicEndpointImage2>,
         /// Exact point/tangent image when the end boundary is algebraic.
@@ -1225,7 +1225,7 @@ impl BezierSplitFragment2 {
             Self::AlgebraicEndpointImages {
                 start,
                 end,
-                source_curve: Some(source_curve),
+                source_curve,
                 ..
             } => {
                 let parameter = match start.strict_rational_between(end, policy)? {
@@ -1236,10 +1236,7 @@ impl BezierSplitFragment2 {
                 };
                 Ok(source_curve.point_at(&parameter, policy))
             }
-            Self::AlgebraicEndpointImages {
-                source_curve: None, ..
-            }
-            | Self::Unresolved { .. } => {
+            Self::Unresolved { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
         }
@@ -1365,12 +1362,6 @@ fn validate_bezier_split_fragment(
             end_image,
             ..
         } => {
-            let Some(source_curve) = source_curve else {
-                return Err(CurveError::Topology(
-                    "algebraic Bezier split endpoint images must retain source curve provenance"
-                        .into(),
-                ));
-            };
             validate_algebraic_endpoint_image_boundary(
                 "start",
                 start,
@@ -1969,7 +1960,7 @@ where
                         reversed: false,
                         start,
                         end,
-                        source_curve: Some(source_curve.clone()),
+                        source_curve: source_curve.clone(),
                         start_image,
                         end_image,
                     });

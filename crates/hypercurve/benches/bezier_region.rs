@@ -2,13 +2,13 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
     Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurveRegion2,
     CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    QuadraticBezier2, RationalBezierIntersectionPointEvidence2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -145,39 +145,18 @@ fn algebraic_polynomial_parameter(
     )))
 }
 
-fn algebraic_midpoint_root(policy: &CurveContext) -> CurveResult<BezierAlgebraicParameter2> {
-    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(2)],
-        policy,
-    )?);
-    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), policy)?);
-    Ok(decided(BezierAlgebraicParameter2::try_isolate(
-        polynomial, interval, policy,
-    )?))
-}
-
-fn algebraic_constant_point_image(
-    point: Point2,
-    policy: &CurveContext,
-) -> CurveResult<BezierAlgebraicEndpointImage2> {
-    let curve = QuadraticBezier2::new(point.clone(), point.clone(), point);
-    BezierAlgebraicEndpointImage2::quadratic(&curve, &algebraic_midpoint_root(policy)?, policy)
-}
-
 fn retained_algebraic_line_fragment(
     start: Point2,
     end: Point2,
     policy: &CurveContext,
 ) -> CurveResult<BezierSplitFragment2> {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
-    Ok(BezierSplitFragment2::AlgebraicEndpointImages {
-        reversed: false,
-        start: parameter.clone(),
-        end: parameter,
-        source_curve: None,
-        start_image: Some(algebraic_constant_point_image(start, policy)?),
-        end_image: Some(algebraic_constant_point_image(end, policy)?),
-    })
+    Ok(BezierSplitFragment2::AlgebraicChord(decided(
+        BezierAlgebraicChord2::try_new(
+            RationalBezierIntersectionPointEvidence2::Exact(start),
+            RationalBezierIntersectionPointEvidence2::Exact(end),
+            policy,
+        )?,
+    )))
 }
 
 fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {
