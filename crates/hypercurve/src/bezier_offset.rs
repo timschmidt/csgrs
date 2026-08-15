@@ -72078,6 +72078,10 @@ impl BezierParallel2 {
             ));
         }
 
+        let (tangent_direction_x, tangent_direction_y) = certified_direction.map_or_else(
+            || line.delta(),
+            |(direction_x, direction_y)| (direction_x.clone(), direction_y.clone()),
+        );
         let mut contacts = Vec::with_capacity(parameters.len());
         for (index, parameter) in parameters.iter().enumerate() {
             if let Some((certified_parameter, direction)) = certified_crossing
@@ -72096,6 +72100,50 @@ impl BezierParallel2 {
                 .is_some_and(|parameter| certified_tangencies.contains(parameter));
             let inferred_tangent =
                 inferred_contact_kinds.get(index) == Some(&Some(BezierLineContactKind::Tangent));
+            // A regular first-order contact owns a smaller and stronger
+            // classification than two neighboring radical evaluations.  In
+            // particular, analytic continuation across a rational endpoint
+            // can retain the correct squared-incidence root while selecting
+            // the wrong radical-side germ outside the authored domain.  The
+            // exact oriented-line derivative is `direction x tangent`, so a
+            // nonzero sign proves both crossing kind and direction without
+            // consulting that exterior germ.
+            match self.vector_tangent_cross_and_dot_signs(
+                parameter,
+                &tangent_direction_x,
+                &tangent_direction_y,
+                policy,
+            )? {
+                Classification::Decided((cross, dot)) => {
+                    if cross != RealSign::Zero {
+                        if certified_tangent || inferred_tangent {
+                            return Err(CurveError::Topology(
+                                "certified supporting-line tangency has a transverse tangent"
+                                    .to_owned(),
+                            ));
+                        }
+                        contacts.push(BezierLineContact::with_crossing_direction(
+                            parameter.clone(),
+                            BezierLineContactKind::Crossing,
+                            Some(match cross {
+                                RealSign::Positive => {
+                                    BezierLineCrossingDirection::NegativeToPositive
+                                }
+                                RealSign::Negative => {
+                                    BezierLineCrossingDirection::PositiveToNegative
+                                }
+                                RealSign::Zero => unreachable!("the contact is transverse"),
+                            }),
+                            policy,
+                        )?);
+                        continue;
+                    }
+                    if dot == RealSign::Zero {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                }
+                Classification::Uncertain(_) => {}
+            }
             let before = match parallel_line_neighbor_sign(
                 self,
                 line,
@@ -86302,6 +86350,52 @@ mod conversion_tests {
         CurveCertainty, CurveCornerMode2, CurveCornerSolutions2, CurveRegion2,
         CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
     };
+
+    #[test]
+    fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
+        let policy = CurveContext::STRICT;
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(2, 3),
+                Point2::from_values(4, 0),
+            ],
+            vec![Real::one(), Real::from(2_i8), Real::one()],
+        )
+        .unwrap();
+        let parallel = BezierParallel2::from_source(
+            BezierParallelSource2::Rational(source),
+            (Real::one() / Real::from(10_i8)).unwrap(),
+        );
+        let endpoint = match parallel.point_at(&Real::one(), &policy).unwrap() {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => panic!("parallel endpoint: {reason:?}"),
+        };
+        let normal_line = LineSeg2::try_new(
+            endpoint.clone(),
+            endpoint.translated(Real::from(3_i8), Real::from(2_i8)),
+        )
+        .unwrap();
+        let relation = match parallel
+            .relation_to_supporting_line_with_contacts(&normal_line, &policy)
+            .unwrap()
+        {
+            Classification::Decided(relation) => relation,
+            Classification::Uncertain(reason) => panic!("support relation: {reason:?}"),
+        };
+        let BezierLineContactRelation::Contacts { contacts } = relation else {
+            panic!("endpoint normal must meet the retained parallel");
+        };
+        let contact = contacts
+            .iter()
+            .find(|contact| contact.parameter().as_exact() == Some(&Real::one()))
+            .expect("the exact endpoint contact must be retained");
+        assert_eq!(contact.kind(), BezierLineContactKind::Crossing);
+        assert_eq!(
+            contact.crossing_direction(),
+            Some(BezierLineCrossingDirection::PositiveToNegative)
+        );
+    }
 
     fn algebraic_parameters(coefficients: Vec<Real>) -> Vec<BezierParameter2> {
         let polynomial = match BezierParameterPolynomial::try_new_power_basis(

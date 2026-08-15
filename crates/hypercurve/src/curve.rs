@@ -2369,6 +2369,27 @@ pub(crate) fn validate_closed_curve_path_connectivity(
     path: &CurvePath2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<()>> {
+    match validate_curve_path_connectivity(path, policy)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    match curve_path_is_closed(path, policy) {
+        Classification::Decided(true) => Ok(Classification::Decided(())),
+        Classification::Decided(false) => Err(ExactCurveError::invalid(
+            CurveOperation2::Arrangement,
+            path.curves()[0].family(),
+            CurveError::OpenCurvePath,
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+pub(crate) fn validate_curve_path_connectivity(
+    path: &CurvePath2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<()>> {
     if !path.data.strict_connectivity_certified {
         for adjacent in path.curves().windows(2) {
             match curve_path_points_equal(adjacent[0].end(), adjacent[1].start(), policy) {
@@ -2388,19 +2409,19 @@ pub(crate) fn validate_closed_curve_path_connectivity(
             }
         }
     }
+    Ok(Classification::Decided(()))
+}
+
+pub(crate) fn curve_path_is_closed(
+    path: &CurvePath2,
+    policy: &CurveContext,
+) -> Classification<bool> {
     if path.data.strict_closure_certified {
-        return Ok(Classification::Decided(()));
+        return Classification::Decided(true);
     }
     match curve_path_points_equal(path.end(), path.start(), policy) {
-        Some(true) => Ok(Classification::Decided(())),
-        Some(false) => Err(ExactCurveError::invalid(
-            CurveOperation2::Arrangement,
-            path.curves()[0].family(),
-            CurveError::OpenCurvePath,
-        )),
-        None => Ok(Classification::Uncertain(
-            crate::UncertaintyReason::RealSign,
-        )),
+        Some(equal) => Classification::Decided(equal),
+        None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
     }
 }
 

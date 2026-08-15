@@ -1,9 +1,9 @@
 #[cfg(feature = "triangulation")]
 use hypercurve::triangulate_finite_rings;
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError,
-    CurveRegion2, CurveString2, LineSeg2, NurbsCurve2, Point2, QuadraticBezier2, Real, Segment2,
-    Similarity2, StraightSkeletonStage2,
+    BooleanOp, BulgeVertex2, CircularArc2, Contour2, Curve2, CurveContext, CurveError, CurvePath2,
+    CurveRegion2, LineSeg2, NurbsCurve2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    Real, Similarity2, StraightSkeletonStage2,
 };
 
 fn r(value: i32) -> Real {
@@ -110,15 +110,19 @@ fn main() {
         )
     });
 
-    let open_path = CurveString2::try_new(vec![
-        Segment2::Line(LineSeg2::try_new(p(0, 0), p(4, 0)).expect("line is valid")),
-        Segment2::Line(LineSeg2::try_new(p(4, 0), p(4, 3)).expect("line is valid")),
+    let open_path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).expect("line is valid")),
+        Curve2::from(LineSeg2::try_new(p(4, 0), p(4, 3)).expect("line is valid")),
     ])
     .expect("path is connected");
-    trace("curve_string_offset", || {
-        let offset = open_path.offset_left_checked(r(1), &policy)?;
-        assert!(matches!(offset, Classification::Decided(_)));
-        Ok::<_, CurveError>(offset)
+    trace("curve_region_path_stroke", || {
+        CurveRegion2::stroke_path(
+            &open_path,
+            r(1),
+            &OffsetCornerStyle2::Round,
+            OffsetCap::Round,
+            &policy,
+        )
     });
 
     let concave = Contour2::from_bulge_vertices(&[

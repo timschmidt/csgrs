@@ -19,10 +19,10 @@ use hypercurve::{
     CurveRegionBoundaryLoop2, RationalBezierIntersectionPointEvidence2, Similarity2,
 };
 use hypercurve::{
-    BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
-    Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
-    RationalBezier2, RationalBezierIntersectionContacts2, Real, Segment2,
+    BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
+    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2, RationalBezier2,
+    RationalBezierIntersectionContacts2, Real,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -1722,11 +1722,8 @@ fn benchmark_bezier_offset(runner: &Runner) {
         Point2::new(real(2.0), real(1.0)),
         Point2::new(real(4.0), real(0.0)),
     );
-    let source_curve = Curve2::from(source.clone());
     let verification = BezierParallelVerificationOptions::try_new(real(0.05), 14, &policy)
         .expect("valid parallel verification options");
-    let flattening = BezierFlatteningOptions::try_new(real(0.05), 14, &policy)
-        .expect("valid source flattening options");
     let distance = real(0.1);
     let curvo_curve = CurvoNurbsCurve2D::<f64>::try_new(
         3,
@@ -1757,31 +1754,6 @@ fn benchmark_bezier_offset(runner: &Runner) {
             panic!("hypercurve certified cubic offset became uncertain");
         };
         path.spans().len()
-    });
-    runner.measure(name, "hypercurve_chord_fallback", || {
-        let Classification::Decided(segmented) = source_curve
-            .segment_certified(&flattening, &policy)
-            .expect("hypercurve cubic source segmentation completes")
-        else {
-            panic!("hypercurve cubic source segmentation became uncertain");
-        };
-        let segments = segmented
-            .points()
-            .windows(2)
-            .map(|edge| {
-                LineSeg2::try_new(edge[0].clone(), edge[1].clone())
-                    .map(Segment2::Line)
-                    .expect("certified source chord is nondegenerate")
-            })
-            .collect();
-        let curve = CurveString2::try_new(segments).expect("certified chords stay connected");
-        let Classification::Decided(offset) = curve
-            .offset_left_checked(distance.clone(), &policy)
-            .expect("legacy chord offset completes")
-        else {
-            panic!("legacy chord offset became uncertain");
-        };
-        offset.len()
     });
     runner.measure(name, "curvo_heuristic", || {
         curvo_curve

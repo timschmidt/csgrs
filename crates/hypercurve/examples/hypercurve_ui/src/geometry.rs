@@ -718,15 +718,23 @@ impl Polyline {
         }
     }
 
-    pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Option<Self>, String> {
-        let curve = self.to_curve_string()?;
+    pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Vec<Self>, String> {
+        let path = self.to_curve_path()?;
         let distance = real_checked(distance, "outline distance")?;
-        match preview(|context| curve.offset_outline(distance, cap, context))
-            .map_err(|e| e.to_string())?
-        {
-            Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
-            Classification::Uncertain(_) => Ok(None),
-        }
+        let outline = preview(|context| {
+            CurveRegion2::stroke_path(
+                &path,
+                distance.clone(),
+                &OffsetCornerStyle2::Round,
+                cap,
+                context,
+            )
+        })
+        .map_err(|error| error.to_string())?
+        .into_value();
+        Ok(Shape::from_curve_region(&outline)?
+            .map(Shape::into_polylines)
+            .unwrap_or_default())
     }
 
     pub fn raw_offset_segments(&self, distance: f64) -> Result<Vec<Self>, String> {
@@ -746,10 +754,6 @@ impl Polyline {
             }
         }
         Ok(out)
-    }
-
-    pub fn from_contour(contour: &HContour) -> Self {
-        Self::from_segments(contour.segments(), true)
     }
 
     pub fn from_segments(segments: &[HSegment], closed: bool) -> Self {

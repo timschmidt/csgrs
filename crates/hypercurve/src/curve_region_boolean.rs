@@ -3919,11 +3919,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             for (axis_chord, candidate) in
                                 [(chord, other_chord), (other_chord, chord)]
                             {
-                                let direction = match axis_chord
-                                    .axis_direction(&self.data.policy)
-                                    .map_err(|cause| {
-                                    self.invalid(chord_index, cause)
-                                })? {
+                                let direction = match self
+                                    .data
+                                    .policy
+                                    .strict_predicate_pass(|| {
+                                        axis_chord.axis_direction(&self.data.policy)
+                                    })
+                                    .map_err(|cause| self.invalid(chord_index, cause))?
+                                {
                                     Classification::Decided(Some(direction)) => direction,
                                     Classification::Decided(None)
                                     | Classification::Uncertain(_) => continue,
@@ -3934,13 +3937,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 };
                                 let mut certified_noncollinear = false;
                                 for endpoint in [candidate.start(), candidate.end()] {
-                                    match crate::BezierAlgebraicChord2::point_axis_order(
-                                        axis_chord.start(),
-                                        endpoint,
-                                        constant_axis,
-                                        &self.data.policy.strict_counterpart(),
-                                    )
-                                    .map_err(|cause| self.invalid(chord_index, cause))?
+                                    match self
+                                        .data
+                                        .policy
+                                        .strict_predicate_pass(|| {
+                                            crate::BezierAlgebraicChord2::point_axis_order(
+                                                axis_chord.start(),
+                                                endpoint,
+                                                constant_axis,
+                                                &self.data.policy,
+                                            )
+                                        })
+                                        .map_err(|cause| self.invalid(chord_index, cause))?
                                     {
                                         Classification::Decided(
                                             std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
@@ -3968,11 +3976,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 Classification::Decided(Some(first_direction)),
                                 Classification::Decided(Some(second_direction)),
                             ) = (
-                                chord
-                                    .axis_direction(&self.data.policy.strict_counterpart())
+                                self.data
+                                    .policy
+                                    .strict_predicate_pass(|| {
+                                        chord.axis_direction(&self.data.policy)
+                                    })
                                     .map_err(|cause| self.invalid(chord_index, cause))?,
-                                other_chord
-                                    .axis_direction(&self.data.policy.strict_counterpart())
+                                self.data
+                                    .policy
+                                    .strict_predicate_pass(|| {
+                                        other_chord.axis_direction(&self.data.policy)
+                                    })
                                     .map_err(|cause| self.invalid(other_index, cause))?,
                             )
                             && first_direction.axis() != second_direction.axis()
@@ -3993,18 +4007,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             return Ok(RegionPairResult::empty());
                         }
                         let strictly_one_sided = if let Some(line) = other_chord.exact_line() {
-                            chord
-                                .is_strictly_one_sided_of_exact_line(
-                                    &line,
-                                    &self.data.policy.strict_counterpart(),
-                                )
+                            self.data
+                                .policy
+                                .strict_predicate_pass(|| {
+                                    chord.is_strictly_one_sided_of_exact_line(
+                                        &line,
+                                        &self.data.policy,
+                                    )
+                                })
                                 .map_err(|cause| self.invalid(chord_index, cause))?
                         } else if let Some(line) = chord.exact_line() {
-                            other_chord
-                                .is_strictly_one_sided_of_exact_line(
-                                    &line,
-                                    &self.data.policy.strict_counterpart(),
-                                )
+                            self.data
+                                .policy
+                                .strict_predicate_pass(|| {
+                                    other_chord.is_strictly_one_sided_of_exact_line(
+                                        &line,
+                                        &self.data.policy,
+                                    )
+                                })
                                 .map_err(|cause| self.invalid(other_index, cause))?
                         } else {
                             Classification::Decided(false)
@@ -4020,10 +4040,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                         for (support, candidate) in [(chord, other_chord), (other_chord, chord)] {
                             let sides = [candidate.start(), candidate.end()].map(|endpoint| {
-                                support.certified_tangent_side(
-                                    endpoint,
-                                    &self.data.policy.strict_counterpart(),
-                                )
+                                self.data.policy.strict_predicate_pass(|| {
+                                    support.certified_tangent_side(endpoint, &self.data.policy)
+                                })
                             });
                             if matches!(
                                 sides,

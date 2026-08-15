@@ -597,10 +597,9 @@ impl PlineOffsetScene {
         match self.mode {
             OffsetMode::HypercurveOffset => source.hypercurve_offset(self.offset),
             OffsetMode::RawOffsetSegments => source.raw_offset_segments(self.offset),
-            OffsetMode::Outline => Ok(source
-                .outline(self.offset.abs().max(0.001), OffsetCap::Round)?
-                .into_iter()
-                .collect()),
+            OffsetMode::Outline => {
+                source.outline(self.offset.abs().max(0.001), OffsetCap::Round)
+            }
             OffsetMode::Offset => {
                 let mut result = Vec::new();
                 let mut current = vec![source.clone()];

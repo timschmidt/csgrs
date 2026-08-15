@@ -63,12 +63,13 @@ use crate::{
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2,
     ContourPointLocation, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
     CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurvePath2,
-    CurvePathIntersectionContact2, CurveRegionParameter2, CurveRegionParameterRange2, CurveResult,
-    ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionPointEvidence2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
-    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameterSide2,
+    CurvePath2, CurvePathIntersectionContact2, CurveRegionParameter2, CurveRegionParameterRange2,
+    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCap,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierPointIncidence2,
+    RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -6079,6 +6080,31 @@ fn exact_offset_join_band_semantics(
     )))
 }
 
+fn exact_offset_spans_form_reversal(
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let Some((previous_tangent, next_tangent)) = previous
+        .end_tangent
+        .as_ref()
+        .zip(next.start_tangent.as_ref())
+    else {
+        return Ok(Classification::Decided(false));
+    };
+    match exact_offset_tangent_cross_sign(previous_tangent, next_tangent, policy) {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+            Ok(Classification::Decided(false))
+        }
+        Classification::Decided(RealSign::Zero) => Ok(exact_offset_tangents_are_opposite(
+            previous_tangent,
+            next_tangent,
+            policy,
+        )),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
 fn exact_offset_band_connector(
     fragments: &mut Vec<BezierSplitFragment2>,
     from: &RationalBezierIntersectionPointEvidence2,
@@ -6156,6 +6182,234 @@ fn exact_offset_corner_band_loop(
     }
     CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(fragments, None, policy)
         .map(Classification::Decided)
+}
+
+fn exact_offset_span_runs_from_open_path(
+    source_fragments: &[BezierSplitFragment2],
+    distance: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<ExactOffsetSpan2>>> {
+    let mut spans = Vec::with_capacity(source_fragments.len());
+    let mut processed = 0;
+    while processed < source_fragments.len() {
+        let (span, consumed) = match exact_offset_span_from_source_run(
+            source_fragments,
+            processed,
+            source_fragments.len() - processed,
+            distance,
+            policy,
+        )? {
+            Classification::Decided(run) => run,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        spans.push(span);
+        processed += consumed;
+    }
+    Ok(Classification::Decided(spans))
+}
+
+fn exact_offset_corner_band(
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    distance: &Real,
+    style: &OffsetCornerStyle2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<(CurveRegionBoundaryLoop2, bool)>>> {
+    let (inner_join, filled_side_is_left) =
+        match exact_offset_join_band_semantics(previous, next, distance, policy)? {
+            Classification::Decided(semantics) => semantics,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    if inner_join {
+        return Ok(Classification::Decided(None));
+    }
+
+    let mut join_fragments = Vec::new();
+    match append_exact_offset_join(&mut join_fragments, previous, next, distance, style, policy)? {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    if join_fragments.is_empty() {
+        return Ok(Classification::Decided(None));
+    }
+    exact_offset_corner_band_loop(
+        &previous.source_end,
+        &previous.offset_end,
+        join_fragments,
+        &next.offset_start,
+        policy,
+    )
+    .map(|loop_| loop_.map(|loop_| Some((loop_, filled_side_is_left))))
+}
+
+fn regularized_exact_offset_band_region(
+    boundary_loop: CurveRegionBoundaryLoop2,
+    filled_side_is_left: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    let mut band = CurveRegion2::new(vec![boundary_loop])
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+    {
+        let data = band.data_mut_for_construction();
+        data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(1));
+        data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero]));
+    }
+    band = band
+        .with_certified_filled_side_is_left(vec![filled_side_is_left])
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+    band.regularized_region_raw(policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Offset))
+}
+
+fn exact_round_path_cap_region(
+    center: &Point2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    let positive = center.translated(distance.clone(), Real::zero());
+    let negative = center.translated(-distance.clone(), Real::zero());
+    let first =
+        CircularArc2::try_from_center(positive.clone(), negative.clone(), center.clone(), false)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+    let second = CircularArc2::try_from_center(negative, positive, center.clone(), false)
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+    let contour = Contour2::try_new_with_fill_rule(
+        vec![Segment2::Arc(first), Segment2::Arc(second)],
+        FillRule::NonZero,
+    )
+    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+    curve_region_from_native_material_contour(contour, policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Offset))
+}
+
+fn exact_path_endpoint_unit_tangent(
+    path: &CurvePath2,
+    at_start: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<(Real, Real)>> {
+    let curve = if at_start {
+        &path.curves()[0]
+    } else {
+        path.curves().last().expect("a curve path is nonempty")
+    };
+    let parameter = if at_start {
+        curve.parameter_domain().start()
+    } else {
+        curve.parameter_domain().end()
+    };
+    let max_order = match curve.geometry() {
+        CurveGeometry2::Line(_) | CurveGeometry2::CircularArc(_) => 1,
+        CurveGeometry2::QuadraticBezier(_) | CurveGeometry2::RationalQuadraticBezier(_) => 2,
+        CurveGeometry2::CubicBezier(_) => 3,
+        CurveGeometry2::RationalBezier(curve) => curve.degree(),
+        CurveGeometry2::PolynomialBSpline(curve) => curve.degree(),
+        CurveGeometry2::Nurbs(curve) => curve.degree(),
+    };
+    let derivatives = curve
+        .derivatives_at_side_with_policy(
+            parameter,
+            max_order,
+            if at_start {
+                CurveParameterSide2::Right
+            } else {
+                CurveParameterSide2::Left
+            },
+            policy,
+        )
+        .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
+    for (index, derivative) in derivatives.into_iter().enumerate() {
+        let length_squared = derivative.dx() * derivative.dx() + derivative.dy() * derivative.dy();
+        match real_sign(&length_squared, policy) {
+            Some(RealSign::Positive) => {
+                let length = length_squared.sqrt().map_err(|cause| {
+                    curve_region_edit_error(CurveOperation2::Offset, cause.into())
+                })?;
+                let orientation = if !at_start && (index + 1).is_multiple_of(2) {
+                    -Real::one()
+                } else {
+                    Real::one()
+                };
+                return Ok(Classification::Decided((
+                    ((derivative.dx() * &orientation) / &length).map_err(|cause| {
+                        curve_region_edit_error(CurveOperation2::Offset, cause.into())
+                    })?,
+                    ((derivative.dy() * orientation) / length).map_err(|cause| {
+                        curve_region_edit_error(CurveOperation2::Offset, cause.into())
+                    })?,
+                )));
+            }
+            Some(RealSign::Zero) => {}
+            Some(RealSign::Negative) => {
+                return Err(curve_region_edit_error(
+                    CurveOperation2::Offset,
+                    CurveError::Topology(
+                        "curve endpoint derivative squared norm was certified negative".into(),
+                    ),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+}
+
+fn exact_line_stroke_band_region(
+    line: LineSeg2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<CurveRegion2>> {
+    let source = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line));
+    let left = match exact_offset_span_from_materialized_curve(&source, distance, policy)
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+    {
+        Classification::Decided(span) => span,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let right_distance = -distance.clone();
+    let right = match exact_offset_span_from_materialized_curve(&source, &right_distance, policy)
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+    {
+        Classification::Decided(span) => span,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let boundary = match exact_offset_span_band_loop(&right, &left, policy)
+        .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+    {
+        Classification::Decided(boundary) => boundary,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    regularized_exact_offset_band_region(boundary, true, policy).map(Classification::Decided)
+}
+
+fn union_exact_offset_regions(
+    regions: Vec<CurveRegion2>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegion2> {
+    let mut regions = regions.into_iter().filter(|region| !region.is_empty());
+    let Some(mut union) = regions.next() else {
+        return Err(curve_region_edit_error(
+            CurveOperation2::Offset,
+            CurveError::Topology("exact path stroke produced no two-dimensional region".into()),
+        ));
+    };
+    for region in regions {
+        union = union
+            .boolean_region_raw(&region, BooleanOp::Union, policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
+    }
+    Ok(union)
 }
 
 fn exact_offset_parallel_tangent_contact(
@@ -13815,6 +14069,256 @@ impl CurveRegion2 {
         ))
     }
 
+    /// Builds the exact filled stroke of a connected curve path.
+    ///
+    /// `half_width` must be strictly positive. Each promoted source span is
+    /// bounded by its two exact analytic parallels, every authored corner uses
+    /// `corner_style`, and open endpoints use `cap_style`. The resulting span,
+    /// corner, and cap regions are composed by the same regularized Boolean
+    /// authority as region offsetting, so self-crossing paths and overlapping
+    /// stroke bands do not escape as raw linework. Closed paths receive their
+    /// cyclic corner and ignore endpoint caps.
+    ///
+    /// General polynomial, rational, B-spline, and NURBS paths retain analytic
+    /// parallel carriers rather than being chordized. `STRICT` accepts only
+    /// certified predicates; `APPROXIMATE_512` may consume its terminal
+    /// equality policy while returning the same exact carrier geometry.
+    pub fn stroke_path(
+        path: &CurvePath2,
+        half_width: Real,
+        corner_style: &OffsetCornerStyle2,
+        cap_style: OffsetCap,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        let family = path.curves()[0].family();
+        resolve_certified_operation(policy, |attempt| {
+            match Self::stroke_path_raw(path, half_width.clone(), corner_style, cap_style, attempt)?
+            {
+                Classification::Decided(region) => Ok(region),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Offset,
+                    family,
+                    reason,
+                )),
+            }
+        })
+    }
+
+    fn stroke_path_raw(
+        path: &CurvePath2,
+        half_width: Real,
+        corner_style: &OffsetCornerStyle2,
+        cap_style: OffsetCap,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Self>> {
+        let family = path.curves()[0].family();
+        match crate::curve::validate_curve_path_connectivity(path, policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?
+        {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match real_sign(&half_width, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(ExactCurveError::invalid(
+                    CurveOperation2::Offset,
+                    family,
+                    CurveError::InvalidOffsetOptions,
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        match crate::offset::validate_offset_corner_style(corner_style, policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let closed = match crate::curve::curve_path_is_closed(path, policy) {
+            Classification::Decided(closed) => closed,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let native = match path
+            .native_bezier_fragments_with_policy(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Offset))?
+        {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let source_fragments = native
+            .iter()
+            .map(|fragment| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: fragment.curve().clone(),
+            })
+            .collect::<Vec<_>>();
+        let left_spans =
+            match exact_offset_span_runs_from_open_path(&source_fragments, &half_width, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(spans) => spans,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let right_distance = -half_width.clone();
+        let right_spans =
+            match exact_offset_span_runs_from_open_path(&source_fragments, &right_distance, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(spans) => spans,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        if left_spans.len() != right_spans.len() || left_spans.is_empty() {
+            return Err(curve_region_edit_error(
+                CurveOperation2::Offset,
+                CurveError::Topology(
+                    "exact path stroke produced inconsistent source-span inventories".into(),
+                ),
+            ));
+        }
+
+        let join_count = if closed {
+            left_spans.len()
+        } else {
+            left_spans.len().saturating_sub(1)
+        };
+        let mut components = Vec::with_capacity(
+            left_spans
+                .len()
+                .saturating_add(join_count.saturating_mul(2))
+                .saturating_add(if closed { 0 } else { 2 }),
+        );
+        for (right, left) in right_spans.iter().zip(&left_spans) {
+            let boundary = match exact_offset_span_band_loop(right, left, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(boundary) => boundary,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            components.push(regularized_exact_offset_band_region(
+                boundary, true, policy,
+            )?);
+        }
+
+        for index in 0..join_count {
+            let next = (index + 1) % left_spans.len();
+            let reversal = match exact_offset_spans_form_reversal(
+                &left_spans[index],
+                &left_spans[next],
+                policy,
+            )
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(reversal) => reversal,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            // Both signed offset sides describe the same join at an exact
+            // 180-degree turn. Round owns one oriented semicircular sector
+            // from the positive side; bevel and bounded miter reduce to the
+            // butt edge already owned by the adjacent span bands.
+            if reversal && !matches!(corner_style, OffsetCornerStyle2::Round) {
+                continue;
+            }
+            let sides = [(&left_spans, &half_width), (&right_spans, &right_distance)];
+            for (spans, distance) in sides.into_iter().take(if reversal { 1 } else { 2 }) {
+                let corner = match exact_offset_corner_band(
+                    &spans[index],
+                    &spans[next],
+                    distance,
+                    corner_style,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+                {
+                    Classification::Decided(corner) => corner,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if let Some((boundary, filled_side_is_left)) = corner {
+                    components.push(regularized_exact_offset_band_region(
+                        boundary,
+                        filled_side_is_left,
+                        policy,
+                    )?);
+                }
+            }
+        }
+
+        if !closed {
+            match cap_style {
+                OffsetCap::Butt => {}
+                OffsetCap::Round => {
+                    components.push(exact_round_path_cap_region(
+                        path.start(),
+                        &half_width,
+                        policy,
+                    )?);
+                    components.push(exact_round_path_cap_region(
+                        path.end(),
+                        &half_width,
+                        policy,
+                    )?);
+                }
+                OffsetCap::Square => {
+                    let start_tangent = match exact_path_endpoint_unit_tangent(path, true, policy)?
+                    {
+                        Classification::Decided(tangent) => tangent,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let end_tangent = match exact_path_endpoint_unit_tangent(path, false, policy)? {
+                        Classification::Decided(tangent) => tangent,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let start_dx = &start_tangent.0 * &half_width;
+                    let start_dy = &start_tangent.1 * &half_width;
+                    let start_extension = LineSeg2::try_new(
+                        path.start().translated(-start_dx, -start_dy),
+                        path.start().clone(),
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+                    let end_extension = LineSeg2::try_new(
+                        path.end().clone(),
+                        path.end()
+                            .translated(&end_tangent.0 * &half_width, &end_tangent.1 * &half_width),
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
+                    for extension in [start_extension, end_extension] {
+                        match exact_line_stroke_band_region(extension, &half_width, policy)? {
+                            Classification::Decided(region) => components.push(region),
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        union_exact_offset_regions(components, policy).map(Classification::Decided)
+    }
+
     /// Offsets every boundary so positive distance expands the filled region.
     ///
     /// The exact filled side of each loop selects the required signed left
@@ -14157,7 +14661,7 @@ impl CurveRegion2 {
                 )
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                 {
-                    Classification::Decided(()) => {}
+                    Classification::Decided(corner) => corner,
                     Classification::Uncertain(reason) => {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
@@ -14381,31 +14885,7 @@ impl CurveRegion2 {
 
             for span_index in 0..spans.len() {
                 let next_index = (span_index + 1) % spans.len();
-                let (inner_join, corner_filled_side_is_left) =
-                    match exact_offset_join_band_semantics(
-                        &spans[span_index],
-                        &spans[next_index],
-                        &signed_left_distance,
-                        policy,
-                    )
-                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                    {
-                        Classification::Decided(semantics) => semantics,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                if inner_join {
-                    // Adjacent span bands already overlap through an inner
-                    // corner and their union owns the exact miter boundary.
-                    // Adding the same sector again would place its radial
-                    // legs on the source boundary and create redundant
-                    // coincident carriers in the signed composition.
-                    continue;
-                }
-                let mut join_fragments = Vec::new();
-                match append_exact_offset_join(
-                    &mut join_fragments,
+                let corner = match exact_offset_corner_band(
                     &spans[span_index],
                     &spans[next_index],
                     &signed_left_distance,
@@ -14414,7 +14894,7 @@ impl CurveRegion2 {
                 )
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                 {
-                    Classification::Decided(()) => {}
+                    Classification::Decided(corner) => corner,
                     Classification::Uncertain(reason) => {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
@@ -14424,23 +14904,11 @@ impl CurveRegion2 {
                         );
                         return Ok(Classification::Uncertain(reason));
                     }
-                }
-                if join_fragments.is_empty() {
+                };
+                // Adjacent span bands already own inner corners. Add only the
+                // exact outward sector selected by the shared corner solver.
+                let Some((band, corner_filled_side_is_left)) = corner else {
                     continue;
-                }
-                let band = match exact_offset_corner_band_loop(
-                    &spans[span_index].source_end,
-                    &spans[span_index].offset_end,
-                    join_fragments,
-                    &spans[next_index].offset_start,
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(band) => band,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
                 };
                 band_loops.push(band);
                 band_filled_sides.push(corner_filled_side_is_left);
@@ -14449,24 +14917,13 @@ impl CurveRegion2 {
 
         let mut band_regions = Vec::with_capacity(band_loops.len());
         for (band_loop, filled_side_is_left) in band_loops.into_iter().zip(band_filled_sides) {
-            let mut band = Self::new(vec![band_loop])
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-            {
-                let data = band.data_mut_for_construction();
-                data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(1));
-                data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero]));
-            }
-            band = band
-                .with_certified_filled_side_is_left(vec![filled_side_is_left])
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
             // A span parallel may reverse after a local radius collapse, so
             // even an individually constructed band can self-intersect.  The
             // binary Boolean kernel requires regularized operands; normalize
             // every band through the same authoritative unary arrangement
             // before composing the band union.
-            band = band
-                .regularized_region_raw(policy)
-                .map_err(|error| error.with_operation(CurveOperation2::Offset))?;
+            let band =
+                regularized_exact_offset_band_region(band_loop, filled_side_is_left, policy)?;
             if !band.is_empty() {
                 band_regions.push(band);
             }

@@ -117,156 +117,30 @@ fn bench_curve_string_round_join_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_curve_string_checked_offset(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
+fn bench_curve_region_path_stroke(iterations: u32) -> CurveResult<()> {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0))?),
+        Curve2::from(LineSeg2::try_new(p(4, 0), p(4, 3))?),
+        Curve2::from(LineSeg2::try_new(p(4, 3), p(7, 3))?),
+    ])
+    .expect("benchmark path is exactly connected");
     let policy = CurveContext::STRICT;
     let started = Instant::now();
-    let mut total_segments = 0_usize;
-
+    let mut total_loops = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(offset) = curve.offset_left_checked(s(1), &policy)? else {
-            panic!("curve_string_checked_offset became uncertain during benchmark");
-        };
-        total_segments += black_box(offset.len());
+        let stroke = CurveRegion2::stroke_path(
+            &path,
+            s(1),
+            &OffsetCornerStyle2::Round,
+            OffsetCap::Round,
+            &policy,
+        )
+        .expect("exact path stroke completes");
+        total_loops += black_box(stroke.value.boundary_loops().len());
     }
-
     let elapsed = started.elapsed();
     println!(
-        "curve_string_checked_offset: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_checked_offset_evidence(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(offset) = curve.offset_left_checked(s(1), &policy)? else {
-            panic!("curve_string_checked_offset benchmark became uncertain");
-        };
-        total_segments += black_box(offset.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_checked_offset_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(outline) = curve.offset_outline_round_caps(s(1), &policy)?
-        else {
-            panic!("curve_string_round_cap_outline became uncertain during benchmark");
-        };
-        total_segments += black_box(outline.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_round_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_round_cap_outline_evidence(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(outline) = curve.offset_outline_round_caps(s(1), &policy)?
-        else {
-            panic!("curve_string_round_cap_outline benchmark became uncertain");
-        };
-        total_segments += black_box(outline.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_round_cap_outline_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_butt_cap_outline(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(outline) = curve.offset_outline_butt_caps(s(1), &policy)?
-        else {
-            panic!("curve_string_butt_cap_outline became uncertain during benchmark");
-        };
-        total_segments += black_box(outline.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_butt_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_curve_string_square_cap_outline(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![
-        line_segment(0, 0, 4, 0),
-        line_segment(4, 0, 4, 3),
-        line_segment(4, 3, 7, 3),
-    ])?;
-    let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(outline) =
-            curve.offset_outline(s(1), OffsetCap::Square, &policy)?
-        else {
-            panic!("curve_string_square_cap_outline became uncertain during benchmark");
-        };
-        total_segments += black_box(outline.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_square_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        "curve_region_path_stroke: {iterations} iterations in {elapsed:?} ({:?}/iter), total loops={total_loops}",
         elapsed / iterations
     );
     Ok(())
@@ -1109,6 +983,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "bezier-intersection" => bench_bezier_parallel_intersection_lanes()?,
             "bezier-pair-general" => bench_bezier_parallel_pair_general_contact()?,
             "bezier-pair-intersection" => bench_bezier_parallel_pair_intersection_lanes()?,
+            "path-stroke" => bench_curve_region_path_stroke(100)?,
             "curve-region-exact" => bench_curve_region_bezier_exact_offset(10)?,
             "curve-region-repeated" => bench_curve_region_repeated_bezier_offset_lanes(100)?,
             "curve-region-algebraic-partition" => {
@@ -1161,12 +1036,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     bench_curve_string_joined_offset(100_000)?;
     bench_curve_string_round_join_offset(100_000)?;
-    bench_curve_string_checked_offset(100_000)?;
-    bench_curve_string_checked_offset_evidence(100_000)?;
-    bench_curve_string_round_cap_outline(100_000)?;
-    bench_curve_string_round_cap_outline_evidence(100_000)?;
-    bench_curve_string_butt_cap_outline(100_000)?;
-    bench_curve_string_square_cap_outline(100_000)?;
+    bench_curve_region_path_stroke(100)?;
     bench_exact_bezier_parallel_construction(100_000)?;
     bench_exact_bezier_parallel_evaluation(10_000)?;
     bench_bezier_parallel_cusp_isolation(100)?;
