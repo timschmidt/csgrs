@@ -10585,20 +10585,6 @@ impl CurveRegion2 {
             next_source.exact_carrier(next_fragment, false, CurveOperation2::Chamfer, policy)?;
         let previous_retained_arc = previous_carrier.retained_rational_arc_support().cloned();
         let next_retained_arc = next_carrier.retained_rational_arc_support().cloned();
-        if mode == CurveCornerMode2::TrimOrExtend
-            && (!previous_carrier.supports_extension(CurveOperation2::Chamfer)
-                || !next_carrier.supports_extension(CurveOperation2::Chamfer))
-        {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
-                if !previous_carrier.supports_extension(CurveOperation2::Chamfer) {
-                    previous_family
-                } else {
-                    next_family
-                },
-                UncertaintyReason::Unsupported,
-            ));
-        }
         let solutions = solve_exact_chamfer_corner(
             previous_carrier,
             next_carrier,

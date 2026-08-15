@@ -1850,21 +1850,6 @@ impl CurvePath2 {
                     crate::UncertaintyReason::Unsupported,
                 )
             })?;
-        if mode == CurveCornerMode2::TrimOrExtend
-            && (!previous_carrier.supports_extension(CurveOperation2::Chamfer)
-                || !next_carrier.supports_extension(CurveOperation2::Chamfer))
-        {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Chamfer,
-                if !previous_carrier.supports_extension(CurveOperation2::Chamfer) {
-                    previous.family()
-                } else {
-                    next.family()
-                },
-                crate::UncertaintyReason::Unsupported,
-            ));
-        }
-
         let solutions = solve_exact_chamfer_corner(
             previous_carrier,
             next_carrier,
@@ -3710,30 +3695,6 @@ impl<'a> ExactCornerCarrier2<'a> {
             _ => None,
         }
     }
-
-    pub(crate) fn supports_extension(&self, operation: CurveOperation2) -> bool {
-        match self {
-            Self::Line(_) | Self::PromotedLine(_) | Self::Arc(_) => true,
-            Self::Bezier(curve) => {
-                operation == CurveOperation2::Chamfer
-                    && matches!(
-                        curve.geometry(),
-                        CurveGeometry2::QuadraticBezier(_)
-                            | CurveGeometry2::CubicBezier(_)
-                            | CurveGeometry2::RationalQuadraticBezier(_)
-                            | CurveGeometry2::RationalBezier(_)
-                    )
-            }
-            Self::RetainedRationalArc(_) => operation == CurveOperation2::Chamfer,
-            Self::NativeBezierSpan(_) => operation == CurveOperation2::Chamfer,
-            Self::AlgebraicChord(_) => true,
-            Self::AnalyticParallel(_) => matches!(
-                operation,
-                CurveOperation2::Chamfer | CurveOperation2::Fillet
-            ),
-            Self::AlgebraicCusp(_) => operation == CurveOperation2::Chamfer,
-        }
-    }
 }
 
 fn retained_rational_arc_support(
@@ -4010,19 +3971,6 @@ pub(crate) fn solve_exact_fillet_corner(
         RealSign::Positive => {}
         RealSign::Negative => unreachable!("negative corner values are rejected"),
     }
-    if mode == CurveCornerMode2::TrimOrExtend
-        && !fillet_carrier_pair_supports_extension(&previous, &next)
-    {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            if !previous.supports_extension(CurveOperation2::Fillet) {
-                previous_family
-            } else {
-                next_family
-            },
-            crate::UncertaintyReason::Unsupported,
-        ));
-    }
     if let (Some(previous_line), Some(next_line)) = (previous.line_source(), next.line_source()) {
         return solve_line_fillet_corner(
             previous_line,
@@ -4044,64 +3992,6 @@ pub(crate) fn solve_exact_fillet_corner(
         next_family,
         policy,
     )
-}
-
-fn fillet_carrier_pair_supports_extension(
-    previous: &ExactCornerCarrier2<'_>,
-    next: &ExactCornerCarrier2<'_>,
-) -> bool {
-    if previous.supports_extension(CurveOperation2::Fillet)
-        && next.supports_extension(CurveOperation2::Fillet)
-    {
-        return true;
-    }
-    let is_affine_line = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(
-            carrier,
-            ExactCornerCarrier2::Line(_)
-                | ExactCornerCarrier2::PromotedLine(_)
-                | ExactCornerCarrier2::AlgebraicChord(_)
-        )
-    };
-    let is_arc = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(
-            carrier,
-            ExactCornerCarrier2::Arc(_) | ExactCornerCarrier2::RetainedRationalArc(_)
-        )
-    };
-    let is_selected_circle = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(carrier, ExactCornerCarrier2::AlgebraicCusp(_))
-    };
-    let is_analytic_parallel = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(carrier, ExactCornerCarrier2::AnalyticParallel(_))
-    };
-    let is_bezier = |carrier: &ExactCornerCarrier2<'_>| {
-        matches!(
-            carrier,
-            ExactCornerCarrier2::Bezier(_) | ExactCornerCarrier2::NativeBezierSpan(_)
-        )
-    };
-    (is_affine_line(previous) && is_arc(next))
-        || (is_arc(previous) && is_affine_line(next))
-        || (is_arc(previous) && is_arc(next))
-        || (is_arc(previous) && is_selected_circle(next))
-        || (is_selected_circle(previous) && is_arc(next))
-        || (is_arc(previous) && is_analytic_parallel(next))
-        || (is_analytic_parallel(previous) && is_arc(next))
-        || (is_affine_line(previous) && is_selected_circle(next))
-        || (is_selected_circle(previous) && is_affine_line(next))
-        || (is_selected_circle(previous) && is_selected_circle(next))
-        || (is_selected_circle(previous) && is_analytic_parallel(next))
-        || (is_analytic_parallel(previous) && is_selected_circle(next))
-        || (is_affine_line(previous) && is_bezier(next))
-        || (is_bezier(previous) && is_affine_line(next))
-        || (is_arc(previous) && is_bezier(next))
-        || (is_bezier(previous) && is_arc(next))
-        || (is_selected_circle(previous) && is_bezier(next))
-        || (is_bezier(previous) && is_selected_circle(next))
-        || (is_analytic_parallel(previous) && is_bezier(next))
-        || (is_bezier(previous) && is_analytic_parallel(next))
-        || (is_bezier(previous) && is_bezier(next))
 }
 
 #[derive(Clone, Copy)]
