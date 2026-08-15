@@ -6628,30 +6628,93 @@ fn fillet_offset_centers(
                 )? {
                     continue;
                 }
-                let contact = if mode == CurveCornerMode2::TrimOrExtend {
-                    support.supporting_line_contact_evidence_affine(line, &parameter, policy)
-                } else {
-                    support.supporting_line_contact_evidence(line, &parameter, policy)
-                };
-                let (point, line_parameter) = match contact.map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
-                })? {
-                    Classification::Decided(contact) => contact,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
+                let procedural_affine_contact =
+                    mode == CurveCornerMode2::TrimOrExtend && parameter.as_exact().is_none();
+                let (point, line_parameter) = if procedural_affine_contact {
+                    (
+                        analytic_parallel_point_evidence(
+                            support,
+                            &parameter,
                             CurveOperation2::Fillet,
                             parallel_family,
-                            reason,
-                        ));
+                            policy,
+                        )?,
+                        None,
+                    )
+                } else {
+                    let contact = if mode == CurveCornerMode2::TrimOrExtend {
+                        support.supporting_line_contact_evidence_affine(line, &parameter, policy)
+                    } else {
+                        support.supporting_line_contact_evidence(line, &parameter, policy)
+                    };
+                    match contact.map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
+                    })? {
+                        Classification::Decided(contact) => contact,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                parallel_family,
+                                reason,
+                            ));
+                        }
                     }
                 };
-                let line_parameter = if line_source.algebraic_chord().is_some() {
-                    None
-                } else {
-                    let Some(parameter) = line_parameter else {
-                        continue;
+                let line_parameter =
+                    if line_source.algebraic_chord().is_some() || procedural_affine_contact {
+                        None
+                    } else {
+                        let Some(parameter) = line_parameter else {
+                            continue;
+                        };
+                        Some(CurveRegionParameter2::from_bezier(parameter))
                     };
-                    Some(CurveRegionParameter2::from_bezier(parameter))
+                let retained_anchor_evidence = if procedural_affine_contact {
+                    let (mut cross, mut dot) = match support
+                        .vector_tangent_cross_and_dot_signs(
+                            &parameter,
+                            line_unit_x,
+                            line_unit_y,
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Fillet,
+                                parallel_family,
+                                cause,
+                            )
+                        })? {
+                        Classification::Decided(signs) => signs,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                parallel_family,
+                                reason,
+                            ));
+                        }
+                    };
+                    let support_reverses_source =
+                        source.support_reverses_source(support, parallel_family, policy)?;
+                    if support_reverses_source {
+                        cross = reverse_fillet_sign(cross);
+                        dot = reverse_fillet_sign(dot);
+                    }
+                    Some(RetainedFilletAnchorEvidence2 {
+                        // The selected analytic circle frame is the anchor;
+                        // the predicate above reports line x analytic.
+                        cross: Some(reverse_fillet_sign(cross)),
+                        dot: Some(dot),
+                        center_parallel: None,
+                        source_direction: Some(if support_reverses_source {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        }),
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    })
+                } else {
+                    None
                 };
                 let parallel_parameter = Some(CurveRegionParameter2::from_bezier(parameter));
                 let (previous_parameter, next_parameter) = if line_is_previous {
@@ -6663,7 +6726,7 @@ fn fillet_offset_centers(
                     point,
                     previous_parameter,
                     next_parameter,
-                    retained_anchor_evidence: None,
+                    retained_anchor_evidence,
                 });
             }
         }
@@ -8846,8 +8909,6 @@ fn fillet_cut_from_center(
                     source,
                     center,
                     retained_parameter,
-                    unit_x,
-                    unit_y,
                     signed_distance,
                     previous,
                     mode,
@@ -8865,23 +8926,15 @@ fn fillet_cut_from_center(
                     family,
                     policy,
                 )?;
-                let point = match crate::BezierAlgebraicChord2::translated_endpoint(
-                    center,
-                    &(signed_distance * *unit_y),
-                    &(-(signed_distance * *unit_x)),
-                    policy,
-                )
-                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-                {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            reason,
-                        ));
-                    }
-                };
+                let point = support
+                    .normal_displaced_point_evidence(
+                        center.clone(),
+                        -signed_distance.clone(),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?;
                 return algebraic_chord_corner_cut_from_support_point(
                     &support,
                     point,
@@ -9305,31 +9358,15 @@ fn algebraic_chord_fillet_cut_from_center(
     source: &crate::BezierAlgebraicChord2,
     center: &RationalBezierIntersectionPointEvidence2,
     retained_parameter: Option<&CurveRegionParameter2>,
-    unit_x: &Real,
-    unit_y: &Real,
     signed_distance: &Real,
     previous: bool,
     mode: CurveCornerMode2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CornerCut2>> {
-    let point = match crate::BezierAlgebraicChord2::translated_endpoint(
-        center,
-        &(signed_distance * unit_y),
-        &(-(signed_distance * unit_x)),
-        policy,
-    )
-    .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
-    };
+    let point = source
+        .normal_displaced_point_evidence(center.clone(), -signed_distance.clone(), policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?;
     if let Some(retained_parameter) = retained_parameter
         && retained_parameter.is_selected_fiber()
     {

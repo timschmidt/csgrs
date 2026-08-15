@@ -7434,6 +7434,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             Some(false) => return Err(CurveError::InvalidBezierParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
+        // Construction retains a nonzero tangent cross after selecting the
+        // unique half-circle chart, so this mapped contact is strictly inside
+        // that chart. Preserve those two endpoint orders without rebuilding
+        // the higher-dimensional chord/parallel predicate during splitting.
+        if represented.zero_status() == ZeroStatus::Zero {
+            return Ok(Classification::Decided(std::cmp::Ordering::Greater));
+        }
+        if (represented - Real::one()).zero_status() == ZeroStatus::Zero {
+            return Ok(Classification::Decided(std::cmp::Ordering::Less));
+        }
         let one_minus = Real::one() - represented;
         let radial = Real::one() - Real::from(2_i8) * represented;
         let tangential = Real::from(2_i8) * represented * one_minus;
@@ -11437,15 +11447,16 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// `chord`'s unit left normal. A retained chord-parallel point supplies its
     /// authored distance directly; represented-vector translations use the
     /// explicit `contact_radial_distance`. The two signed radial distances
-    /// must have equal magnitude. Once those construction facts are certified,
-    /// angular ordering needs only a three-axis chord/parallel tangent
-    /// predicate; the center field and the two chord endpoint fields never
-    /// form a primitive compositum.
+    /// must have equal magnitude. The caller also supplies the already-replayed
+    /// nonzero tangent cross that selected this circle half, so construction
+    /// does not repeat a three-axis boundary predicate merely to prove that
+    /// the contact is not a diameter endpoint.
     pub(crate) fn certified_selected_chord_parallel_normal_contact_parameter(
         &self,
         chord: BezierAlgebraicChord2,
         point: RationalBezierIntersectionPointEvidence2,
         contact_radial_distance: Real,
+        tangent_cross_sign: RealSign,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
         chord.validate_policy(policy)?;
@@ -11455,6 +11466,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         if !policy.accepts_retained_policy(frame.policy) {
             return Err(CurveError::Topology(
                 "a selected chord/parallel-normal contact crossed predicate policies".into(),
+            ));
+        }
+        if tangent_cross_sign == RealSign::Zero {
+            return Err(CurveError::Topology(
+                "a selected chord/parallel-normal interior contact had parallel tangents".into(),
             ));
         }
         let center = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
@@ -11507,23 +11523,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy: *policy,
             },
         ));
-        for (boundary, expected) in [
-            (Real::zero(), std::cmp::Ordering::Greater),
-            (Real::one(), std::cmp::Ordering::Less),
-        ] {
-            match parameter.order_to_real(&boundary, policy)? {
-                Classification::Decided(order) if order == expected => {}
-                Classification::Decided(_) => {
-                    return Err(CurveError::Topology(
-                        "a certified chord/parallel-normal contact lay outside its selected circle half"
-                            .into(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
         Ok(Classification::Decided(parameter))
     }
 
@@ -56842,9 +56841,21 @@ impl BezierAlgebraicChord2 {
             let shares_center = displaced.source_endpoint().shares_storage(center)
                 || displaced.source_endpoint().same_point(center, policy)
                     == Classification::Decided(true);
-            if shares_support && shares_center {
-                let reversed = source.retained_support_orientation_is_reversed()
-                    != self.retained_support_orientation_is_reversed();
+            let mut reversed = shares_support.then(|| {
+                source.retained_support_orientation_is_reversed()
+                    != self.retained_support_orientation_is_reversed()
+            });
+            if reversed.is_none()
+                && shares_center
+                && source.support_collinearity(self, policy)? == Classification::Decided(true)
+            {
+                reversed = match source.tangent_dot_sign(self, policy)? {
+                    Classification::Decided(RealSign::Positive) => Some(false),
+                    Classification::Decided(RealSign::Negative) => Some(true),
+                    Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => None,
+                };
+            }
+            if let (true, Some(reversed)) = (shares_center, reversed) {
                 return Ok(Classification::Decided(if reversed {
                     -displaced.data.distance.clone()
                 } else {
@@ -56901,8 +56912,11 @@ impl BezierAlgebraicChord2 {
     /// solved offset center as the origin and the negated offset distance to
     /// recover the source tangency point without adjoining the two endpoint
     /// fields, their direction norm, and the center field. Chords with a
-    /// represented certified unit tangent instead use the smaller exact
-    /// translated-point authority.
+    /// represented certified unit tangent normally use the smaller exact
+    /// translated-point authority. An analytic-parallel source point retains
+    /// this chord-normal construction even in that fast case because later
+    /// fillet reconstruction must replay the correlated displacement without
+    /// flattening the selected center into independent coordinates.
     pub(crate) fn normal_displaced_point_evidence(
         &self,
         point: RationalBezierIntersectionPointEvidence2,
@@ -56913,7 +56927,12 @@ impl BezierAlgebraicChord2 {
         if distance.zero_status() == ZeroStatus::Zero {
             return Ok(point);
         }
-        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
+        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent()
+            && !matches!(
+                &point,
+                RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+            )
+        {
             return match Self::translated_endpoint(
                 &point,
                 &(-tangent_y * &distance),

@@ -12030,6 +12030,7 @@ impl CurveRegion2 {
                         chord.clone(),
                         chord_cut.point.clone(),
                         frame.radial_distance.clone(),
+                        tangent_cross,
                         policy,
                     ),
                 RetainedFilletRadialFrame2::SelectedConcentric { .. } => terminal_circle
@@ -12885,10 +12886,14 @@ impl CurveRegion2 {
                 );
             }
             if let BezierSplitFragment2::AlgebraicChord(chord) = other_fragment {
+                let chord = other_cut
+                    .parameter
+                    .as_algebraic_chord()
+                    .map_or_else(|| chord.clone(), |parameter| parameter.chord().clone());
                 return Self::retained_chord_fillet_fragments(
                     &frame,
                     fillet,
-                    chord,
+                    &chord,
                     fillet_clockwise,
                     anchor_cut,
                     other_cut,
@@ -12919,12 +12924,16 @@ impl CurveRegion2 {
                 && (other_cut.parameter.as_algebraic_chord().is_some()
                     || other_cut.parameter.is_selected_fiber())
             {
-                let support = retained_algebraic_line_support(
-                    line.retained_exact_line_image()
-                        .expect("the retained fillet companion is an exact line"),
-                    CurveOperation2::Fillet,
-                    policy,
-                )?;
+                let support = if let Some(parameter) = other_cut.parameter.as_algebraic_chord() {
+                    parameter.chord().clone()
+                } else {
+                    retained_algebraic_line_support(
+                        line.retained_exact_line_image()
+                            .expect("the retained fillet companion is an exact line"),
+                        CurveOperation2::Fillet,
+                        policy,
+                    )?
+                };
                 return Self::retained_chord_fillet_fragments(
                     &frame,
                     fillet,
