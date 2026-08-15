@@ -901,6 +901,24 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if policy.permits_approximate_512() {
+            match policy
+                .strict_predicate_pass(|| self.boolean_region_once(other, operation, policy))
+            {
+                Ok(region) => return Ok(region),
+                Err(ExactCurveError::Blocked(_)) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        self.boolean_region_once(other, operation, policy)
+    }
+
+    fn boolean_region_once(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
         if let Some(region) = boolean_trivial_region(self, other, operation)? {
             return Ok(region);
         }
@@ -919,6 +937,21 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn boolean_regions_raw(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveRegionBooleanResults2> {
+        if policy.permits_approximate_512() {
+            match policy.strict_predicate_pass(|| self.boolean_regions_once(other, policy)) {
+                Ok(regions) => return Ok(regions),
+                Err(ExactCurveError::Blocked(_)) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        self.boolean_regions_once(other, policy)
+    }
+
+    fn boolean_regions_once(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -1445,6 +1478,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         parallel: &BezierParallel2,
         curve: &BezierSubcurve2,
         parallel_is_first: bool,
+        regular_range: Option<&CurveRegionParameterRange2>,
     ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
         let retained = BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
@@ -1479,13 +1513,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .map(|contact| contact.parameter().clone())
             .collect::<Vec<_>>();
-        let relation = match parallel
-            .relation_to_supporting_line_with_certified_tangencies(
+        let relation = match match regular_range {
+            Some(range) => parallel
+                .relation_to_supporting_line_on_regular_range_with_certified_contacts(
+                    &line,
+                    range,
+                    None,
+                    &certified_tangent_parameters,
+                    false,
+                    &self.data.policy,
+                ),
+            None => parallel.relation_to_supporting_line_with_certified_tangencies(
                 &line,
                 &certified_tangent_parameters,
                 &self.data.policy,
-            )
-            .map_err(|cause| self.invalid(0, cause))?
+            ),
+        }
+        .map_err(|cause| self.invalid(0, cause))?
         {
             Classification::Decided(relation) => relation,
             Classification::Uncertain(reason) => {
@@ -1519,22 +1563,40 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 retained_certified_tangencies.push(*certified);
                 continue;
             }
-            let from_start = match parallel
-                .supporting_line_parameter_order(contact.parameter(), &line, &self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?
+            let from_start = match match regular_range {
+                Some(range) => parallel.supporting_line_parameter_order_on_regular_range(
+                    contact.parameter(),
+                    &line,
+                    range,
+                    &self.data.policy,
+                ),
+                None => parallel.supporting_line_parameter_order(
+                    contact.parameter(),
+                    &line,
+                    &self.data.policy,
+                ),
+            }
+            .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let from_end = match parallel
-                .supporting_line_parameter_order(
+            let from_end = match match regular_range {
+                Some(range) => parallel.supporting_line_parameter_order_on_regular_range(
+                    contact.parameter(),
+                    &reversed_line,
+                    range,
+                    &self.data.policy,
+                ),
+                None => parallel.supporting_line_parameter_order(
                     contact.parameter(),
                     &reversed_line,
                     &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(0, cause))?
+                ),
+            }
+            .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(reason) => {
@@ -1667,7 +1729,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         if let BezierSubcurve2::RationalQuadratic(conic) = curve
             && let Some(mut parameter_maps) = parallel
-                .polynomial_circle_rational_quadratic_parameter_maps(
+                .circle_rational_quadratic_parameter_maps(
                     arc.center(),
                     arc.radius_squared_ref(),
                     conic,
@@ -1957,25 +2019,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurveRegionBooleanOperand2::First => self.data.first,
             CurveRegionBooleanOperand2::Second => self.data.second,
         };
-        let Some(fragment_count) = region
+        let fragment_count = region
             .boundary_loops()
             .get(first.loop_index)
-            .map(|boundary| boundary.fragments().len())
-        else {
-            return None;
-        };
-        if first.fragment_index.checked_add(1) == Some(second.fragment_index) {
+            .map(|boundary| boundary.fragments().len())?;
+        let first_precedes_second = first.fragment_index.checked_add(1)
+            == Some(second.fragment_index)
+            || (second.fragment_index == 0
+                && first.fragment_index.checked_add(1) == Some(fragment_count));
+        let second_precedes_first = second.fragment_index.checked_add(1)
+            == Some(first.fragment_index)
+            || (first.fragment_index == 0
+                && second.fragment_index.checked_add(1) == Some(fragment_count));
+        if first_precedes_second {
             Some((false, true))
-        } else if second.fragment_index.checked_add(1) == Some(first.fragment_index) {
+        } else if second_precedes_first {
             Some((true, false))
-        } else if first.fragment_index == 0
-            && second.fragment_index.checked_add(1) == Some(fragment_count)
-        {
-            Some((true, false))
-        } else if second.fragment_index == 0
-            && first.fragment_index.checked_add(1) == Some(fragment_count)
-        {
-            Some((false, true))
         } else {
             None
         }
@@ -2598,60 +2657,80 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if support_result.blockers.is_empty() {
             return Ok(support_result);
         }
-        if chord.exact_line().is_none() {
+        {
             let blocker = |reason| RegionPairResult {
                 contacts: Vec::new(),
                 overlaps: Vec::new(),
                 blockers: vec![RegionPairBlocker::Uncertain(reason)],
             };
-            let contacts = match chord
-                .parallel_intersections(parallel, &self.data.policy)
-                .map_err(|cause| self.invalid(parallel_index, cause))?
-            {
+            let retained = match (
+                parallel_carrier.start.as_bezier_parameter(),
+                parallel_carrier.end.as_bezier_parameter(),
+            ) {
+                (Some(start), Some(end)) => chord.parallel_intersections_on_regular_range(
+                    parallel,
+                    &BezierParameterRange2::new_validated(start.clone(), end.clone()),
+                    &self.data.policy,
+                ),
+                _ => chord.parallel_intersections(parallel, &self.data.policy),
+            }
+            .map_err(|cause| self.invalid(parallel_index, cause))?;
+            let contacts = match retained {
                 Classification::Decided(BezierAlgebraicChordParallelIntersections2::Contacts(
                     contacts,
-                )) => contacts,
+                )) => Some(contacts),
                 Classification::Decided(
                     BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
-                ) => return Ok(blocker(UncertaintyReason::Boundary)),
-                Classification::Uncertain(reason) => return Ok(blocker(reason)),
+                ) if chord.exact_line().is_none() => {
+                    return Ok(blocker(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) if chord.exact_line().is_none() => {
+                    return Ok(blocker(reason));
+                }
+                Classification::Decided(
+                    BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                )
+                | Classification::Uncertain(_) => None,
             };
-            let chord_is_first = chord_index == pair.first_carrier_index;
-            let contacts = contacts
-                .into_iter()
-                .map(|contact| {
-                    let tangent_cross_sign =
-                        orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
-                    let chord_parameter = CurveRegionParameter2::from_algebraic_chord(
-                        contact.chord_parameter().clone(),
-                    );
-                    let parallel_parameter =
-                        CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
-                    let (first_parameter, second_parameter) = if chord_is_first {
-                        (chord_parameter, parallel_parameter)
-                    } else {
-                        (parallel_parameter, chord_parameter)
-                    };
-                    RegionPairContactEvidence::direct(
-                        first_parameter,
-                        second_parameter,
-                        Some(contact.point().clone()),
-                        tangent_cross_sign != RealSign::Zero,
-                        Some(tangent_cross_sign),
-                    )
-                })
-                .collect();
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-pair",
-                "analytic-parallel-retained-support",
-            );
-            return Ok(RegionPairResult {
-                contacts,
-                overlaps: Vec::new(),
-                blockers: Vec::new(),
-            });
+            if let Some(contacts) = contacts {
+                let chord_is_first = chord_index == pair.first_carrier_index;
+                let contacts = contacts
+                    .into_iter()
+                    .map(|contact| {
+                        let tangent_cross_sign =
+                            orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
+                        let chord_parameter = CurveRegionParameter2::from_algebraic_chord(
+                            contact.chord_parameter().clone(),
+                        );
+                        let parallel_parameter = CurveRegionParameter2::from_bezier(
+                            contact.parallel_parameter().clone(),
+                        );
+                        let (first_parameter, second_parameter) = if chord_is_first {
+                            (chord_parameter, parallel_parameter)
+                        } else {
+                            (parallel_parameter, chord_parameter)
+                        };
+                        RegionPairContactEvidence::direct(
+                            first_parameter,
+                            second_parameter,
+                            Some(contact.point().clone()),
+                            tangent_cross_sign != RealSign::Zero,
+                            Some(tangent_cross_sign),
+                        )
+                    })
+                    .collect();
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-pair",
+                    "analytic-parallel-retained-support",
+                );
+                return Ok(RegionPairResult {
+                    contacts,
+                    overlaps: Vec::new(),
+                    blockers: Vec::new(),
+                });
+            }
         }
         let Some(chord_line) = chord.exact_line() else {
             unreachable!("the retained-support path owns non-represented chords");
@@ -2683,7 +2762,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
         // Preserve the cheaper univariate supporting-line route whenever all
         // retained contacts have directly represented parallel parameters.
-        match self.parallel_line_pair_result(parallel, &line_curve, parallel_is_first)? {
+        let regular_range = parallel_carrier
+            .start
+            .as_bezier_parameter()
+            .zip(parallel_carrier.end.as_bezier_parameter())
+            .map(|_| {
+                CurveRegionParameterRange2::new_validated(
+                    parallel_carrier.start.clone(),
+                    parallel_carrier.end.clone(),
+                )
+            });
+        match self.parallel_line_pair_result(
+            parallel,
+            &line_curve,
+            parallel_is_first,
+            regular_range.as_ref(),
+        )? {
             Classification::Decided(Some(mut result)) => {
                 for contact in &mut result.contacts {
                     let Some(point) = contact.point.clone() else {
@@ -2822,6 +2916,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
             overlaps: Vec::new(),
             blockers: vec![RegionPairBlocker::Uncertain(reason)],
         };
+        let parallel_carrier = &self.data.carriers[parallel_index];
+        let regular_range = parallel_carrier
+            .start
+            .as_bezier_parameter()
+            .zip(parallel_carrier.end.as_bezier_parameter())
+            .map(|_| {
+                CurveRegionParameterRange2::new_validated(
+                    parallel_carrier.start.clone(),
+                    parallel_carrier.end.clone(),
+                )
+            });
         let Some(support_line) = chord
             .exact_line()
             .or_else(|| chord.strict_provenance_support_line(&self.data.policy))
@@ -2877,15 +2982,22 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .as_bezier_parameter()?
                 .as_exact()?
                 .clone();
-                let Classification::Decided((cross, dot)) = parallel
-                    .vector_tangent_cross_and_dot_signs(
+                let tangent_relation = match regular_range.as_ref() {
+                    Some(range) => parallel.vector_tangent_cross_and_dot_signs_on_regular_range(
+                        &BezierParameter2::Exact(parameter.clone()),
+                        &direction_x,
+                        &direction_y,
+                        range,
+                        &self.data.policy,
+                    ),
+                    None => parallel.vector_tangent_cross_and_dot_signs(
                         &BezierParameter2::Exact(parameter.clone()),
                         &direction_x,
                         &direction_y,
                         &self.data.policy,
-                    )
-                    .ok()?
-                else {
+                    ),
+                };
+                let Classification::Decided((cross, dot)) = tangent_relation.ok()? else {
                     return None;
                 };
                 if dot == RealSign::Zero {
@@ -2908,8 +3020,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .map(|contact| contact.parameter().clone())
             .collect::<Vec<_>>();
-        let relation = match parallel
-            .relation_to_supporting_line_with_direction_and_certified_contacts(
+        let relation_on_retained_range = |deep_branch_refinement| match regular_range.as_ref() {
+            Some(range) => parallel
+                .relation_to_supporting_line_on_regular_range_with_certified_contacts(
+                    &directed_line,
+                    range,
+                    authored_crossing
+                        .as_ref()
+                        .map(|(parameter, direction, _)| (parameter, *direction)),
+                    &certified_tangent_parameters,
+                    deep_branch_refinement,
+                    &self.data.policy,
+                ),
+            None => parallel.relation_to_supporting_line_with_direction_and_certified_contacts(
                 &directed_line,
                 &direction_x,
                 &direction_y,
@@ -2917,9 +3040,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .as_ref()
                     .map(|(parameter, direction, _)| (parameter, *direction)),
                 &certified_tangent_parameters,
-                false,
+                deep_branch_refinement,
                 &self.data.policy,
-            )
+            ),
+        };
+        let relation = match relation_on_retained_range(false)
             .map_err(|cause| self.invalid(parallel_index, cause))?
         {
             Classification::Decided(relation) => relation,
@@ -3007,18 +3132,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     return Ok(RegionPairResult::empty());
                 }
-                match parallel
-                    .relation_to_supporting_line_with_direction_and_certified_contacts(
-                        &directed_line,
-                        &direction_x,
-                        &direction_y,
-                        authored_crossing
-                            .as_ref()
-                            .map(|(parameter, direction, _)| (parameter, *direction)),
-                        &certified_tangent_parameters,
-                        true,
-                        &self.data.policy,
-                    )
+                match relation_on_retained_range(true)
                     .map_err(|cause| self.invalid(parallel_index, cause))?
                 {
                     Classification::Decided(relation) => relation,
@@ -3063,7 +3177,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     BezierEndpoint::End => (chord.end().clone(), chord.end_parameter()),
                 }
             } else {
-                let point = if contact.parameter().as_exact().is_some() {
+                let point = if let Some(range) = regular_range.as_ref() {
+                    match parallel
+                        .point_evidence_on_regular_range(
+                            contact.parameter(),
+                            range,
+                            &self.data.policy,
+                        )
+                        .map_err(|cause| self.invalid(parallel_index, cause))?
+                    {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => return Ok(blocker(reason)),
+                    }
+                } else if contact.parameter().as_exact().is_some() {
                     match parallel
                         .supporting_line_contact_evidence(
                             &directed_line,
@@ -3104,18 +3230,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let tangent_cross_sign =
                 orient_tangent_cross_sign(chord_cross_parallel, chord_is_first);
             let tangent_topology = if let Some(parallel_side_of_chord) = contact.tangent_side() {
-                let (cross, dot) = match parallel
-                    .vector_tangent_cross_and_dot_signs(
+                let tangent_relation = match regular_range.as_ref() {
+                    Some(range) => parallel.vector_tangent_cross_and_dot_signs_on_regular_range(
+                        contact.parameter(),
+                        &direction_x,
+                        &direction_y,
+                        range,
+                        &self.data.policy,
+                    ),
+                    None => parallel.vector_tangent_cross_and_dot_signs(
                         contact.parameter(),
                         &direction_x,
                         &direction_y,
                         &self.data.policy,
-                    )
-                    .map_err(|cause| self.invalid(parallel_index, cause))?
-                {
-                    Classification::Decided(signs) => signs,
-                    Classification::Uncertain(reason) => return Ok(blocker(reason)),
+                    ),
                 };
+                let (cross, dot) =
+                    match tangent_relation.map_err(|cause| self.invalid(parallel_index, cause))? {
+                        Classification::Decided(signs) => signs,
+                        Classification::Uncertain(reason) => return Ok(blocker(reason)),
+                    };
                 if cross != RealSign::Zero || dot == RealSign::Zero {
                     return Err(self.invalid(
                         parallel_index,
@@ -3371,23 +3505,57 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::ParallelRational { parallel_is_first } => {
-                let (parallel, curve) = if *parallel_is_first {
-                    (first.geometry.parallel(), second.geometry.bezier())
+                let (parallel_carrier, parallel, curve) = if *parallel_is_first {
+                    (first, first.geometry.parallel(), second.geometry.bezier())
                 } else {
-                    (second.geometry.parallel(), first.geometry.bezier())
+                    (second, second.geometry.parallel(), first.geometry.bezier())
                 };
-                match self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)? {
-                    Classification::Decided(Some(result)) => return Ok(result),
-                    Classification::Decided(None) | Classification::Uncertain(_) => {}
+                let retained_range = match (
+                    parallel_carrier.start.as_bezier_parameter(),
+                    parallel_carrier.end.as_bezier_parameter(),
+                ) {
+                    (Some(start), Some(end)) => Some(BezierParameterRange2::new_validated(
+                        start.clone(),
+                        end.clone(),
+                    )),
+                    _ => None,
+                };
+                // Source-cusp branches retain one-sided endpoint point
+                // evidence and must enter the range-aware common kernel before
+                // the older circle shortcut, whose authored hodograph is
+                // undefined at that endpoint. Ordinary carriers keep that cheap
+                // interaction fast path. The line kernel is range-aware for
+                // every retained subcarrier: a regular sibling of a cusp branch
+                // need not itself own a selected endpoint, while its unsplit
+                // authored source still has the singular hodograph.
+                if parallel_carrier.selected_fiber_endpoint_points.is_none() {
+                    match self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)? {
+                        Classification::Decided(Some(result)) => return Ok(result),
+                        Classification::Decided(None) | Classification::Uncertain(_) => {}
+                    }
                 }
-                match self.parallel_line_pair_result(parallel, curve, *parallel_is_first)? {
+                let regular_range = retained_range
+                    .as_ref()
+                    .cloned()
+                    .map(CurveRegionParameterRange2::from_bezier_range);
+                match self.parallel_line_pair_result(
+                    parallel,
+                    curve,
+                    *parallel_is_first,
+                    regular_range.as_ref(),
+                )? {
                     Classification::Decided(Some(result)) => return Ok(result),
                     Classification::Decided(None) | Classification::Uncertain(_) => {}
                 }
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
-                let result = match parallel
-                    .intersections(&rational, &self.data.policy)
+                let intersections = match retained_range.as_ref() {
+                    Some(range) => {
+                        parallel.intersections_on_regular_range(&rational, range, &self.data.policy)
+                    }
+                    None => parallel.intersections(&rational, &self.data.policy),
+                };
+                let result = match intersections
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
                     Classification::Decided(result) => result,
@@ -3495,15 +3663,40 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 let parallel = first.geometry.parallel();
                 let intersection = match &pair.context {
-                    RegionCarrierPairContext::ParallelPair => parallel
-                        .parallel_intersections(second.geometry.parallel(), &self.data.policy),
-                    RegionCarrierPairContext::ParallelSameImage => {
+                    RegionCarrierPairContext::ParallelPair
+                    | RegionCarrierPairContext::ParallelSameImage => {
                         // The pair kernel saturates the identity component and
                         // replays every residual off-diagonal contact.  Adding
                         // the unordered self result would publish each fitting
                         // crossing twice.
-                        parallel
-                            .parallel_intersections(second.geometry.parallel(), &self.data.policy)
+                        match (
+                            first.start.as_bezier_parameter(),
+                            first.end.as_bezier_parameter(),
+                            second.start.as_bezier_parameter(),
+                            second.end.as_bezier_parameter(),
+                        ) {
+                            (
+                                Some(first_start),
+                                Some(first_end),
+                                Some(second_start),
+                                Some(second_end),
+                            ) => parallel.parallel_intersections_on_regular_ranges(
+                                second.geometry.parallel(),
+                                &BezierParameterRange2::new_validated(
+                                    first_start.clone(),
+                                    first_end.clone(),
+                                ),
+                                &BezierParameterRange2::new_validated(
+                                    second_start.clone(),
+                                    second_end.clone(),
+                                ),
+                                &self.data.policy,
+                            ),
+                            _ => parallel.parallel_intersections(
+                                second.geometry.parallel(),
+                                &self.data.policy,
+                            ),
+                        }
                     }
                     RegionCarrierPairContext::ParallelSelf => {
                         self.parallel_self_intersections(parallel)
@@ -9022,11 +9215,83 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .map_err(|cause| self.invalid(carrier_index, cause))?
                 }
             }
-        } else {
-            let (_, representative) = self.fragment_representative(carrier_index, fragment)?;
+        } else if let BezierSplitFragment2::SelectedFiber(fragment) = fragment {
+            let representative = match fragment
+                .representative_point(&self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            };
             other
                 .classify_point_raw(&representative, &self.data.policy)
                 .map_err(|cause| self.invalid(carrier_index, cause))?
+        } else {
+            let (parameter, representative) =
+                self.fragment_representative(carrier_index, fragment)?;
+            let classification = other
+                .classify_point_raw(&representative, &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            if matches!(
+                classification,
+                Classification::Decided(RegionPointLocation::Inside | RegionPointLocation::Outside)
+            ) {
+                classification
+            } else {
+                // A symmetric rational witness can land on a tangent or
+                // shared-boundary event even though the open arrangement
+                // fragment lies in one face. Complete pair replay guarantees
+                // that its face cannot change between split events, so probe
+                // exact rational witnesses on both sides before propagating a
+                // boundary ambiguity.
+                let Some((start, end)) = fragment_range(fragment) else {
+                    return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+                };
+                let middle = BezierParameter2::Exact(parameter);
+                let mut decided = None;
+                for (left, right) in [(start, &middle), (&middle, end)] {
+                    let witness = match left
+                        .strict_rational_between_ordered(right, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(witness) => witness,
+                        Classification::Uncertain(_) => continue,
+                    };
+                    let point = match carrier
+                        .geometry
+                        .point_at(&witness, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(_) => continue,
+                    };
+                    match other
+                        .classify_point_raw(&point, &self.data.policy)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?
+                    {
+                        Classification::Decided(
+                            location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
+                        ) => match decided {
+                            Some(previous) if previous != location => {
+                                return Err(self.invalid(
+                                    carrier_index,
+                                    CurveError::Topology(
+                                        "one split carrier fragment crossed two Boolean faces"
+                                            .into(),
+                                    ),
+                                ));
+                            }
+                            Some(_) => {}
+                            None => decided = Some(location),
+                        },
+                        Classification::Decided(RegionPointLocation::Boundary)
+                        | Classification::Uncertain(_) => {}
+                    }
+                }
+                decided.map_or(classification, Classification::Decided)
+            }
         };
         match classification {
             Classification::Decided(location) => Ok(location),
@@ -9147,76 +9412,82 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn carrier_bounds_are_outside_other_region(&self, carrier_index: usize) -> bool {
-        let carrier = &self.data.carriers[carrier_index];
-        let coarse_bounds_are_separated = || {
-            let Classification::Decided(carrier_bounds) = carrier
-                .bounds
-                .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy))
-            else {
-                return false;
-            };
-            let mut other_bounds = None::<Aabb2>;
-            for other in &self.data.carriers {
-                if other.operand == carrier.operand {
-                    continue;
-                }
-                let Classification::Decided(bounds) = other
+        // This entire path is an optional fragment-classification shortcut.
+        // If exact bounds cannot separate the operands, the authoritative
+        // point/region classifier below must get the decision.
+        self.data.policy.strict_predicate_pass(|| {
+            let carrier = &self.data.carriers[carrier_index];
+            let coarse_bounds_are_separated = || {
+                let Classification::Decided(carrier_bounds) = carrier
                     .bounds
-                    .get_or_init(|| other.geometry.certified_outer_bounds(&self.data.policy))
+                    .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy))
                 else {
                     return false;
                 };
-                other_bounds = Some(match other_bounds {
-                    None => bounds.clone(),
-                    Some(accumulated) => match accumulated.union(bounds, &self.data.policy) {
-                        Classification::Decided(bounds) => bounds,
-                        Classification::Uncertain(_) => return false,
-                    },
-                });
-            }
-            other_bounds.is_none_or(|other_bounds| {
-                carrier_bounds.overlaps(&other_bounds, &self.data.policy)
-                    == Classification::Decided(false)
-            })
-        };
-        coarse_bounds_are_separated()
-            || [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-                .into_iter()
-                .any(|refinement_steps| {
-                    let Classification::Decided(carrier_bounds) = carrier
-                        .geometry
-                        .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
+                let mut other_bounds = None::<Aabb2>;
+                for other in &self.data.carriers {
+                    if other.operand == carrier.operand {
+                        continue;
+                    }
+                    let Classification::Decided(bounds) = other
+                        .bounds
+                        .get_or_init(|| other.geometry.certified_outer_bounds(&self.data.policy))
                     else {
                         return false;
                     };
-                    let mut other_bounds = None::<Aabb2>;
-                    for other in &self.data.carriers {
-                        if other.operand == carrier.operand {
-                            continue;
-                        }
-                        let other_result = other
+                    other_bounds = Some(match other_bounds {
+                        None => bounds.clone(),
+                        Some(accumulated) => match accumulated.union(bounds, &self.data.policy) {
+                            Classification::Decided(bounds) => bounds,
+                            Classification::Uncertain(_) => return false,
+                        },
+                    });
+                }
+                other_bounds.is_none_or(|other_bounds| {
+                    carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                        == Classification::Decided(false)
+                })
+            };
+            coarse_bounds_are_separated()
+                || [0, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+                    .into_iter()
+                    .any(|refinement_steps| {
+                        let Classification::Decided(carrier_bounds) = carrier
                             .geometry
-                            .certified_outer_bounds_refined(refinement_steps, &self.data.policy);
-                        let Classification::Decided(bounds) = other_result else {
+                            .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
+                        else {
                             return false;
                         };
-                        other_bounds = Some(match other_bounds {
-                            None => bounds,
-                            Some(accumulated) => {
-                                let Classification::Decided(bounds) =
-                                    accumulated.union(&bounds, &self.data.policy)
-                                else {
-                                    return false;
-                                };
-                                bounds
+                        let mut other_bounds = None::<Aabb2>;
+                        for other in &self.data.carriers {
+                            if other.operand == carrier.operand {
+                                continue;
                             }
-                        });
-                    }
-                    other_bounds.is_none_or(|other_bounds| {
-                        carrier_bounds.overlaps(&other_bounds, &self.data.policy)
-                            == Classification::Decided(false)
+                            let other_result = other.geometry.certified_outer_bounds_refined(
+                                refinement_steps,
+                                &self.data.policy,
+                            );
+                            let Classification::Decided(bounds) = other_result else {
+                                return false;
+                            };
+                            other_bounds = Some(match other_bounds {
+                                None => bounds,
+                                Some(accumulated) => {
+                                    let Classification::Decided(bounds) =
+                                        accumulated.union(&bounds, &self.data.policy)
+                                    else {
+                                        return false;
+                                    };
+                                    bounds
+                                }
+                            });
+                        }
+                        other_bounds.is_none_or(|other_bounds| {
+                            carrier_bounds.overlaps(&other_bounds, &self.data.policy)
+                                == Classification::Decided(false)
+                        })
                     })
-                })
+        })
     }
 
     fn fragment_representative(
@@ -9318,10 +9589,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             !second.filled_side_is_left
         };
-        Ok(action_from_result_sides(
-            operation.apply(first.filled_side_is_left, second_left_in_first_direction),
-            operation.apply(!first.filled_side_is_left, !second_left_in_first_direction),
-        ))
+        let left = operation.apply(first.filled_side_is_left, second_left_in_first_direction);
+        let right = operation.apply(!first.filled_side_is_left, !second_left_in_first_direction);
+        Ok(action_from_result_sides(left, right))
     }
 
     fn invalid(&self, carrier_index: usize, cause: CurveError) -> ExactCurveError {
@@ -9598,19 +9868,24 @@ fn carrier_bounds_decided_disjoint(
     second: &RegionCarrier,
     policy: &CurveContext,
 ) -> bool {
-    let first_bounds = first
-        .bounds
-        .get_or_init(|| first.geometry.certified_outer_bounds(policy));
-    let second_bounds = second
-        .bounds
-        .get_or_init(|| second.geometry.certified_outer_bounds(policy));
-    match (first_bounds, second_bounds) {
-        (Classification::Decided(first), Classification::Decided(second)) => matches!(
-            first.overlaps(second, policy),
-            Classification::Decided(false)
-        ),
-        (Classification::Decided(_) | Classification::Uncertain(_), _) => false,
-    }
+    // Bounds are an optional rejection proof. They must never consume the
+    // APPROXIMATE_512 terminal or weaken the certainty of an operation whose
+    // authoritative carrier kernel can decide the pair exactly.
+    policy.strict_predicate_pass(|| {
+        let first_bounds = first
+            .bounds
+            .get_or_init(|| first.geometry.certified_outer_bounds(policy));
+        let second_bounds = second
+            .bounds
+            .get_or_init(|| second.geometry.certified_outer_bounds(policy));
+        match (first_bounds, second_bounds) {
+            (Classification::Decided(first), Classification::Decided(second)) => matches!(
+                first.overlaps(second, policy),
+                Classification::Decided(false)
+            ),
+            (Classification::Decided(_) | Classification::Uncertain(_), _) => false,
+        }
+    })
 }
 
 fn carrier_bounds_refined(
@@ -9672,18 +9947,20 @@ fn carrier_refined_bounds_decided_disjoint(
 ) -> CurveResult<bool> {
     // This is a broad-phase rejection proof, not a terminal predicate.
     // Unresolved boxes proceed to the authoritative exact pair kernel.
-    for refinement_steps in [0, 2] {
-        let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
-            carrier_bounds_refined(first, refinement_steps, policy)?,
-            carrier_bounds_refined(second, refinement_steps, policy)?,
-        ) else {
-            continue;
-        };
-        if first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false) {
-            return Ok(true);
+    policy.strict_predicate_pass(|| {
+        for refinement_steps in [0, 2] {
+            let (Classification::Decided(first_bounds), Classification::Decided(second_bounds)) = (
+                carrier_bounds_refined(first, refinement_steps, policy)?,
+                carrier_bounds_refined(second, refinement_steps, policy)?,
+            ) else {
+                continue;
+            };
+            if first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false) {
+                return Ok(true);
+            }
         }
-    }
-    Ok(false)
+        Ok(false)
+    })
 }
 
 fn subcurve_certified_outer_bounds(
@@ -9910,9 +10187,10 @@ fn split_carrier_with_refinement(
     max_refinement_steps: usize,
     policy: &CurveContext,
 ) -> Result<Vec<SplitCarrierFragment>, CurveError> {
-    if events
-        .iter()
-        .any(|event| event.parameter.is_selected_fiber())
+    if carrier.selected_fiber_endpoint_points.is_some()
+        || events
+            .iter()
+            .any(|event| event.parameter.is_selected_fiber())
     {
         return split_selected_fiber_carrier(carrier, events, contact_points, policy);
     }
@@ -11719,11 +11997,105 @@ fn contacts_decided_same_from_shared_parallel(
                     Classification::Decided(Ordering::Equal)
                 )
             {
+                let normal_sheet_matches = match (
+                    carriers[existing_carrier].start.as_bezier_parameter(),
+                    carriers[existing_carrier].end.as_bezier_parameter(),
+                    carriers[current_carrier].start.as_bezier_parameter(),
+                    carriers[current_carrier].end.as_bezier_parameter(),
+                ) {
+                    (
+                        Some(existing_start),
+                        Some(existing_end),
+                        Some(current_start),
+                        Some(current_end),
+                    ) => existing_parallel
+                        .regular_source_ranges_share_normal_sheet(
+                            &BezierParameterRange2::new_validated(
+                                existing_start.clone(),
+                                existing_end.clone(),
+                            ),
+                            &BezierParameterRange2::new_validated(
+                                current_start.clone(),
+                                current_end.clone(),
+                            ),
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Boolean,
+                                carriers[existing_carrier].family,
+                                cause,
+                            )
+                        })?,
+                    _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+                };
+                if !matches!(normal_sheet_matches, Classification::Decided(true)) {
+                    continue;
+                }
+                let existing_endpoint = selected_fiber_endpoint_point_at_parameter(
+                    &carriers[existing_carrier],
+                    &existing.parameters[existing_slot],
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Boolean,
+                        carriers[existing_carrier].family,
+                        cause,
+                    )
+                })?;
+                let current_endpoint = selected_fiber_endpoint_point_at_parameter(
+                    &carriers[current_carrier],
+                    parameters[current_slot],
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Boolean,
+                        carriers[current_carrier].family,
+                        cause,
+                    )
+                })?;
+                if existing_endpoint.is_some() || current_endpoint.is_some() {
+                    let (Some(existing_endpoint), Some(current_endpoint)) =
+                        (existing_endpoint, current_endpoint)
+                    else {
+                        // At a source singularity the same procedural
+                        // parallel and parameter can have two distinct
+                        // one-sided normal limits.  Without both branch-owned
+                        // endpoint images, parameter identity is not point
+                        // identity; let the ordinary point-evidence matcher
+                        // decide the contact instead.
+                        continue;
+                    };
+                    let same = existing_endpoint.same_point(current_endpoint, policy);
+                    if !matches!(same, Classification::Decided(true)) {
+                        continue;
+                    }
+                }
                 return Ok(true);
             }
         }
     }
     Ok(false)
+}
+
+fn selected_fiber_endpoint_point_at_parameter<'a>(
+    carrier: &'a RegionCarrier,
+    parameter: &CurveRegionParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<&'a RationalBezierIntersectionPointEvidence2>> {
+    let Some(points) = carrier.selected_fiber_endpoint_points.as_deref() else {
+        return Ok(None);
+    };
+    for (endpoint, point) in [(&carrier.start, &points[0]), (&carrier.end, &points[1])] {
+        match endpoint.cmp_by_refinement(parameter, policy)? {
+            Classification::Decided(Ordering::Equal) => return Ok(Some(point)),
+            Classification::Decided(Ordering::Less | Ordering::Greater) => {}
+            Classification::Uncertain(_) => return Ok(None),
+        }
+    }
+    Ok(None)
 }
 
 fn parameter_matches_any(

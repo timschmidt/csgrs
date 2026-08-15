@@ -1,7 +1,8 @@
 use hypercurve::{
     BezierSplitFragment2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
     CurveCertainty, CurveContext, CurveError, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2,
-    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -384,6 +385,63 @@ fn square_cap_uses_the_first_nonzero_endpoint_derivative() {
 }
 
 #[test]
+fn nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame() {
+    // P(u)=(u^2,u^3) has a nonlinear source cusp at its first endpoint.
+    // Reversing its controls moves the same cusp to the final endpoint and
+    // requires the even-order endpoint derivative to be orientation-corrected.
+    let third = q(1, 3);
+    let curves = [
+        CubicBezier2::new(
+            p(0, 0),
+            p(0, 0),
+            Point2::new(third.clone(), Real::zero()),
+            p(1, 1),
+        ),
+        CubicBezier2::new(p(1, 1), Point2::new(third, Real::zero()), p(0, 0), p(0, 0)),
+    ];
+    for curve in curves {
+        let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let stroke_call = || {
+                CurveRegion2::stroke_path(
+                    &path,
+                    q(1, 4),
+                    &OffsetCornerStyle2::Round,
+                    OffsetCap::Square,
+                    &policy,
+                )
+            };
+            #[cfg(feature = "dispatch-trace")]
+            let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
+            #[cfg(not(feature = "dispatch-trace"))]
+            let stroke = stroke_call();
+            let stroke = stroke.unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                let trace = hyperreal::dispatch_trace::take_trace()
+                    .dispatch
+                    .into_iter()
+                    .filter(|entry| entry.layer == "hypercurve")
+                    .collect::<Vec<_>>();
+                #[cfg(not(feature = "dispatch-trace"))]
+                let trace = ();
+                panic!("a nonlinear endpoint source cusp must remain strokeable: policy={policy:?}, error={error:?}; {trace:?}")
+            });
+            assert_eq!(stroke.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                location(&stroke.value, Point2::new(q(-1, 8), Real::zero())),
+                RegionPointLocation::Inside,
+            );
+            assert_eq!(
+                location(&stroke.value, Point2::new(q(-3, 8), Real::zero())),
+                RegionPointLocation::Outside,
+            );
+        }
+    }
+}
+
+#[test]
 fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
     let path = CurvePath2::try_new(vec![Curve2::from(CubicBezier2::new(
         p(0, 0),
@@ -421,6 +479,170 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
         ),
         Err(ExactCurveError::Invalid { .. })
     ));
+}
+
+#[test]
+#[ignore = "long exact end-to-end source-cusp regression; run explicitly in release mode"]
+fn exact_path_stroke_splits_an_interior_source_cusp() {
+    // P(u) = ((2u - 1)^2, (2u - 1)^3).  Both first derivatives vanish at
+    // u=1/2, while the two regular incident branches have exact opposite
+    // one-sided tangents.  A stroke must partition at that source singularity
+    // and regularize the two branch bands instead of rejecting the whole
+    // authored cubic.
+    let path = CurvePath2::try_new(vec![Curve2::from(CubicBezier2::new(
+        p(1, -1),
+        Point2::new(q(-1, 3), s(1)),
+        Point2::new(q(-1, 3), s(-1)),
+        p(1, 1),
+    ))])
+    .unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let stroke_call = || {
+            CurveRegion2::stroke_path(
+                &path,
+                q(1, 4),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+                &policy,
+            )
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let stroke = stroke_call();
+        let stroke = stroke.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace()
+                .dispatch
+                .into_iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let trace = ();
+            panic!("an exact source cusp must remain strokeable: policy={policy:?}, error={error:?}; {trace:?}")
+        });
+        assert_eq!(stroke.certainty, CurveCertainty::Certified);
+        assert!(!stroke.value.is_empty());
+        assert_eq!(
+            location(&stroke.value, p(0, 0)),
+            RegionPointLocation::Inside
+        );
+    }
+}
+
+#[test]
+#[ignore = "long exact degree-four end-to-end regression; about 24 seconds in release mode"]
+fn exact_path_stroke_preserves_an_even_multiplicity_stationary_source() {
+    // With s=2u-1, P(u)=(s^3,s^4) has P'(u)=s^2(6,8s).
+    // The common hodograph factor has even multiplicity, so the two regular
+    // branches meet on the same normal sheet and must not acquire a reversal
+    // cap at u=1/2. Degree four is represented by an exact unit-weight
+    // RationalBezier2 because the public polynomial primitives stop at cubic.
+    let curve = RationalBezier2::try_new(
+        vec![
+            p(-1, 1),
+            Point2::new(q(1, 2), s(-1)),
+            p(0, 1),
+            Point2::new(q(-1, 2), s(-1)),
+            p(1, 1),
+        ],
+        vec![Real::one(); 5],
+    )
+    .unwrap();
+    let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let stroke_call = || {
+            CurveRegion2::stroke_path(
+                &path,
+                q(1, 4),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+                &policy,
+            )
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let stroke = stroke_call();
+        let stroke = stroke.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace()
+                .dispatch
+                .into_iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let trace = ();
+            panic!("an even-multiplicity stationary source must remain strokeable: policy={policy:?}, error={error:?}; {trace:?}")
+        });
+        assert_eq!(stroke.certainty, CurveCertainty::Certified);
+        assert!(!stroke.value.is_empty());
+        assert_eq!(
+            location(&stroke.value, p(0, 0)),
+            RegionPointLocation::Inside
+        );
+    }
+}
+
+#[test]
+#[ignore = "long exact rational-cusp end-to-end regression; run explicitly in release mode"]
+fn exact_path_stroke_splits_a_nonuniform_rational_source_cusp() {
+    // These controls and weights are the projective reparameterization
+    // t=u/(2-u) of P(t)=((2t-1)^2,(2t-1)^3). The geometric cusp is unchanged,
+    // but its source parameter moves from t=1/2 to u=2/3 and its homogeneous
+    // hodograph is genuinely rational.
+    let curve = RationalBezier2::try_new(
+        vec![
+            p(1, -1),
+            Point2::new(q(-1, 3), s(1)),
+            Point2::new(q(-1, 3), s(-1)),
+            p(1, 1),
+        ],
+        vec![s(8), s(4), s(2), s(1)],
+    )
+    .unwrap();
+    let path = CurvePath2::try_new(vec![Curve2::from(curve)]).unwrap();
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let stroke_call = || {
+            CurveRegion2::stroke_path(
+                &path,
+                q(1, 4),
+                &OffsetCornerStyle2::Round,
+                OffsetCap::Round,
+                &policy,
+            )
+        };
+        #[cfg(feature = "dispatch-trace")]
+        let stroke = hyperreal::dispatch_trace::with_recording(stroke_call);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let stroke = stroke_call();
+        let stroke = stroke.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            let trace = hyperreal::dispatch_trace::take_trace()
+                .dispatch
+                .into_iter()
+                .filter(|entry| entry.layer == "hypercurve")
+                .collect::<Vec<_>>();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let trace = ();
+            panic!("a nonuniform rational source cusp must remain strokeable: policy={policy:?}, error={error:?}; {trace:?}")
+        });
+        assert_eq!(stroke.certainty, CurveCertainty::Certified);
+        assert!(!stroke.value.is_empty());
+        assert_eq!(
+            location(&stroke.value, p(0, 0)),
+            RegionPointLocation::Inside
+        );
+    }
 }
 
 #[test]
