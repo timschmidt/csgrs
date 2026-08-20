@@ -14,7 +14,7 @@
 //! reservations turn unrepresentable host sizes into explicit statuses;
 //! coefficients are never sampled through primitive floating point.
 
-use hyperreal::{CertifiedRealSign, Real, RealSign};
+use hyperreal::{CertifiedRealSign, Real, RealSign, ZeroKnowledge};
 
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::resultant::{UnivariateResultantError, resultant_univariate_polynomials};
@@ -128,8 +128,14 @@ impl DenseTensorPolynomial {
             .collect::<Option<Vec<_>>>()?;
         let mut result = Self::zero(dimensions.clone())?;
         for (left_index, left) in self.coefficients.iter().enumerate() {
+            if left.zero_status() == ZeroKnowledge::Zero {
+                continue;
+            }
             let left_exponents = exponents(&self.dimensions, left_index);
             for (right_index, right) in other.coefficients.iter().enumerate() {
+                if right.zero_status() == ZeroKnowledge::Zero {
+                    continue;
+                }
                 let right_exponents = exponents(&other.dimensions, right_index);
                 let product_exponents = left_exponents
                     .iter()
