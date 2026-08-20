@@ -1457,7 +1457,11 @@ impl BezierParameter2 {
         offset: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let scale_sign = match real_sign(scale, policy) {
+        // An affine chart is retained construction evidence. Even when the
+        // caller permits terminal 512-bit equality, its orientation and
+        // transformed polynomial must be selected under STRICT.
+        let strict = policy.strict_counterpart();
+        let scale_sign = match real_sign(scale, &strict) {
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -1476,18 +1480,18 @@ impl BezierParameter2 {
             &-offset.clone(),
             &Real::zero(),
             scale,
-            policy.predicate_policy(),
+            strict.predicate_policy(),
         ) {
             Some(coefficients) => coefficients,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let polynomial =
+            match BezierParameterPolynomial::try_new_power_basis(coefficients, &strict)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let first = scale * parameter.interval().start() + offset;
         let second = scale * parameter.interval().end() + offset;
         let interval = match scale_sign {

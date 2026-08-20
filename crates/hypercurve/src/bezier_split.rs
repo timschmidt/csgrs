@@ -281,6 +281,74 @@ impl CurveRegionParameter2 {
         }
     }
 
+    /// Returns the exact finite isolating bounds used to construct a rational
+    /// envelope around this parameter. These are outward certificates, not
+    /// representative values.
+    pub(crate) fn finite_envelope_bounds(&self) -> Option<(&Real, &Real)> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(BezierParameter2::Exact(parameter)) => {
+                Some((parameter, parameter))
+            }
+            CurveRegionParameterData2::Bezier(BezierParameter2::Algebraic(parameter)) => {
+                Some((parameter.interval().start(), parameter.interval().end()))
+            }
+            CurveRegionParameterData2::SelectedFiber(parameter) => {
+                Some(parameter.isolating_bounds())
+            }
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => None,
+        }
+    }
+
+    /// Refines a finite scalar while preserving its native authority.
+    pub(crate) fn refined_for_finite_envelope(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => {
+                Ok(Classification::Decided(Self::from_bezier(
+                    parameter
+                        .clone()
+                        .refined_isolating_interval(refinement_steps, policy),
+                )))
+            }
+            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+                .refined(refinement_steps, policy)?
+                .map(Self::from_selected_fiber)),
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    /// Applies a finite affine chart without projecting a selected-fiber
+    /// scalar into a degree-multiplied global polynomial.
+    pub(crate) fn affine_image_unbounded(
+        &self,
+        scale: &Real,
+        offset: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        match &self.data {
+            CurveRegionParameterData2::Bezier(parameter) => Ok(parameter
+                .affine_image_unbounded(scale, offset, policy)?
+                .map(Self::from_bezier)),
+            CurveRegionParameterData2::SelectedFiber(parameter) => Ok(parameter
+                .affine_image_unbounded(scale, offset, policy)?
+                .map(Self::from_selected_fiber)),
+            CurveRegionParameterData2::AlgebraicChord(_)
+            | CurveRegionParameterData2::AlgebraicCusp(_)
+            | CurveRegionParameterData2::AlgebraicCuspComplement(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
     pub(crate) fn strict_rational_between_ordered(
         &self,
         other: &Self,
@@ -703,7 +771,7 @@ impl BezierSelectedFiberFragment2 {
         }
     }
 
-    fn reversed(&self) -> Self {
+    pub(crate) fn reversed(&self) -> Self {
         let mut reversed = self.clone();
         reversed.reversed = !reversed.reversed;
         reversed

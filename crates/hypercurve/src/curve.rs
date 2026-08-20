@@ -3182,26 +3182,42 @@ pub(crate) enum CornerReplacement2 {
         source_scale: Real,
         source_offset: Real,
     },
+    /// A finite rational envelope whose exact cut boundaries remain selected
+    /// in local fibers. The replacement fragment owns the reparameterized
+    /// carrier and both endpoint point witnesses, so reconstruction never
+    /// needs the degree-multiplied global parameter projections.
+    SelectedFiber {
+        fragment: Arc<crate::bezier_split::BezierSelectedFiberFragment2>,
+        /// Maps the replacement parameter back to the authored source:
+        /// `source = scale * replacement + offset`.
+        source_scale: Real,
+        source_offset: Real,
+    },
 }
 
 impl CornerReplacement2 {
     pub(crate) const fn as_curve(&self) -> Option<&BezierSubcurve2> {
         match self {
             Self::Curve(curve) => Some(curve),
-            Self::AnalyticParallel { .. } => None,
+            Self::AnalyticParallel { .. } | Self::SelectedFiber { .. } => None,
         }
     }
 
     pub(crate) const fn as_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
         match self {
             Self::AnalyticParallel { fragment, .. } => Some(fragment),
-            Self::Curve(_) => None,
+            Self::Curve(_) | Self::SelectedFiber { .. } => None,
         }
     }
 
     pub(crate) fn parallel_source_parameter_map(&self) -> Option<(&Real, &Real)> {
         match self {
             Self::AnalyticParallel {
+                source_scale,
+                source_offset,
+                ..
+            } => Some((source_scale, source_offset)),
+            Self::SelectedFiber {
                 source_scale,
                 source_offset,
                 ..

@@ -3360,50 +3360,87 @@ impl BezierAlgebraicSelectedFiberParameter2 {
 
     pub(crate) fn unit_complement(&self) -> Self {
         let policy = self.data.authority.data.policy;
+        let Classification::Decided(complement) = self
+            .affine_image_unbounded(&Real::from(-1_i8), &Real::one(), &policy)
+            .expect("the represented unit-complement chart is nondegenerate")
+        else {
+            unreachable!("the represented unit-complement chart has a strict sign")
+        };
+        complement
+    }
+
+    /// Applies `scale * parameter + offset` without constructing the selected
+    /// scalar's global resultant.
+    ///
+    /// If `u` is selected by `F(alpha, u) = 0` and `v = scale*u + offset`,
+    /// the returned authority selects `v` through
+    /// `F(alpha, (v-offset)/scale) = 0`.  The represented affine coefficients
+    /// and transformed isolator are exact construction evidence; an
+    /// `APPROXIMATE_512` terminal equality decision is never used to choose
+    /// this chart.
+    pub(crate) fn affine_image_unbounded(
+        &self,
+        scale: &Real,
+        offset: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        let scale_sign = match real_sign(scale, &CurveContext::STRICT) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        if scale == &Real::one() && offset.zero_status() == ZeroStatus::Zero {
+            return Ok(Classification::Decided(self.clone()));
+        }
+        let inverse_scale = (Real::one() / scale)?;
+        let inverse_offset = ((-offset.clone()) / scale)?;
         let authority = BezierAlgebraicSelectedFiberAuthority2::new(
-            bivariate_complement_second_parameter(&self.data.authority.data.incidence),
+            bivariate_affine_second_parameter(
+                &self.data.authority.data.incidence,
+                &inverse_scale,
+                &inverse_offset,
+            ),
             self.data.authority.data.retained_parameter.clone(),
-            &policy,
+            &self.data.authority.data.policy,
         );
-        authority.parameter(IsolatedRootInterval {
-            lower: Real::one() - &self.data.root.upper,
-            upper: Real::one() - &self.data.root.lower,
-            exact_root: self
-                .data
-                .root
-                .exact_root
-                .as_ref()
-                .map(|root| Real::one() - root),
-            distinct_root_count: self.data.root.distinct_root_count,
-        })
+        let first = scale * &self.data.root.lower + offset;
+        let second = scale * &self.data.root.upper + offset;
+        let (lower, upper) = match scale_sign {
+            RealSign::Positive => (first, second),
+            RealSign::Negative => (second, first),
+            RealSign::Zero => unreachable!(),
+        };
+        Ok(Classification::Decided(
+            authority.parameter(IsolatedRootInterval {
+                lower,
+                upper,
+                exact_root: self
+                    .data
+                    .root
+                    .exact_root
+                    .as_ref()
+                    .map(|root| scale * root + offset),
+                distinct_root_count: self.data.root.distinct_root_count,
+            }),
+        ))
     }
 
     /// Translates this exact local scalar without constructing its global
     /// resultant. If `u` is selected by `F(alpha, u) = 0`, the returned scalar
     /// `v = u + offset` is selected by `F(alpha, v - offset) = 0`.
     fn translated(&self, offset: &Real) -> Self {
-        if offset.zero_status() == ZeroStatus::Zero {
-            return self.clone();
-        }
         let policy = self.data.authority.data.policy;
-        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
-            bivariate_affine_second_parameter(
-                &self.data.authority.data.incidence,
-                &Real::one(),
-                &(-offset.clone()),
-            ),
-            self.data.authority.data.retained_parameter.clone(),
-            &policy,
-        );
-        authority.parameter(IsolatedRootInterval {
-            lower: &self.data.root.lower + offset,
-            upper: &self.data.root.upper + offset,
-            exact_root: self.data.root.exact_root.as_ref().map(|root| root + offset),
-            distinct_root_count: self.data.root.distinct_root_count,
-        })
+        let Classification::Decided(translated) = self
+            .affine_image_unbounded(&Real::one(), offset, &policy)
+            .expect("a represented translation is a nondegenerate affine chart")
+        else {
+            unreachable!("a represented translation has a strict positive scale")
+        };
+        translated
     }
 
-    fn refined(
+    pub(crate) fn refined(
         &self,
         refinement_steps: usize,
         policy: &CurveContext,
@@ -3417,6 +3454,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             policy,
         )?
         .map(|root| self.data.authority.parameter(root)))
+    }
+
+    pub(crate) fn isolating_bounds(&self) -> (&Real, &Real) {
+        (&self.data.root.lower, &self.data.root.upper)
     }
 
     fn predicate_sign(
@@ -110045,6 +110086,39 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_affine_chart_round_trip_avoids_global_projection() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            let two = Real::from(2_i8);
+            let minus_one = Real::from(-1_i8);
+            let Classification::Decided(mapped) = parameter
+                .affine_image_unbounded(&two, &minus_one, &policy)
+                .unwrap()
+            else {
+                panic!("a represented nonzero affine chart must decide exactly");
+            };
+            assert!(matches!(
+                mapped.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let inverse_scale = (Real::one() / Real::from(2_i8)).unwrap();
+            let inverse_offset = inverse_scale.clone();
+            let Classification::Decided(restored) = mapped
+                .affine_image_unbounded(&inverse_scale, &inverse_offset, &policy)
+                .unwrap()
+            else {
+                panic!("the inverse represented affine chart must decide exactly");
+            };
+            assert_eq!(
+                restored.cmp_by_refinement(&parameter, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
         }
     }
 
