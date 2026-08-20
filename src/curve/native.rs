@@ -2788,7 +2788,7 @@ mod tests {
     }
 
     #[test]
-    fn finite_profiles_consume_curve_projection_policy_once() {
+    fn finite_profiles_consume_selected_projection_outcome_once() {
         let point = |x, y| Point2::new(Real::from(x), Real::from(y));
         let fragment = |start, control, end| BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(Real::zero()),
@@ -2829,14 +2829,17 @@ mod tests {
         .unwrap();
         let region = CurveRegion2::new(vec![boundary]).unwrap();
 
-        assert!(try_finite_profiles(&region, &GeometryContext::STRICT).is_err());
-        let approximate =
+        let strict = try_finite_profiles(&region, &GeometryContext::STRICT).unwrap();
+        assert_eq!(strict.certainty, crate::GeometryCertainty::Certified);
+        assert_eq!(strict.value.len(), 1);
+
+        let permissive =
             try_finite_profiles(&region, &GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(
-            approximate.certainty,
+            permissive.certainty,
             crate::GeometryCertainty::Approximate512Consumed
         );
-        assert_eq!(approximate.value.len(), 1);
+        assert_eq!(permissive.value.len(), 1);
     }
 
     #[test]
