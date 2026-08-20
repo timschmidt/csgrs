@@ -6,10 +6,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -19,43 +16,50 @@ jobs:
   build:
     name: Build WASM UI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           path: hypercurve
+          persist-credentials: false
 
       - name: Check out hyperreal sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
 
       - name: Check out hyperlimit sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlimit
           path: hyperlimit
+          persist-credentials: false
 
       - name: Check out hyperlattice sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlattice
           path: hyperlattice
+          persist-credentials: false
 
       - name: Check out hypersolve sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hypersolve
           path: hypersolve
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
 
       - name: Cache Cargo build output
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: |
             hypercurve -> hypercurve/target
@@ -71,10 +75,10 @@ jobs:
           set -euo pipefail
           unset NO_COLOR
 
-          if [[ "${{ github.event.repository.name }}" == "${{ github.repository_owner }}.github.io" ]]; then
+          if [[ "${GITHUB_EVENT_REPOSITORY_NAME}" == "${GITHUB_REPOSITORY_OWNER}.github.io" ]]; then
             public_url="/"
           else
-            public_url="/${{ github.event.repository.name }}/"
+            public_url="/${GITHUB_EVENT_REPOSITORY_NAME}/"
           fi
 
           trunk build index.html \
@@ -83,12 +87,15 @@ jobs:
             --public-url "${public_url}"
 
           touch dist/.nojekyll
+        env:
+          GITHUB_EVENT_REPOSITORY_NAME: ${{ github.event.repository.name }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: hypercurve/examples/hypercurve_ui/dist
 
@@ -96,10 +103,13 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write # Required to publish the Pages artifact.
+      id-token: write # Required for Pages OIDC authentication.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
