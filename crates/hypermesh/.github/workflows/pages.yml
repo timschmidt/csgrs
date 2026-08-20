@@ -6,10 +6,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -19,48 +16,59 @@ jobs:
   build:
     name: Build demo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       TRUNK_COLOR: never
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: hypermesh
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: timschmidt/hypergraphics
           path: hypergraphics
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: timschmidt/hyperreal
           path: hyperreal
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: timschmidt/hyperlattice
           path: hyperlattice
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: timschmidt/hyperlimit
           path: hyperlimit
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: timschmidt/hypertri
           path: hypertri
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: hypermesh/examples/hypermesh_ui
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@a2a5f6e99e1a31540baa0468acfa302cff0f359f # v2
         with:
           tool: trunk@0.21.14
       - name: Configure GitHub Pages
         id: pages
-        uses: actions/configure-pages@v5
-      - run: trunk build --release --locked --public-url "${{ steps.pages.outputs.base_path }}/"
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - run: trunk build --release --locked --public-url "${STEPS_PAGES_OUTPUTS_BASE_PATH}/"
         working-directory: hypermesh/examples/hypermesh_ui
-      - uses: actions/upload-pages-artifact@v4
+        env:
+          STEPS_PAGES_OUTPUTS_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: hypermesh/examples/hypermesh_ui/dist
 
@@ -68,6 +76,9 @@ jobs:
     name: Deploy demo
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write # Required to publish the Pages artifact.
+      id-token: write # Required for Pages OIDC authentication.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -75,4 +86,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
