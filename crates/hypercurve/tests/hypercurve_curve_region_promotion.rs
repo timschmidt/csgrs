@@ -782,10 +782,7 @@ fn unified_region_offsets_general_rational_boundary_identically_under_both_polic
         .unwrap();
 
     assert_eq!(strict.certainty, CurveCertainty::Certified);
-    assert_eq!(
-        approximate.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
+    assert_eq!(approximate.certainty, CurveCertainty::Certified);
     assert_eq!(strict.value, approximate.value);
     assert!(strict.value.has_algebraic_fragments());
     assert_eq!(
@@ -2646,11 +2643,15 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
         let evidence = evidence.into_value();
         assert!(evidence.is_complete(), "{evidence:?}");
         assert!(
-            evidence.contacts().iter().any(|contact| matches!(
-                contact.point(),
-                Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_))
-            )),
-            "the rotated round regions must retain an oblique cusp/chord contact: {evidence:?}",
+            evidence.contacts().iter().any(|contact| {
+                contact.point().is_some()
+                    && matches!(
+                        (contact.first().family(), contact.second().family()),
+                        (CurveFamily2::RationalBezier, CurveFamily2::Line)
+                            | (CurveFamily2::Line, CurveFamily2::RationalBezier)
+                    )
+            }),
+            "the rotated round regions must retain an exact oblique cusp/chord contact: {evidence:?}",
         );
         #[cfg(feature = "dispatch-trace")]
         {
@@ -2659,9 +2660,9 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
                 trace.path_count(
                     "hypercurve",
                     "algebraic-circle-chord-kernel",
-                    "general-algebraic-oblique",
+                    "exact-support-replay",
                 ) > 0,
-                "the public rotated-region path must enter the general algebraic kernel: {trace:?}",
+                "the public rotated-region path must replay its certified oblique support exactly: {trace:?}",
             );
         }
 
@@ -2894,11 +2895,7 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .intersection()
             .intersect_region(&replay_clip, &policy)
             .expect("the retained strict-interior contacts must enter a later intersection");
-        let replay_certainty = if policy == CurveContext::STRICT {
-            CurveCertainty::Certified
-        } else {
-            CurveCertainty::Approximate512Consumed
-        };
+        let replay_certainty = CurveCertainty::Certified;
         assert_eq!(replay_evidence.certainty, replay_certainty);
         let replay_blockers = replay_evidence
             .value
@@ -5544,34 +5541,35 @@ fn unified_region_non_miter_erosions_split_after_neck_collapse() {
             CurveRegion2::try_from_native_material_contours(vec![dumbbell_shape()], &policy)
                 .unwrap()
                 .into_value();
-        for (corner_style, approximate_round_predicate) in [
-            (OffsetCornerStyle2::Bevel, false),
-            (OffsetCornerStyle2::Round, true),
-            (OffsetCornerStyle2::Miter { limit: Real::one() }, false),
+        for corner_style in [
+            OffsetCornerStyle2::Bevel,
+            OffsetCornerStyle2::Round,
+            OffsetCornerStyle2::Miter { limit: Real::one() },
         ] {
             let eroded = source
                 .offset(-q(3, 2), &corner_style, &policy)
                 .unwrap_or_else(|error| {
                     panic!("{corner_style:?} must regularize through a collapsed neck: {error:?}")
                 });
-            let expected_certainty =
-                if approximate_round_predicate && policy == CurveContext::APPROXIMATE_512 {
-                    CurveCertainty::Approximate512Consumed
-                } else {
-                    CurveCertainty::Certified
-                };
-            assert_eq!(eroded.certainty, expected_certainty);
+            assert_eq!(eroded.certainty, CurveCertainty::Certified);
             assert_eq!(eroded.value.boundary_loops().len(), 2);
+            let expected_location_certainty = if matches!(corner_style, OffsetCornerStyle2::Round)
+                && policy == CurveContext::APPROXIMATE_512
+            {
+                CurveCertainty::Approximate512Consumed
+            } else {
+                CurveCertainty::Certified
+            };
             for point in [p(2, 2), p(10, 2)] {
                 let location = eroded.value.classify_point(&point, &policy).unwrap();
-                assert_eq!(location.certainty, expected_certainty);
+                assert_eq!(location.certainty, expected_location_certainty);
                 assert_eq!(
                     location.value,
                     Classification::Decided(RegionPointLocation::Inside)
                 );
             }
             let location = eroded.value.classify_point(&p(6, 2), &policy).unwrap();
-            assert_eq!(location.certainty, expected_certainty);
+            assert_eq!(location.certainty, expected_location_certainty);
             assert_eq!(
                 location.value,
                 Classification::Decided(RegionPointLocation::Outside)

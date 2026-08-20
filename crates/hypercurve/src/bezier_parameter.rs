@@ -1666,8 +1666,13 @@ impl BezierParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameterInterval>> {
         match self {
+            // Public exact-parameter construction validates the authored
+            // segment domain. Internal corner-extension and incident charts
+            // also use this representation for finite affine parameters
+            // outside `[0, 1]`; an enclosure query must preserve those values
+            // rather than reapplying the public-domain constraint.
             Self::Exact(value) => {
-                BezierParameterInterval::try_new(value.clone(), value.clone(), policy)
+                BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy)
             }
             Self::Algebraic(value) => Ok(Classification::Decided(value.interval().clone())),
         }

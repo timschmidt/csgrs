@@ -308,7 +308,7 @@ impl CurveContext {
     /// Only a terminal decision observed before the object is published binds
     /// that object to the approximate policy.
     pub(crate) fn retained_object_policy(&self) -> Self {
-        if self.permits_approximate_512() && !APPROXIMATE_512_CONSUMED.with(Cell::get) {
+        if self.0 & APPROXIMATE_512_CONTEXT != 0 && !APPROXIMATE_512_CONSUMED.with(Cell::get) {
             self.strict_counterpart()
         } else {
             *self
@@ -986,6 +986,24 @@ mod tests {
         assert!(approximate_preview.accepts_retained_policy(strict_preview));
         assert!(!strict_preview.accepts_retained_policy(approximate_preview));
         assert!(!CurveContext::APPROXIMATE_512.accepts_retained_policy(strict_preview));
+    }
+
+    #[test]
+    fn strict_predicate_pass_retains_certified_object_policy_until_a_terminal_is_consumed() {
+        let approximate = CurveContext::APPROXIMATE_512;
+        approximate.strict_predicate_pass(|| {
+            assert_eq!(approximate.retained_object_policy(), CurveContext::STRICT);
+        });
+
+        let outcome = resolve_certified_operation(&approximate, |policy| {
+            policy.observe_approximate_512();
+            policy.strict_predicate_pass(|| {
+                assert_eq!(policy.retained_object_policy(), approximate);
+            });
+            Ok::<_, ()>(())
+        })
+        .unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     }
 
     #[test]
