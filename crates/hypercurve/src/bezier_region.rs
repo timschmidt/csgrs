@@ -2939,30 +2939,6 @@ fn retained_corner_fragment_trim(
         }
         let cut_parameter = parameter;
         let range = fragment.range();
-        // A newly selected fixed-distance root and an existing selected
-        // fragment endpoint can belong to different local fields even though
-        // both name the same source-parameter axis.  Promote only those old
-        // boundaries needed to compare/store the new cut; the cut itself stays
-        // in its compact shared fiber authority.
-        let normalize_boundary = |boundary: &CurveRegionParameter2| {
-            if cut_parameter.is_selected_fiber() && boundary.is_selected_fiber() {
-                return match promoted_retained_parallel_parameter(boundary, policy)
-                    .map_err(|cause| curve_region_edit_error(operation, cause))?
-                {
-                    Classification::Decided(parameter) => {
-                        Ok(CurveRegionParameter2::from_bezier(parameter))
-                    }
-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                        operation,
-                        CurveFamily2::RationalBezier,
-                        reason,
-                    )),
-                };
-            }
-            Ok(boundary.clone())
-        };
-        let range_start = normalize_boundary(range.start())?;
-        let range_end = normalize_boundary(range.end())?;
         let compare = |boundary: &CurveRegionParameter2| {
             cut_parameter
                 .cmp_by_refinement(boundary, policy)
@@ -2976,7 +2952,7 @@ fn retained_corner_fragment_trim(
                     )),
                 })
         };
-        if !compare(&range_start)?.is_gt() || !compare(&range_end)?.is_lt() {
+        if !compare(range.start())?.is_gt() || !compare(range.end())?.is_lt() {
             return Err(curve_region_edit_error(
                 operation,
                 CurveError::Topology(
@@ -2993,13 +2969,13 @@ fn retained_corner_fragment_trim(
         };
         let (trimmed_range, start_point, end_point) = if keep_lower_parameter_range {
             (
-                CurveRegionParameterRange2::new_validated(range_start, cut_parameter),
+                CurveRegionParameterRange2::new_validated(range.start().clone(), cut_parameter),
                 source_start_point.clone(),
                 cut_point.clone(),
             )
         } else {
             (
-                CurveRegionParameterRange2::new_validated(cut_parameter, range_end),
+                CurveRegionParameterRange2::new_validated(cut_parameter, range.end().clone()),
                 cut_point.clone(),
                 source_end_point.clone(),
             )
@@ -20890,6 +20866,85 @@ mod tests {
             }],
         )
         .expect("the selected one-fragment loop has authored topology")
+    }
+
+    #[test]
+    fn retained_selected_corner_trim_keeps_distinct_bounded_fields_local() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                half.clone(),
+                32_768,
+                &policy,
+            );
+            let cut = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                quarter.clone(),
+                1_024,
+                &policy,
+            );
+            let end = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                third.clone(),
+                64,
+                &policy,
+            );
+            assert_eq!(
+                start.cmp_by_refinement(&cut, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                cut.cmp_by_refinement(&end, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            for parameter in [&start, &cut, &end] {
+                assert!(matches!(
+                    parameter.promoted_bezier_parameter(&policy).unwrap(),
+                    Classification::Uncertain(_)
+                ));
+            }
+
+            let source =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let point = |parameter| {
+                RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                        source.clone(),
+                        parameter,
+                        &policy,
+                    ),
+                )
+            };
+            let fragment = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::AnalyticParallel(source.clone()),
+                    CurveRegionParameterRange2::new_validated(
+                        CurveRegionParameter2::from_selected_fiber(start.clone()),
+                        CurveRegionParameter2::from_selected_fiber(end.clone()),
+                    ),
+                    point(start.clone()),
+                    point(end.clone()),
+                ),
+            );
+            let cut_point = point(cut.clone());
+            let trimmed = retained_corner_fragment_trim(
+                &fragment,
+                CurveRegionParameter2::from_selected_fiber(cut.clone()),
+                &cut_point,
+                None,
+                true,
+                CurveOperation2::Chamfer,
+                &policy,
+            )
+            .expect("distinct selected fields must trim without globalizing either endpoint");
+            let BezierSplitFragment2::SelectedFiber(trimmed) = trimmed else {
+                panic!("the compact selected carrier must survive corner reconstruction");
+            };
+            assert_eq!(trimmed.range().start().as_selected_fiber(), Some(&start));
+            assert_eq!(trimmed.range().end().as_selected_fiber(), Some(&cut));
+        }
     }
 
     fn one_fragment_materialized_corner_region(

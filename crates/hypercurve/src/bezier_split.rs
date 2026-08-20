@@ -240,7 +240,7 @@ impl CurveRegionParameter2 {
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::SelectedFiber(second),
-            ) => first.cmp_same_authority(second, policy),
+            ) => first.cmp_by_refinement(second, policy),
             (
                 CurveRegionParameterData2::SelectedFiber(first),
                 CurveRegionParameterData2::Bezier(second),

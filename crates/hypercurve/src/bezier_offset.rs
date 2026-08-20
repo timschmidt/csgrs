@@ -3166,6 +3166,58 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
     }
 }
 
+#[cfg(test)]
+pub(crate) fn degree_nine_selected_fiber_parameter_for_test(
+    retained_constant: Real,
+    fiber_scale: i32,
+    policy: &CurveContext,
+) -> BezierAlgebraicSelectedFiberParameter2 {
+    let mut retained_coefficients = vec![Real::zero(); 10];
+    retained_coefficients[0] = -retained_constant;
+    retained_coefficients[9] = Real::one();
+    let Classification::Decided(retained_polynomial) =
+        BezierParameterPolynomial::try_new_power_basis(retained_coefficients, policy).unwrap()
+    else {
+        panic!("the degree-nine retained polynomial must construct");
+    };
+    let Classification::Decided(retained_interval) =
+        BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()
+    else {
+        panic!("the degree-nine retained interval must construct");
+    };
+    let Classification::Decided(retained) =
+        BezierAlgebraicParameter2::try_isolate(retained_polynomial, retained_interval, policy)
+            .unwrap()
+    else {
+        panic!("the degree-nine retained root must isolate");
+    };
+
+    // `fiber_scale * u^15 - alpha = 0` makes the global projection
+    // degree 9*15=135, beyond the bounded degree-128 resultant and the
+    // degree-eight quotient-ring fallback. The local selected fiber is
+    // nevertheless a single exact positive root.
+    let mut fiber = vec![Real::zero(); 16];
+    fiber[15] = Real::from(fiber_scale);
+    let incidence = BivariatePolynomial::new(vec![fiber, vec![Real::from(-1_i8)]]);
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        &incidence,
+        CurveResultantParameter::First,
+        &parameter_representation(&retained, policy),
+        &Real::zero(),
+        &Real::one(),
+        AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: 512,
+            refinement_steps: 8,
+        },
+        hypersolve::PredicatePolicy::STRICT,
+    );
+    assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+    let [root] = report.intervals.as_slice() else {
+        panic!("the odd local fiber must have one unit-interval root");
+    };
+    BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained, policy).parameter(root.clone())
+}
+
 impl BezierAlgebraicSelectedFiberParameter2 {
     fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if !policy.accepts_retained_policy(self.data.authority.data.policy) {
@@ -3438,7 +3490,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         Ok(Classification::Decided((lower, representative, upper)))
     }
 
-    pub(crate) fn cmp_same_authority(
+    pub(crate) fn cmp_by_refinement(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -3448,12 +3500,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         if self == other {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
-        if self.data.authority.data.retained_parameter
-            != other.data.authority.data.retained_parameter
+        let shares_retained_parameter = self.data.authority.data.retained_parameter
+            == other.data.authority.data.retained_parameter;
+        let same_root = if !shares_retained_parameter || self.data.authority == other.data.authority
         {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let same_root = if self.data.authority == other.data.authority {
             false
         } else {
             match self.predicate_sign(&other.data.authority.data.incidence, policy)? {
@@ -3499,12 +3549,57 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             {
                 return Ok(Classification::Decided(std::cmp::Ordering::Greater));
             }
+            if !shares_retained_parameter && refinement_steps >= 512 {
+                break;
+            }
+            if shares_retained_parameter
+                && refinement_steps == 512
+                && policy.permits_approximate_512()
+            {
+                policy.observe_approximate_512();
+                return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+            }
             refinement_steps = refinement_steps
                 .checked_mul(2)
                 .and_then(|steps| steps.checked_add(1))
                 .ok_or_else(|| {
                     CurveError::Topology("selected-fiber scalar refinement overflow".into())
                 })?;
+        }
+
+        // Distinct retained fields usually separate from their certified
+        // local isolators without constructing either degree-multiplied norm.
+        // Equality is the only case for which interval refinement cannot
+        // decide. Exhaust the existing exact projection only at that terminal
+        // boundary; it remains construction-independent and selects the same
+        // already-isolated roots under STRICT.
+        let (first, second) = policy.strict_predicate_pass(|| -> CurveResult<_> {
+            Ok((
+                self.promoted_bezier_parameter(policy)?,
+                other.promoted_bezier_parameter(policy)?,
+            ))
+        })?;
+        let mut reason = UncertaintyReason::Unsupported;
+        if let (Classification::Decided(first), Classification::Decided(second)) = (&first, &second)
+        {
+            match policy.strict_predicate_pass(|| first.cmp_by_refinement(second, policy))? {
+                Classification::Decided(order) => {
+                    return Ok(Classification::Decided(order));
+                }
+                Classification::Uncertain(uncertainty) => reason = uncertainty,
+            }
+        } else {
+            for projection in [&first, &second] {
+                if let Classification::Uncertain(uncertainty) = projection {
+                    reason = *uncertainty;
+                }
+            }
+        }
+        if policy.permits_approximate_512() {
+            policy.observe_approximate_512();
+            Ok(Classification::Decided(std::cmp::Ordering::Equal))
+        } else {
+            Ok(Classification::Uncertain(reason))
         }
     }
 
@@ -3597,11 +3692,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     ) -> CurveResult<Classification<Real>> {
         self.validate_policy(policy)?;
         other.validate_policy(policy)?;
-        if self.data.authority.data.retained_parameter
-            != other.data.authority.data.retained_parameter
-        {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
+        let shares_retained_parameter = self.data.authority.data.retained_parameter
+            == other.data.authority.data.retained_parameter;
         let mut refinement_steps = 0_usize;
         loop {
             let first = match self.refined(refinement_steps, policy)? {
@@ -3626,6 +3718,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                     ((&first.root().upper + &second.root().lower) / Real::from(2_i8))?,
                 ));
             }
+            if !shares_retained_parameter && refinement_steps >= 512 {
+                break;
+            }
             refinement_steps = refinement_steps
                 .checked_mul(2)
                 .and_then(|steps| steps.checked_add(1))
@@ -3633,6 +3728,21 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                     CurveError::Topology("selected-fiber separation refinement overflow".into())
                 })?;
         }
+
+        let first = match policy.strict_predicate_pass(|| self.promoted_bezier_parameter(policy))? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second =
+            match policy.strict_predicate_pass(|| other.promoted_bezier_parameter(policy))? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        policy.strict_predicate_pass(|| first.strict_rational_between_ordered(&second, policy))
     }
 
     pub(crate) fn strict_rational_between_bezier_ordered(
@@ -26406,7 +26516,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             while cursor > 0 {
                 let order = match boundaries[cursor]
                     .parameter
-                    .cmp_same_authority(&boundaries[cursor - 1].parameter, policy)?
+                    .cmp_by_refinement(&boundaries[cursor - 1].parameter, policy)?
                 {
                     Classification::Decided(order) => order,
                     Classification::Uncertain(reason) => {
@@ -26425,7 +26535,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             if let Some(previous) = distinct.last_mut() {
                 match previous
                     .parameter
-                    .cmp_same_authority(&boundary.parameter, policy)?
+                    .cmp_by_refinement(&boundary.parameter, policy)?
                 {
                     Classification::Decided(std::cmp::Ordering::Equal) => {
                         if boundary.authored_endpoint {
@@ -29544,7 +29654,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             (&self.other_start, &self.cusp_start),
             (&self.other_end, &self.cusp_end),
         ] {
-            match parameter.cmp_same_authority(endpoint, policy)? {
+            match parameter.cmp_by_refinement(endpoint, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     let location = match cusp_parameter {
                         BezierAlgebraicCuspSemicircleParameter2::Exact(value)
@@ -29580,7 +29690,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             (&self.other_start, &self.cusp_start),
             (&self.other_end, &self.cusp_end),
         ] {
-            match parameter.cmp_same_authority(endpoint, policy)? {
+            match parameter.cmp_by_refinement(endpoint, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(cusp_parameter.clone()));
                 }
@@ -29623,13 +29733,13 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         parameter: &BezierAlgebraicSelectedFiberParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let start = match parameter.cmp_same_authority(&self.other_start, policy)? {
+        let start = match parameter.cmp_by_refinement(&self.other_start, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let end = match parameter.cmp_same_authority(&self.other_end, policy)? {
+        let end = match parameter.cmp_by_refinement(&self.other_end, policy)? {
             Classification::Decided(order) => order,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -34848,7 +34958,7 @@ impl BezierAlgebraicCuspChordPoint2 {
             }
             let first_parameter = first_map.selected_fiber_line_parameter(first_contact)?;
             let second_parameter = second_map.selected_fiber_line_parameter(second_contact)?;
-            let order = match first_parameter.cmp_same_authority(second_parameter, policy)? {
+            let order = match first_parameter.cmp_by_refinement(second_parameter, policy)? {
                 Classification::Decided(order) => order,
                 Classification::Uncertain(_) => return Ok(None),
             };
@@ -64649,7 +64759,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                             }
                         };
                     let order = if let Some(selected_source_parameter) = selected_source_parameter {
-                        candidate.cmp_same_authority(selected_source_parameter, policy)?
+                        candidate.cmp_by_refinement(selected_source_parameter, policy)?
                     } else {
                         candidate.cmp_bezier_parameter(parameter, policy)?
                     };
@@ -109642,7 +109752,7 @@ mod conversion_tests {
                 std::mem::size_of::<usize>(),
             );
             assert_eq!(
-                first.cmp_same_authority(&second, &policy).unwrap(),
+                first.cmp_by_refinement(&second, &policy).unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less),
             );
             assert_eq!(
@@ -109673,6 +109783,85 @@ mod conversion_tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn selected_fiber_distinct_fields_order_before_bounded_global_projection() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            let second = degree_nine_selected_fiber_parameter_for_test(third.clone(), 64, &policy);
+            for parameter in [&first, &second] {
+                assert!(
+                    matches!(
+                        parameter.promoted_bezier_parameter(&policy).unwrap(),
+                        Classification::Uncertain(_)
+                    ),
+                    "the fixture must remain outside both bounded global projections",
+                );
+            }
+            assert_eq!(
+                first.cmp_by_refinement(&second, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            let Classification::Decided(separator) = first
+                .strict_rational_between_ordered(&second, &policy)
+                .unwrap()
+            else {
+                panic!("disjoint local isolators must expose an exact rational separator");
+            };
+            assert_eq!(
+                first.order_to_real(&separator, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Less),
+            );
+            assert_eq!(
+                second.order_to_real(&separator, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_distinct_field_equality_uses_only_the_512_bit_terminal() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let one_over_1024 = (Real::one() / Real::from(1_024_i16)).unwrap();
+
+        let strict_first = degree_nine_selected_fiber_parameter_for_test(
+            half.clone(),
+            32_768,
+            &CurveContext::STRICT,
+        );
+        let strict_second = degree_nine_selected_fiber_parameter_for_test(
+            one_over_1024.clone(),
+            16_384,
+            &CurveContext::STRICT,
+        );
+        assert!(matches!(
+            strict_first
+                .cmp_by_refinement(&strict_second, &CurveContext::STRICT)
+                .unwrap(),
+            Classification::Uncertain(_)
+        ));
+
+        let policy = CurveContext::APPROXIMATE_512;
+        let approximate_first =
+            degree_nine_selected_fiber_parameter_for_test(half, 32_768, &policy);
+        let approximate_second =
+            degree_nine_selected_fiber_parameter_for_test(one_over_1024, 16_384, &policy);
+        let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+            approximate_first.cmp_by_refinement(&approximate_second, attempt)
+        })
+        .unwrap();
+        assert_eq!(
+            outcome.value,
+            Classification::Decided(std::cmp::Ordering::Equal),
+        );
+        assert_eq!(
+            outcome.certainty,
+            crate::CurveCertainty::Approximate512Consumed,
+        );
     }
 
     #[test]
@@ -110864,7 +111053,7 @@ mod conversion_tests {
                     .as_selected_fiber()
                     .unwrap()
                     .unit_complement()
-                    .cmp_same_authority(
+                    .cmp_by_refinement(
                         selected_carrier_range.start().as_selected_fiber().unwrap(),
                         &policy,
                     )
