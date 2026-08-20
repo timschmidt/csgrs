@@ -10,13 +10,19 @@
 use core::cmp::Ordering;
 
 use hyperlattice::Vector3;
-use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed, compare_reals};
+use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed};
 use hyperreal::Real;
 
 use crate::expr::{SdfCoordinate, SdfExpr};
+use crate::policy::{
+    compare_reals_for_construction as compare_reals, compare_reals_for_final_decision,
+};
 use crate::primitive::SdfPrimitive;
 use crate::sampling::scalar_expr_point;
-use crate::status::{SdfEvidenceStatus, SdfGradientStatus, SdfNormalStatus};
+use crate::status::{
+    SdfEvidenceStatus, SdfGradientStatus, SdfNormalStatus, merge_certainty,
+    merge_outcome_provenance, merge_stage,
+};
 
 /// Point-gradient report for a retained expression.
 #[derive(Clone, Debug, PartialEq)]
@@ -40,7 +46,10 @@ impl SdfGradientReport {
     /// Validate that gradient presence agrees with evidence status.
     pub const fn is_self_consistent(&self) -> bool {
         match self.evidence {
-            SdfEvidenceStatus::Certified { .. } => self.gradient.is_some(),
+            SdfEvidenceStatus::Certified { certainty, .. } => {
+                self.gradient.is_some() && !matches!(certainty, hyperlimit::Certainty::Approximate)
+            }
+            SdfEvidenceStatus::Approximate { .. } => self.gradient.is_some(),
             SdfEvidenceStatus::Unknown { .. } => self.gradient.is_none(),
         }
     }
@@ -96,30 +105,79 @@ pub(crate) fn normal_from_gradient_report(report: SdfGradientReport) -> SdfNorma
             evidence: report.evidence,
         };
     };
+    let (gradient_certainty, gradient_stage) = match report.evidence {
+        SdfEvidenceStatus::Certified { certainty, stage } => (certainty, stage),
+        SdfEvidenceStatus::Approximate { stage } => {
+            return SdfNormalReport {
+                point: report.point,
+                normal: None,
+                normal_status: SdfNormalStatus::Unknown,
+                gradient_status: report.gradient_status,
+                evidence: SdfEvidenceStatus::Approximate { stage },
+            };
+        }
+        SdfEvidenceStatus::Unknown { needed, stage } => {
+            return SdfNormalReport {
+                point: report.point,
+                normal: None,
+                normal_status: SdfNormalStatus::Unknown,
+                gradient_status: report.gradient_status,
+                evidence: SdfEvidenceStatus::Unknown { needed, stage },
+            };
+        }
+    };
     let norm_squared = vector_norm_squared(&gradient);
-    match compare_reals(&norm_squared, &Real::zero()) {
+    match compare_reals_for_final_decision(&norm_squared, &Real::zero()) {
         PredicateOutcome::Decided {
             value: Ordering::Greater,
             certainty,
             stage,
-        } => SdfNormalReport {
-            point: report.point,
-            normal: Some(gradient),
-            normal_status: SdfNormalStatus::ExactDirection,
-            gradient_status: report.gradient_status,
-            evidence: SdfEvidenceStatus::Certified { certainty, stage },
-        },
+        } => {
+            let certainty = merge_certainty(gradient_certainty, certainty);
+            let stage = merge_stage(gradient_stage, stage);
+            if certainty == hyperlimit::Certainty::Approximate {
+                SdfNormalReport {
+                    point: report.point,
+                    normal: None,
+                    normal_status: SdfNormalStatus::Unknown,
+                    gradient_status: report.gradient_status,
+                    evidence: SdfEvidenceStatus::Approximate { stage },
+                }
+            } else {
+                SdfNormalReport {
+                    point: report.point,
+                    normal: Some(gradient),
+                    normal_status: SdfNormalStatus::ExactDirection,
+                    gradient_status: report.gradient_status,
+                    evidence: SdfEvidenceStatus::Certified { certainty, stage },
+                }
+            }
+        }
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             certainty,
             stage,
-        } => SdfNormalReport {
-            point: report.point,
-            normal: None,
-            normal_status: SdfNormalStatus::ZeroGradient,
-            gradient_status: report.gradient_status,
-            evidence: SdfEvidenceStatus::Certified { certainty, stage },
-        },
+        } => {
+            let certainty = merge_certainty(gradient_certainty, certainty);
+            let stage = merge_stage(gradient_stage, stage);
+            if certainty == hyperlimit::Certainty::Approximate {
+                SdfNormalReport {
+                    point: report.point,
+                    normal: None,
+                    normal_status: SdfNormalStatus::Unknown,
+                    gradient_status: report.gradient_status,
+                    evidence: SdfEvidenceStatus::Approximate { stage },
+                }
+            } else {
+                SdfNormalReport {
+                    point: report.point,
+                    normal: None,
+                    normal_status: SdfNormalStatus::ZeroGradient,
+                    gradient_status: report.gradient_status,
+                    evidence: SdfEvidenceStatus::Certified { certainty, stage },
+                }
+            }
+        }
         PredicateOutcome::Decided { .. } => SdfNormalReport {
             point: report.point,
             normal: None,
@@ -197,20 +255,26 @@ fn gradient_primitive_point(primitive: &SdfPrimitive, point: &Point3) -> Predica
             match compare_reals(&value, &Real::zero()) {
                 PredicateOutcome::Decided {
                     value: Ordering::Less,
-                    ..
-                } => decided(Vector3([
-                    -&plane.normal.x,
-                    -&plane.normal.y,
-                    -&plane.normal.z,
-                ])),
+                    certainty,
+                    stage,
+                } => PredicateOutcome::decided(
+                    Vector3([-&plane.normal.x, -&plane.normal.y, -&plane.normal.z]),
+                    certainty,
+                    stage,
+                ),
                 PredicateOutcome::Decided {
                     value: Ordering::Greater,
-                    ..
-                } => decided(Vector3([
-                    plane.normal.x.clone(),
-                    plane.normal.y.clone(),
-                    plane.normal.z.clone(),
-                ])),
+                    certainty,
+                    stage,
+                } => PredicateOutcome::decided(
+                    Vector3([
+                        plane.normal.x.clone(),
+                        plane.normal.y.clone(),
+                        plane.normal.z.clone(),
+                    ]),
+                    certainty,
+                    stage,
+                ),
                 PredicateOutcome::Decided { .. } => unsupported(),
                 PredicateOutcome::Unknown { needed, stage } => {
                     PredicateOutcome::unknown(needed, stage)
@@ -235,23 +299,27 @@ fn gradient_minmax_point(
     match compare_reals(&left_value, &right_value) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
-            ..
+            certainty,
+            stage,
         } => {
-            if choose_min {
+            let gradient = if choose_min {
                 gradient_expr_point(left, point)
             } else {
                 gradient_expr_point(right, point)
-            }
+            };
+            merge_outcome_provenance(gradient, certainty, stage)
         }
         PredicateOutcome::Decided {
             value: Ordering::Greater,
-            ..
+            certainty,
+            stage,
         } => {
-            if choose_min {
+            let gradient = if choose_min {
                 gradient_expr_point(right, point)
             } else {
                 gradient_expr_point(left, point)
-            }
+            };
+            merge_outcome_provenance(gradient, certainty, stage)
         }
         PredicateOutcome::Decided { .. } => unsupported(),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
@@ -287,12 +355,18 @@ fn gradient_abs_point(inner: &SdfExpr, point: &Point3) -> PredicateOutcome<Vecto
     match compare_reals(&value, &Real::zero()) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
-            ..
-        } => map_gradient(gradient_expr_point(inner, point), neg_vector),
+            certainty,
+            stage,
+        } => merge_outcome_provenance(
+            map_gradient(gradient_expr_point(inner, point), neg_vector),
+            certainty,
+            stage,
+        ),
         PredicateOutcome::Decided {
             value: Ordering::Greater,
-            ..
-        } => gradient_expr_point(inner, point),
+            certainty,
+            stage,
+        } => merge_outcome_provenance(gradient_expr_point(inner, point), certainty, stage),
         PredicateOutcome::Decided { .. } => unsupported(),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
@@ -308,9 +382,21 @@ where
 {
     match (left, right) {
         (
-            PredicateOutcome::Decided { value: a, .. },
-            PredicateOutcome::Decided { value: b, .. },
-        ) => decided(combine(a, b)),
+            PredicateOutcome::Decided {
+                value: a,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Decided {
+                value: b,
+                certainty: right_certainty,
+                stage: right_stage,
+            },
+        ) => PredicateOutcome::decided(
+            combine(a, b),
+            merge_certainty(certainty, right_certainty),
+            merge_stage(stage, right_stage),
+        ),
         (PredicateOutcome::Unknown { needed, stage }, _)
         | (_, PredicateOutcome::Unknown { needed, stage }) => {
             PredicateOutcome::unknown(needed, stage)
@@ -323,7 +409,11 @@ where
     F: FnOnce(Vector3) -> Vector3,
 {
     match outcome {
-        PredicateOutcome::Decided { value, .. } => decided(map(value)),
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(map(value), certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }

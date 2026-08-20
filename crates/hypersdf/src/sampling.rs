@@ -9,10 +9,13 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Point3, PredicateOutcome, compare_reals};
+use hyperlimit::{Point3, PredicateOutcome};
 use hyperreal::Real;
 
 use crate::expr::{SdfCoordinate, SdfExpr};
+use crate::policy::{
+    compare_reals_for_construction as compare_reals, compare_reals_for_final_decision,
+};
 use crate::status::SdfMetricStatus;
 
 /// Primitive scalar precision requested from a preview sampler.
@@ -231,7 +234,7 @@ impl SdfSampleSignCounts {
             self.unknown += 1;
             return;
         };
-        match compare_reals(value, &Real::zero()) {
+        match compare_reals_for_final_decision(value, &Real::zero()) {
             PredicateOutcome::Decided {
                 value: Ordering::Less,
                 ..

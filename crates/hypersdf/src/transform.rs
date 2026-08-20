@@ -11,9 +11,10 @@
 use core::cmp::Ordering;
 
 use hyperlattice::{Matrix4, Vector4};
-use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed, compare_reals};
+use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed};
 use hyperreal::{Problem, Real, ZeroOneMinusOneStatus};
 
+use crate::policy::compare_reals_for_construction as compare_reals;
 use crate::status::{SdfGradientStatus, SdfLipschitzStatus, SdfMetricStatus};
 
 /// Exact transform node supported by the first SDF expression core.

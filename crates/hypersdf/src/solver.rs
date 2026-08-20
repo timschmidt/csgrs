@@ -93,7 +93,10 @@ impl SdfProjectionReplayReport {
     ) -> Self {
         let displacement_squared = squared_distance3(&proposal.query, &proposal.candidate);
         let status = match candidate_report.location {
-            SdfPointLocation::Boundary => SdfProjectionReplayStatus::BoundaryCertified,
+            SdfPointLocation::Boundary if candidate_report.evidence.is_certified() => {
+                SdfProjectionReplayStatus::BoundaryCertified
+            }
+            SdfPointLocation::Boundary => SdfProjectionReplayStatus::Unknown,
             SdfPointLocation::Inside | SdfPointLocation::Outside => {
                 SdfProjectionReplayStatus::RejectedByClassification
             }
@@ -113,7 +116,10 @@ impl SdfProjectionReplayReport {
         self.candidate_report.is_self_consistent()
             && self.status
                 == match self.candidate_report.location {
-                    SdfPointLocation::Boundary => SdfProjectionReplayStatus::BoundaryCertified,
+                    SdfPointLocation::Boundary if self.candidate_report.evidence.is_certified() => {
+                        SdfProjectionReplayStatus::BoundaryCertified
+                    }
+                    SdfPointLocation::Boundary => SdfProjectionReplayStatus::Unknown,
                     SdfPointLocation::Inside | SdfPointLocation::Outside => {
                         SdfProjectionReplayStatus::RejectedByClassification
                     }

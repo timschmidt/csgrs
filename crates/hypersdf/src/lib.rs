@@ -19,6 +19,7 @@ mod hypervoxel_adapter;
 mod interval;
 mod lipschitz;
 mod mesh;
+mod policy;
 mod primitive;
 mod sampling;
 mod sdf;
@@ -236,6 +237,10 @@ mod tests {
     #[test]
     fn cylinder_point_and_cell_classification_is_exact() {
         let cylinder = Sdf::new(SdfExpr::cylinder(SdfCoordinate::Z, p(0, 0, 0), r(25), r(3)));
+        assert_eq!(
+            cylinder.facts().lipschitz_status,
+            SdfLipschitzStatus::LocalOnly
+        );
 
         assert_eq!(
             cylinder.classify_point(&p(0, 0, 0)).location,
@@ -282,6 +287,10 @@ mod tests {
     #[test]
     fn capsule_point_and_cell_classification_is_exact() {
         let capsule = Sdf::new(SdfExpr::capsule(SdfCoordinate::Z, p(0, 0, 0), r(25), r(3)));
+        assert_eq!(
+            capsule.facts().lipschitz_status,
+            SdfLipschitzStatus::LocalOnly
+        );
 
         assert_eq!(
             capsule.classify_point(&p(0, 0, 4)).location,
@@ -316,6 +325,10 @@ mod tests {
     #[test]
     fn torus_point_and_cell_classification_is_exact() {
         let torus = Sdf::new(SdfExpr::torus(SdfCoordinate::Z, p(0, 0, 0), r(9), r(1)));
+        assert_eq!(
+            torus.facts().lipschitz_status,
+            SdfLipschitzStatus::LocalOnly
+        );
 
         assert_eq!(
             torus.classify_point(&p(3, 0, 0)).location,

@@ -2,9 +2,10 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Point3, PredicateOutcome, compare_reals};
+use hyperlimit::{Point3, PredicateOutcome};
 use hyperreal::Real;
 
+use crate::policy::compare_reals_for_construction;
 use crate::status::{SdfCellClassificationReport, SdfCellLocation};
 
 /// Length unit declared for a voxel grid.
@@ -140,9 +141,14 @@ impl SdfVoxelBatch {
                     let Some(classification) = iter.next() else {
                         return Self { grid, cells };
                     };
+                    let occupancy = if classification.evidence.is_certified() {
+                        SdfVoxelOccupancy::from_cell_location(classification.location)
+                    } else {
+                        SdfVoxelOccupancy::Unknown
+                    };
                     cells.push(SdfVoxelCell {
                         index: [x, y, z],
-                        occupancy: SdfVoxelOccupancy::from_cell_location(classification.location),
+                        occupancy,
                     });
                 }
             }
@@ -175,12 +181,52 @@ pub(crate) fn voxel_cell_bounds(grid: &SdfVoxelCellGrid) -> Vec<(Point3, Point3)
 }
 
 fn validate_positive(value: &Real, axis: usize) -> Result<(), SdfVoxelGridError> {
-    match compare_reals(value, &Real::from(0)) {
+    match compare_reals_for_construction(value, &Real::zero()) {
         PredicateOutcome::Decided {
             value: Ordering::Greater,
             ..
         } => Ok(()),
         PredicateOutcome::Decided { .. } => Err(SdfVoxelGridError::NonPositiveStep { axis }),
         PredicateOutcome::Unknown { .. } => Err(SdfVoxelGridError::UnknownStepSign { axis }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::status::{SdfEvidenceStatus, SdfMetricStatus};
+    use hyperlimit::{Certainty, Escalation};
+
+    #[test]
+    fn approximate_cell_evidence_never_becomes_definite_occupancy() {
+        let grid = SdfVoxelCellGrid::new(
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::one(), Real::one(), Real::one()),
+            [1, 1, 1],
+        );
+        let report = SdfCellClassificationReport {
+            min: Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            max: Point3::new(Real::one(), Real::one(), Real::one()),
+            location: SdfCellLocation::ConservativeInside,
+            metric_status: SdfMetricStatus::SignEquivalent,
+            evidence: SdfEvidenceStatus::Approximate {
+                stage: Escalation::Refined,
+            },
+        };
+        let batch = SdfVoxelBatch::from_classifications(grid.clone(), vec![report]);
+        assert_eq!(batch.cells[0].occupancy, SdfVoxelOccupancy::Unknown);
+
+        let report = SdfCellClassificationReport {
+            min: Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            max: Point3::new(Real::one(), Real::one(), Real::one()),
+            location: SdfCellLocation::ConservativeInside,
+            metric_status: SdfMetricStatus::SignEquivalent,
+            evidence: SdfEvidenceStatus::Certified {
+                certainty: Certainty::Exact,
+                stage: Escalation::Exact,
+            },
+        };
+        let batch = SdfVoxelBatch::from_classifications(grid, vec![report]);
+        assert_eq!(batch.cells[0].occupancy, SdfVoxelOccupancy::Filled);
     }
 }

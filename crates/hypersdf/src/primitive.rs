@@ -8,12 +8,16 @@
 use hyperlimit::{
     Aabb3PointLocation, Certainty, Escalation, Plane3, PlaneSide, Point3, PredicateOutcome,
     RefinementNeed, SpherePointLocation, classify_point_aabb3, classify_point_plane,
-    classify_point_sphere3, compare_reals,
+    classify_point_sphere3,
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
 
 use crate::expr::SdfCoordinate;
+use crate::policy::{
+    CONSTRUCTION_PREDICATE_POLICY, FINAL_PREDICATE_POLICY,
+    compare_reals_for_construction as compare_reals, compare_reals_for_final_decision,
+};
 use crate::status::{SdfMetricStatus, SdfPointLocation};
 
 /// Exact-friendly primitive node.
@@ -254,14 +258,16 @@ impl SdfPrimitive {
     /// Classify a point using Hyperlimit predicates.
     pub fn classify_point(&self, point: &Point3) -> hyperlimit::PredicateOutcome<SdfPointLocation> {
         match self {
-            Self::Plane { plane } => map_plane_point(classify_point_plane(point, plane)),
+            Self::Plane { plane } => {
+                map_plane_point(classify_point_plane(point, plane, FINAL_PREDICATE_POLICY))
+            }
             Self::Sphere {
                 center,
                 radius_squared,
             } => match radius_squared_domain(radius_squared) {
-                PredicateOutcome::Decided { value: true, .. } => {
-                    map_sphere_point(classify_point_sphere3(center, radius_squared, point))
-                }
+                PredicateOutcome::Decided { value: true, .. } => map_sphere_point(
+                    classify_point_sphere3(center, radius_squared, point, FINAL_PREDICATE_POLICY),
+                ),
                 PredicateOutcome::Decided { value: false, .. } => {
                     PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
                 }
@@ -269,7 +275,12 @@ impl SdfPrimitive {
                     PredicateOutcome::unknown(needed, stage)
                 }
             },
-            Self::Aabb { min, max } => map_aabb_point(classify_point_aabb3(min, max, point)),
+            Self::Aabb { min, max } => map_aabb_point(classify_point_aabb3(
+                min,
+                max,
+                point,
+                FINAL_PREDICATE_POLICY,
+            )),
             Self::RoundedAabb { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
             Self::Cylinder { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
             Self::Capsule { .. } => classify_scalar_primitive_value(self.scalar_value(point)),
@@ -296,24 +307,21 @@ pub(crate) fn half_width_domain(half_width: &Real) -> PredicateOutcome<bool> {
 
 /// Certify whether both cylinder radial and axial domain parameters are valid.
 pub(crate) fn cylinder_domain(radius_squared: &Real, half_height: &Real) -> PredicateOutcome<bool> {
-    match (
-        radius_squared_domain(radius_squared),
-        half_width_domain(half_height),
+    match hyperlimit::classify_real_sign_pair(
+        radius_squared,
+        half_height,
+        CONSTRUCTION_PREDICATE_POLICY,
     ) {
-        (
-            PredicateOutcome::Decided {
-                value: radius_ok,
-                certainty,
-                stage,
-            },
-            PredicateOutcome::Decided {
-                value: height_ok, ..
-            },
-        ) => PredicateOutcome::decided(radius_ok && height_ok, certainty, stage),
-        (PredicateOutcome::Unknown { needed, stage }, _)
-        | (_, PredicateOutcome::Unknown { needed, stage }) => {
-            PredicateOutcome::unknown(needed, stage)
-        }
+        PredicateOutcome::Decided {
+            value: (radius, height),
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(
+            radius != hyperlimit::Sign::Negative && height != hyperlimit::Sign::Negative,
+            certainty,
+            stage,
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
 
@@ -327,24 +335,21 @@ pub(crate) fn torus_domain(
     major_radius_squared: &Real,
     minor_radius_squared: &Real,
 ) -> PredicateOutcome<bool> {
-    match (
-        positive_domain(major_radius_squared),
-        radius_squared_domain(minor_radius_squared),
+    match hyperlimit::classify_real_sign_pair(
+        major_radius_squared,
+        minor_radius_squared,
+        CONSTRUCTION_PREDICATE_POLICY,
     ) {
-        (
-            PredicateOutcome::Decided {
-                value: major_ok,
-                certainty,
-                stage,
-            },
-            PredicateOutcome::Decided {
-                value: minor_ok, ..
-            },
-        ) => PredicateOutcome::decided(major_ok && minor_ok, certainty, stage),
-        (PredicateOutcome::Unknown { needed, stage }, _)
-        | (_, PredicateOutcome::Unknown { needed, stage }) => {
-            PredicateOutcome::unknown(needed, stage)
-        }
+        PredicateOutcome::Decided {
+            value: (major, minor),
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(
+            major == hyperlimit::Sign::Positive && minor != hyperlimit::Sign::Negative,
+            certainty,
+            stage,
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
 
@@ -359,22 +364,11 @@ fn nonnegative_domain(value: &Real) -> PredicateOutcome<bool> {
     }
 }
 
-fn positive_domain(value: &Real) -> PredicateOutcome<bool> {
-    match compare_reals(value, &Real::zero()) {
-        PredicateOutcome::Decided {
-            value,
-            certainty,
-            stage,
-        } => PredicateOutcome::decided(value == Ordering::Greater, certainty, stage),
-        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
-    }
-}
-
 fn classify_scalar_primitive_value(value: Option<Real>) -> PredicateOutcome<SdfPointLocation> {
     let Some(value) = value else {
         return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
     };
-    match compare_reals(&value, &Real::zero()) {
+    match compare_reals_for_final_decision(&value, &Real::zero()) {
         PredicateOutcome::Decided {
             value,
             certainty,
@@ -497,7 +491,7 @@ fn rounded_aabb_value(
         return None;
     }
 
-    match classify_point_aabb3(min, max, point) {
+    match classify_point_aabb3(min, max, point, CONSTRUCTION_PREDICATE_POLICY) {
         PredicateOutcome::Decided {
             value: Aabb3PointLocation::Inside | Aabb3PointLocation::Boundary,
             ..

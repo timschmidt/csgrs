@@ -9,7 +9,7 @@
 use hyperlimit::{
     Aabb3Intersection, AabbSphereIntersection, Certainty, Escalation, PlaneAabbRelation, Point3,
     PredicateOutcome, classify_aabb3_intersection, classify_aabb3_sphere_intersection,
-    classify_plane_aabb3, classify_point_aabb3, compare_reals,
+    classify_plane_aabb3, classify_point_aabb3,
 };
 use std::cmp::Ordering;
 
@@ -23,6 +23,7 @@ use crate::gradient_contour::{SdfGradientContourReport, gradient_contour_report_
 use crate::interval::{SdfIntervalReport, interval_expr_cell};
 use crate::lipschitz::{SdfLipschitzReport, lipschitz_expr_cell};
 use crate::mesh::SdfMeshPreviewReport;
+use crate::policy::{FINAL_PREDICATE_POLICY, compare_reals_for_final_decision as compare_reals};
 use crate::primitive::SdfPrimitive;
 use crate::primitive::{farthest_squared_distance3_to_aabb, radius_squared_domain};
 use crate::sampling::{
@@ -34,7 +35,7 @@ use crate::shader::{SdfShaderExportReport, export_expr_glsl_preview};
 use crate::solver::{SdfProjectionProposal, SdfProjectionReplayReport};
 use crate::status::{
     SdfCellClassificationReport, SdfCellLocation, SdfEvidenceStatus, SdfMetricStatus,
-    SdfPointClassificationReport, SdfPointLocation,
+    SdfPointClassificationReport, SdfPointLocation, merge_certainty, merge_stage,
 };
 use crate::voxel::{SdfVoxelBatch, SdfVoxelCellGrid, SdfVoxelGridError, voxel_cell_bounds};
 
@@ -478,27 +479,51 @@ fn interval_to_cell(
     match compare_reals(&upper, &zero) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
+            certainty: comparison_certainty,
+            stage: comparison_stage,
+        } => PredicateOutcome::decided(
+            SdfCellLocation::ConservativeInside,
+            merge_certainty(certainty, comparison_certainty),
+            merge_stage(stage, comparison_stage),
+        ),
+        PredicateOutcome::Decided {
+            certainty: comparison_certainty,
+            stage: comparison_stage,
             ..
-        } => {
-            return PredicateOutcome::decided(
-                SdfCellLocation::ConservativeInside,
-                certainty,
-                stage,
-            );
-        }
-        PredicateOutcome::Decided { .. } => {}
-        PredicateOutcome::Unknown { needed, stage } => {
-            return PredicateOutcome::unknown(needed, stage);
-        }
+        } => interval_lower_to_cell(
+            lower,
+            merge_certainty(certainty, comparison_certainty),
+            merge_stage(stage, comparison_stage),
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
+}
+
+fn interval_lower_to_cell(
+    lower: hyperreal::Real,
+    certainty: Certainty,
+    stage: Escalation,
+) -> PredicateOutcome<SdfCellLocation> {
+    let zero = hyperreal::Real::zero();
     match compare_reals(&lower, &zero) {
         PredicateOutcome::Decided {
             value: Ordering::Greater,
+            certainty: comparison_certainty,
+            stage: comparison_stage,
+        } => PredicateOutcome::decided(
+            SdfCellLocation::ConservativeOutside,
+            merge_certainty(certainty, comparison_certainty),
+            merge_stage(stage, comparison_stage),
+        ),
+        PredicateOutcome::Decided {
+            certainty: comparison_certainty,
+            stage: comparison_stage,
             ..
-        } => PredicateOutcome::decided(SdfCellLocation::ConservativeOutside, certainty, stage),
-        PredicateOutcome::Decided { .. } => {
-            PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
-        }
+        } => PredicateOutcome::decided(
+            SdfCellLocation::Boundary,
+            merge_certainty(certainty, comparison_certainty),
+            merge_stage(stage, comparison_stage),
+        ),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
@@ -509,13 +534,24 @@ fn classify_primitive_cell(
     max: &Point3,
 ) -> PredicateOutcome<SdfCellLocation> {
     match primitive {
-        SdfPrimitive::Plane { plane } => map_plane_aabb(classify_plane_aabb3(plane, min, max)),
+        SdfPrimitive::Plane { plane } => map_plane_aabb(classify_plane_aabb3(
+            plane,
+            min,
+            max,
+            FINAL_PREDICATE_POLICY,
+        )),
         SdfPrimitive::Sphere {
             center,
             radius_squared,
         } => match radius_squared_domain(radius_squared) {
             PredicateOutcome::Decided { value: true, .. } => map_sphere_aabb(
-                classify_aabb3_sphere_intersection(min, max, center, radius_squared),
+                classify_aabb3_sphere_intersection(
+                    min,
+                    max,
+                    center,
+                    radius_squared,
+                    FINAL_PREDICATE_POLICY,
+                ),
                 min,
                 max,
                 center,
@@ -531,7 +567,7 @@ fn classify_primitive_cell(
             min: shape_min,
             max: shape_max,
         } => map_aabb_aabb(
-            classify_aabb3_intersection(shape_min, shape_max, min, max),
+            classify_aabb3_intersection(shape_min, shape_max, min, max, FINAL_PREDICATE_POLICY),
             shape_min,
             shape_max,
             min,
@@ -595,24 +631,42 @@ fn map_sphere_aabb(
                 PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
             }
             AabbSphereIntersection::Overlapping => {
-                let farthest = match farthest_squared_distance3_to_aabb(center, min, max) {
-                    PredicateOutcome::Decided { value, .. } => value,
-                    PredicateOutcome::Unknown { needed, stage } => {
-                        return PredicateOutcome::unknown(needed, stage);
-                    }
-                };
+                let (farthest, farthest_certainty, farthest_stage) =
+                    match farthest_squared_distance3_to_aabb(center, min, max) {
+                        PredicateOutcome::Decided {
+                            value,
+                            certainty,
+                            stage,
+                        } => (value, certainty, stage),
+                        PredicateOutcome::Unknown { needed, stage } => {
+                            return PredicateOutcome::unknown(needed, stage);
+                        }
+                    };
                 match compare_reals(&farthest, radius_squared) {
                     PredicateOutcome::Decided {
                         value: Ordering::Less,
-                        ..
+                        certainty: comparison_certainty,
+                        stage: comparison_stage,
                     } => PredicateOutcome::decided(
                         SdfCellLocation::ConservativeInside,
-                        certainty,
-                        stage,
+                        merge_certainty(
+                            certainty,
+                            merge_certainty(farthest_certainty, comparison_certainty),
+                        ),
+                        merge_stage(stage, merge_stage(farthest_stage, comparison_stage)),
                     ),
-                    PredicateOutcome::Decided { .. } => {
-                        PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
-                    }
+                    PredicateOutcome::Decided {
+                        certainty: comparison_certainty,
+                        stage: comparison_stage,
+                        ..
+                    } => PredicateOutcome::decided(
+                        SdfCellLocation::Boundary,
+                        merge_certainty(
+                            certainty,
+                            merge_certainty(farthest_certainty, comparison_certainty),
+                        ),
+                        merge_stage(stage, merge_stage(farthest_stage, comparison_stage)),
+                    ),
                     PredicateOutcome::Unknown { needed, stage } => {
                         PredicateOutcome::unknown(needed, stage)
                     }
@@ -647,9 +701,18 @@ fn map_aabb_aabb(
                 // collectively cover both endpoints of every coordinate. If
                 // both are strictly inside the shape AABB, every mixed corner
                 // and therefore the full cell is inside as well.
+                let mut certainty = certainty;
+                let mut stage = stage;
                 for corner in [cell_min, cell_max] {
-                    match classify_point_aabb3(shape_min, shape_max, corner) {
-                        PredicateOutcome::Decided { value, .. } => {
+                    match classify_point_aabb3(shape_min, shape_max, corner, FINAL_PREDICATE_POLICY)
+                    {
+                        PredicateOutcome::Decided {
+                            value,
+                            certainty: corner_certainty,
+                            stage: corner_stage,
+                        } => {
+                            certainty = merge_certainty(certainty, corner_certainty);
+                            stage = merge_stage(stage, corner_stage);
                             if value != hyperlimit::Aabb3PointLocation::Inside {
                                 return PredicateOutcome::decided(
                                     SdfCellLocation::Boundary,
@@ -674,62 +737,139 @@ fn combine_point_union(
     left: PredicateOutcome<SdfPointLocation>,
     right: PredicateOutcome<SdfPointLocation>,
 ) -> PredicateOutcome<SdfPointLocation> {
-    combine_point(left, right, |a, b| match (a, b) {
-        (SdfPointLocation::Inside, _) | (_, SdfPointLocation::Inside) => SdfPointLocation::Inside,
-        (SdfPointLocation::Boundary, _) | (_, SdfPointLocation::Boundary) => {
-            SdfPointLocation::Boundary
-        }
-        (SdfPointLocation::Outside, SdfPointLocation::Outside) => SdfPointLocation::Outside,
-        _ => SdfPointLocation::Unknown,
-    })
+    match (left, right) {
+        (
+            PredicateOutcome::Decided {
+                value: SdfPointLocation::Inside,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Unknown { .. },
+        )
+        | (
+            PredicateOutcome::Unknown { .. },
+            PredicateOutcome::Decided {
+                value: SdfPointLocation::Inside,
+                certainty,
+                stage,
+            },
+        ) => PredicateOutcome::decided(SdfPointLocation::Inside, certainty, stage),
+        (left, right) => combine_point(left, right, |a, b| match (a, b) {
+            (SdfPointLocation::Inside, _) | (_, SdfPointLocation::Inside) => {
+                SdfPointLocation::Inside
+            }
+            (SdfPointLocation::Boundary, _) | (_, SdfPointLocation::Boundary) => {
+                SdfPointLocation::Boundary
+            }
+            (SdfPointLocation::Outside, SdfPointLocation::Outside) => SdfPointLocation::Outside,
+            _ => SdfPointLocation::Unknown,
+        }),
+    }
 }
 
 fn combine_point_intersection(
     left: PredicateOutcome<SdfPointLocation>,
     right: PredicateOutcome<SdfPointLocation>,
 ) -> PredicateOutcome<SdfPointLocation> {
-    combine_point(left, right, |a, b| match (a, b) {
-        (SdfPointLocation::Outside, _) | (_, SdfPointLocation::Outside) => {
-            SdfPointLocation::Outside
-        }
-        (SdfPointLocation::Boundary, _) | (_, SdfPointLocation::Boundary) => {
-            SdfPointLocation::Boundary
-        }
-        (SdfPointLocation::Inside, SdfPointLocation::Inside) => SdfPointLocation::Inside,
-        _ => SdfPointLocation::Unknown,
-    })
+    match (left, right) {
+        (
+            PredicateOutcome::Decided {
+                value: SdfPointLocation::Outside,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Unknown { .. },
+        )
+        | (
+            PredicateOutcome::Unknown { .. },
+            PredicateOutcome::Decided {
+                value: SdfPointLocation::Outside,
+                certainty,
+                stage,
+            },
+        ) => PredicateOutcome::decided(SdfPointLocation::Outside, certainty, stage),
+        (left, right) => combine_point(left, right, |a, b| match (a, b) {
+            (SdfPointLocation::Outside, _) | (_, SdfPointLocation::Outside) => {
+                SdfPointLocation::Outside
+            }
+            (SdfPointLocation::Boundary, _) | (_, SdfPointLocation::Boundary) => {
+                SdfPointLocation::Boundary
+            }
+            (SdfPointLocation::Inside, SdfPointLocation::Inside) => SdfPointLocation::Inside,
+            _ => SdfPointLocation::Unknown,
+        }),
+    }
 }
 
 fn combine_cell_union(
     left: PredicateOutcome<SdfCellLocation>,
     right: PredicateOutcome<SdfCellLocation>,
 ) -> PredicateOutcome<SdfCellLocation> {
-    combine_cell(left, right, |a, b| match (a, b) {
-        (SdfCellLocation::ConservativeInside, _) | (_, SdfCellLocation::ConservativeInside) => {
-            SdfCellLocation::ConservativeInside
-        }
-        (SdfCellLocation::ConservativeOutside, SdfCellLocation::ConservativeOutside) => {
-            SdfCellLocation::ConservativeOutside
-        }
-        (SdfCellLocation::Unknown, _) | (_, SdfCellLocation::Unknown) => SdfCellLocation::Unknown,
-        _ => SdfCellLocation::Boundary,
-    })
+    match (left, right) {
+        (
+            PredicateOutcome::Decided {
+                value: SdfCellLocation::ConservativeInside,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Unknown { .. },
+        )
+        | (
+            PredicateOutcome::Unknown { .. },
+            PredicateOutcome::Decided {
+                value: SdfCellLocation::ConservativeInside,
+                certainty,
+                stage,
+            },
+        ) => PredicateOutcome::decided(SdfCellLocation::ConservativeInside, certainty, stage),
+        (left, right) => combine_cell(left, right, |a, b| match (a, b) {
+            (SdfCellLocation::ConservativeInside, _) | (_, SdfCellLocation::ConservativeInside) => {
+                SdfCellLocation::ConservativeInside
+            }
+            (SdfCellLocation::ConservativeOutside, SdfCellLocation::ConservativeOutside) => {
+                SdfCellLocation::ConservativeOutside
+            }
+            (SdfCellLocation::Unknown, _) | (_, SdfCellLocation::Unknown) => {
+                SdfCellLocation::Unknown
+            }
+            _ => SdfCellLocation::Boundary,
+        }),
+    }
 }
 
 fn combine_cell_intersection(
     left: PredicateOutcome<SdfCellLocation>,
     right: PredicateOutcome<SdfCellLocation>,
 ) -> PredicateOutcome<SdfCellLocation> {
-    combine_cell(left, right, |a, b| match (a, b) {
-        (SdfCellLocation::ConservativeOutside, _) | (_, SdfCellLocation::ConservativeOutside) => {
-            SdfCellLocation::ConservativeOutside
-        }
-        (SdfCellLocation::ConservativeInside, SdfCellLocation::ConservativeInside) => {
-            SdfCellLocation::ConservativeInside
-        }
-        (SdfCellLocation::Unknown, _) | (_, SdfCellLocation::Unknown) => SdfCellLocation::Unknown,
-        _ => SdfCellLocation::Boundary,
-    })
+    match (left, right) {
+        (
+            PredicateOutcome::Decided {
+                value: SdfCellLocation::ConservativeOutside,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Unknown { .. },
+        )
+        | (
+            PredicateOutcome::Unknown { .. },
+            PredicateOutcome::Decided {
+                value: SdfCellLocation::ConservativeOutside,
+                certainty,
+                stage,
+            },
+        ) => PredicateOutcome::decided(SdfCellLocation::ConservativeOutside, certainty, stage),
+        (left, right) => combine_cell(left, right, |a, b| match (a, b) {
+            (SdfCellLocation::ConservativeOutside, _)
+            | (_, SdfCellLocation::ConservativeOutside) => SdfCellLocation::ConservativeOutside,
+            (SdfCellLocation::ConservativeInside, SdfCellLocation::ConservativeInside) => {
+                SdfCellLocation::ConservativeInside
+            }
+            (SdfCellLocation::Unknown, _) | (_, SdfCellLocation::Unknown) => {
+                SdfCellLocation::Unknown
+            }
+            _ => SdfCellLocation::Boundary,
+        }),
+    }
 }
 
 fn combine_point<F>(
@@ -822,28 +962,49 @@ fn map_cell_complement(
     }
 }
 
-fn merge_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if left == Certainty::Filtered || right == Certainty::Filtered {
-        Certainty::Filtered
-    } else {
-        Certainty::Exact
-    }
-}
+#[cfg(test)]
+mod provenance_tests {
+    use super::*;
+    use hyperlimit::RefinementNeed;
 
-fn merge_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(right) > stage_rank(left) {
-        right
-    } else {
-        left
+    #[test]
+    fn csg_composition_preserves_approximate_certainty() {
+        let approximate = PredicateOutcome::decided(
+            SdfPointLocation::Outside,
+            Certainty::Approximate,
+            Escalation::Refined,
+        );
+        let exact = PredicateOutcome::decided(
+            SdfPointLocation::Inside,
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+        assert_eq!(
+            combine_point_union(approximate, exact),
+            PredicateOutcome::decided(
+                SdfPointLocation::Inside,
+                Certainty::Approximate,
+                Escalation::Refined,
+            )
+        );
     }
-}
 
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
+    #[test]
+    fn decisive_csg_child_can_dominate_an_unknown_child() {
+        let inside = PredicateOutcome::decided(
+            SdfPointLocation::Inside,
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+        let unknown =
+            PredicateOutcome::unknown(RefinementNeed::RealRefinement, Escalation::Undecided);
+        assert_eq!(
+            combine_point_union(inside, unknown),
+            PredicateOutcome::decided(
+                SdfPointLocation::Inside,
+                Certainty::Exact,
+                Escalation::Exact,
+            )
+        );
     }
 }

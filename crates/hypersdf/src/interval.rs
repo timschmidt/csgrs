@@ -12,16 +12,17 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed, compare_reals};
+use hyperlimit::{Escalation, Point3, PredicateOutcome, RefinementNeed};
 use hyperreal::Real;
 
 use crate::expr::{SdfCoordinate, SdfExpr};
+use crate::policy::compare_reals_for_construction as compare_reals;
 use crate::primitive::{
     SdfPrimitive, capsule_domain, cylinder_domain, farthest_squared_distance3_to_aabb,
     half_width_domain, radial_squared, radius_squared_domain, rounded_aabb_domain,
     squared_distance3, torus_domain,
 };
-use crate::status::{SdfEvidenceStatus, SdfMetricStatus};
+use crate::status::{SdfEvidenceStatus, SdfMetricStatus, merge_certainty, merge_stage};
 
 /// Certified scalar interval over a query domain.
 #[derive(Clone, Debug, PartialEq)]
@@ -673,12 +674,22 @@ where
 {
     match (left, right) {
         (
-            PredicateOutcome::Decided { value: a, .. },
-            PredicateOutcome::Decided { value: b, .. },
+            PredicateOutcome::Decided {
+                value: a,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Decided {
+                value: b,
+                certainty: right_certainty,
+                stage: right_stage,
+            },
         ) => match combine(a, b) {
-            Ok(interval) => {
-                PredicateOutcome::decided(interval, hyperlimit::Certainty::Exact, Escalation::Exact)
-            }
+            Ok(interval) => PredicateOutcome::decided(
+                interval,
+                merge_certainty(certainty, right_certainty),
+                merge_stage(stage, right_stage),
+            ),
             Err(outcome) => outcome,
         },
         (PredicateOutcome::Unknown { needed, stage }, _)

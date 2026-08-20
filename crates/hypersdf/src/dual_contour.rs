@@ -11,11 +11,12 @@ use core::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use hyperlattice::Vector3;
-use hyperlimit::{Point3, PredicateOutcome, compare_reals};
+use hyperlimit::{Point3, PredicateOutcome};
 use hyperreal::Real;
 
 use crate::expr::SdfExpr;
 use crate::gradient::{SdfGradientReport, gradient_expr_point, normal_from_gradient_report};
+use crate::policy::compare_reals_for_construction;
 use crate::primitive::SdfPrimitive;
 use crate::sampling::{SdfGridSamplingReport, SdfPreviewSample};
 use crate::status::{SdfEvidenceStatus, SdfGradientStatus, SdfMetricStatus, SdfNormalStatus};
@@ -58,7 +59,7 @@ impl SdfGridSampleSign {
         let Some(value) = value else {
             return Self::Unknown;
         };
-        match compare_reals(value, &Real::zero()) {
+        match compare_reals_for_construction(value, &Real::zero()) {
             PredicateOutcome::Decided {
                 value: Ordering::Less,
                 ..

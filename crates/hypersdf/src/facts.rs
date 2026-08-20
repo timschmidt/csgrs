@@ -344,13 +344,12 @@ fn lipschitz_status_expr(expr: &SdfExpr) -> SdfLipschitzStatus {
 
 fn lipschitz_status_primitive(primitive: &SdfPrimitive) -> SdfLipschitzStatus {
     match primitive {
-        SdfPrimitive::Aabb { .. }
+        SdfPrimitive::Aabb { .. } | SdfPrimitive::Slab { .. } => SdfLipschitzStatus::GlobalExact,
+        SdfPrimitive::Sphere { .. }
+        | SdfPrimitive::RoundedAabb { .. }
         | SdfPrimitive::Cylinder { .. }
         | SdfPrimitive::Capsule { .. }
-        | SdfPrimitive::Torus { .. }
-        | SdfPrimitive::Slab { .. } => SdfLipschitzStatus::GlobalExact,
-        SdfPrimitive::RoundedAabb { .. } => SdfLipschitzStatus::LocalOnly,
-        SdfPrimitive::Sphere { .. } => SdfLipschitzStatus::LocalOnly,
+        | SdfPrimitive::Torus { .. } => SdfLipschitzStatus::LocalOnly,
         SdfPrimitive::Plane { .. } => SdfLipschitzStatus::Unknown,
     }
 }

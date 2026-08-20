@@ -6,6 +6,58 @@
 
 use hyperlimit::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
 
+/// Preserve the weakest certainty used by a composed SDF decision.
+#[inline(always)]
+pub(crate) const fn merge_certainty(left: Certainty, right: Certainty) -> Certainty {
+    match (left, right) {
+        (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
+        (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
+        (Certainty::Exact, Certainty::Exact) => Certainty::Exact,
+    }
+}
+
+/// Preserve the furthest escalation stage used by a composed SDF decision.
+#[inline(always)]
+pub(crate) const fn merge_stage(left: Escalation, right: Escalation) -> Escalation {
+    if stage_rank(right) > stage_rank(left) {
+        right
+    } else {
+        left
+    }
+}
+
+/// Attach prerequisite decision provenance to a derived outcome.
+#[inline(always)]
+pub(crate) fn merge_outcome_provenance<T>(
+    outcome: PredicateOutcome<T>,
+    certainty: Certainty,
+    stage: Escalation,
+) -> PredicateOutcome<T> {
+    match outcome {
+        PredicateOutcome::Decided {
+            value,
+            certainty: outcome_certainty,
+            stage: outcome_stage,
+        } => PredicateOutcome::decided(
+            value,
+            merge_certainty(certainty, outcome_certainty),
+            merge_stage(stage, outcome_stage),
+        ),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
+#[inline(always)]
+const fn stage_rank(stage: Escalation) -> u8 {
+    match stage {
+        Escalation::Structural => 0,
+        Escalation::Filter => 1,
+        Escalation::Exact => 2,
+        Escalation::Refined => 3,
+        Escalation::Undecided => 4,
+    }
+}
+
 /// Domain validity for a retained SDF expression.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SdfDomainStatus {
@@ -140,6 +192,11 @@ pub enum SdfEvidenceStatus {
         /// Escalation stage that decided the predicate.
         stage: Escalation,
     },
+    /// Classification used the policy-authorized terminal approximation.
+    Approximate {
+        /// Escalation stage that produced the terminal approximation.
+        stage: Escalation,
+    },
     /// Classification could not be certified under the selected policy.
     Unknown {
         /// Additional capability requested by the underlying predicate.
@@ -153,6 +210,11 @@ impl SdfEvidenceStatus {
     /// Convert a Hyperlimit predicate outcome into SDF evidence.
     pub const fn from_outcome<T>(outcome: &PredicateOutcome<T>) -> Self {
         match outcome {
+            PredicateOutcome::Decided {
+                certainty: Certainty::Approximate,
+                stage,
+                ..
+            } => Self::Approximate { stage: *stage },
             PredicateOutcome::Decided {
                 certainty, stage, ..
             } => Self::Certified {
@@ -168,7 +230,13 @@ impl SdfEvidenceStatus {
 
     /// Returns whether the evidence is certified.
     pub const fn is_certified(self) -> bool {
-        matches!(self, Self::Certified { .. })
+        matches!(
+            self,
+            Self::Certified {
+                certainty: Certainty::Exact | Certainty::Filtered,
+                ..
+            }
+        )
     }
 }
 
@@ -223,6 +291,53 @@ impl SdfCellLocation {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn composed_certainty_never_upgrades_approximate_evidence() {
+        assert_eq!(
+            merge_certainty(Certainty::Exact, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(
+            merge_certainty(Certainty::Filtered, Certainty::Approximate),
+            Certainty::Approximate
+        );
+        assert_eq!(
+            merge_certainty(Certainty::Exact, Certainty::Filtered),
+            Certainty::Filtered
+        );
+
+        let outcome = PredicateOutcome::decided((), Certainty::Approximate, Escalation::Refined);
+        let evidence = SdfEvidenceStatus::from_outcome(&outcome);
+        assert_eq!(
+            evidence,
+            SdfEvidenceStatus::Approximate {
+                stage: Escalation::Refined
+            }
+        );
+        assert!(!evidence.is_certified());
+
+        let malformed = SdfPointClassificationReport {
+            point: hyperlimit::Point3::new(
+                hyperreal::Real::zero(),
+                hyperreal::Real::zero(),
+                hyperreal::Real::zero(),
+            ),
+            location: SdfPointLocation::Inside,
+            scalar_value: None,
+            metric_status: SdfMetricStatus::Unknown,
+            evidence: SdfEvidenceStatus::Certified {
+                certainty: Certainty::Approximate,
+                stage: Escalation::Refined,
+            },
+        };
+        assert!(!malformed.is_self_consistent());
+    }
+}
+
 /// Report returned by point classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SdfPointClassificationReport {
@@ -246,7 +361,11 @@ impl SdfPointClassificationReport {
     /// combinations before downstream consumers rely on them.
     pub const fn is_self_consistent(&self) -> bool {
         match self.evidence {
-            SdfEvidenceStatus::Certified { .. } => {
+            SdfEvidenceStatus::Certified { certainty, .. } => {
+                !matches!(certainty, Certainty::Approximate)
+                    && !matches!(self.location, SdfPointLocation::Unknown)
+            }
+            SdfEvidenceStatus::Approximate { .. } => {
                 !matches!(self.location, SdfPointLocation::Unknown)
             }
             SdfEvidenceStatus::Unknown { .. } => matches!(self.location, SdfPointLocation::Unknown),
@@ -273,7 +392,11 @@ impl SdfCellClassificationReport {
     /// Validate report-field consistency without replaying the source expression.
     pub const fn is_self_consistent(&self) -> bool {
         match self.evidence {
-            SdfEvidenceStatus::Certified { .. } => {
+            SdfEvidenceStatus::Certified { certainty, .. } => {
+                !matches!(certainty, Certainty::Approximate)
+                    && !matches!(self.location, SdfCellLocation::Unknown)
+            }
+            SdfEvidenceStatus::Approximate { .. } => {
                 !matches!(self.location, SdfCellLocation::Unknown)
             }
             SdfEvidenceStatus::Unknown { .. } => matches!(self.location, SdfCellLocation::Unknown),

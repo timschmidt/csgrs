@@ -9,13 +9,16 @@
 
 use core::cmp::Ordering;
 
-use hyperlimit::{Certainty, Escalation, Point3, PredicateOutcome, RefinementNeed, compare_reals};
+use hyperlimit::{Certainty, Escalation, Point3, PredicateOutcome, RefinementNeed};
 use hyperreal::Real;
 
 use crate::expr::SdfExpr;
 use crate::interval::{SdfInterval, interval_expr_cell};
+use crate::policy::compare_reals_for_construction as compare_reals;
 use crate::primitive::{SdfPrimitive, farthest_squared_distance3_to_aabb, radius_squared_domain};
-use crate::status::{SdfEvidenceStatus, SdfLipschitzStatus};
+use crate::status::{
+    SdfEvidenceStatus, SdfLipschitzStatus, merge_certainty, merge_outcome_provenance, merge_stage,
+};
 
 /// Conservative local Lipschitz-bound report over a closed AABB/cell.
 #[derive(Clone, Debug, PartialEq)]
@@ -41,7 +44,10 @@ impl SdfLipschitzReport {
     /// Validate that bound presence agrees with evidence status.
     pub const fn is_self_consistent(&self) -> bool {
         match self.evidence {
-            SdfEvidenceStatus::Certified { .. } => self.bound.is_some(),
+            SdfEvidenceStatus::Certified { certainty, .. } => {
+                self.bound.is_some() && !matches!(certainty, Certainty::Approximate)
+            }
+            SdfEvidenceStatus::Approximate { .. } => self.bound.is_some(),
             SdfEvidenceStatus::Unknown { .. } => self.bound.is_none(),
         }
     }
@@ -69,7 +75,7 @@ pub(crate) fn lipschitz_expr_cell(
         SdfExpr::Add(left, right) | SdfExpr::Sub(left, right) => combine_lipschitz_pair(
             lipschitz_expr_cell(left, min, max),
             lipschitz_expr_cell(right, min, max),
-            |a, b| Some(&a + &b),
+            |a, b| decided(&a + &b),
         ),
         SdfExpr::Mul(left, right) => lipschitz_mul_cell(left, right, min, max),
         SdfExpr::Abs(inner) | SdfExpr::Complement(inner) | SdfExpr::Offset { child: inner, .. } => {
@@ -102,18 +108,27 @@ fn lipschitz_primitive_cell(
             center,
             radius_squared,
         } => match radius_squared_domain(radius_squared) {
-            PredicateOutcome::Decided { value: true, .. } => {
-                let farthest = match farthest_squared_distance3_to_aabb(center, min, max) {
-                    PredicateOutcome::Decided { value, .. } => value,
-                    PredicateOutcome::Unknown { needed, stage } => {
-                        return PredicateOutcome::unknown(needed, stage);
-                    }
-                };
-                match farthest.sqrt() {
-                    Ok(distance) => decided(Real::from(2_i32) * &distance),
+            PredicateOutcome::Decided {
+                value: true,
+                certainty,
+                stage,
+            } => match farthest_squared_distance3_to_aabb(center, min, max) {
+                PredicateOutcome::Decided {
+                    value,
+                    certainty: farthest_certainty,
+                    stage: farthest_stage,
+                } => match value.sqrt() {
+                    Ok(distance) => PredicateOutcome::decided(
+                        Real::from(2_i32) * &distance,
+                        merge_certainty(certainty, farthest_certainty),
+                        merge_stage(stage, farthest_stage),
+                    ),
                     Err(_) => unsupported(),
+                },
+                PredicateOutcome::Unknown { needed, stage } => {
+                    PredicateOutcome::unknown(needed, stage)
                 }
-            }
+            },
             PredicateOutcome::Decided { .. } => unsupported(),
             PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
         },
@@ -136,48 +151,114 @@ fn lipschitz_mul_cell(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<Real> {
-    let left_l = match lipschitz_expr_cell(left, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+    let (left_l, mut certainty, mut stage) = match lipschitz_expr_cell(left, min, max) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => (value, certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
     };
     let right_l = match lipschitz_expr_cell(right, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Decided {
+            value,
+            certainty: right_certainty,
+            stage: right_stage,
+        } => {
+            certainty = merge_certainty(certainty, right_certainty);
+            stage = merge_stage(stage, right_stage);
+            value
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
     };
     let left_interval = match interval_expr_cell(left, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Decided {
+            value,
+            certainty: interval_certainty,
+            stage: interval_stage,
+        } => {
+            certainty = merge_certainty(certainty, interval_certainty);
+            stage = merge_stage(stage, interval_stage);
+            value
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
     };
     let right_interval = match interval_expr_cell(right, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Decided {
+            value,
+            certainty: interval_certainty,
+            stage: interval_stage,
+        } => {
+            certainty = merge_certainty(certainty, interval_certainty);
+            stage = merge_stage(stage, interval_stage);
+            value
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
     };
-    let Some(left_abs) = interval_abs_upper(&left_interval) else {
-        return unsupported();
+    let left_abs = match interval_abs_upper(&left_interval) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: abs_certainty,
+            stage: abs_stage,
+        } => {
+            certainty = merge_certainty(certainty, abs_certainty);
+            stage = merge_stage(stage, abs_stage);
+            value
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
     };
-    let Some(right_abs) = interval_abs_upper(&right_interval) else {
-        return unsupported();
+    let right_abs = match interval_abs_upper(&right_interval) {
+        PredicateOutcome::Decided {
+            value,
+            certainty: abs_certainty,
+            stage: abs_stage,
+        } => {
+            certainty = merge_certainty(certainty, abs_certainty);
+            stage = merge_stage(stage, abs_stage);
+            value
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
     };
-    decided(&(&left_abs * &right_l) + &(&right_abs * &left_l))
+    PredicateOutcome::decided(
+        &(&left_abs * &right_l) + &(&right_abs * &left_l),
+        certainty,
+        stage,
+    )
 }
 
 fn lipschitz_sqrt_cell(inner: &SdfExpr, min: &Point3, max: &Point3) -> PredicateOutcome<Real> {
-    let child_l = match lipschitz_expr_cell(inner, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+    let (child_l, mut certainty, mut stage) = match lipschitz_expr_cell(inner, min, max) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => (value, certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
     };
     let interval = match interval_expr_cell(inner, min, max) {
-        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Decided {
+            value,
+            certainty: interval_certainty,
+            stage: interval_stage,
+        } => {
+            certainty = merge_certainty(certainty, interval_certainty);
+            stage = merge_stage(stage, interval_stage);
+            value
+        }
         PredicateOutcome::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
         }
@@ -185,14 +266,17 @@ fn lipschitz_sqrt_cell(inner: &SdfExpr, min: &Point3, max: &Point3) -> Predicate
     match compare_reals(&interval.lower, &Real::zero()) {
         PredicateOutcome::Decided {
             value: Ordering::Greater,
-            ..
+            certainty: comparison_certainty,
+            stage: comparison_stage,
         } => {
+            certainty = merge_certainty(certainty, comparison_certainty);
+            stage = merge_stage(stage, comparison_stage);
             let Ok(root) = interval.lower.sqrt() else {
                 return unsupported();
             };
             let denominator = Real::from(2_i32) * &root;
             match (&child_l / &denominator).ok() {
-                Some(bound) => decided(bound),
+                Some(bound) => PredicateOutcome::decided(bound, certainty, stage),
                 None => unsupported(),
             }
         }
@@ -211,7 +295,7 @@ fn vector_norm(components: &[Real; 3]) -> PredicateOutcome<Real> {
     }
 }
 
-fn interval_abs_upper(interval: &SdfInterval) -> Option<Real> {
+fn interval_abs_upper(interval: &SdfInterval) -> PredicateOutcome<Real> {
     let neg_lower = -&interval.lower;
     max_real(neg_lower, interval.upper.clone())
 }
@@ -222,16 +306,25 @@ fn combine_lipschitz_pair<F>(
     combine: F,
 ) -> PredicateOutcome<Real>
 where
-    F: FnOnce(Real, Real) -> Option<Real>,
+    F: FnOnce(Real, Real) -> PredicateOutcome<Real>,
 {
     match (left, right) {
         (
-            PredicateOutcome::Decided { value: a, .. },
-            PredicateOutcome::Decided { value: b, .. },
-        ) => match combine(a, b) {
-            Some(value) => decided(value),
-            None => unsupported(),
-        },
+            PredicateOutcome::Decided {
+                value: a,
+                certainty,
+                stage,
+            },
+            PredicateOutcome::Decided {
+                value: b,
+                certainty: right_certainty,
+                stage: right_stage,
+            },
+        ) => merge_outcome_provenance(
+            combine(a, b),
+            merge_certainty(certainty, right_certainty),
+            merge_stage(stage, right_stage),
+        ),
         (PredicateOutcome::Unknown { needed, stage }, _)
         | (_, PredicateOutcome::Unknown { needed, stage }) => {
             PredicateOutcome::unknown(needed, stage)
@@ -239,14 +332,17 @@ where
     }
 }
 
-fn max_real(left: Real, right: Real) -> Option<Real> {
+fn max_real(left: Real, right: Real) -> PredicateOutcome<Real> {
     match compare_reals(&left, &right) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
-            ..
-        } => Some(right),
-        PredicateOutcome::Decided { .. } => Some(left),
-        PredicateOutcome::Unknown { .. } => None,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(right, certainty, stage),
+        PredicateOutcome::Decided {
+            certainty, stage, ..
+        } => PredicateOutcome::decided(left, certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
 }
 
