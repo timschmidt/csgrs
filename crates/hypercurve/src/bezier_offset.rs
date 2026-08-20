@@ -61630,7 +61630,7 @@ impl BezierAnalyticParallelPoint2 {
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                match parameter.promoted_bezier_parameter(policy)? {
+                match parameter.promoted_bezier_parameter_complete(policy)? {
                     Classification::Decided(parameter) => parameter,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -110959,6 +110959,47 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn resource_blocked_selected_analytic_point_materializes_at_cold_boundary() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            assert!(matches!(
+                parameter.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let point = BezierAnalyticParallelPoint2::new_selected_fiber(
+                parallel.clone(),
+                parameter,
+                &policy,
+            );
+            let represented = point.represented_coordinates(&policy).unwrap();
+            let Classification::Decided([x, y]) = represented else {
+                panic!(
+                    "a genuine cold carrier switch must complete selected projection: {represented:?}"
+                );
+            };
+            assert!(x.is_valid());
+            assert!(y.is_valid());
+            assert_eq!(y.exact_rational_witness(), Some(&Real::zero()));
+            assert_eq!(
+                compare_reals(&x.interval.lower, &Real::zero(), &CurveContext::STRICT),
+                Some(std::cmp::Ordering::Greater)
+            );
+            assert_eq!(
+                compare_reals(&x.interval.upper, &Real::one(), &CurveContext::STRICT,),
+                Some(std::cmp::Ordering::Less)
+            );
         }
     }
 

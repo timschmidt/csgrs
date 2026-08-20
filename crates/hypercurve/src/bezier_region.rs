@@ -5563,7 +5563,7 @@ fn promoted_retained_parallel_parameter(
     let Some(parameter) = parameter.as_selected_fiber() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    parameter.promoted_bezier_parameter(policy)
+    parameter.promoted_bezier_parameter_complete(policy)
 }
 
 fn promoted_retained_parallel_fragment(
@@ -21372,6 +21372,66 @@ mod tests {
             let extended = solve(CurveCornerMode2::TrimOrExtend);
             assert!(trim.candidate_count() > 0);
             assert!(extended.candidate_count() > trim.candidate_count());
+        }
+    }
+
+    #[test]
+    fn resource_blocked_selected_offset_span_completes_its_cold_projection() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let end = q(3, 4);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                half.clone(),
+                32_768,
+                &policy,
+            );
+            assert!(matches!(
+                start.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let parallel =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 0), p(10, 0)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let start_point = RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                    parallel.clone(),
+                    start.clone(),
+                    &policy,
+                ),
+            );
+            let fragment = crate::bezier_split::BezierSelectedFiberFragment2::new(
+                BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
+                CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_selected_fiber(start.clone()),
+                    CurveRegionParameter2::from_bezier(BezierParameter2::Exact(end.clone())),
+                ),
+                start_point,
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::new(
+                    Real::from(10_i8) * &end,
+                    Real::zero(),
+                )),
+            );
+            let Classification::Decided(span) = exact_offset_span_from_retained_parallel_fragment(
+                RetainedParallelOffsetFragmentRef2::Selected(&fragment),
+                &q(1, 4),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("a genuine offset carrier switch must complete selected projection");
+            };
+            assert!(!span.fragments.is_empty());
+            let Some(ExactOffsetTangent2::RetainedParallel {
+                selected_source_parameter: Some(retained),
+                ..
+            }) = span.start_tangent
+            else {
+                panic!("the offset span must retain its compact source tangent parameter");
+            };
+            assert_eq!(
+                retained.cmp_by_refinement(&start, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
         }
     }
 
