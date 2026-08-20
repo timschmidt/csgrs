@@ -7233,7 +7233,7 @@ fn append_retained_parallel_round_join(
                 companion.clone(),
                 companion_at_start,
                 parallel.clone(),
-                parameter.clone(),
+                CurveRegionParameter2::from_bezier(parameter.clone()),
                 source_direction,
                 radial_product_sign,
                 other_point,
@@ -13489,7 +13489,7 @@ impl CurveRegion2 {
         companion_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
         companion_at_start: bool,
         anchor_parallel: &BezierParallel2,
-        anchor_parameter: &BezierParameter2,
+        anchor_parameter: &CurveRegionParameter2,
         source_direction: RealSign,
         companion_radial_sign: RealSign,
         fillet_clockwise: bool,
@@ -13497,13 +13497,30 @@ impl CurveRegion2 {
         companion_cut: &mut CornerTrimCut2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
-        let (sweep_halves, tangent_cross, _) = Self::retained_fillet_sweep(
-            frame,
-            anchor_parallel,
-            anchor_parameter,
-            false,
+        let (tangent_cross, tangent_dot) = match frame.anchor_evidence.as_ref() {
+            Some(relation) => match (relation.cross, relation.dot) {
+                (Some(cross), dot) => (cross, dot.unwrap_or(RealSign::Zero)),
+                (None, Some(dot)) => (RealSign::Zero, dot),
+                (None, None) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        UncertaintyReason::Predicate,
+                    ));
+                }
+            },
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    CurveFamily2::CircularArc,
+                    UncertaintyReason::Predicate,
+                ));
+            }
+        };
+        let (sweep_halves, tangent_cross, _) = Self::retained_fillet_sweep_from_tangent_relation(
+            tangent_cross,
+            tangent_dot,
             fillet_clockwise,
-            policy,
         )?;
         let terminal_circle = if sweep_halves == 2 {
             fillet.complementary_half()
@@ -14214,22 +14231,38 @@ impl CurveRegion2 {
             }
             if let (
                 BezierSplitFragment2::AlgebraicCuspSemicircle(companion),
-                RetainedFilletRadialFrame2::ParallelNormal {
-                    center_support,
-                    center_parameter,
-                    ..
-                },
                 Some(source_direction),
                 Some(companion_parameter),
             ) = (
                 other_fragment,
-                &frame.radial_frame,
                 frame
                     .anchor_evidence
                     .as_ref()
                     .and_then(|evidence| evidence.source_direction),
                 other_cut.parameter.as_algebraic_cusp().cloned(),
-            ) {
+            ) && let Some((center_support, center_parameter)) = match &frame.radial_frame {
+                RetainedFilletRadialFrame2::ParallelNormal {
+                    center_support,
+                    center_parameter,
+                    ..
+                } => Some((
+                    center_support.clone(),
+                    CurveRegionParameter2::from_bezier(center_parameter.clone()),
+                )),
+                RetainedFilletRadialFrame2::ChordNormal { .. } => frame
+                    .anchor_evidence
+                    .as_ref()
+                    .and_then(|evidence| evidence.center_parallel.as_ref())
+                    .and_then(|center| {
+                        center
+                            .parameter
+                            .as_ref()
+                            .map(|parameter| (center.support.clone(), parameter.clone()))
+                    }),
+                RetainedFilletRadialFrame2::RepresentedUnitNormal(_)
+                | RetainedFilletRadialFrame2::ConcentricArc { .. }
+                | RetainedFilletRadialFrame2::SelectedConcentric { .. } => None,
+            } {
                 // The solved offset center lies on the opposite side of the
                 // circular source from its tangency point.
                 let companion_radial_sign = if clockwise {
@@ -14243,8 +14276,8 @@ impl CurveRegion2 {
                     companion,
                     companion_parameter,
                     frame.anchor_is_previous,
-                    center_support,
-                    center_parameter,
+                    &center_support,
+                    &center_parameter,
                     source_direction,
                     companion_radial_sign,
                     fillet_clockwise,
