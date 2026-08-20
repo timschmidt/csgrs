@@ -2345,7 +2345,19 @@ fn retained_cusp_smooth_run_neighbor(
     } else {
         (false, true)
     };
-    match policy.strict_predicate_pass(|| {
+    // A selected-radial fillet diameter and the concentric source parameter
+    // that authored its frame are tangent but cannot belong to one supporting
+    // circle: the former is centered at a nonzero-radius point of the latter.
+    // Reject that structurally distinct adjacency before asking the general
+    // circle-pair kernel to rediscover a high-multiplicity tangent contact.
+    match source
+        .endpoint_selected_radial_source_tangent_relation(source_start, next, next_start, policy)
+        .map_err(|cause| curve_region_edit_error(operation, cause))?
+    {
+        Classification::Decided(Some(_)) => return Ok(None),
+        Classification::Decided(None) | Classification::Uncertain(_) => {}
+    }
+    let tangent_relation = policy.strict_predicate_pass(|| {
         exact_selected_circle_pair_tangent_cross_and_dot(
             source,
             source,
@@ -2355,7 +2367,8 @@ fn retained_cusp_smooth_run_neighbor(
             next_start,
             policy,
         )
-    }) {
+    });
+    match tangent_relation {
         Classification::Decided((RealSign::Positive | RealSign::Negative, _))
         | Classification::Decided((RealSign::Zero, Some(RealSign::Negative))) => return Ok(None),
         Classification::Decided((RealSign::Zero, Some(RealSign::Zero))) => {
@@ -8570,7 +8583,9 @@ fn exact_selected_circle_pair_tangent_cross_and_dot(
     policy: &CurveContext,
 ) -> Classification<(RealSign, Option<RealSign>)> {
     match first.endpoint_pair_tangent_cross_and_dot(first_start, second, second_start, policy) {
-        Ok(Classification::Decided(Some(relation))) => return Classification::Decided(relation),
+        Ok(Classification::Decided(Some(relation))) => {
+            return Classification::Decided(relation);
+        }
         Ok(Classification::Decided(None)) => {}
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -25045,6 +25060,15 @@ mod tests {
         analytic_bottom: bool,
         policy: &CurveContext,
     ) -> CurveRegion2 {
+        selected_radial_crossing_cutter(filleted, None, analytic_bottom, policy)
+    }
+
+    fn selected_radial_crossing_cutter(
+        filleted: &CurveRegion2,
+        selected_radius: Option<&Real>,
+        analytic_bottom: bool,
+        policy: &CurveContext,
+    ) -> CurveRegion2 {
         let pair_fragment = filleted.boundary_loops()[0]
             .fragments()
             .iter()
@@ -25052,11 +25076,15 @@ mod tests {
                 BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
                     if fragment.semicircle().uses_selected_radial_frame() =>
                 {
-                    Some(fragment)
+                    selected_radius
+                        .is_none_or(|radius| {
+                            fragment.semicircle().radial_distance().abs() == *radius
+                        })
+                        .then_some(fragment)
                 }
                 _ => None,
             })
-            .expect("the fillet retains its pair-native circle");
+            .expect("the fillet retains the requested selected-radial circle");
         let pair_circle = pair_fragment.semicircle();
         let parameter_bounds =
             |parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
@@ -25235,6 +25263,127 @@ mod tests {
             vec![CurveBoundaryInteriorSide2::Left],
         )
         .expect("the crossing cutter has authored topology")
+    }
+
+    fn selected_radial_linear_corner(
+        region: &CurveRegion2,
+        selected_radius: &Real,
+    ) -> (usize, usize) {
+        let selected_circle = |fragment: &BezierSplitFragment2| match fragment {
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                if fragment.semicircle().uses_selected_radial_frame()
+                    && fragment.semicircle().radial_distance().abs() == *selected_radius =>
+            {
+                true
+            }
+            _ => false,
+        };
+        let retained_line = |fragment: &BezierSplitFragment2| {
+            matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicChord(_) | BezierSplitFragment2::Materialized { .. }
+            )
+        };
+        region
+            .boundary_loops()
+            .iter()
+            .enumerate()
+            .find_map(|(loop_index, boundary)| {
+                let fragments = boundary.fragments();
+                (0..fragments.len()).find_map(|corner| {
+                    let previous = &fragments[(corner + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[corner];
+                    ((selected_circle(previous) && retained_line(next))
+                        || (retained_line(previous) && selected_circle(next)))
+                    .then_some((loop_index, corner))
+                })
+            })
+            .expect("the clipped region retains the requested selected-radial/line corner")
+    }
+
+    fn next_selected_radial_boolean_fillet_generation(
+        source: &CurveRegion2,
+        source_radius: &Real,
+        policy: &CurveContext,
+    ) -> (CurveRegion2, Real) {
+        let cutter = selected_radial_crossing_cutter(source, Some(source_radius), false, policy);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let boolean_work = || source.boolean_regions(&cutter, policy);
+        #[cfg(feature = "dispatch-trace")]
+        let booleans = hyperreal::dispatch_trace::with_recording(boolean_work);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let booleans = boolean_work();
+        let clipped = booleans
+            .unwrap_or_else(|error| {
+                #[cfg(feature = "dispatch-trace")]
+                panic!(
+                    "the recursive selected-radial cutter must publish exact topology: {error:?}; trace={:?}",
+                    hyperreal::dispatch_trace::take_trace()
+                );
+                #[cfg(not(feature = "dispatch-trace"))]
+                panic!("the recursive selected-radial cutter must publish exact topology: {error:?}");
+            })
+            .into_value()
+            .intersection()
+            .clone();
+        let (loop_index, corner) = selected_radial_linear_corner(&clipped, source_radius);
+        let radius = (source_radius / Real::from(100_i16)).unwrap();
+        let result = clipped
+            .fillet_loop_vertex_by_radius(
+                loop_index,
+                corner,
+                radius.clone(),
+                CurveCornerMode2::TrimOnly,
+                policy,
+            )
+            .expect("the recursive selected-radial/line corner must fillet exactly");
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        let candidates = match result.value {
+            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+            CurveCornerSolutions2::Multiple(candidates) => candidates,
+            CurveCornerSolutions2::NoSolution(reason) => {
+                panic!("the recursive selected-radial/line fillet was lost: {reason:?}")
+            }
+        };
+        let candidate = candidates
+            .into_iter()
+            .find(|candidate| {
+                candidate
+                    .boundary_loops()
+                    .iter()
+                    .flat_map(|boundary| boundary.fragments())
+                    .any(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                            if fragment.semicircle().uses_selected_radial_frame() =>
+                        {
+                            fragment.semicircle().radial_distance().abs() == radius
+                        }
+                        _ => false,
+                    })
+            })
+            .expect("the recursive fillet retains its selected-radial circle");
+        (candidate, radius)
+    }
+
+    #[test]
+    fn recursively_nested_selected_radial_boolean_fillets_remain_exact() {
+        let policy = CurveContext::STRICT;
+        let source = independent_pair_native_fillet(&policy, false);
+        let source_radius = pair_radial_corner(&source).1;
+        let (third_generation, third_radius) =
+            next_selected_radial_boolean_fillet_generation(&source, &source_radius, &policy);
+        let (fourth_generation, _) = next_selected_radial_boolean_fillet_generation(
+            &third_generation,
+            &third_radius,
+            &policy,
+        );
+        let replay = fourth_generation
+            .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
+            .expect("the fourth-generation fillet re-enters the Boolean kernel");
+        assert_eq!(replay.certainty, CurveCertainty::Certified);
+        assert!(replay.value.intersection().is_empty());
+        assert_eq!(replay.value.union().boundary_loops().len(), 2);
     }
 
     #[test]

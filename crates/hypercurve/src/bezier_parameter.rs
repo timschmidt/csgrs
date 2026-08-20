@@ -829,7 +829,7 @@ impl BezierParameterInterval {
         Self::try_new_ordered(start, end, policy)
     }
 
-    fn try_new_ordered(
+    pub(crate) fn try_new_ordered(
         start: Real,
         end: Real,
         policy: &CurveContext,

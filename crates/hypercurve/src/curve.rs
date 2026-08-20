@@ -8047,19 +8047,13 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            let intersections = if finite_source_domain {
-                cusp_support
-                    .semicircle()
-                    .chord_intersections_prefer_exact_line(
-                        chord_support,
-                        mode != CurveCornerMode2::TrimOrExtend,
-                        policy,
-                    )
-            } else {
-                cusp_support
-                    .semicircle()
-                    .chord_support_intersections(chord_support, policy)
-            };
+            let intersections = cusp_support
+                .semicircle()
+                .chord_intersections_prefer_exact_line(
+                    chord_support,
+                    finite_source_domain && mode != CurveCornerMode2::TrimOrExtend,
+                    policy,
+                );
             let base_contacts = match intersections
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
@@ -9267,11 +9261,14 @@ fn fillet_cut_from_center(
                     })?;
                 match translated_pair_interior {
                     Some(Classification::Decided(interior)) => Classification::Decided(interior),
-                    Some(Classification::Uncertain(_)) | None => support
-                        .certified_incident_point_evidence_is_strict_interior(center, policy)
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                        })?,
+                    Some(Classification::Uncertain(_)) | None => {
+                        let interior = support
+                            .certified_incident_point_evidence_is_strict_interior(center, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                            })?;
+                        interior
+                    }
                 }
             };
             let placement = if complementary {
@@ -9662,6 +9659,20 @@ fn algebraic_chord_domain_matches_line_witness(
         crate::Axis2::X => point.x().clone(),
         crate::Axis2::Y => point.y().clone(),
     };
+    // Prepared algebraic axis chords use a canonical unit witness solely to
+    // name their affine support.  Its active coordinate is structurally
+    // `[0, +/-1]`; final cut publication still classifies every center on the
+    // authored algebraic chord.  Treat that witness as unbounded immediately
+    // instead of trying to rediscover two potentially recursive endpoint
+    // equalities through the terminal predicate schedule.
+    let witness_start = coordinate(witness.start());
+    let witness_end = coordinate(witness.end());
+    if witness_start.zero_status() == hyperreal::ZeroKnowledge::Zero
+        && ((&witness_end - &witness_start).abs() - Real::one()).zero_status()
+            == hyperreal::ZeroKnowledge::Zero
+    {
+        return Ok(false);
+    }
     let equal = |point, value| {
         policy
             .strict_predicate_pass(|| {
@@ -9670,8 +9681,6 @@ fn algebraic_chord_domain_matches_line_witness(
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))
             .map(|order| order == Classification::Decided(std::cmp::Ordering::Equal))
     };
-    let witness_start = coordinate(witness.start());
-    let witness_end = coordinate(witness.end());
     let forward = equal(source.start(), &witness_start)? && equal(source.end(), &witness_end)?;
     if forward {
         return Ok(true);
