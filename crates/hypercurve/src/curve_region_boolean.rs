@@ -6026,158 +6026,133 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 else {
                     continue;
                 };
-                let cusp_overlap_topology = matches!(
-                    overlap.source,
-                    Some(
-                        RegionPairOverlapSource::AlgebraicCusp(_)
-                            | RegionPairOverlapSource::AlgebraicCuspMapped(_)
+                // A certified overlap is also exact endpoint-incidence
+                // evidence.  Give each corresponding endpoint pair one
+                // topology vertex even when neither carrier can materialize
+                // the shared Cartesian point.  If regularization later
+                // cancels both coincident spans, their neighboring unique
+                // fragments still reconnect through these vertices.
+                let mut first_parameters = [first_range.start().clone(), first_range.end().clone()];
+                let mut second_parameters =
+                    [second_range.start().clone(), second_range.end().clone()];
+                let first_direction = decided_parameter_cmp(
+                    &first_parameters[0],
+                    &first_parameters[1],
+                    &self.data.policy,
+                )?;
+                let second_direction = decided_parameter_cmp(
+                    &second_parameters[0],
+                    &second_parameters[1],
+                    &self.data.policy,
+                )?;
+                if first_direction == Ordering::Equal || second_direction == Ordering::Equal {
+                    return Err(
+                        self.invalid(pair.first_carrier_index, CurveError::DegenerateOverlapRange)
+                    );
+                }
+                let endpoints_correspond_in_order = (first_direction == second_direction)
+                    == (overlap.orientation == RationalBezierOverlapOrientation2::Same);
+                for index in [0_usize, 1] {
+                    let second_index = if endpoints_correspond_in_order {
+                        index
+                    } else {
+                        1 - index
+                    };
+                    let first_existing = existing_event_vertex_if_decided(
+                        &events[pair.first_carrier_index],
+                        &first_parameters[index],
+                        &self.data.policy,
                     )
-                ) || {
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
+                    let second_existing = existing_event_vertex_if_decided(
+                        &events[pair.second_carrier_index],
+                        &second_parameters[second_index],
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(pair.second_carrier_index, cause))?;
+                    let topology_vertex = first_existing.or(second_existing).unwrap_or_else(|| {
+                        let vertex = next_topology_vertex;
+                        next_topology_vertex += 1;
+                        vertex
+                    });
+                    if let Some(previous_vertex) = second_existing
+                        && previous_vertex != topology_vertex
                     {
-                        matches!(
-                            overlap.source,
-                            Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_))
-                        )
-                    }
-                };
-                if cusp_overlap_topology {
-                    let mut first_parameters =
-                        [first_range.start().clone(), first_range.end().clone()];
-                    let mut second_parameters =
-                        [second_range.start().clone(), second_range.end().clone()];
-                    for index in 0..2 {
-                        let first_existing = existing_event_vertex_if_decided(
-                            &events[pair.first_carrier_index],
-                            &first_parameters[index],
-                            &self.data.policy,
-                        )
-                        .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
-                        let second_existing = existing_event_vertex_if_decided(
-                            &events[pair.second_carrier_index],
-                            &second_parameters[index],
-                            &self.data.policy,
-                        )
-                        .map_err(|cause| self.invalid(pair.second_carrier_index, cause))?;
-                        let topology_vertex =
-                            first_existing.or(second_existing).unwrap_or_else(|| {
-                                let vertex = next_topology_vertex;
-                                next_topology_vertex += 1;
-                                vertex
-                            });
-                        if let Some(previous_vertex) = second_existing
-                            && previous_vertex != topology_vertex
-                        {
-                            replace_topology_vertex(
-                                &mut events,
-                                &mut contact_points,
-                                previous_vertex,
-                                topology_vertex,
-                            );
-                            contact_vertex_counts[topology_vertex] +=
-                                contact_vertex_counts[previous_vertex];
-                            contact_vertex_counts[previous_vertex] = 0;
-                            reclassification_vertices[topology_vertex] |=
-                                reclassification_vertices[previous_vertex];
-                            reclassification_vertices[previous_vertex] = false;
-                            transition_candidates[topology_vertex] = None;
-                            transition_candidates[previous_vertex] = None;
-                        }
-                        if contact_vertex_counts.len() <= topology_vertex {
-                            contact_vertex_counts.resize(topology_vertex + 1, 0);
-                            transition_candidates.resize(topology_vertex + 1, None);
-                            reclassification_vertices.resize(topology_vertex + 1, false);
-                        }
+                        replace_topology_vertex(
+                            &mut events,
+                            &mut contact_points,
+                            previous_vertex,
+                            topology_vertex,
+                        );
+                        contact_vertex_counts[topology_vertex] +=
+                            contact_vertex_counts[previous_vertex];
+                        contact_vertex_counts[previous_vertex] = 0;
+                        reclassification_vertices[topology_vertex] |=
+                            reclassification_vertices[previous_vertex];
+                        reclassification_vertices[previous_vertex] = false;
                         transition_candidates[topology_vertex] = None;
-                        reclassification_vertices[topology_vertex] = true;
-                        push_carrier_event(
-                            &mut events[pair.first_carrier_index],
-                            first_parameters[index].clone(),
-                            Some(topology_vertex),
-                            &self.data.carriers[pair.first_carrier_index],
-                            &self.data.policy,
-                        )?;
-                        push_carrier_event(
-                            &mut events[pair.second_carrier_index],
-                            second_parameters[index].clone(),
-                            Some(topology_vertex),
-                            &self.data.carriers[pair.second_carrier_index],
-                            &self.data.policy,
-                        )?;
-                        first_parameters[index] = events[pair.first_carrier_index]
-                            .iter()
-                            .find(|event| event.topology_vertex == Some(topology_vertex))
-                            .expect("a pushed cusp-overlap event retains its topology vertex")
-                            .parameter
-                            .clone();
-                        second_parameters[index] = events[pair.second_carrier_index]
-                            .iter()
-                            .find(|event| event.topology_vertex == Some(topology_vertex))
-                            .expect("a pushed cusp-overlap event retains its topology vertex")
-                            .parameter
-                            .clone();
-                        if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(
-                            source,
-                        )) = overlap.source.as_ref()
-                        {
-                            let selected_parameter = first_parameters[index]
-                                .as_selected_fiber()
-                                .or_else(|| second_parameters[index].as_selected_fiber());
-                            if let Some(selected_parameter) = selected_parameter {
-                                let point = match source
-                                    .point_evidence_for_other(selected_parameter, &self.data.policy)
-                                    .map_err(|cause| {
-                                        self.invalid(pair.first_carrier_index, cause)
-                                    })? {
-                                    Classification::Decided(point) => point,
-                                    Classification::Uncertain(reason) => {
-                                        return Err(self.blocked(pair.first_carrier_index, reason));
-                                    }
-                                };
-                                contact_points.push(ContactVertex {
-                                    point: Some(point),
-                                    topology_vertex,
-                                    carrier_indices: [
-                                        pair.first_carrier_index,
-                                        pair.second_carrier_index,
-                                    ],
-                                    parameters: [
-                                        first_parameters[index].clone(),
-                                        second_parameters[index].clone(),
-                                    ],
-                                });
-                            }
-                        }
+                        transition_candidates[previous_vertex] = None;
                     }
-                    first_range = CurveRegionParameterRange2::new_validated(
-                        first_parameters[0].clone(),
-                        first_parameters[1].clone(),
-                    );
-                    second_range = CurveRegionParameterRange2::new_validated(
-                        second_parameters[0].clone(),
-                        second_parameters[1].clone(),
-                    );
-                } else {
-                    let first_parameters = [first_range.start(), first_range.end()];
-                    let second_parameters = [second_range.start(), second_range.end()];
-                    for (parameter, second_parameter) in
-                        first_parameters.into_iter().zip(second_parameters)
+                    if contact_vertex_counts.len() <= topology_vertex {
+                        contact_vertex_counts.resize(topology_vertex + 1, 0);
+                        transition_candidates.resize(topology_vertex + 1, None);
+                        reclassification_vertices.resize(topology_vertex + 1, false);
+                    }
+                    transition_candidates[topology_vertex] = None;
+                    reclassification_vertices[topology_vertex] = true;
+                    first_parameters[index] = push_canonical_carrier_event(
+                        &mut events[pair.first_carrier_index],
+                        first_parameters[index].clone(),
+                        Some(topology_vertex),
+                        &self.data.carriers[pair.first_carrier_index],
+                        &self.data.policy,
+                    )?;
+                    second_parameters[second_index] = push_canonical_carrier_event(
+                        &mut events[pair.second_carrier_index],
+                        second_parameters[second_index].clone(),
+                        Some(topology_vertex),
+                        &self.data.carriers[pair.second_carrier_index],
+                        &self.data.policy,
+                    )?;
+                    if let Some(RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(source)) =
+                        overlap.source.as_ref()
                     {
-                        push_carrier_event(
-                            &mut events[pair.first_carrier_index],
-                            parameter.clone(),
-                            None,
-                            &self.data.carriers[pair.first_carrier_index],
-                            &self.data.policy,
-                        )?;
-                        push_carrier_event(
-                            &mut events[pair.second_carrier_index],
-                            second_parameter.clone(),
-                            None,
-                            &self.data.carriers[pair.second_carrier_index],
-                            &self.data.policy,
-                        )?;
+                        let selected_parameter = first_parameters[index]
+                            .as_selected_fiber()
+                            .or_else(|| second_parameters[second_index].as_selected_fiber());
+                        if let Some(selected_parameter) = selected_parameter {
+                            let point = match source
+                                .point_evidence_for_other(selected_parameter, &self.data.policy)
+                                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                            {
+                                Classification::Decided(point) => point,
+                                Classification::Uncertain(reason) => {
+                                    return Err(self.blocked(pair.first_carrier_index, reason));
+                                }
+                            };
+                            contact_points.push(ContactVertex {
+                                point: Some(point),
+                                topology_vertex,
+                                carrier_indices: [
+                                    pair.first_carrier_index,
+                                    pair.second_carrier_index,
+                                ],
+                                parameters: [
+                                    first_parameters[index].clone(),
+                                    second_parameters[second_index].clone(),
+                                ],
+                            });
+                        }
                     }
                 }
+                first_range = CurveRegionParameterRange2::new_validated(
+                    first_parameters[0].clone(),
+                    first_parameters[1].clone(),
+                );
+                second_range = CurveRegionParameterRange2::new_validated(
+                    second_parameters[0].clone(),
+                    second_parameters[1].clone(),
+                );
                 overlaps.push(CarrierOverlap {
                     first_carrier_index: pair.first_carrier_index,
                     second_carrier_index: pair.second_carrier_index,
@@ -7355,12 +7330,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     continue;
                 }
                 if left == right {
-                    return Err(self.invalid(
-                        carrier_index,
-                        CurveError::Topology(
-                            "a regularized non-overlap edge has the same face on both sides".into(),
-                        ),
-                    ));
+                    // Contact-sector unions can conservatively collapse the
+                    // two local sides of a neighboring non-overlap edge as
+                    // well as an overlap edge.  The sparse face equations are
+                    // then unusable, but the per-fragment geometric
+                    // classifier below remains authoritative and exact.
+                    face_equations_valid = false;
+                    continue;
                 }
                 debug_assert!(!edge_overlap_grouped[edge]);
                 let jump = winding_jumps.len();
@@ -7810,6 +7786,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             _ => continue,
                         };
                         if !authored_successor(incoming, outgoing) {
+                            continue;
+                        }
+                        // A coincident edge that lost deterministic overlap
+                        // ownership is discarded as a duplicate image.  That
+                        // ownership action belongs only to the overlap cell;
+                        // it cannot propagate through the authored endpoint
+                        // into an adjacent unique edge.
+                        if edge_overlapped[incoming.0][incoming.1]
+                            && !edge_owns_overlap[incoming.0][incoming.1]
+                            || edge_overlapped[outgoing.0][outgoing.1]
+                                && !edge_owns_overlap[outgoing.0][outgoing.1]
+                        {
                             continue;
                         }
                         let first = actions[incoming.0][incoming.1];
@@ -12305,6 +12293,7 @@ fn algebraic_endpoint_tangent_at_vertex(
     })
 }
 
+#[cfg(test)]
 fn push_carrier_event(
     events: &mut Vec<CarrierEvent>,
     parameter: CurveRegionParameter2,
@@ -12316,6 +12305,18 @@ fn push_carrier_event(
         .map(|_| ())
 }
 
+fn push_canonical_carrier_event(
+    events: &mut Vec<CarrierEvent>,
+    parameter: CurveRegionParameter2,
+    topology_vertex: Option<usize>,
+    carrier: &RegionCarrier,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveRegionParameter2> {
+    let (_, event_index) =
+        push_carrier_event_internal(events, parameter, topology_vertex, carrier, false, policy)?;
+    Ok(events[event_index].parameter.clone())
+}
+
 fn push_contact_carrier_event(
     events: &mut Vec<CarrierEvent>,
     parameter: CurveRegionParameter2,
@@ -12324,6 +12325,7 @@ fn push_contact_carrier_event(
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     push_carrier_event_internal(events, parameter, topology_vertex, carrier, true, policy)
+        .map(|(deferred, _)| deferred)
 }
 
 fn push_carrier_event_internal(
@@ -12333,9 +12335,9 @@ fn push_carrier_event_internal(
     carrier: &RegionCarrier,
     defer_unordered: bool,
     policy: &CurveContext,
-) -> ExactCurveResult<bool> {
+) -> ExactCurveResult<(bool, usize)> {
     let mut deferred_ordering = false;
-    for event in events.iter_mut() {
+    for (event_index, event) in events.iter_mut().enumerate() {
         let same_topology_vertex =
             topology_vertex.is_some() && event.topology_vertex == topology_vertex;
         match parameter
@@ -12347,20 +12349,20 @@ fn push_carrier_event_internal(
                 if event.topology_vertex.is_none() {
                     event.topology_vertex = topology_vertex;
                 }
-                return Ok(deferred_ordering);
+                return Ok((deferred_ordering, event_index));
             }
             Classification::Decided(_)
                 if same_topology_vertex
                     && carrier_has_certified_injective_image(carrier, policy) =>
             {
-                return Ok(deferred_ordering);
+                return Ok((deferred_ordering, event_index));
             }
             Classification::Decided(_) => {}
             Classification::Uncertain(_)
                 if same_topology_vertex
                     && carrier_has_certified_injective_image(carrier, policy) =>
             {
-                return Ok(deferred_ordering);
+                return Ok((deferred_ordering, event_index));
             }
             Classification::Uncertain(_) if defer_unordered => deferred_ordering = true,
             Classification::Uncertain(reason) => {
@@ -12376,7 +12378,7 @@ fn push_carrier_event_internal(
         parameter,
         topology_vertex,
     });
-    Ok(deferred_ordering)
+    Ok((deferred_ordering, events.len() - 1))
 }
 
 fn seed_loop_topology_vertices(
