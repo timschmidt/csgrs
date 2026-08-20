@@ -254,6 +254,7 @@ impl MaterialPropertyGraph {
         let mut sources = Vec::new();
         let mut first_exact = None::<&Real>;
         let mut exact_conflict = false;
+        let mut exact_agreement_unknown = false;
         let mut first_interval = None::<&PropertyValue>;
         let mut first_proposal = None::<&PropertyValue>;
 
@@ -264,11 +265,17 @@ impl MaterialPropertyGraph {
         {
             sources.push(assertion.source.clone());
             match &assertion.value {
-                PropertyValue::ExactScalar(value) => match first_exact {
-                    Some(first) if first != value.as_ref() => exact_conflict = true,
-                    Some(_) => {}
-                    None => first_exact = Some(value.as_ref()),
-                },
+                PropertyValue::ExactScalar(value) => {
+                    if let Some(first) = first_exact {
+                        match crate::strict_real_cmp(first, value.as_ref()) {
+                            Some(Ordering::Equal) => {}
+                            Some(Ordering::Less | Ordering::Greater) => exact_conflict = true,
+                            None => exact_agreement_unknown = true,
+                        }
+                    } else {
+                        first_exact = Some(value.as_ref());
+                    }
+                }
                 PropertyValue::Interval { .. } => {
                     first_interval.get_or_insert(&assertion.value);
                 }
@@ -290,21 +297,30 @@ impl MaterialPropertyGraph {
         }
 
         if let Some(first) = first_exact {
-            if !exact_conflict {
-                return ResolvedPropertyReport {
+            return if exact_conflict {
+                ResolvedPropertyReport {
+                    kind: kind.clone(),
+                    status: PropertyResolutionStatus::Conflict,
+                    value: None,
+                    sources,
+                    evidence: vec!["certified conflicting exact assertions".into()],
+                }
+            } else if exact_agreement_unknown {
+                ResolvedPropertyReport {
+                    kind: kind.clone(),
+                    status: PropertyResolutionStatus::Unknown,
+                    value: None,
+                    sources,
+                    evidence: vec!["exact assertion agreement could not be certified".into()],
+                }
+            } else {
+                ResolvedPropertyReport {
                     kind: kind.clone(),
                     status: PropertyResolutionStatus::ExactKnown,
                     value: Some(PropertyValue::exact_scalar(first.clone())),
                     sources,
                     evidence: vec!["all exact assertions agree".into()],
-                };
-            }
-            return ResolvedPropertyReport {
-                kind: kind.clone(),
-                status: PropertyResolutionStatus::Conflict,
-                value: None,
-                sources,
-                evidence: vec!["conflicting exact assertions".into()],
+                }
             };
         }
 

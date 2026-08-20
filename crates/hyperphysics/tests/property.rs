@@ -86,6 +86,39 @@ fn conflicting_exact_assertions_are_not_silently_averaged() {
 }
 
 #[test]
+fn structurally_distinct_unresolved_assertions_remain_unknown() {
+    let mut graph = MaterialPropertyGraph::default();
+    let logarithm = Real::pi() + Real::e();
+    let scaled_logarithm = Real::e() + Real::pi();
+    assert_ne!(
+        logarithm, scaled_logarithm,
+        "fixture must use distinct structures"
+    );
+
+    for (locator, value) in [
+        ("logarithm", logarithm),
+        ("scaled-logarithm", scaled_logarithm),
+    ] {
+        graph.push(assertion(
+            MaterialPropertyKind::Custom("semantic-equality".into()),
+            PropertyValue::exact_scalar(value),
+            "1",
+            locator,
+        ));
+    }
+
+    let report = graph.resolve(&MaterialPropertyKind::Custom("semantic-equality".into()));
+    assert_eq!(report.status, PropertyResolutionStatus::Unknown);
+    assert_eq!(report.value, None);
+    assert!(
+        report
+            .evidence
+            .iter()
+            .any(|line| line.contains("could not be certified"))
+    );
+}
+
+#[test]
 fn interval_values_are_validated_and_resolved_without_point_guessing() {
     let interval = PropertyValue::interval(r(3), r(5)).unwrap();
     let mut graph = MaterialPropertyGraph::default();

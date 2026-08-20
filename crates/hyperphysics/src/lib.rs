@@ -80,13 +80,18 @@ pub use thermal::{
     ThermalPolicy, ThermalPort3, ThermalReportStatus, TransientThermalStepReport,
 };
 
+pub(crate) const STRICT_PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::STRICT;
+pub(crate) const STRICT_MESH_CONTEXT: hypermesh::MeshContext =
+    hypermesh::MeshContext::new(STRICT_PREDICATE_POLICY);
+
 /// Classify a sign for report paths that promise exact/certified provenance.
 ///
 /// These paths intentionally opt out of the workspace's temporary terminal
 /// approximation while still sharing Hyperlimit's structural and refinement
 /// pipeline.
 pub(crate) fn strict_real_sign(value: &hyperreal::Real) -> Option<hyperreal::RealSign> {
-    hyperlimit::classify_real_sign_with_policy(value, hyperlimit::PredicatePolicy::STRICT)
+    hyperlimit::classify_real_sign(value, STRICT_PREDICATE_POLICY)
         .value()
         .map(|sign| match sign {
             hyperlimit::Sign::Negative => hyperreal::RealSign::Negative,
@@ -99,5 +104,5 @@ pub(crate) fn strict_real_cmp(
     left: &hyperreal::Real,
     right: &hyperreal::Real,
 ) -> Option<std::cmp::Ordering> {
-    hyperlimit::compare_reals_with_policy(left, right, hyperlimit::PredicatePolicy::STRICT).value()
+    hyperlimit::compare_reals(left, right, STRICT_PREDICATE_POLICY).value()
 }

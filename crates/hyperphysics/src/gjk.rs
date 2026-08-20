@@ -75,7 +75,7 @@ impl Default for GjkConfig3 {
     fn default() -> Self {
         Self {
             max_iterations: 32,
-            min_precision: -64,
+            min_precision: hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         }
     }
 }

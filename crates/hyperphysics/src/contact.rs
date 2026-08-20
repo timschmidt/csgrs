@@ -78,6 +78,7 @@ impl AabbContactReport3 {
             &point3_from_vector(&left.max),
             &point3_from_vector(&right.min),
             &point3_from_vector(&right.max),
+            crate::STRICT_PREDICATE_POLICY,
         ))?;
 
         if relation == Aabb3Intersection::Disjoint {
@@ -136,24 +137,32 @@ fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
 
 fn require_fraction(value: &Real) -> PhysicsResult<()> {
     let lower = sign(value)?;
-    let upper = sign(&(Real::one() - value.clone()))?;
+    let upper = compare(value, &Real::one())?;
     match (lower, upper) {
-        (RealSign::Positive | RealSign::Zero, RealSign::Positive | RealSign::Zero) => Ok(()),
+        (
+            RealSign::Positive | RealSign::Zero,
+            core::cmp::Ordering::Less | core::cmp::Ordering::Equal,
+        ) => Ok(()),
         _ => Err(PhysicsError::InvalidRestitutionCoefficient),
     }
 }
 
 fn less(left: &Real, right: &Real) -> PhysicsResult<bool> {
-    Ok(sign(&(left.clone() - right.clone()))? == RealSign::Negative)
+    Ok(compare(left, right)? == core::cmp::Ordering::Less)
 }
 
 fn sign(value: &Real) -> PhysicsResult<RealSign> {
-    match hyperlimit::compare_reals(value, &Real::zero()).value() {
-        Some(core::cmp::Ordering::Less) => Ok(RealSign::Negative),
-        Some(core::cmp::Ordering::Equal) => Ok(RealSign::Zero),
-        Some(core::cmp::Ordering::Greater) => Ok(RealSign::Positive),
-        None => Err(PhysicsError::UnknownShapeQuery),
+    match compare(value, &Real::zero())? {
+        core::cmp::Ordering::Less => Ok(RealSign::Negative),
+        core::cmp::Ordering::Equal => Ok(RealSign::Zero),
+        core::cmp::Ordering::Greater => Ok(RealSign::Positive),
     }
+}
+
+fn compare(left: &Real, right: &Real) -> PhysicsResult<core::cmp::Ordering> {
+    hyperlimit::compare_reals(left, right, crate::STRICT_PREDICATE_POLICY)
+        .value()
+        .ok_or(PhysicsError::UnknownShapeQuery)
 }
 
 fn decide<T>(outcome: PredicateOutcome<T>) -> PhysicsResult<T> {

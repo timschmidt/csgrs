@@ -109,6 +109,7 @@ proptest! {
             &p(&left.max),
             &p(&right.min),
             &p(&right.max),
+            hyperlimit::PredicatePolicy::STRICT,
         ).value().unwrap();
         let reference = match reference {
             hyperlimit::Aabb3Intersection::Disjoint => ContactClassification::Separated,

@@ -315,7 +315,7 @@ impl ClosedTriangleMesh3 {
             triangles.push(hypermesh::Triangle::new(base, base + 1, base + 2));
         }
         let mesh = hypermesh::TriangleMesh::new(positions, triangles);
-        hypermesh::polygon_soup(&[mesh.as_ref()])?;
+        hypermesh::polygon_soup(&crate::STRICT_MESH_CONTEXT, &[mesh.as_ref()])?;
         Ok(mesh)
     }
 }
@@ -337,6 +337,7 @@ impl AxisAlignedBox3 {
             &point3_from_vector(&self.min),
             &point3_from_vector(&self.max),
             &point3_from_vector(point),
+            crate::STRICT_PREDICATE_POLICY,
         ))? {
             Aabb3PointLocation::Outside => Ok(BoxPointClassification::Outside),
             Aabb3PointLocation::Boundary => Ok(BoxPointClassification::Boundary),
@@ -352,6 +353,7 @@ impl AxisAlignedBox3 {
                 &point3_from_vector(&self.max),
                 &point3_from_vector(&other.min),
                 &point3_from_vector(&other.max),
+                crate::STRICT_PREDICATE_POLICY,
             ))?,
             Aabb3Intersection::Disjoint
         ))
@@ -419,6 +421,7 @@ impl Plane3 {
         let classification = match decide(hyperlimit::classify_point_plane(
             &point3_from_vector(point),
             &predicate_plane,
+            crate::STRICT_PREDICATE_POLICY,
         ))? {
             PlaneSide::Above => PlanePointClassification::Positive,
             PlaneSide::Below => PlanePointClassification::Negative,
@@ -469,6 +472,7 @@ impl Plane3 {
             &predicate_plane,
             &point3_from_vector(&segment.start),
             &point3_from_vector(&segment.end),
+            crate::STRICT_PREDICATE_POLICY,
         ))? {
             PlaneSegmentRelation::Coplanar => SegmentPlaneClassification::Coplanar,
             PlaneSegmentRelation::Crossing => SegmentPlaneClassification::Crosses,
@@ -548,7 +552,7 @@ fn choose_support_axis(
 }
 
 fn sign(value: &Real) -> PhysicsResult<RealSign> {
-    match hyperlimit::compare_reals(value, &Real::zero()).value() {
+    match hyperlimit::compare_reals(value, &Real::zero(), crate::STRICT_PREDICATE_POLICY).value() {
         Some(core::cmp::Ordering::Less) => Ok(RealSign::Negative),
         Some(core::cmp::Ordering::Equal) => Ok(RealSign::Zero),
         Some(core::cmp::Ordering::Greater) => Ok(RealSign::Positive),
@@ -558,8 +562,10 @@ fn sign(value: &Real) -> PhysicsResult<RealSign> {
 
 fn leq(left: &Real, right: &Real) -> PhysicsResult<bool> {
     Ok(!matches!(
-        sign(&(left.clone() - right.clone()))?,
-        RealSign::Positive
+        hyperlimit::compare_reals(left, right, crate::STRICT_PREDICATE_POLICY)
+            .value()
+            .ok_or(PhysicsError::UnknownShapeQuery)?,
+        core::cmp::Ordering::Greater
     ))
 }
 

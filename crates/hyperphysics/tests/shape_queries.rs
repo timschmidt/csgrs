@@ -187,6 +187,7 @@ proptest! {
             &p(&b),
             &p(&c),
             &p(&point),
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .unwrap();

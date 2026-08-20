@@ -178,7 +178,8 @@ impl ClosedTriangleMesh3 {
             }
         }
 
-        let sign_certificate = signed_volume.certified_sign_until(-64);
+        let sign_certificate = signed_volume
+            .certified_sign_until(hyperlimit::PredicatePolicy::MAX_REFINEMENT_PRECISION);
         let sign = sign_certificate.sign();
         let orientation_was_negative = match sign {
             Some(RealSign::Positive) => false,
