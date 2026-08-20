@@ -6095,40 +6095,6 @@ fn retained_fillet_cusp_rational_contacts(
             ));
         }
     }
-    // A selected-fiber scalar stays compact for source trimming. Constructing
-    // a new fillet circle is the one genuine carrier switch in this path, so
-    // promote only accepted center contacts to a standalone exact algebraic
-    // point. The selected authority chooses the identical resultant root; no
-    // isolating bound or terminal approximation becomes construction data.
-    for contact in &mut retained {
-        let Some(parameter) = contact.other_parameter.as_selected_fiber() else {
-            continue;
-        };
-        let parameter = match parameter
-            .promoted_bezier_parameter(policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Fillet,
-                    family,
-                    reason,
-                ));
-            }
-        };
-        contact.point = crate::rational_bezier_general::exact_contact_point_evidence(
-            rational, &parameter, policy,
-        )
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        .ok_or_else(|| {
-            ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                crate::UncertaintyReason::Unsupported,
-            )
-        })?;
-    }
     Ok(RetainedFilletCuspRationalContacts2 {
         contacts: retained,
         coincident: false,
@@ -12664,6 +12630,89 @@ mod tests {
                 retained.promoted_bezier_parameter(&policy).unwrap(),
                 Classification::Uncertain(_)
             ));
+        }
+    }
+
+    #[test]
+    fn selected_cusp_rational_fillet_contact_retains_mapped_point() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        // P(t)=(t^2, t^3-t/2) keeps the center parameter and radial frame
+        // genuinely algebraic while P(sqrt(1/2))=(1/2, 0). The short x-axis
+        // cutter therefore has one represented fiber root at the leftmost
+        // circle point without collapsing the selected frame itself.
+        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let one_sixth = (Real::one() / Real::from(6_i8)).unwrap();
+        let support = CubicBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(Real::zero(), -one_sixth),
+            Point2::new(one_third.clone(), -one_third),
+            Point2::new(Real::one(), half.clone()),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let rational = RationalBezier2::try_new(
+            vec![Point2::from_values(-1, 0), Point2::from_values(0, 0)],
+            vec![Real::one(); 2],
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_parameter = selected_inverse_square_parameter(2, &policy);
+            let Classification::Decided(Some(circle)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    support.clone(),
+                    center_parameter,
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected circle must construct");
+            };
+
+            let contacts = retained_fillet_cusp_rational_contacts(
+                &crate::BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy),
+                &rational,
+                true,
+                true,
+                true,
+                true,
+                CurveFamily2::RationalBezier,
+                &policy,
+            )
+            .expect("the fillet kernel must retain the selected rational contact locally");
+            assert!(!contacts.coincident);
+            let [contact] = contacts.contacts.as_slice() else {
+                panic!("the selected half must retain exactly its left-axis contact");
+            };
+            let parameter = contact
+                .other_parameter
+                .as_selected_fiber()
+                .expect("the accepted rational contact must retain its local scalar");
+            // This small fixture can project globally, but the fillet path has
+            // no reason to pay for it. Nearby degree-135 fixtures prove that
+            // imposing the same projection universally is also incomplete.
+            assert!(matches!(
+                parameter.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Decided(_)
+            ));
+            assert!(matches!(
+                contact.point,
+                RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(_)
+            ));
+            let Classification::Decided(bounds) =
+                crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                    &contact.point,
+                    8,
+                    &policy,
+                )
+            else {
+                panic!("the retained selected contact point must refine without promotion");
+            };
+            let expected = Point2::new(-half.clone(), Real::zero());
+            assert_eq!(bounds.min(), &expected);
+            assert_eq!(bounds.max(), &expected);
         }
     }
 
