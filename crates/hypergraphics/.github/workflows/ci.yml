@@ -7,11 +7,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   stable:
+    name: Stable Rust
     runs-on: ubuntu-latest
     steps:
       - name: Check out Hypergraphics
@@ -44,11 +49,11 @@ jobs:
           path: hypertri
           persist-credentials: false
       - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: stable
-          components: clippy,rustfmt
-          targets: wasm32-unknown-unknown
+        run: |
+          rustup toolchain install stable --profile minimal \
+            --component clippy --component rustfmt \
+            --target wasm32-unknown-unknown
+          rustup default stable
       - name: Check formatting
         working-directory: hypergraphics
         run: |
@@ -86,6 +91,7 @@ jobs:
         run: cargo package --no-verify --list
 
   msrv:
+    name: Minimum supported Rust
     runs-on: ubuntu-latest
     steps:
       - name: Check out Hypergraphics
@@ -118,9 +124,9 @@ jobs:
           path: hypertri
           persist-credentials: false
       - name: Install MSRV
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c
-        with:
-          toolchain: 1.88.0
+        run: |
+          rustup toolchain install 1.88.0 --profile minimal
+          rustup default 1.88.0
       - name: Check all features at MSRV
         working-directory: hypergraphics
         run: cargo check --all-targets --all-features
