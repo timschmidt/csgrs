@@ -5,10 +5,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: "pages"
@@ -16,59 +13,70 @@ concurrency:
 
 jobs:
   build:
+    name: Build UI
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           path: hypertri
+          persist-credentials: false
 
       - name: Checkout hyperreal sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
 
       - name: Check out hyperlattice sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlattice
           path: hyperlattice
+          persist-credentials: false
 
       - name: Checkout hyperlimit sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlimit
           path: hyperlimit
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
 
       - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: hypertri/examples/hypertri_ui
 
       - name: Install Trunk
-        uses: taiki-e/install-action@trunk
+        uses: taiki-e/install-action@8f3337fa69e4b15951afc4eaab3f43d71f7ec0ae # trunk
 
       - name: Build
         working-directory: hypertri/examples/hypertri_ui
         run: trunk build --release --public-url /hypertri/
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
         with:
           enablement: true
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: hypertri/examples/hypertri_ui/dist
 
   deploy:
+    name: Deploy UI
+    permissions:
+      pages: write # Required to publish the Pages artifact.
+      id-token: write # Required for Pages OIDC authentication.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -77,4 +85,4 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

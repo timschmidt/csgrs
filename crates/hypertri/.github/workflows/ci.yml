@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -27,42 +31,50 @@ jobs:
 
     steps:
       - name: Checkout hypertri
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           path: hypertri
+          persist-credentials: false
 
       - name: Checkout hyperreal sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
 
       - name: Checkout hyperlimit sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlimit
           path: hyperlimit
+          persist-credentials: false
 
       - name: Checkout earcutr sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/earcutr
           path: earcutr
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
 
       - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
+        uses: taiki-e/install-action@e5307749adff22649743d264eea18999b2666e85 # cargo-hack
 
       - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: hypertri
 
       - name: Run ${{ matrix.kind }} across feature powerset
         working-directory: hypertri
-        run: ${{ matrix.command }}
+        env:
+          COMMAND: ${{ matrix.command }}
+        run: $COMMAND
 
   aggregate-configs:
     name: Aggregate and dependent configs
@@ -70,35 +82,39 @@ jobs:
 
     steps:
       - name: Checkout hypertri
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           path: hypertri
+          persist-credentials: false
 
       - name: Checkout hyperreal sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
 
       - name: Checkout hyperlimit sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperlimit
           path: hyperlimit
+          persist-credentials: false
 
       - name: Checkout earcutr sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/earcutr
           path: earcutr
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        run: |
+          rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+          rustup default stable
 
       - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: hypertri
 
