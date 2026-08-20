@@ -16182,6 +16182,9 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelIntersections2>> {
         let system = match self.selected_radial_parallel_system(other, policy)? {
             Classification::Decided(system) => system,
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return self.represented_parallel_intersections(other, range, incident, policy);
+            }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
@@ -18135,35 +18138,36 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelParameterMap2>> {
         if self.uses_selected_radial_frame() {
-            let system = match self.selected_radial_parallel_system(other, policy)? {
-                Classification::Decided(system) => system,
+            match self.selected_radial_parallel_system(other, policy)? {
+                Classification::Decided(system) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParallelParameterMap2 {
+                            data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
+                                semicircle: self.clone(),
+                                parallel: other.clone(),
+                                system: BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
+                                    pair_map: system.pair_map,
+                                    branch: system.branch,
+                                    discriminant: system.discriminant,
+                                    candidate_speed_squared: system.candidate_speed_squared,
+                                    diameter: system.diameter,
+                                    radius_squared_denominator: system.radius_squared_denominator,
+                                    tangent_cross_source: system.tangent_cross_source,
+                                    tangent_dot_source: system.tangent_dot_source,
+                                },
+                                policy: policy.retained_object_policy(),
+                                represented_rational_values: Mutex::new(Vec::new()),
+                            }),
+                        },
+                    ));
+                }
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {}
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            };
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelParameterMap2 {
-                    data: Arc::new(BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
-                        semicircle: self.clone(),
-                        parallel: other.clone(),
-                        system:
-                            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
-                                pair_map: system.pair_map,
-                                branch: system.branch,
-                                discriminant: system.discriminant,
-                                candidate_speed_squared: system.candidate_speed_squared,
-                                diameter: system.diameter,
-                                radius_squared_denominator: system.radius_squared_denominator,
-                                tangent_cross_source: system.tangent_cross_source,
-                                tangent_dot_source: system.tangent_dot_source,
-                            },
-                        policy: policy.retained_object_policy(),
-                        represented_rational_values: Mutex::new(Vec::new()),
-                    }),
-                },
-            ));
+            }
         }
-        if self.uses_selected_chord_normal_frame() {
+        if self.uses_selected_chord_normal_frame() || self.uses_selected_radial_frame() {
             let system = match self.represented_parallel_system(other, policy)? {
                 Classification::Decided(system) => system,
                 Classification::Uncertain(reason) => {
@@ -31785,17 +31789,41 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
                 "a pair-radial parallel tangent map crossed predicate policies".into(),
             ));
         }
-        let BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
+        let (
             pair_map,
             branch,
             discriminant,
             candidate_speed_squared,
             tangent_cross_source,
             tangent_dot_source,
-            ..
-        } = &self.data.system
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        ) = match &self.data.system {
+            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::SelectedRadial {
+                pair_map,
+                branch,
+                discriminant,
+                candidate_speed_squared,
+                tangent_cross_source,
+                tangent_dot_source,
+                ..
+            } => (
+                pair_map,
+                branch,
+                discriminant,
+                candidate_speed_squared,
+                tangent_cross_source,
+                tangent_dot_source,
+            ),
+            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::Represented { system } => {
+                return system.tangent_cross_dot_source_sign(
+                    &contact.parallel_parameter,
+                    cross_scale,
+                    dot_scale,
+                    policy,
+                );
+            }
+            BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::OneField { .. } => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
         };
         let Some(expression) = (|| {
             Some(BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
@@ -107002,6 +107030,90 @@ mod conversion_tests {
                 &(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
             ));
             assert!(encloses(&translated.unit_radial[0], &half));
+        }
+    }
+
+    #[test]
+    fn recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
+        let distance = (Real::one() / Real::from(20_i8)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(-1, -1),
+            Point2::new(half, -nine_tenths),
+            Point2::from_values(2, -1),
+        );
+        let parallel = source.parallel_left(distance).unwrap();
+        let range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                parallel.exact_rational_parallel_component(&policy).unwrap(),
+                Classification::Decided(None),
+            ));
+            let recursive = recursively_pair_radial_rational_center_half(&policy);
+            assert!(matches!(
+                recursive
+                    .selected_radial_parallel_system(&parallel, &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Unsupported),
+            ));
+            assert!(matches!(
+                recursive
+                    .represented_parallel_system(&parallel, &policy)
+                    .unwrap(),
+                Classification::Decided(_),
+            ));
+
+            let intersections = recursive
+                .parallel_intersections_in_range(&parallel, &range, &policy)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            ) = intersections
+            else {
+                panic!(
+                    "the recursive selected circle/parallel intersection must decide: {intersections:?}"
+                );
+            };
+            assert!(!contacts.is_empty());
+            let map = recursive
+                .parallel_parameter_map(&parallel, &policy)
+                .unwrap();
+            let Classification::Decided(map) = map else {
+                panic!("the recursive selected circle/parallel map must decide: {map:?}");
+            };
+            for contact in &contacts {
+                assert!(matches!(
+                    map.contact_parameter_bracket(contact, 8).unwrap(),
+                    Classification::Decided(_),
+                ));
+                assert!(matches!(
+                    recursive
+                        .parallel_contact_tangent_dot_sign(&parallel, contact, &policy)
+                        .unwrap(),
+                    Classification::Decided(_),
+                ));
+            }
+
+            let incident = incident_domain(
+                &parallel,
+                Real::one(),
+                BezierParameterRayDirection2::Increasing,
+                &policy,
+            );
+            let extended = recursive
+                .parallel_intersections_with_incident_ray(&parallel, &range, &incident, &policy)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(extended),
+            ) = extended
+            else {
+                panic!(
+                    "the recursive selected circle/parallel incident ray must decide: {extended:?}"
+                );
+            };
+            assert!(extended.len() >= contacts.len());
         }
     }
 
