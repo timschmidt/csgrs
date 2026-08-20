@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -15,6 +19,8 @@ jobs:
   checks:
     name: Rust checks (${{ matrix.backend.name }})
     runs-on: ubuntu-latest
+    env:
+      CARGO_ARGS: ${{ matrix.backend.args }}
     strategy:
       fail-fast: false
       matrix:
@@ -26,23 +32,25 @@ jobs:
 
     steps:
       - name: Check out Hyperlattice
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           path: hyperlattice
+          persist-credentials: false
 
       - name: Check out Hyperreal sibling
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
+          rustup default stable
 
       - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: hyperlattice
 
@@ -51,13 +59,13 @@ jobs:
         working-directory: hyperlattice
 
       - name: Check build
-        run: cargo check --all-targets ${{ matrix.backend.args }}
+        run: cargo check --all-targets ${CARGO_ARGS}
         working-directory: hyperlattice
 
       - name: Run tests
-        run: cargo test --all-targets ${{ matrix.backend.args }}
+        run: cargo test --all-targets ${CARGO_ARGS}
         working-directory: hyperlattice
 
       - name: Run Clippy
-        run: cargo clippy --all-targets ${{ matrix.backend.args }} -- -D warnings
+        run: cargo clippy --all-targets ${CARGO_ARGS} -- -D warnings
         working-directory: hyperlattice
