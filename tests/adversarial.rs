@@ -40,15 +40,18 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = solid::center(&solid::cube(r(2.0)));
     let b = solid::cube(r(1.1)).translated(r(0.4), r(0.2), r(0.1));
 
-    let direct = hypermesh::boolean_triangle_meshes(
+    let batch = hypermesh::boolean(
         &CONTEXT,
-        &a,
-        &b,
-        hypermesh::BooleanOp::Difference,
-        hypermesh::EmberConfig::default(),
+        &[a.as_ref(), b.as_ref()],
+        hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
     )
     .expect("direct difference")
     .into_value();
+    let direct = batch
+        .into_triangle_meshes()
+        .expect("bounded direct difference")
+        .pop()
+        .expect("one direct result");
     assert!(
         direct
             .has_unique_nondegenerate_triangles(&CONTEXT)
@@ -111,9 +114,14 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
 fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     let region = curve::square(r(2.0));
     #[cfg(feature = "offset")]
-    let region = curve::offset(&region, r(0.125), &hypercurve::CurvePolicy::STRICT)
-        .expect("offset")
-        .into_value();
+    let region = curve::offset(
+        &region,
+        r(0.125),
+        &hypercurve::OffsetCornerStyle2::Miter { limit: r(4.0) },
+        &hypercurve::CurveContext::STRICT,
+    )
+    .expect("offset")
+    .into_value();
     let mesh = curve::try_extrude(&region, r(0.75), &csgrs::GeometryContext::STRICT)
         .expect("extrude")
         .into_value();

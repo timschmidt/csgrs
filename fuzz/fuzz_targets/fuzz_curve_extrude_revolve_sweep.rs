@@ -94,6 +94,7 @@ fuzz_target!(|bytes: &[u8]| {
                     &Real::zero(),
                     &context.curve_policy(),
                 )
+                .map(|outcome| outcome.into_value())
                 .unwrap_or_else(|_| curve::empty());
             match curve::revolve(&translated, angle, segments, &context) {
                 Ok(outcome) => outcome.into_value(),

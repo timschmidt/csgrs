@@ -9,10 +9,10 @@ use crate::errors::{CurveBooleanError, ValidationError};
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
-    BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurveOutcome, CurvePath2,
-    CurvePolicy, CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2,
-    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RegionPointLocation,
+    BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurveOutcome,
+    CurvePath2, CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2,
+    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, OffsetCornerStyle2, Point2,
+    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -38,7 +38,8 @@ fn region_from_ring(points: &[[Real; 2]]) -> CurveRegion2 {
         return CurveRegion2::empty();
     };
     let region =
-        CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::STRICT)
+        CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+            .map(CurveOutcome::into_value)
             .unwrap_or_else(|_| CurveRegion2::empty());
     REGION_RING_CACHE.with_borrow_mut(|entries| {
         const CAPACITY: usize = 64;
@@ -992,6 +993,14 @@ pub fn involute_rack(
 }
 
 /// Linear cycloidal rack region.
+///
+/// Each tooth joins an addendum cycloid above the pitch line to a dedendum
+/// cycloid below it on both sides. Each rolling radius is twice its
+/// corresponding standard height, so every sampled flank spans one sixth turn
+/// and meets a horizontal tip or root land.
+///
+/// Returns an empty region when the requested clearance would close the root
+/// land between neighboring teeth.
 pub fn cycloidal_rack(
     module: Real,
     teeth: usize,
@@ -1005,54 +1014,107 @@ pub fn cycloidal_rack(
     {
         return empty();
     }
-    let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
-    let generating_radius = module.clone() * half.clone();
+    let two = Real::from(2_u8);
+    let three = Real::from(3_u8);
+    let four = Real::from(4_u8);
     let pitch = Real::pi() * module.clone();
-    let root = -(module.clone()
-        * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
-        + clearance);
-    let left = -half.clone() * pitch.clone();
-    let right = (Real::from(teeth as u64) - half.clone()) * pitch.clone();
-    let Some(lobe_capacity) = segments_per_flank.checked_add(1) else {
+    let half_pitch = (pitch.clone() / two.clone()).expect("two is nonzero");
+    let quarter_pitch = (pitch.clone() / four.clone()).expect("four is nonzero");
+    let dedendum =
+        module.clone() * (Real::from(5_u8) / four).expect("four is nonzero") + clearance;
+    let root = -dedendum.clone();
+    let flank_sweep = (Real::pi() / three).expect("three is nonzero");
+    let run_factor = two.clone() * (flank_sweep.clone() - flank_sweep.clone().sin());
+    let face_run = module.clone() * run_factor.clone();
+    let root_run = dedendum.clone() * run_factor;
+    if real_cmp(&face_run, &quarter_pitch) != Some(Ordering::Less)
+        || real_cmp(&root_run, &quarter_pitch) != Some(Ordering::Less)
+    {
+        return empty();
+    }
+
+    let Some(sample_capacity) = segments_per_flank.checked_add(1) else {
         return empty();
     };
-    let mut lobe = Vec::with_capacity(lobe_capacity);
+    let mut unit_flank = Vec::with_capacity(sample_capacity);
     for sample in 0..=segments_per_flank {
         let Some(fraction) = exact_ratio(sample, segments_per_flank) else {
             return empty();
         };
-        let theta = Real::tau() * fraction;
-        lobe.push([
-            generating_radius.clone() * (theta.clone() - theta.clone().sin()),
-            generating_radius.clone() * (Real::one() - theta.cos()),
+        let theta = flank_sweep.clone() * fraction;
+        unit_flank.push([
+            two.clone() * (theta.clone() - theta.clone().sin()),
+            two.clone() * (Real::one() - theta.cos()),
         ]);
     }
+
+    let Some(tooth_capacity) = segments_per_flank
+        .checked_mul(4)
+        .and_then(|count| count.checked_add(4))
+    else {
+        return empty();
+    };
+    let mut tooth_points = Vec::with_capacity(tooth_capacity);
+    tooth_points.push([-half_pitch.clone(), root.clone()]);
+    tooth_points.extend(unit_flank.iter().rev().map(|[run, rise]| {
+        [
+            -quarter_pitch.clone() - dedendum.clone() * run.clone(),
+            -(dedendum.clone() * rise.clone()),
+        ]
+    }));
+    tooth_points.extend(unit_flank.iter().skip(1).map(|[run, rise]| {
+        [
+            -quarter_pitch.clone() + module.clone() * run.clone(),
+            module.clone() * rise.clone(),
+        ]
+    }));
+    tooth_points.push([quarter_pitch.clone() - face_run, module.clone()]);
+    tooth_points.extend(
+        unit_flank[..segments_per_flank]
+            .iter()
+            .rev()
+            .map(|[run, rise]| {
+                [
+                    quarter_pitch.clone() - module.clone() * run.clone(),
+                    module.clone() * rise.clone(),
+                ]
+            }),
+    );
+    tooth_points.extend(unit_flank.iter().skip(1).map(|[run, rise]| {
+        [
+            quarter_pitch.clone() + dedendum.clone() * run.clone(),
+            -(dedendum.clone() * rise.clone()),
+        ]
+    }));
+    tooth_points.push([half_pitch.clone(), root.clone()]);
+
     let Some(top_capacity) = teeth
-        .checked_mul(segments_per_flank)
+        .checked_mul(tooth_points.len().saturating_sub(1))
         .and_then(|count| count.checked_add(1))
     else {
         return empty();
     };
     let mut top = Vec::with_capacity(top_capacity);
     for tooth in 0..teeth {
-        let tooth_left = (Real::from(tooth as u64) - half.clone()) * pitch.clone();
-        for (sample, point) in lobe.iter().enumerate() {
-            if tooth > 0 && sample == 0 {
+        let offset = Real::from(tooth as u64) * pitch.clone();
+        for (point_index, point) in tooth_points.iter().enumerate() {
+            if tooth > 0 && point_index == 0 {
                 continue;
             }
-            top.push([tooth_left.clone() + point[0].clone(), point[1].clone()]);
+            top.push([offset.clone() + point[0].clone(), point[1].clone()]);
         }
     }
-    let Some(point_capacity) = top.len().checked_add(4) else {
+
+    let Some(point_capacity) = top.len().checked_add(2) else {
         return empty();
     };
     let mut points = Vec::with_capacity(point_capacity);
     let backing = root.clone() - module;
-    points.push([left.clone(), backing.clone()]);
-    points.push([right.clone(), backing]);
-    points.push([right, root.clone()]);
+    let left = top.first().expect("validated rack has a left root")[0].clone();
+    let right = top.last().expect("validated rack has a right root")[0].clone();
+    points.push([left, backing.clone()]);
+    points.push([right, backing]);
     points.extend(top.into_iter().rev());
-    points.push([left, root]);
     region_from_ring(&points)
 }
 
@@ -1469,7 +1531,8 @@ pub fn bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveReg
     if points_equal(path.start(), path.end()) != Some(true) {
         return empty();
     }
-    CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path))
+    CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
         .unwrap_or_else(|_| empty())
 }
 
@@ -1501,7 +1564,9 @@ pub fn bspline_path(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = PolynomialSplineCurve2::try_new(degree, points, knots).ok()?;
+    let spline = PolynomialSplineCurve2::try_new(degree, points, knots, &CurveContext::STRICT)
+        .ok()?
+        .into_value();
     CurvePath2::try_new(vec![Curve2::from(spline)]).ok()
 }
 
@@ -1612,24 +1677,17 @@ pub fn hilbert_strings(
     strings.unwrap_or_default()
 }
 
-/// Sharp regularized offset of a native filled region.
+/// Exact regularized offset of a native filled region.
 #[cfg(feature = "offset")]
 pub fn offset(
     input: &CurveRegion2,
     distance: Real,
-    policy: &CurvePolicy,
+    corner_style: &OffsetCornerStyle2,
+    policy: &CurveContext,
 ) -> Result<CurveOutcome<CurveRegion2>, crate::errors::CurveOffsetError> {
-    input.offset(distance, policy).map_err(Into::into)
-}
-
-/// Rounded regularized offset of a native filled region.
-#[cfg(feature = "offset")]
-pub fn offset_rounded(
-    input: &CurveRegion2,
-    distance: Real,
-    policy: &CurvePolicy,
-) -> Result<CurveOutcome<CurveRegion2>, crate::errors::CurveOffsetError> {
-    offset(input, distance, policy)
+    input
+        .offset(distance, corner_style, policy)
+        .map_err(Into::into)
 }
 
 /// Triangulates a filled region as a flat native triangle surface.
@@ -1698,9 +1756,16 @@ fn try_finite_profiles_with(
 ) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
-    decisions.classify_curve("finite curve projection", |policy| {
-        input.project_to_finite_profiles_exact(&options, policy)
-    })
+    match decisions.consume_curve(
+        input
+            .project_to_finite_profiles_exact(&options, decisions.curve_policy())
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
+    ) {
+        Classification::Decided(profiles) => Ok(profiles),
+        Classification::Uncertain(reason) => Err(ValidationError::Geometry(format!(
+            "finite curve projection is uncertain: {reason:?}"
+        ))),
+    }
 }
 
 /// Linear extrusion that reports invalid or uncertain geometry.
@@ -2431,14 +2496,34 @@ pub fn truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2 
     super::truetype::text_region(text, font_data, scale)
 }
 
-/// Hershey stroke geometry as native open curve strings.
+/// Hershey stroke geometry as native open curve strings in Cartesian coordinates.
+///
+/// Hershey's source records use screen-style coordinates with positive Y
+/// pointing down. The returned geometry reflects that axis so positive Y
+/// points up, consistently with the rest of the planar curve API.
 #[cfg(feature = "hershey-text")]
 pub fn hershey_strings(
     text: &str,
     font: &hypercurve::hershey::Font<'_>,
     size: Real,
 ) -> Vec<CurveString2> {
+    let source_to_cartesian = hypercurve::Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        -Real::one(),
+        Real::zero(),
+        Real::zero(),
+    )
+    .expect("Y reflection is a nonsingular exact similarity");
     hypercurve::hershey::strings(text, font, size)
+        .into_iter()
+        .map(|string| {
+            string
+                .transform_similarity(&source_to_cartesian)
+                .expect("Hershey line strings remain valid under Y reflection")
+        })
+        .collect()
 }
 
 /// Convenience CSG and construction operations on native filled regions.
@@ -2447,25 +2532,25 @@ pub trait CurveRegionExt: Sized {
     fn try_union(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
     /// Exact regularized difference.
     fn try_difference(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
     /// Exact regularized intersection.
     fn try_intersection(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
     /// Exact regularized symmetric difference.
     fn try_xor(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
     /// Exact planar affine transform.
     fn transformed_affine(
@@ -2476,15 +2561,15 @@ pub trait CurveRegionExt: Sized {
         m11: &Real,
         tx: &Real,
         ty: &Real,
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<Self>;
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>>;
 }
 
 impl CurveRegionExt for CurveRegion2 {
     fn try_union(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
         self.boolean_region(other, BooleanOp::Union, policy)
             .map_err(CurveBooleanError::from)
@@ -2493,7 +2578,7 @@ impl CurveRegionExt for CurveRegion2 {
     fn try_difference(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
         self.boolean_region(other, BooleanOp::Difference, policy)
             .map_err(CurveBooleanError::from)
@@ -2502,7 +2587,7 @@ impl CurveRegionExt for CurveRegion2 {
     fn try_intersection(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
         self.boolean_region(other, BooleanOp::Intersection, policy)
             .map_err(CurveBooleanError::from)
@@ -2511,7 +2596,7 @@ impl CurveRegionExt for CurveRegion2 {
     fn try_xor(
         &self,
         other: &Self,
-        policy: &CurvePolicy,
+        policy: &CurveContext,
     ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
         self.boolean_region(other, BooleanOp::Xor, policy)
             .map_err(CurveBooleanError::from)
@@ -2525,8 +2610,8 @@ impl CurveRegionExt for CurveRegion2 {
         m11: &Real,
         tx: &Real,
         ty: &Real,
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<Self> {
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         self.transform_affine(m00, m01, m10, m11, tx, ty, policy)
     }
 }
@@ -2537,15 +2622,17 @@ pub fn try_transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
 ) -> ExactCurveResult<CurveRegion2> {
-    input.transform_affine(
-        &matrix.0[0][0],
-        &matrix.0[0][1],
-        &matrix.0[1][0],
-        &matrix.0[1][1],
-        &matrix.0[0][3],
-        &matrix.0[1][3],
-        &CurvePolicy::STRICT,
-    )
+    input
+        .transform_affine(
+            &matrix.0[0][0],
+            &matrix.0[0][1],
+            &matrix.0[1][0],
+            &matrix.0[1][1],
+            &matrix.0[0][3],
+            &matrix.0[1][3],
+            &CurveContext::STRICT,
+        )
+        .map(CurveOutcome::into_value)
 }
 
 pub fn transformed(input: &CurveRegion2, matrix: &Matrix4) -> CurveRegion2 {
@@ -2558,15 +2645,17 @@ pub fn try_translated(
     x: Real,
     y: Real,
 ) -> ExactCurveResult<CurveRegion2> {
-    input.transform_affine(
-        &Real::one(),
-        &Real::zero(),
-        &Real::zero(),
-        &Real::one(),
-        &x,
-        &y,
-        &CurvePolicy::STRICT,
-    )
+    input
+        .transform_affine(
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &x,
+            &y,
+            &CurveContext::STRICT,
+        )
+        .map(CurveOutcome::into_value)
 }
 
 pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2578,15 +2667,17 @@ pub fn try_rotated(input: &CurveRegion2, z_degrees: Real) -> ExactCurveResult<Cu
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
     let cosine = radians.clone().cos();
     let sine = radians.sin();
-    input.transform_affine(
-        &cosine,
-        &(-sine.clone()),
-        &sine,
-        &cosine,
-        &Real::zero(),
-        &Real::zero(),
-        &CurvePolicy::STRICT,
-    )
+    input
+        .transform_affine(
+            &cosine,
+            &(-sine.clone()),
+            &sine,
+            &cosine,
+            &Real::zero(),
+            &Real::zero(),
+            &CurveContext::STRICT,
+        )
+        .map(CurveOutcome::into_value)
 }
 
 pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
@@ -2595,15 +2686,17 @@ pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
 
 /// Scales a filled native region independently along the planar axes.
 pub fn try_scaled(input: &CurveRegion2, x: Real, y: Real) -> ExactCurveResult<CurveRegion2> {
-    input.transform_affine(
-        &x,
-        &Real::zero(),
-        &Real::zero(),
-        &y,
-        &Real::zero(),
-        &Real::zero(),
-        &CurvePolicy::STRICT,
-    )
+    input
+        .transform_affine(
+            &x,
+            &Real::zero(),
+            &Real::zero(),
+            &y,
+            &Real::zero(),
+            &Real::zero(),
+            &CurveContext::STRICT,
+        )
+        .map(CurveOutcome::into_value)
 }
 
 pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
@@ -2616,8 +2709,9 @@ pub fn contains_xy(input: &CurveRegion2, x: Real, y: Real) -> Option<bool> {
         return None;
     }
     match input
-        .classify_point(&Point2::new(x, y), &CurvePolicy::STRICT)
+        .classify_point(&Point2::new(x, y), &CurveContext::STRICT)
         .ok()?
+        .value
     {
         Classification::Decided(RegionPointLocation::Inside) => Some(true),
         Classification::Decided(RegionPointLocation::Outside) => Some(false),
@@ -2631,7 +2725,10 @@ pub fn try_bounding_box(input: &CurveRegion2) -> Result<Aabb, ValidationError> {
     if input.is_empty() {
         return Ok(Aabb::origin());
     }
-    match input.bounds(&CurvePolicy::STRICT) {
+    match input
+        .bounds(&CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
+    {
         Ok(Classification::Decided(bounds)) => Ok(Aabb::new(
             Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
             Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
@@ -2656,6 +2753,9 @@ pub fn translated_solid(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> Trian
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hypercurve::{
+        BezierParameter2, BezierSplitFragment2, BezierSubcurve2, CurveRegionBoundaryLoop2,
+    };
 
     fn signed_volume(mesh: &TriangleMesh) -> f64 {
         mesh.triangles
@@ -2683,6 +2783,58 @@ mod tests {
                 .into_value(),
             "{label} is not an exact geometric two-manifold"
         );
+    }
+
+    #[test]
+    fn finite_profiles_consume_curve_projection_policy_once() {
+        let point = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |start, control, end| BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::zero()),
+            end: BezierParameter2::Exact(Real::one()),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        };
+        let symbolic_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        let rational = RationalBezier2::try_new(
+            vec![
+                point(1, 1),
+                Point2::new(Real::from(2), Real::one() + &symbolic_zero),
+                Point2::new(Real::from(3), Real::one() + &symbolic_zero),
+                Point2::new(Real::from(4), Real::one() + &symbolic_zero),
+                point(5, 1),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2),
+                Real::from(3),
+                Real::from(5),
+                Real::from(10),
+            ],
+        )
+        .unwrap();
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Rational(rational),
+                },
+                fragment(point(5, 1), point(5, 2), point(5, 3)),
+                fragment(point(5, 3), point(3, 3), point(1, 3)),
+                fragment(point(1, 3), point(1, 2), point(1, 1)),
+            ],
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+        let region = CurveRegion2::new(vec![boundary]).unwrap();
+
+        assert!(try_finite_profiles(&region, &GeometryContext::STRICT).is_err());
+        let approximate =
+            try_finite_profiles(&region, &GeometryContext::APPROXIMATE_512).unwrap();
+        assert_eq!(
+            approximate.certainty,
+            crate::GeometryCertainty::Approximate512Consumed
+        );
+        assert_eq!(approximate.value.len(), 1);
     }
 
     #[test]
@@ -2844,7 +2996,7 @@ mod tests {
         let left = square(Real::from(2_u8));
         let right = rectangle(Real::from(1_u8), Real::from(3_u8));
         let union: CurveRegion2 = left
-            .try_union(&right, &CurvePolicy::STRICT)
+            .try_union(&right, &CurveContext::STRICT)
             .expect("region union")
             .into_value();
         assert!(!union.is_empty());
@@ -3063,6 +3215,48 @@ mod tests {
     }
 
     #[test]
+    fn cycloidal_rack_alternates_face_and_root_flanks() {
+        let teeth = 4;
+        let tip = Real::one();
+        let pitch_line = Real::zero();
+        let root = -(Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero");
+        let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8);
+        let paths = match rack
+            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .expect("cycloidal rack edge projection")
+            .into_value()
+        {
+            Classification::Decided(paths) => paths,
+            Classification::Uncertain(reason) => {
+                panic!("cycloidal rack edge topology is uncertain: {reason:?}")
+            },
+        };
+        assert_eq!(paths.len(), 1, "rack must have one closed boundary");
+
+        let curves = paths[0].curves();
+        let vertices_at = |level: &Real| {
+            curves
+                .iter()
+                .filter(|curve| curve.start().y() == level)
+                .count()
+        };
+        assert_eq!(
+            vertices_at(&pitch_line),
+            teeth * 2,
+            "both sides of every tooth must cross the pitch line"
+        );
+        assert_eq!(
+            vertices_at(&tip),
+            teeth * 2,
+            "both addendum cycloids must reach every tooth tip"
+        );
+        assert!(
+            vertices_at(&root) >= teeth * 2,
+            "both dedendum cycloids must reach every tooth root"
+        );
+    }
+
+    #[test]
     fn gear_and_rack_profiles_form_one_hole_free_material_component() {
         let cycloidal = cycloidal_gear(
             Real::one(),
@@ -3102,8 +3296,9 @@ mod tests {
             ("cycloidal rack", cycloidal_rack_profile),
         ] {
             let profiles = match region
-                .project_to_finite_profiles_exact(&projection, &CurvePolicy::STRICT)
+                .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
                 .unwrap_or_else(|error| panic!("{name} profile projection failed: {error}"))
+                .into_value()
             {
                 Classification::Decided(profiles) => profiles,
                 Classification::Uncertain(reason) => {
@@ -3120,8 +3315,9 @@ mod tests {
                 "{name} must not acquire holes from a self-intersecting boundary"
             );
             let paths = match region
-                .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+                .project_to_finite_curve_paths(&CurveContext::STRICT)
                 .unwrap_or_else(|error| panic!("{name} edge projection failed: {error}"))
+                .into_value()
             {
                 Classification::Decided(paths) => paths,
                 Classification::Uncertain(reason) => {
@@ -3223,14 +3419,15 @@ mod tests {
             crate::GeometryCertainty::Approximate512Consumed
         );
         assert!(!approximate_crescent.value.is_empty());
-        assert!(matches!(
-            try_finite_profiles(
+        assert!(
+            !try_finite_profiles(
                 &approximate_crescent.value,
                 &GeometryContext::APPROXIMATE_512,
-            ),
-            Err(ValidationError::Geometry(message))
-                if message.contains("Unsupported")
-        ));
+            )
+            .expect("the completed crescent should retain projectable boundary topology")
+            .into_value()
+            .is_empty()
+        );
         let shapes = [
             rectangle(two.clone(), one.clone()),
             square(two.clone()),
@@ -3363,5 +3560,20 @@ mod tests {
         assert!(!strings.is_empty());
         assert_eq!(crate::curve::hershey::fonts::ALL.len(), 32);
         assert!(strings.iter().all(|string| !string.segments().is_empty()));
+    }
+
+    #[cfg(feature = "hershey-text")]
+    #[test]
+    fn hershey_strings_convert_source_coordinates_to_y_up() {
+        let font = crate::curve::hershey::Font::new(&["MWRMNV RRMVV"], 'A');
+        let strings = hershey_strings("A", &font, Real::one());
+
+        assert_eq!(strings.len(), 2);
+        let left = &strings[0].segments()[0];
+        let right = &strings[1].segments()[0];
+        assert_eq!(left.start(), &Point2::new(Real::zero(), Real::from(5_u8)));
+        assert_eq!(left.end(), &Point2::new(Real::from(-4_i8), Real::from(-4_i8)));
+        assert_eq!(right.start(), &Point2::new(Real::zero(), Real::from(5_u8)));
+        assert_eq!(right.end(), &Point2::new(Real::from(4_u8), Real::from(-4_i8)));
     }
 }

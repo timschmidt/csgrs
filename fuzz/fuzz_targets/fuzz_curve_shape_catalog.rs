@@ -5,7 +5,7 @@
 mod support;
 
 use csgrs::{GeometryContext, curve};
-use hypercurve::{CurvePolicy, CurveRegion2, FiniteProjectionOptions, Point2};
+use hypercurve::{CurveContext, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Real;
 use hyperlimit::PredicatePolicy;
 use libfuzzer_sys::fuzz_target;
@@ -181,7 +181,10 @@ fuzz_target!(|bytes: &[u8]| {
             ) {
                 let options =
                     FiniteProjectionOptions::try_new(1.0e-3).expect("positive tolerance");
-                if let Ok(polyline) = path.project_to_finite_polyline(&options) {
+                if let Ok(polyline) = path
+                    .project_to_finite_polyline(&options, &CurveContext::STRICT)
+                    .map(|outcome| outcome.into_value())
+                {
                     for point in polyline.points() {
                         assert!(point[0].is_finite());
                         assert!(point[1].is_finite());
@@ -202,7 +205,7 @@ fuzz_target!(|bytes: &[u8]| {
         _ => curve::polygon_points(&native_points),
     };
 
-    let _policy = CurvePolicy::STRICT;
+    let _policy = CurveContext::STRICT;
     assert_curve_finite(&region, &context);
     if let Ok(flat) = curve::try_triangulate(&region, &context) {
         support::validate_triangle_mesh(&flat.into_value(), false);

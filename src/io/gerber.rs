@@ -15,7 +15,7 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, Contour2, CurvePolicy, CurveRegion2, CurveString2,
+    Classification, Contour2, CurveContext, CurveOutcome, CurveRegion2, CurveString2,
     FiniteProjectionOptions, FiniteRegionProfile2,
 };
 use hyperlattice::Real;
@@ -202,11 +202,13 @@ pub fn export_gerber_with_options(
                 detail: format!("invalid projection configuration: {error}"),
             })?;
         match region
-            .project_to_finite_profiles(&projection_options, &CurvePolicy::STRICT)
+            .project_to_finite_profiles(&projection_options, &CurveContext::STRICT)
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("native region projection failed: {error}"),
-            })? {
+            })?
+            .into_value()
+        {
             Classification::Decided(region_profiles) => {
                 emit_region_profiles(&region_profiles, &mut commands, options)?;
             },
@@ -437,7 +439,7 @@ impl ImportState {
                     self.flush_pending_dark()?;
                     self.curve = self
                         .curve
-                        .try_difference(&curve, &CurvePolicy::STRICT)
+                        .try_difference(&curve, &CurveContext::STRICT)
                         .map(hypercurve::CurveOutcome::into_value)
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
@@ -469,7 +471,7 @@ impl ImportState {
                     break;
                 };
                 next.push(
-                    left.try_union(&right, &CurvePolicy::STRICT)
+                    left.try_union(&right, &CurveContext::STRICT)
                         .map(hypercurve::CurveOutcome::into_value)
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
@@ -486,7 +488,7 @@ impl ImportState {
             dark
         } else {
             self.curve
-                .try_union(&dark, &CurvePolicy::STRICT)
+                .try_union(&dark, &CurveContext::STRICT)
                 .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
@@ -769,12 +771,14 @@ impl RegionBuilder {
             .collect::<Result<Vec<_>, _>>()?;
         let region = match CurveRegion2::try_from_native_boundary_contours(
             contours,
-            &CurvePolicy::STRICT,
+            &CurveContext::STRICT,
         )
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: error.to_string(),
-        })? {
+        })?
+        .value
+        {
             Classification::Decided(region) => region,
             Classification::Uncertain(reason) => {
                 return Err(IoError::Geometry {
@@ -1111,7 +1115,7 @@ fn add_aperture_hole(
     hole: CurveRegion2,
 ) -> Result<CurveRegion2, IoError> {
     outer
-        .try_difference(&hole, &CurvePolicy::STRICT)
+        .try_difference(&hole, &CurveContext::STRICT)
         .map(hypercurve::CurveOutcome::into_value)
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
@@ -1593,7 +1597,8 @@ fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<CurveRegion2, IoEr
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::STRICT)
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: error.to_string(),
