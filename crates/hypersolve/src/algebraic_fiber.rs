@@ -99,6 +99,45 @@ pub struct AlgebraicFiberDiagonalDeflationReport {
     pub certainty: Certainty,
 }
 
+/// Final status for reducing a rational function modulo one algebraic fiber.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlgebraicFiberRationalReductionStatus {
+    /// The quotient is independent of the fiber parameter and was retained as
+    /// one exact rational function of the algebraic base parameter.
+    ReducedToRetainedField,
+    /// The selected fiber parameter remains essential after exact reduction.
+    FiberDependent,
+    /// Every coefficient of the specialized fiber equation vanishes.
+    IdenticallyZeroFiber,
+    /// The specialized fiber equation is a nonzero constant and has no root.
+    ConstantNonzeroFiber,
+    /// The rational denominator vanishes throughout the fiber quotient ring.
+    ZeroDenominator,
+    /// The retained algebraic-root representation is invalid.
+    InvalidEvidence,
+    /// A coefficient could not be represented by the exact local-field package.
+    UnsupportedCoefficient,
+    /// Exact local-field arithmetic or a predicate did not complete.
+    Undecided,
+}
+
+/// Exact retained-field value of a rational function on one algebraic fiber.
+///
+/// When `status == ReducedToRetainedField`, the represented value is
+/// `numerator_coefficients(alpha) / denominator_coefficients(alpha)`. Both
+/// polynomials are reduced modulo the defining polynomial of `alpha`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicFiberRationalReductionReport {
+    /// Final reduction status.
+    pub status: AlgebraicFiberRationalReductionStatus,
+    /// Numerator in ascending powers of the retained algebraic parameter.
+    pub numerator_coefficients: Vec<Real>,
+    /// Nonzero denominator in ascending powers of the retained parameter.
+    pub denominator_coefficients: Vec<Real>,
+    /// Weakest predicate certainty consumed by local-field identities.
+    pub certainty: Certainty,
+}
+
 /// Final status for quotient-ring projection of one algebraic fiber.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AlgebraicFiberProjectionStatus {
@@ -1153,6 +1192,203 @@ pub fn deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter(
         reduced_polynomial: Some(reduced_polynomial),
         certainty: field.certainty,
     }
+}
+
+/// Reduces `numerator / denominator` modulo one exact algebraic fiber.
+///
+/// The retained parameter is specialized to `alpha` in its local field and
+/// both rational-function polynomials are reduced modulo `fiber_equation` in
+/// the other parameter. If their residues differ by one scalar in `Q(alpha)`,
+/// that scalar is exported without constructing the degree-multiplied global
+/// projection of the selected fiber parameter.
+///
+/// `ReducedToRetainedField` proves an identity in the complete fiber quotient
+/// ring. The caller must still know that the authored rational denominator is
+/// nonzero at the selected fiber root; this routine reports
+/// `ZeroDenominator` only when it vanishes throughout that quotient ring.
+pub fn reduce_bivariate_rational_function_at_algebraic_parameter(
+    fiber_equation: &BivariatePolynomial,
+    numerator: &BivariatePolynomial,
+    denominator: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberRationalReductionReport {
+    let mut field = match LocalAlgebraicField::new(retained_root, policy) {
+        Ok(field) => field,
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, Certainty::Exact);
+        }
+    };
+    let fiber = match local_fiber_polynomial(fiber_equation, retained_parameter, &mut field) {
+        Ok(fiber) => fiber,
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+        }
+    };
+    match local_polynomial_is_zero(&fiber, &mut field) {
+        Ok(true) => {
+            return algebraic_fiber_rational_reduction_report(
+                AlgebraicFiberRationalReductionStatus::IdenticallyZeroFiber,
+                None,
+                field.certainty,
+            );
+        }
+        Ok(false) if fiber.len() == 1 => {
+            return algebraic_fiber_rational_reduction_report(
+                AlgebraicFiberRationalReductionStatus::ConstantNonzeroFiber,
+                None,
+                field.certainty,
+            );
+        }
+        Ok(false) => {}
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+        }
+    }
+
+    let reduce = |polynomial: &BivariatePolynomial,
+                  field: &mut LocalAlgebraicField|
+     -> Result<Vec<LocalFieldElement>, LocalFieldError> {
+        let polynomial = local_fiber_polynomial(polynomial, retained_parameter, field)?;
+        local_polynomial_remainder(polynomial, &fiber, field)
+    };
+    let numerator = match reduce(numerator, &mut field) {
+        Ok(numerator) => numerator,
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+        }
+    };
+    let denominator = match reduce(denominator, &mut field) {
+        Ok(denominator) => denominator,
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+        }
+    };
+
+    let mut pivot = None;
+    for (power, coefficient) in denominator.iter().enumerate() {
+        match coefficient.is_zero(&mut field) {
+            Ok(false) => {
+                pivot = Some(power);
+                break;
+            }
+            Ok(true) => {}
+            Err(error) => {
+                return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+            }
+        }
+    }
+    let Some(pivot) = pivot else {
+        return algebraic_fiber_rational_reduction_report(
+            AlgebraicFiberRationalReductionStatus::ZeroDenominator,
+            None,
+            field.certainty,
+        );
+    };
+    let numerator_pivot = numerator
+        .get(pivot)
+        .cloned()
+        .unwrap_or_else(LocalFieldElement::zero);
+    let ratio = match numerator_pivot.divide(&denominator[pivot], &mut field) {
+        Ok(ratio) => ratio,
+        Err(error) => {
+            return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+        }
+    };
+
+    for power in 0..numerator.len().max(denominator.len()) {
+        let numerator_coefficient = numerator
+            .get(power)
+            .cloned()
+            .unwrap_or_else(LocalFieldElement::zero);
+        let denominator_coefficient = denominator
+            .get(power)
+            .cloned()
+            .unwrap_or_else(LocalFieldElement::zero);
+        let residual = match ratio
+            .multiply(&denominator_coefficient, &field)
+            .and_then(|product| numerator_coefficient.subtract(&product, &field))
+        {
+            Ok(residual) => residual,
+            Err(error) => {
+                return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+            }
+        };
+        match residual.is_zero(&mut field) {
+            Ok(true) => {}
+            Ok(false) => {
+                return algebraic_fiber_rational_reduction_report(
+                    AlgebraicFiberRationalReductionStatus::FiberDependent,
+                    None,
+                    field.certainty,
+                );
+            }
+            Err(error) => {
+                return algebraic_fiber_rational_reduction_error_report(error, field.certainty);
+            }
+        }
+    }
+
+    algebraic_fiber_rational_reduction_report(
+        AlgebraicFiberRationalReductionStatus::ReducedToRetainedField,
+        Some(normalized_local_field_rational_coefficients(ratio)),
+        field.certainty,
+    )
+}
+
+fn normalized_local_field_rational_coefficients(
+    value: LocalFieldElement,
+) -> (Vec<Real>, Vec<Real>) {
+    let mut numerator = value.numerator;
+    let mut denominator = value.denominator.unwrap_or_else(|| vec![Real::one()]);
+    // A local-field quotient is projective in these two coefficient vectors.
+    // Make the denominator monic when its exact leading scalar is invertible;
+    // otherwise an irrelevant division scale would be raised through every
+    // coefficient of a later algebraic image polynomial.
+    if let Some(leading) = denominator.last().cloned()
+        && let Ok(inverse) = Real::one() / leading
+    {
+        for coefficient in &mut numerator {
+            *coefficient *= &inverse;
+        }
+        for coefficient in &mut denominator {
+            *coefficient *= &inverse;
+        }
+    }
+    (numerator, denominator)
+}
+
+fn algebraic_fiber_rational_reduction_report(
+    status: AlgebraicFiberRationalReductionStatus,
+    value: Option<(Vec<Real>, Vec<Real>)>,
+    certainty: Certainty,
+) -> AlgebraicFiberRationalReductionReport {
+    let (numerator_coefficients, denominator_coefficients) = value.unwrap_or_default();
+    AlgebraicFiberRationalReductionReport {
+        status,
+        numerator_coefficients,
+        denominator_coefficients,
+        certainty,
+    }
+}
+
+fn algebraic_fiber_rational_reduction_error_report(
+    error: LocalFieldError,
+    certainty: Certainty,
+) -> AlgebraicFiberRationalReductionReport {
+    let status = match error {
+        LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval => {
+            AlgebraicFiberRationalReductionStatus::InvalidEvidence
+        }
+        LocalFieldError::UnsupportedCoefficient => {
+            AlgebraicFiberRationalReductionStatus::UnsupportedCoefficient
+        }
+        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
+            AlgebraicFiberRationalReductionStatus::Undecided
+        }
+    };
+    algebraic_fiber_rational_reduction_report(status, None, certainty)
 }
 
 /// Projects one bivariate fiber through a low-degree algebraic quotient ring.
@@ -2668,6 +2904,84 @@ mod tests {
             assert_eq!(report.multiplicity, 3);
             assert_eq!(report.reduced_polynomial, Some(expected.clone()));
             assert_eq!(report.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn rational_fiber_reduction_preserves_degree_fifteen_correlation() {
+        // alpha^9 = 1/2 and 32768*u^15 = alpha make u a global degree-135
+        // scalar. The correlated coordinate 3/5 + 32768*u^15 nevertheless
+        // remains the degree-nine retained-field value 3/5 + alpha.
+        let mut retained_polynomial = vec![Real::zero(); 10];
+        retained_polynomial[0] = -rational(1, 2);
+        retained_polynomial[9] = Real::one();
+        let mut fiber_row = vec![Real::zero(); 16];
+        fiber_row[15] = real(32_768);
+        let fiber = BivariatePolynomial::new(vec![fiber_row.clone(), vec![real(-1)]]);
+        let mut numerator_row = fiber_row;
+        numerator_row[0] = rational(3, 5);
+        let numerator = BivariatePolynomial::new(vec![numerator_row]);
+        let denominator = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let dependent = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
+        let shared_denominator = BivariatePolynomial::new(vec![vec![Real::one(), Real::one()]]);
+        let shared_numerator =
+            BivariatePolynomial::new(vec![vec![real(3), real(3)], vec![Real::one(), Real::one()]]);
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                retained_polynomial.clone(),
+                rational(9, 10),
+                Real::one(),
+                policy,
+            );
+            let report = reduce_bivariate_rational_function_at_algebraic_parameter(
+                &fiber,
+                &numerator,
+                &denominator,
+                CurveResultantParameter::First,
+                &alpha,
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+            );
+            assert_eq!(
+                report.numerator_coefficients,
+                vec![rational(3, 5), Real::one()]
+            );
+            assert_eq!(report.denominator_coefficients, vec![Real::one()]);
+            assert_eq!(report.certainty, Certainty::Exact);
+
+            let dependent = reduce_bivariate_rational_function_at_algebraic_parameter(
+                &fiber,
+                &dependent,
+                &denominator,
+                CurveResultantParameter::First,
+                &alpha,
+                policy,
+            );
+            assert_eq!(
+                dependent.status,
+                AlgebraicFiberRationalReductionStatus::FiberDependent
+            );
+            assert_eq!(dependent.certainty, Certainty::Exact);
+
+            let shared = reduce_bivariate_rational_function_at_algebraic_parameter(
+                &fiber,
+                &shared_numerator,
+                &shared_denominator,
+                CurveResultantParameter::First,
+                &alpha,
+                policy,
+            );
+            assert_eq!(
+                shared.status,
+                AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+            );
+            assert_eq!(shared.numerator_coefficients, vec![real(3), Real::one()]);
+            assert_eq!(shared.denominator_coefficients, vec![Real::one()]);
+            assert_eq!(shared.certainty, Certainty::Exact);
         }
     }
 
