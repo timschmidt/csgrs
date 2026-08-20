@@ -2,7 +2,7 @@
 name = "hypergraphics"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.95"
 description = "Exact 3D scene geometry with explicit f64/f32 rendering boundaries."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"

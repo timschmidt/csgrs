@@ -161,8 +161,8 @@ jobs:
           persist-credentials: false
       - name: Install MSRV
         run: |
-          rustup toolchain install 1.88.0 --profile minimal
-          rustup default 1.88.0
+          rustup toolchain install 1.95.0 --profile minimal
+          rustup default 1.95.0
       - name: Check all features at MSRV
         working-directory: hypergraphics
         run: cargo check --all-targets --all-features

@@ -315,7 +315,7 @@ camera projection at the explicit rendering boundary.
 ## License and contributing
 
 Hypergraphics is available under either the [MIT License](LICENSE-MIT) or the
-[Apache License 2.0](LICENSE-APACHE). Rust 1.88 is the declared minimum
+[Apache License 2.0](LICENSE-APACHE). Rust 1.95 is the declared minimum
 supported version. Contributions should preserve the separation between exact
 geometry and lossy presentation data. CI checks that MSRV plus the full stable
 feature matrix. Before submitting a change, run:
