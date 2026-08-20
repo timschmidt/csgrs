@@ -10951,7 +10951,28 @@ impl BezierParallelAlgebraicCuspFrame2 {
     }
 }
 
-#[allow(dead_code)]
+/// Maps one edited-carrier parameter into its selected-circle source chart.
+/// The authored center alias remains the compact ordinary fast path; every
+/// other finite parameter keeps its native local authority.
+fn affine_tangent_source_region_parameter(
+    parameter: &CurveRegionParameter2,
+    authority_parameter: &BezierParameter2,
+    frame_parameter: &BezierParameter2,
+    source_scale: &Real,
+    source_offset: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveRegionParameter2>> {
+    if parameter
+        .as_bezier_parameter()
+        .is_some_and(|parameter| parameter == authority_parameter)
+    {
+        return Ok(Classification::Decided(CurveRegionParameter2::from_bezier(
+            frame_parameter.clone(),
+        )));
+    }
+    parameter.affine_image_unbounded(source_scale, source_offset, policy)
+}
+
 impl BezierAlgebraicCuspSemicircle2 {
     #[inline]
     fn turn_sign(&self) -> Real {
@@ -15715,24 +15736,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             if residual_sign.is_some() {
                 let parameter = BezierParameter2::Algebraic(center_parameter.clone());
-                let inside = match (
-                    parameter.cmp_by_refinement(search_range.start(), policy)?,
-                    parameter.cmp_by_refinement(search_range.end(), policy)?,
-                ) {
-                    (
-                        Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                        ),
-                        Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
-                        ),
-                    ) => true,
-                    (Classification::Decided(_), Classification::Decided(_)) => false,
-                    (Classification::Uncertain(reason), _)
-                    | (_, Classification::Uncertain(reason)) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let inside =
+                    match overlap_parameter_is_in_range(&parameter, search_range, true, policy)? {
+                        Classification::Decided(inside) => inside,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
                 let contacts = inside
                     .then(|| BezierAlgebraicCuspSemicircleParallelContact2 {
                         parallel_parameter: parameter,
@@ -15837,127 +15847,182 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let roots = if let [univariate] = incidence.coefficients.as_slice() {
-            let polynomial =
-                match polynomial_from_coefficients(univariate.clone(), &CurveContext::STRICT)? {
+        let range_bounds = if let Some(range) = range {
+            match range.start().cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    Some((range.start(), range.end()))
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    Some((range.end(), range.start()))
+                }
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                            Vec::new(),
+                        ),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            None
+        };
+        let outer_bound = |parameter: &BezierParameter2, lower: bool| match parameter {
+            BezierParameter2::Exact(parameter) => parameter.clone(),
+            BezierParameter2::Algebraic(parameter) => {
+                if lower {
+                    parameter.interval().start().clone()
+                } else {
+                    parameter.interval().end().clone()
+                }
+            }
+        };
+        let (isolation_lower, isolation_upper) = range_bounds.map_or_else(
+            || (Real::zero(), Real::one()),
+            |(lower, upper)| (outer_bound(lower, true), outer_bound(upper, false)),
+        );
+        let unit_isolation = matches!(
+            compare_reals(&isolation_lower, &Real::zero(), &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater),
+        ) && matches!(
+            compare_reals(&isolation_upper, &Real::one(), &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less),
+        );
+        let (mut projection_identically_zero, mut candidates) = if unit_isolation {
+            let roots = if let [univariate] = incidence.coefficients.as_slice() {
+                let polynomial = match polynomial_from_coefficients(
+                    univariate.clone(),
+                    &CurveContext::STRICT,
+                )? {
                     Classification::Decided(Some(polynomial)) => Some(polynomial),
                     Classification::Decided(None) => None,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-            if let Some(polynomial) = polynomial {
-                match polynomial.isolate_unit_interval_roots(&CurveContext::STRICT)? {
-                    Classification::Decided(parameters) => Some(
-                        parameters
-                            .into_iter()
-                            .map(|parameter| match parameter {
-                                BezierParameter2::Exact(root) => IsolatedRootInterval {
-                                    lower: root.clone(),
-                                    upper: root.clone(),
-                                    exact_root: Some(root),
-                                    distinct_root_count: 1,
-                                },
-                                BezierParameter2::Algebraic(root) => IsolatedRootInterval {
-                                    lower: root.interval().start().clone(),
-                                    upper: root.interval().end().clone(),
-                                    exact_root: None,
-                                    distinct_root_count: 1,
-                                },
-                            })
-                            .collect(),
-                    ),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                if let Some(polynomial) = polynomial {
+                    match polynomial.isolate_unit_interval_roots(&CurveContext::STRICT)? {
+                        Classification::Decided(parameters) => Some(
+                            parameters
+                                .into_iter()
+                                .map(|parameter| match parameter {
+                                    BezierParameter2::Exact(root) => IsolatedRootInterval {
+                                        lower: root.clone(),
+                                        upper: root.clone(),
+                                        exact_root: Some(root),
+                                        distinct_root_count: 1,
+                                    },
+                                    BezierParameter2::Algebraic(root) => IsolatedRootInterval {
+                                        lower: root.interval().start().clone(),
+                                        upper: root.interval().end().clone(),
+                                        exact_root: None,
+                                        distinct_root_count: 1,
+                                    },
+                                })
+                                .collect(),
+                        ),
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
+                } else {
+                    None
                 }
             } else {
-                None
-            }
-        } else {
-            let refined_center = center.refined_isolating_interval(64, &CurveContext::STRICT);
-            let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-                &incidence,
-                CurveResultantParameter::First,
-                &match refined_center {
-                    BezierParameter2::Algebraic(parameter) => {
-                        parameter_representation(&parameter, policy)
+                let refined_center = center.refined_isolating_interval(64, &CurveContext::STRICT);
+                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    &incidence,
+                    CurveResultantParameter::First,
+                    &match refined_center {
+                        BezierParameter2::Algebraic(parameter) => {
+                            parameter_representation(&parameter, policy)
+                        }
+                        BezierParameter2::Exact(parameter) => {
+                            exact_real_algebraic_representation(&parameter)
+                        }
+                    },
+                    &Real::zero(),
+                    &Real::one(),
+                    AlgebraicFiberRootIsolationConfig {
+                        max_subdivision_depth: 512,
+                        refinement_steps: 8,
+                    },
+                    hypersolve::PredicatePolicy::STRICT,
+                );
+                match report.status {
+                    AlgebraicFiberRootIsolationStatus::Isolated => Some(report.intervals),
+                    AlgebraicFiberRootIsolationStatus::NoRoots => Some(Vec::new()),
+                    AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => None,
+                    AlgebraicFiberRootIsolationStatus::InvalidEvidence
+                    | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
                     }
-                    BezierParameter2::Exact(parameter) => {
-                        exact_real_algebraic_representation(&parameter)
+                    AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                     }
-                },
-                &Real::zero(),
-                &Real::one(),
-                AlgebraicFiberRootIsolationConfig {
-                    max_subdivision_depth: 512,
-                    refinement_steps: 8,
-                },
-                hypersolve::PredicatePolicy::STRICT,
-            );
-            match report.status {
-                AlgebraicFiberRootIsolationStatus::Isolated => Some(report.intervals),
-                AlgebraicFiberRootIsolationStatus::NoRoots => Some(Vec::new()),
-                AlgebraicFiberRootIsolationStatus::IdenticallyZeroFiber => None,
-                AlgebraicFiberRootIsolationStatus::InvalidEvidence
-                | AlgebraicFiberRootIsolationStatus::InvalidInterval => {
-                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    AlgebraicFiberRootIsolationStatus::DepthLimit
+                    | AlgebraicFiberRootIsolationStatus::Undecided => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
                 }
-                AlgebraicFiberRootIsolationStatus::UnsupportedCoefficient => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                AlgebraicFiberRootIsolationStatus::DepthLimit
-                | AlgebraicFiberRootIsolationStatus::Undecided => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-                }
-            }
-        };
-        let mut projection_identically_zero = roots.is_none();
-        let mut candidates = Vec::with_capacity(roots.as_ref().map_or(0, Vec::len));
-        if let Some(roots) = roots {
+            };
+            let identically_zero = roots.is_none();
             let authority = BezierAlgebraicSelectedFiberAuthority2::new(
                 incidence.clone(),
                 center_parameter.clone(),
                 policy,
             );
-            for root in roots {
-                if let Some(range) = range
-                    && ((range.start().as_exact().is_some_and(|start| {
-                        compare_reals(&root.upper, start, &CurveContext::STRICT)
-                            == Some(std::cmp::Ordering::Less)
-                    })) || (range.end().as_exact().is_some_and(|end| {
-                        compare_reals(&root.lower, end, &CurveContext::STRICT)
-                            == Some(std::cmp::Ordering::Greater)
-                    })))
-                {
-                    continue;
+            (
+                identically_zero,
+                roots
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|root| authority.parameter(root))
+                    .collect(),
+            )
+        } else {
+            match selected_fiber_parameters_in_interval(
+                &incidence,
+                &center_parameter,
+                &isolation_lower,
+                &isolation_upper,
+                &CurveContext::STRICT,
+            )? {
+                Classification::Decided(Some(parameters)) => (false, parameters),
+                Classification::Decided(None) => (true, Vec::new()),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                let candidate = authority.parameter(root);
-                if let Some(range) = range {
-                    let after_start = match candidate.cmp_bezier_parameter(range.start(), policy)? {
-                        Classification::Decided(std::cmp::Ordering::Less) => false,
-                        Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                        ) => true,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let before_end = match candidate.cmp_bezier_parameter(range.end(), policy)? {
-                        Classification::Decided(std::cmp::Ordering::Greater) => false,
-                        Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
-                        ) => true,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    if !after_start || !before_end {
-                        continue;
-                    }
-                }
-                candidates.push(candidate);
             }
+        };
+        if let Some((lower, upper)) = range_bounds {
+            let mut retained = Vec::with_capacity(candidates.len());
+            for candidate in candidates {
+                let after_lower = match candidate.cmp_bezier_parameter(lower, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Less) => false,
+                    Classification::Decided(
+                        std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                    ) => true,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let before_upper = match candidate.cmp_bezier_parameter(upper, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Greater) => false,
+                    Classification::Decided(
+                        std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
+                    ) => true,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if after_lower && before_upper {
+                    retained.push(candidate);
+                }
+            }
+            candidates = retained;
         }
         if !projection_identically_zero && let Some(incident) = incident {
             match selected_fiber_parameters_on_incident_ray(
@@ -16598,10 +16663,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         let mapped_incident = if let Some(incident) = incident {
-            let Some(endpoint) = incident.endpoint.as_bezier_parameter() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let endpoint = match map_parameter(endpoint)? {
+            let endpoint = match affine_tangent_source_region_parameter(
+                &incident.endpoint,
+                &authority.parameter,
+                &frame.center_parameter,
+                &authority.source_scale,
+                &authority.source_offset,
+                policy,
+            )? {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -16618,7 +16687,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 None
             };
             Some(BezierParallelIncidentDomain2 {
-                endpoint: CurveRegionParameter2::from_bezier(endpoint),
+                endpoint,
                 // The caller already folded the rootless endpoint bridge into
                 // `range`; the selected-normal kernel consumes only the
                 // affine ray anchor and its first regularity barrier.
@@ -16660,29 +16729,64 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
                 contacts,
             ) => {
-                // Keep the ordinary selected-fiber representation inside the
-                // same-source solver. A carrier switch is the one place that
-                // needs a globally authored parameter, so promote exactly and
-                // then apply the inverse affine chart.
-                let mut promoted = Vec::with_capacity(contacts.len());
+                let Some(first) = contacts.first() else {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                            Vec::new(),
+                        ),
+                    ));
+                };
+                let map = match first.data.as_ref() {
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
+                        map,
+                        ..
+                    } => map,
+                    _ => {
+                        return Err(CurveError::Topology(
+                            "an analytic selected-fiber contact lost its parallel map".into(),
+                        ));
+                    }
+                };
+                let map = match map.affine_target_parameterization(
+                    other.clone(),
+                    &authority.source_scale,
+                    &authority.source_offset,
+                    policy,
+                )? {
+                    Classification::Decided(map) => map,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let mut transported = Vec::with_capacity(contacts.len());
                 for contact in contacts {
-                    let parameter = match contact
-                        .other_parameter()
-                        .promoted_bezier_parameter(policy)?
-                    {
+                    let parameter = match contact.other_parameter().affine_image_unbounded(
+                        &inverse_scale,
+                        &inverse_offset,
+                        policy,
+                    )? {
                         Classification::Decided(parameter) => parameter,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
                         }
                     };
-                    promoted.push(BezierAlgebraicCuspSemicircleParallelContact2 {
-                        parallel_parameter: parameter,
-                        tangent_cross_sign: Some(contact.tangent_cross_sign()),
-                        location: contact.location(),
-                        correlated: true,
-                    });
+                    transported.push(map.contact(
+                        parameter,
+                        contact.location(),
+                        contact.tangent_cross_sign(),
+                    ));
                 }
-                promoted
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-parallel-kernel",
+                    "selected-normal-positive-affine-selected-fiber",
+                );
+                return Ok(Classification::Decided(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                        transported,
+                    ),
+                ));
             }
             result @ (BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent
             | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection) => {
@@ -30483,6 +30587,61 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
+    /// Re-expresses the target axis through the certified positive affine
+    /// chart `old = offset + scale * new`.
+    ///
+    /// Every retained predicate is composed in the local bivariate field, so
+    /// contacts can move back to an edited carrier's native parameter without
+    /// constructing the selected scalar's global resultant. A positive chart
+    /// preserves every authored target-tangent sign.
+    fn affine_target_parameterization(
+        &self,
+        parallel: BezierParallel2,
+        scale: &Real,
+        offset: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        match real_sign(scale, &CurveContext::STRICT) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a selected-fiber parallel map received a nonpositive affine chart".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let polynomial =
+            |value: &BivariatePolynomial| bivariate_affine_second_parameter(value, scale, offset);
+        let two_term =
+            |value: &BezierAlgebraicCuspTwoTermExpression2| BezierAlgebraicCuspTwoTermExpression2 {
+                rational: polynomial(&value.rational),
+                radical: polynomial(&value.radical),
+            };
+        let two_normal =
+            |value: &BezierParallelTwoNormalExpression2| BezierParallelTwoNormalExpression2 {
+                product: polynomial(&value.product),
+                center: polynomial(&value.center),
+                candidate: polynomial(&value.candidate),
+                rational: polynomial(&value.rational),
+            };
+        Ok(Classification::Decided(Self {
+            data: Arc::new(
+                BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMapData2 {
+                    semicircle: self.data.semicircle.clone(),
+                    parallel,
+                    diameter: two_normal(&self.data.diameter),
+                    radius_squared_denominator: polynomial(&self.data.radius_squared_denominator),
+                    tangent_cross_source: two_term(&self.data.tangent_cross_source),
+                    tangent_dot_source: two_normal(&self.data.tangent_dot_source),
+                    center_speed_squared: polynomial(&self.data.center_speed_squared),
+                    candidate_speed_squared: polynomial(&self.data.candidate_speed_squared),
+                    policy: self.data.policy,
+                },
+            ),
+        }))
+    }
+
     fn mapped_data(
         &self,
         other_parameter: BezierAlgebraicSelectedFiberParameter2,
@@ -67915,89 +68074,65 @@ fn selected_parallel_normal_positive_dimensional_projection(
     incident: Option<&BezierParallelIncidentDomain2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierSelectedParallelNormalPositiveProjection2>> {
+    enum SelectedEquationProjection2 {
+        Candidates(Vec<BezierAlgebraicSelectedFiberParameter2>),
+        IdenticallyZero,
+    }
+
     let full_range = BezierParameterRange2::new_validated(
         BezierParameter2::Exact(Real::zero()),
         BezierParameter2::Exact(Real::one()),
     );
+    let finite_range = range.unwrap_or(&full_range);
+    let strict = policy.strict_counterpart();
     let project = |equation: &BivariatePolynomial|
-     -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        let projection = if let Some(incident) = incident {
-            algebraic_selected_fiber_parameters_with_incident_ray(
+     -> CurveResult<Classification<SelectedEquationProjection2>> {
+        let mut parameters = match selected_fiber_parameters_in_bezier_range(
+            equation,
+            center_parameter,
+            finite_range,
+            &strict,
+        )? {
+            Classification::Decided(Some(parameters)) => parameters,
+            Classification::Decided(None) => {
+                return Ok(Classification::Decided(
+                    SelectedEquationProjection2::IdenticallyZero,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if let Some(incident) = incident {
+            match selected_fiber_parameters_on_incident_ray(
                 equation,
                 center_parameter,
-                range.unwrap_or(&full_range),
                 &incident.anchor,
                 incident.direction,
                 incident.barrier.as_ref(),
-                policy,
-            )
-        } else {
-            algebraic_selected_fiber_parameters(equation, center_parameter, policy)
-        }?;
-        let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) =
-            projection
-        else {
-            return Ok(projection);
-        };
-        let Some(range) = range.filter(|_| incident.is_none()) else {
-            return Ok(Classification::Decided(
-                BezierAlgebraicFiberProjection2::Parameters(parameters),
-            ));
-        };
-        let mut retained = Vec::with_capacity(parameters.len());
-        for parameter in parameters {
-            match overlap_parameter_is_in_range(&parameter, range, true, policy)? {
-                Classification::Decided(true) => retained.push(parameter),
-                Classification::Decided(false) => {}
+                &strict,
+            )? {
+                Classification::Decided(Some(mut exterior)) => parameters.append(&mut exterior),
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(
+                        SelectedEquationProjection2::IdenticallyZero,
+                    ));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
         }
         Ok(Classification::Decided(
-            BezierAlgebraicFiberProjection2::Parameters(retained),
+            SelectedEquationProjection2::Candidates(parameters),
         ))
     };
-    let selected = |equation: &BivariatePolynomial, parameters: Vec<BezierParameter2>| {
-        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
-            equation.clone(),
-            center_parameter.clone(),
-            policy,
-        );
-        parameters
-            .into_iter()
-            .map(|parameter| {
-                authority.parameter(match parameter {
-                    BezierParameter2::Exact(root) => IsolatedRootInterval {
-                        lower: root.clone(),
-                        upper: root.clone(),
-                        exact_root: Some(root),
-                        distinct_root_count: 1,
-                    },
-                    BezierParameter2::Algebraic(root) => IsolatedRootInterval {
-                        lower: root.interval().start().clone(),
-                        upper: root.interval().end().clone(),
-                        exact_root: None,
-                        distinct_root_count: 1,
-                    },
-                })
-            })
-            .collect()
+    let finish_projection = |projection: SelectedEquationProjection2| match projection {
+        SelectedEquationProjection2::Candidates(parameters) => Some(
+            BezierSelectedParallelNormalPositiveProjection2::Candidates(parameters),
+        ),
+        SelectedEquationProjection2::IdenticallyZero => None,
     };
-    let finish_projection =
-        |equation: &BivariatePolynomial, projection: BezierAlgebraicFiberProjection2| {
-            match projection {
-                BezierAlgebraicFiberProjection2::Parameters(parameters) => {
-                    Some(BezierSelectedParallelNormalPositiveProjection2::Candidates(
-                        selected(equation, parameters),
-                    ))
-                }
-                BezierAlgebraicFiberProjection2::IdenticallyZero => None,
-                BezierAlgebraicFiberProjection2::Degenerate => {
-                    Some(BezierSelectedParallelNormalPositiveProjection2::Degenerate)
-                }
-            }
-        };
     let project_nonzero_branch =
         |first: &BivariatePolynomial,
          second: &BivariatePolynomial|
@@ -68010,15 +68145,12 @@ fn selected_parallel_normal_positive_dimensional_projection(
                     }
                 };
                 match projection {
-                    BezierAlgebraicFiberProjection2::Parameters(parameters) => {
+                    SelectedEquationProjection2::Candidates(parameters) => {
                         return Ok(Classification::Decided(
-                            BezierSelectedParallelNormalPositiveProjection2::Candidates(selected(
-                                equation, parameters,
-                            )),
+                            BezierSelectedParallelNormalPositiveProjection2::Candidates(parameters),
                         ));
                     }
-                    BezierAlgebraicFiberProjection2::IdenticallyZero
-                    | BezierAlgebraicFiberProjection2::Degenerate => {}
+                    SelectedEquationProjection2::IdenticallyZero => {}
                 }
             }
             Ok(Classification::Decided(
@@ -68033,10 +68165,44 @@ fn selected_parallel_normal_positive_dimensional_projection(
         ));
     }
     match polynomial_square_root(&candidate_speed, policy)? {
-        Classification::Decided(Some(speed)) => {
-            // The exact polynomial root chosen positive at zero is sqrt(T)
-            // throughout the regular unit domain and its incident endpoint
-            // cell; the latter terminates at the first speed zero.
+        Classification::Decided(Some(mut speed)) => {
+            // A polynomial square root has two sheets. Select the positive
+            // sheet on the actual regular finite cell: an affine carrier edit
+            // may move that cell across a speed zero lying outside its domain,
+            // so the historical sign-at-zero convention is insufficient.
+            let (sample_start, sample_end) = match finite_range
+                .start()
+                .cmp_by_refinement(finite_range.end(), &strict)?
+            {
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    (finite_range.start(), finite_range.end())
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    (finite_range.end(), finite_range.start())
+                }
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Err(CurveError::InvalidBezierRange);
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let sample = match sample_start.strict_rational_between_ordered(sample_end, &strict)? {
+                Classification::Decided(sample) => sample,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            match real_sign(&polynomial_evaluate(&speed, &sample), &strict) {
+                Some(RealSign::Positive) => {}
+                Some(RealSign::Negative) => {
+                    speed = polynomial_scale(&speed, &Real::from(-1_i8));
+                }
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
             let speed = bivariate_outer_product(&[Real::one()], &speed);
             let collapsed = BezierAlgebraicCuspTwoTermExpression2 {
                 rational: bivariate_add(
@@ -68077,7 +68243,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            if let Some(result) = finish_projection(&norm, projection) {
+            if let Some(result) = finish_projection(projection) {
                 return Ok(Classification::Decided(result));
             }
             // The norm itself can vanish on the opposite center-speed sheet.
@@ -68166,7 +68332,7 @@ fn selected_parallel_normal_positive_dimensional_projection(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            if let Some(result) = finish_projection(&norm, projection) {
+            if let Some(result) = finish_projection(projection) {
                 return Ok(Classification::Decided(result));
             }
             project_nonzero_branch(&selected_term.rational, &selected_term.radical)
@@ -68399,6 +68565,66 @@ fn selected_fiber_parameters_in_interval(
             .map(|root| authority.parameter(root))
             .collect(),
     )))
+}
+
+/// Isolates a selected fiber on either orientation of one finite parameter
+/// range. Algebraic endpoints contribute only outward isolation bounds; exact
+/// selected comparisons perform the final closed-range filtering.
+fn selected_fiber_parameters_in_bezier_range(
+    incidence: &BivariatePolynomial,
+    retained_parameter: &BezierAlgebraicParameter2,
+    range: &BezierParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
+    let strict = policy.strict_counterpart();
+    let (lower, upper) = match range.start().cmp_by_refinement(range.end(), &strict)? {
+        Classification::Decided(std::cmp::Ordering::Less) => (range.start(), range.end()),
+        Classification::Decided(std::cmp::Ordering::Greater) => (range.end(), range.start()),
+        Classification::Decided(std::cmp::Ordering::Equal) => {
+            return Err(CurveError::DegenerateOverlapRange);
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let outer_bound = |parameter: &BezierParameter2, lower_bound: bool| match parameter {
+        BezierParameter2::Exact(parameter) => parameter.clone(),
+        BezierParameter2::Algebraic(parameter) => {
+            if lower_bound {
+                parameter.interval().start().clone()
+            } else {
+                parameter.interval().end().clone()
+            }
+        }
+    };
+    let candidates = match selected_fiber_parameters_in_interval(
+        incidence,
+        retained_parameter,
+        &outer_bound(lower, true),
+        &outer_bound(upper, false),
+        &strict,
+    )? {
+        Classification::Decided(Some(candidates)) => candidates,
+        decided @ Classification::Decided(None) => return Ok(decided),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mut retained = Vec::with_capacity(candidates.len());
+    for candidate in candidates {
+        let after_lower = match candidate.cmp_bezier_parameter(lower, &strict)? {
+            Classification::Decided(ordering) => ordering != std::cmp::Ordering::Less,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let before_upper = match candidate.cmp_bezier_parameter(upper, &strict)? {
+            Classification::Decided(ordering) => ordering != std::cmp::Ordering::Greater,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if after_lower && before_upper {
+            retained.push(candidate);
+        }
+    }
+    Ok(Classification::Decided(Some(retained)))
 }
 
 /// Isolates one selected bivariate fiber on an open incident ray without
@@ -69228,10 +69454,11 @@ fn selected_fiber_parameter_at_exact_retained(
     incidence: &BivariatePolynomial,
     retained: &Real,
     root: &IsolatedRootInterval,
-    policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParameter2>> {
     if let Some(exact) = &root.exact_root {
-        return BezierParameter2::exact(exact.clone(), policy);
+        return Ok(Classification::Decided(BezierParameter2::Exact(
+            exact.clone(),
+        )));
     }
     let polynomial = match polynomial_from_coefficients(
         bivariate_specialize_first(incidence, retained),
@@ -69247,7 +69474,7 @@ fn selected_fiber_parameter_at_exact_retained(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let interval = match BezierParameterInterval::try_new(
+    let interval = match BezierParameterInterval::try_new_ordered(
         root.lower.clone(),
         root.upper.clone(),
         &CurveContext::STRICT,
@@ -69279,19 +69506,16 @@ fn algebraic_selected_fiber_root_interval_refined(
         let BezierParameter2::Exact(retained_parameter) = retained_parameter else {
             unreachable!()
         };
-        let parameter = match selected_fiber_parameter_at_exact_retained(
-            incidence,
-            &retained_parameter,
-            root,
-            policy,
-        )? {
-            Classification::Decided(parameter) => {
-                parameter.refined_isolating_interval(refinement_steps, &CurveContext::STRICT)
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter =
+            match selected_fiber_parameter_at_exact_retained(incidence, &retained_parameter, root)?
+            {
+                Classification::Decided(parameter) => {
+                    parameter.refined_isolating_interval(refinement_steps, &CurveContext::STRICT)
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         return Ok(Classification::Decided(match parameter {
             BezierParameter2::Exact(root) => IsolatedRootInterval {
                 lower: root.clone(),
@@ -69371,17 +69595,23 @@ fn algebraic_selected_fiber_root_predicate_sign(
     let retained_parameter = BezierParameter2::Algebraic(retained.clone())
         .refined_isolating_interval(64, &CurveContext::STRICT);
     if let BezierParameter2::Exact(retained_value) = &retained_parameter {
-        let parameter = match selected_fiber_parameter_at_exact_retained(
-            incidence,
-            retained_value,
-            root,
-            policy,
-        )? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        if let Some(exact_root) = &root.exact_root {
+            return Ok(real_sign(
+                &bivariate_evaluate_exact(predicate, retained_value, exact_root),
+                policy,
+            )
+            .map_or(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided,
+            ));
+        }
+        let parameter =
+            match selected_fiber_parameter_at_exact_retained(incidence, retained_value, root)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         return signed_coefficients_at_parameter(
             bivariate_specialize_first(predicate, retained_value),
             &parameter,
@@ -112464,6 +112694,212 @@ mod conversion_tests {
     }
 
     #[test]
+    fn selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let center_parameter = BezierParameter2::Exact(quarter.clone());
+        // P(u)=(u,0), and Q(t)=P(2t), force the retained contact u=5/4
+        // beyond the canonical source unit interval while its edited-carrier
+        // parameter t=5/8 remains finite.
+        let center_support = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let tangent_support = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+        let expected = (Real::from(5_i8) / Real::from(8_i8)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(tangent_parameter) = center_parameter
+                .affine_image_unbounded(&half, &Real::zero(), &policy)
+                .unwrap()
+            else {
+                panic!("the positive affine center chart must decide exactly");
+            };
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    center_support.clone(),
+                    center_parameter.clone(),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected-normal circle must construct");
+            };
+            let circle = circle
+                .with_certified_parallel_normal_tangent_authority(
+                    tangent_support.clone(),
+                    tangent_parameter.clone(),
+                    Real::from(2_i8),
+                    Real::zero(),
+                    &policy,
+                )
+                .unwrap();
+            let endpoint =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            assert!(matches!(
+                endpoint.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let endpoint = CurveRegionParameter2::from_selected_fiber(endpoint);
+            let Classification::Decided(mapped_endpoint) = affine_tangent_source_region_parameter(
+                &endpoint,
+                &tangent_parameter,
+                &center_parameter,
+                &Real::from(2_i8),
+                &Real::zero(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("a selected incident endpoint must cross the affine chart locally");
+            };
+            assert!(matches!(
+                mapped_endpoint
+                    .as_selected_fiber()
+                    .expect("the mapped incident endpoint must remain selected")
+                    .promoted_bezier_parameter(&policy)
+                    .unwrap(),
+                Classification::Uncertain(_)
+            ));
+
+            for range in [range.clone(), range.reversed()] {
+                let mut retained = Vec::new();
+                for half_circle in [circle.clone(), circle.complementary_half()] {
+                    let result = half_circle
+                        .parallel_intersections_in_range(&tangent_support, &range, &policy)
+                        .unwrap();
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                            contacts,
+                        ),
+                    ) = result
+                    else {
+                        panic!(
+                            "an affine carrier switch must retain its selected incident contacts: {result:?}"
+                        );
+                    };
+                    retained.extend(contacts);
+                }
+                assert_eq!(retained.len(), 1);
+                let parameter = retained[0].other_parameter();
+                assert_eq!(parameter.represented_value(), Some(&expected));
+                assert_eq!(
+                    parameter
+                        .cmp_bezier_parameter(&BezierParameter2::Exact(expected.clone()), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_interval_supports_exact_and_nonexact_exterior_roots() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_halves = &Real::from(3_i8) * &half;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Retain alpha=1/2 as algebraic construction evidence. Refinement
+            // recovers its exact value, which exercises the exterior
+            // exact-retained path without changing the selected authority.
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the rational retained-root polynomial must construct");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+            else {
+                panic!("the retained-root interval must construct");
+            };
+            let Classification::Decided(retained) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("the retained rational root must isolate");
+            };
+
+            // u^2=1+alpha selects sqrt(3/2) strictly between 1 and 2.
+            let nonlinear_incidence = BivariatePolynomial::new(vec![
+                vec![Real::from(-1_i8), Real::zero(), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]);
+            let outside_unit_predicate =
+                BivariatePolynomial::new(vec![vec![Real::from(-1_i8), Real::zero(), Real::one()]]);
+            let exterior_range = BezierParameterRange2::from_exact(Real::one(), Real::from(2_i8));
+            for exterior_range in [exterior_range.clone(), exterior_range.reversed()] {
+                let Classification::Decided(Some(nonlinear)) =
+                    selected_fiber_parameters_in_bezier_range(
+                        &nonlinear_incidence,
+                        &retained,
+                        &exterior_range,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the nonlinear exterior fiber must isolate");
+                };
+                let [nonlinear] = nonlinear.as_slice() else {
+                    panic!("the positive exterior interval must contain one nonlinear root");
+                };
+                assert!(nonlinear.represented_value().is_none());
+                assert_eq!(
+                    nonlinear.order_to_real(&Real::one(), &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    nonlinear.order_to_real(&Real::from(2_i8), &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    nonlinear
+                        .predicate_sign(&outside_unit_predicate, &policy)
+                        .unwrap(),
+                    Classification::Decided(RealSign::Positive),
+                );
+            }
+
+            // u=1+alpha recovers the represented exterior root 3/2. This is
+            // valid affine evidence even though it is not a bounded Bezier
+            // parameter until the caller maps it back into its target chart.
+            let linear_incidence = BivariatePolynomial::new(vec![
+                vec![Real::from(-1_i8), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]);
+            let Classification::Decided(Some(linear)) = selected_fiber_parameters_in_bezier_range(
+                &linear_incidence,
+                &retained,
+                &exterior_range,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the linear exterior fiber must isolate");
+            };
+            let [linear] = linear.as_slice() else {
+                panic!("the exterior interval must contain one represented root");
+            };
+            assert_eq!(linear.represented_value(), Some(&three_halves));
+            assert_eq!(
+                linear.predicate_sign(&linear_incidence, &policy).unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+        }
+    }
+
+    #[test]
     fn selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let BezierParameter2::Algebraic(center) =
@@ -112489,6 +112925,28 @@ mod conversion_tests {
             rational: BivariatePolynomial::new(vec![vec![Real::from(2_i8)]]),
             radical: BivariatePolynomial::new(vec![vec![Real::from(2_i8)]]),
         };
+        let exterior_branch = BezierAlgebraicCuspTwoTermExpression2 {
+            // u^2=1+alpha has one positive root strictly between 1 and 2.
+            rational: BivariatePolynomial::new(vec![
+                vec![Real::from(-1_i8), Real::zero(), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]),
+            radical: zero.clone(),
+        };
+        let exterior_range = BezierParameterRange2::from_exact(Real::one(), Real::from(2_i8));
+        let unit_range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+        let square_speed =
+            BivariatePolynomial::new(vec![vec![Real::one(), Real::from(-2_i8), Real::one()]]);
+        let square_circle = BezierParallelTwoNormalExpression2 {
+            product: zero.clone(),
+            center: zero.clone(),
+            candidate: one.clone(),
+            rational: BivariatePolynomial::new(vec![vec![
+                -(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+            ]]),
+        };
+        let square_range = BezierParameterRange2::from_exact(Real::from(2_i8), Real::from(3_i8));
+        let square_contact = (Real::from(5_i8) / Real::from(2_i8)).unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert!(matches!(
@@ -112507,6 +112965,93 @@ mod conversion_tests {
                     BezierSelectedParallelNormalPositiveProjection2::Candidates(ref candidates)
                 ) if candidates.is_empty(),
             ));
+            for exterior_range in [exterior_range.clone(), exterior_range.reversed()] {
+                let Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::Candidates(candidates),
+                ) = selected_parallel_normal_positive_dimensional_projection(
+                    &circle,
+                    &exterior_branch,
+                    &center_speed,
+                    &target_speed,
+                    &center,
+                    Some(&exterior_range),
+                    None,
+                    &policy,
+                )
+                .unwrap()
+                else {
+                    panic!("the positive-dimensional exterior branch must project");
+                };
+                let [candidate] = candidates.as_slice() else {
+                    panic!("the exterior branch must retain its one positive root");
+                };
+                assert_eq!(
+                    candidate.order_to_real(&Real::one(), &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater),
+                );
+                assert_eq!(
+                    candidate.order_to_real(&Real::from(2_i8), &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less),
+                );
+            }
+
+            let incident = BezierParallelIncidentDomain2 {
+                endpoint: CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one())),
+                bridge: None,
+                anchor: Real::one(),
+                direction: BezierParameterRayDirection2::Increasing,
+                barrier: None,
+            };
+            let Classification::Decided(
+                BezierSelectedParallelNormalPositiveProjection2::Candidates(candidates),
+            ) = selected_parallel_normal_positive_dimensional_projection(
+                &circle,
+                &exterior_branch,
+                &center_speed,
+                &target_speed,
+                &center,
+                Some(&unit_range),
+                Some(&incident),
+                &policy,
+            )
+            .unwrap()
+            else {
+                panic!("the positive-dimensional incident branch must project");
+            };
+            assert_eq!(candidates.len(), 1);
+            assert_eq!(
+                candidates[0].order_to_real(&Real::one(), &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater),
+            );
+
+            // sqrt((u-1)^2)=u-1 on [2,3], although the polynomial square
+            // root selected positive at zero is 1-u. The active cell, not
+            // parameter zero, must choose the authored positive-speed sheet.
+            for square_range in [square_range.clone(), square_range.reversed()] {
+                let Classification::Decided(
+                    BezierSelectedParallelNormalPositiveProjection2::Candidates(candidates),
+                ) = selected_parallel_normal_positive_dimensional_projection(
+                    &square_circle,
+                    &squared_branch,
+                    &center_speed,
+                    &square_speed,
+                    &center,
+                    Some(&square_range),
+                    None,
+                    &policy,
+                )
+                .unwrap()
+                else {
+                    panic!("the exterior square-speed sheet must project");
+                };
+                let [candidate] = candidates.as_slice() else {
+                    panic!("the exterior square-speed sheet must retain one root");
+                };
+                assert_eq!(
+                    candidate.order_to_real(&square_contact, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+            }
         }
     }
 
