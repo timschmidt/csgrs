@@ -2556,6 +2556,55 @@ fn bivariate_affine_second_parameter(
     )
 }
 
+/// Substitutes one linear-fractional second-parameter chart and clears its
+/// common denominator at the original second-axis degree.
+///
+/// `numerator / denominator` is the inverse chart: the returned polynomial
+/// vanishes at `v` exactly when the source polynomial vanishes at that finite
+/// inverse image.  A caller must separately prove that the denominator does
+/// not vanish on its retained isolating interval.
+fn bivariate_projective_second_parameter(
+    polynomial: &BivariatePolynomial,
+    numerator: &[Real; 2],
+    denominator: &[Real; 2],
+) -> BivariatePolynomial {
+    let degree = polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let powers = |linear: &[Real; 2]| {
+        let mut powers = Vec::with_capacity(degree + 1);
+        powers.push(vec![Real::one()]);
+        for power in 1..=degree {
+            powers.push(polynomial_multiply(&powers[power - 1], linear));
+        }
+        powers
+    };
+    let numerator_powers = powers(numerator);
+    let denominator_powers = powers(denominator);
+    BivariatePolynomial::new(
+        polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                let mut transformed = vec![Real::zero(); degree + 1];
+                for (source_power, coefficient) in row.iter().enumerate() {
+                    let term = polynomial_multiply(
+                        &numerator_powers[source_power],
+                        &denominator_powers[degree - source_power],
+                    );
+                    for (target, factor) in transformed.iter_mut().zip(term) {
+                        *target += coefficient * factor;
+                    }
+                }
+                transformed
+            })
+            .collect(),
+    )
+}
+
 fn bivariate_exact_second_fiber(polynomial: &BivariatePolynomial, parameter: &Real) -> Vec<Real> {
     polynomial
         .coefficients
@@ -3534,6 +3583,113 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 distinct_root_count: self.data.root.distinct_root_count,
             }),
         ))
+    }
+
+    /// Applies `(n0 + n1*u) / (d0 + d1*u)` without constructing the selected
+    /// scalar's global resultant.
+    ///
+    /// The forward denominator and constant derivative sign are certified
+    /// under a strict predicate pass.  The local incidence is composed with
+    /// the exact inverse chart and its denominator is cleared symbolically;
+    /// refined isolating endpoints provide an outward interval only, never a
+    /// representative construction value.
+    pub(crate) fn projective_image_unbounded(
+        &self,
+        numerator: &[Real; 2],
+        denominator: &[Real; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        policy.strict_predicate_pass(|| {
+            let derivative = &numerator[1] * &denominator[0] - &numerator[0] * &denominator[1];
+            let derivative_sign = match real_sign(&derivative, &CurveContext::STRICT) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => return Err(CurveError::InvalidBezierRange),
+                None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                }
+            };
+            let denominator_predicate =
+                bivariate_outer_product(&[Real::one()], denominator.as_slice());
+            match self.predicate_sign(&denominator_predicate, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+
+            let mut refinement_steps = 0_usize;
+            let (refined, first, second) = loop {
+                let refined = match self.refined(refinement_steps, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let map = |source: &Real| -> CurveResult<Option<(RealSign, Real)>> {
+                    let mapped_denominator = &denominator[0] + &denominator[1] * source;
+                    let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
+                        real_sign(&mapped_denominator, &CurveContext::STRICT)
+                    else {
+                        return Ok(None);
+                    };
+                    Ok(Some((
+                        sign,
+                        ((&numerator[0] + &numerator[1] * source) / mapped_denominator)?,
+                    )))
+                };
+                if let (Some((first_sign, first)), Some((second_sign, second))) = (
+                    map(&refined.data.root.lower)?,
+                    map(&refined.data.root.upper)?,
+                ) && first_sign == second_sign
+                {
+                    break (refined, first, second);
+                }
+                refinement_steps = refinement_steps
+                    .checked_mul(2)
+                    .and_then(|steps| steps.checked_add(1))
+                    .ok_or_else(|| {
+                        CurveError::Topology("selected-fiber projective refinement overflow".into())
+                    })?;
+            };
+            let (lower, upper) = match derivative_sign {
+                RealSign::Positive => (first, second),
+                RealSign::Negative => (second, first),
+                RealSign::Zero => unreachable!(),
+            };
+            let exact_root = refined
+                .data
+                .root
+                .exact_root
+                .as_ref()
+                .map(|source| {
+                    let mapped_denominator = &denominator[0] + &denominator[1] * source;
+                    (&numerator[0] + &numerator[1] * source) / mapped_denominator
+                })
+                .transpose()?;
+            let inverse_numerator = [numerator[0].clone(), -denominator[0].clone()];
+            let inverse_denominator = [-numerator[1].clone(), denominator[1].clone()];
+            let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+                bivariate_projective_second_parameter(
+                    &self.data.authority.data.incidence,
+                    &inverse_numerator,
+                    &inverse_denominator,
+                ),
+                self.data.authority.data.retained_parameter.clone(),
+                &self.data.authority.data.policy,
+            );
+            Ok(Classification::Decided(authority.parameter(
+                IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root,
+                    distinct_root_count: refined.data.root.distinct_root_count,
+                },
+            )))
+        })
     }
 
     /// Translates this exact local scalar without constructing its global
@@ -110601,6 +110757,78 @@ mod conversion_tests {
                 .unwrap()
             else {
                 panic!("the inverse represented affine chart must decide exactly");
+            };
+            assert_eq!(
+                restored.cmp_by_refinement(&parameter, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+
+            // The reversed endpoint-projective chart is decreasing and
+            // self-inverse, so it also exercises isolating-bound reversal.
+            let Classification::Decided(reversed) = parameter
+                .projective_image_unbounded(
+                    &[Real::from(2_i8), Real::from(-2_i8)],
+                    &[Real::from(2_i8), Real::from(-1_i8)],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("a pole-free reversed projective chart must decide exactly");
+            };
+            assert_eq!(
+                reversed
+                    .order_to_real(&(Real::from(2_i8) / Real::from(3_i8)).unwrap(), &policy,)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            let Classification::Decided(reversed_round_trip) = reversed
+                .projective_image_unbounded(
+                    &[Real::from(2_i8), Real::from(-2_i8)],
+                    &[Real::from(2_i8), Real::from(-1_i8)],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the reversed projective involution must decide exactly");
+            };
+            assert_eq!(
+                reversed_round_trip
+                    .cmp_by_refinement(&parameter, &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_projective_chart_round_trip_avoids_global_projection() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            let Classification::Decided(mapped) = parameter
+                .projective_image_unbounded(
+                    &[Real::zero(), Real::from(2_i8)],
+                    &[Real::one(), Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("a pole-free selected projective chart must decide exactly");
+            };
+            assert!(matches!(
+                mapped.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let Classification::Decided(restored) = mapped
+                .projective_image_unbounded(
+                    &[Real::zero(), Real::one()],
+                    &[Real::from(2_i8), Real::from(-1_i8)],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the inverse selected projective chart must decide exactly");
             };
             assert_eq!(
                 restored.cmp_by_refinement(&parameter, &policy).unwrap(),

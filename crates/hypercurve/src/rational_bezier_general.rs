@@ -39,9 +39,9 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveResult,
-    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2,
+    CurveRegionParameter2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide,
+    ParamRange, Point2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalQuadraticBezier2, UncertaintyReason,
 };
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
@@ -818,6 +818,180 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 unresolved,
             } => overlap_parameter_on_curve(second, first, parameter, *unresolved, policy),
         }
+    }
+
+    pub(crate) fn map_first_to_second_region_parameter(
+        &self,
+        parameter: &CurveRegionParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        self.map_region_parameter(parameter, first_range, second_range, true, policy)
+    }
+
+    pub(crate) fn map_second_to_first_region_parameter(
+        &self,
+        parameter: &CurveRegionParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        self.map_region_parameter(parameter, first_range, second_range, false, policy)
+    }
+
+    fn map_region_parameter(
+        &self,
+        parameter: &CurveRegionParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
+        first_to_second: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        if let Some(parameter) = parameter.as_bezier_parameter() {
+            let mapped = if first_to_second {
+                self.map_first_to_second(parameter, first_range, second_range, policy)
+            } else {
+                self.map_second_to_first(parameter, first_range, second_range, policy)
+            }?;
+            return Ok(mapped.map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)));
+        }
+        let Some(parameter) = parameter.as_selected_fiber() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let (source_range, target_range) = if first_to_second {
+            (first_range, second_range)
+        } else {
+            (second_range, first_range)
+        };
+        for (source_endpoint, target_endpoint) in [
+            (source_range.start(), target_range.start()),
+            (source_range.end(), target_range.end()),
+        ] {
+            match parameter.cmp_bezier_parameter(source_endpoint, policy)? {
+                Classification::Decided(Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(
+                        CurveRegionParameter2::from_bezier(target_endpoint.clone()),
+                    )));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+
+        let mapped = match self {
+            Self::Identity => Classification::Decided(parameter.clone()),
+            Self::UnitComplement => Classification::Decided(parameter.unit_complement()),
+            Self::EndpointProjective {
+                second_to_first_scale,
+                reversed,
+            } => {
+                let (numerator, denominator) = endpoint_projective_parameter_coefficients(
+                    second_to_first_scale,
+                    *reversed,
+                    first_to_second,
+                );
+                match parameter.projective_image_unbounded(&numerator, &denominator, policy)? {
+                    Classification::Decided(parameter) => Classification::Decided(parameter),
+                    Classification::Uncertain(_) => {
+                        return self.map_promoted_region_parameter(
+                            parameter,
+                            first_range,
+                            second_range,
+                            first_to_second,
+                            policy,
+                        );
+                    }
+                }
+            }
+            Self::RangeProjective {
+                second_to_first_scale,
+                reversed,
+            } => {
+                let Some((numerator, denominator)) = range_projective_parameter_coefficients(
+                    first_range,
+                    second_range,
+                    second_to_first_scale,
+                    *reversed,
+                    first_to_second,
+                ) else {
+                    return self.map_promoted_region_parameter(
+                        parameter,
+                        first_range,
+                        second_range,
+                        first_to_second,
+                        policy,
+                    );
+                };
+                match parameter.projective_image_unbounded(&numerator, &denominator, policy)? {
+                    Classification::Decided(parameter) => Classification::Decided(parameter),
+                    Classification::Uncertain(_) => {
+                        return self.map_promoted_region_parameter(
+                            parameter,
+                            first_range,
+                            second_range,
+                            first_to_second,
+                            policy,
+                        );
+                    }
+                }
+            }
+            Self::General { .. } => {
+                return self.map_promoted_region_parameter(
+                    parameter,
+                    first_range,
+                    second_range,
+                    first_to_second,
+                    policy,
+                );
+            }
+        };
+        let mapped = match mapped {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let lower = match mapped.order_to_real(&Real::zero(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let upper = match mapped.order_to_real(&Real::one(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(
+            (!lower.is_lt() && !upper.is_gt())
+                .then(|| CurveRegionParameter2::from_selected_fiber(mapped)),
+        ))
+    }
+
+    fn map_promoted_region_parameter(
+        &self,
+        parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
+        first_to_second: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        let parameter = match parameter.promoted_bezier_parameter_complete(policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mapped = if first_to_second {
+            self.map_first_to_second(&parameter, first_range, second_range, policy)
+        } else {
+            self.map_second_to_first(&parameter, first_range, second_range, policy)
+        }?;
+        Ok(mapped.map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)))
     }
 }
 
@@ -6810,9 +6984,22 @@ fn endpoint_projective_parameter_image(
     first_to_second: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let (numerator, denominator) = endpoint_projective_parameter_coefficients(
+        second_to_first_scale,
+        reversed,
+        first_to_second,
+    );
+    projective_parameter_image(parameter, &numerator, &denominator, policy)
+}
+
+fn endpoint_projective_parameter_coefficients(
+    second_to_first_scale: &Real,
+    reversed: bool,
+    first_to_second: bool,
+) -> ([Real; 2], [Real; 2]) {
     let one = Real::one();
     let zero = Real::zero();
-    let (numerator, denominator) = match (reversed, first_to_second) {
+    match (reversed, first_to_second) {
         (false, true) => (
             [zero, one.clone()],
             [second_to_first_scale.clone(), &one - second_to_first_scale],
@@ -6828,8 +7015,7 @@ fn endpoint_projective_parameter_image(
             ],
             [second_to_first_scale.clone(), &one - second_to_first_scale],
         ),
-    };
-    projective_parameter_image(parameter, &numerator, &denominator, policy)
+    }
 }
 
 fn range_projective_parameter_image(
@@ -6841,10 +7027,29 @@ fn range_projective_parameter_image(
     first_to_second: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    let Some((numerator, denominator)) = range_projective_parameter_coefficients(
+        first_range,
+        second_range,
+        second_to_first_scale,
+        reversed,
+        first_to_second,
+    ) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    projective_parameter_image(parameter, &numerator, &denominator, policy)
+}
+
+fn range_projective_parameter_coefficients(
+    first_range: &BezierParameterRange2,
+    second_range: &BezierParameterRange2,
+    second_to_first_scale: &Real,
+    reversed: bool,
+    first_to_second: bool,
+) -> Option<([Real; 2], [Real; 2])> {
     let (Some(first_start), Some(first_end)) =
         (first_range.start().as_exact(), first_range.end().as_exact())
     else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        return None;
     };
     let (second_start, second_end) = if reversed {
         (
@@ -6858,7 +7063,7 @@ fn range_projective_parameter_image(
         )
     };
     let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        return None;
     };
     let second_span = second_end - second_start;
     let denominator = [
@@ -6874,13 +7079,13 @@ fn range_projective_parameter_image(
         second_start * &denominator[0] + &second_span * &aligned_numerator[0],
         second_start * &denominator[1] + second_span * &aligned_numerator[1],
     ];
-    if first_to_second {
-        projective_parameter_image(parameter, &numerator, &denominator, policy)
+    Some(if first_to_second {
+        (numerator, denominator)
     } else {
         let inverse_numerator = [numerator[0].clone(), -denominator[0].clone()];
         let inverse_denominator = [-numerator[1].clone(), denominator[1].clone()];
-        projective_parameter_image(parameter, &inverse_numerator, &inverse_denominator, policy)
-    }
+        (inverse_numerator, inverse_denominator)
+    })
 }
 
 fn projective_parameter_image(

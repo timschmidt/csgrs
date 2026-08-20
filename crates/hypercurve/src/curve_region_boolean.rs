@@ -13484,37 +13484,21 @@ fn clip_corresponding_parameter_overlap(
     second_carrier: &RegionCarrier,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let Some(first_carrier_start) = first_carrier.start.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            first_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(first_carrier_end) = first_carrier.end.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            first_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(second_carrier_start) = second_carrier.start.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            second_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some(second_carrier_end) = second_carrier.end.as_bezier_parameter() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            second_carrier.family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let (first_overlap_start, first_overlap_end) = ascending_bezier_range(first_range, policy)?;
-    let first_start = maximum_parameter([first_overlap_start, first_carrier_start], policy)?;
-    let first_end = minimum_parameter([first_overlap_end, first_carrier_end], policy)?;
+    let first_overlap = CurveRegionParameterRange2::from_bezier_range(first_range.clone());
+    let second_overlap = CurveRegionParameterRange2::from_bezier_range(second_range.clone());
+    let (first_overlap_start, first_overlap_end) = ascending_range(&first_overlap, policy)?;
+    let first_start = extreme_region_parameter(
+        [&first_carrier.start, first_overlap_start],
+        Ordering::Less,
+        first_carrier.family,
+        policy,
+    )?;
+    let first_end = extreme_region_parameter(
+        [&first_carrier.end, first_overlap_end],
+        Ordering::Greater,
+        first_carrier.family,
+        policy,
+    )?;
     match decided_parameter_cmp(&first_start, &first_end, policy)? {
         Ordering::Less => {}
         Ordering::Equal | Ordering::Greater => return Ok(None),
@@ -13543,81 +13527,80 @@ fn clip_corresponding_parameter_overlap(
         Ordering::Greater => (&mapped_end, &mapped_start),
         Ordering::Equal => return Ok(None),
     };
-    let (second_overlap_start, second_overlap_end) = ascending_bezier_range(second_range, policy)?;
-    let second_low = maximum_parameter(
-        [mapped_low, second_overlap_start, second_carrier_start],
+    let (second_overlap_start, second_overlap_end) = ascending_range(&second_overlap, policy)?;
+    let second_low = extreme_region_parameter(
+        [&second_carrier.start, mapped_low, second_overlap_start],
+        Ordering::Less,
+        second_carrier.family,
         policy,
     )?;
-    let second_high = minimum_parameter(
-        [mapped_high, second_overlap_end, second_carrier_end],
+    let second_high = extreme_region_parameter(
+        [&second_carrier.end, mapped_high, second_overlap_end],
+        Ordering::Greater,
+        second_carrier.family,
         policy,
     )?;
     match decided_parameter_cmp(&second_low, &second_high, policy)? {
         Ordering::Less => {}
         Ordering::Equal | Ordering::Greater => return Ok(None),
     }
-    if decided_parameter_cmp(&second_low, mapped_low, policy)? == Ordering::Equal
-        && decided_parameter_cmp(&second_high, mapped_high, policy)? == Ordering::Equal
-    {
-        return Ok(Some((
-            CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-                first_start,
-                first_end,
-            )),
-            CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-                mapped_start,
-                mapped_end,
-            )),
-        )));
-    }
     let (second_start, second_end) = if mapped_order == Ordering::Less {
         (second_low, second_high)
     } else {
         (second_high, second_low)
     };
-    let first_start = mapped_overlap_parameter(
-        correspondence,
-        false,
-        &second_start,
-        first_range,
-        second_range,
-        second_carrier.family,
-        policy,
-    )?;
-    let first_end = mapped_overlap_parameter(
-        correspondence,
-        false,
-        &second_end,
-        first_range,
-        second_range,
-        second_carrier.family,
-        policy,
-    )?;
+    let lift = |second: &CurveRegionParameter2,
+                mapped: &CurveRegionParameter2,
+                original: &CurveRegionParameter2| {
+        if decided_parameter_cmp(second, mapped, policy)? == Ordering::Equal {
+            Ok(original.clone())
+        } else {
+            mapped_overlap_parameter(
+                correspondence,
+                false,
+                second,
+                first_range,
+                second_range,
+                second_carrier.family,
+                policy,
+            )
+        }
+    };
+    let first_start = lift(&second_start, &mapped_start, &first_start)?;
+    let first_end = lift(&second_end, &mapped_end, &first_end)?;
+    match decided_parameter_cmp(&first_start, &first_end, policy)? {
+        Ordering::Less => {}
+        Ordering::Equal | Ordering::Greater => return Ok(None),
+    }
     Ok(Some((
-        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-            first_start,
-            first_end,
-        )),
-        CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-            second_start,
-            second_end,
-        )),
+        CurveRegionParameterRange2::new_validated(first_start, first_end),
+        CurveRegionParameterRange2::new_validated(second_start, second_end),
     )))
 }
 
 fn mapped_overlap_parameter(
     correspondence: &RationalBezierOverlapParameterCorrespondence2,
     first_to_second: bool,
-    parameter: &BezierParameter2,
+    parameter: &CurveRegionParameter2,
     first_range: &BezierParameterRange2,
     second_range: &BezierParameterRange2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<BezierParameter2> {
+) -> ExactCurveResult<CurveRegionParameter2> {
     let mapped = if first_to_second {
-        correspondence.map_first_to_second(parameter, first_range, second_range, policy)
+        correspondence.map_first_to_second_region_parameter(
+            parameter,
+            first_range,
+            second_range,
+            policy,
+        )
     } else {
-        correspondence.map_second_to_first(parameter, first_range, second_range, policy)
+        correspondence.map_second_to_first_region_parameter(
+            parameter,
+            first_range,
+            second_range,
+            policy,
+        )
     };
     match mapped {
         Ok(Classification::Decided(Some(parameter))) => Ok(parameter),
@@ -13824,32 +13807,6 @@ pub(crate) fn clip_aligned_parameter_overlap_for_test(
             CurveError::Topology("the certified test ranges were not parameter-aligned".into()),
         )),
     }
-}
-
-fn maximum_parameter<const N: usize>(
-    parameters: [&BezierParameter2; N],
-    policy: &CurveContext,
-) -> ExactCurveResult<BezierParameter2> {
-    let mut maximum = parameters[0];
-    for parameter in &parameters[1..] {
-        if decided_parameter_cmp(*parameter, maximum, policy)?.is_gt() {
-            maximum = *parameter;
-        }
-    }
-    Ok(maximum.clone())
-}
-
-fn minimum_parameter<const N: usize>(
-    parameters: [&BezierParameter2; N],
-    policy: &CurveContext,
-) -> ExactCurveResult<BezierParameter2> {
-    let mut minimum = parameters[0];
-    for parameter in &parameters[1..] {
-        if decided_parameter_cmp(*parameter, minimum, policy)?.is_lt() {
-            minimum = *parameter;
-        }
-    }
-    Ok(minimum.clone())
 }
 
 fn range_contains_fragment(
@@ -14371,6 +14328,227 @@ mod certified_successor_tests {
             assert_selected(first.end(), fraction(1, 4));
             assert_eq!(second.start().as_exact(), Some(&fraction(1, 4)));
             assert_eq!(second.end().as_exact(), Some(&fraction(1, 2)));
+        }
+    }
+
+    #[test]
+    fn selected_projective_overlap_clips_without_global_parameter_projection() {
+        let fraction = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let retained = sqrt_half_parameter(&policy);
+            let selected =
+                |value: Real| {
+                    CurveRegionParameter2::from_selected_fiber(
+                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
+                    )
+                };
+            let first_carrier_range = CurveRegionParameterRange2::new_validated(
+                selected(fraction(1, 2)),
+                selected(fraction(3, 4)),
+            );
+            let second_carrier_range = CurveRegionParameterRange2::new_validated(
+                selected(fraction(1, 3)),
+                selected(fraction(1, 2)),
+            );
+            let controls = vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(2, 0),
+            ];
+            let first = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 3])
+                .expect("valid polynomial quadratic");
+            // Scaling homogeneous Bernstein control i by 2^i composes the
+            // first parameter with t=2s/(1+s).
+            let second = RationalBezier2::try_new(
+                controls,
+                vec![Real::one(), Real::from(2_i8), Real::from(4_i8)],
+            )
+            .expect("valid projectively reparameterized quadratic");
+            let first_range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+            let second_range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+            let overlap = RationalBezierIntersectionOverlap2::from_certified_parameters(
+                first_range.start().clone(),
+                first_range.end().clone(),
+                second_range.start().clone(),
+                second_range.end().clone(),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            );
+            let endpoint_correspondence =
+                RationalBezierOverlapParameterCorrespondence2::for_overlap(
+                    &first, &second, &overlap, &policy,
+                );
+            let carrier = |operand, curve: RationalBezier2, range: &CurveRegionParameterRange2| {
+                let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
+                RegionCarrier {
+                    operand,
+                    loop_index: 0,
+                    fragment_index: 0,
+                    family: geometry.family(),
+                    geometry,
+                    start: range.start().clone(),
+                    end: range.end().clone(),
+                    reversed: false,
+                    filled_side_is_left: true,
+                    selected_fiber_endpoint_points: None,
+                    image_is_injective: OnceLock::new(),
+                    bounds: OnceLock::new(),
+                }
+            };
+            for correspondence in [
+                endpoint_correspondence,
+                RationalBezierOverlapParameterCorrespondence2::RangeProjective {
+                    second_to_first_scale: Real::from(2_i8),
+                    reversed: false,
+                },
+            ] {
+                assert!(correspondence.projective_reversal().is_none());
+                let first_carrier = carrier(
+                    CurveRegionBooleanOperand2::First,
+                    first.clone(),
+                    &first_carrier_range,
+                );
+                let second_carrier = carrier(
+                    CurveRegionBooleanOperand2::Second,
+                    second.clone(),
+                    &second_carrier_range,
+                );
+                let (first, second) = clip_corresponding_parameter_overlap(
+                    &first_range,
+                    &second_range,
+                    &correspondence,
+                    &first_carrier,
+                    &second_carrier,
+                    &policy,
+                )
+                .expect("selected projective clipping must decide")
+                .expect("the selected projective subranges overlap");
+                for (parameter, expected) in [
+                    (first.start(), fraction(1, 2)),
+                    (first.end(), fraction(2, 3)),
+                    (second.start(), fraction(1, 3)),
+                    (second.end(), fraction(1, 2)),
+                ] {
+                    assert_eq!(
+                        parameter
+                            .as_selected_fiber()
+                            .expect("projective clipping must retain a local selected scalar")
+                            .order_to_real(&expected, &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_general_overlap_clips_through_exact_projection() {
+        let fraction = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let retained = sqrt_half_parameter(&policy);
+            let selected =
+                |value: Real| {
+                    CurveRegionParameter2::from_selected_fiber(
+                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
+                    )
+                };
+            let first_carrier_range = CurveRegionParameterRange2::new_validated(
+                selected(fraction(1, 4)),
+                selected(fraction(3, 4)),
+            );
+            let second_carrier_range = CurveRegionParameterRange2::new_validated(
+                selected(fraction(1, 16)),
+                selected(fraction(1, 4)),
+            );
+            // The first line uses x=t^2 while the second uses x=u. Their
+            // positive-dimensional image correspondence u=t^2 is neither
+            // affine nor projective.
+            let first = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, 0),
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 0),
+                ],
+                vec![Real::one(); 3],
+            )
+            .expect("valid quadratically parameterized line");
+            let second = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+                vec![Real::one(); 2],
+            )
+            .expect("valid affine line");
+            let correspondence = RationalBezierOverlapParameterCorrespondence2::General {
+                first: first.clone(),
+                second: second.clone(),
+                unresolved: None,
+            };
+            let carrier = |operand, curve: RationalBezier2, range: &CurveRegionParameterRange2| {
+                let geometry = RegionCarrierGeometry::Bezier(BezierSubcurve2::Rational(curve));
+                RegionCarrier {
+                    operand,
+                    loop_index: 0,
+                    fragment_index: 0,
+                    family: geometry.family(),
+                    geometry,
+                    start: range.start().clone(),
+                    end: range.end().clone(),
+                    reversed: false,
+                    filled_side_is_left: true,
+                    selected_fiber_endpoint_points: None,
+                    image_is_injective: OnceLock::new(),
+                    bounds: OnceLock::new(),
+                }
+            };
+            let first_carrier = carrier(
+                CurveRegionBooleanOperand2::First,
+                first,
+                &first_carrier_range,
+            );
+            let second_carrier = carrier(
+                CurveRegionBooleanOperand2::Second,
+                second,
+                &second_carrier_range,
+            );
+            let first_range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+            let second_range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+            let (first, second) = clip_corresponding_parameter_overlap(
+                &first_range,
+                &second_range,
+                &correspondence,
+                &first_carrier,
+                &second_carrier,
+                &policy,
+            )
+            .expect("selected general clipping must decide")
+            .expect("the selected nonlinear subranges overlap");
+            assert_eq!(
+                first
+                    .start()
+                    .as_selected_fiber()
+                    .expect("an unchanged first bound must remain selected")
+                    .order_to_real(&fraction(1, 4), &policy)
+                    .unwrap(),
+                Classification::Decided(Ordering::Equal),
+            );
+            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            for (parameter, expected) in [
+                (second.start(), fraction(1, 16)),
+                (second.end(), fraction(1, 4)),
+            ] {
+                assert_eq!(
+                    parameter
+                        .as_selected_fiber()
+                        .expect("an unchanged second bound must remain selected")
+                        .order_to_real(&expected, &policy)
+                        .unwrap(),
+                    Classification::Decided(Ordering::Equal),
+                );
+            }
         }
     }
 
