@@ -53,6 +53,7 @@ dependencies = [
 name = "hyperevolution"
 version = "0.3.0"
 dependencies = [
+ "hyperlimit",
  "hyperreal",
 ]
 
@@ -63,6 +64,21 @@ dependencies = [
  "hyperevolution",
  "hyperreal",
  "libfuzzer-sys",
+]
+
+[[package]]
+name = "hyperlattice"
+version = "0.6.1"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.4.1"
+dependencies = [
+ "hyperlattice",
+ "hyperreal",
 ]
 
 [[package]]

@@ -15,6 +15,7 @@ pub mod fitness;
 pub mod gp;
 pub mod identity;
 pub mod oracle;
+mod predicate;
 pub mod search;
 
 pub use domain::{

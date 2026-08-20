@@ -198,6 +198,8 @@ pub enum AnnealingAcceptance {
     RejectUncertifiedReplay,
     /// Fitness comparison was unknown or unsupported.
     UnknownComparison,
+    /// Temperature or cooling schedule ordering could not be certified.
+    UnknownSchedule,
     /// Temperature or cooling data is outside the exact supported domain.
     InvalidSchedule,
 }
@@ -431,11 +433,16 @@ pub fn classify_simulated_annealing_neighbor(
     policy: &SimulatedAnnealingPolicy,
     direction: FitnessDirection,
 ) -> AnnealingAcceptance {
-    if policy.initial_temperature <= Real::zero()
-        || policy.cooling_ratio <= Real::zero()
-        || policy.cooling_ratio > Real::one()
-    {
+    let schedule_checks = [
+        crate::predicate::positive(&policy.initial_temperature),
+        crate::predicate::positive(&policy.cooling_ratio),
+        crate::predicate::leq(&policy.cooling_ratio, &Real::one()),
+    ];
+    if schedule_checks.contains(&Some(false)) {
         return AnnealingAcceptance::InvalidSchedule;
+    }
+    if schedule_checks.contains(&None) {
+        return AnnealingAcceptance::UnknownSchedule;
     }
     if neighbor.replay != ReplayStatus::Accepted {
         return AnnealingAcceptance::RejectUncertifiedReplay;

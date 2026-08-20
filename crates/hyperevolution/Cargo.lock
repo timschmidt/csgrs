@@ -125,8 +125,24 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 name = "hyperevolution"
 version = "0.3.0"
 dependencies = [
+ "hyperlimit",
  "hyperreal",
  "proptest",
+]
+
+[[package]]
+name = "hyperlattice"
+version = "0.6.1"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.4.1"
+dependencies = [
+ "hyperlattice",
+ "hyperreal",
 ]
 
 [[package]]

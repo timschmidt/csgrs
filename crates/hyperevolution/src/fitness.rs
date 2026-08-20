@@ -167,7 +167,7 @@ impl FitnessInterval {
 
     /// Returns true when `lower <= upper` can be certified exactly.
     pub fn has_valid_bounds(&self) -> Option<bool> {
-        match self.lower.partial_cmp(&self.upper) {
+        match crate::predicate::compare(&self.lower, &self.upper) {
             Some(Ordering::Less | Ordering::Equal) => Some(true),
             Some(Ordering::Greater) => Some(false),
             None => None,
@@ -189,15 +189,17 @@ impl FitnessInterval {
             }
             (None, _) | (_, None) => return FitnessIntervalComparison::Unknown,
         }
-        if self.lower == other.lower && self.upper == other.upper {
+        if crate::predicate::equal(&self.lower, &other.lower) == Some(true)
+            && crate::predicate::equal(&self.upper, &other.upper) == Some(true)
+        {
             return FitnessIntervalComparison::Equal;
         }
 
         // These are the only two cross-interval orderings needed below. Keep
         // them because the overlap/unknown cases otherwise repeat both exact
         // endpoint comparisons after the strict-separation checks fail.
-        let lower_against_upper = self.lower.partial_cmp(&other.upper);
-        let upper_against_lower = self.upper.partial_cmp(&other.lower);
+        let lower_against_upper = crate::predicate::compare(&self.lower, &other.upper);
+        let upper_against_lower = crate::predicate::compare(&self.upper, &other.lower);
         match direction {
             FitnessDirection::Minimize => {
                 if matches!(upper_against_lower, Some(Ordering::Less)) {
@@ -226,7 +228,7 @@ impl FitnessInterval {
 }
 
 fn compare_real(left: &Real, right: &Real, direction: FitnessDirection) -> FitnessComparison {
-    match left.partial_cmp(right) {
+    match crate::predicate::compare(left, right) {
         Some(Ordering::Less) => match direction {
             FitnessDirection::Minimize => FitnessComparison::Better,
             FitnessDirection::Maximize => FitnessComparison::Worse,

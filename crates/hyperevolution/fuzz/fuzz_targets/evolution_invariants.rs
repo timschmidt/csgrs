@@ -88,7 +88,10 @@ fuzz_target!(|data: &[u8]| {
 });
 
 fn values_are_not_ordered(left: &Real, right: &Real) -> bool {
-    left.partial_cmp(right).is_none()
+    FitnessValue::Scalar(Box::new(left.clone())).compare_total(
+        &FitnessValue::Scalar(Box::new(right.clone())),
+        FitnessDirection::Minimize,
+    ) == hyperevolution::FitnessComparison::Unknown
 }
 
 fn candidate(prefix: &str, index: usize, first: &Real, second: &Real) -> Candidate {
