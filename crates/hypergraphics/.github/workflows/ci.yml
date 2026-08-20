@@ -24,6 +24,12 @@ jobs:
         with:
           path: hypergraphics
           persist-credentials: false
+      - name: Check out Hypercurve
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypercurve
+          path: hypercurve
+          persist-credentials: false
       - name: Check out Hyperreal
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -41,6 +47,18 @@ jobs:
         with:
           repository: timschmidt/hyperlimit
           path: hyperlimit
+          persist-credentials: false
+      - name: Check out Hypermesh
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypermesh
+          path: hypermesh
+          persist-credentials: false
+      - name: Check out Hypersolve
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypersolve
+          path: hypersolve
           persist-credentials: false
       - name: Check out Hypertri
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -99,6 +117,12 @@ jobs:
         with:
           path: hypergraphics
           persist-credentials: false
+      - name: Check out Hypercurve
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypercurve
+          path: hypercurve
+          persist-credentials: false
       - name: Check out Hyperreal
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -116,6 +140,18 @@ jobs:
         with:
           repository: timschmidt/hyperlimit
           path: hyperlimit
+          persist-credentials: false
+      - name: Check out Hypermesh
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypermesh
+          path: hypermesh
+          persist-credentials: false
+      - name: Check out Hypersolve
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: timschmidt/hypersolve
+          path: hypersolve
           persist-credentials: false
       - name: Check out Hypertri
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

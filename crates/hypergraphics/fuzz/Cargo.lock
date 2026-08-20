@@ -229,13 +229,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "hypercurve"
+version = "0.3.1"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
+ "hypersolve",
+ "num",
+]
+
+[[package]]
 name = "hypergraphics"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
  "glow",
+ "hypercurve",
  "hyperlattice",
  "hyperlimit",
+ "hypermesh",
  "hyperreal",
  "hypertri",
  "nalgebra",
@@ -267,9 +279,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "hypermesh"
+version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+ "hypertri",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.13.1"
 dependencies = [
+ "num",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.3.1"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
  "num",
 ]
 
