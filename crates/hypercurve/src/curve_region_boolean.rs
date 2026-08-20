@@ -14150,7 +14150,6 @@ mod certified_successor_tests {
     use super::*;
     use crate::bezier_offset::{
         BezierAlgebraicChordAxisDirection2, BezierAlgebraicCuspSemicircle2,
-        BezierAlgebraicCuspSemicircleChordIntersections2,
         BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicircleParameter2,
         exact_selected_fiber_parameter_for_test, nonlinear_parameter_component_overlap_for_test,
     };
@@ -15057,24 +15056,15 @@ mod certified_successor_tests {
             );
             let contacts = |circle: &BezierAlgebraicCuspSemicircle2| -> [CurveRegionParameter2; 2] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleChordIntersections2::Contacts {
-                        contacts,
-                        parameter_map,
-                    },
-                ) = circle.axis_chord_intersections(&chord, &policy).unwrap()
+                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+                ) = circle.chord_intersections(&chord, &policy).unwrap()
                 else {
                     panic!("both independent circle contacts must be retained");
                 };
                 assert_eq!(contacts.len(), 2);
                 std::array::from_fn(|index| {
-                    let (_, point) = parameter_map.contact_evidence(&contacts[index]);
                     CurveRegionParameter2::from_algebraic_chord(
-                        decided(
-                            chord
-                                .parameter_at_certified_point(point, &policy)
-                                .expect("certified shared-chord point"),
-                        )
-                        .expect("the circle contact lies on the shared chord"),
+                        contacts[index].chord_parameter.clone(),
                     )
                 })
             };
