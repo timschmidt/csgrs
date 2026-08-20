@@ -10,8 +10,6 @@
 //! missing internal die nets or pin semantics remain explicit unknowns.
 //! Circuit-model interpretation and numerical solution stay delegated.
 
-use std::cmp::Ordering;
-
 use hyperreal::Real;
 
 use crate::{
@@ -295,17 +293,15 @@ pub struct SafeConnectionReport {
 impl VoltageRange {
     /// Creates an exact voltage range after validating `min <= max`.
     pub fn new(min: Real, max: Real) -> PartsResult<Self> {
-        match min.partial_cmp(&max) {
-            Some(Ordering::Less | Ordering::Equal) => Ok(Self { min, max }),
-            Some(Ordering::Greater) | None => Err(PartsError::InvalidVoltageEnvelope),
+        match crate::predicate::compare(&min, &max) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(Self { min, max }),
+            Some(std::cmp::Ordering::Greater) | None => Err(PartsError::InvalidVoltageEnvelope),
         }
     }
 
     /// Returns true when two exact ranges overlap.
     pub fn overlaps(&self, other: &Self) -> Option<bool> {
-        let left = self.min.partial_cmp(&other.max)?;
-        let right = other.min.partial_cmp(&self.max)?;
-        Some(!matches!(left, Ordering::Greater) && !matches!(right, Ordering::Greater))
+        crate::predicate::closed_intervals_overlap(&self.min, &self.max, &other.min, &other.max)
     }
 }
 

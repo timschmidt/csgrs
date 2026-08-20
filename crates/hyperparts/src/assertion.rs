@@ -1,7 +1,5 @@
 //! Source-attributed assertions.
 
-use std::cmp::Ordering;
-
 use hyperreal::Real;
 
 use crate::{ManufacturerPartNumber, PartsError, PartsResult, SupplierSku};
@@ -216,12 +214,12 @@ impl AssertionValue {
 
     /// Creates a validated exact interval assertion value.
     pub fn interval(min: Real, max: Real) -> PartsResult<Self> {
-        match min.partial_cmp(&max) {
-            Some(Ordering::Less | Ordering::Equal) => Ok(Self::ExactInterval {
+        match crate::predicate::compare(&min, &max) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(Self::ExactInterval {
                 min: Box::new(min),
                 max: Box::new(max),
             }),
-            Some(Ordering::Greater) | None => Err(PartsError::InvalidAssertionRange),
+            Some(std::cmp::Ordering::Greater) | None => Err(PartsError::InvalidAssertionRange),
         }
     }
 }

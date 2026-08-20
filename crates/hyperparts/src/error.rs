@@ -10,7 +10,7 @@ pub enum PartsError {
     EmptyIdentifier,
     /// A source authority or locator was empty.
     EmptySource,
-    /// A voltage envelope had `min > max` under exact comparison.
+    /// A voltage envelope was not certified to have `min <= max`.
     InvalidVoltageEnvelope,
     /// An assertion interval had `min > max` or an undecidable ordering.
     InvalidAssertionRange,

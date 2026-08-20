@@ -11,11 +11,12 @@ categories = ["data-structures", "science", "development-tools"]
 
 [features]
 default = []
-dispatch-trace = ["hyperreal/dispatch-trace"]
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 
 [dependencies]
 # Cargo uses this path in the workspace and retains the version requirement in
 # the published manifest.
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
 [dev-dependencies]
 proptest = "1.7.0"

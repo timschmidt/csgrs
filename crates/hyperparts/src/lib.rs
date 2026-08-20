@@ -20,6 +20,7 @@ pub mod graph;
 pub mod identity;
 pub mod interface;
 pub mod physics;
+mod predicate;
 pub mod process;
 pub mod query;
 

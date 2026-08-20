@@ -1,7 +1,5 @@
 //! Terminal and interface metadata.
 
-use std::cmp::Ordering;
-
 use hyperreal::Real;
 
 use crate::{PartsError, PartsResult, TerminalId};
@@ -204,17 +202,15 @@ impl PartAspect {
 impl VoltageEnvelope {
     /// Creates an exact voltage envelope after validating `min <= max`.
     pub fn new(min: Real, max: Real) -> PartsResult<Self> {
-        match min.partial_cmp(&max) {
-            Some(Ordering::Less | Ordering::Equal) => Ok(Self { min, max }),
-            Some(Ordering::Greater) | None => Err(PartsError::InvalidVoltageEnvelope),
+        match crate::predicate::compare(&min, &max) {
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(Self { min, max }),
+            Some(std::cmp::Ordering::Greater) | None => Err(PartsError::InvalidVoltageEnvelope),
         }
     }
 
     /// Returns true when two certified envelopes overlap.
     pub fn overlaps(&self, other: &Self) -> Option<bool> {
-        let left = self.min.partial_cmp(&other.max)?;
-        let right = other.min.partial_cmp(&self.max)?;
-        Some(!matches!(left, Ordering::Greater) && !matches!(right, Ordering::Greater))
+        crate::predicate::closed_intervals_overlap(&self.min, &self.max, &other.min, &other.max)
     }
 }
 
