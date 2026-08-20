@@ -209,9 +209,7 @@ fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
             ],
         );
         c.bench_function("hypermesh_exact_solid_adapter", |b| {
-            b.iter(|| {
-                adapt_hypermesh_exact_solid(black_box(&context), black_box(&mesh)).unwrap()
-            })
+            b.iter(|| adapt_hypermesh_exact_solid(black_box(&context), black_box(&mesh)).unwrap())
         });
     }
     #[cfg(not(feature = "hypermesh-adapter"))]
