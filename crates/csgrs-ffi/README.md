@@ -57,6 +57,8 @@ finite region projections, and curve-to-solid operations.
 
 - Input pointers must be null where allowed or valid for every documented read;
   output pointers must be valid for one write.
+- Array pointers may be null only for a zero-length input. Polyhedron face
+  offsets must cover the complete index buffer from zero through its length.
 - Free every successful `CsgrsReal`, `CsgrsTriangleMesh`, and `CsgrsCurveRegion` handle
   exactly once with its matching `*_free` function.
 - Free heap-backed real-valued bounds, buffers, graphics meshes, and region

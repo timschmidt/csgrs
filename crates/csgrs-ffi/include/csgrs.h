@@ -119,6 +119,11 @@ void csgrs_curve_region_free(csgrs_curve_region_t *value);
 csgrs_status_t csgrs_triangle_mesh_family(const csgrs_triangle_mesh_t *value, csgrs_scalar_family_t *out);
 csgrs_status_t csgrs_curve_region_family(const csgrs_curve_region_t *value, csgrs_scalar_family_t *out);
 
+/*
+ * Array pointers may be NULL only when their corresponding length is zero.
+ * Polyhedron face_offsets must start at zero and end at face_index_len, so
+ * every supplied index belongs to exactly one declared face range.
+ */
 #define CSGRS_DECLARE_FAMILY(Name, Scalar, Vec2, Vec3, Matrix4, Aabb3, MeshBuffers, GraphicsMesh, RegionProfiles) \
   csgrs_status_t csgrs_triangle_mesh_##Name##_cube(Scalar width, csgrs_triangle_mesh_t **out); \
   csgrs_status_t csgrs_triangle_mesh_##Name##_cuboid(Scalar width, Scalar length, Scalar height, csgrs_triangle_mesh_t **out); \

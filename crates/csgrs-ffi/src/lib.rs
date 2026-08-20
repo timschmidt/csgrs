@@ -1042,7 +1042,9 @@ unsafe fn ptr_ref<'a, T>(ptr: *const T) -> FfiResult<&'a T> {
 }
 
 unsafe fn c_slice<'a, T>(ptr: *const T, len: usize) -> FfiResult<&'a [T]> {
-    if ptr.is_null() && len != 0 {
+    if len == 0 {
+        Ok(&[])
+    } else if ptr.is_null() {
         Err(FfiError::NullPointer)
     } else {
         Ok(unsafe { slice::from_raw_parts(ptr, len) })
@@ -1080,6 +1082,12 @@ fn build_faces<'a>(offsets: &'a [usize], indices: &'a [usize]) -> FfiResult<Vec<
     if offsets.len() < 2 {
         return Err(AdapterError::Validation(
             "face_offsets must contain at least two values".into(),
+        )
+        .into());
+    }
+    if offsets.first() != Some(&0) || offsets.last() != Some(&indices.len()) {
+        return Err(AdapterError::Validation(
+            "face_offsets must cover the complete face_indices buffer".into(),
         )
         .into());
     }
@@ -1347,9 +1355,8 @@ macro_rules! export_family {
             ffi_status(|| {
                 let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 let matrix = <$family as Family>::matrix4_to_core(matrix)?;
-                unsafe {
-                    out_handle(out, triangle_mesh_handle::<$family>(mesh.transform(&matrix)))
-                }
+                let result = mesh.transform(&matrix)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
@@ -1428,7 +1435,8 @@ macro_rules! export_family {
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh.center())) }
+                let result = mesh.center()?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
@@ -1439,7 +1447,8 @@ macro_rules! export_family {
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh.float())) }
+                let result = mesh.float()?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
@@ -1606,9 +1615,8 @@ macro_rules! export_family {
                 let region =
                     <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
                 let matrix = <$family as Family>::matrix4_to_core(matrix)?;
-                unsafe {
-                    out_handle(out, curve_region_handle::<$family>(region.transform(&matrix)))
-                }
+                let result = region.transform(&matrix)?;
+                unsafe { out_handle(out, curve_region_handle::<$family>(result)) }
             })
         }
 
@@ -2222,5 +2230,121 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
         free_boxed_slice::<CsgrsVec2Real>(value.points, value.point_len);
         free_boxed_slice::<usize>(value.ring_offsets, value.ring_offset_len);
         free_boxed_slice::<usize>(value.region_offsets, value.region_offset_len);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn zero_matrix_f64() -> CsgrsMatrix4F64 {
+        CsgrsMatrix4F64 { values: [0.0; 16] }
+    }
+
+    #[test]
+    fn null_pointer_is_a_valid_empty_input_slice() {
+        let values = unsafe { c_slice::<u8>(ptr::null(), 0) }.expect("empty slice");
+        assert!(values.is_empty());
+    }
+
+    #[test]
+    fn nonempty_input_slice_requires_a_pointer() {
+        assert!(matches!(
+            unsafe { c_slice::<u8>(ptr::null(), 1) },
+            Err(FfiError::NullPointer)
+        ));
+    }
+
+    #[test]
+    fn face_offsets_must_cover_the_entire_index_buffer() {
+        let indices = [0, 1, 2, 0, 2, 3];
+        assert!(build_faces(&[0, 3, 6], &indices).is_ok());
+        assert!(build_faces(&[1, 6], &indices).is_err());
+        assert!(build_faces(&[0, 3], &indices).is_err());
+        assert!(build_faces(&[0, 7], &indices).is_err());
+        assert!(build_faces(&[0, 4, 3, 6], &indices).is_err());
+    }
+
+    #[test]
+    fn nonfinite_float_ingress_fails_without_producing_a_handle() {
+        let mut mesh = ptr::null_mut();
+        let status = unsafe { csgrs_triangle_mesh_f64_cube(f64::NAN, &mut mesh) };
+        assert_eq!(status, CsgrsStatus::ConversionFailed);
+        assert!(mesh.is_null());
+    }
+
+    #[test]
+    fn malformed_face_offsets_fail_without_producing_a_partial_mesh() {
+        let points = [
+            CsgrsVec3F64 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            CsgrsVec3F64 {
+                x: 1.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            CsgrsVec3F64 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
+        ];
+        let indices = [0, 1, 2, 0];
+        let offsets = [0, 3];
+        let mut mesh = ptr::null_mut();
+        let status = unsafe {
+            csgrs_triangle_mesh_f64_polyhedron(
+                points.as_ptr(),
+                points.len(),
+                indices.as_ptr(),
+                indices.len(),
+                offsets.as_ptr(),
+                offsets.len(),
+                &mut mesh,
+            )
+        };
+        assert_eq!(status, CsgrsStatus::ValidationFailed);
+        assert!(mesh.is_null());
+    }
+
+    #[test]
+    fn singular_mesh_transform_is_reported_instead_of_returning_geometry() {
+        let mut source = ptr::null_mut();
+        assert_eq!(
+            unsafe { csgrs_triangle_mesh_f64_cube(1.0, &mut source) },
+            CsgrsStatus::Ok
+        );
+        assert!(!source.is_null());
+
+        let mut transformed = ptr::null_mut();
+        let status = unsafe {
+            csgrs_triangle_mesh_f64_transform(source, zero_matrix_f64(), &mut transformed)
+        };
+        assert_eq!(status, CsgrsStatus::ValidationFailed);
+        assert!(transformed.is_null());
+
+        unsafe { csgrs_triangle_mesh_free(source) };
+    }
+
+    #[test]
+    fn singular_region_transform_is_reported_instead_of_returning_geometry() {
+        let mut source = ptr::null_mut();
+        assert_eq!(
+            unsafe { csgrs_curve_region_f64_square(1.0, &mut source) },
+            CsgrsStatus::Ok
+        );
+        assert!(!source.is_null());
+
+        let mut transformed = ptr::null_mut();
+        let status = unsafe {
+            csgrs_curve_region_f64_transform(source, zero_matrix_f64(), &mut transformed)
+        };
+        assert_eq!(status, CsgrsStatus::ValidationFailed);
+        assert!(transformed.is_null());
+
+        unsafe { csgrs_curve_region_free(source) };
     }
 }
