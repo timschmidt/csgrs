@@ -27933,7 +27933,7 @@ mod tests {
     }
 
     #[test]
-    fn independent_oblique_chord_pair_fillet_crosses_compact_and_dense_algebraic_chords_exactly() {
+    fn independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let region = independent_oblique_chord_pair_corner_region(&policy, false);
             let extended = region
@@ -27947,7 +27947,6 @@ mod tests {
                 .expect("the independent chord pair has exact extended fillets");
             let mut exercised = 0;
             let mut crossings = 0;
-            let mut dense_exercised = 0;
             for_each_corner_region(&extended.value, |filleted| {
                 let Some(circle) =
                     filleted.boundary_loops()[0]
@@ -28054,7 +28053,6 @@ mod tests {
                         ),
                     };
                     crossings += 1;
-                    dense_exercised += usize::from(target_radicand == 7);
                     assert!(!contacts.is_empty());
                     for contact in contacts {
                         assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
@@ -28077,10 +28075,7 @@ mod tests {
                         else {
                             panic!("the contact must retain its projective chord map")
                         };
-                        assert_eq!(
-                            point.uses_dense_chord_normal_projective_map(),
-                            target_radicand == 7,
-                        );
+                        assert!(point.uses_chord_normal_projective_map());
                         assert!(matches!(
                             point.conservative_bounds_refined(16, &policy),
                             Classification::Decided(_)
@@ -28090,7 +28085,6 @@ mod tests {
             });
             assert!(exercised > 0);
             assert_eq!(crossings, exercised * 2);
-            assert_eq!(dense_exercised, exercised);
         }
     }
 

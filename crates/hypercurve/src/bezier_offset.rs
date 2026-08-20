@@ -606,10 +606,10 @@ enum BezierAlgebraicCuspSemicircleRationalParameterMapSystem2 {
         angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     },
     /// Direct homogeneous chord-pair center with two retained positive speed
-    /// radicals. Compact and rank-independent maps share this one angular
-    /// authority; their immutable tensors are allocation-shared by contacts.
+    /// radicals. Its rank-independent tensor is the sole angular authority;
+    /// immutable coefficients are allocation-shared by contacts.
     ChordNormalProjective {
-        system: BezierChordNormalRationalParameterMapSystem2,
+        system: Arc<BezierChordNormalDenseMapSystem2>,
     },
     /// Rank-independent Cartesian frame selected under STRICT.  The target
     /// curve parameter remains its own retained algebraic root; angular order
@@ -3024,7 +3024,7 @@ enum BezierAlgebraicCuspSemicircleChordParameterMapSystem2 {
     SelectedFiberLine(BezierAlgebraicCuspSemicircleSelectedFiberLineParameterMapSystem2),
     RecursiveQuadraticLine(BezierRecursiveQuadraticLineParameterMapSystem2),
     SelectedRadial(BezierSelectedRadialCircleChordParameterMapSystem2),
-    ChordNormalProjective(BezierChordNormalProjectiveChordParameterMapSystem2),
+    ChordNormalProjective(BezierChordNormalDenseChordParameterMapSystem2),
 }
 
 /// Rank-independent exact authority for a selected circle against an affine
@@ -3988,37 +3988,10 @@ struct BezierRepresentedCircleParallelSystem2 {
     weight: DenseTensorPolynomial,
 }
 
-/// Compact projective map for a chord-normal circle whose center is the
-/// intersection of two algebraic chord parallels.  The three selected source
-/// roots and the rational target parameter occupy the four tensor axes.  The
-/// two positive support-speed radicals remain procedural and are never
-/// flattened into Cartesian center coordinates.
-#[derive(Clone, Debug)]
-struct BezierChordNormalProjectiveMapSystem2 {
-    source_parameters: [BezierParameter2; 3],
-    first_speed_squared: QuadrivariatePolynomial2,
-    second_speed_squared: QuadrivariatePolynomial2,
-    diameter: BezierQuadrivariateTwoSquareRootExpression2,
-    radius_squared_denominator: BezierQuadrivariateTwoSquareRootExpression2,
-}
-
-#[derive(Debug)]
-struct BezierChordNormalProjectiveIntersectionSystem2 {
-    map: Arc<BezierChordNormalProjectiveMapSystem2>,
-    source_representations: [AlgebraicRootRepresentation; 3],
-    incidence: BezierQuadrivariateTwoSquareRootExpression2,
-    selected_half_plane: BezierQuadrivariateTwoSquareRootExpression2,
-    tangent_cross: BezierQuadrivariateTwoSquareRootExpression2,
-    angular_tangent: BezierQuadrivariateTwoSquareRootExpression2,
-    geometry: Option<BezierChordNormalProjectiveTargetGeometry2>,
-}
-
-/// Rank-independent form of the same chord-normal projective authority.
+/// Rank-independent chord-normal projective authority.
 /// Every selected endpoint field occupies one tensor axis and the final axis
-/// is the affine target-chord parameter.  The compact four-axis form remains
-/// the fast representation whenever the selected basis has at most three
-/// sources; this form removes that representation ceiling without changing
-/// the authored positive speed sheets or contact publisher.
+/// is the affine target parameter. The two positive support-speed radicals
+/// remain procedural and are never flattened into Cartesian coordinates.
 #[derive(Clone, Debug)]
 struct BezierChordNormalDenseMapSystem2 {
     source_representations: Vec<AlgebraicRootRepresentation>,
@@ -4038,18 +4011,6 @@ struct BezierChordNormalDenseIntersectionSystem2 {
     geometry: Option<BezierChordNormalDenseTargetGeometry2>,
 }
 
-#[derive(Debug)]
-enum BezierChordNormalProjectiveTargetSystem2 {
-    Compact(BezierChordNormalProjectiveIntersectionSystem2),
-    Dense(BezierChordNormalDenseIntersectionSystem2),
-}
-
-#[derive(Debug)]
-enum BezierChordNormalRationalParameterMapSystem2 {
-    Compact(Arc<BezierChordNormalProjectiveMapSystem2>),
-    Dense(Arc<BezierChordNormalDenseMapSystem2>),
-}
-
 #[derive(Clone, Debug)]
 struct BezierChordNormalProjectiveFrameSource2 {
     first_support: BezierChordParallelSupportSource2,
@@ -4059,54 +4020,12 @@ struct BezierChordNormalProjectiveFrameSource2 {
 }
 
 #[derive(Debug)]
-struct BezierChordNormalProjectiveTarget2 {
-    x: QuadrivariatePolynomial2,
-    y: QuadrivariatePolynomial2,
-    weight: QuadrivariatePolynomial2,
-    tangent_x: QuadrivariatePolynomial2,
-    tangent_y: QuadrivariatePolynomial2,
-}
-
-#[derive(Clone, Debug)]
-struct BezierChordNormalProjectiveTargetGeometry2 {
-    point_x: BezierQuadrivariateTwoSquareRootExpression2,
-    point_y: BezierQuadrivariateTwoSquareRootExpression2,
-    center_x: BezierQuadrivariateTwoSquareRootExpression2,
-    center_y: BezierQuadrivariateTwoSquareRootExpression2,
-    common_denominator: QuadrivariatePolynomial2,
-}
-
-#[derive(Debug)]
-enum BezierChordNormalProjectiveChordParameterMapSystem2 {
-    Compact(BezierChordNormalCompactChordParameterMapSystem2),
-    Dense(BezierChordNormalDenseChordParameterMapSystem2),
-}
-
-#[derive(Debug)]
-struct BezierChordNormalCompactChordParameterMapSystem2 {
-    projective: Arc<BezierChordNormalProjectiveMapSystem2>,
-    geometry: BezierChordNormalProjectiveTargetGeometry2,
-    tangent_cross: BezierQuadrivariateTwoSquareRootExpression2,
-    angular_tangent: BezierQuadrivariateTwoSquareRootExpression2,
-}
-
-#[derive(Debug)]
 struct BezierChordNormalDenseChordParameterMapSystem2 {
     projective: Arc<BezierChordNormalDenseMapSystem2>,
     geometry: BezierChordNormalDenseTargetGeometry2,
     tangent_cross: BezierDenseTwoSquareRootExpression2,
     angular_tangent: BezierDenseTwoSquareRootExpression2,
     recursive_contact_fields: [std::sync::OnceLock<BezierRecursiveQuadraticField2>; 3],
-}
-
-/// One exact value in the biquadratic extension generated by two positive
-/// support-speed roots: `R + A*sqrt(S) + B*sqrt(T) + P*sqrt(S*T)`.
-#[derive(Clone, Debug)]
-struct BezierQuadrivariateTwoSquareRootExpression2 {
-    rational: QuadrivariatePolynomial2,
-    first: QuadrivariatePolynomial2,
-    second: QuadrivariatePolynomial2,
-    product: QuadrivariatePolynomial2,
 }
 
 #[derive(Clone, Debug)]
@@ -4246,27 +4165,13 @@ struct BezierChordNormalDenseTargetGeometry2 {
     common_denominator: DenseTensorPolynomial,
 }
 
-impl BezierChordNormalProjectiveTargetSystem2 {
+impl BezierChordNormalDenseIntersectionSystem2 {
     fn contact_parameters(
         &self,
         domain: SelectedThirdAxisDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        match self {
-            Self::Compact(system) => chord_normal_projective_expression_parameters(
-                &system.map,
-                &system.source_representations,
-                &system.incidence,
-                domain,
-                policy,
-            ),
-            Self::Dense(system) => chord_normal_dense_expression_parameters(
-                &system.map,
-                &system.incidence,
-                domain,
-                policy,
-            ),
-        }
+        chord_normal_dense_expression_parameters(&self.map, &self.incidence, domain, policy)
     }
 
     fn selected_half_plane_sign(
@@ -4274,39 +4179,20 @@ impl BezierChordNormalProjectiveTargetSystem2 {
         target: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        match self {
-            Self::Compact(system) => {
-                system
-                    .map
-                    .expression_sign(&system.selected_half_plane, target, policy)
-            }
-            Self::Dense(system) => {
-                system
-                    .map
-                    .expression_sign(&system.selected_half_plane, target, policy)
-            }
-        }
+        self.map
+            .expression_sign(&self.selected_half_plane, target, policy)
     }
 
     fn selected_half_plane_parameters(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        match self {
-            Self::Compact(system) => chord_normal_projective_expression_parameters(
-                &system.map,
-                &system.source_representations,
-                &system.selected_half_plane,
-                SelectedThirdAxisDomain2::UnitInterval,
-                policy,
-            ),
-            Self::Dense(system) => chord_normal_dense_expression_parameters(
-                &system.map,
-                &system.selected_half_plane,
-                SelectedThirdAxisDomain2::UnitInterval,
-                policy,
-            ),
-        }
+        chord_normal_dense_expression_parameters(
+            &self.map,
+            &self.selected_half_plane,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )
     }
 
     fn diameter_sign(
@@ -4314,16 +4200,7 @@ impl BezierChordNormalProjectiveTargetSystem2 {
         target: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        match self {
-            Self::Compact(system) => {
-                system
-                    .map
-                    .expression_sign(&system.map.diameter, target, policy)
-            }
-            Self::Dense(system) => system
-                .map
-                .expression_sign(&system.map.diameter, target, policy),
-        }
+        self.map.expression_sign(&self.map.diameter, target, policy)
     }
 
     fn tangent_cross_sign(
@@ -4331,44 +4208,23 @@ impl BezierChordNormalProjectiveTargetSystem2 {
         target: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        match self {
-            Self::Compact(system) => {
-                system
-                    .map
-                    .expression_sign(&system.tangent_cross, target, policy)
-            }
-            Self::Dense(system) => {
-                system
-                    .map
-                    .expression_sign(&system.tangent_cross, target, policy)
-            }
-        }
+        self.map
+            .expression_sign(&self.tangent_cross, target, policy)
     }
 
     fn angular_tangent_parameters(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        match self {
-            Self::Compact(system) => chord_normal_projective_expression_parameters(
-                &system.map,
-                &system.source_representations,
-                &system.angular_tangent,
-                SelectedThirdAxisDomain2::UnitInterval,
-                policy,
-            ),
-            Self::Dense(system) => {
-                let Some(angular_tangent) = system.angular_tangent.as_ref() else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                chord_normal_dense_expression_parameters(
-                    &system.map,
-                    angular_tangent,
-                    SelectedThirdAxisDomain2::UnitInterval,
-                    policy,
-                )
-            }
-        }
+        let Some(angular_tangent) = self.angular_tangent.as_ref() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        chord_normal_dense_expression_parameters(
+            &self.map,
+            angular_tangent,
+            SelectedThirdAxisDomain2::UnitInterval,
+            policy,
+        )
     }
 
     fn angular_tangent_sign(
@@ -4376,70 +4232,32 @@ impl BezierChordNormalProjectiveTargetSystem2 {
         target: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        match self {
-            Self::Compact(system) => {
-                system
-                    .map
-                    .expression_sign(&system.angular_tangent, target, policy)
-            }
-            Self::Dense(system) => {
-                let Some(angular_tangent) = system.angular_tangent.as_ref() else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                system.map.expression_sign(angular_tangent, target, policy)
-            }
-        }
+        let Some(angular_tangent) = self.angular_tangent.as_ref() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        self.map.expression_sign(angular_tangent, target, policy)
     }
 
-    fn rational_parameter_map_system(&self) -> BezierChordNormalRationalParameterMapSystem2 {
-        match self {
-            Self::Compact(system) => {
-                BezierChordNormalRationalParameterMapSystem2::Compact(system.map.clone())
-            }
-            Self::Dense(system) => {
-                BezierChordNormalRationalParameterMapSystem2::Dense(system.map.clone())
-            }
-        }
+    fn rational_parameter_map_system(&self) -> Arc<BezierChordNormalDenseMapSystem2> {
+        self.map.clone()
     }
 
-    fn into_parameter_map_system(self) -> BezierChordNormalProjectiveChordParameterMapSystem2 {
-        match self {
-            Self::Compact(system) => BezierChordNormalProjectiveChordParameterMapSystem2::Compact(
-                BezierChordNormalCompactChordParameterMapSystem2 {
-                    projective: system.map,
-                    geometry: system
-                        .geometry
-                        .expect("a chord target retains its compact point map"),
-                    tangent_cross: system.tangent_cross,
-                    angular_tangent: system.angular_tangent,
-                },
-            ),
-            Self::Dense(system) => BezierChordNormalProjectiveChordParameterMapSystem2::Dense(
-                BezierChordNormalDenseChordParameterMapSystem2 {
-                    projective: system.map,
-                    geometry: system
-                        .geometry
-                        .expect("a chord target retains its dense point map"),
-                    tangent_cross: system.tangent_cross,
-                    angular_tangent: system
-                        .angular_tangent
-                        .expect("a chord target retains its dense angular tangent"),
-                    recursive_contact_fields: std::array::from_fn(|_| std::sync::OnceLock::new()),
-                },
-            ),
+    fn into_parameter_map_system(self) -> BezierChordNormalDenseChordParameterMapSystem2 {
+        BezierChordNormalDenseChordParameterMapSystem2 {
+            projective: self.map,
+            geometry: self
+                .geometry
+                .expect("a chord target retains its dense point map"),
+            tangent_cross: self.tangent_cross,
+            angular_tangent: self
+                .angular_tangent
+                .expect("a chord target retains its dense angular tangent"),
+            recursive_contact_fields: std::array::from_fn(|_| std::sync::OnceLock::new()),
         }
     }
 }
 
-impl BezierChordNormalRationalParameterMapSystem2 {
-    fn shares_storage(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Compact(first), Self::Compact(second)) => Arc::ptr_eq(first, second),
-            (Self::Dense(first), Self::Dense(second)) => Arc::ptr_eq(first, second),
-            (Self::Compact(_), Self::Dense(_)) | (Self::Dense(_), Self::Compact(_)) => false,
-        }
-    }
-
+impl BezierChordNormalDenseMapSystem2 {
     fn diameter_parameter_sign(
         &self,
         target: &BezierParameter2,
@@ -4447,30 +4265,14 @@ impl BezierChordNormalRationalParameterMapSystem2 {
         radial_coefficient: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        match self {
-            Self::Compact(system) => {
-                let Some(predicate) = system.diameter.scale(denominator).and_then(|diameter| {
-                    system
-                        .radius_squared_denominator
-                        .scale(radial_coefficient)
-                        .and_then(|radius| diameter.subtract(&radius))
-                }) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                system.expression_sign(&predicate, target, policy)
-            }
-            Self::Dense(system) => {
-                let Some(predicate) = system.diameter.scale(denominator).and_then(|diameter| {
-                    system
-                        .radius_squared_denominator
-                        .scale(radial_coefficient)
-                        .and_then(|radius| diameter.subtract(&radius))
-                }) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                system.expression_sign(&predicate, target, policy)
-            }
-        }
+        let Some(predicate) = self.diameter.scale(denominator).and_then(|diameter| {
+            self.radius_squared_denominator
+                .scale(radial_coefficient)
+                .and_then(|radius| diameter.subtract(&radius))
+        }) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        self.expression_sign(&predicate, target, policy)
     }
 }
 
@@ -10692,7 +10494,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some((map, _, _)) = frame.center_parameter.coincident_chord_source() else {
             return false;
         };
-        map.recursive_quadratic_line_system().is_some() || map.chord_normal_dense_system().is_some()
+        map.recursive_quadratic_line_system().is_some()
+            || map.chord_normal_projective_system().is_some()
     }
 
     /// Builds a circle in the exact orthonormal frame selected by one regular
@@ -18507,7 +18310,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         line: &LineSeg2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveTargetSystem2>>> {
+    ) -> CurveResult<Classification<Option<BezierChordNormalDenseIntersectionSystem2>>> {
         let Some(frame) = self.data.frame.selected_radial() else {
             return Ok(Classification::Decided(None));
         };
@@ -18537,7 +18340,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a recursive selected-radial center lost its support-circle map".into(),
             ));
         }
-        let Some(inner) = center_map.chord_normal_dense_system() else {
+        let Some(inner) = center_map.chord_normal_projective_system() else {
             return Ok(Classification::Decided(None));
         };
         let inner_parameter = center_map.chord_normal_projective_parameter(center_contact)?;
@@ -18653,22 +18456,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                 diameter,
                 radius_squared_denominator,
             });
-            Some(BezierChordNormalProjectiveTargetSystem2::Dense(
-                BezierChordNormalDenseIntersectionSystem2 {
-                    map,
-                    incidence,
-                    selected_half_plane,
-                    tangent_cross,
-                    angular_tangent: Some(angular_tangent),
-                    geometry: Some(BezierChordNormalDenseTargetGeometry2 {
-                        point_x,
-                        point_y,
-                        center_x: outer_center_x,
-                        center_y: outer_center_y,
-                        common_denominator,
-                    }),
-                },
-            ))
+            Some(BezierChordNormalDenseIntersectionSystem2 {
+                map,
+                incidence,
+                selected_half_plane,
+                tangent_cross,
+                angular_tangent: Some(angular_tangent),
+                geometry: Some(BezierChordNormalDenseTargetGeometry2 {
+                    point_x,
+                    point_y,
+                    center_x: outer_center_x,
+                    center_y: outer_center_y,
+                    common_denominator,
+                }),
+            })
         })();
         Ok(Classification::Decided(system))
     }
@@ -18722,7 +18523,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 contact.point.clone(),
                 system.center.clone(),
             ))
-        } else if let Some(system) = center_map.chord_normal_dense_system() {
+        } else if let Some(system) = center_map.chord_normal_projective_system() {
             let Some(field) = system.recursive_contact_field(center_contact)? else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -20610,22 +20411,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                 diameter,
                 radius_squared_denominator,
             });
-            Some(BezierChordNormalProjectiveTargetSystem2::Dense(
-                BezierChordNormalDenseIntersectionSystem2 {
-                    map,
-                    incidence,
-                    selected_half_plane,
-                    tangent_cross,
-                    angular_tangent: Some(angular_tangent),
-                    geometry: Some(BezierChordNormalDenseTargetGeometry2 {
-                        point_x,
-                        point_y,
-                        center_x,
-                        center_y,
-                        common_denominator: q.clone(),
-                    }),
-                },
-            ))
+            Some(BezierChordNormalDenseIntersectionSystem2 {
+                map,
+                incidence,
+                selected_half_plane,
+                tangent_cross,
+                angular_tangent: Some(angular_tangent),
+                geometry: Some(BezierChordNormalDenseTargetGeometry2 {
+                    point_x,
+                    point_y,
+                    center_x,
+                    center_y,
+                    common_denominator: q.clone(),
+                }),
+            })
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -21185,22 +20984,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                 diameter,
                 radius_squared_denominator,
             });
-            Some(BezierChordNormalProjectiveTargetSystem2::Dense(
-                BezierChordNormalDenseIntersectionSystem2 {
-                    map,
-                    incidence,
-                    selected_half_plane,
-                    tangent_cross,
-                    angular_tangent: Some(angular_tangent),
-                    geometry: Some(BezierChordNormalDenseTargetGeometry2 {
-                        point_x,
-                        point_y,
-                        center_x,
-                        center_y,
-                        common_denominator: q.clone(),
-                    }),
-                },
-            ))
+            Some(BezierChordNormalDenseIntersectionSystem2 {
+                map,
+                incidence,
+                selected_half_plane,
+                tangent_cross,
+                angular_tangent: Some(angular_tangent),
+                geometry: Some(BezierChordNormalDenseTargetGeometry2 {
+                    point_x,
+                    point_y,
+                    center_x,
+                    center_y,
+                    common_denominator: q.clone(),
+                }),
+            })
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -22873,7 +22670,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn chord_normal_projective_chord_intersections(
         &self,
         chord: &BezierAlgebraicChord2,
-        system: BezierChordNormalProjectiveTargetSystem2,
+        system: BezierChordNormalDenseIntersectionSystem2,
         clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
@@ -22910,7 +22707,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn chord_normal_projective_chord_intersections_from_candidates(
         &self,
         chord: &BezierAlgebraicChord2,
-        system: BezierChordNormalProjectiveTargetSystem2,
+        system: BezierChordNormalDenseIntersectionSystem2,
         candidates: Vec<BezierParameter2>,
         clip_to_finite_chord: bool,
         policy: &CurveContext,
@@ -27296,296 +27093,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         )))
     }
 
-    /// Builds the common projective incidence for any positively weighted
-    /// one-parameter target. The target-specific closure only supplies its
-    /// homogeneous point and tangent tensors; every center, radical, sheet,
-    /// and angular predicate below is shared by rational curves and retained
-    /// algebraic chords.
-    fn chord_normal_projective_target_system<F>(
-        &self,
-        frame_source: BezierChordNormalProjectiveFrameSource2,
-        target_coordinates: Vec<AlgebraicRootRepresentation>,
-        retain_geometry: bool,
-        target: F,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveIntersectionSystem2>>>
-    where
-        F: FnOnce(
-            Vec<QuadrivariatePolynomial2>,
-        ) -> CurveResult<Option<BezierChordNormalProjectiveTarget2>>,
-    {
-        let BezierChordNormalProjectiveFrameSource2 {
-            first_support,
-            second_support,
-            anchor_speed,
-            coordinates,
-        } = frame_source;
-        let mut represented_coordinates = Vec::from(coordinates);
-        represented_coordinates.extend(target_coordinates);
-        let Some((sources, coordinates)) =
-            represented_affine_tensor_basis(&represented_coordinates)
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        if sources.len() > 3 {
-            return Ok(Classification::Decided(None));
-        }
-        let mut source_representations = sources;
-        let mut source_parameters = Vec::with_capacity(3);
-        for source in &source_representations {
-            let parameter = match BezierParameter2::from_algebraic_root_representation(
-                source,
-                &CurveContext::STRICT,
-            ) {
-                Ok(Classification::Decided(parameter)) => parameter,
-                Ok(Classification::Uncertain(_)) | Err(_) => {
-                    return Ok(Classification::Decided(None));
-                }
-            };
-            source_parameters.push(parameter);
-        }
-        while source_representations.len() < 3 {
-            source_representations.push(exact_real_algebraic_representation(&Real::zero()));
-            source_parameters.push(BezierParameter2::Exact(Real::zero()));
-        }
-        let source_representations: [AlgebraicRootRepresentation; 3] = source_representations
-            .try_into()
-            .expect("a projective chord-normal system pads three source roots");
-        let source_parameters: [BezierParameter2; 3] = source_parameters
-            .try_into()
-            .expect("a projective chord-normal system pads three source parameters");
-        let coordinates = coordinates
-            .iter()
-            .map(QuadrivariatePolynomial2::lift_dense_last_axis_to_fourth)
-            .collect::<Option<Vec<_>>>();
-        let Some(coordinates) = coordinates else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let mut coordinates = coordinates;
-        let target_coordinates = coordinates.split_off(12);
-        let [
-            first_start_x,
-            first_start_y,
-            first_end_x,
-            first_end_y,
-            second_start_x,
-            second_start_y,
-            second_end_x,
-            second_end_y,
-            anchor_start_x,
-            anchor_start_y,
-            anchor_end_x,
-            anchor_end_y,
-        ]: [QuadrivariatePolynomial2; 12] = coordinates
-            .try_into()
-            .expect("a projective chord-normal frame retains twelve coordinates");
-        let Some(BezierChordNormalProjectiveTarget2 {
-            x,
-            y,
-            weight,
-            tangent_x,
-            tangent_y,
-        }) = target(target_coordinates)?
-        else {
-            return Ok(Classification::Decided(None));
-        };
-        let parameter_refs = [
-            &source_parameters[0],
-            &source_parameters[1],
-            &source_parameters[2],
-        ];
-        let reduce = |polynomial| {
-            quadrivariate_reduce_three_selected_root_relations(polynomial, parameter_refs)
-        };
-
-        let system = (|| {
-            let first_dx = reduce(first_end_x.subtract(&first_start_x)?)?;
-            let first_dy = reduce(first_end_y.subtract(&first_start_y)?)?;
-            let second_dx = reduce(second_end_x.subtract(&second_start_x)?)?;
-            let second_dy = reduce(second_end_y.subtract(&second_start_y)?)?;
-            let anchor_dx = reduce(anchor_end_x.subtract(&anchor_start_x)?)?;
-            let anchor_dy = reduce(anchor_end_y.subtract(&anchor_start_y)?)?;
-            let first_speed_squared = reduce(
-                first_dx
-                    .multiply(&first_dx)?
-                    .add(&first_dy.multiply(&first_dy)?)?,
-            )?;
-            let second_speed_squared = reduce(
-                second_dx
-                    .multiply(&second_dx)?
-                    .add(&second_dy.multiply(&second_dy)?)?,
-            )?;
-
-            let parallel_c = |x: &QuadrivariatePolynomial2,
-                              y: &QuadrivariatePolynomial2,
-                              dx: &QuadrivariatePolynomial2,
-                              dy: &QuadrivariatePolynomial2,
-                              support: &BezierChordParallelSupportSource2,
-                              speed_index: usize| {
-                let rational = reduce(
-                    dy.multiply(x)?
-                        .subtract(&dx.multiply(y)?)?
-                        .add(&dy.scale(&support.translation_x)?)?
-                        .subtract(&dx.scale(&support.translation_y)?)?,
-                )?;
-                let mut expression =
-                    BezierQuadrivariateTwoSquareRootExpression2::from_rational(rational)?;
-                if support.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal {
-                    let coefficient = QuadrivariatePolynomial2::from_axis_polynomial(
-                        &[-support.distance.clone()],
-                        0,
-                    )?;
-                    let radical = if speed_index == 0 {
-                        BezierQuadrivariateTwoSquareRootExpression2::from_first_radical(
-                            coefficient,
-                        )?
-                    } else {
-                        BezierQuadrivariateTwoSquareRootExpression2::from_second_radical(
-                            coefficient,
-                        )?
-                    };
-                    expression = expression.add(&radical)?;
-                }
-                expression.reduced(parameter_refs)
-            };
-            let first_c = parallel_c(
-                &first_start_x,
-                &first_start_y,
-                &first_dx,
-                &first_dy,
-                &first_support,
-                0,
-            )?;
-            let second_c = parallel_c(
-                &second_start_x,
-                &second_start_y,
-                &second_dx,
-                &second_dy,
-                &second_support,
-                1,
-            )?;
-            // Homogeneous intersection of `a*x+b*y+c=0`, with
-            // `a=-dy`, `b=dx`: C=(X/W,Y/W).
-            let denominator = reduce(
-                first_dy
-                    .scale(&Real::from(-1_i8))?
-                    .multiply(&second_dx)?
-                    .subtract(&second_dy.scale(&Real::from(-1_i8))?.multiply(&first_dx)?)?,
-            )?;
-            let center_x = first_c
-                .multiply_rational(&second_dx)?
-                .scale(&Real::from(-1_i8))?
-                .add(&second_c.multiply_rational(&first_dx)?)?
-                .reduced(parameter_refs)?;
-            let center_y = first_c
-                .multiply_rational(&second_dy.scale(&Real::from(-1_i8))?)?
-                .subtract(&second_c.multiply_rational(&first_dy.scale(&Real::from(-1_i8))?)?)?
-                .reduced(parameter_refs)?;
-
-            let common_denominator = reduce(weight.multiply(&denominator)?)?;
-            let point_x = BezierQuadrivariateTwoSquareRootExpression2::from_rational(reduce(
-                x.multiply(&denominator)?,
-            )?)?
-            .reduced(parameter_refs)?;
-            let point_y = BezierQuadrivariateTwoSquareRootExpression2::from_rational(reduce(
-                y.multiply(&denominator)?,
-            )?)?
-            .reduced(parameter_refs)?;
-            let center_x = center_x
-                .multiply_rational(&weight)?
-                .reduced(parameter_refs)?;
-            let center_y = center_y
-                .multiply_rational(&weight)?
-                .reduced(parameter_refs)?;
-            let radial_x = point_x.subtract(&center_x)?.reduced(parameter_refs)?;
-            let radial_y = point_y.subtract(&center_y)?.reduced(parameter_refs)?;
-            let radius = self.radial_distance().clone();
-            let radius_squared = &radius * &radius;
-            let incidence = radial_x
-                .square(&first_speed_squared, &second_speed_squared)?
-                .add(&radial_y.square(&first_speed_squared, &second_speed_squared)?)?
-                .subtract(&BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                    reduce(
-                        common_denominator
-                            .multiply(&common_denominator)?
-                            .scale(&radius_squared)?,
-                    )?,
-                )?)?
-                .reduced(parameter_refs)?;
-
-            let dot_anchor = radial_x
-                .multiply_rational(&anchor_dx)?
-                .add(&radial_y.multiply_rational(&anchor_dy)?)?;
-            let cross_anchor = radial_y
-                .multiply_rational(&anchor_dx)?
-                .subtract(&radial_x.multiply_rational(&anchor_dy)?)?;
-            let selected_half_plane = dot_anchor
-                .multiply_rational(&denominator)?
-                .scale(&(-(&radius * self.turn_sign())))?
-                .reduced(parameter_refs)?;
-            let diameter = cross_anchor
-                .multiply_rational(&denominator)?
-                .scale(&radius)?
-                .reduced(parameter_refs)?;
-
-            // `speed*weight*W^2` is strictly positive.  It scales both the
-            // physical diameter coordinate and r^2 in the angular order
-            // predicate without selecting a Cartesian center or unit normal.
-            let radius_scale = reduce(
-                weight
-                    .multiply(&denominator.multiply(&denominator)?)?
-                    .scale(&radius_squared)?,
-            )?;
-            let radius_squared_denominator = if anchor_speed == 0 {
-                BezierQuadrivariateTwoSquareRootExpression2::from_first_radical(radius_scale)?
-            } else {
-                BezierQuadrivariateTwoSquareRootExpression2::from_second_radical(radius_scale)?
-            };
-
-            let tangent_dot = radial_x
-                .multiply_rational(&tangent_x)?
-                .add(&radial_y.multiply_rational(&tangent_y)?)?;
-            let tangent_cross = tangent_dot
-                .multiply_rational(&denominator)?
-                .scale(&(-self.turn_sign()))?
-                .reduced(parameter_refs)?;
-            let angular_tangent = radial_x
-                .multiply_rational(&tangent_y)?
-                .subtract(&radial_y.multiply_rational(&tangent_x)?)?
-                .multiply_rational(&denominator)?
-                .reduced(parameter_refs)?;
-            let first_speed_squared = reduce(first_speed_squared)?;
-            let second_speed_squared = reduce(second_speed_squared)?;
-            let map = Arc::new(BezierChordNormalProjectiveMapSystem2 {
-                source_parameters: source_parameters.clone(),
-                first_speed_squared,
-                second_speed_squared,
-                diameter,
-                radius_squared_denominator: radius_squared_denominator.reduced(parameter_refs)?,
-            });
-            Some(BezierChordNormalProjectiveIntersectionSystem2 {
-                map,
-                source_representations,
-                incidence,
-                selected_half_plane,
-                tangent_cross,
-                angular_tangent,
-                geometry: retain_geometry.then_some(BezierChordNormalProjectiveTargetGeometry2 {
-                    point_x,
-                    point_y,
-                    center_x,
-                    center_y,
-                    common_denominator,
-                }),
-            })
-        })();
-        Ok(Classification::Decided(system))
-    }
-
     fn chord_normal_projective_rational_system(
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveTargetSystem2>>> {
+    ) -> CurveResult<Classification<Option<BezierChordNormalDenseIntersectionSystem2>>> {
         let frame_source = match self.chord_normal_projective_frame_source(policy)? {
             Classification::Decided(Some(frame_source)) => frame_source,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
@@ -27621,125 +27133,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             &polynomial_multiply(&polynomial_derivative(&target_y), &target_weight),
             &polynomial_multiply(&target_y, &polynomial_derivative(&target_weight)),
         );
-        match self.chord_normal_projective_target_system(
-            frame_source.clone(),
-            Vec::new(),
-            false,
-            |_| {
-                let axis = |coefficients: &[Real]| {
-                    QuadrivariatePolynomial2::from_axis_polynomial(coefficients, 3)
-                };
-                let (Some(x), Some(y), Some(weight), Some(tangent_x), Some(tangent_y)) = (
-                    axis(&target_x),
-                    axis(&target_y),
-                    axis(&target_weight),
-                    axis(&target_tangent_x),
-                    axis(&target_tangent_y),
-                ) else {
-                    return Ok(None);
-                };
-                Ok(Some(BezierChordNormalProjectiveTarget2 {
-                    x,
-                    y,
-                    weight,
-                    tangent_x,
-                    tangent_y,
-                }))
-            },
-        )? {
-            Classification::Decided(Some(system)) => {
-                return Ok(Classification::Decided(Some(
-                    BezierChordNormalProjectiveTargetSystem2::Compact(system),
-                )));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        Ok(self
-            .chord_normal_dense_target_system(frame_source, Vec::new(), true, |_, rank| {
-                let target_axis = rank.checked_sub(1)?;
-                let axis = |coefficients: &[Real]| {
-                    DenseTensorPolynomial::from_axis_polynomial(rank, target_axis, coefficients)
-                };
-                Some(BezierChordNormalDenseTarget2 {
-                    x: axis(&target_x)?,
-                    y: axis(&target_y)?,
-                    weight: axis(&target_weight)?,
-                    tangent_x: axis(&target_tangent_x)?,
-                    tangent_y: axis(&target_tangent_y)?,
-                })
-            })?
-            .map(|system| system.map(BezierChordNormalProjectiveTargetSystem2::Dense)))
-    }
-
-    fn chord_normal_compact_chord_system(
-        &self,
-        chord: &BezierAlgebraicChord2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveIntersectionSystem2>>> {
-        let frame_source = match self.chord_normal_projective_frame_source(policy)? {
-            Classification::Decided(Some(frame_source)) => frame_source,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mut target_coordinates = Vec::with_capacity(4);
-        for endpoint in [chord.start(), chord.end()] {
-            match represented_point_evidence_coordinates(endpoint, policy)? {
-                Classification::Decided(point) => target_coordinates.extend(point),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        self.chord_normal_projective_target_system(
-            frame_source,
-            target_coordinates,
-            true,
-            |coordinates| {
-                let [start_x, start_y, end_x, end_y]: [QuadrivariatePolynomial2; 4] =
-                    match coordinates.try_into() {
-                        Ok(coordinates) => coordinates,
-                        Err(_) => return Ok(None),
-                    };
-                let one_minus = QuadrivariatePolynomial2::from_axis_polynomial(
-                    &[Real::one(), Real::from(-1_i8)],
-                    3,
-                );
-                let parameter =
-                    QuadrivariatePolynomial2::from_axis_polynomial(&[Real::zero(), Real::one()], 3);
-                let (Some(one_minus), Some(parameter), Some(weight)) = (
-                    one_minus,
-                    parameter,
-                    QuadrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 3),
-                ) else {
-                    return Ok(None);
-                };
-                let x = start_x
-                    .multiply(&one_minus)
-                    .and_then(|start| end_x.multiply(&parameter).and_then(|end| start.add(&end)));
-                let y = start_y
-                    .multiply(&one_minus)
-                    .and_then(|start| end_y.multiply(&parameter).and_then(|end| start.add(&end)));
-                let tangent_x = end_x.subtract(&start_x);
-                let tangent_y = end_y.subtract(&start_y);
-                Ok(match (x, y, tangent_x, tangent_y) {
-                    (Some(x), Some(y), Some(tangent_x), Some(tangent_y)) => {
-                        Some(BezierChordNormalProjectiveTarget2 {
-                            x,
-                            y,
-                            weight,
-                            tangent_x,
-                            tangent_y,
-                        })
-                    }
-                    _ => None,
-                })
-            },
-        )
+        self.chord_normal_dense_target_system(frame_source, Vec::new(), true, |_, rank| {
+            let target_axis = rank.checked_sub(1)?;
+            let axis = |coefficients: &[Real]| {
+                DenseTensorPolynomial::from_axis_polynomial(rank, target_axis, coefficients)
+            };
+            Some(BezierChordNormalDenseTarget2 {
+                x: axis(&target_x)?,
+                y: axis(&target_y)?,
+                weight: axis(&target_weight)?,
+                tangent_x: axis(&target_tangent_x)?,
+                tangent_y: axis(&target_tangent_y)?,
+            })
+        })
     }
 
     fn chord_normal_dense_target_system<F>(
@@ -27965,7 +27371,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Classification::Decided(system))
     }
 
-    fn chord_normal_dense_chord_system(
+    fn chord_normal_projective_chord_system(
         &self,
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
@@ -28023,27 +27429,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                 })
             },
         )
-    }
-
-    fn chord_normal_projective_chord_system(
-        &self,
-        chord: &BezierAlgebraicChord2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierChordNormalProjectiveTargetSystem2>>> {
-        match self.chord_normal_compact_chord_system(chord, policy)? {
-            Classification::Decided(Some(system)) => {
-                return Ok(Classification::Decided(Some(
-                    BezierChordNormalProjectiveTargetSystem2::Compact(system),
-                )));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        Ok(self
-            .chord_normal_dense_chord_system(chord, policy)?
-            .map(|system| system.map(BezierChordNormalProjectiveTargetSystem2::Dense)))
     }
 
     fn represented_rational_system(
@@ -28365,7 +27750,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn chord_normal_projective_replay_rational_circle_component(
         &self,
         other: &RationalBezier2,
-        system: &BezierChordNormalProjectiveTargetSystem2,
+        system: &BezierChordNormalDenseIntersectionSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
         let selected_roots = match system.selected_half_plane_parameters(policy)? {
@@ -28454,7 +27839,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &RationalBezier2,
         retain_parameter_map: bool,
-        system: BezierChordNormalProjectiveTargetSystem2,
+        system: BezierChordNormalDenseIntersectionSystem2,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<(
@@ -30866,7 +30251,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
                     system: second,
                 },
-            ) => self.data.curve == other.data.curve && first.shares_storage(second),
+            ) => self.data.curve == other.data.curve && Arc::ptr_eq(first, second),
             (
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::Represented { .. },
                 BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField { .. }
@@ -32417,28 +31802,10 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
 
     fn chord_normal_projective_system(
         &self,
-    ) -> Option<&BezierChordNormalCompactChordParameterMapSystem2> {
+    ) -> Option<&BezierChordNormalDenseChordParameterMapSystem2> {
         match &self.data.system {
             BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
-                BezierChordNormalProjectiveChordParameterMapSystem2::Compact(system),
-            ) => Some(system),
-            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Axis(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::Oblique(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RepresentedOblique(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RetainedOffset(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::RecursiveQuadraticLine(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedFiberLine(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::SelectedRadial(_)
-            | BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
-                BezierChordNormalProjectiveChordParameterMapSystem2::Dense(_),
-            ) => None,
-        }
-    }
-
-    fn chord_normal_dense_system(&self) -> Option<&BezierChordNormalDenseChordParameterMapSystem2> {
-        match &self.data.system {
-            BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
-                BezierChordNormalProjectiveChordParameterMapSystem2::Dense(system),
+                system,
             ) => Some(system),
             _ => None,
         }
@@ -32446,7 +31813,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
 
     fn has_chord_normal_projective_system(&self) -> bool {
         self.chord_normal_projective_system().is_some()
-            || self.chord_normal_dense_system().is_some()
     }
 
     fn chord_normal_projective_parameter<'a>(
@@ -32465,208 +31831,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         })
     }
 
-    fn chord_normal_projective_expression_sign(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    ) -> CurveResult<Classification<RealSign>> {
-        let system = self.chord_normal_projective_system().ok_or_else(|| {
-            CurveError::Topology(
-                "a nonprojective cusp/chord map used a chord-normal expression".into(),
-            )
-        })?;
-        system.projective.expression_sign(
-            expression,
-            self.chord_normal_projective_parameter(contact)?,
-            &self.data.policy,
-        )
-    }
-
-    fn chord_normal_projective_quotient_numerator_sign(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        numerator: &BezierQuadrivariateTwoSquareRootExpression2,
-    ) -> CurveResult<Classification<RealSign>> {
-        let system = self.chord_normal_projective_system().ok_or_else(|| {
-            CurveError::Topology(
-                "a nonprojective cusp/chord map used a projective quotient predicate".into(),
-            )
-        })?;
-        let Some(predicate) = numerator
-            .multiply_rational(&system.geometry.common_denominator)
-            .and_then(|expression| {
-                expression.reduced([
-                    &system.projective.source_parameters[0],
-                    &system.projective.source_parameters[1],
-                    &system.projective.source_parameters[2],
-                ])
-            })
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        self.chord_normal_projective_expression_sign(contact, &predicate)
-    }
-
-    fn chord_normal_projective_derived_coordinate_expression(
-        &self,
-        axis: Axis2,
-        radial_scale: &Real,
-        translation: &Real,
-    ) -> Option<BezierQuadrivariateTwoSquareRootExpression2> {
-        let system = self.chord_normal_projective_system()?;
-        let (point, center) = match axis {
-            Axis2::X => (&system.geometry.point_x, &system.geometry.center_x),
-            Axis2::Y => (&system.geometry.point_y, &system.geometry.center_y),
-        };
-        let translated = BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-            system.geometry.common_denominator.scale(translation)?,
-        )?;
-        point
-            .scale(radial_scale)?
-            .add(&center.scale(&(Real::one() - radial_scale))?)?
-            .add(&translated)?
-            .reduced([
-                &system.projective.source_parameters[0],
-                &system.projective.source_parameters[1],
-                &system.projective.source_parameters[2],
-            ])
-    }
-
-    fn chord_normal_projective_rotated_derived_coordinate_expression(
-        &self,
-        axis: Axis2,
-        radial_scale: &Real,
-        perpendicular_scale: &Real,
-        translation: &Real,
-    ) -> Option<BezierQuadrivariateTwoSquareRootExpression2> {
-        let system = self.chord_normal_projective_system()?;
-        let one_minus_radial = Real::one() - radial_scale;
-        let negative_perpendicular = -perpendicular_scale.clone();
-        let terms = match axis {
-            Axis2::X => [
-                (&system.geometry.point_x, radial_scale),
-                (&system.geometry.point_y, &negative_perpendicular),
-                (&system.geometry.center_x, &one_minus_radial),
-                (&system.geometry.center_y, perpendicular_scale),
-            ],
-            Axis2::Y => [
-                (&system.geometry.point_x, perpendicular_scale),
-                (&system.geometry.point_y, radial_scale),
-                (&system.geometry.center_x, &negative_perpendicular),
-                (&system.geometry.center_y, &one_minus_radial),
-            ],
-        };
-        let mut coordinate = terms[0].0.scale(terms[0].1)?;
-        for (term, scale) in &terms[1..] {
-            coordinate = coordinate.add(&term.scale(scale)?)?;
-        }
-        coordinate =
-            coordinate.add(&BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                system.geometry.common_denominator.scale(translation)?,
-            )?)?;
-        coordinate.reduced([
-            &system.projective.source_parameters[0],
-            &system.projective.source_parameters[1],
-            &system.projective.source_parameters[2],
-        ])
-    }
-
-    fn chord_normal_projective_represented_coordinates(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-    ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        let system = self.chord_normal_projective_system().ok_or_else(|| {
-            CurveError::Topology(
-                "a nonprojective cusp/chord map requested projective coordinates".into(),
-            )
-        })?;
-        // The projective kernel already certifies its target parameter on the
-        // retained chord.  When that chord is a represented line, evaluating
-        // this one scalar is the exact point construction; re-eliminating the
-        // chord-normal center's two positive speed radicals only manufactures
-        // a much larger equivalent compositum and can exceed the cold tensor
-        // representation budget after recursive fillets.
-        if let Some(line) = self.data.chord.exact_line() {
-            let parameter = bezier_parameter_root_representation(
-                self.chord_normal_projective_parameter(contact)?,
-            );
-            let (delta_x, delta_y) = line.delta();
-            let x = represented_affine_coordinate(&[(&parameter, &delta_x)], line.start().x());
-            let y = represented_affine_coordinate(&[(&parameter, &delta_y)], line.start().y());
-            return Ok(match (x, y) {
-                (Classification::Decided(x), Classification::Decided(y)) => {
-                    Classification::Decided([x, y].map(|coordinate| {
-                        hypersolve::compact_algebraic_root_low_degree_witness(&coordinate)
-                            .unwrap_or(coordinate)
-                    }))
-                }
-                (Classification::Uncertain(UncertaintyReason::Unsupported), _)
-                | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                }
-                _ => Classification::Uncertain(UncertaintyReason::Predicate),
-            });
-        }
-        let geometry_has_radicals =
-            !quadrivariate_structurally_zero(&system.geometry.point_x.first)
-                || !quadrivariate_structurally_zero(&system.geometry.point_x.second)
-                || !quadrivariate_structurally_zero(&system.geometry.point_x.product)
-                || !quadrivariate_structurally_zero(&system.geometry.point_y.first)
-                || !quadrivariate_structurally_zero(&system.geometry.point_y.second)
-                || !quadrivariate_structurally_zero(&system.geometry.point_y.product);
-        if geometry_has_radicals {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let represent = |parameter: &BezierParameter2| match parameter {
-            BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
-            BezierParameter2::Algebraic(parameter) => {
-                parameter_representation(parameter, &CurveContext::STRICT)
-            }
-        };
-        let target = self.chord_normal_projective_parameter(contact)?;
-        let sources = [
-            represent(&system.projective.source_parameters[0]),
-            represent(&system.projective.source_parameters[1]),
-            represent(&system.projective.source_parameters[2]),
-            represent(target),
-        ];
-        let Some(denominator) = system
-            .geometry
-            .common_denominator
-            .to_dense_with_output_axis()
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let coordinate = |numerator: &QuadrivariatePolynomial2| {
-            let numerator = numerator.to_dense_with_output_axis()?;
-            Some(represented_tensor_ratio(&numerator, &denominator, &sources))
-        };
-        let (Some(x), Some(y)) = (
-            coordinate(&system.geometry.point_x.rational),
-            coordinate(&system.geometry.point_y.rational),
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        Ok(match (x, y) {
-            (Classification::Decided(x), Classification::Decided(y)) => {
-                Classification::Decided([x, y])
-            }
-            (Classification::Uncertain(UncertaintyReason::Unsupported), _)
-            | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
-            _ => Classification::Uncertain(UncertaintyReason::Predicate),
-        })
-    }
-
     fn chord_normal_dense_expression_sign(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         expression: &BezierDenseTwoSquareRootExpression2,
     ) -> CurveResult<Classification<RealSign>> {
-        let system = self.chord_normal_dense_system().ok_or_else(|| {
+        let system = self.chord_normal_projective_system().ok_or_else(|| {
             CurveError::Topology(
-                "a compact cusp/chord map used a dense chord-normal expression".into(),
+                "a nonprojective cusp/chord map used a chord-normal expression".into(),
             )
         })?;
         system.projective.expression_sign(
@@ -32681,9 +31853,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
         numerator: &BezierDenseTwoSquareRootExpression2,
     ) -> CurveResult<Classification<RealSign>> {
-        let system = self.chord_normal_dense_system().ok_or_else(|| {
+        let system = self.chord_normal_projective_system().ok_or_else(|| {
             CurveError::Topology(
-                "a compact cusp/chord map used a dense projective quotient predicate".into(),
+                "a nonprojective cusp/chord map used a chord-normal quotient predicate".into(),
             )
         })?;
         let Some(predicate) = numerator
@@ -32701,7 +31873,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         radial_scale: &Real,
         translation: &Real,
     ) -> Option<BezierDenseTwoSquareRootExpression2> {
-        let system = self.chord_normal_dense_system()?;
+        let system = self.chord_normal_projective_system()?;
         let (point, center) = match axis {
             Axis2::X => (&system.geometry.point_x, &system.geometry.center_x),
             Axis2::Y => (&system.geometry.point_y, &system.geometry.center_y),
@@ -32723,7 +31895,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         perpendicular_scale: &Real,
         translation: &Real,
     ) -> Option<BezierDenseTwoSquareRootExpression2> {
-        let system = self.chord_normal_dense_system()?;
+        let system = self.chord_normal_projective_system()?;
         let one_minus_radial = Real::one() - radial_scale;
         let negative_perpendicular = -perpendicular_scale.clone();
         let terms = match axis {
@@ -32754,9 +31926,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        let system = self.chord_normal_dense_system().ok_or_else(|| {
+        let system = self.chord_normal_projective_system().ok_or_else(|| {
             CurveError::Topology(
-                "a compact cusp/chord map requested dense projective coordinates".into(),
+                "a nonprojective cusp/chord map requested chord-normal coordinates".into(),
             )
         })?;
         let parameter = self.chord_normal_projective_parameter(contact)?;
@@ -32991,21 +32163,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 1_i8
             });
         if let Some(system) = self.chord_normal_projective_system() {
-            let Some(expression) = system.tangent_cross.scale(cross_scale).and_then(|cross| {
-                system
-                    .angular_tangent
-                    .scale(&angular_scale)
-                    .and_then(|dot| cross.add(&dot))
-            }) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return system.projective.expression_sign(
-                &expression,
-                self.chord_normal_projective_parameter(contact)?,
-                &self.data.policy,
-            );
-        }
-        if let Some(system) = self.chord_normal_dense_system() {
             let Some(expression) = system.tangent_cross.scale(cross_scale).and_then(|cross| {
                 system
                     .angular_tangent
@@ -33271,52 +32428,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         if let Some(system) = self.recursive_quadratic_line_system() {
             return system.contact_order_to_real(contact, parameter, &self.data.policy);
         }
-        if let Some(system) = self.chord_normal_dense_system() {
-            if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
-                contact.cusp_location,
-                parameter,
-                &self.data.policy,
-            ) {
-                return Ok(order);
-            }
-            match in_closed_unit_interval(parameter, &self.data.policy) {
-                Some(true) => {}
-                Some(false) => return Err(CurveError::InvalidBezierParameter),
-                None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-            }
-            let one_minus = Real::one() - parameter;
-            let denominator = &one_minus * &one_minus + parameter * parameter;
-            let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
-            let Some(predicate) =
-                system
-                    .projective
-                    .diameter
-                    .scale(&denominator)
-                    .and_then(|diameter| {
-                        system
-                            .projective
-                            .radius_squared_denominator
-                            .scale(&radial_coefficient)
-                            .and_then(|radius| diameter.subtract(&radius))
-                    })
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(
-                match self.chord_normal_dense_expression_sign(contact, &predicate)? {
-                    Classification::Decided(RealSign::Positive) => {
-                        Classification::Decided(std::cmp::Ordering::Less)
-                    }
-                    Classification::Decided(RealSign::Negative) => {
-                        Classification::Decided(std::cmp::Ordering::Greater)
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        Classification::Decided(std::cmp::Ordering::Equal)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                },
-            );
-        }
         if let Some(system) = self.chord_normal_projective_system() {
             if let Some(order) = algebraic_cusp_semicircle_endpoint_contact_order(
                 contact.cusp_location,
@@ -33349,7 +32460,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             return Ok(
-                match self.chord_normal_projective_expression_sign(contact, &predicate)? {
+                match self.chord_normal_dense_expression_sign(contact, &predicate)? {
                     Classification::Decided(RealSign::Positive) => {
                         Classification::Decided(std::cmp::Ordering::Less)
                     }
@@ -33638,7 +32749,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &self.data.policy,
             );
         }
-        if let Some(system) = self.chord_normal_dense_system() {
+        if let Some(system) = self.chord_normal_projective_system() {
             let point = match axis {
                 Axis2::X => &system.geometry.point_x,
                 Axis2::Y => &system.geometry.point_y,
@@ -33661,35 +32772,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             return Ok(self
                 .chord_normal_dense_quotient_numerator_sign(contact, &numerator)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
-        }
-        if let Some(system) = self.chord_normal_projective_system() {
-            let point = match axis {
-                Axis2::X => &system.geometry.point_x,
-                Axis2::Y => &system.geometry.point_y,
-            };
-            let Some(offset) = BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                system
-                    .geometry
-                    .common_denominator
-                    .scale(value)
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a projective chord coordinate exceeded its tensor budget".into(),
-                        )
-                    })?,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(numerator) = point.subtract(&offset) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(self
-                .chord_normal_projective_quotient_numerator_sign(contact, &numerator)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -33839,7 +32921,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &self.data.policy,
             );
         }
-        if let Some(system) = self.chord_normal_dense_system() {
+        if let Some(system) = self.chord_normal_projective_system() {
             let Some(point) = system.geometry.point_x.scale(x_factor).and_then(|x| {
                 system
                     .geometry
@@ -33868,40 +32950,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             return Ok(self
                 .chord_normal_dense_quotient_numerator_sign(contact, &numerator)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
-        }
-        if let Some(system) = self.chord_normal_projective_system() {
-            let Some(point) = system.geometry.point_x.scale(x_factor).and_then(|x| {
-                system
-                    .geometry
-                    .point_y
-                    .scale(y_factor)
-                    .and_then(|y| x.add(&y))
-            }) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(offset) = BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                system
-                    .geometry
-                    .common_denominator
-                    .scale(value)
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a projective chord linear predicate exceeded its tensor budget".into(),
-                        )
-                    })?,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(numerator) = point.subtract(&offset) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(self
-                .chord_normal_projective_quotient_numerator_sign(contact, &numerator)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -34147,7 +33195,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &self.data.policy,
             );
         }
-        if let Some(system) = self.chord_normal_dense_system() {
+        if let Some(system) = self.chord_normal_projective_system() {
             let Some(point) = self.chord_normal_dense_derived_coordinate_expression(
                 axis,
                 radial_scale,
@@ -34174,38 +33222,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             return Ok(self
                 .chord_normal_dense_quotient_numerator_sign(contact, &numerator)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
-        }
-        if let Some(system) = self.chord_normal_projective_system() {
-            let Some(point) = self.chord_normal_projective_derived_coordinate_expression(
-                axis,
-                radial_scale,
-                translation,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(offset) = BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                system
-                    .geometry
-                    .common_denominator
-                    .scale(value)
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a derived projective coordinate exceeded its tensor budget".into(),
-                        )
-                    })?,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(numerator) = point.subtract(&offset) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(self
-                .chord_normal_projective_quotient_numerator_sign(contact, &numerator)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -34378,7 +33394,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &self.data.policy,
             );
         }
-        if let Some(system) = self.chord_normal_dense_system() {
+        if let Some(system) = self.chord_normal_projective_system() {
             let (Some(x), Some(y)) = (
                 self.chord_normal_dense_rotated_derived_coordinate_expression(
                     Axis2::X,
@@ -34409,43 +33425,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             return Ok(self
                 .chord_normal_dense_quotient_numerator_sign(contact, &numerator)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
-        }
-        if let Some(system) = self.chord_normal_projective_system() {
-            let (Some(x), Some(y)) = (
-                self.chord_normal_projective_rotated_derived_coordinate_expression(
-                    Axis2::X,
-                    radial_scale,
-                    perpendicular_scale,
-                    translation_x,
-                ),
-                self.chord_normal_projective_rotated_derived_coordinate_expression(
-                    Axis2::Y,
-                    radial_scale,
-                    perpendicular_scale,
-                    translation_y,
-                ),
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(numerator) = x
-                .scale(x_factor)
-                .and_then(|x| y.scale(y_factor).and_then(|y| x.add(&y)))
-                .and_then(|point| {
-                    BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                        system.geometry.common_denominator.scale(value)?,
-                    )
-                    .and_then(|offset| point.subtract(&offset))
-                })
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(self
-                .chord_normal_projective_quotient_numerator_sign(contact, &numerator)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -34496,7 +33475,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 },
             );
         }
-        if let Some(system) = self.chord_normal_dense_system() {
+        if let Some(system) = self.chord_normal_projective_system() {
             let (Some(x), Some(y)) = (
                 self.chord_normal_dense_derived_coordinate_expression(
                     Axis2::X,
@@ -34536,52 +33515,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             return Ok(self
                 .chord_normal_dense_quotient_numerator_sign(contact, &numerator)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
-        }
-        if let Some(system) = self.chord_normal_projective_system() {
-            let (Some(x), Some(y)) = (
-                self.chord_normal_projective_derived_coordinate_expression(
-                    Axis2::X,
-                    radial_scale,
-                    translation_x,
-                ),
-                self.chord_normal_projective_derived_coordinate_expression(
-                    Axis2::Y,
-                    radial_scale,
-                    translation_y,
-                ),
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(point) = x
-                .scale(x_factor)
-                .and_then(|x| y.scale(y_factor).and_then(|y| x.add(&y)))
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(offset) = BezierQuadrivariateTwoSquareRootExpression2::from_rational(
-                system
-                    .geometry
-                    .common_denominator
-                    .scale(value)
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a derived projective linear predicate exceeded its tensor budget"
-                                .into(),
-                        )
-                    })?,
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(numerator) = point.subtract(&offset) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            return Ok(self
-                .chord_normal_projective_quotient_numerator_sign(contact, &numerator)?
                 .map(|sign| match sign {
                     RealSign::Negative => std::cmp::Ordering::Less,
                     RealSign::Zero => std::cmp::Ordering::Equal,
@@ -34783,7 +33716,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 }
             });
         }
-        if self.chord_normal_dense_system().is_some() {
+        if self.chord_normal_projective_system().is_some() {
             let difference = |axis, first_translation, second_translation| {
                 self.chord_normal_dense_derived_coordinate_expression(
                     axis,
@@ -34806,43 +33739,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             let x = self.chord_normal_dense_expression_sign(contact, &x)?;
             let y = self.chord_normal_dense_expression_sign(contact, &y)?;
-            return Ok(match (x, y) {
-                (
-                    Classification::Decided(RealSign::Zero),
-                    Classification::Decided(RealSign::Zero),
-                ) => Classification::Decided(true),
-                (Classification::Decided(RealSign::Negative | RealSign::Positive), _)
-                | (_, Classification::Decided(RealSign::Negative | RealSign::Positive)) => {
-                    Classification::Decided(false)
-                }
-                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-                    Classification::Uncertain(reason)
-                }
-            });
-        }
-        if self.chord_normal_projective_system().is_some() {
-            let difference = |axis, first_translation, second_translation| {
-                self.chord_normal_projective_derived_coordinate_expression(
-                    axis,
-                    first_radial_scale,
-                    first_translation,
-                )?
-                .subtract(
-                    &self.chord_normal_projective_derived_coordinate_expression(
-                        axis,
-                        second_radial_scale,
-                        second_translation,
-                    )?,
-                )
-            };
-            let (Some(x), Some(y)) = (
-                difference(Axis2::X, first_translation_x, second_translation_x),
-                difference(Axis2::Y, first_translation_y, second_translation_y),
-            ) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let x = self.chord_normal_projective_expression_sign(contact, &x)?;
-            let y = self.chord_normal_projective_expression_sign(contact, &y)?;
             return Ok(match (x, y) {
                 (
                     Classification::Decided(RealSign::Zero),
@@ -35009,7 +33905,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         point_y: &BezierDenseTwoSquareRootExpression2,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
-        let Some(system) = self.chord_normal_dense_system() else {
+        let Some(system) = self.chord_normal_projective_system() else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         let Ok(target) = self.chord_normal_projective_parameter(contact) else {
@@ -35048,71 +33944,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         ))
     }
 
-    fn chord_normal_projective_expressions_bounds_refined(
-        &self,
-        contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        point_x: &BezierQuadrivariateTwoSquareRootExpression2,
-        point_y: &BezierQuadrivariateTwoSquareRootExpression2,
-        refinement_steps: usize,
-    ) -> Classification<Aabb2> {
-        let Some(system) = self.chord_normal_projective_system() else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let Ok(target) = self.chord_normal_projective_parameter(contact) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let parameters = [
-            &system.projective.source_parameters[0],
-            &system.projective.source_parameters[1],
-            &system.projective.source_parameters[2],
-            target,
-        ]
-        .map(|parameter| {
-            parameter
-                .clone()
-                .refined_isolating_interval(refinement_steps, &CurveContext::STRICT)
-        });
-        let parameter_intervals = parameters
-            .each_ref()
-            .map(BezierAlgebraicChordRealInterval2::from_parameter);
-        let Some(common_denominator) =
-            BezierAlgebraicChordRealInterval2::evaluate_quadrivariate_power_basis(
-                &system.geometry.common_denominator,
-                [
-                    &parameter_intervals[0],
-                    &parameter_intervals[1],
-                    &parameter_intervals[2],
-                    &parameter_intervals[3],
-                ],
-                &CurveContext::STRICT,
-            )
-        else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        let parameter_refs = [
-            &parameters[0],
-            &parameters[1],
-            &parameters[2],
-            &parameters[3],
-        ];
-        let coordinate = |expression| {
-            quadrivariate_two_positive_square_root_interval(
-                expression,
-                &system.projective.first_speed_squared,
-                &system.projective.second_speed_squared,
-                parameter_refs,
-            )?
-            .divide(&common_denominator, &CurveContext::STRICT)
-        };
-        let (Some(x), Some(y)) = (coordinate(point_x), coordinate(point_y)) else {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        };
-        Classification::Decided(Aabb2::new_unchecked(
-            Point2::new(x.lower, y.lower),
-            Point2::new(x.upper, y.upper),
-        ))
-    }
-
     fn contact_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
@@ -35134,16 +33965,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         if let Some(system) = self.recursive_quadratic_line_system() {
             return system.contact_bounds_refined(contact, refinement_steps);
         }
-        if let Some(system) = self.chord_normal_dense_system() {
-            return self.chord_normal_dense_expressions_bounds_refined(
-                contact,
-                &system.geometry.point_x,
-                &system.geometry.point_y,
-                refinement_steps,
-            );
-        }
         if let Some(system) = self.chord_normal_projective_system() {
-            return self.chord_normal_projective_expressions_bounds_refined(
+            return self.chord_normal_dense_expressions_bounds_refined(
                 contact,
                 &system.geometry.point_x,
                 &system.geometry.point_y,
@@ -35252,7 +34075,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 refinement_steps,
             );
         }
-        if self.chord_normal_dense_system().is_some() {
+        if self.chord_normal_projective_system().is_some() {
             let (Some(point_x), Some(point_y)) = (
                 self.chord_normal_dense_derived_coordinate_expression(
                     Axis2::X,
@@ -35268,28 +34091,6 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 return Classification::Uncertain(UncertaintyReason::Unsupported);
             };
             return self.chord_normal_dense_expressions_bounds_refined(
-                contact,
-                &point_x,
-                &point_y,
-                refinement_steps,
-            );
-        }
-        if self.chord_normal_projective_system().is_some() {
-            let (Some(point_x), Some(point_y)) = (
-                self.chord_normal_projective_derived_coordinate_expression(
-                    Axis2::X,
-                    radial_scale,
-                    translation_x,
-                ),
-                self.chord_normal_projective_derived_coordinate_expression(
-                    Axis2::Y,
-                    radial_scale,
-                    translation_y,
-                ),
-            ) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            return self.chord_normal_projective_expressions_bounds_refined(
                 contact,
                 &point_x,
                 &point_y,
@@ -35720,8 +34521,11 @@ impl BezierAlgebraicCuspChordPoint2 {
     }
 
     #[cfg(test)]
-    pub(crate) fn uses_dense_chord_normal_projective_map(&self) -> bool {
-        self.map_contact().0.chord_normal_dense_system().is_some()
+    pub(crate) fn uses_chord_normal_projective_map(&self) -> bool {
+        self.map_contact()
+            .0
+            .chord_normal_projective_system()
+            .is_some()
     }
 
     fn translated(
@@ -35776,10 +34580,8 @@ impl BezierAlgebraicCuspChordPoint2 {
             ))
         } else if map.axis_system().is_some() {
             map.axis_represented_coordinates(contact)
-        } else if map.chord_normal_dense_system().is_some() {
-            map.chord_normal_dense_represented_coordinates(contact)
         } else if map.chord_normal_projective_system().is_some() {
-            map.chord_normal_projective_represented_coordinates(contact)
+            map.chord_normal_dense_represented_coordinates(contact)
         } else {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
@@ -41611,59 +40413,6 @@ impl QuadrivariatePolynomial2 {
         })
     }
 
-    fn from_dense(polynomial: &DenseTensorPolynomial) -> Option<Self> {
-        let dimensions: [usize; 4] = polynomial.dimensions().try_into().ok()?;
-        Self::try_new(dimensions, polynomial.coefficients().to_vec())
-    }
-
-    fn lift_dense_last_axis_to_fourth(polynomial: &DenseTensorPolynomial) -> Option<Self> {
-        let source_dimensions = polynomial.dimensions();
-        if source_dimensions.is_empty() || source_dimensions.len() > 4 {
-            return None;
-        }
-        if source_dimensions.len() == 4 {
-            return Self::from_dense(polynomial);
-        }
-        let source_count = source_dimensions.len() - 1;
-        let mut dimensions = [1; 4];
-        dimensions[..source_count].copy_from_slice(&source_dimensions[..source_count]);
-        dimensions[3] = source_dimensions[source_count];
-        let mut result = Self::zero(dimensions)?;
-        for (index, coefficient) in polynomial.coefficients().iter().enumerate() {
-            let mut remaining = index;
-            let mut source_exponents = vec![0; source_dimensions.len()];
-            for axis in (0..source_dimensions.len()).rev() {
-                source_exponents[axis] = remaining % source_dimensions[axis];
-                remaining /= source_dimensions[axis];
-            }
-            let mut target_exponents = [0; 4];
-            target_exponents[..source_count].copy_from_slice(&source_exponents[..source_count]);
-            target_exponents[3] = source_exponents[source_count];
-            result.coefficients[Self::flat_index(dimensions, target_exponents)] =
-                coefficient.clone();
-        }
-        Some(result)
-    }
-
-    fn to_dense(&self) -> Option<DenseTensorPolynomial> {
-        DenseTensorPolynomial::try_new(self.dimensions.to_vec(), self.coefficients.clone())
-    }
-
-    fn to_dense_with_output_axis(&self) -> Option<DenseTensorPolynomial> {
-        let mut dimensions = self.dimensions.to_vec();
-        dimensions.push(1);
-        DenseTensorPolynomial::try_new(dimensions, self.coefficients.clone())
-    }
-
-    fn compact_exact_rational_coefficients(mut self) -> Self {
-        for coefficient in &mut self.coefficients {
-            if let Some(rational) = coefficient.exact_rational_normal_form() {
-                *coefficient = Real::new(rational);
-            }
-        }
-        self
-    }
-
     fn zero(dimensions: [usize; 4]) -> Option<Self> {
         let count = dimensions
             .into_iter()
@@ -41898,246 +40647,6 @@ impl QuadrivariatePolynomial2 {
 
     fn from_solver(polynomial: &SolverTrivariatePolynomial) -> Option<TrivariatePolynomial2> {
         TrivariatePolynomial2::from_coefficients(polynomial.coefficients.clone())
-    }
-}
-
-impl BezierQuadrivariateTwoSquareRootExpression2 {
-    fn from_rational(rational: QuadrivariatePolynomial2) -> Option<Self> {
-        let zero = QuadrivariatePolynomial2::zero([1; 4])?;
-        Some(Self {
-            rational,
-            first: zero.clone(),
-            second: zero.clone(),
-            product: zero,
-        })
-    }
-
-    fn from_first_radical(first: QuadrivariatePolynomial2) -> Option<Self> {
-        let zero = QuadrivariatePolynomial2::zero([1; 4])?;
-        Some(Self {
-            rational: zero.clone(),
-            first,
-            second: zero.clone(),
-            product: zero,
-        })
-    }
-
-    fn from_second_radical(second: QuadrivariatePolynomial2) -> Option<Self> {
-        let zero = QuadrivariatePolynomial2::zero([1; 4])?;
-        Some(Self {
-            rational: zero.clone(),
-            first: zero.clone(),
-            second,
-            product: zero,
-        })
-    }
-
-    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
-        Some(Self {
-            rational: if subtract {
-                self.rational.subtract(&other.rational)?
-            } else {
-                self.rational.add(&other.rational)?
-            },
-            first: if subtract {
-                self.first.subtract(&other.first)?
-            } else {
-                self.first.add(&other.first)?
-            },
-            second: if subtract {
-                self.second.subtract(&other.second)?
-            } else {
-                self.second.add(&other.second)?
-            },
-            product: if subtract {
-                self.product.subtract(&other.product)?
-            } else {
-                self.product.add(&other.product)?
-            },
-        })
-    }
-
-    fn add(&self, other: &Self) -> Option<Self> {
-        self.combine(other, false)
-    }
-
-    fn subtract(&self, other: &Self) -> Option<Self> {
-        self.combine(other, true)
-    }
-
-    fn scale(&self, scale: &Real) -> Option<Self> {
-        Some(Self {
-            rational: self.rational.scale(scale)?,
-            first: self.first.scale(scale)?,
-            second: self.second.scale(scale)?,
-            product: self.product.scale(scale)?,
-        })
-    }
-
-    fn multiply_rational(&self, polynomial: &QuadrivariatePolynomial2) -> Option<Self> {
-        Some(Self {
-            rational: self.rational.multiply(polynomial)?,
-            first: self.first.multiply(polynomial)?,
-            second: self.second.multiply(polynomial)?,
-            product: self.product.multiply(polynomial)?,
-        })
-    }
-
-    fn multiply(
-        &self,
-        other: &Self,
-        first_speed_squared: &QuadrivariatePolynomial2,
-        second_speed_squared: &QuadrivariatePolynomial2,
-    ) -> Option<Self> {
-        let speed_product = first_speed_squared.multiply(second_speed_squared)?;
-        let rational = self
-            .rational
-            .multiply(&other.rational)?
-            .add(
-                &self
-                    .first
-                    .multiply(&other.first)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .second
-                    .multiply(&other.second)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.product)?
-                    .multiply(&speed_product)?,
-            )?;
-        let first = self
-            .rational
-            .multiply(&other.first)?
-            .add(&self.first.multiply(&other.rational)?)?
-            .add(
-                &self
-                    .second
-                    .multiply(&other.product)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.second)?
-                    .multiply(second_speed_squared)?,
-            )?;
-        let second = self
-            .rational
-            .multiply(&other.second)?
-            .add(&self.second.multiply(&other.rational)?)?
-            .add(
-                &self
-                    .first
-                    .multiply(&other.product)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.first)?
-                    .multiply(first_speed_squared)?,
-            )?;
-        let product = self
-            .rational
-            .multiply(&other.product)?
-            .add(&self.product.multiply(&other.rational)?)?
-            .add(&self.first.multiply(&other.second)?)?
-            .add(&self.second.multiply(&other.first)?)?;
-        Some(Self {
-            rational,
-            first,
-            second,
-            product,
-        })
-    }
-
-    fn square(
-        &self,
-        first_speed_squared: &QuadrivariatePolynomial2,
-        second_speed_squared: &QuadrivariatePolynomial2,
-    ) -> Option<Self> {
-        self.multiply(self, first_speed_squared, second_speed_squared)
-    }
-
-    fn reduced(&self, parameters: [&BezierParameter2; 3]) -> Option<Self> {
-        Some(Self {
-            rational: quadrivariate_reduce_three_selected_root_relations(
-                self.rational.clone(),
-                parameters,
-            )?,
-            first: quadrivariate_reduce_three_selected_root_relations(
-                self.first.clone(),
-                parameters,
-            )?,
-            second: quadrivariate_reduce_three_selected_root_relations(
-                self.second.clone(),
-                parameters,
-            )?,
-            product: quadrivariate_reduce_three_selected_root_relations(
-                self.product.clone(),
-                parameters,
-            )?,
-        })
-    }
-
-    /// Complete norm used only for target-root enumeration.  Every admitted
-    /// root is subsequently replayed against this unsquared authored sheet.
-    fn projection(
-        &self,
-        first_speed_squared: &QuadrivariatePolynomial2,
-        second_speed_squared: &QuadrivariatePolynomial2,
-        parameters: [&BezierParameter2; 3],
-    ) -> Option<QuadrivariatePolynomial2> {
-        let expression = self.reduced(parameters)?;
-        let first_speed_squared = quadrivariate_reduce_three_selected_root_relations(
-            first_speed_squared.clone(),
-            parameters,
-        )?;
-        let second_speed_squared = quadrivariate_reduce_three_selected_root_relations(
-            second_speed_squared.clone(),
-            parameters,
-        )?;
-        let reduce =
-            |polynomial| quadrivariate_reduce_three_selected_root_relations(polynomial, parameters);
-        let rational_squared = reduce(expression.rational.multiply(&expression.rational)?)?;
-        let first_squared = reduce(expression.first.multiply(&expression.first)?)?;
-        let second_squared = reduce(expression.second.multiply(&expression.second)?)?;
-        let product_squared = reduce(expression.product.multiply(&expression.product)?)?;
-        let retained_rational = reduce(
-            rational_squared
-                .add(&reduce(first_squared.multiply(&first_speed_squared)?)?)?
-                .subtract(&reduce(
-                    second_speed_squared.multiply(
-                        &second_squared
-                            .add(&reduce(product_squared.multiply(&first_speed_squared)?)?)?,
-                    )?,
-                )?)?,
-        )?;
-        let retained_radical = reduce(
-            expression
-                .rational
-                .multiply(&expression.first)?
-                .subtract(&reduce(
-                    second_speed_squared
-                        .multiply(&expression.second.multiply(&expression.product)?)?,
-                )?)?
-                .scale(&Real::from(2_i8))?,
-        )?;
-        reduce(
-            retained_rational
-                .multiply(&retained_rational)?
-                .subtract(&reduce(
-                    retained_radical
-                        .multiply(&retained_radical)?
-                        .multiply(&first_speed_squared)?,
-                )?)?,
-        )
     }
 }
 
@@ -47515,169 +46024,6 @@ fn quadrivariate_reduce_axis_mod_defining(
     Some(reduced)
 }
 
-fn quadrivariate_reduce_three_selected_root_relations(
-    mut polynomial: QuadrivariatePolynomial2,
-    parameters: [&BezierParameter2; 3],
-) -> Option<QuadrivariatePolynomial2> {
-    for (axis, parameter) in parameters.into_iter().enumerate() {
-        let defining = match parameter {
-            BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
-            BezierParameter2::Algebraic(parameter) => {
-                parameter.polynomial().coefficients().to_vec()
-            }
-        };
-        polynomial = quadrivariate_reduce_axis_mod_defining(polynomial, axis, &defining)?;
-    }
-    Some(polynomial)
-}
-
-fn quadrivariate_axis_coefficient(
-    polynomial: &QuadrivariatePolynomial2,
-    axis: usize,
-    power: usize,
-) -> Option<QuadrivariatePolynomial2> {
-    if axis >= 4 || power >= polynomial.dimensions[axis] {
-        return None;
-    }
-    let mut dimensions = polynomial.dimensions;
-    dimensions[axis] = 1;
-    let mut coefficient = QuadrivariatePolynomial2::zero(dimensions)?;
-    for (index, value) in polynomial.coefficients.iter().enumerate() {
-        let mut exponents = QuadrivariatePolynomial2::exponents(polynomial.dimensions, index);
-        if exponents[axis] != power {
-            continue;
-        }
-        exponents[axis] = 0;
-        coefficient.coefficients[QuadrivariatePolynomial2::flat_index(dimensions, exponents)] =
-            value.clone();
-    }
-    Some(coefficient)
-}
-
-/// Projects three selected source roots from a four-axis tensor.  Quotient
-/// reduction makes the ubiquitous quadratic selected source linear, allowing
-/// the exact homogeneous identity
-/// `Res(A+B*x,Q)=sum q_i*(-A)^i*B^(n-i)` to replace an interpolated Sylvester
-/// determinant.  Higher-degree selected fields fall back to the generic dense
-/// authority in the caller.
-fn selected_quadrivariate_fourth_axis_parameters(
-    polynomial: &QuadrivariatePolynomial2,
-    source_parameters: [&BezierParameter2; 3],
-    domain: SelectedThirdAxisDomain2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<Option<Classification<BezierAlgebraicFiberProjection2>>> {
-    let defining = |parameter: &BezierParameter2| match parameter {
-        BezierParameter2::Exact(parameter) => vec![-parameter.clone(), Real::one()],
-        BezierParameter2::Algebraic(parameter) => parameter.polynomial().coefficients().to_vec(),
-    };
-    let mut projection = polynomial.clone();
-    for (axis, parameter) in source_parameters.into_iter().enumerate() {
-        let constraint = defining(parameter);
-        let Some(reduced) = quadrivariate_reduce_axis_mod_defining(projection, axis, &constraint)
-        else {
-            return Ok(None);
-        };
-        projection = reduced;
-        if projection.dimensions[axis] == 1 {
-            continue;
-        }
-        if projection.dimensions[axis] != 2 {
-            return Ok(None);
-        }
-        let Some(constant) = quadrivariate_axis_coefficient(&projection, axis, 0) else {
-            return Ok(None);
-        };
-        let Some(linear) = quadrivariate_axis_coefficient(&projection, axis, 1) else {
-            return Ok(None);
-        };
-        let degree = constraint.len().saturating_sub(1);
-        let one = QuadrivariatePolynomial2::from_axis_polynomial(&[Real::one()], axis)
-            .expect("a constant four-axis tensor fits");
-        let mut constant_powers = Vec::with_capacity(degree + 1);
-        let mut linear_powers = Vec::with_capacity(degree + 1);
-        constant_powers.push(one.clone());
-        linear_powers.push(one.clone());
-        for power in 1..=degree {
-            let Some(next_constant) =
-                constant_powers[power - 1]
-                    .multiply(&constant)
-                    .and_then(|value| {
-                        quadrivariate_reduce_three_selected_root_relations(value, source_parameters)
-                    })
-            else {
-                return Ok(None);
-            };
-            let Some(next_linear) = linear_powers[power - 1]
-                .multiply(&linear)
-                .and_then(|value| {
-                    quadrivariate_reduce_three_selected_root_relations(value, source_parameters)
-                })
-            else {
-                return Ok(None);
-            };
-            constant_powers.push(next_constant);
-            linear_powers.push(next_linear);
-        }
-        let mut resultant = one.scale(&Real::zero()).expect("a zero tensor fits");
-        for (power, coefficient) in constraint.iter().enumerate() {
-            let signed_coefficient = if power % 2 == 0 {
-                coefficient.clone()
-            } else {
-                -coefficient.clone()
-            };
-            let Some(term) = constant_powers[power]
-                .multiply(&linear_powers[degree - power])
-                .and_then(|value| value.scale(&signed_coefficient))
-                .and_then(|value| resultant.add(&value))
-                .and_then(|value| {
-                    quadrivariate_reduce_three_selected_root_relations(value, source_parameters)
-                })
-            else {
-                return Ok(None);
-            };
-            resultant = term;
-        }
-        projection = resultant.compact_exact_rational_coefficients();
-    }
-    if projection.dimensions[..3] != [1, 1, 1] {
-        return Ok(None);
-    }
-    let mut coefficients = Vec::with_capacity(projection.dimensions[3]);
-    for power in 0..projection.dimensions[3] {
-        coefficients.push(
-            projection
-                .coefficient([0, 0, 0, power])
-                .cloned()
-                .unwrap_or_else(Real::zero),
-        );
-    }
-    match polynomial_coefficients_are_identically_zero(&coefficients, policy) {
-        Classification::Decided(true) => {
-            return Ok(Some(Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero,
-            )));
-        }
-        Classification::Decided(false) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(Some(Classification::Uncertain(reason)));
-        }
-    }
-    let coefficients =
-        hypersolve::square_free_part(coefficients.clone(), hypersolve::PredicatePolicy::STRICT)
-            .unwrap_or(coefficients);
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Some(Classification::Uncertain(reason)));
-        }
-    };
-    Ok(Some(
-        domain
-            .isolate(&polynomial, policy)?
-            .map(BezierAlgebraicFiberProjection2::Parameters),
-    ))
-}
-
 fn quadrivariate_reduce_selected_root_relations(
     polynomial: &QuadrivariatePolynomial2,
     parameters: [&BezierParameter2; 4],
@@ -47834,155 +46180,6 @@ fn quadrivariate_parameter_tuple_bounded_box_sign(
             )?,
         )? {
             return Ok(Some(sign));
-        }
-    }
-    Ok(None)
-}
-
-fn quadrivariate_two_positive_square_root_box_sign(
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    first_speed_squared: &QuadrivariatePolynomial2,
-    second_speed_squared: &QuadrivariatePolynomial2,
-    parameters: [&BezierParameter2; 4],
-    maximum_steps: usize,
-) -> CurveResult<Option<RealSign>> {
-    let strict = &CurveContext::STRICT;
-    let mut refinements =
-        parameters.map(|parameter| BezierParameterRefinement2::new(parameter, strict));
-    for target_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        if target_steps > maximum_steps {
-            break;
-        }
-        let refined: [BezierParameter2; 4] =
-            std::array::from_fn(|axis| refinements[axis].refine_to(target_steps).clone());
-        let parameters = [&refined[0], &refined[1], &refined[2], &refined[3]];
-        let Some(value) = quadrivariate_two_positive_square_root_interval(
-            expression,
-            first_speed_squared,
-            second_speed_squared,
-            parameters,
-        ) else {
-            continue;
-        };
-        if compare_reals(&value.upper, &Real::zero(), strict) == Some(std::cmp::Ordering::Less) {
-            return Ok(Some(RealSign::Negative));
-        }
-        if compare_reals(&value.lower, &Real::zero(), strict) == Some(std::cmp::Ordering::Greater) {
-            return Ok(Some(RealSign::Positive));
-        }
-        if value.lower.zero_status() == ZeroStatus::Zero
-            && value.upper.zero_status() == ZeroStatus::Zero
-        {
-            return Ok(Some(RealSign::Zero));
-        }
-    }
-    Ok(None)
-}
-
-fn quadrivariate_two_positive_square_root_interval(
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    first_speed_squared: &QuadrivariatePolynomial2,
-    second_speed_squared: &QuadrivariatePolynomial2,
-    parameters: [&BezierParameter2; 4],
-) -> Option<BezierAlgebraicChordRealInterval2> {
-    let strict = &CurveContext::STRICT;
-    let parameter_intervals = parameters.map(|parameter| {
-        let (lower, upper) = parameter_bounds(parameter);
-        BezierAlgebraicChordRealInterval2 {
-            lower: lower.clone(),
-            upper: upper.clone(),
-        }
-    });
-    let interval = |polynomial: &QuadrivariatePolynomial2| {
-        BezierAlgebraicChordRealInterval2::evaluate_quadrivariate_power_basis(
-            polynomial,
-            [
-                &parameter_intervals[0],
-                &parameter_intervals[1],
-                &parameter_intervals[2],
-                &parameter_intervals[3],
-            ],
-            strict,
-        )
-    };
-    let first_speed = interval(first_speed_squared)?.nonnegative_square_root(strict)?;
-    let second_speed = interval(second_speed_squared)?.nonnegative_square_root(strict)?;
-    let product_speed = first_speed.multiply(&second_speed, strict)?;
-    let value = interval(&expression.rational)?;
-    let value = value.add(&interval(&expression.first)?.multiply(&first_speed, strict)?);
-    let value = value.add(&interval(&expression.second)?.multiply(&second_speed, strict)?);
-    Some(value.add(&interval(&expression.product)?.multiply(&product_speed, strict)?))
-}
-
-/// Certifies whether one isolated norm root is a transverse zero on the two
-/// authored positive speed sheets.  Opposite strict face signs are an exact
-/// continuity witness; exclusion of zero on the full selected box rejects a
-/// conjugate norm root.  Tangencies deliberately return `None` for the exact
-/// common-root replay.
-fn quadrivariate_two_positive_square_root_transverse_root(
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    first_speed_squared: &QuadrivariatePolynomial2,
-    second_speed_squared: &QuadrivariatePolynomial2,
-    source_parameters: [&BezierParameter2; 3],
-    target_parameter: &BezierParameter2,
-) -> CurveResult<Option<bool>> {
-    let strict = &CurveContext::STRICT;
-    let mut source_refinements =
-        source_parameters.map(|parameter| BezierParameterRefinement2::new(parameter, strict));
-    let mut target_refinement = BezierParameterRefinement2::new(target_parameter, strict);
-    let strict_interval_sign = |value: &BezierAlgebraicChordRealInterval2| {
-        if compare_reals(&value.upper, &Real::zero(), strict) == Some(std::cmp::Ordering::Less) {
-            Some(RealSign::Negative)
-        } else if compare_reals(&value.lower, &Real::zero(), strict)
-            == Some(std::cmp::Ordering::Greater)
-        {
-            Some(RealSign::Positive)
-        } else if value.lower.zero_status() == ZeroStatus::Zero
-            && value.upper.zero_status() == ZeroStatus::Zero
-        {
-            Some(RealSign::Zero)
-        } else {
-            None
-        }
-    };
-    for target_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let source_steps = target_steps.saturating_add(64);
-        let sources: [BezierParameter2; 3] =
-            std::array::from_fn(|axis| source_refinements[axis].refine_to(source_steps).clone());
-        let target = target_refinement.refine_to(target_steps).clone();
-        let full = quadrivariate_two_positive_square_root_interval(
-            expression,
-            first_speed_squared,
-            second_speed_squared,
-            [&sources[0], &sources[1], &sources[2], &target],
-        );
-        if matches!(
-            full.as_ref().and_then(&strict_interval_sign),
-            Some(RealSign::Negative | RealSign::Positive)
-        ) {
-            return Ok(Some(false));
-        }
-        let (lower, upper) = parameter_bounds(&target);
-        let lower = BezierParameter2::Exact(lower.clone());
-        let upper = BezierParameter2::Exact(upper.clone());
-        let lower_sign = quadrivariate_two_positive_square_root_interval(
-            expression,
-            first_speed_squared,
-            second_speed_squared,
-            [&sources[0], &sources[1], &sources[2], &lower],
-        )
-        .as_ref()
-        .and_then(&strict_interval_sign);
-        let upper_sign = quadrivariate_two_positive_square_root_interval(
-            expression,
-            first_speed_squared,
-            second_speed_squared,
-            [&sources[0], &sources[1], &sources[2], &upper],
-        )
-        .as_ref()
-        .and_then(&strict_interval_sign);
-        if strict_signs_are_opposite(lower_sign, upper_sign) {
-            return Ok(Some(true));
         }
     }
     Ok(None)
@@ -48323,154 +46520,6 @@ fn quadrivariate_parameter_tuple_sign_by_refinement(
     } else {
         Ok(Classification::Uncertain(UncertaintyReason::Predicate))
     }
-}
-
-fn quadrivariate_positive_square_root_sum_sign(
-    rational: &QuadrivariatePolynomial2,
-    radical: &QuadrivariatePolynomial2,
-    radicand: &QuadrivariatePolynomial2,
-    parameters: [&BezierParameter2; 4],
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    let rational_sign =
-        match quadrivariate_parameter_tuple_sign_by_refinement(rational, parameters, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let radical_sign =
-        match quadrivariate_parameter_tuple_sign_by_refinement(radical, parameters, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    match (rational_sign, radical_sign) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-    let Some(magnitude) = rational.multiply(rational).and_then(|rational_squared| {
-        radical
-            .multiply(radical)
-            .and_then(|radical_squared| radical_squared.multiply(radicand))
-            .and_then(|radical_squared| rational_squared.subtract(&radical_squared))
-    }) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    Ok(
-        match quadrivariate_parameter_tuple_sign_by_refinement(&magnitude, parameters, policy)? {
-            Classification::Decided(RealSign::Positive) => Classification::Decided(rational_sign),
-            Classification::Decided(RealSign::Negative) => Classification::Decided(radical_sign),
-            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
-}
-
-fn quadrivariate_two_positive_square_root_sum_sign(
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    first_speed_squared: &QuadrivariatePolynomial2,
-    second_speed_squared: &QuadrivariatePolynomial2,
-    parameters: [&BezierParameter2; 4],
-    policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
-    let retained = match quadrivariate_positive_square_root_sum_sign(
-        &expression.rational,
-        &expression.first,
-        first_speed_squared,
-        parameters,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidate = match quadrivariate_positive_square_root_sum_sign(
-        &expression.second,
-        &expression.product,
-        first_speed_squared,
-        parameters,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    match (retained, candidate) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-
-    // Eliminate the second positive speed while retaining the first:
-    // `(R+A*u)^2-T*(B+P*u)^2`.
-    let Some(norm_rational) = expression
-        .rational
-        .multiply(&expression.rational)
-        .and_then(|rational_squared| {
-            expression
-                .first
-                .multiply(&expression.first)
-                .and_then(|first_squared| first_squared.multiply(first_speed_squared))
-                .and_then(|first_squared| rational_squared.add(&first_squared))
-        })
-        .and_then(|retained_squared| {
-            expression
-                .second
-                .multiply(&expression.second)
-                .and_then(|second_squared| {
-                    expression
-                        .product
-                        .multiply(&expression.product)
-                        .and_then(|product_squared| product_squared.multiply(first_speed_squared))
-                        .and_then(|product_squared| second_squared.add(&product_squared))
-                })
-                .and_then(|candidate_squared| candidate_squared.multiply(second_speed_squared))
-                .and_then(|candidate_squared| retained_squared.subtract(&candidate_squared))
-        })
-    else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let Some(norm_radical) = expression
-        .rational
-        .multiply(&expression.first)
-        .and_then(|retained_product| {
-            expression
-                .second
-                .multiply(&expression.product)
-                .and_then(|candidate_product| candidate_product.multiply(second_speed_squared))
-                .and_then(|candidate_product| retained_product.subtract(&candidate_product))
-        })
-        .and_then(|radical| radical.scale(&Real::from(2_i8)))
-    else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    Ok(
-        match quadrivariate_positive_square_root_sum_sign(
-            &norm_rational,
-            &norm_radical,
-            first_speed_squared,
-            parameters,
-            policy,
-        )? {
-            Classification::Decided(RealSign::Positive) => Classification::Decided(retained),
-            Classification::Decided(RealSign::Negative) => Classification::Decided(candidate),
-            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
 }
 
 fn dense_tensor_with_output_axis(
@@ -49313,162 +47362,6 @@ fn chord_normal_dense_expression_parameters(
                     }
                 }
             }
-        }
-    }
-    Ok(Classification::Decided(
-        BezierAlgebraicFiberProjection2::Parameters(retained),
-    ))
-}
-
-impl BezierChordNormalProjectiveMapSystem2 {
-    fn expression_sign(
-        &self,
-        expression: &BezierQuadrivariateTwoSquareRootExpression2,
-        target_parameter: &BezierParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        let parameters = [
-            &self.source_parameters[0],
-            &self.source_parameters[1],
-            &self.source_parameters[2],
-            target_parameter,
-        ];
-        if let Some(sign) = quadrivariate_two_positive_square_root_box_sign(
-            expression,
-            &self.first_speed_squared,
-            &self.second_speed_squared,
-            parameters,
-            64,
-        )? {
-            return Ok(Classification::Decided(sign));
-        }
-        quadrivariate_two_positive_square_root_sum_sign(
-            expression,
-            &self.first_speed_squared,
-            &self.second_speed_squared,
-            parameters,
-            policy,
-        )
-    }
-}
-
-fn chord_normal_projective_expression_is_identically_zero(
-    map: &BezierChordNormalProjectiveMapSystem2,
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let target_count = [
-        expression.rational.dimensions[3],
-        expression.first.dimensions[3],
-        expression.second.dimensions[3],
-        expression.product.dimensions[3],
-    ]
-    .into_iter()
-    .max()
-    .unwrap_or(1);
-    let zero = QuadrivariatePolynomial2::zero([1; 4])
-        .expect("a zero coefficient tensor fits the four-field budget");
-    let coefficient = |polynomial: &QuadrivariatePolynomial2, power| {
-        quadrivariate_axis_coefficient(polynomial, 3, power).unwrap_or_else(|| zero.clone())
-    };
-    for power in 0..target_count {
-        let coefficient = BezierQuadrivariateTwoSquareRootExpression2 {
-            rational: coefficient(&expression.rational, power),
-            first: coefficient(&expression.first, power),
-            second: coefficient(&expression.second, power),
-            product: coefficient(&expression.product, power),
-        };
-        match map.expression_sign(&coefficient, &BezierParameter2::Exact(Real::zero()), policy)? {
-            Classification::Decided(RealSign::Zero) => {}
-            Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                return Ok(Classification::Decided(false));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-    }
-    Ok(Classification::Decided(true))
-}
-
-fn chord_normal_projective_expression_parameters(
-    map: &BezierChordNormalProjectiveMapSystem2,
-    source_representations: &[AlgebraicRootRepresentation; 3],
-    expression: &BezierQuadrivariateTwoSquareRootExpression2,
-    domain: SelectedThirdAxisDomain2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let source_parameters = [
-        &map.source_parameters[0],
-        &map.source_parameters[1],
-        &map.source_parameters[2],
-    ];
-    let Some(projection) = expression.projection(
-        &map.first_speed_squared,
-        &map.second_speed_squared,
-        source_parameters,
-    ) else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
-    let projected = if let Some(projected) = selected_quadrivariate_fourth_axis_parameters(
-        &projection,
-        source_parameters,
-        domain,
-        policy,
-    )? {
-        projected
-    } else {
-        let Some(projection) = projection.to_dense() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        selected_dense_last_axis_parameters(&projection, source_representations, domain, policy)?
-    };
-    let candidates = match projected {
-        Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-            candidates
-        }
-        Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-            return Ok(
-                match chord_normal_projective_expression_is_identically_zero(
-                    map, expression, policy,
-                )? {
-                    Classification::Decided(true) => {
-                        Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
-                    }
-                    Classification::Decided(false) => {
-                        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                },
-            );
-        }
-        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
-            return Ok(Classification::Decided(
-                BezierAlgebraicFiberProjection2::Degenerate,
-            ));
-        }
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let mut retained = Vec::with_capacity(candidates.len());
-    for candidate in candidates {
-        match quadrivariate_two_positive_square_root_transverse_root(
-            expression,
-            &map.first_speed_squared,
-            &map.second_speed_squared,
-            source_parameters,
-            &candidate,
-        )? {
-            Some(true) => retained.push(candidate),
-            Some(false) => {}
-            None => match map.expression_sign(expression, &candidate, policy)? {
-                Classification::Decided(RealSign::Zero) => retained.push(candidate),
-                Classification::Decided(RealSign::Negative | RealSign::Positive) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
         }
     }
     Ok(Classification::Decided(
@@ -103866,55 +101759,45 @@ mod conversion_tests {
         ]
     }
 
-    fn exact_chord_normal_projective_test_map() -> (
-        BezierChordNormalProjectiveMapSystem2,
-        [AlgebraicRootRepresentation; 3],
-    ) {
-        let source_parameters = std::array::from_fn(|_| BezierParameter2::Exact(Real::zero()));
-        let source_representations =
-            std::array::from_fn(|_| exact_real_algebraic_representation(&Real::zero()));
-        let one = QuadrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0).unwrap();
-        let zero = QuadrivariatePolynomial2::zero([1; 4]).unwrap();
-        let zero_expression = BezierQuadrivariateTwoSquareRootExpression2 {
+    fn exact_chord_normal_dense_test_map() -> BezierChordNormalDenseMapSystem2 {
+        let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
+        let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
+        let zero_expression = BezierDenseTwoSquareRootExpression2 {
             rational: zero.clone(),
             first: zero.clone(),
             second: zero.clone(),
             product: zero.clone(),
         };
-        (
-            BezierChordNormalProjectiveMapSystem2 {
-                source_parameters,
-                first_speed_squared: one.clone(),
-                second_speed_squared: one,
-                diameter: zero_expression.clone(),
-                radius_squared_denominator: zero_expression,
-            },
-            source_representations,
-        )
+        BezierChordNormalDenseMapSystem2 {
+            source_representations: Vec::new(),
+            first_speed_squared: one.clone(),
+            second_speed_squared: one,
+            diameter: zero_expression.clone(),
+            radius_squared_denominator: zero_expression,
+        }
     }
 
     #[test]
-    fn chord_normal_projective_sheet_replay_rejects_conjugate_roots() {
-        let (map, sources) = exact_chord_normal_projective_test_map();
+    fn chord_normal_dense_sheet_replay_rejects_conjugate_roots() {
+        let map = exact_chord_normal_dense_test_map();
         let tenth = (Real::one() / Real::from(10_i8)).unwrap();
         let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let zero = QuadrivariatePolynomial2::zero([1; 4]).unwrap();
+        let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
         // t - 1/2 + sqrt(1)/10 + sqrt(1)/10 has the authored root 3/10.
         // Its complete norm also contains the conjugate roots 1/2 and 7/10;
         // only positive-positive sheet replay may publish topology.
-        let expression = BezierQuadrivariateTwoSquareRootExpression2 {
-            rational: QuadrivariatePolynomial2::from_axis_polynomial(&[-half, Real::one()], 3)
+        let expression = BezierDenseTwoSquareRootExpression2 {
+            rational: DenseTensorPolynomial::from_axis_polynomial(1, 0, &[-half, Real::one()])
                 .unwrap(),
-            first: QuadrivariatePolynomial2::from_axis_polynomial(std::slice::from_ref(&tenth), 0)
+            first: DenseTensorPolynomial::from_axis_polynomial(1, 0, std::slice::from_ref(&tenth))
                 .unwrap(),
-            second: QuadrivariatePolynomial2::from_axis_polynomial(&[tenth], 0).unwrap(),
+            second: DenseTensorPolynomial::from_axis_polynomial(1, 0, &[tenth]).unwrap(),
             product: zero,
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
-                chord_normal_projective_expression_parameters(
+                chord_normal_dense_expression_parameters(
                     &map,
-                    &sources,
                     &expression,
                     SelectedThirdAxisDomain2::UnitInterval,
                     &policy,
@@ -103937,21 +101820,22 @@ mod conversion_tests {
     }
 
     #[test]
-    fn chord_normal_projective_sheet_replay_keeps_even_roots_and_zero_components() {
-        let (map, sources) = exact_chord_normal_projective_test_map();
+    fn chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components() {
+        let map = exact_chord_normal_dense_test_map();
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-        let zero = QuadrivariatePolynomial2::zero([1; 4]).unwrap();
-        let even = BezierQuadrivariateTwoSquareRootExpression2 {
-            rational: QuadrivariatePolynomial2::from_axis_polynomial(
+        let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
+        let even = BezierDenseTwoSquareRootExpression2 {
+            rational: DenseTensorPolynomial::from_axis_polynomial(
+                1,
+                0,
                 &[quarter, Real::from(-1_i8), Real::one()],
-                3,
             )
             .unwrap(),
             first: zero.clone(),
             second: zero.clone(),
             product: zero.clone(),
         };
-        let identically_zero = BezierQuadrivariateTwoSquareRootExpression2 {
+        let identically_zero = BezierDenseTwoSquareRootExpression2 {
             rational: zero.clone(),
             first: zero.clone(),
             second: zero.clone(),
@@ -103959,9 +101843,8 @@ mod conversion_tests {
         };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
-                chord_normal_projective_expression_parameters(
+                chord_normal_dense_expression_parameters(
                     &map,
-                    &sources,
                     &even,
                     SelectedThirdAxisDomain2::UnitInterval,
                     &policy,
@@ -103977,9 +101860,8 @@ mod conversion_tests {
                 )]
             );
             assert!(matches!(
-                chord_normal_projective_expression_parameters(
+                chord_normal_dense_expression_parameters(
                     &map,
-                    &sources,
                     &identically_zero,
                     SelectedThirdAxisDomain2::UnitInterval,
                     &policy,
@@ -104195,9 +102077,7 @@ mod conversion_tests {
             };
             assert!(matches!(
                 &map.data.system,
-                BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(
-                    BezierChordNormalProjectiveChordParameterMapSystem2::Dense(_)
-                )
+                BezierAlgebraicCuspSemicircleChordParameterMapSystem2::ChordNormalProjective(_)
             ));
             assert_eq!(
                 map.retained_tangent_cross_dot_linear_combination_sign(
@@ -104410,9 +102290,7 @@ mod conversion_tests {
                     circle
                         .chord_normal_projective_chord_system(&chord, &policy)
                         .unwrap(),
-                    Classification::Decided(Some(BezierChordNormalProjectiveTargetSystem2::Dense(
-                        _
-                    )))
+                    Classification::Decided(Some(_))
                 ));
                 for carrier in [chord.clone(), chord.reversed()] {
                     assert!(matches!(
@@ -104497,9 +102375,7 @@ mod conversion_tests {
             assert_eq!(contacts.len(), 2);
             assert!(matches!(
                 &parameter_map.data.system,
-                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective {
-                    system: BezierChordNormalRationalParameterMapSystem2::Dense(_),
-                }
+                BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::ChordNormalProjective { .. }
             ));
             for contact in &contacts {
                 assert_eq!(
@@ -104523,7 +102399,7 @@ mod conversion_tests {
                 circle
                     .chord_normal_projective_rational_system(&quarter_circle, &policy)
                     .unwrap(),
-                Classification::Decided(Some(BezierChordNormalProjectiveTargetSystem2::Dense(_)))
+                Classification::Decided(Some(_))
             ));
             for (target, orientation) in [
                 (
