@@ -43,6 +43,13 @@ jobs:
           path: hyperreal
           persist-credentials: false
 
+      - name: Checkout hyperlattice sibling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
+          persist-credentials: false
+
       - name: Checkout hyperlimit sibling
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -85,6 +92,13 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
+          persist-credentials: false
+
+      - name: Checkout hyperlattice sibling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperlattice
+          path: hyperlattice
           persist-credentials: false
 
       - name: Checkout hyperlimit sibling
