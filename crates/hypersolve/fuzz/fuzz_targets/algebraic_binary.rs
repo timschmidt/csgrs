@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy::APPROXIMATE_512;
+use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootBinaryTransformStatus, AlgebraicRootKind,
@@ -46,7 +46,7 @@ fuzz_target!(|data: [u8; 3]| {
         &sqrt_root(left_square),
         &sqrt_root(right_square),
         operation,
-        PredicatePolicy,
+        PredicatePolicy::APPROXIMATE_512,
     );
     if report.status == AlgebraicRootBinaryTransformStatus::Transformed {
         let representation = report.representation.as_ref().unwrap();

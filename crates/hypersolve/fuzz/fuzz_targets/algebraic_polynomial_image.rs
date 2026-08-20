@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy::APPROXIMATE_512;
+use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootPolynomialImageStatus, AlgebraicRootRepresentation,
@@ -41,12 +41,15 @@ fuzz_target!(|data: [i16; 4]| {
     let report = transform_algebraic_root_polynomial_image(
         &represented_rational_root(root),
         &[real(constant), real(linear), real(quadratic)],
-        PredicatePolicy,
+        PredicatePolicy::APPROXIMATE_512,
     );
     if report.status == AlgebraicRootPolynomialImageStatus::Transformed {
         let expected = constant + linear * root + quadratic * root * root;
         let representation = report.representation.as_ref().unwrap();
         assert!(representation.is_valid());
-        assert_eq!(representation.exact_rational_witness(), Some(&real(expected)));
+        assert_eq!(
+            representation.exact_rational_witness(),
+            Some(&real(expected))
+        );
     }
 });

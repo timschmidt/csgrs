@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy::APPROXIMATE_512;
+use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootKind, AlgebraicRootMobiusTransformStatus, AlgebraicRootRepresentation,
@@ -45,14 +45,20 @@ fuzz_target!(|data: [i16; 5]| {
         real(b),
         real(c),
         real(d),
-        PredicatePolicy,
+        PredicatePolicy::APPROXIMATE_512,
     );
     if a * d - b * c == 0 {
-        assert_ne!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);
+        assert_ne!(
+            report.status,
+            AlgebraicRootMobiusTransformStatus::Transformed
+        );
         return;
     }
     if c * root + d == 0 {
-        assert_ne!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);
+        assert_ne!(
+            report.status,
+            AlgebraicRootMobiusTransformStatus::Transformed
+        );
         return;
     }
     if report.status == AlgebraicRootMobiusTransformStatus::Transformed {

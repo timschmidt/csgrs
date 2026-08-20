@@ -1,11 +1,11 @@
 #![no_main]
 
-use hyperlimit::PredicatePolicy::APPROXIMATE_512;
+use hyperlimit::PredicatePolicy;
 use hyperreal::Real;
 use hypersolve::{
-    transform_algebraic_root_rational_image, AlgebraicRootKind, AlgebraicRootRationalImageStatus,
-    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    IsolatedRootInterval, SymbolId,
+    AlgebraicRootKind, AlgebraicRootRationalImageStatus, AlgebraicRootRepresentation,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
+    transform_algebraic_root_rational_image,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -64,7 +64,7 @@ fuzz_target!(|data: [i16; 5]| {
         &represented_rational_root(root),
         &[real(numerator_constant), real(numerator_linear)],
         &[real(denominator_constant), real(denominator_linear)],
-        PredicatePolicy,
+        PredicatePolicy::APPROXIMATE_512,
     );
 
     if denominator == 0 {
@@ -85,7 +85,7 @@ fuzz_target!(|data: [i16; 5]| {
         &sqrt_two_positive(),
         &[Real::one(), Real::one()],
         &[real(positive_constant), real(-3), Real::one()],
-        PredicatePolicy,
+        PredicatePolicy::APPROXIMATE_512,
     );
     if direct.status == AlgebraicRootRationalImageStatus::Transformed {
         assert!(direct.numerator_image.is_none());
