@@ -17,7 +17,7 @@ use csgrs::{
     curve::CurveRegionExt,
     solid::{self, SolidExt},
 };
-use hypercurve::{CurvePolicy, CurveRegion2, Point2};
+use hypercurve::{CurveContext, CurveRegion2, Point2};
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hypersdf::SdfExpr;
 use image::{GrayImage, Luma};
@@ -226,19 +226,19 @@ fn main() {
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
             curve_left
-                .try_union(&curve_right, &CurvePolicy::STRICT)
+                .try_union(&curve_right, &CurveContext::STRICT)
                 .expect("union")
                 .into_value(),
             curve_left
-                .try_difference(&curve_right, &CurvePolicy::STRICT)
+                .try_difference(&curve_right, &CurveContext::STRICT)
                 .expect("difference")
                 .into_value(),
             curve_left
-                .try_intersection(&curve_right, &CurvePolicy::STRICT)
+                .try_intersection(&curve_right, &CurveContext::STRICT)
                 .expect("intersection")
                 .into_value(),
             curve_left
-                .try_xor(&curve_right, &CurvePolicy::STRICT)
+                .try_xor(&curve_right, &CurveContext::STRICT)
                 .expect("xor")
                 .into_value(),
         ];
@@ -258,14 +258,18 @@ fn main() {
         let sharp = curve::offset(
             black_box(&curve_left),
             Real::one(),
-            &hypercurve::CurvePolicy::STRICT,
+            &hypercurve::OffsetCornerStyle2::Miter {
+                limit: Real::from(4),
+            },
+            &hypercurve::CurveContext::STRICT,
         )
         .expect("offset")
         .into_value();
-        let rounded = curve::offset_rounded(
+        let rounded = curve::offset(
             black_box(&curve_left),
             Real::one(),
-            &hypercurve::CurvePolicy::STRICT,
+            &hypercurve::OffsetCornerStyle2::Round,
+            &hypercurve::CurveContext::STRICT,
         )
         .expect("rounded offset")
         .into_value();
@@ -286,9 +290,10 @@ fn main() {
                     &Real::zero(),
                     &Real::zero(),
                     &Real::zero(),
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 )
-                .expect("rotation"),
+                .expect("rotation")
+                .into_value(),
             source
                 .transformed_affine(
                     &Real::from(2),
@@ -297,9 +302,10 @@ fn main() {
                     &Real::from(3),
                     &Real::zero(),
                     &Real::zero(),
-                    &CurvePolicy::STRICT,
+                    &CurveContext::STRICT,
                 )
-                .expect("scale"),
+                .expect("scale")
+                .into_value(),
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(7), Real::from(-4), Real::zero()]),

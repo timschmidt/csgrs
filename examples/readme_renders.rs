@@ -9,8 +9,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    Classification, CurvePath2, CurvePolicy, CurveRegion2, CurveString2,
-    FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    BezierSplitFragment2, Classification, CurveContext, CurveOutcome, CurvePath2,
+    CurveRegion2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -482,15 +482,17 @@ fn cube_minus_translated_sphere() -> TriangleMesh {
     let cube = solid::cube(r(2.0));
     let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
-    hypermesh::boolean_triangle_meshes(
+    hypermesh::boolean(
         &context,
-        &cube,
-        &sphere,
-        hypermesh::BooleanOp::Difference,
-        hypermesh::EmberConfig::default(),
+        &[cube.as_ref(), sphere.as_ref()],
+        hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
     )
     .expect("translated-sphere difference")
     .into_value()
+    .into_triangle_meshes()
+    .expect("translated-sphere difference is bounded")
+    .pop()
+    .expect("one translated-sphere result")
 }
 
 fn render_curve(name: &str, region: &CurveRegion2) {
@@ -501,14 +503,16 @@ fn render_curve(name: &str, region: &CurveRegion2) {
     // before the finite raster projection is created.
     let profiles = expect_decided(
         region
-            .project_to_finite_profiles_exact(&projection, &CurvePolicy::STRICT)
-            .expect("project exact CurveRegion2 profiles"),
+            .project_to_finite_profiles_exact(&projection, &CurveContext::STRICT)
+            .expect("project exact CurveRegion2 profiles")
+            .into_value(),
         "exact CurveRegion2 profile topology",
     );
     let edge_paths = expect_decided(
         region
-            .project_to_finite_curve_paths(&CurvePolicy::STRICT)
-            .expect("project exact CurveRegion2 edge paths"),
+            .project_to_finite_curve_paths(&CurveContext::STRICT)
+            .expect("project exact CurveRegion2 edge paths")
+            .into_value(),
         "exact CurveRegion2 edge topology",
     );
     let Some(bounds) = curve_bounds(&profiles) else {
@@ -519,7 +523,7 @@ fn render_curve(name: &str, region: &CurveRegion2) {
 
     for profile in &profiles {
         for triangle in profile
-            .triangulate(&CurvePolicy::STRICT)
+            .triangulate(&CurveContext::STRICT)
             .expect("triangulate exact CurveRegion2 profile")
             .into_value()
         {
@@ -533,16 +537,47 @@ fn render_curve(name: &str, region: &CurveRegion2) {
         stroke_points(&mut image, &map, points, EDGE_WIDTH_2D, EDGE);
     }
 
-    let vertex_count = edge_paths.iter().map(|path| path.curves().len()).sum();
-    let radius = vertex_radius(vertex_count);
-    for path in &edge_paths {
-        // Mark exact curve-fragment junctions, not chordization samples.
-        for edge in path.curves() {
-            let vertex = (real_to_f64(edge.start().x()), real_to_f64(edge.start().y()));
-            draw_vertex_2d(&mut image, map.point(vertex), radius);
-        }
+    let vertices = exact_region_vertices(region);
+    let radius = vertex_radius(vertices.len());
+    for vertex in vertices {
+        let vertex = (real_to_f64(vertex.x()), real_to_f64(vertex.y()));
+        draw_vertex_2d(&mut image, map.point(vertex), radius);
     }
     save_image(name, &image);
+}
+
+fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
+    if let Ok(Classification::Decided(native)) = region
+        .native_contours_fast_path(&CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
+    {
+        return native
+            .material_contours()
+            .iter()
+            .chain(native.hole_contours())
+            .flat_map(|contour| contour.segments().iter())
+            .map(|segment| segment.start().clone())
+            .collect();
+    }
+
+    // Higher-order regions have no native line/arc view. Draw only represented
+    // endpoints retained by the exact boundary itself. Algebraic endpoint
+    // images deliberately remain unmarked because turning an isolating interval
+    // into a screen coordinate would invent a projected vertex.
+    region
+        .boundary_loops()
+        .iter()
+        .flat_map(|boundary| boundary.fragments())
+        .filter_map(|fragment| match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => Some(curve.start().clone()),
+            BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::AlgebraicChord(_)
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+            | BezierSplitFragment2::SelectedFiber(_)
+            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::Unresolved { .. } => None,
+        })
+        .collect()
 }
 
 fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]) {
@@ -552,8 +587,9 @@ fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]
     let mut polylines = paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(&projection)
+            path.project_to_finite_polyline(&projection, &CurveContext::STRICT)
                 .expect("project exact open CurvePath2")
+                .into_value()
                 .points()
                 .to_vec()
         })
@@ -694,8 +730,9 @@ fn project_edge_paths(
     paths
         .iter()
         .map(|path| {
-            path.project_to_finite_polyline(projection)
+            path.project_to_finite_polyline(projection, &CurveContext::STRICT)
                 .expect("rasterize exact CurveRegion2 edge path")
+                .into_value()
                 .points()
                 .to_vec()
         })
@@ -1174,4 +1211,48 @@ fn p3(x: f64, y: f64, z: f64) -> Point3 {
 
 fn v3(x: f64, y: f64, z: f64) -> Vector3 {
     Vector3::from_xyz(r(x), r(y), r(z))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hypercurve::{BulgeVertex2, Contour2};
+
+    #[test]
+    fn exact_region_vertices_ignore_arc_projection_fragments() {
+        let right = Point2::new(Real::one(), Real::zero());
+        let left = Point2::new(-Real::one(), Real::zero());
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(right.clone(), Real::one()),
+            BulgeVertex2::new(left.clone(), Real::one()),
+        ])
+        .expect("two exact semicircles form a closed contour");
+        let region = CurveRegion2::try_from_native_material_contours(
+            vec![contour],
+            &CurveContext::STRICT,
+        )
+        .expect("promote exact circular contour")
+        .into_value();
+
+        let projected_paths = expect_decided(
+            region
+                .project_to_finite_curve_paths(&CurveContext::STRICT)
+                .expect("project circular boundary")
+                .into_value(),
+            "circular boundary projection",
+        );
+        let projected_vertices = projected_paths
+            .iter()
+            .map(|path| path.curves().len())
+            .sum::<usize>();
+        assert!(
+            projected_vertices > 2,
+            "arc-to-Bezier projection must expose the former false markers"
+        );
+
+        let vertices = exact_region_vertices(&region);
+        assert_eq!(vertices.len(), 2);
+        assert!(vertices.contains(&right));
+        assert!(vertices.contains(&left));
+    }
 }

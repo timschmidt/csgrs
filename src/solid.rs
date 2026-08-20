@@ -7,7 +7,7 @@
 use crate::context::GeometryDecisions;
 use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
-use hypermesh::{BooleanOp, EmberConfig, HypermeshResult, Plane, Triangle, TriangleMesh};
+use hypermesh::{BooleanOp, BooleanProgram, HypermeshResult, Plane, Triangle, TriangleMesh};
 use hyperreal::RealSign;
 use std::cell::RefCell;
 use std::num::NonZeroU32;
@@ -214,7 +214,7 @@ fn indexed_convex(
     positions: Vec<Point3>,
     triangles: impl IntoIterator<Item = [usize; 3]>,
 ) -> TriangleMesh {
-    indexed(positions, triangles).with_certified_convexity()
+    indexed(positions, triangles)
 }
 
 /// Empty native triangle geometry.
@@ -1064,14 +1064,18 @@ pub fn boolean(
     right: &TriangleMesh,
     operation: BooleanOp,
 ) -> HypermeshResult<TriangleMesh> {
-    hypermesh::boolean_triangle_meshes(
+    let batch = hypermesh::boolean(
         &crate::MESH_CONTEXT,
-        left,
-        right,
-        operation,
-        EmberConfig::default(),
-    )
-    .map(hypermesh::MeshOutcome::into_value)
+        &[left.as_ref(), right.as_ref()],
+        BooleanProgram::Operation(operation),
+    )?
+    .into_value();
+    let mut meshes = batch.into_triangle_meshes()?;
+    meshes
+        .pop()
+        .ok_or(hypermesh::HypermeshError::InvalidBooleanProgram {
+            reason: "one CSG Boolean operation produced no result row",
+        })
 }
 
 /// Applies a homogeneous transform and returns native geometry.
@@ -1679,7 +1683,7 @@ pub fn exact_mass_properties(
 /// Flattens native triangle faces into native filled curve topology.
 #[cfg(feature = "curve")]
 pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
-    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurvePolicy, CurveRegion2};
+    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2};
 
     if let Some(region) = FLATTEN_CACHE.with_borrow(|entries| {
         entries
@@ -1692,7 +1696,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
     }) {
         return region;
     }
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -1726,6 +1730,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
         else {
             return CurveRegion2::empty();
         };
+        let region = region.into_value();
         output = if output.is_empty() {
             region
         } else {
@@ -1754,7 +1759,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
 #[cfg(feature = "curve")]
 pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
     use hypercurve::{
-        BooleanOp as CurveBooleanOp, Contour2, CurvePolicy, CurveRegion2, CurveString2,
+        BooleanOp as CurveBooleanOp, Contour2, CurveContext, CurveRegion2, CurveString2,
     };
     let empty_result = || (CurveRegion2::empty(), Vec::new(), Vec::new());
 
@@ -1875,7 +1880,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
         chains.push(chain);
     }
 
-    let policy = CurvePolicy::STRICT;
+    let policy = CurveContext::STRICT;
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {
@@ -1905,6 +1910,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             else {
                 return empty_result();
             };
+            let loop_region = loop_region.into_value();
             region = if region.is_empty() {
                 loop_region
             } else {

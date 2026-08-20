@@ -11,7 +11,7 @@ use csgrs::{
 };
 use hyperlattice::Point3;
 use hyperlimit::PredicatePolicy;
-use hypermesh::{MeshContext, Triangle};
+use hypermesh::{MeshContext, Triangle, certify_convex_mesh};
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
     types::{Error as ManifoldError, MeshGL64},
@@ -202,8 +202,8 @@ pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
 
 fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     let direct = to_csgrs(mesh);
-    if let Ok(direct) = direct.clone().try_certify_convex(&MESH_CONTEXT) {
-        return direct.into_value();
+    if certify_convex_mesh(&MESH_CONTEXT, direct.as_ref()).is_ok() {
+        return direct;
     }
 
     // YeahRight is distributed as a decimal serialization of a CGAL convex
