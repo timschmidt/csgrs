@@ -794,15 +794,8 @@ fn isolate_local_polynomial_roots_bernstein(
 
         let mut stack = Vec::with_capacity(boundaries.len());
         for segment in boundaries.windows(2).rev() {
-            let controls = match local_power_to_bernstein_on_interval(
-                &polynomial,
-                &segment[0],
-                &segment[1],
-                field,
-            ) {
-                Ok(controls) => controls,
-                Err(error) => return Err(error),
-            };
+            let controls =
+                local_power_to_bernstein_on_interval(&polynomial, &segment[0], &segment[1], field)?;
             let Some(controls) = controls else {
                 return Ok((None, subdivision_steps));
             };
@@ -2317,15 +2310,14 @@ impl LocalAlgebraicField {
             return Ok(sign);
         }
 
-        match polynomials_share_one_root_in_interval(
+        if let Some(true) = polynomials_share_one_root_in_interval(
             &self.modulus,
             polynomial,
             &self.root.interval.lower,
             &self.root.interval.upper,
             self.policy,
         ) {
-            Some(true) => return Ok(Ordering::Equal),
-            Some(false) | None => {}
+            return Ok(Ordering::Equal);
         }
 
         // A general `Real` GCD may itself be undecided even when the local
