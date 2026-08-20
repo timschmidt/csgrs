@@ -5241,33 +5241,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if let Some(RegionPairOverlapSource::ParameterComponent { source, swapped }) =
             overlap.source.as_ref()
         {
-            let carrier_range = |carrier: &RegionCarrier| {
-                let start = carrier.start.as_bezier_parameter().ok_or_else(|| {
-                    self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
-                })?;
-                let end = carrier.end.as_bezier_parameter().ok_or_else(|| {
-                    self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
-                })?;
-                Ok(BezierParameterRange2::new_validated(
-                    start.clone(),
-                    end.clone(),
-                ))
-            };
-            let first_range = carrier_range(first_carrier)?;
-            let second_range = carrier_range(second_carrier)?;
+            let first_range = CurveRegionParameterRange2::new_validated(
+                first_carrier.start.clone(),
+                first_carrier.end.clone(),
+            );
+            let second_range = CurveRegionParameterRange2::new_validated(
+                second_carrier.start.clone(),
+                second_carrier.end.clone(),
+            );
             let clipped = if *swapped {
                 source
-                    .clipped_ranges(&second_range, &first_range, &self.data.policy)
+                    .clipped_curve_region_ranges(&second_range, &first_range, &self.data.policy)
                     .map(|classification| classification.map(|ranges| ranges.map(|(a, b)| (b, a))))
             } else {
-                source.clipped_ranges(&first_range, &second_range, &self.data.policy)
+                source.clipped_curve_region_ranges(&first_range, &second_range, &self.data.policy)
             }
             .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
             return match clipped {
-                Classification::Decided(Some((first, second))) => Ok(Some((
-                    CurveRegionParameterRange2::from_bezier_range(first),
-                    CurveRegionParameterRange2::from_bezier_range(second),
-                ))),
+                Classification::Decided(Some(ranges)) => Ok(Some(ranges)),
                 Classification::Decided(None) => Ok(None),
                 Classification::Uncertain(reason) => {
                     Err(self.blocked(pair.first_carrier_index, reason))
@@ -14204,6 +14195,7 @@ mod certified_successor_tests {
         BezierAlgebraicChordAxisDirection2, BezierAlgebraicCuspSemicircle2,
         BezierAlgebraicCuspSemicircleChordIntersections2,
         BezierAlgebraicCuspSemicirclePairIntersections2, BezierAlgebraicCuspSemicircleParameter2,
+        exact_selected_fiber_parameter_for_test, nonlinear_parameter_component_overlap_for_test,
     };
     use crate::{BezierAlgebraicCuspSemicircleFragment2, CubicBezier2};
     use crate::{
@@ -14250,6 +14242,136 @@ mod certified_successor_tests {
             BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
                 .expect("isolated parameter"),
         )
+    }
+
+    #[test]
+    fn selected_parameter_component_overlap_clips_in_both_boolean_orders() {
+        let fraction = |numerator: i8, denominator: i8| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let retained = sqrt_half_parameter(&policy);
+            let selected =
+                |value: Real| {
+                    CurveRegionParameter2::from_selected_fiber(
+                        exact_selected_fiber_parameter_for_test(retained.clone(), value, &policy),
+                    )
+                };
+            let selected_range = |start: Real, end: Real| {
+                CurveRegionParameterRange2::new_validated(selected(start), selected(end))
+            };
+            let ordinary_range = |start: Real, end: Real| {
+                CurveRegionParameterRange2::from_bezier_range(BezierParameterRange2::from_exact(
+                    start, end,
+                ))
+            };
+            let source = nonlinear_parameter_component_overlap_for_test(&policy);
+            let first_overlap = CurveRegionParameterRange2::from_bezier_range(
+                source.overlap().first_range().clone(),
+            );
+            let second_overlap = CurveRegionParameterRange2::from_bezier_range(
+                source.overlap().second_range().clone(),
+            );
+            let line = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                    .expect("the test carrier is nondegenerate"),
+            ));
+            let clip = |first_range: CurveRegionParameterRange2,
+                        second_range: CurveRegionParameterRange2,
+                        swapped: bool| {
+                let carrier = |operand, range: &CurveRegionParameterRange2| {
+                    let geometry = RegionCarrierGeometry::Bezier(line.clone());
+                    RegionCarrier {
+                        operand,
+                        loop_index: 0,
+                        fragment_index: 0,
+                        family: geometry.family(),
+                        geometry,
+                        start: range.start().clone(),
+                        end: range.end().clone(),
+                        reversed: false,
+                        filled_side_is_left: true,
+                        selected_fiber_endpoint_points: None,
+                        image_is_injective: OnceLock::new(),
+                        bounds: OnceLock::new(),
+                    }
+                };
+                let empty_first = CurveRegion2::empty();
+                let empty_second = CurveRegion2::empty();
+                let context = CurveRegionBooleanContext {
+                    data: CurveRegionBooleanContextData {
+                        first: &empty_first,
+                        second: &empty_second,
+                        policy,
+                        carriers: vec![
+                            carrier(CurveRegionBooleanOperand2::First, &first_range),
+                            carrier(CurveRegionBooleanOperand2::Second, &second_range),
+                        ],
+                        first_carrier_count: 1,
+                        authored_carrier_pair_count: 1,
+                        pairs: Vec::new(),
+                        bezier_self_intersections: Vec::new(),
+                        parallel_self_intersections: Vec::new(),
+                        strict_line_image_only: OnceLock::new(),
+                    },
+                };
+                let pair = RegionCarrierPair {
+                    first_carrier_index: 0,
+                    second_carrier_index: 1,
+                    context: RegionCarrierPairContext::ParallelPair,
+                };
+                let (first_range, second_range) = if swapped {
+                    (second_overlap.clone(), first_overlap.clone())
+                } else {
+                    (first_overlap.clone(), second_overlap.clone())
+                };
+                let overlap = RegionPairOverlap {
+                    source: Some(RegionPairOverlapSource::ParameterComponent {
+                        source: source.clone(),
+                        swapped,
+                    }),
+                    first_range,
+                    second_range,
+                    orientation: source.overlap().orientation(),
+                };
+                context
+                    .clipped_overlap_ranges(&pair, &overlap)
+                    .expect("selected component clipping must decide")
+                    .expect("the selected carrier ranges overlap")
+            };
+            let assert_selected = |parameter: &CurveRegionParameter2, expected: Real| {
+                assert_eq!(
+                    parameter
+                        .as_selected_fiber()
+                        .expect("an unchanged component bound must remain selected")
+                        .order_to_real(&expected, &policy)
+                        .unwrap(),
+                    Classification::Decided(Ordering::Equal),
+                );
+            };
+
+            let (first, second) = clip(
+                selected_range(fraction(1, 4), fraction(3, 4)),
+                ordinary_range(fraction(1, 16), fraction(1, 4)),
+                false,
+            );
+            assert_selected(first.start(), fraction(1, 4));
+            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(
+                second.exact_endpoints(),
+                Some((&fraction(1, 16), &fraction(1, 4))),
+            );
+
+            let (first, second) = clip(
+                selected_range(fraction(1, 16), fraction(1, 4)),
+                ordinary_range(fraction(1, 4), fraction(3, 4)),
+                true,
+            );
+            assert_selected(first.start(), fraction(1, 16));
+            assert_selected(first.end(), fraction(1, 4));
+            assert_eq!(second.start().as_exact(), Some(&fraction(1, 4)));
+            assert_eq!(second.end().as_exact(), Some(&fraction(1, 2)));
+        }
     }
 
     fn sqrt_third_parameter(policy: &CurveContext) -> BezierAlgebraicParameter2 {

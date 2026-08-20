@@ -3180,6 +3180,15 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
 }
 
 #[cfg(test)]
+pub(crate) fn exact_selected_fiber_parameter_for_test(
+    retained_parameter: BezierAlgebraicParameter2,
+    value: Real,
+    policy: &CurveContext,
+) -> BezierAlgebraicSelectedFiberParameter2 {
+    BezierAlgebraicSelectedFiberAuthority2::exact_parameter(retained_parameter, value, policy)
+}
+
+#[cfg(test)]
 pub(crate) fn degree_nine_selected_fiber_parameter_for_test(
     retained_constant: Real,
     fiber_scale: i32,
@@ -81645,20 +81654,51 @@ impl BezierParameterComponentOverlap2 {
         &self.overlap
     }
 
-    pub(crate) fn map_first_to_second(
+    fn map_curve_parameter(
         &self,
-        parameter: &BezierParameter2,
+        retained_parameter: CurveResultantParameter,
+        parameter: &CurveRegionParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        self.map_parameter(CurveResultantParameter::First, parameter, policy)
-    }
-
-    pub(crate) fn map_second_to_first(
-        &self,
-        parameter: &BezierParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-        self.map_parameter(CurveResultantParameter::Second, parameter, policy)
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        let parameter = if let Some(parameter) = parameter.as_bezier_parameter() {
+            parameter.clone()
+        } else if let Some(parameter) = parameter.as_selected_fiber() {
+            let (retained_range, lifted_range) = match retained_parameter {
+                CurveResultantParameter::First => {
+                    (self.overlap.first_range(), self.overlap.second_range())
+                }
+                CurveResultantParameter::Second => {
+                    (self.overlap.second_range(), self.overlap.first_range())
+                }
+            };
+            for (retained_endpoint, lifted_endpoint) in [
+                (retained_range.start(), lifted_range.start()),
+                (retained_range.end(), lifted_range.end()),
+            ] {
+                match parameter.cmp_bezier_parameter(retained_endpoint, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        return Ok(Classification::Decided(Some(
+                            CurveRegionParameter2::from_bezier(lifted_endpoint.clone()),
+                        )));
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            match parameter.promoted_bezier_parameter_complete(policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(self
+            .map_parameter(retained_parameter, &parameter, policy)?
+            .map(|parameter| parameter.map(CurveRegionParameter2::from_bezier)))
     }
 
     fn resolved_fiber_root_rank(
@@ -81873,14 +81913,19 @@ impl BezierParameterComponentOverlap2 {
         Ok(Classification::Uncertain(UncertaintyReason::Boundary))
     }
 
-    pub(crate) fn clipped_ranges(
+    pub(crate) fn clipped_curve_region_ranges(
         &self,
-        first_fragment: &BezierParameterRange2,
-        second_fragment: &BezierParameterRange2,
+        first_fragment: &CurveRegionParameterRange2,
+        second_fragment: &CurveRegionParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(BezierParameterRange2, BezierParameterRange2)>>> {
-        let [first_start, first_end] = match intersect_bezier_parameter_ranges(
-            self.overlap.first_range(),
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
+        let first_overlap =
+            CurveRegionParameterRange2::from_bezier_range(self.overlap.first_range().clone());
+        let second_overlap =
+            CurveRegionParameterRange2::from_bezier_range(self.overlap.second_range().clone());
+        let [first_start, first_end] = match intersect_curve_region_parameter_ranges(
+            &first_overlap,
             first_fragment,
             policy,
         )? {
@@ -81890,20 +81935,22 @@ impl BezierParameterComponentOverlap2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let mapped_start = match self.map_first_to_second(&first_start, policy)? {
-            Classification::Decided(Some(parameter)) => parameter,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mapped_end = match self.map_first_to_second(&first_end, policy)? {
-            Classification::Decided(Some(parameter)) => parameter,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mapped_start =
+            match self.map_curve_parameter(CurveResultantParameter::First, &first_start, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let mapped_end =
+            match self.map_curve_parameter(CurveResultantParameter::First, &first_end, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let mapped_order = match mapped_start.cmp_by_refinement(&mapped_end, policy)? {
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 return Ok(Classification::Decided(None));
@@ -81914,28 +81961,57 @@ impl BezierParameterComponentOverlap2 {
             }
         };
         let mapped_range =
-            BezierParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
-        let [second_low, second_high] =
-            match intersect_bezier_parameter_ranges(&mapped_range, second_fragment, policy)? {
-                Classification::Decided(Some(bounds)) => bounds,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            CurveRegionParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());
+        let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
+            &mapped_range,
+            &second_overlap,
+            policy,
+        )? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second_candidate = CurveRegionParameterRange2::new_validated(second_low, second_high);
+        let [second_low, second_high] = match intersect_curve_region_parameter_ranges(
+            &second_candidate,
+            second_fragment,
+            policy,
+        )? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let (second_start, second_end) = if mapped_order == std::cmp::Ordering::Less {
             (second_low, second_high)
         } else {
             (second_high, second_low)
         };
-        let clipped_first_start = match self.map_second_to_first(&second_start, policy)? {
+        let lift = |second: &CurveRegionParameter2,
+                    mapped: &CurveRegionParameter2,
+                    original: &CurveRegionParameter2|
+         -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+            Ok(match second.cmp_by_refinement(mapped, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    Classification::Decided(Some(original.clone()))
+                }
+                Classification::Decided(_) => {
+                    self.map_curve_parameter(CurveResultantParameter::Second, second, policy)?
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            })
+        };
+        let clipped_first_start = match lift(&second_start, &mapped_start, &first_start)? {
             Classification::Decided(Some(parameter)) => parameter,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let clipped_first_end = match self.map_second_to_first(&second_end, policy)? {
+        let clipped_first_end = match lift(&second_end, &mapped_end, &first_end)? {
             Classification::Decided(Some(parameter)) => parameter,
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -81952,10 +82028,127 @@ impl BezierParameterComponentOverlap2 {
             }
         }
         Ok(Classification::Decided(Some((
-            BezierParameterRange2::new_validated(clipped_first_start, clipped_first_end),
-            BezierParameterRange2::new_validated(second_start, second_end),
+            CurveRegionParameterRange2::new_validated(clipped_first_start, clipped_first_end),
+            CurveRegionParameterRange2::new_validated(second_start, second_end),
         ))))
     }
+
+    pub(crate) fn clipped_ranges(
+        &self,
+        first_fragment: &BezierParameterRange2,
+        second_fragment: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(BezierParameterRange2, BezierParameterRange2)>>> {
+        let first = CurveRegionParameterRange2::from_bezier_range(first_fragment.clone());
+        let second = CurveRegionParameterRange2::from_bezier_range(second_fragment.clone());
+        Ok(
+            match self.clipped_curve_region_ranges(&first, &second, policy)? {
+                Classification::Decided(Some((first, second))) => {
+                    let (Some((first_start, first_end)), Some((second_start, second_end))) =
+                        (first.as_bezier_parameters(), second.as_bezier_parameters())
+                    else {
+                        return Err(CurveError::Topology(
+                            "ordinary component clipping produced a local parameter".into(),
+                        ));
+                    };
+                    Classification::Decided(Some((
+                        BezierParameterRange2::new_validated(
+                            first_start.clone(),
+                            first_end.clone(),
+                        ),
+                        BezierParameterRange2::new_validated(
+                            second_start.clone(),
+                            second_end.clone(),
+                        ),
+                    )))
+                }
+                Classification::Decided(None) => Classification::Decided(None),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn nonlinear_parameter_component_overlap_for_test(
+    policy: &CurveContext,
+) -> BezierParameterComponentOverlap2 {
+    // u=t^2 is monotone on the authored square but is not an affine or
+    // projective parameter correspondence.
+    let support = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::one()],
+        vec![Real::zero()],
+        vec![Real::from(-1_i8)],
+    ]);
+    let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let config = CurveIntersectionResultantConfig {
+        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
+    let Classification::Decided(Some(component)) =
+        parameter_component_system(&[support.clone(), support], &branch, policy, config).unwrap()
+    else {
+        panic!("the nonlinear parameter component was not certified");
+    };
+    let [overlap] = component.component_overlaps.as_ref() else {
+        panic!("the nonlinear component omitted its exact support evidence");
+    };
+    overlap.clone()
+}
+
+fn intersect_curve_region_parameter_ranges(
+    first: &CurveRegionParameterRange2,
+    second: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<[CurveRegionParameter2; 2]>>> {
+    let ascending = |range: &CurveRegionParameterRange2| {
+        Ok(
+            match range.start().cmp_by_refinement(range.end(), policy)? {
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    Classification::Decided([range.start().clone(), range.end().clone()])
+                }
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    Classification::Decided([range.end().clone(), range.start().clone()])
+                }
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Err(CurveError::DegenerateOverlapRange);
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    };
+    let [first_low, first_high] = match ascending(first)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [second_low, second_high] = match ascending(second)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    // Prefer the second operand on equal bounds. Component clipping passes
+    // the retained carrier fragment second, preserving its compact local
+    // parameter instead of replacing it with an equal projected scalar.
+    let low = match first_low.cmp_by_refinement(&second_low, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => second_low,
+        Classification::Decided(std::cmp::Ordering::Greater) => first_low,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let high = match first_high.cmp_by_refinement(&second_high, policy)? {
+        Classification::Decided(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
+            second_high
+        }
+        Classification::Decided(std::cmp::Ordering::Less) => first_high,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(match low.cmp_by_refinement(&high, policy)? {
+        Classification::Decided(std::cmp::Ordering::Less) => {
+            Classification::Decided(Some([low, high]))
+        }
+        Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
+            Classification::Decided(None)
+        }
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
 }
 
 fn intersect_bezier_parameter_ranges(
@@ -114436,12 +114629,6 @@ mod conversion_tests {
         // u=t^2 is monotone on the authored square but is not an affine or
         // projective parameter correspondence.  Independent axis clipping
         // would therefore retain false overlaps.
-        let support = BivariatePolynomial::new(vec![
-            vec![Real::zero(), Real::one()],
-            vec![Real::zero()],
-            vec![Real::from(-1_i8)],
-        ]);
-        let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
         let fraction = |numerator: i8, denominator: i8| {
             (Real::from(numerator) / Real::from(denominator)).unwrap()
         };
@@ -114451,38 +114638,31 @@ mod conversion_tests {
             .pop()
             .expect("sqrt(1/2) has one authored-domain root");
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let config = CurveIntersectionResultantConfig {
-                min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-                max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-            };
-            let Classification::Decided(Some(component)) = parameter_component_system(
-                &[support.clone(), support.clone()],
-                &branch,
-                &policy,
-                config,
-            )
-            .unwrap() else {
-                panic!("the nonlinear parameter component was not certified");
-            };
-            let [overlap] = component.component_overlaps.as_ref() else {
-                panic!("the nonlinear component omitted its exact support evidence");
-            };
+            let overlap = nonlinear_parameter_component_overlap_for_test(&policy);
             let Classification::Decided(Some(mapped)) = overlap
-                .map_first_to_second(&BezierParameter2::Exact(fraction(1, 2)), &policy)
+                .map_parameter(
+                    CurveResultantParameter::First,
+                    &BezierParameter2::Exact(fraction(1, 2)),
+                    &policy,
+                )
                 .unwrap()
             else {
                 panic!("the exact nonlinear forward map was not decided");
             };
             assert_eq!(mapped.as_exact(), Some(&fraction(1, 4)));
             let Classification::Decided(Some(mapped)) = overlap
-                .map_second_to_first(&BezierParameter2::Exact(fraction(1, 4)), &policy)
+                .map_parameter(
+                    CurveResultantParameter::Second,
+                    &BezierParameter2::Exact(fraction(1, 4)),
+                    &policy,
+                )
                 .unwrap()
             else {
                 panic!("the exact nonlinear inverse map was not decided");
             };
             assert_eq!(mapped.as_exact(), Some(&fraction(1, 2)));
             let Classification::Decided(Some(mapped)) = overlap
-                .map_first_to_second(&square_root_half, &policy)
+                .map_parameter(CurveResultantParameter::First, &square_root_half, &policy)
                 .unwrap()
             else {
                 panic!("the algebraic nonlinear forward map was not decided");
@@ -114514,6 +114694,73 @@ mod conversion_tests {
                 second.exact_endpoints(),
                 Some((&fraction(1, 16), &fraction(1, 4))),
             );
+
+            let BezierParameter2::Algebraic(retained_parameter) = square_root_half.clone() else {
+                panic!("sqrt(1/2) was not retained algebraically")
+            };
+            let selected_parameter = |value: Real| {
+                CurveRegionParameter2::from_selected_fiber(
+                    BezierAlgebraicSelectedFiberAuthority2::exact_parameter(
+                        retained_parameter.clone(),
+                        value,
+                        &policy,
+                    ),
+                )
+            };
+            let first = CurveRegionParameterRange2::new_validated(
+                selected_parameter(fraction(1, 4)),
+                selected_parameter(fraction(3, 4)),
+            );
+            let second = CurveRegionParameterRange2::from_bezier_range(
+                BezierParameterRange2::from_exact(fraction(1, 16), fraction(1, 4)),
+            );
+            let Classification::Decided(Some((first, second))) = overlap
+                .clipped_curve_region_ranges(&first, &second, &policy)
+                .unwrap()
+            else {
+                panic!("the selected first-axis nonlinear subrange was not retained");
+            };
+            let first_start = first
+                .start()
+                .as_selected_fiber()
+                .expect("an unchanged selected first bound must remain local");
+            assert_eq!(
+                first_start.order_to_real(&fraction(1, 4), &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            assert_eq!(
+                second.exact_endpoints(),
+                Some((&fraction(1, 16), &fraction(1, 4))),
+            );
+
+            let first = CurveRegionParameterRange2::from_bezier_range(
+                BezierParameterRange2::from_exact(fraction(1, 4), fraction(3, 4)),
+            );
+            let second = CurveRegionParameterRange2::new_validated(
+                selected_parameter(fraction(1, 16)),
+                selected_parameter(fraction(1, 4)),
+            );
+            let Classification::Decided(Some((first, second))) = overlap
+                .clipped_curve_region_ranges(&first, &second, &policy)
+                .unwrap()
+            else {
+                panic!("the selected second-axis nonlinear subrange was not retained");
+            };
+            assert_eq!(first.start().as_exact(), Some(&fraction(1, 4)));
+            assert_eq!(first.end().as_exact(), Some(&fraction(1, 2)));
+            for (parameter, expected) in [
+                (second.start(), fraction(1, 16)),
+                (second.end(), fraction(1, 4)),
+            ] {
+                let selected = parameter
+                    .as_selected_fiber()
+                    .expect("an unchanged selected second bound must remain local");
+                assert_eq!(
+                    selected.order_to_real(&expected, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+            }
         }
     }
 
