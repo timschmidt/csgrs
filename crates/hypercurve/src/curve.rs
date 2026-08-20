@@ -10942,7 +10942,7 @@ fn selected_fiber_chamfer_cuts(
         });
     }
     let parallel = fragment.parallel_carrier();
-    let parameters = if let Some(center_parameter) = corner_parameter.as_bezier_parameter() {
+    let ordinary_parameters = |center_parameter: &BezierParameter2| {
         let unit_range = BezierParameterRange2::new_validated(
             BezierParameter2::Exact(Real::zero()),
             BezierParameter2::Exact(Real::one()),
@@ -10953,7 +10953,7 @@ fn selected_fiber_chamfer_cuts(
             crate::BezierParameterRayDirection2::Decreasing
         };
         let radius_squared = setback * setback;
-        match (if mode == CurveCornerMode2::TrimOrExtend {
+        let parameters = (if mode == CurveCornerMode2::TrimOrExtend {
             parallel.fixed_distance_incidence_from_parameter_with_incident_ray(
                 center_parameter,
                 &radius_squared,
@@ -10969,13 +10969,16 @@ fn selected_fiber_chamfer_cuts(
                 policy,
             )
         })
-        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-        {
-            Classification::Decided(parameters) => parameters,
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+        match parameters {
+            Classification::Decided(parameters) => Ok(parameters),
             Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(operation, family, reason));
+                Err(ExactCurveError::blocked(operation, family, reason))
             }
         }
+    };
+    let parameters = if let Some(center_parameter) = corner_parameter.as_bezier_parameter() {
+        ordinary_parameters(center_parameter)?
     } else if let Some(center_parameter) = corner_parameter.as_selected_fiber() {
         match parallel
             .affine_fixed_distance_parameters_from_selected_parameter(
@@ -10990,11 +10993,16 @@ fn selected_fiber_chamfer_cuts(
                 .map(crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber)
                 .collect(),
             Classification::Decided(None) => {
-                return Err(ExactCurveError::blocked(
-                    operation,
-                    family,
-                    crate::UncertaintyReason::Unsupported,
-                ));
+                let promoted = match center_parameter
+                    .promoted_bezier_parameter_complete(policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+                {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(operation, family, reason));
+                    }
+                };
+                ordinary_parameters(&promoted)?
             }
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(operation, family, reason));
@@ -12656,6 +12664,32 @@ mod tests {
                 retained.promoted_bezier_parameter(&policy).unwrap(),
                 Classification::Uncertain(_)
             ));
+        }
+    }
+
+    #[test]
+    fn resource_blocked_selected_parameter_has_exact_cold_promotion() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                half.clone(),
+                32_768,
+                &policy,
+            );
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let Classification::Decided(promoted) = selected
+                .promoted_bezier_parameter_complete(&policy)
+                .unwrap()
+            else {
+                panic!("the cold exact resultant must remove only the scheduling cap");
+            };
+            assert_eq!(
+                selected.cmp_bezier_parameter(&promoted, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
         }
     }
 

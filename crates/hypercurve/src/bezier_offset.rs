@@ -3335,6 +3335,107 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         let BezierAlgebraicFiberProjection2::Parameters(candidates) = projection else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
+        self.select_promoted_bezier_parameter(candidates, policy)
+    }
+
+    /// Completes exact scalar promotion after the bounded hot schedules decline.
+    ///
+    /// The ordinary promotion path deliberately caps its resultant and local
+    /// quotient dimensions because most topology never needs a global norm.
+    /// A genuine carrier switch may nevertheless require one.  This cold path
+    /// removes only that scheduling cap: it constructs the exact resultant,
+    /// then replays every root against this selected fiber before returning
+    /// one ordinary parameter.  An exterior scalar is first mapped from its
+    /// certified finite isolator to `[0,1]` and mapped back exactly; isolating
+    /// bounds choose the chart under STRICT and never become scalar evidence.
+    pub(crate) fn promoted_bezier_parameter_complete(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        match self.promoted_bezier_parameter(policy)? {
+            decided @ Classification::Decided(_) => return Ok(decided),
+            Classification::Uncertain(_) => {}
+        }
+        self.validate_policy(policy)?;
+        let zero = Real::zero();
+        let one = Real::one();
+        let inside_unit = matches!(
+            compare_reals(&self.data.root.lower, &zero, &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) && matches!(
+            compare_reals(&self.data.root.upper, &one, &CurveContext::STRICT),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less)
+        );
+        if inside_unit {
+            return self.promoted_bezier_parameter_complete_unit(policy);
+        }
+
+        let width = &self.data.root.upper - &self.data.root.lower;
+        match real_sign(&width, &CurveContext::STRICT) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "a nonrepresented selected scalar had a zero-width isolator".into(),
+                ));
+            }
+            Some(RealSign::Negative) => return Err(CurveError::InvalidBezierAlgebraicParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let scale = (Real::one() / &width)?;
+        let offset = ((-&self.data.root.lower) / &width)?;
+        let compact = match policy
+            .strict_predicate_pass(|| self.affine_image_unbounded(&scale, &offset, policy))?
+        {
+            Classification::Decided(compact) => compact,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(
+            match compact.promoted_bezier_parameter_complete_unit(policy)? {
+                Classification::Decided(parameter) => {
+                    parameter.affine_image_unbounded(&width, &self.data.root.lower, policy)?
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
+    fn promoted_bezier_parameter_complete_unit(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
+        let retained = &self.data.authority.data.retained_parameter;
+        let projection = algebraic_selected_fiber_parameters_with_resultant_limit(
+            &self.data.authority.data.incidence,
+            retained,
+            usize::MAX,
+            retained
+                .polynomial()
+                .degree()
+                .max(MAX_SELECTED_FIBER_QUOTIENT_DEGREE),
+            policy,
+        )?;
+        let candidates = match projection {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.select_promoted_bezier_parameter(candidates, policy)
+    }
+
+    fn select_promoted_bezier_parameter(
+        &self,
+        candidates: Vec<BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParameter2>> {
         let mut selected = None;
         let mut uncertainty = None;
         for candidate in candidates {
