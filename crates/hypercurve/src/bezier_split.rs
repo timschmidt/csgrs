@@ -625,6 +625,22 @@ impl BezierSelectedFiberFragment2 {
         }
     }
 
+    /// Returns the analytic carrier in the fragment's native source chart.
+    ///
+    /// Rational selected fibers are the zero-distance member of the same
+    /// parallel family. Keeping that conversion here gives every downstream
+    /// curve operation one carrier authority without globalizing either
+    /// selected range boundary.
+    pub(crate) fn parallel_carrier(&self) -> BezierParallel2 {
+        match &self.source {
+            BezierSelectedFiberSource2::Rational(curve) => BezierParallel2::from_source(
+                crate::BezierParallelSource2::Rational(curve.clone()),
+                Real::zero(),
+            ),
+            BezierSelectedFiberSource2::AnalyticParallel(parallel) => parallel.clone(),
+        }
+    }
+
     pub(crate) const fn range(&self) -> &CurveRegionParameterRange2 {
         &self.range
     }
