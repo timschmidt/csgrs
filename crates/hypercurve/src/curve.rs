@@ -4085,25 +4085,49 @@ impl FilletParallelSource2<'_> {
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<crate::bezier_offset::BezierParallelIncidentDomain2> {
-        let range = self.parameter_range().ok_or_else(|| {
-            ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                crate::UncertaintyReason::Unsupported,
-            )
-        })?;
-        let source_reversed = self.retained().is_some_and(|source| source.is_reversed());
-        let extends_toward_higher_parameter = previous != source_reversed;
-        let (endpoint, direction) = if extends_toward_higher_parameter {
-            (range.end(), crate::BezierParameterRayDirection2::Increasing)
-        } else {
-            (
-                range.start(),
-                crate::BezierParameterRayDirection2::Decreasing,
-            )
+        let source_reversed = match self {
+            Self::Direct(_) => false,
+            Self::Retained(source) => source.is_reversed(),
+            Self::Selected(source) => source.is_reversed(),
         };
-        match support
-            .incident_domain_from_parameter(endpoint, direction, policy)
+        let extends_toward_higher_parameter = previous != source_reversed;
+        let direction = if extends_toward_higher_parameter {
+            crate::BezierParameterRayDirection2::Increasing
+        } else {
+            crate::BezierParameterRayDirection2::Decreasing
+        };
+        let domain = match self {
+            Self::Direct(_) | Self::Retained(_) => {
+                let range = self
+                    .parameter_range()
+                    .expect("an ordinary parallel source has a Bezier range");
+                let endpoint = if extends_toward_higher_parameter {
+                    range.end()
+                } else {
+                    range.start()
+                };
+                support.incident_domain_from_parameter(endpoint, direction, policy)
+            }
+            Self::Selected(source) => {
+                let endpoint = if extends_toward_higher_parameter {
+                    source.range().end()
+                } else {
+                    source.range().start()
+                };
+                if let Some(endpoint) = endpoint.as_bezier_parameter() {
+                    support.incident_domain_from_parameter(endpoint, direction, policy)
+                } else if let Some(endpoint) = endpoint.as_selected_fiber() {
+                    support.incident_domain_from_selected_parameter(endpoint, direction, policy)
+                } else {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        crate::UncertaintyReason::Unsupported,
+                    ));
+                }
+            }
+        };
+        match domain
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
             Classification::Decided(domain) => Ok(domain),
@@ -5525,15 +5549,17 @@ fn retained_fillet_range_overlaps_incident_domain(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
+    let order_to_endpoint = |parameter: &BezierParameter2| {
+        retained_fillet_curve_region_parameter_order(
+            &CurveRegionParameter2::from_bezier(parameter.clone()),
+            domain.endpoint(),
+            family,
+            policy,
+        )
+    };
     Ok(match domain.direction() {
         crate::BezierParameterRayDirection2::Decreasing => {
-            retained_fillet_bezier_parameter_order(
-                range.start(),
-                domain.endpoint(),
-                family,
-                policy,
-            )?
-            .is_lt()
+            order_to_endpoint(range.start())?.is_lt()
                 && match domain.barrier() {
                     Some(barrier) => retained_fillet_bezier_parameter_order(
                         range.end(),
@@ -5546,8 +5572,7 @@ fn retained_fillet_range_overlaps_incident_domain(
                 }
         }
         crate::BezierParameterRayDirection2::Increasing => {
-            retained_fillet_bezier_parameter_order(range.end(), domain.endpoint(), family, policy)?
-                .is_gt()
+            order_to_endpoint(range.end())?.is_gt()
                 && match domain.barrier() {
                     Some(barrier) => retained_fillet_bezier_parameter_order(
                         range.start(),
@@ -5565,6 +5590,25 @@ fn retained_fillet_range_overlaps_incident_domain(
 fn retained_fillet_bezier_parameter_order(
     first: &BezierParameter2,
     second: &BezierParameter2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<std::cmp::Ordering> {
+    match first
+        .cmp_by_refinement(second, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(order) => Ok(order),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
+    }
+}
+
+fn retained_fillet_curve_region_parameter_order(
+    first: &CurveRegionParameter2,
+    second: &CurveRegionParameter2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<std::cmp::Ordering> {
@@ -6057,9 +6101,9 @@ fn retained_selected_fillet_overlap_is_positive(
 ) -> ExactCurveResult<bool> {
     let selected_order =
         |parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
-         boundary: &BezierParameter2| {
-            parameter
-                .cmp_bezier_parameter(boundary, policy)
+         boundary: &CurveRegionParameter2| {
+            CurveRegionParameter2::from_selected_fiber(parameter.clone())
+                .cmp_by_refinement(boundary, policy)
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
                 })
@@ -6074,21 +6118,31 @@ fn retained_selected_fillet_overlap_is_positive(
         };
     let other_start = overlap.other_start_parameter();
     let other_end = overlap.other_end_parameter();
-    let overlaps_authored = selected_order(&other_end, analytic_range.start())?.is_gt()
-        && selected_order(&other_start, analytic_range.end())?.is_lt();
+    let authored_start = CurveRegionParameter2::from_bezier(analytic_range.start().clone());
+    let authored_end = CurveRegionParameter2::from_bezier(analytic_range.end().clone());
+    let overlaps_authored = selected_order(&other_end, &authored_start)?.is_gt()
+        && selected_order(&other_start, &authored_end)?.is_lt();
     let overlaps_extension = if let Some(domain) = incident_domain {
         match domain.direction() {
             crate::BezierParameterRayDirection2::Decreasing => {
                 selected_order(&other_start, domain.endpoint())?.is_lt()
                     && match domain.barrier() {
-                        Some(barrier) => selected_order(&other_end, barrier)?.is_gt(),
+                        Some(barrier) => selected_order(
+                            &other_end,
+                            &CurveRegionParameter2::from_bezier(barrier.clone()),
+                        )?
+                        .is_gt(),
                         None => true,
                     }
             }
             crate::BezierParameterRayDirection2::Increasing => {
                 selected_order(&other_end, domain.endpoint())?.is_gt()
                     && match domain.barrier() {
-                        Some(barrier) => selected_order(&other_start, barrier)?.is_lt(),
+                        Some(barrier) => selected_order(
+                            &other_start,
+                            &CurveRegionParameter2::from_bezier(barrier.clone()),
+                        )?
+                        .is_lt(),
                         None => true,
                     }
             }
@@ -10729,42 +10783,71 @@ fn selected_fiber_chamfer_cuts(
             overflow: Vec::new(),
         });
     }
-    let center_parameter = corner_parameter.as_bezier_parameter().ok_or_else(|| {
-        ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Unsupported)
-    })?;
     let parallel = fragment.parallel_carrier();
-    let unit_range = BezierParameterRange2::new_validated(
-        BezierParameter2::Exact(Real::zero()),
-        BezierParameter2::Exact(Real::one()),
-    );
-    let direction = if previous != fragment.is_reversed() {
-        crate::BezierParameterRayDirection2::Increasing
-    } else {
-        crate::BezierParameterRayDirection2::Decreasing
-    };
-    let radius_squared = setback * setback;
-    let parameters = match (if mode == CurveCornerMode2::TrimOrExtend {
-        parallel.fixed_distance_incidence_from_parameter_with_incident_ray(
-            center_parameter,
-            &radius_squared,
-            &unit_range,
-            direction,
-            policy,
-        )
-    } else {
-        parallel.fixed_distance_incidence_from_parameter(
-            center_parameter,
-            &radius_squared,
-            &unit_range,
-            policy,
-        )
-    })
-    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-    {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(operation, family, reason));
+    let parameters = if let Some(center_parameter) = corner_parameter.as_bezier_parameter() {
+        let unit_range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        );
+        let direction = if previous != fragment.is_reversed() {
+            crate::BezierParameterRayDirection2::Increasing
+        } else {
+            crate::BezierParameterRayDirection2::Decreasing
+        };
+        let radius_squared = setback * setback;
+        match (if mode == CurveCornerMode2::TrimOrExtend {
+            parallel.fixed_distance_incidence_from_parameter_with_incident_ray(
+                center_parameter,
+                &radius_squared,
+                &unit_range,
+                direction,
+                policy,
+            )
+        } else {
+            parallel.fixed_distance_incidence_from_parameter(
+                center_parameter,
+                &radius_squared,
+                &unit_range,
+                policy,
+            )
+        })
+        .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameters) => parameters,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
         }
+    } else if let Some(center_parameter) = corner_parameter.as_selected_fiber() {
+        match parallel
+            .affine_fixed_distance_parameters_from_selected_parameter(
+                center_parameter,
+                setback,
+                policy,
+            )
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(Some(parameters)) => parameters
+                .into_iter()
+                .map(crate::bezier_offset::BezierParallelFixedDistanceParameter2::SelectedFiber)
+                .collect(),
+            Classification::Decided(None) => {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    family,
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(operation, family, reason));
+            }
+        }
+    } else {
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
     };
     let mut cuts = CornerCuts2::default();
     for parameter in parameters {

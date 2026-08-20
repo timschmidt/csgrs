@@ -2511,6 +2511,19 @@ fn bivariate_orient_second_parameter<'a>(
 }
 
 fn bivariate_complement_second_parameter(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
+    bivariate_affine_second_parameter(polynomial, &Real::from(-1_i8), &Real::one())
+}
+
+/// Substitutes `offset + scale * second_parameter` into the second axis.
+///
+/// Keeping this small power-basis compositor shared by complement and
+/// selected-fiber translation avoids projecting a locally selected scalar
+/// merely to apply an exact affine parameter-chart change.
+fn bivariate_affine_second_parameter(
+    polynomial: &BivariatePolynomial,
+    scale: &Real,
+    offset: &Real,
+) -> BivariatePolynomial {
     let degree = polynomial
         .coefficients
         .iter()
@@ -2522,7 +2535,7 @@ fn bivariate_complement_second_parameter(polynomial: &BivariatePolynomial) -> Bi
     for power in 1..=degree {
         complement_powers.push(polynomial_multiply(
             &complement_powers[power - 1],
-            &[Real::one(), Real::from(-1_i8)],
+            &[offset.clone(), scale.clone()],
         ));
     }
     BivariatePolynomial::new(
@@ -3361,6 +3374,31 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 .exact_root
                 .as_ref()
                 .map(|root| Real::one() - root),
+            distinct_root_count: self.data.root.distinct_root_count,
+        })
+    }
+
+    /// Translates this exact local scalar without constructing its global
+    /// resultant. If `u` is selected by `F(alpha, u) = 0`, the returned scalar
+    /// `v = u + offset` is selected by `F(alpha, v - offset) = 0`.
+    fn translated(&self, offset: &Real) -> Self {
+        if offset.zero_status() == ZeroStatus::Zero {
+            return self.clone();
+        }
+        let policy = self.data.authority.data.policy;
+        let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+            bivariate_affine_second_parameter(
+                &self.data.authority.data.incidence,
+                &Real::one(),
+                &(-offset.clone()),
+            ),
+            self.data.authority.data.retained_parameter.clone(),
+            &policy,
+        );
+        authority.parameter(IsolatedRootInterval {
+            lower: &self.data.root.lower + offset,
+            upper: &self.data.root.upper + offset,
+            exact_root: self.data.root.exact_root.as_ref().map(|root| root + offset),
             distinct_root_count: self.data.root.distinct_root_count,
         })
     }
@@ -16240,7 +16278,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         let mapped_incident = if let Some(incident) = incident {
-            let endpoint = match map_parameter(&incident.endpoint)? {
+            let Some(endpoint) = incident.endpoint.as_bezier_parameter() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let endpoint = match map_parameter(endpoint)? {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -16257,7 +16298,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 None
             };
             Some(BezierParallelIncidentDomain2 {
-                endpoint,
+                endpoint: CurveRegionParameter2::from_bezier(endpoint),
                 // The caller already folded the rootless endpoint bridge into
                 // `range`; the selected-normal kernel consumes only the
                 // affine ray anchor and its first regularity barrier.
@@ -73046,12 +73087,229 @@ impl BezierParallel2 {
             }
         };
         Ok(Classification::Decided(BezierParallelIncidentDomain2 {
-            endpoint: endpoint.clone(),
+            endpoint: CurveRegionParameter2::from_bezier(endpoint.clone()),
             bridge,
             anchor,
             direction,
             barrier,
         }))
+    }
+
+    /// Builds the same regular incident ray from a compact selected-fiber
+    /// endpoint without constructing its degree-multiplied global norm.
+    ///
+    /// The selected isolator is refined under STRICT until its complete
+    /// rational box has one nonzero source-weight sign and positive tangent
+    /// speed. The outward box boundary is then a certified represented ray
+    /// anchor; the root-to-anchor bridge stays regular by the same interval
+    /// proof. No approximate value selects the chart.
+    pub(crate) fn incident_domain_from_selected_parameter(
+        &self,
+        endpoint: &BezierAlgebraicSelectedFiberParameter2,
+        direction: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIncidentDomain2>> {
+        endpoint.validate_policy(policy)?;
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let weight = source
+            .weight
+            .map_or_else(|| vec![Real::one()], ToOwned::to_owned);
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let selected_sign = |coefficients: &[Real]| {
+            policy.strict_predicate_pass(|| {
+                endpoint.predicate_sign(
+                    &bivariate_outer_product(&[Real::one()], coefficients),
+                    policy,
+                )
+            })
+        };
+        match selected_sign(&weight)? {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match selected_sign(&speed_squared)? {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "parallel source speed squared was certified negative".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+
+        let strict_interval_sign = |coefficients: &[Real],
+                                    lower: &Real,
+                                    upper: &Real,
+                                    precision|
+         -> CurveResult<Option<RealSign>> {
+            let Some([lower, upper]) = coefficients_value_interval_on_real_interval(
+                coefficients,
+                lower,
+                upper,
+                precision,
+            )?
+            else {
+                return Ok(None);
+            };
+            let lower = Real::new(lower);
+            let upper = Real::new(upper);
+            Ok(
+                if compare_reals(&lower, &Real::zero(), &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Greater)
+                {
+                    Some(RealSign::Positive)
+                } else if compare_reals(&upper, &Real::zero(), &CurveContext::STRICT)
+                    == Some(std::cmp::Ordering::Less)
+                {
+                    Some(RealSign::Negative)
+                } else {
+                    None
+                },
+            )
+        };
+        let mut selected_bridge = None;
+        for (steps, precision) in [
+            (0, -32),
+            (2, -64),
+            (4, -96),
+            (8, -128),
+            (16, -192),
+            (32, -256),
+            (64, -384),
+            (128, -512),
+            (256, -768),
+            (512, -1024),
+        ] {
+            let refined = match policy.strict_predicate_pass(|| endpoint.refined(steps, policy))? {
+                Classification::Decided(refined) => refined,
+                Classification::Uncertain(_) => continue,
+            };
+            let lower = &refined.root().lower;
+            let upper = &refined.root().upper;
+            if strict_interval_sign(&weight, lower, upper, precision)?.is_none()
+                || strict_interval_sign(&speed_squared, lower, upper, precision)?
+                    != Some(RealSign::Positive)
+            {
+                continue;
+            }
+            let interval = match BezierParameterInterval::try_new(
+                lower.clone(),
+                upper.clone(),
+                &CurveContext::STRICT,
+            )? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => continue,
+            };
+            let anchor = match direction {
+                BezierParameterRayDirection2::Decreasing => lower.clone(),
+                BezierParameterRayDirection2::Increasing => upper.clone(),
+            };
+            selected_bridge = Some((anchor, interval));
+            break;
+        }
+        let Some((anchor, bridge)) = selected_bridge else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+        };
+        let barrier = match self.incident_ray_regular_barrier(&anchor, direction, policy)? {
+            Classification::Decided(barrier) => barrier,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(BezierParallelIncidentDomain2 {
+            endpoint: CurveRegionParameter2::from_selected_fiber(endpoint.clone()),
+            bridge: Some(bridge),
+            anchor,
+            direction,
+            barrier,
+        }))
+    }
+
+    /// Returns both fixed-distance parameters from one compact selected
+    /// parameter when this analytic parallel has an affine source chart.
+    ///
+    /// A parallel of an affine parameterization differs from its source only
+    /// by a constant normal translation, so its parameter speed is constant.
+    /// The two circle intersections are therefore the exact local scalars
+    /// `center +/- setback / speed`. General nonlinear carriers deliberately
+    /// return `None` and remain owned by the selected two-parameter kernel.
+    pub(crate) fn affine_fixed_distance_parameters_from_selected_parameter(
+        &self,
+        center: &BezierAlgebraicSelectedFiberParameter2,
+        setback: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<[BezierAlgebraicSelectedFiberParameter2; 2]>>> {
+        center.validate_policy(policy)?;
+        let source = self.source_power_basis()?;
+        let structurally_affine = |coefficients: &[Real]| {
+            coefficients
+                .iter()
+                .skip(2)
+                .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero)
+        };
+        if !structurally_affine(source.x_numerator) || !structurally_affine(source.y_numerator) {
+            return Ok(Classification::Decided(None));
+        }
+        let weight = match source.weight {
+            None => Real::one(),
+            Some(weight)
+                if weight
+                    .iter()
+                    .skip(1)
+                    .all(|coefficient| coefficient.zero_status() == ZeroStatus::Zero) =>
+            {
+                let Some(weight) = weight.first() else {
+                    return Err(CurveError::Topology(
+                        "an affine rational source had no weight coefficient".into(),
+                    ));
+                };
+                match policy.strict_predicate_pass(|| real_sign(weight, policy)) {
+                    Some(RealSign::Positive | RealSign::Negative) => weight.clone(),
+                    Some(RealSign::Zero) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    None => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                    }
+                }
+            }
+            Some(_) => return Ok(Classification::Decided(None)),
+        };
+        let derivative = |coefficients: &[Real]| -> CurveResult<Real> {
+            (coefficients.get(1).cloned().unwrap_or_else(Real::zero) / &weight).map_err(Into::into)
+        };
+        let derivative_x = derivative(source.x_numerator)?;
+        let derivative_y = derivative(source.y_numerator)?;
+        let speed_squared = &derivative_x * &derivative_x + &derivative_y * &derivative_y;
+        match policy.strict_predicate_pass(|| real_sign(&speed_squared, policy)) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "an affine parallel source had negative squared speed".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let speed = speed_squared.sqrt()?;
+        let delta = (setback / speed)?;
+        Ok(Classification::Decided(Some([
+            center.translated(&(-delta.clone())),
+            center.translated(&delta),
+        ])))
     }
 
     /// Solves analytic-parallel circle incidence on the regular affine cell
@@ -85578,7 +85836,7 @@ pub(crate) enum BezierParallelFixedDistanceParameter2 {
 /// is the first source pole or tangent-speed zero beyond that anchor.
 #[derive(Clone, Debug)]
 pub(crate) struct BezierParallelIncidentDomain2 {
-    endpoint: BezierParameter2,
+    endpoint: CurveRegionParameter2,
     bridge: Option<BezierParameterInterval>,
     anchor: Real,
     direction: BezierParameterRayDirection2,
@@ -85586,7 +85844,7 @@ pub(crate) struct BezierParallelIncidentDomain2 {
 }
 
 impl BezierParallelIncidentDomain2 {
-    pub(crate) const fn endpoint(&self) -> &BezierParameter2 {
+    pub(crate) const fn endpoint(&self) -> &CurveRegionParameter2 {
         &self.endpoint
     }
 
@@ -85608,7 +85866,10 @@ impl BezierParallelIncidentDomain2 {
 
     fn reversed(&self) -> Self {
         Self {
-            endpoint: self.endpoint.unit_complement(),
+            endpoint: self
+                .endpoint
+                .unit_complement()
+                .expect("an analytic incident endpoint has a source-parameter complement"),
             bridge: self
                 .bridge
                 .as_ref()
@@ -85646,7 +85907,9 @@ impl BezierParallelIncidentDomain2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let endpoint_order = match parameter.cmp_by_refinement(&self.endpoint, policy)? {
+        let endpoint_order = match CurveRegionParameter2::from_bezier(parameter.clone())
+            .cmp_by_refinement(&self.endpoint, policy)?
+        {
             Classification::Decided(ordering) => ordering,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));

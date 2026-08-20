@@ -2666,6 +2666,78 @@ fn retained_corner_fragment_extension(
         )
         .map(|fragment| vec![fragment]);
     }
+    if let BezierSplitFragment2::SelectedFiber(fragment) = fragment {
+        if parameter.as_bezier_parameter().is_none() && parameter.as_selected_fiber().is_none() {
+            return Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        let compare = |first: &CurveRegionParameter2, second: &CurveRegionParameter2| {
+            retained_corner_decision(
+                first
+                    .cmp_by_refinement(second, policy)
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                operation,
+            )
+        };
+        let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
+        let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+        if compare(&parameter, &zero)?.is_lt() || compare(&parameter, &one)?.is_gt() {
+            return Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        let keep_lower_parameter_range = keep_before_cut != fragment.is_reversed();
+        let range = fragment.range();
+        if (keep_lower_parameter_range && !compare(&parameter, range.end())?.is_gt())
+            || (!keep_lower_parameter_range && !compare(&parameter, range.start())?.is_lt())
+        {
+            return Err(curve_region_edit_error(
+                operation,
+                CurveError::Topology(
+                    "a selected-fiber extension cut did not extend its authored range".into(),
+                ),
+            ));
+        }
+        let (source_start_point, source_end_point) = if fragment.is_reversed() {
+            (fragment.end_point(), fragment.start_point())
+        } else {
+            (fragment.start_point(), fragment.end_point())
+        };
+        let (range, start_point, end_point) = if keep_lower_parameter_range {
+            (
+                CurveRegionParameterRange2::new_validated(range.start().clone(), parameter),
+                source_start_point.clone(),
+                cut_point.clone(),
+            )
+        } else {
+            (
+                CurveRegionParameterRange2::new_validated(parameter, range.end().clone()),
+                cut_point.clone(),
+                source_end_point.clone(),
+            )
+        };
+        let extended = BezierSplitFragment2::SelectedFiber(
+            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                fragment.source().clone(),
+                range,
+                start_point,
+                end_point,
+            ),
+        );
+        return if fragment.is_reversed() {
+            extended
+                .reversed()
+                .map(|fragment| vec![fragment])
+                .map_err(|cause| curve_region_edit_error(operation, cause))
+        } else {
+            Ok(vec![extended])
+        };
+    }
     if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
         return retained_cusp_fragment_extension(
             fragment,
@@ -14316,6 +14388,25 @@ impl CurveRegion2 {
             return Ok(());
         }
 
+        if matches!(fragment, BezierSplitFragment2::SelectedFiber(_)) {
+            let zero = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::zero()));
+            let one = CurveRegionParameter2::from_bezier(BezierParameter2::Exact(Real::one()));
+            let order = |boundary: &CurveRegionParameter2| {
+                retained_corner_decision(
+                    cut.parameter
+                        .cmp_by_refinement(boundary, policy)
+                        .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                    operation,
+                )
+            };
+            if !order(&zero)?.is_lt() && !order(&one)?.is_gt() {
+                // The original source chart already contains this extension.
+                // Reconstruction can enlarge the compact selected range
+                // directly; no finite-envelope reparameterization is needed.
+                return Ok(());
+            }
+        }
+
         if cut.parameter.is_selected_fiber() {
             cut.parameter = CurveRegionParameter2::from_bezier(retained_corner_decision(
                 promoted_retained_parallel_parameter(&cut.parameter, policy)
@@ -20996,31 +21087,157 @@ mod tests {
                 .prepare(&fragment, CurveOperation2::Fillet, &policy)
                 .expect("selected carrier admission must not require global projection");
             assert!(admitted.promoted_parallel().is_none());
-            let selected = admitted
-                .exact_carrier(&fragment, true, CurveOperation2::Fillet, &policy)
-                .unwrap();
             assert!(matches!(
-                selected,
+                admitted
+                    .exact_carrier(&fragment, true, CurveOperation2::Fillet, &policy)
+                    .unwrap(),
                 crate::curve::ExactCornerCarrier2::SelectedFiber(_)
             ));
             let vertical = LineSeg2::try_new(p(7, 0), p(7, 10)).unwrap();
-            let solutions = crate::curve::solve_exact_fillet_corner(
-                selected,
-                crate::curve::ExactCornerCarrier2::Line(&vertical),
-                &Real::one(),
-                RealSign::Positive,
-                CurveCornerMode2::TrimOnly,
-                false,
-                CurveFamily2::RationalBezier,
-                CurveFamily2::Line,
+            let solve = |mode| {
+                crate::curve::solve_exact_fillet_corner(
+                    admitted
+                        .exact_carrier(&fragment, true, CurveOperation2::Fillet, &policy)
+                        .unwrap(),
+                    crate::curve::ExactCornerCarrier2::Line(&vertical),
+                    &Real::one(),
+                    RealSign::Positive,
+                    mode,
+                    false,
+                    CurveFamily2::RationalBezier,
+                    CurveFamily2::Line,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "resource-blocked selected carrier must fillet in its local chart: policy={policy:?}, mode={mode:?}, error={error:?}"
+                    )
+                })
+            };
+            let trim = solve(CurveCornerMode2::TrimOnly);
+            let extended = solve(CurveCornerMode2::TrimOrExtend);
+            assert!(trim.candidate_count() > 0);
+            assert!(extended.candidate_count() > trim.candidate_count());
+        }
+    }
+
+    #[test]
+    fn resource_blocked_selected_corner_chamfers_in_its_affine_fiber() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let setback = q(1, 4);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                half.clone(),
+                32_768,
+                &policy,
+            );
+            let end = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                third.clone(),
+                64,
+                &policy,
+            );
+            for parameter in [&start, &end] {
+                assert!(matches!(
+                    parameter.promoted_bezier_parameter(&policy).unwrap(),
+                    Classification::Uncertain(_)
+                ));
+            }
+
+            let parallel =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(0, 0), p(10, 0)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let point = |parameter| {
+                RationalBezierIntersectionPointEvidence2::AnalyticParallel(
+                    crate::BezierAnalyticParallelPoint2::new_selected_fiber(
+                        parallel.clone(),
+                        parameter,
+                        &policy,
+                    ),
+                )
+            };
+            let start_point = point(start.clone());
+            let end_point = point(end.clone());
+            let selected = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::AnalyticParallel(parallel),
+                    CurveRegionParameterRange2::new_validated(
+                        CurveRegionParameter2::from_selected_fiber(start.clone()),
+                        CurveRegionParameter2::from_selected_fiber(end.clone()),
+                    ),
+                    start_point.clone(),
+                    end_point.clone(),
+                ),
+            );
+            let apex = match crate::BezierAlgebraicChord2::translated_endpoint(
+                &end_point,
+                &Real::zero(),
+                &Real::from(5_i8),
                 &policy,
             )
-            .unwrap_or_else(|error| {
-                panic!(
-                    "resource-blocked selected carrier must fillet in its local chart: policy={policy:?}, error={error:?}"
-                )
+            .unwrap()
+            {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    panic!("selected loop apex must translate: {reason:?}")
+                }
+            };
+            let vertical = BezierSplitFragment2::AlgebraicChord(
+                crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                    end_point,
+                    apex.clone(),
+                    crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveY,
+                    &policy,
+                ),
+            );
+            let closing =
+                match crate::BezierAlgebraicChord2::try_new(apex, start_point, &policy).unwrap() {
+                    Classification::Decided(chord) => BezierSplitFragment2::AlgebraicChord(chord),
+                    Classification::Uncertain(reason) => {
+                        panic!("selected loop closing chord must construct: {reason:?}")
+                    }
+                };
+            let boundary =
+                CurveRegionBoundaryLoop2::new(vec![selected, vertical, closing], &policy)
+                    .expect("the selected affine triangle must close");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let chamfer = |mode| {
+                region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        1,
+                        setback.clone(),
+                        setback.clone(),
+                        mode,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "resource-blocked selected endpoint must chamfer in its local affine fiber: policy={policy:?}, mode={mode:?}, error={error:?}"
+                        )
+                    })
+            };
+            let chamfers = chamfer(CurveCornerMode2::TrimOnly);
+            let extended = chamfer(CurveCornerMode2::TrimOrExtend);
+            assert_eq!(chamfers.certainty, CurveCertainty::Certified);
+            assert_eq!(extended.certainty, CurveCertainty::Certified);
+            assert!(chamfers.value.candidate_count() > 0);
+            assert!(extended.value.candidate_count() > chamfers.value.candidate_count());
+            let mut retained_local_boundary = false;
+            for_each_corner_region(&chamfers.value, |edited| {
+                retained_local_boundary |= edited.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)));
             });
-            assert!(solutions.candidate_count() > 0);
+            assert!(retained_local_boundary);
         }
     }
 
@@ -21149,6 +21366,24 @@ mod tests {
                 });
             assert_eq!(fillets.certainty, CurveCertainty::Certified);
             assert!(fillets.value.candidate_count() > 0);
+            let extended_fillets = region
+                .fillet_loop_vertex_by_radius(
+                    0,
+                    1,
+                    radius.clone(),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "resource-blocked selected boundary must extend and rebuild: policy={policy:?}, error={error:?}"
+                    )
+                });
+            assert_eq!(extended_fillets.certainty, CurveCertainty::Certified);
+            assert!(
+                extended_fillets.value.candidate_count() > fillets.value.candidate_count(),
+                "the selected incident chart must contribute exterior fillet candidates"
+            );
             let mut retained_local_boundary = false;
             for_each_corner_region(&fillets.value, |edited| {
                 retained_local_boundary |= edited.boundary_loops()[0]
