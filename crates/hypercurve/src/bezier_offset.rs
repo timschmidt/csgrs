@@ -9084,16 +9084,6 @@ impl BezierAlgebraicChordAxisDirection2 {
         }
     }
 
-    const fn from_cardinal_components(x: i8, y: i8) -> Option<Self> {
-        match (x, y) {
-            (1, 0) => Some(Self::PositiveX),
-            (-1, 0) => Some(Self::NegativeX),
-            (0, 1) => Some(Self::PositiveY),
-            (0, -1) => Some(Self::NegativeY),
-            _ => None,
-        }
-    }
-
     pub(crate) const fn axis(self) -> Axis2 {
         match self {
             Self::PositiveX | Self::NegativeX => Axis2::X,
@@ -63275,7 +63265,6 @@ fn selected_circle_endpoint_chord_side(
     support.oriented_side(point, policy)
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if !policy.accepts_retained_policy(self.data.policy) {
@@ -63450,46 +63439,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             2 => (-normal_x, -normal_y),
             _ => unreachable!("cardinal parameter slot is closed"),
         })
-    }
-
-    /// Returns a structurally certified cardinal traversal tangent at an
-    /// endpoint of a directly framed retained circle fragment.
-    ///
-    /// Only the exact diameter and quarter-turn parameters are admitted. A
-    /// mapped/nonrational cut therefore cannot become a convex-topology fast
-    /// path merely because APPROXIMATE_512 rounded its parameter to a cardinal
-    /// value.
-    pub(crate) fn cardinal_endpoint_tangent_direction(
-        &self,
-        start_endpoint: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierAlgebraicChordAxisDirection2>>> {
-        self.validate_policy(policy)?;
-        let Some((radial_x, radial_y)) = self.cardinal_endpoint_radial_components(start_endpoint)
-        else {
-            return Ok(Classification::Decided(None));
-        };
-        let radial_sign = match real_sign(self.data.semicircle.radial_distance(), policy) {
-            Some(RealSign::Positive) => 1_i8,
-            Some(RealSign::Negative) => -1_i8,
-            Some(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "selected algebraic semicircle retained a zero radius".into(),
-                ));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        let turn_sign = if self.data.semicircle.is_clockwise() {
-            -1_i8
-        } else {
-            1_i8
-        };
-        let traversal_sign = if self.data.reversed { -1_i8 } else { 1_i8 };
-        let scale = turn_sign * radial_sign * traversal_sign;
-        let (x, y) = (-radial_y * scale, radial_x * scale);
-        Ok(Classification::Decided(
-            BezierAlgebraicChordAxisDirection2::from_cardinal_components(x, y),
-        ))
     }
 
     /// Returns a represented exact traversal tangent at an authored diameter
@@ -64310,18 +64259,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             cross,
             Some(product_sign(dot, orientation)),
         ))))
-    }
-
-    pub(crate) fn endpoint_pair_tangent_cross(
-        &self,
-        self_start: bool,
-        other: &Self,
-        other_start: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RealSign>>> {
-        Ok(self
-            .endpoint_pair_tangent_cross_and_dot(self_start, other, other_start, policy)?
-            .map(|relation| relation.map(|(cross, _)| cross)))
     }
 
     /// Replays an exactly parameterized endpoint of a parallel-normal circle
@@ -65597,44 +65534,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         Ok(Classification::Decided(Some(translated)))
     }
 
-    /// Replays a noncardinal endpoint on an exact concentric offset whenever
-    /// its retained parameter already owns a one-field target construction.
-    pub(crate) fn concentric_offset_endpoint_point_image(
-        &self,
-        offset: &Self,
-        start_endpoint: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {
-        self.validate_policy(policy)?;
-        offset.validate_policy(policy)?;
-        if self.data.reversed != offset.data.reversed
-            || !self
-                .endpoint_parameter(start_endpoint)
-                .shares_exact_evidence(offset.endpoint_parameter(start_endpoint))
-        {
-            return Ok(Classification::Decided(None));
-        }
-        let point = match self
-            .endpoint_parameter(start_endpoint)
-            .concentric_offset_point_image(&self.data.semicircle, &offset.data.semicircle, policy)?
-        {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if let Some(point) = &point {
-            let source_start = start_endpoint != offset.data.reversed;
-            let cache = if source_start {
-                &offset.data.start_point_image
-            } else {
-                &offset.data.end_point_image
-            };
-            let _ = cache.set(Some(point.clone()));
-        }
-        Ok(Classification::Decided(point))
-    }
-
     /// Replays an endpoint on an exact concentric offset using the general
     /// point authority, including correlated selected-circle/chord cuts.
     pub(crate) fn concentric_offset_endpoint_point_evidence(
@@ -65694,6 +65593,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
         self.transform_similarity_cached(
             transform,
@@ -98529,22 +98429,22 @@ mod conversion_tests {
                         Classification::Decided(true),
                     );
                     assert_eq!(
-                        first_upper.endpoint_pair_tangent_cross(
+                        first_upper.endpoint_pair_tangent_cross_and_dot(
                             false,
                             &second_upper,
                             true,
                             &policy,
                         )?,
-                        Classification::Decided(Some(RealSign::Positive)),
+                        Classification::Decided(Some((RealSign::Positive, None))),
                     );
                     assert_eq!(
-                        second_lower.endpoint_pair_tangent_cross(
+                        second_lower.endpoint_pair_tangent_cross_and_dot(
                             false,
                             &first_lower,
                             true,
                             &policy,
                         )?,
-                        Classification::Decided(Some(RealSign::Positive)),
+                        Classification::Decided(Some((RealSign::Positive, None))),
                     );
                     let probe_distance = (-Real::one() / Real::from(8_i8))?;
                     let Classification::Decided(Some(first_upper_offset)) =
@@ -98558,13 +98458,13 @@ mod conversion_tests {
                         panic!("the second selected half must retain its outward parallel");
                     };
                     assert_eq!(
-                        first_upper_offset.endpoint_pair_tangent_cross(
+                        first_upper_offset.endpoint_pair_tangent_cross_and_dot(
                             false,
                             &second_upper_offset,
                             true,
                             &policy,
                         )?,
-                        Classification::Decided(Some(RealSign::Positive)),
+                        Classification::Decided(Some((RealSign::Positive, None))),
                     );
                     let Classification::Decided(Some(first_lower_offset)) =
                         first_lower.offset_left(&probe_distance, &policy)?
@@ -98577,13 +98477,13 @@ mod conversion_tests {
                         panic!("the second lower half must retain its outward parallel");
                     };
                     assert_eq!(
-                        second_lower_offset.endpoint_pair_tangent_cross(
+                        second_lower_offset.endpoint_pair_tangent_cross_and_dot(
                             false,
                             &first_lower_offset,
                             true,
                             &policy,
                         )?,
-                        Classification::Decided(Some(RealSign::Positive)),
+                        Classification::Decided(Some((RealSign::Positive, None))),
                     );
 
                     let boundary = CurveRegionBoundaryLoop2::new(
@@ -99576,6 +99476,21 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let first = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let foreign = || synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy);
+            let assert_endpoint = |fragment: &BezierAlgebraicCuspSemicircleFragment2,
+                                   expected: Point2| {
+                let Classification::Decided(Some(point)) =
+                    fragment.endpoint_point_evidence(true, &policy).unwrap()
+                else {
+                    panic!("the retained offset endpoint must remain exact");
+                };
+                assert_eq!(
+                    point.same_point(
+                        &RationalBezierIntersectionPointEvidence2::Exact(expected),
+                        &policy,
+                    ),
+                    Classification::Decided(true),
+                );
+            };
 
             for (second, expected_orientation) in [
                 (first.clone(), RationalBezierOverlapOrientation2::Same),
@@ -99723,23 +99638,7 @@ mod conversion_tests {
                 else {
                     panic!("the mapped-endpoint concentric offset must remain nonzero");
                 };
-                let Classification::Decided(Some(offset_endpoint)) = mapped_endpoint_fragment
-                    .concentric_offset_endpoint_point_image(&offset_fragment, true, &policy)
-                    .unwrap()
-                else {
-                    panic!("the coincident endpoint field must survive a radius change");
-                };
-                assert_eq!(
-                    offset_endpoint.exact_rational_point(&policy),
-                    Some(Point2::new(Real::zero(), expected_y)),
-                );
-                assert!(
-                    offset_fragment
-                        .endpoint_point_image(true, &policy)
-                        .unwrap()
-                        .expect("the transported endpoint must be cached")
-                        .shares_storage(&offset_endpoint)
-                );
+                assert_endpoint(&offset_fragment, Point2::new(Real::zero(), expected_y));
             }
             let translated_fragment = mapped_endpoint_fragment
                 .transform_similarity(
@@ -99781,18 +99680,12 @@ mod conversion_tests {
             else {
                 panic!("the transformed carrier offset must remain nonzero");
             };
-            let Classification::Decided(Some(translated_offset_endpoint)) = translated_fragment
-                .concentric_offset_endpoint_point_image(&translated_offset_fragment, true, &policy)
-                .unwrap()
-            else {
-                panic!("the transformed correlation must survive a radius change");
-            };
-            assert_eq!(
-                translated_offset_endpoint.exact_rational_point(&policy),
-                Some(Point2::new(
+            assert_endpoint(
+                &translated_offset_fragment,
+                Point2::new(
                     Real::from(2_i8),
                     (Real::from(7_i8) / Real::from(2_i8)).unwrap(),
-                )),
+                ),
             );
             for transform in [
                 Similarity2::try_from_real_affine(
@@ -99838,15 +99731,9 @@ mod conversion_tests {
                 else {
                     panic!("the similarity-transported offset must remain nonzero");
                 };
-                let Classification::Decided(Some(endpoint)) = transformed
-                    .concentric_offset_endpoint_point_image(&offset, true, &policy)
-                    .unwrap()
-                else {
-                    panic!("the similarity-transported correlation must re-offset");
-                };
-                assert_eq!(
-                    endpoint.exact_rational_point(&policy),
-                    Some(transform.transform_point(&Point2::new(Real::zero(), half.clone(),))),
+                assert_endpoint(
+                    &offset,
+                    transform.transform_point(&Point2::new(Real::zero(), half.clone())),
                 );
             }
             let rational_wide_arc = RationalBezier2::from(
@@ -99934,15 +99821,9 @@ mod conversion_tests {
             else {
                 panic!("the wrapped mapped-endpoint offset must remain nonzero");
             };
-            let Classification::Decided(Some(wrapped_offset_endpoint)) = wrapped_endpoint_fragment
-                .concentric_offset_endpoint_point_image(&wrapped_offset_fragment, true, &policy)
-                .unwrap()
-            else {
-                panic!("nested coincident transports must retain the endpoint field");
-            };
-            assert_eq!(
-                wrapped_offset_endpoint.exact_rational_point(&policy),
-                Some(Point2::new(Real::zero(), Real::one() + &half)),
+            assert_endpoint(
+                &wrapped_offset_fragment,
+                Point2::new(Real::zero(), Real::one() + &half),
             );
             let translated_wrapped = wrapped_endpoint_fragment
                 .transform_similarity(
@@ -99970,15 +99851,9 @@ mod conversion_tests {
             else {
                 panic!("the transformed nested carrier offset must remain nonzero");
             };
-            let Classification::Decided(Some(translated_wrapped_endpoint)) = translated_wrapped
-                .concentric_offset_endpoint_point_image(&translated_wrapped_offset, true, &policy)
-                .unwrap()
-            else {
-                panic!("nested overlap transport must survive another offset");
-            };
-            assert_eq!(
-                translated_wrapped_endpoint.exact_rational_point(&policy),
-                Some(Point2::new(Real::from(2_i8), Real::from(4_i8) + &half,)),
+            assert_endpoint(
+                &translated_wrapped_offset,
+                Point2::new(Real::from(2_i8), Real::from(4_i8) + &half),
             );
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
