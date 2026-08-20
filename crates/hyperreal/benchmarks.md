@@ -3,29 +3,29 @@
 
 Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
 
-<!-- promoted_slow_score_nanos: 50490 -->
-<!-- promoted_slow_previous_score_nanos: 50490 -->
+<!-- promoted_slow_score_nanos: 4622 -->
+<!-- promoted_slow_previous_score_nanos: 4622 -->
 <!-- promoted_slow_score_delta_nanos: 0 -->
 
 | Metric | Value |
 | --- | ---: |
 | Cases scored | 100 |
-| Average score | 50.490 us |
+| Average score | 4.622 us |
 | Delta | 0 ns |
 | Delta derivative | 0 ns |
 
 | Rank | Current Time | Operation | Input |
 | ---: | ---: | --- | --- |
-| 1 | 128.232 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
-| 2 | 125.811 us | `generated_tan_p96` | `generated[3756] -1 123/214` |
-| 3 | 124.701 us | `generated_tan_p96` | `generated[5916] -1 337/578` |
-| 4 | 124.112 us | `generated_tan_p96` | `generated[8976] 1 71/73` |
-| 5 | 123.612 us | `generated_tan_p96` | `generated[11691] 1 431/439` |
-| 6 | 123.611 us | `generated_tan_p96` | `generated[18276] -1 77/107` |
-| 7 | 123.201 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
-| 8 | 122.572 us | `generated_tan_p96` | `generated[321] 1 214/231` |
-| 9 | 122.172 us | `generated_tan_p96` | `generated[15081] 1 205/259` |
-| 10 | 121.121 us | `generated_tan_p96` | `generated[486] 1 53/71` |
+| 1 | 10.609 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
+| 2 | 10.549 us | `generated_tan_p96` | `generated[5676] -1 215/229` |
+| 3 | 10.490 us | `generated_tan_p96` | `generated[3756] -1 123/214` |
+| 4 | 10.419 us | `generated_tan_p96` | `generated[5916] -1 337/578` |
+| 5 | 10.249 us | `generated_tan_p96` | `generated[8976] 1 71/73` |
+| 6 | 10.219 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
+| 7 | 10.210 us | `generated_tan_p96` | `generated[14136] -1 79/106` |
+| 8 | 10.189 us | `generated_tan_p96` | `generated[11691] 1 431/439` |
+| 9 | 10.129 us | `generated_tan_p96` | `generated[321] 1 214/231` |
+| 10 | 10.119 us | `generated_tan_p96` | `generated[13911] -2 134/427` |
 
 <!-- END promoted_slow_offender_score -->
 
@@ -188,16 +188,16 @@ Cost of constructing common exact scalar identities and small integers.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `construction_speed/rational_one` | not run | not run | Constructs `Rational::one()`. |
-| `construction_speed/rational_new_one` | not run | not run | Constructs one through `Rational::new(1)`. |
-| `construction_speed/rational_from_u8_four` | not run | not run | Constructs positive four through unsigned primitive conversion. |
-| `construction_speed/rational_from_i8_minus_four` | not run | not run | Constructs negative four through signed primitive conversion. |
-| `construction_speed/computable_one` | not run | not run | Constructs `Computable::one()`. |
-| `construction_speed/real_new_rational_one` | not run | not run | Constructs one through `Real::new(Rational::one())`. |
-| `construction_speed/real_one` | not run | not run | Constructs one through `Real::one()`. |
-| `construction_speed/real_from_i32_one` | not run | not run | Constructs one through integer conversion. |
-| `construction_speed/real_from_u8_four` | not run | not run | Constructs positive four as an exact `Real` from `u8`. |
-| `construction_speed/real_from_i8_minus_four` | not run | not run | Constructs negative four as an exact `Real` from `i8`. |
+| `construction_speed/rational_one` | 3.02 ns | 3.00 ns - 3.03 ns | Constructs `Rational::one()`. |
+| `construction_speed/rational_new_one` | 3.27 ns | 3.25 ns - 3.30 ns | Constructs one through `Rational::new(1)`. |
+| `construction_speed/rational_from_u8_four` | 3.71 ns | 3.70 ns - 3.73 ns | Constructs positive four through unsigned primitive conversion. |
+| `construction_speed/rational_from_i8_minus_four` | 4.17 ns | 4.15 ns - 4.20 ns | Constructs negative four through signed primitive conversion. |
+| `construction_speed/computable_one` | 16.18 ns | 16.14 ns - 16.24 ns | Constructs `Computable::one()`. |
+| `construction_speed/real_new_rational_one` | 15.25 ns | 15.22 ns - 15.29 ns | Constructs one through `Real::new(Rational::one())`. |
+| `construction_speed/real_one` | 15.54 ns | 15.50 ns - 15.58 ns | Constructs one through `Real::one()`. |
+| `construction_speed/real_from_i32_one` | 15.80 ns | 15.75 ns - 15.86 ns | Constructs one through integer conversion. |
+| `construction_speed/real_from_u8_four` | 16.39 ns | 16.37 ns - 16.42 ns | Constructs positive four as an exact `Real` from `u8`. |
+| `construction_speed/real_from_i8_minus_four` | 16.28 ns | 16.22 ns - 16.37 ns | Constructs negative four as an exact `Real` from `i8`. |
 
 ### `raw_cache_hit_cost`
 
@@ -309,8 +309,8 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | --- | ---: | ---: | --- |
 | `rational_algorithm_dispatch_speed/dyadic_fact_cold` | not run | not run | Classifies a fresh non-dyadic denominator and retains the result. |
 | `rational_algorithm_dispatch_speed/dyadic_fact_retained` | not run | not run | Reads an already-retained non-dyadic denominator classification. |
-| `rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits` | 48.90 ns | 48.50 ns - 49.36 ns | Compares retained wide rational magnitudes through the certified leading-significand interval. |
-| `rational_algorithm_dispatch_speed/compare_dyadic_shifted_retained_1024_bits` | 15.13 ns | 15.07 ns - 15.20 ns | Compares retained wide dyadics with equal scaled width and a five-bit denominator-shift difference. |
+| `rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits` | not run | not run | Compares retained wide rational magnitudes through the certified leading-significand interval. |
+| `rational_algorithm_dispatch_speed/compare_dyadic_shifted_retained_1024_bits` | not run | not run | Compares retained wide dyadics with equal scaled width and a five-bit denominator-shift difference. |
 | `rational_algorithm_dispatch_speed/mul_backend_basecase_cold` | not run | not run | Multiplies fresh balanced 16-limb integers through the backend basecase kernel. |
 | `rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold` | not run | not run | Multiplies fresh unbalanced 33-by-66-limb integers through half-Karatsuba. |
 | `rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold` | not run | not run | Multiplies fresh balanced 40-limb integers through Karatsuba. |
@@ -360,34 +360,34 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold` | not run | not run | Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD. |
 | `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | not run | not run | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
 | `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | not run | not run | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
-| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | 132.43 ns | 131.89 ns - 133.17 ns | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | not run | not run | Runs selected magnitude GCD on an ascending balanced two-limb pair. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_128_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 128-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | 5.370 us | 5.342 us - 5.410 us | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_192_bits` | not run | not run | Runs selected magnitude GCD at the retained three-limb Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_192_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 192-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | 11.227 us | 11.204 us - 11.254 us | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_512_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_512_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 512-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | 21.747 us | 21.676 us - 21.824 us | Runs selected magnitude GCD above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_1024_bits` | not run | not run | Runs selected magnitude GCD above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 1,024-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | 118.069 us | 117.625 us - 118.632 us | Runs selected magnitude GCD well above the Lehmer crossover. |
+| `rational_algorithm_dispatch_speed/gcd_selected_4096_bits` | not run | not run | Runs selected magnitude GCD well above the Lehmer crossover. |
 | `rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits` | not run | not run | Runs the full-width Euclidean baseline on the same 4,096-bit pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | 8.464 us | 8.451 us - 8.479 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits` | 8.538 us | 8.497 us - 8.584 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | 8.316 us | 8.202 us - 8.452 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits` | 13.967 us | 13.920 us - 14.020 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | 12.293 us | 12.230 us - 12.373 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits` | 31.514 us | 31.336 us - 31.721 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | 24.132 us | 24.049 us - 24.226 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits` | 72.899 us | 72.721 us - 73.099 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
-| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | 129.132 us | 128.630 us - 129.760 us | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
-| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits` | 514.854 us | 512.048 us - 517.995 us | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 192 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 256 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 512 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 1,024 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
+| `rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits` | not run | not run | Runs selected magnitude GCD on an initially unbalanced pair whose first remainder is balanced at 4,096 bits. |
+| `rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits` | not run | not run | Runs the full-width Euclidean baseline on the same initially unbalanced pair. |
 | `rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits` | not run | not run | Runs the recursive half-GCD candidate below its provisional crossover. |
 | `rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 8,192-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits` | 3.206 ms | 3.196 ms - 3.218 ms | Runs the recursive half-GCD candidate at its provisional crossover. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits` | 935.547 us | 931.676 us - 940.070 us | Runs the quadratic Lehmer baseline on the same 16,384-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits` | 24.918 ms | 24.849 ms - 24.995 ms | Runs the recursive half-GCD candidate well above its provisional crossover. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits` | 9.509 ms | 9.490 ms - 9.529 ms | Runs the quadratic Lehmer baseline on the same 65,536-bit pair. |
-| `rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits` | 358.124 ms | 340.411 ms - 376.454 ms | Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits. |
-| `rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits` | 140.251 ms | 137.835 ms - 142.936 ms | Runs the Lehmer baseline on the same 262,144-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits` | not run | not run | Runs the recursive half-GCD candidate at its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 16,384-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits` | not run | not run | Runs the recursive half-GCD candidate well above its provisional crossover. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits` | not run | not run | Runs the quadratic Lehmer baseline on the same 65,536-bit pair. |
+| `rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits` | not run | not run | Runs recursive half-GCD with selected higher-Toom matrix products at 262,144 bits. |
+| `rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits` | not run | not run | Runs the Lehmer baseline on the same 262,144-bit pair. |
 | `rational_algorithm_dispatch_speed/half_gcd_candidate_1048576_bits` | not run | not run | Runs recursive half-GCD with selected higher-Toom matrix products at 1,048,576 bits. |
 | `rational_algorithm_dispatch_speed/half_gcd_lehmer_1048576_bits` | not run | not run | Runs the Lehmer baseline on the same 1,048,576-bit pair. |
 | `rational_algorithm_dispatch_speed/barrett_one_shot_8192_by_1024` | not run | not run | Prepares a Rust-native Barrett reciprocal and divides one 8,192-bit value by a 1,024-bit divisor. |
@@ -515,6 +515,7 @@ Fixed product-sum reducers used by determinant and cofactor kernels.
 | `exact_product_sums/signed_product_sum_sparse_single_6x2` | not run | not run | Computes a sparse exact rational six-term signed product sum with one active product. |
 | `exact_product_sums/real_signed_product_sum_rational_det3` | not run | not run | Computes a 3x3 determinant-shaped signed product sum through the public `Real` builder. |
 | `exact_product_sums/real_signed_product_sum_mixed_symbolic_det3` | not run | not run | Computes the same determinant-shaped builder with symbolic factors and rational scales. |
+| `exact_product_sums/exact_rational_sparse_homogeneous_plane_intersection3` | not run | not run | Computes a canonical exact three-plane cofactor tuple from one sparse dyadic row. |
 
 <!-- END scalar_micro -->
 
@@ -529,9 +530,9 @@ Formatting costs for important irrational `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_format/pi_lower_exp_32` | 4.956 us | 4.924 us - 5.003 us | Formats pi with 32 digits in lower-exponential form. |
-| `real_format/pi_display_alt_32` | 4.949 us | 4.944 us - 4.954 us | Formats pi with alternate decimal display at 32 digits. |
-| `real_format/sqrt_two_display_alt_32` | 4.861 us | 4.850 us - 4.873 us | Formats sqrt(2) with alternate decimal display at 32 digits. |
+| `real_format/pi_lower_exp_32` | not run | not run | Formats pi with 32 digits in lower-exponential form. |
+| `real_format/pi_display_alt_32` | not run | not run | Formats pi with alternate decimal display at 32 digits. |
+| `real_format/sqrt_two_display_alt_32` | not run | not run | Formats sqrt(2) with alternate decimal display at 32 digits. |
 
 ### `real_constants`
 
@@ -539,8 +540,8 @@ Construction cost for shared mathematical constants.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_constants/pi` | 37.72 ns | 37.68 ns - 37.76 ns | Constructs the symbolic pi value. |
-| `real_constants/e` | 44.20 ns | 44.15 ns - 44.26 ns | Constructs the symbolic Euler constant value. |
+| `real_constants/pi` | not run | not run | Constructs the symbolic pi value. |
+| `real_constants/e` | not run | not run | Constructs the symbolic Euler constant value. |
 
 ### `simple`
 
@@ -548,11 +549,11 @@ Parser and evaluator costs for the `Simple` expression language.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `simple/parse_nested` | 397.84 ns | 397.55 ns - 398.13 ns | Parses a nested expression with powers, trig, and constants. |
-| `simple/eval_nested` | 1.255 us | 1.251 us - 1.260 us | Evaluates a parsed mixed symbolic/numeric expression. |
-| `simple/eval_constants` | 736.20 ns | 728.93 ns - 743.34 ns | Evaluates repeated built-in constants. |
-| `simple/eval_exact` | 278.23 ns | 276.45 ns - 279.97 ns | Evaluates a rational-only expression through exact shortcuts. |
-| `simple/eval_nested_exact` | 879.07 ns | 872.92 ns - 885.05 ns | Evaluates a nested rational-only expression through exact shortcuts. |
+| `simple/parse_nested` | not run | not run | Parses a nested expression with powers, trig, and constants. |
+| `simple/eval_nested` | not run | not run | Evaluates a parsed mixed symbolic/numeric expression. |
+| `simple/eval_constants` | not run | not run | Evaluates repeated built-in constants. |
+| `simple/eval_exact` | not run | not run | Evaluates a rational-only expression through exact shortcuts. |
+| `simple/eval_nested_exact` | not run | not run | Evaluates a nested rational-only expression through exact shortcuts. |
 
 ### `real_powi`
 
@@ -560,10 +561,10 @@ Integer exponentiation for exact and irrational `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_powi/exact_17` | 121.56 ns | 121.17 ns - 121.99 ns | Raises an exact rational-backed `Real` to the 17th power. |
-| `real_powi/exact_17_i64` | 89.06 ns | 88.83 ns - 89.34 ns | Raises an exact rational-backed `Real` through the machine-sized exponent API. |
-| `real_powi/irrational_17` | 151.81 ns | 151.53 ns - 152.11 ns | Raises sqrt(3) to the 17th power with symbolic simplification. |
-| `real_powi/large_exact_lazy_20000` | 42.916 us | 42.803 us - 43.093 us | Routes an oversized exact rational power to its bounded lazy exact representation. |
+| `real_powi/exact_17` | not run | not run | Raises an exact rational-backed `Real` to the 17th power. |
+| `real_powi/exact_17_i64` | not run | not run | Raises an exact rational-backed `Real` through the machine-sized exponent API. |
+| `real_powi/irrational_17` | not run | not run | Raises sqrt(3) to the 17th power with symbolic simplification. |
+| `real_powi/large_exact_lazy_20000` | not run | not run | Routes an oversized exact rational power to its bounded lazy exact representation. |
 
 ### `rational_powi`
 
@@ -571,8 +572,8 @@ Integer exponentiation for `Rational`.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `rational_powi/exact_17` | 80.74 ns | 80.28 ns - 81.30 ns | Raises a rational value to the 17th power. |
-| `rational_powi/oversized_20000_exhausted` | 18.14 ns | 18.13 ns - 18.16 ns | Rejects eager materialization before an oversized rational power allocates its result. |
+| `rational_powi/exact_17` | not run | not run | Raises a rational value to the 17th power. |
+| `rational_powi/oversized_20000_exhausted` | not run | not run | Rejects eager materialization before an oversized rational power allocates its result. |
 
 ### `real_exact_trig`
 
@@ -580,9 +581,9 @@ Exact and symbolic trig construction for known pi multiples.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_trig/sin_pi_6` | 99.00 ns | 98.01 ns - 100.05 ns | Computes sin(pi/6) via exact shortcut. |
-| `real_exact_trig/cos_pi_3` | 48.89 ns | 48.67 ns - 49.12 ns | Computes cos(pi/3) via exact shortcut. |
-| `real_exact_trig/tan_pi_5` | 186.27 ns | 185.19 ns - 187.65 ns | Builds tan(pi/5), a nontrivial symbolic tangent. |
+| `real_exact_trig/sin_pi_6` | not run | not run | Computes sin(pi/6) via exact shortcut. |
+| `real_exact_trig/cos_pi_3` | not run | not run | Computes cos(pi/3) via exact shortcut. |
+| `real_exact_trig/tan_pi_5` | not run | not run | Builds tan(pi/5), a nontrivial symbolic tangent. |
 
 ### `real_general_trig`
 
@@ -590,8 +591,8 @@ General trig construction for irrational arguments.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_general_trig/tan_sqrt_2` | 827.51 ns | 784.76 ns - 911.03 ns | Builds tan(sqrt(2)). |
-| `real_general_trig/tan_pi_sqrt_2_over_5` | 1.450 us | 1.416 us - 1.515 us | Builds tangent of an irrational multiple of pi. |
+| `real_general_trig/tan_sqrt_2` | not run | not run | Builds tan(sqrt(2)). |
+| `real_general_trig/tan_pi_sqrt_2_over_5` | not run | not run | Builds tangent of an irrational multiple of pi. |
 
 ### `real_exact_inverse_trig`
 
@@ -599,16 +600,16 @@ Exact inverse trig shortcuts and symbolic inverse trig recognition.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_inverse_trig/asin_1_2` | 51.37 ns | 51.28 ns - 51.48 ns | Recognizes asin(1/2) as pi/6. |
-| `real_exact_inverse_trig/asin_minus_1_2` | 63.07 ns | 62.90 ns - 63.27 ns | Recognizes asin(-1/2) as -pi/6. |
-| `real_exact_inverse_trig/asin_sqrt_2_over_2` | 95.92 ns | 95.48 ns - 96.40 ns | Recognizes asin(sqrt(2)/2) as pi/4. |
-| `real_exact_inverse_trig/asin_sin_pi_5` | 117.34 ns | 116.56 ns - 118.05 ns | Inverts a symbolic sin(pi/5). |
-| `real_exact_inverse_trig/acos_1` | 28.03 ns | 27.89 ns - 28.20 ns | Recognizes acos(1) as zero. |
-| `real_exact_inverse_trig/acos_minus_1` | 44.53 ns | 39.80 ns - 53.88 ns | Recognizes acos(-1) as pi. |
-| `real_exact_inverse_trig/acos_1_2` | 57.61 ns | 50.21 ns - 71.66 ns | Recognizes acos(1/2) as pi/3. |
-| `real_exact_inverse_trig/atan_1` | 46.83 ns | 41.89 ns - 56.64 ns | Recognizes atan(1) as pi/4. |
-| `real_exact_inverse_trig/atan_sqrt_3_over_3` | 108.68 ns | 96.89 ns - 131.89 ns | Recognizes atan(sqrt(3)/3) as pi/6. |
-| `real_exact_inverse_trig/atan_tan_pi_5` | 116.65 ns | 115.87 ns - 117.35 ns | Inverts a symbolic tan(pi/5). |
+| `real_exact_inverse_trig/asin_1_2` | not run | not run | Recognizes asin(1/2) as pi/6. |
+| `real_exact_inverse_trig/asin_minus_1_2` | not run | not run | Recognizes asin(-1/2) as -pi/6. |
+| `real_exact_inverse_trig/asin_sqrt_2_over_2` | not run | not run | Recognizes asin(sqrt(2)/2) as pi/4. |
+| `real_exact_inverse_trig/asin_sin_pi_5` | not run | not run | Inverts a symbolic sin(pi/5). |
+| `real_exact_inverse_trig/acos_1` | not run | not run | Recognizes acos(1) as zero. |
+| `real_exact_inverse_trig/acos_minus_1` | not run | not run | Recognizes acos(-1) as pi. |
+| `real_exact_inverse_trig/acos_1_2` | not run | not run | Recognizes acos(1/2) as pi/3. |
+| `real_exact_inverse_trig/atan_1` | not run | not run | Recognizes atan(1) as pi/4. |
+| `real_exact_inverse_trig/atan_sqrt_3_over_3` | not run | not run | Recognizes atan(sqrt(3)/3) as pi/6. |
+| `real_exact_inverse_trig/atan_tan_pi_5` | not run | not run | Inverts a symbolic tan(pi/5). |
 
 ### `real_general_inverse_trig`
 
@@ -616,16 +617,16 @@ General inverse trig construction, domain errors, and atan range reduction.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_general_inverse_trig/asin_7_10` | 185.17 ns | 180.94 ns - 188.85 ns | Builds asin(7/10) through the rational-specialized path. |
-| `real_general_inverse_trig/asin_near_one` | 192.11 ns | 188.97 ns - 195.13 ns | Builds a deferred exact-rational asin near the positive endpoint. |
-| `real_general_inverse_trig/asin_near_minus_one` | 110.19 ns | 109.68 ns - 110.77 ns | Builds a deferred exact-rational asin near the negative endpoint. |
-| `real_general_inverse_trig/asin_sqrt_2_over_3` | 267.14 ns | 260.05 ns - 280.37 ns | Builds asin(sqrt(2)/3) through the general path. |
-| `real_general_inverse_trig/acos_7_10` | 119.50 ns | 107.53 ns - 137.20 ns | Builds acos(7/10) through the rational-specialized asin path. |
-| `real_general_inverse_trig/acos_sqrt_2_over_3` | 313.32 ns | 292.20 ns - 339.17 ns | Builds acos(sqrt(2)/3) through the general path. |
-| `real_general_inverse_trig/asin_11_10_error` | 29.87 ns | 29.79 ns - 29.97 ns | Rejects rational asin input outside [-1, 1]. |
-| `real_general_inverse_trig/acos_11_10_error` | 27.53 ns | 27.46 ns - 27.62 ns | Rejects rational acos input outside [-1, 1]. |
-| `real_general_inverse_trig/atan_8` | 118.85 ns | 118.61 ns - 119.14 ns | Builds atan(8), exercising large-argument reduction. |
-| `real_general_inverse_trig/atan_sqrt_2` | 8.419 us | 8.379 us - 8.477 us | Builds atan(sqrt(2)). |
+| `real_general_inverse_trig/asin_7_10` | not run | not run | Builds asin(7/10) through the rational-specialized path. |
+| `real_general_inverse_trig/asin_near_one` | not run | not run | Builds a deferred exact-rational asin near the positive endpoint. |
+| `real_general_inverse_trig/asin_near_minus_one` | not run | not run | Builds a deferred exact-rational asin near the negative endpoint. |
+| `real_general_inverse_trig/asin_sqrt_2_over_3` | not run | not run | Builds asin(sqrt(2)/3) through the general path. |
+| `real_general_inverse_trig/acos_7_10` | not run | not run | Builds acos(7/10) through the rational-specialized asin path. |
+| `real_general_inverse_trig/acos_sqrt_2_over_3` | not run | not run | Builds acos(sqrt(2)/3) through the general path. |
+| `real_general_inverse_trig/asin_11_10_error` | not run | not run | Rejects rational asin input outside [-1, 1]. |
+| `real_general_inverse_trig/acos_11_10_error` | not run | not run | Rejects rational acos input outside [-1, 1]. |
+| `real_general_inverse_trig/atan_8` | not run | not run | Builds atan(8), exercising large-argument reduction. |
+| `real_general_inverse_trig/atan_sqrt_2` | not run | not run | Builds atan(sqrt(2)). |
 
 ### `real_inverse_hyperbolic`
 
@@ -633,21 +634,21 @@ Inverse hyperbolic construction, exact exits, stable ln1p forms, and domain erro
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_inverse_hyperbolic/asinh_0` | 15.51 ns | 15.49 ns - 15.54 ns | Recognizes asinh(0) as zero. |
-| `real_inverse_hyperbolic/asinh_1_2` | 107.02 ns | 106.47 ns - 107.69 ns | Builds asinh(1/2) through the stable moderate-input path. |
-| `real_inverse_hyperbolic/asinh_sqrt_2` | 76.48 ns | 66.45 ns - 96.26 ns | Builds asinh(sqrt(2)) without cancellation-prone log construction. |
-| `real_inverse_hyperbolic/asinh_minus_1_2` | 150.29 ns | 150.14 ns - 150.46 ns | Uses odd symmetry for negative asinh input. |
-| `real_inverse_hyperbolic/asinh_1_000_000` | 130.81 ns | 121.38 ns - 149.29 ns | Builds asinh for a large positive rational. |
-| `real_inverse_hyperbolic/acosh_1` | 18.43 ns | 18.34 ns - 18.55 ns | Recognizes acosh(1) as zero. |
-| `real_inverse_hyperbolic/acosh_2` | 42.93 ns | 37.00 ns - 54.59 ns | Builds acosh(2) through the stable moderate-input path. |
-| `real_inverse_hyperbolic/acosh_sqrt_2` | 119.02 ns | 117.52 ns - 121.67 ns | Builds acosh(sqrt(2)) through square-root domain specialization. |
-| `real_inverse_hyperbolic/acosh_1_000_000` | 88.18 ns | 87.55 ns - 88.85 ns | Builds acosh for a large positive rational. |
-| `real_inverse_hyperbolic/atanh_0` | 15.38 ns | 15.34 ns - 15.42 ns | Recognizes atanh(0) as zero. |
-| `real_inverse_hyperbolic/atanh_1_2` | 58.58 ns | 51.19 ns - 73.07 ns | Builds exact-rational atanh(1/2). |
-| `real_inverse_hyperbolic/atanh_minus_1_2` | 74.28 ns | 74.08 ns - 74.54 ns | Builds exact-rational atanh(-1/2). |
-| `real_inverse_hyperbolic/atanh_sqrt_half` | 107.75 ns | 107.40 ns - 108.04 ns | Recognizes atanh(sqrt(2)/2) as asinh(1). |
-| `real_inverse_hyperbolic/atanh_9_10` | 129.69 ns | 128.99 ns - 130.58 ns | Builds exact-rational atanh near the upper domain boundary. |
-| `real_inverse_hyperbolic/atanh_1_error` | 10.12 ns | 10.05 ns - 10.21 ns | Rejects atanh(1) at the rational domain boundary. |
+| `real_inverse_hyperbolic/asinh_0` | not run | not run | Recognizes asinh(0) as zero. |
+| `real_inverse_hyperbolic/asinh_1_2` | not run | not run | Builds asinh(1/2) through the stable moderate-input path. |
+| `real_inverse_hyperbolic/asinh_sqrt_2` | not run | not run | Builds asinh(sqrt(2)) without cancellation-prone log construction. |
+| `real_inverse_hyperbolic/asinh_minus_1_2` | not run | not run | Uses odd symmetry for negative asinh input. |
+| `real_inverse_hyperbolic/asinh_1_000_000` | not run | not run | Builds asinh for a large positive rational. |
+| `real_inverse_hyperbolic/acosh_1` | not run | not run | Recognizes acosh(1) as zero. |
+| `real_inverse_hyperbolic/acosh_2` | not run | not run | Builds acosh(2) through the stable moderate-input path. |
+| `real_inverse_hyperbolic/acosh_sqrt_2` | not run | not run | Builds acosh(sqrt(2)) through square-root domain specialization. |
+| `real_inverse_hyperbolic/acosh_1_000_000` | not run | not run | Builds acosh for a large positive rational. |
+| `real_inverse_hyperbolic/atanh_0` | not run | not run | Recognizes atanh(0) as zero. |
+| `real_inverse_hyperbolic/atanh_1_2` | not run | not run | Builds exact-rational atanh(1/2). |
+| `real_inverse_hyperbolic/atanh_minus_1_2` | not run | not run | Builds exact-rational atanh(-1/2). |
+| `real_inverse_hyperbolic/atanh_sqrt_half` | not run | not run | Recognizes atanh(sqrt(2)/2) as asinh(1). |
+| `real_inverse_hyperbolic/atanh_9_10` | not run | not run | Builds exact-rational atanh near the upper domain boundary. |
+| `real_inverse_hyperbolic/atanh_1_error` | not run | not run | Rejects atanh(1) at the rational domain boundary. |
 
 ### `simple_inverse_functions`
 
@@ -655,18 +656,18 @@ Parsed/evaluated inverse trig and inverse hyperbolic expressions that should suc
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `simple_inverse_functions/asin_1_2` | 79.41 ns | 79.19 ns - 79.62 ns | Evaluates `(asin 1/2)`. |
-| `simple_inverse_functions/acos_1_2` | 83.79 ns | 83.21 ns - 84.46 ns | Evaluates `(acos 1/2)`. |
-| `simple_inverse_functions/atan_1` | 73.75 ns | 73.49 ns - 74.05 ns | Evaluates `(atan 1)`. |
-| `simple_inverse_functions/asin_general` | 132.42 ns | 132.04 ns - 132.81 ns | Evaluates `(asin 7/10)`. |
-| `simple_inverse_functions/acos_general` | 124.26 ns | 123.86 ns - 124.70 ns | Evaluates `(acos 7/10)`. |
-| `simple_inverse_functions/atan_general` | 161.51 ns | 160.75 ns - 162.40 ns | Evaluates `(atan 8)`. |
-| `simple_inverse_functions/asinh_1_2` | 141.57 ns | 141.34 ns - 141.78 ns | Evaluates `(asinh 1/2)`. |
-| `simple_inverse_functions/asinh_sqrt_2` | 210.51 ns | 210.00 ns - 211.04 ns | Evaluates `(asinh (sqrt 2))`. |
-| `simple_inverse_functions/acosh_2` | 65.76 ns | 65.56 ns - 65.94 ns | Evaluates `(acosh 2)`. |
-| `simple_inverse_functions/acosh_sqrt_2` | 236.20 ns | 235.72 ns - 236.72 ns | Evaluates `(acosh (sqrt 2))`. |
-| `simple_inverse_functions/atanh_1_2` | 80.08 ns | 79.81 ns - 80.37 ns | Evaluates `(atanh 1/2)`. |
-| `simple_inverse_functions/atanh_minus_1_2` | 103.89 ns | 103.64 ns - 104.14 ns | Evaluates `(atanh -1/2)`. |
+| `simple_inverse_functions/asin_1_2` | not run | not run | Evaluates `(asin 1/2)`. |
+| `simple_inverse_functions/acos_1_2` | not run | not run | Evaluates `(acos 1/2)`. |
+| `simple_inverse_functions/atan_1` | not run | not run | Evaluates `(atan 1)`. |
+| `simple_inverse_functions/asin_general` | not run | not run | Evaluates `(asin 7/10)`. |
+| `simple_inverse_functions/acos_general` | not run | not run | Evaluates `(acos 7/10)`. |
+| `simple_inverse_functions/atan_general` | not run | not run | Evaluates `(atan 8)`. |
+| `simple_inverse_functions/asinh_1_2` | not run | not run | Evaluates `(asinh 1/2)`. |
+| `simple_inverse_functions/asinh_sqrt_2` | not run | not run | Evaluates `(asinh (sqrt 2))`. |
+| `simple_inverse_functions/acosh_2` | not run | not run | Evaluates `(acosh 2)`. |
+| `simple_inverse_functions/acosh_sqrt_2` | not run | not run | Evaluates `(acosh (sqrt 2))`. |
+| `simple_inverse_functions/atanh_1_2` | not run | not run | Evaluates `(atanh 1/2)`. |
+| `simple_inverse_functions/atanh_minus_1_2` | not run | not run | Evaluates `(atanh -1/2)`. |
 
 ### `simple_inverse_error_functions`
 
@@ -674,12 +675,12 @@ Parsed/evaluated inverse function expressions that should fail quickly with `Not
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `simple_inverse_error_functions/asin_11_10` | 55.01 ns | 54.85 ns - 55.16 ns | Rejects `(asin 11/10)`. |
-| `simple_inverse_error_functions/acos_sqrt_2` | 253.44 ns | 252.86 ns - 254.03 ns | Rejects `(acos (sqrt 2))`. |
-| `simple_inverse_error_functions/acosh_0` | 36.87 ns | 36.70 ns - 37.03 ns | Rejects `(acosh 0)`. |
-| `simple_inverse_error_functions/acosh_minus_2` | 36.88 ns | 36.71 ns - 37.04 ns | Rejects `(acosh -2)`. |
-| `simple_inverse_error_functions/atanh_1` | 40.85 ns | 40.69 ns - 41.01 ns | Rejects `(atanh 1)`. |
-| `simple_inverse_error_functions/atanh_sqrt_2` | 161.63 ns | 161.15 ns - 162.14 ns | Rejects `(atanh (sqrt 2))`. |
+| `simple_inverse_error_functions/asin_11_10` | not run | not run | Rejects `(asin 11/10)`. |
+| `simple_inverse_error_functions/acos_sqrt_2` | not run | not run | Rejects `(acos (sqrt 2))`. |
+| `simple_inverse_error_functions/acosh_0` | not run | not run | Rejects `(acosh 0)`. |
+| `simple_inverse_error_functions/acosh_minus_2` | not run | not run | Rejects `(acosh -2)`. |
+| `simple_inverse_error_functions/atanh_1` | not run | not run | Rejects `(atanh 1)`. |
+| `simple_inverse_error_functions/atanh_sqrt_2` | not run | not run | Rejects `(atanh (sqrt 2))`. |
 
 ### `real_exact_ln`
 
@@ -687,9 +688,9 @@ Exact logarithm construction and simplification for rational inputs.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_ln/ln_1024` | 102.81 ns | 102.65 ns - 103.02 ns | Recognizes ln(1024) as 10 ln(2). |
-| `real_exact_ln/ln_1_8` | 102.67 ns | 102.46 ns - 102.91 ns | Recognizes ln(1/8) as -3 ln(2). |
-| `real_exact_ln/ln_1000` | 83.88 ns | 77.68 ns - 96.20 ns | Simplifies ln(1000) via small integer logarithm factors. |
+| `real_exact_ln/ln_1024` | not run | not run | Recognizes ln(1024) as 10 ln(2). |
+| `real_exact_ln/ln_1_8` | not run | not run | Recognizes ln(1/8) as -3 ln(2). |
+| `real_exact_ln/ln_1000` | not run | not run | Simplifies ln(1000) via small integer logarithm factors. |
 
 ### `real_exact_exp_log10`
 
@@ -697,10 +698,10 @@ Exact inverse relationships among exp, ln, and log10.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_exp_log10/exp_ln_1000` | 68.85 ns | 67.89 ns - 70.15 ns | Simplifies exp(ln(1000)) back to 1000. |
-| `real_exact_exp_log10/exp_ln_1_8` | 79.51 ns | 79.07 ns - 79.98 ns | Simplifies exp(ln(1/8)) back to 1/8. |
-| `real_exact_exp_log10/log10_1000` | 41.10 ns | 41.03 ns - 41.17 ns | Recognizes log10(1000) as 3. |
-| `real_exact_exp_log10/log10_1_1000` | 72.18 ns | 71.91 ns - 72.46 ns | Recognizes log10(1/1000) as -3. |
+| `real_exact_exp_log10/exp_ln_1000` | not run | not run | Simplifies exp(ln(1000)) back to 1000. |
+| `real_exact_exp_log10/exp_ln_1_8` | not run | not run | Simplifies exp(ln(1/8)) back to 1/8. |
+| `real_exact_exp_log10/log10_1000` | not run | not run | Recognizes log10(1000) as 3. |
+| `real_exact_exp_log10/log10_1_1000` | not run | not run | Recognizes log10(1/1000) as -3. |
 
 ### `real_stable_scalar_substrate`
 
@@ -708,22 +709,22 @@ Stable scalar constructors that preserve small residuals, dominance, roots, rati
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_stable_scalar_substrate/ln_1p_tiny` | 46.80 ns | 46.50 ns - 47.20 ns | Builds ln(1 + tiny) without first adding one generically. |
-| `real_stable_scalar_substrate/ln_1m_tiny` | 53.10 ns | 52.22 ns - 54.22 ns | Builds ln(1 - tiny) through the log1p companion path. |
-| `real_stable_scalar_substrate/expm1_tiny` | 75.56 ns | 75.30 ns - 75.88 ns | Builds exp(tiny) - 1 through the dedicated expm1 node. |
-| `real_stable_scalar_substrate/softplus_large_positive` | 1.862 us | 1.857 us - 1.867 us | Builds softplus for a dominant positive input. |
-| `real_stable_scalar_substrate/softplus_large_negative` | 1.752 us | 1.747 us - 1.758 us | Builds softplus for a dominant negative input. |
-| `real_stable_scalar_substrate/logaddexp_dominant` | 2.026 us | 2.020 us - 2.033 us | Builds logaddexp when one side is certifiably dominant. |
-| `real_stable_scalar_substrate/logsubexp_near` | 246.07 ns | 244.30 ns - 248.21 ns | Builds logsubexp for a certifiably positive but small log-space difference. |
-| `real_stable_scalar_substrate/sigmoid_large_positive` | 1.821 us | 1.814 us - 1.830 us | Builds a large positive sigmoid through the stable tail path. |
-| `real_stable_scalar_substrate/logit_near_one` | 297.71 ns | 296.69 ns - 299.03 ns | Builds logit close to the upper probability boundary. |
-| `real_stable_scalar_substrate/sqrt1pm1_tiny` | 541.71 ns | 539.18 ns - 544.73 ns | Builds sqrt(1 + tiny) - 1 through the stable helper. |
-| `real_stable_scalar_substrate/sqrt1m1_tiny` | 598.78 ns | 597.11 ns - 600.75 ns | Builds sqrt(1 - tiny) - 1 through the stable helper. |
-| `real_stable_scalar_substrate/cbrt_negative_perfect` | 160.12 ns | 146.79 ns - 185.87 ns | Collapses a negative perfect cube. |
-| `real_stable_scalar_substrate/root_n_perfect_fourth` | 163.82 ns | 155.40 ns - 179.77 ns | Collapses an exact fourth root. |
-| `real_stable_scalar_substrate/pow_rational_negative_odd_denominator` | 215.43 ns | 215.16 ns - 215.72 ns | Routes a negative rational base through odd-root symmetry. |
-| `real_stable_scalar_substrate/floor_certified_rational` | 77.39 ns | 77.02 ns - 77.91 ns | Certifies rational floor structurally. |
-| `real_stable_scalar_substrate/rem_euclid_certified_rational` | 302.46 ns | 301.79 ns - 303.49 ns | Computes rational Euclidean remainder through certified quotient floor. |
+| `real_stable_scalar_substrate/ln_1p_tiny` | not run | not run | Builds ln(1 + tiny) without first adding one generically. |
+| `real_stable_scalar_substrate/ln_1m_tiny` | not run | not run | Builds ln(1 - tiny) through the log1p companion path. |
+| `real_stable_scalar_substrate/expm1_tiny` | not run | not run | Builds exp(tiny) - 1 through the dedicated expm1 node. |
+| `real_stable_scalar_substrate/softplus_large_positive` | not run | not run | Builds softplus for a dominant positive input. |
+| `real_stable_scalar_substrate/softplus_large_negative` | not run | not run | Builds softplus for a dominant negative input. |
+| `real_stable_scalar_substrate/logaddexp_dominant` | not run | not run | Builds logaddexp when one side is certifiably dominant. |
+| `real_stable_scalar_substrate/logsubexp_near` | not run | not run | Builds logsubexp for a certifiably positive but small log-space difference. |
+| `real_stable_scalar_substrate/sigmoid_large_positive` | not run | not run | Builds a large positive sigmoid through the stable tail path. |
+| `real_stable_scalar_substrate/logit_near_one` | not run | not run | Builds logit close to the upper probability boundary. |
+| `real_stable_scalar_substrate/sqrt1pm1_tiny` | not run | not run | Builds sqrt(1 + tiny) - 1 through the stable helper. |
+| `real_stable_scalar_substrate/sqrt1m1_tiny` | not run | not run | Builds sqrt(1 - tiny) - 1 through the stable helper. |
+| `real_stable_scalar_substrate/cbrt_negative_perfect` | not run | not run | Collapses a negative perfect cube. |
+| `real_stable_scalar_substrate/root_n_perfect_fourth` | not run | not run | Collapses an exact fourth root. |
+| `real_stable_scalar_substrate/pow_rational_negative_odd_denominator` | not run | not run | Routes a negative rational base through odd-root symmetry. |
+| `real_stable_scalar_substrate/floor_certified_rational` | not run | not run | Certifies rational floor structurally. |
+| `real_stable_scalar_substrate/rem_euclid_certified_rational` | not run | not run | Computes rational Euclidean remainder through certified quotient floor. |
 
 ### `real_geometry_polynomial_substrate`
 
@@ -731,24 +732,24 @@ Geometry-facing scalar helpers for rational-turn trig, removable small-angle lim
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_geometry_polynomial_substrate/sin_pi_one_sixth` | 81.14 ns | 80.93 ns - 81.38 ns | Uses exact rational-turn sine. |
-| `real_geometry_polynomial_substrate/cos_pi_one_fourth` | 98.70 ns | 98.15 ns - 99.33 ns | Uses exact rational-turn cosine. |
-| `real_geometry_polynomial_substrate/cos_pi_one_seventh` | 116.75 ns | 116.38 ns - 117.19 ns | Builds a non-tabulated rational-turn cosine certificate. |
-| `real_geometry_polynomial_substrate/tan_pi_one_third` | 92.02 ns | 91.81 ns - 92.31 ns | Uses exact rational-turn tangent. |
-| `real_geometry_polynomial_substrate/sinc_zero` | 15.46 ns | 15.40 ns - 15.52 ns | Returns the removable sinc limit at zero. |
-| `real_geometry_polynomial_substrate/sinc_tiny` | 173.77 ns | 173.49 ns - 174.10 ns | Builds sinc for a tiny exact input. |
-| `real_geometry_polynomial_substrate/sinc_pi_half` | 182.29 ns | 179.11 ns - 188.32 ns | Builds normalized sinc for an exact half turn. |
-| `real_geometry_polynomial_substrate/cosc_tiny` | 307.64 ns | 306.10 ns - 310.19 ns | Builds the small-angle (1 - cos x) / x^2 helper. |
-| `real_geometry_polynomial_substrate/atan2_axis` | 49.45 ns | 49.29 ns - 49.66 ns | Classifies an axis-aligned atan2 input exactly. |
-| `real_geometry_polynomial_substrate/atan2_quadrant` | 224.44 ns | 205.49 ns - 262.01 ns | Builds a quadrant-correct atan2 expression. |
-| `real_geometry_polynomial_substrate/hypot2_3_4` | 86.20 ns | 85.82 ns - 86.65 ns | Collapses a 3-4-5 norm through exact dot products. |
-| `real_geometry_polynomial_substrate/hypot3_2_3_6` | 140.87 ns | 140.14 ns - 142.18 ns | Collapses a 2-3-6 norm through exact dot products. |
-| `real_geometry_polynomial_substrate/hypot_minus_tiny` | 1.868 us | 1.865 us - 1.871 us | Uses rationalized hypot-minus for cancellation resistance. |
-| `real_geometry_polynomial_substrate/mul_add_zero_product` | 96.45 ns | 73.96 ns - 141.11 ns | Skips a known-zero product lane. |
-| `real_geometry_polynomial_substrate/sum_products_dense` | 1.270 us | 1.267 us - 1.273 us | Builds a dense product sum. |
-| `real_geometry_polynomial_substrate/diff_of_products_near_cancel` | 298.61 ns | 298.40 ns - 298.84 ns | Preserves determinant-like product difference structure. |
-| `real_geometry_polynomial_substrate/eval_poly_horner` | 1.001 us | 981.50 ns - 1.038 us | Evaluates a polynomial through Horner form. |
-| `real_geometry_polynomial_substrate/eval_rational_poly` | 1.337 us | 1.319 us - 1.361 us | Evaluates numerator and denominator polynomial forms before division. |
+| `real_geometry_polynomial_substrate/sin_pi_one_sixth` | not run | not run | Uses exact rational-turn sine. |
+| `real_geometry_polynomial_substrate/cos_pi_one_fourth` | not run | not run | Uses exact rational-turn cosine. |
+| `real_geometry_polynomial_substrate/cos_pi_one_seventh` | not run | not run | Builds a non-tabulated rational-turn cosine certificate. |
+| `real_geometry_polynomial_substrate/tan_pi_one_third` | not run | not run | Uses exact rational-turn tangent. |
+| `real_geometry_polynomial_substrate/sinc_zero` | not run | not run | Returns the removable sinc limit at zero. |
+| `real_geometry_polynomial_substrate/sinc_tiny` | not run | not run | Builds sinc for a tiny exact input. |
+| `real_geometry_polynomial_substrate/sinc_pi_half` | not run | not run | Builds normalized sinc for an exact half turn. |
+| `real_geometry_polynomial_substrate/cosc_tiny` | not run | not run | Builds the small-angle (1 - cos x) / x^2 helper. |
+| `real_geometry_polynomial_substrate/atan2_axis` | not run | not run | Classifies an axis-aligned atan2 input exactly. |
+| `real_geometry_polynomial_substrate/atan2_quadrant` | not run | not run | Builds a quadrant-correct atan2 expression. |
+| `real_geometry_polynomial_substrate/hypot2_3_4` | not run | not run | Collapses a 3-4-5 norm through exact dot products. |
+| `real_geometry_polynomial_substrate/hypot3_2_3_6` | not run | not run | Collapses a 2-3-6 norm through exact dot products. |
+| `real_geometry_polynomial_substrate/hypot_minus_tiny` | not run | not run | Uses rationalized hypot-minus for cancellation resistance. |
+| `real_geometry_polynomial_substrate/mul_add_zero_product` | not run | not run | Skips a known-zero product lane. |
+| `real_geometry_polynomial_substrate/sum_products_dense` | not run | not run | Builds a dense product sum. |
+| `real_geometry_polynomial_substrate/diff_of_products_near_cancel` | not run | not run | Preserves determinant-like product difference structure. |
+| `real_geometry_polynomial_substrate/eval_poly_horner` | not run | not run | Evaluates a polynomial through Horner form. |
+| `real_geometry_polynomial_substrate/eval_rational_poly` | not run | not run | Evaluates numerator and denominator polynomial forms before division. |
 
 ### `real_normal_scientific_substrate`
 
@@ -756,45 +757,45 @@ Gaussian tail helpers and exact/finite scientific special-function forms added f
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_normal_scientific_substrate/erfc_zero` | 11.78 ns | 11.67 ns - 11.93 ns | Takes the exact erfc(0) exit. |
-| `real_normal_scientific_substrate/erfcx_tail` | 476.35 ns | 467.37 ns - 493.02 ns | Builds scaled erfc in a positive tail. |
-| `real_normal_scientific_substrate/normal_sf_tail` | 239.33 ns | 229.72 ns - 257.67 ns | Builds standard-normal upper-tail probability. |
-| `real_normal_scientific_substrate/pnorm_upper_tail` | 240.87 ns | 230.90 ns - 259.94 ns | Builds the upper-tail alias. |
-| `real_normal_scientific_substrate/log_pnorm_tail` | 187.54 ns | 177.13 ns - 207.93 ns | Builds lower log-CDF tail form. |
-| `real_normal_scientific_substrate/log_pnorm_zero` | 66.20 ns | 66.03 ns - 66.48 ns | Takes the exact log-CDF value at zero. |
-| `real_normal_scientific_substrate/log_normal_sf_tail` | 190.50 ns | 190.01 ns - 191.11 ns | Builds upper log-survival tail form. |
-| `real_normal_scientific_substrate/log_normal_sf_zero` | 100.62 ns | 97.86 ns - 103.15 ns | Takes the exact log-survival value at zero. |
-| `real_normal_scientific_substrate/log_dnorm_large` | 125.86 ns | 120.81 ns - 130.72 ns | Builds analytic log-density at a large input. |
-| `real_normal_scientific_substrate/normal_interval_narrow` | 882.69 ns | 824.08 ns - 940.58 ns | Builds a narrow interval mass without spelling pnorm subtraction. |
-| `real_normal_scientific_substrate/erfinv_mid` | 1.325 us | 1.316 us - 1.336 us | Builds inverse error function through qnorm transform. |
-| `real_normal_scientific_substrate/erfcinv_tail` | 1.615 us | 1.559 us - 1.681 us | Builds inverse complementary error function through tail qnorm transform. |
-| `real_normal_scientific_substrate/qnorm_upper_tail` | 1.781 us | 1.766 us - 1.796 us | Builds inverse survival quantile. |
-| `real_normal_scientific_substrate/normal_pdf_parametric` | 680.67 ns | 677.03 ns - 684.70 ns | Standardizes exactly before density construction. |
-| `real_normal_scientific_substrate/normal_survival_parametric` | 350.43 ns | 349.74 ns - 351.15 ns | Standardizes exactly before upper-tail construction. |
-| `real_normal_scientific_substrate/normal_mills_tail` | 2.088 us | 2.072 us - 2.109 us | Builds Mills ratio through erfcx identity. |
-| `real_normal_scientific_substrate/normal_mills_zero` | 20.94 ns | 20.75 ns - 21.18 ns | Takes the exact Mills ratio value at zero. |
-| `real_normal_scientific_substrate/normal_hazard_tail` | 2.208 us | 2.195 us - 2.224 us | Builds reciprocal Mills hazard. |
-| `real_normal_scientific_substrate/normal_hazard_zero` | 20.47 ns | 20.35 ns - 20.62 ns | Takes the exact hazard value at zero. |
-| `real_normal_scientific_substrate/normal_inverse_mills_zero` | 20.52 ns | 20.41 ns - 20.66 ns | Takes the exact lower inverse Mills value at zero. |
-| `real_normal_scientific_substrate/hermite_8` | 1.265 us | 1.261 us - 1.270 us | Builds an exact probabilists' Hermite polynomial. |
-| `real_normal_scientific_substrate/dnorm_derivative_4` | 1.051 us | 1.043 us - 1.067 us | Combines exact Hermite polynomial with normal density. |
-| `real_normal_scientific_substrate/standard_normal_moment_12` | 152.59 ns | 152.18 ns - 153.07 ns | Uses double-factorial closed form. |
-| `real_normal_scientific_substrate/normal_interval_moment_3` | 1.147 us | 1.144 us - 1.150 us | Uses interval mass and density-boundary recurrence. |
-| `real_normal_scientific_substrate/truncated_normal_mean` | 1.123 us | 1.115 us - 1.132 us | Builds truncated-normal mean from stable interval mass. |
-| `real_normal_scientific_substrate/gamma_integer` | 215.60 ns | 215.20 ns - 216.06 ns | Uses exact integer gamma closed form. |
-| `real_normal_scientific_substrate/gamma_half_integer` | 320.97 ns | 319.59 ns - 322.65 ns | Uses exact half-integer gamma closed form. |
-| `real_normal_scientific_substrate/lgamma_half_integer` | 1.531 us | 1.524 us - 1.539 us | Logs the absolute half-integer gamma value. |
-| `real_normal_scientific_substrate/beta_integer` | 299.62 ns | 298.63 ns - 300.73 ns | Builds integer beta through an exact factorial ratio. |
-| `real_normal_scientific_substrate/ln_beta_half_integer` | 2.845 us | 2.837 us - 2.853 us | Builds log beta through lgamma sum. |
-| `real_normal_scientific_substrate/regularized_beta_mid` | 1.151 us | 1.145 us - 1.159 us | Uses finite positive-integer beta binomial tail. |
-| `real_normal_scientific_substrate/regularized_beta_uniform` | 147.00 ns | 146.25 ns - 147.94 ns | Takes the exact I_x(1, 1) identity. |
-| `real_normal_scientific_substrate/regularized_beta_left_unity` | 307.20 ns | 305.94 ns - 308.68 ns | Reduces I_x(1, b) to one complement power. |
-| `real_normal_scientific_substrate/regularized_beta_q_mid` | 836.92 ns | 834.54 ns - 839.51 ns | Uses finite positive-integer beta upper-tail form. |
-| `real_normal_scientific_substrate/regularized_beta_q_uniform` | 179.83 ns | 167.55 ns - 204.02 ns | Takes the exact upper-tail I_x(1, 1) complement. |
-| `real_normal_scientific_substrate/regularized_beta_q_left_unity` | 211.16 ns | 210.33 ns - 212.38 ns | Reduces the upper beta tail for a = 1 to one power. |
-| `real_normal_scientific_substrate/regularized_gamma_p_half` | 1.216 us | 1.199 us - 1.245 us | Uses half-integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/regularized_gamma_q_integer` | 1.093 us | 1.091 us - 1.094 us | Uses integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/chi_square_sf` | 1.839 us | 1.830 us - 1.853 us | Wraps regularized upper gamma for chi-square upper tail. |
+| `real_normal_scientific_substrate/erfc_zero` | not run | not run | Takes the exact erfc(0) exit. |
+| `real_normal_scientific_substrate/erfcx_tail` | not run | not run | Builds scaled erfc in a positive tail. |
+| `real_normal_scientific_substrate/normal_sf_tail` | not run | not run | Builds standard-normal upper-tail probability. |
+| `real_normal_scientific_substrate/pnorm_upper_tail` | not run | not run | Builds the upper-tail alias. |
+| `real_normal_scientific_substrate/log_pnorm_tail` | not run | not run | Builds lower log-CDF tail form. |
+| `real_normal_scientific_substrate/log_pnorm_zero` | not run | not run | Takes the exact log-CDF value at zero. |
+| `real_normal_scientific_substrate/log_normal_sf_tail` | not run | not run | Builds upper log-survival tail form. |
+| `real_normal_scientific_substrate/log_normal_sf_zero` | not run | not run | Takes the exact log-survival value at zero. |
+| `real_normal_scientific_substrate/log_dnorm_large` | not run | not run | Builds analytic log-density at a large input. |
+| `real_normal_scientific_substrate/normal_interval_narrow` | not run | not run | Builds a narrow interval mass without spelling pnorm subtraction. |
+| `real_normal_scientific_substrate/erfinv_mid` | not run | not run | Builds inverse error function through qnorm transform. |
+| `real_normal_scientific_substrate/erfcinv_tail` | not run | not run | Builds inverse complementary error function through tail qnorm transform. |
+| `real_normal_scientific_substrate/qnorm_upper_tail` | not run | not run | Builds inverse survival quantile. |
+| `real_normal_scientific_substrate/normal_pdf_parametric` | not run | not run | Standardizes exactly before density construction. |
+| `real_normal_scientific_substrate/normal_survival_parametric` | not run | not run | Standardizes exactly before upper-tail construction. |
+| `real_normal_scientific_substrate/normal_mills_tail` | not run | not run | Builds Mills ratio through erfcx identity. |
+| `real_normal_scientific_substrate/normal_mills_zero` | not run | not run | Takes the exact Mills ratio value at zero. |
+| `real_normal_scientific_substrate/normal_hazard_tail` | not run | not run | Builds reciprocal Mills hazard. |
+| `real_normal_scientific_substrate/normal_hazard_zero` | not run | not run | Takes the exact hazard value at zero. |
+| `real_normal_scientific_substrate/normal_inverse_mills_zero` | not run | not run | Takes the exact lower inverse Mills value at zero. |
+| `real_normal_scientific_substrate/hermite_8` | not run | not run | Builds an exact probabilists' Hermite polynomial. |
+| `real_normal_scientific_substrate/dnorm_derivative_4` | not run | not run | Combines exact Hermite polynomial with normal density. |
+| `real_normal_scientific_substrate/standard_normal_moment_12` | not run | not run | Uses double-factorial closed form. |
+| `real_normal_scientific_substrate/normal_interval_moment_3` | not run | not run | Uses interval mass and density-boundary recurrence. |
+| `real_normal_scientific_substrate/truncated_normal_mean` | not run | not run | Builds truncated-normal mean from stable interval mass. |
+| `real_normal_scientific_substrate/gamma_integer` | not run | not run | Uses exact integer gamma closed form. |
+| `real_normal_scientific_substrate/gamma_half_integer` | not run | not run | Uses exact half-integer gamma closed form. |
+| `real_normal_scientific_substrate/lgamma_half_integer` | not run | not run | Logs the absolute half-integer gamma value. |
+| `real_normal_scientific_substrate/beta_integer` | not run | not run | Builds integer beta through an exact factorial ratio. |
+| `real_normal_scientific_substrate/ln_beta_half_integer` | not run | not run | Builds log beta through lgamma sum. |
+| `real_normal_scientific_substrate/regularized_beta_mid` | not run | not run | Uses finite positive-integer beta binomial tail. |
+| `real_normal_scientific_substrate/regularized_beta_uniform` | not run | not run | Takes the exact I_x(1, 1) identity. |
+| `real_normal_scientific_substrate/regularized_beta_left_unity` | not run | not run | Reduces I_x(1, b) to one complement power. |
+| `real_normal_scientific_substrate/regularized_beta_q_mid` | not run | not run | Uses finite positive-integer beta upper-tail form. |
+| `real_normal_scientific_substrate/regularized_beta_q_uniform` | not run | not run | Takes the exact upper-tail I_x(1, 1) complement. |
+| `real_normal_scientific_substrate/regularized_beta_q_left_unity` | not run | not run | Reduces the upper beta tail for a = 1 to one power. |
+| `real_normal_scientific_substrate/regularized_gamma_p_half` | not run | not run | Uses half-integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/regularized_gamma_q_integer` | not run | not run | Uses integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/chi_square_sf` | not run | not run | Wraps regularized upper gamma for chi-square upper tail. |
 
 ### `simple_new_function_surface`
 
@@ -802,11 +803,11 @@ Parser and evaluator coverage for the newly exposed stable scalar, geometry, nor
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `simple_new_function_surface/stable_log_exp_bundle` | 7.497 us | 7.461 us - 7.540 us | Evaluates log1p/log1m/expm1/softplus/logaddexp/logsubexp/sigmoid/logit together. |
-| `simple_new_function_surface/geometry_bundle` | 8.746 us | 8.728 us - 8.765 us | Evaluates rational-turn trig, small-angle helpers, vector norms, product sums, and polynomials together. |
-| `simple_new_function_surface/normal_bundle` | 20.550 us | 20.414 us - 20.753 us | Evaluates normal tails, log tails, interval mass, inverse tails, and moments together. |
-| `simple_new_function_surface/scientific_bundle` | 14.361 us | 14.291 us - 14.441 us | Evaluates gamma, beta, regularized gamma/beta, and chi-square forms together. |
-| `simple_new_function_surface/error_bundle` | 172.20 ns | 168.87 ns - 175.19 ns | Exercises fast domain failures for new public functions. |
+| `simple_new_function_surface/stable_log_exp_bundle` | not run | not run | Evaluates log1p/log1m/expm1/softplus/logaddexp/logsubexp/sigmoid/logit together. |
+| `simple_new_function_surface/geometry_bundle` | not run | not run | Evaluates rational-turn trig, small-angle helpers, vector norms, product sums, and polynomials together. |
+| `simple_new_function_surface/normal_bundle` | not run | not run | Evaluates normal tails, log tails, interval mass, inverse tails, and moments together. |
+| `simple_new_function_surface/scientific_bundle` | not run | not run | Evaluates gamma, beta, regularized gamma/beta, and chi-square forms together. |
+| `simple_new_function_surface/error_bundle` | not run | not run | Exercises fast domain failures for new public functions. |
 
 <!-- END library_perf -->
 
