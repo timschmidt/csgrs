@@ -22,7 +22,8 @@ use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
 use crate::resultant::quotient_ring_fiber_resultant_polynomial;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementStatus, RootIsolationConfig, polynomial_div_rem,
-    polynomials_share_one_root_in_interval, refine_isolated_univariate_polynomial_interval,
+    polynomial_gcd, polynomials_share_one_root_in_interval,
+    refine_isolated_univariate_polynomial_interval,
 };
 
 const LOCAL_FIELD_INTERVAL_SIGN_REFINEMENT_ROUNDS: usize = 8;
@@ -136,6 +137,58 @@ pub struct AlgebraicFiberRationalReductionReport {
     pub denominator_coefficients: Vec<Real>,
     /// Weakest predicate certainty consumed by local-field identities.
     pub certainty: Certainty,
+}
+
+/// Final status for projecting a polynomial image of one algebraic fiber.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlgebraicFiberPolynomialImageProjectionStatus {
+    /// The exact rational-coefficient image eliminant was constructed.
+    Constructed,
+    /// Every coefficient of the specialized fiber equation vanishes.
+    IdenticallyZeroFiber,
+    /// The specialized fiber equation is a nonzero constant and has no root.
+    ConstantNonzeroFiber,
+    /// The image relation is identically zero.
+    IdenticallyZeroImageRelation,
+    /// The retained algebraic-root representation is invalid.
+    InvalidEvidence,
+    /// A coefficient could not be represented by the exact local-field package.
+    UnsupportedCoefficient,
+    /// One explicitly bounded quotient-ring dimension was exceeded.
+    DegreeLimitExceeded,
+    /// Exact arithmetic or a predicate did not complete.
+    Undecided,
+}
+
+/// Exact global eliminant for a polynomial image of one selected fiber.
+///
+/// If `status == Constructed`, `coefficients` is a polynomial in the image
+/// variable whose real roots include every image of the authored selected
+/// fiber. The caller must isolate and replay the intended local root and any
+/// unsquared branch condition.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicFiberPolynomialImageProjectionReport {
+    /// Final projection status.
+    pub status: AlgebraicFiberPolynomialImageProjectionStatus,
+    /// Global image eliminant in ascending powers of the image variable.
+    pub coefficients: Vec<Real>,
+    /// Degree of the specialized source fiber used by the local norm.
+    pub fiber_degree: usize,
+    /// Conservative image degree before exact trimming and square-free replay.
+    pub image_degree_bound: usize,
+    /// Weakest predicate certainty consumed by visible decisions.
+    pub certainty: Certainty,
+}
+
+/// Bounded-memory dimensions for one direct algebraic-fiber image norm.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct AlgebraicFiberPolynomialImageProjectionConfig {
+    /// Maximum degree of the selected local fiber in its fiber parameter.
+    pub max_fiber_degree: usize,
+    /// Maximum degree of the retained base-root carrier.
+    pub max_retained_degree: usize,
+    /// Maximum source-fiber degree times image-relation degree.
+    pub max_image_degree_bound: usize,
 }
 
 /// Final status for quotient-ring projection of one algebraic fiber.
@@ -1389,6 +1442,685 @@ fn algebraic_fiber_rational_reduction_error_report(
         }
     };
     algebraic_fiber_rational_reduction_report(status, None, certainty)
+}
+
+/// Projects `image_relation(u, z) = 0` through one selected algebraic fiber
+/// `fiber_equation(alpha, u) = 0` without first constructing a global value
+/// for `u`.
+///
+/// The first norm is evaluated in `Q(alpha)[u] / (fiber_equation)` by a
+/// division-free multiplication-matrix determinant. Its coefficients are
+/// made primitive in `alpha` before the second norm through the defining
+/// polynomial of `alpha`; this removes pseudo-reduction scale that could
+/// otherwise vanish on an unrelated factor of a reducible root carrier.
+/// `image_parameter` identifies the `z` axis of `image_relation`; the other
+/// axis is `u`.
+///
+/// The explicit degree limits protect the bounded-memory fast path. A caller
+/// whose dimensions exceed them must retain or invoke a complete construction
+/// path rather than interpreting `DegreeLimitExceeded` as geometric evidence.
+pub fn project_algebraic_fiber_polynomial_image(
+    fiber_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    image_relation: &BivariatePolynomial,
+    image_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    config: AlgebraicFiberPolynomialImageProjectionConfig,
+    policy: PredicatePolicy,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
+    let report = |status, coefficients, fiber_degree, image_degree_bound, certainty| {
+        AlgebraicFiberPolynomialImageProjectionReport {
+            status,
+            coefficients,
+            fiber_degree,
+            image_degree_bound,
+            certainty,
+        }
+    };
+    let mut field = match LocalAlgebraicField::new(retained_root, policy) {
+        Ok(field) => field,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(error, 0, 0, Certainty::Exact);
+        }
+    };
+    let fiber = match local_fiber_polynomial(fiber_equation, retained_parameter, &mut field) {
+        Ok(fiber) => fiber,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(error, 0, 0, field.certainty);
+        }
+    };
+    match local_polynomial_is_zero(&fiber, &mut field) {
+        Ok(true) => {
+            return report(
+                AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroFiber,
+                Vec::new(),
+                0,
+                0,
+                field.certainty,
+            );
+        }
+        Ok(false) if fiber.len() == 1 => {
+            return report(
+                AlgebraicFiberPolynomialImageProjectionStatus::ConstantNonzeroFiber,
+                Vec::new(),
+                0,
+                0,
+                field.certainty,
+            );
+        }
+        Ok(false) => {}
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(error, 0, 0, field.certainty);
+        }
+    }
+    let fiber_degree = fiber.len() - 1;
+    if fiber_degree > config.max_fiber_degree
+        || field.modulus.len() - 1 > config.max_retained_degree
+    {
+        return report(
+            AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded,
+            Vec::new(),
+            fiber_degree,
+            0,
+            field.certainty,
+        );
+    }
+
+    // Coefficients are indexed first by source-fiber power, then by image
+    // power. Only structurally certified zero leading rows are discarded;
+    // an undecided coefficient remains in the exact determinant.
+    let mut image_coefficients = fiber_coefficient_polynomials(image_relation, image_parameter);
+    while image_coefficients.len() > 1
+        && image_coefficients.last().is_some_and(|coefficient| {
+            coefficient
+                .iter()
+                .all(|value| value.zero_status() == ZeroKnowledge::Zero)
+        })
+    {
+        image_coefficients.pop();
+    }
+    if image_coefficients
+        .iter()
+        .flatten()
+        .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        return report(
+            AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
+            Vec::new(),
+            fiber_degree,
+            0,
+            field.certainty,
+        );
+    }
+    let image_degree = image_coefficients
+        .iter()
+        .map(|coefficient| coefficient.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let image_degree_bound = match fiber_degree.checked_mul(image_degree) {
+        Some(bound) => bound,
+        None => {
+            return report(
+                AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded,
+                Vec::new(),
+                fiber_degree,
+                usize::MAX,
+                field.certainty,
+            );
+        }
+    };
+    if image_degree_bound > config.max_image_degree_bound {
+        return report(
+            AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded,
+            Vec::new(),
+            fiber_degree,
+            image_degree_bound,
+            field.certainty,
+        );
+    }
+    let image_coefficients = match image_coefficients
+        .into_iter()
+        .map(|coefficient| {
+            coefficient
+                .into_iter()
+                .map(|coefficient| LocalFieldElement::from_polynomial(vec![coefficient], &field))
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .collect::<Result<Vec<_>, _>>()
+    {
+        Ok(coefficients) => coefficients,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(
+                error,
+                fiber_degree,
+                image_degree_bound,
+                field.certainty,
+            );
+        }
+    };
+    let matrix = match local_polynomial_quotient_multiplication_matrix(
+        &fiber,
+        &image_coefficients,
+        &mut field,
+    ) {
+        Ok(matrix) => matrix,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(
+                error,
+                fiber_degree,
+                image_degree_bound,
+                field.certainty,
+            );
+        }
+    };
+    let local_image = match local_polynomial_matrix_determinant(&matrix, fiber_degree, &mut field) {
+        Ok(image) => image,
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(
+                error,
+                fiber_degree,
+                image_degree_bound,
+                field.certainty,
+            );
+        }
+    };
+    let primitive_image = match primitive_local_image_coefficients(local_image, &mut field) {
+        Ok(Some(image)) => image,
+        Ok(None) => {
+            return report(
+                AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation,
+                Vec::new(),
+                fiber_degree,
+                image_degree_bound,
+                field.certainty,
+            );
+        }
+        Err(error) => {
+            return algebraic_fiber_polynomial_image_error_report(
+                error,
+                fiber_degree,
+                image_degree_bound,
+                field.certainty,
+            );
+        }
+    };
+    if primitive_image
+        .iter()
+        .all(|coefficient| coefficient.len() <= 1)
+    {
+        return report(
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
+            normalize_projective_image_polynomial(
+                primitive_image
+                    .into_iter()
+                    .map(|coefficient| coefficient.into_iter().next().unwrap_or_else(Real::zero))
+                    .collect(),
+            ),
+            fiber_degree,
+            image_degree_bound,
+            field.certainty,
+        );
+    }
+    match quotient_ring_fiber_resultant_polynomial(
+        &field.modulus,
+        &primitive_image,
+        config.max_retained_degree,
+    ) {
+        Some(coefficients) => report(
+            AlgebraicFiberPolynomialImageProjectionStatus::Constructed,
+            normalize_projective_image_polynomial(coefficients),
+            fiber_degree,
+            image_degree_bound,
+            field.certainty,
+        ),
+        None => report(
+            AlgebraicFiberPolynomialImageProjectionStatus::Undecided,
+            Vec::new(),
+            fiber_degree,
+            image_degree_bound,
+            field.certainty,
+        ),
+    }
+}
+
+fn normalize_projective_image_polynomial(mut coefficients: Vec<Real>) -> Vec<Real> {
+    while coefficients.len() > 1
+        && coefficients
+            .last()
+            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        coefficients.pop();
+    }
+    if let Some(leading) = coefficients.last().cloned()
+        && let Ok(inverse) = Real::one() / leading
+    {
+        for coefficient in &mut coefficients {
+            *coefficient *= &inverse;
+        }
+    }
+    coefficients
+}
+
+type LocalImagePolynomial = Vec<LocalFieldElement>;
+
+fn local_field_element_is_structurally_zero(coefficient: &LocalFieldElement) -> bool {
+    coefficient
+        .numerator
+        .iter()
+        .all(|value| value.zero_status() == ZeroKnowledge::Zero)
+}
+
+fn local_image_polynomial_is_structurally_zero(polynomial: &[LocalFieldElement]) -> bool {
+    polynomial
+        .iter()
+        .all(local_field_element_is_structurally_zero)
+}
+
+fn local_image_polynomial_zero() -> LocalImagePolynomial {
+    vec![LocalFieldElement::zero()]
+}
+
+fn local_image_polynomial_one(
+    field: &LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    Ok(vec![LocalFieldElement::from_polynomial(
+        vec![Real::one()],
+        field,
+    )?])
+}
+
+fn trim_local_image_polynomial(
+    polynomial: &mut LocalImagePolynomial,
+    field: &mut LocalAlgebraicField,
+) -> Result<(), LocalFieldError> {
+    while polynomial.len() > 1
+        && polynomial
+            .last()
+            .ok_or(LocalFieldError::Undecided)?
+            .is_zero(field)?
+    {
+        polynomial.pop();
+    }
+    if polynomial.is_empty() {
+        polynomial.push(LocalFieldElement::zero());
+    }
+    Ok(())
+}
+
+fn local_image_polynomial_add(
+    first: &[LocalFieldElement],
+    second: &[LocalFieldElement],
+    subtract: bool,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    if local_image_polynomial_is_structurally_zero(second) {
+        return Ok(first.to_vec());
+    }
+    if local_image_polynomial_is_structurally_zero(first) {
+        return Ok(if subtract {
+            local_image_polynomial_negated(second)
+        } else {
+            second.to_vec()
+        });
+    }
+    let mut result = Vec::new();
+    result
+        .try_reserve_exact(first.len().max(second.len()))
+        .map_err(|_| LocalFieldError::Undecided)?;
+    for power in 0..first.len().max(second.len()) {
+        let first = first
+            .get(power)
+            .cloned()
+            .unwrap_or_else(LocalFieldElement::zero);
+        let second = second
+            .get(power)
+            .cloned()
+            .unwrap_or_else(LocalFieldElement::zero);
+        result.push(if subtract {
+            first.subtract(&second, field)?
+        } else {
+            first.add(&second, field)?
+        });
+    }
+    trim_local_image_polynomial(&mut result, field)?;
+    Ok(result)
+}
+
+fn local_image_polynomial_multiply(
+    first: &[LocalFieldElement],
+    second: &[LocalFieldElement],
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    if local_image_polynomial_is_structurally_zero(first)
+        || local_image_polynomial_is_structurally_zero(second)
+    {
+        return Ok(local_image_polynomial_zero());
+    }
+    let length = first
+        .len()
+        .checked_add(second.len())
+        .and_then(|length| length.checked_sub(1))
+        .ok_or(LocalFieldError::Undecided)?;
+    let mut result = vec![LocalFieldElement::zero(); length];
+    for (first_power, first_coefficient) in first.iter().enumerate() {
+        if local_field_element_is_structurally_zero(first_coefficient) {
+            continue;
+        }
+        for (second_power, second_coefficient) in second.iter().enumerate() {
+            if local_field_element_is_structurally_zero(second_coefficient) {
+                continue;
+            }
+            let product = first_coefficient.multiply(second_coefficient, field)?;
+            let target = &mut result[first_power + second_power];
+            *target = if local_field_element_is_structurally_zero(target) {
+                product
+            } else {
+                target.add(&product, field)?
+            };
+        }
+    }
+    trim_local_image_polynomial(&mut result, field)?;
+    Ok(result)
+}
+
+fn local_image_polynomial_scale(
+    polynomial: &[LocalFieldElement],
+    scale: &LocalFieldElement,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    if local_image_polynomial_is_structurally_zero(polynomial)
+        || local_field_element_is_structurally_zero(scale)
+    {
+        return Ok(local_image_polynomial_zero());
+    }
+    let mut result = polynomial
+        .iter()
+        .map(|coefficient| coefficient.multiply(scale, field))
+        .collect::<Result<Vec<_>, _>>()?;
+    trim_local_image_polynomial(&mut result, field)?;
+    Ok(result)
+}
+
+fn local_image_polynomial_negated(polynomial: &[LocalFieldElement]) -> LocalImagePolynomial {
+    polynomial
+        .iter()
+        .cloned()
+        .map(|mut coefficient| {
+            coefficient.negate();
+            coefficient
+        })
+        .collect()
+}
+
+/// Builds multiplication by one image relation in the pseudo-quotient ring
+/// of the selected fiber. Pseudo-reduction uses only ring operations and one
+/// shared power of the source leading coefficient, so every matrix entry
+/// remains denominator-free in `Q(alpha)`.
+fn local_polynomial_quotient_multiplication_matrix(
+    source: &[LocalFieldElement],
+    relation: &[LocalImagePolynomial],
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalImagePolynomial>, LocalFieldError> {
+    let degree = source
+        .len()
+        .checked_sub(1)
+        .ok_or(LocalFieldError::Undecided)?;
+    let leading = source.last().ok_or(LocalFieldError::Undecided)?;
+    if leading.is_zero(field)? {
+        return Err(LocalFieldError::DivisionByZero);
+    }
+    let relation_degree = relation.len().saturating_sub(1);
+    let matrix_len = degree
+        .checked_mul(degree)
+        .ok_or(LocalFieldError::Undecided)?;
+    let mut matrix = Vec::new();
+    matrix
+        .try_reserve_exact(matrix_len)
+        .map_err(|_| LocalFieldError::Undecided)?;
+    matrix.resize_with(matrix_len, local_image_polynomial_zero);
+    let product_len = degree
+        .checked_add(relation_degree)
+        .ok_or(LocalFieldError::Undecided)?;
+    for column in 0..degree {
+        let mut product = Vec::new();
+        product
+            .try_reserve_exact(product_len)
+            .map_err(|_| LocalFieldError::Undecided)?;
+        product.resize_with(product_len, local_image_polynomial_zero);
+        for (power, coefficient) in relation.iter().enumerate() {
+            product[column + power].clone_from(coefficient);
+        }
+        for power in (degree..product_len).rev() {
+            let eliminand = product[power].clone();
+            let shift = power - degree;
+            for coefficient in &mut product[..shift] {
+                *coefficient = local_image_polynomial_scale(coefficient, leading, field)?;
+            }
+            for (source_power, source_coefficient) in source[..degree].iter().enumerate() {
+                let index = shift + source_power;
+                let retained = local_image_polynomial_scale(&product[index], leading, field)?;
+                let removed = local_image_polynomial_scale(&eliminand, source_coefficient, field)?;
+                product[index] = local_image_polynomial_add(&retained, &removed, true, field)?;
+            }
+            product[power] = local_image_polynomial_zero();
+        }
+        for row in 0..degree {
+            matrix[row * degree + column] = product[row].clone();
+        }
+    }
+    Ok(matrix)
+}
+
+/// Division-free Berkowitz determinant over the commutative polynomial ring
+/// `Q(alpha)[z]`. The returned characteristic-polynomial constant is adjusted
+/// by `(-1)^n` to recover the determinant.
+fn local_polynomial_matrix_determinant(
+    entries: &[LocalImagePolynomial],
+    dimension: usize,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    let characteristic = local_polynomial_matrix_characteristic(entries, dimension, field)?;
+    let mut determinant = characteristic
+        .last()
+        .cloned()
+        .ok_or(LocalFieldError::Undecided)?;
+    if dimension % 2 == 1 {
+        determinant = local_image_polynomial_negated(&determinant);
+    }
+    trim_local_image_polynomial(&mut determinant, field)?;
+    Ok(determinant)
+}
+
+fn local_polynomial_matrix_characteristic(
+    entries: &[LocalImagePolynomial],
+    dimension: usize,
+    field: &mut LocalAlgebraicField,
+) -> Result<Vec<LocalImagePolynomial>, LocalFieldError> {
+    if entries.len()
+        != dimension
+            .checked_mul(dimension)
+            .ok_or(LocalFieldError::Undecided)?
+    {
+        return Err(LocalFieldError::Undecided);
+    }
+    if dimension == 0 {
+        return Ok(vec![local_image_polynomial_one(field)?]);
+    }
+    if dimension == 1 {
+        return Ok(vec![
+            local_image_polynomial_one(field)?,
+            local_image_polynomial_negated(&entries[0]),
+        ]);
+    }
+
+    let minor_dimension = dimension - 1;
+    let mut minor = Vec::new();
+    minor
+        .try_reserve_exact(
+            minor_dimension
+                .checked_mul(minor_dimension)
+                .ok_or(LocalFieldError::Undecided)?,
+        )
+        .map_err(|_| LocalFieldError::Undecided)?;
+    for row in 1..dimension {
+        for column in 1..dimension {
+            minor.push(entries[row * dimension + column].clone());
+        }
+    }
+    let minor_characteristic =
+        local_polynomial_matrix_characteristic(&minor, minor_dimension, field)?;
+
+    let mut first_column = Vec::new();
+    first_column
+        .try_reserve_exact(dimension + 1)
+        .map_err(|_| LocalFieldError::Undecided)?;
+    first_column.push(local_image_polynomial_one(field)?);
+    first_column.push(local_image_polynomial_negated(&entries[0]));
+    let row = &entries[1..dimension];
+    let mut vector = (1..dimension)
+        .map(|source_row| entries[source_row * dimension].clone())
+        .collect::<Vec<_>>();
+    for power in 0..minor_dimension {
+        let mut product = local_image_polynomial_zero();
+        for (left, right) in row.iter().zip(&vector) {
+            if local_image_polynomial_is_structurally_zero(left)
+                || local_image_polynomial_is_structurally_zero(right)
+            {
+                continue;
+            }
+            let term = local_image_polynomial_multiply(left, right, field)?;
+            product = local_image_polynomial_add(&product, &term, false, field)?;
+        }
+        first_column.push(local_image_polynomial_negated(&product));
+        if power + 1 == minor_dimension {
+            break;
+        }
+        let mut next = Vec::new();
+        next.try_reserve_exact(minor_dimension)
+            .map_err(|_| LocalFieldError::Undecided)?;
+        for matrix_row in 0..minor_dimension {
+            let mut value = local_image_polynomial_zero();
+            for matrix_column in 0..minor_dimension {
+                if local_image_polynomial_is_structurally_zero(
+                    &minor[matrix_row * minor_dimension + matrix_column],
+                ) || local_image_polynomial_is_structurally_zero(&vector[matrix_column])
+                {
+                    continue;
+                }
+                let term = local_image_polynomial_multiply(
+                    &minor[matrix_row * minor_dimension + matrix_column],
+                    &vector[matrix_column],
+                    field,
+                )?;
+                value = local_image_polynomial_add(&value, &term, false, field)?;
+            }
+            next.push(value);
+        }
+        vector = next;
+    }
+
+    let mut characteristic = Vec::new();
+    characteristic
+        .try_reserve_exact(dimension + 1)
+        .map_err(|_| LocalFieldError::Undecided)?;
+    for output_power in 0..=dimension {
+        let mut coefficient = local_image_polynomial_zero();
+        for source_power in 0..minor_characteristic.len().min(output_power + 1) {
+            let factor = &first_column[output_power - source_power];
+            if local_image_polynomial_is_structurally_zero(factor)
+                || local_image_polynomial_is_structurally_zero(&minor_characteristic[source_power])
+            {
+                continue;
+            }
+            let term = local_image_polynomial_multiply(
+                factor,
+                &minor_characteristic[source_power],
+                field,
+            )?;
+            coefficient = local_image_polynomial_add(&coefficient, &term, false, field)?;
+        }
+        characteristic.push(coefficient);
+    }
+    Ok(characteristic)
+}
+
+fn primitive_local_image_coefficients(
+    mut image: LocalImagePolynomial,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<Vec<Vec<Real>>>, LocalFieldError> {
+    trim_local_image_polynomial(&mut image, field)?;
+    if image.len() == 1 && image[0].is_zero(field)? {
+        return Ok(None);
+    }
+    if image
+        .iter()
+        .any(|coefficient| coefficient.denominator.is_some())
+    {
+        return Err(LocalFieldError::Undecided);
+    }
+    let mut content = None;
+    for coefficient in &image {
+        if coefficient.is_zero(field)? {
+            continue;
+        }
+        content = Some(match content {
+            Some(content) => polynomial_gcd(content, coefficient.numerator.clone(), field.policy)
+                .ok_or(LocalFieldError::Undecided)?,
+            None => coefficient.numerator.clone(),
+        });
+        if content.as_ref().is_some_and(|content| content.len() == 1) {
+            break;
+        }
+    }
+    let content = content.ok_or(LocalFieldError::Undecided)?;
+    image
+        .into_iter()
+        .map(|coefficient| {
+            if coefficient.is_zero(field)? {
+                return Ok(vec![Real::zero()]);
+            }
+            if content.len() == 1 && content[0] == Real::one() {
+                return Ok(coefficient.numerator);
+            }
+            let (quotient, remainder) =
+                polynomial_div_rem(coefficient.numerator, &content, field.policy)
+                    .ok_or(LocalFieldError::Undecided)?;
+            if remainder
+                .iter()
+                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+            {
+                return Err(LocalFieldError::Undecided);
+            }
+            Ok(quotient)
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
+}
+
+fn algebraic_fiber_polynomial_image_error_report(
+    error: LocalFieldError,
+    fiber_degree: usize,
+    image_degree_bound: usize,
+    certainty: Certainty,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
+    let status = match error {
+        LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval => {
+            AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence
+        }
+        LocalFieldError::UnsupportedCoefficient => {
+            AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
+        }
+        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
+            AlgebraicFiberPolynomialImageProjectionStatus::Undecided
+        }
+    };
+    AlgebraicFiberPolynomialImageProjectionReport {
+        status,
+        coefficients: Vec::new(),
+        fiber_degree,
+        image_degree_bound,
+        certainty,
+    }
 }
 
 /// Projects one bivariate fiber through a low-degree algebraic quotient ring.
@@ -2982,6 +3714,133 @@ mod tests {
             assert_eq!(shared.numerator_coefficients, vec![real(3), Real::one()]);
             assert_eq!(shared.denominator_coefficients, vec![Real::one()]);
             assert_eq!(shared.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly() {
+        // alpha^2 = 2, u^3 = alpha, and z^2 = 1 + u^2 imply
+        // (z^2 - 1)^3 - 2 = 0. The construction must eliminate the complete
+        // tower without first representing the degree-six scalar u.
+        let fiber = BivariatePolynomial::new(vec![
+            vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+            vec![real(-1)],
+        ]);
+        let image = BivariatePolynomial::new(vec![
+            vec![real(-1), Real::zero(), Real::one()],
+            vec![Real::zero()],
+            vec![real(-1)],
+        ]);
+        let expected = vec![
+            real(-3),
+            Real::zero(),
+            real(3),
+            Real::zero(),
+            real(-3),
+            Real::zero(),
+            Real::one(),
+        ];
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let report = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 3,
+                    max_retained_degree: 2,
+                    max_image_degree_bound: 6,
+                },
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(report.fiber_degree, 3);
+            assert_eq!(report.image_degree_bound, 6);
+            assert_eq!(report.coefficients, expected);
+            assert_eq!(report.certainty, Certainty::Exact);
+
+            let bounded = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 3,
+                    max_retained_degree: 2,
+                    max_image_degree_bound: 5,
+                },
+                policy,
+            );
+            assert_eq!(
+                bounded.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded
+            );
+            assert_eq!(bounded.image_degree_bound, 6);
+        }
+    }
+
+    #[test]
+    fn polynomial_fiber_image_preserves_a_degree_135_selected_tower() {
+        let mut retained_polynomial = vec![Real::zero(); 10];
+        retained_polynomial[0] = -rational(1, 2);
+        retained_polynomial[9] = Real::one();
+        let mut fiber_row = vec![Real::zero(); 16];
+        fiber_row[15] = real(32_768);
+        let fiber = BivariatePolynomial::new(vec![fiber_row, vec![real(-1)]]);
+        let image = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![real(-1)]]);
+        let mut denominator = real(2);
+        for _ in 0..9 {
+            denominator *= real(32_768);
+        }
+        let expected_constant = -(Real::one() / denominator).unwrap();
+
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                retained_polynomial.clone(),
+                rational(9, 10),
+                Real::one(),
+                policy,
+            );
+            let report = project_algebraic_fiber_polynomial_image(
+                &fiber,
+                CurveResultantParameter::First,
+                &image,
+                CurveResultantParameter::Second,
+                &alpha,
+                AlgebraicFiberPolynomialImageProjectionConfig {
+                    max_fiber_degree: 15,
+                    max_retained_degree: 9,
+                    max_image_degree_bound: 15,
+                },
+                policy,
+            );
+            assert_eq!(
+                report.status,
+                AlgebraicFiberPolynomialImageProjectionStatus::Constructed
+            );
+            assert_eq!(report.fiber_degree, 15);
+            assert_eq!(report.image_degree_bound, 15);
+            assert_eq!(report.coefficients.len(), 136);
+            assert_eq!(report.coefficients[0], expected_constant);
+            assert!(
+                report.coefficients[1..135]
+                    .iter()
+                    .all(|coefficient| coefficient == &Real::zero())
+            );
+            assert_eq!(report.coefficients[135], Real::one());
+            assert_eq!(report.certainty, Certainty::Exact);
         }
     }
 
