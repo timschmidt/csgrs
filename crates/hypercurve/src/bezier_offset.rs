@@ -8572,7 +8572,8 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
-    /// Returns point evidence stored directly beside this mapped parameter.
+    /// Returns point evidence retained by this mapped parameter or by the
+    /// physical source of an exact overlap transport.
     fn retained_point_evidence(&self) -> Option<&RationalBezierIntersectionPointEvidence2> {
         match self {
             Self::SelectedCircularTangentContact { point, .. }
@@ -8581,6 +8582,12 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedChordParallelNormalContact { point, .. }
             | Self::SimilarityTransport { point, .. }
             | Self::Chamfer { point, .. } => Some(point),
+            Self::PairOverlapMap { source, .. } => {
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return None;
+                };
+                source.retained_point_evidence()
+            }
             Self::Rational { .. }
             | Self::SelectedFiberRational { .. }
             | Self::SelectedFiberParallel { .. }
@@ -8588,8 +8595,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedParallelContact { .. }
             | Self::Pair { .. }
             | Self::Chord { .. }
-            | Self::PairOverlap { .. }
-            | Self::PairOverlapMap { .. } => None,
+            | Self::PairOverlap { .. } => None,
         }
     }
 
@@ -9914,7 +9920,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// carrier contact is replayed against the authored point before its
     /// parameter is admitted.
     fn retained_point_parameter_candidates_on_target(
-        &self,
+        self: &Arc<Self>,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
@@ -9940,6 +9946,25 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                         policy,
                     )?
                     .map(Some));
+                }
+                if let Classification::Decided(Some(curve)) = target
+                    .data
+                    .parallel
+                    .exact_circular_parallel_component(&policy.strict_counterpart())?
+                    && let decided @ Classification::Decided(Some(_)) =
+                        self.retained_point_parameter_candidates_on_rational_target(&curve, policy)?
+                {
+                    // Preserve the authored analytic parameter while solving
+                    // the retained point through its exact rational circle.
+                    // This avoids rebuilding a multi-field chord/parallel
+                    // system for geometry already proved to be circular.
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "mapped-circle-retained-point-inverse",
+                        "exact-analytic-circle-component",
+                    );
+                    return Ok(decided);
                 }
                 let (chord, point) = match self.retained_point_probe_chord(policy)? {
                     Classification::Decided(Some(probe)) => probe,
@@ -9981,7 +10006,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     }
 
     fn retained_point_parameter_candidates_on_rational_target(
-        &self,
+        self: &Arc<Self>,
         target: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
@@ -10168,7 +10193,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     }
 
     fn retained_point_probe_chord(
-        &self,
+        self: &Arc<Self>,
         policy: &CurveContext,
     ) -> CurveResult<
         Classification<
@@ -10178,7 +10203,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             )>,
         >,
     > {
-        let Some(point) = self.retained_point_evidence().cloned() else {
+        let point = if let Some(point) = self.retained_point_evidence().cloned() {
+            point
+        } else if let Some(data) = self.coincident_chord_parameter() {
+            RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(
+                BezierAlgebraicCuspChordPoint2 { data },
+            )
+        } else {
             return Ok(Classification::Decided(None));
         };
         if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived) = &point
@@ -97026,13 +97057,13 @@ mod conversion_tests {
                 panic!("the exact oblique chord must construct");
             };
             let point = chord
-                .normal_displaced_point_evidence(center, Real::from(-1_i8), &policy)
+                .normal_displaced_point_evidence(center.clone(), Real::from(-1_i8), &policy)
                 .unwrap();
             let Classification::Decided(parameter) = circle
                 .certified_selected_chord_normal_contact_parameter(
                     (Real::zero(), Real::from(-1_i8)),
                     chord,
-                    point,
+                    point.clone(),
                     Real::from(-1_i8),
                     &policy,
                 )
@@ -97051,6 +97082,50 @@ mod conversion_tests {
                 panic!("the selected chord-normal parameter must retain its construction");
             };
             assert_eq!(*radial_product_sign, RealSign::Negative);
+
+            let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+            let Classification::Decided(Some(target)) =
+                BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
+                    &center,
+                    (Real::from(4_i8) * &fifth, Real::from(3_i8) * fifth),
+                    Real::one(),
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the rotated selected circle must construct");
+            };
+            let Classification::Decided(BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(
+                overlap,
+            )) = circle.pair_intersections(&target, &policy).unwrap()
+            else {
+                panic!("the rotated selected circle must retain its coincident overlap");
+            };
+            let mapped = overlap.map_parameter(
+                &BezierAlgebraicCuspSemicircleParameter2::Mapped(parameter),
+                true,
+            );
+            let BezierAlgebraicCuspSemicircleParameter2::Mapped(mapped) = mapped else {
+                panic!("the point-owning contact must retain its overlap transport");
+            };
+            assert!(matches!(
+                mapped.as_ref(),
+                BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                    source: BezierAlgebraicCuspSemicircleParameter2::Mapped(source),
+                    ..
+                } if matches!(
+                    source.as_ref(),
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact { .. }
+                )
+            ));
+            assert_eq!(
+                mapped
+                    .retained_point_evidence()
+                    .expect("the overlap transport must preserve retained point evidence")
+                    .same_point(&point, &policy),
+                Classification::Decided(true),
+            );
         }
     }
 
@@ -103712,7 +103787,7 @@ mod conversion_tests {
                         RationalBezierOverlapOrientation2::Same,
                     );
 
-                    let fifth = (Real::one() / Real::from(5_i8))?;
+                    let two_thirds = (Real::from(2_i8) / Real::from(3_i8))?;
                     let BezierParameter2::Algebraic(start_parameter) = algebraic_parameter(vec![
                         -(Real::one() / Real::from(2_i8))?,
                         Real::zero(),
@@ -103736,8 +103811,8 @@ mod conversion_tests {
                         let curve = RationalBezier2::try_from_subcurve(
                             &BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
                                 LineSeg2::try_new(
-                                    Point2::new(Real::from(start_x), Real::from(4_i8) * &fifth),
-                                    Point2::new(Real::from(end_x), Real::from(4_i8) * &fifth),
+                                    Point2::new(Real::from(start_x), two_thirds.clone()),
+                                    Point2::new(Real::from(end_x), two_thirds.clone()),
                                 )?,
                             )),
                         )?;
@@ -103806,6 +103881,10 @@ mod conversion_tests {
                     );
                     for parameter in [&right_target_parameter, &left_target_parameter] {
                         assert_eq!(
+                            parameter.represented_rational_value(&policy)?,
+                            Classification::Decided(None),
+                        );
+                        assert_eq!(
                             parameter.order_to_real(&Real::zero(), &policy)?,
                             Classification::Decided(std::cmp::Ordering::Greater),
                         );
@@ -103814,6 +103893,76 @@ mod conversion_tests {
                             Classification::Decided(std::cmp::Ordering::Less),
                         );
                     }
+                    let rational_quarter = RationalBezier2::from(
+                        RationalQuadraticBezier2::try_new(
+                            Point2::new(Real::one(), Real::zero()),
+                            Point2::new(Real::one(), Real::one()),
+                            Point2::new(Real::zero(), Real::one()),
+                            Real::one(),
+                            Real::one(),
+                            Real::from(2_i8),
+                        )
+                        .unwrap(),
+                    );
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+                            rational_overlaps,
+                        ),
+                    ) = target.rational_intersections(&rational_quarter, &policy)?
+                    else {
+                        panic!("the nested target must overlap the rational quarter");
+                    };
+                    let [rational_overlap] = rational_overlaps.as_slice() else {
+                        panic!("the nested target must retain one rational overlap cell");
+                    };
+                    let nested_target = rational_overlap
+                        .other_parameter_for_cusp(&right_target_parameter, &policy)?;
+                    let Classification::Decided(nested_target) = nested_target else {
+                        panic!(
+                            "the nested chord-mapped cut must invert on the rational overlap: {nested_target:?}"
+                        );
+                    };
+                    let expected_target = algebraic_parameter(vec![
+                        Real::one(),
+                        Real::from(-3_i8),
+                        Real::one(),
+                    ]);
+                    assert_eq!(
+                        nested_target.same_value(&expected_target, &policy)?,
+                        Classification::Decided(true),
+                    );
+                    let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let analytic_inverse_work = || {
+                        analytic_overlap
+                            .other_parameter_for_cusp(&right_target_parameter, &policy)
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let analytic_target =
+                        hyperreal::dispatch_trace::with_recording(analytic_inverse_work)?;
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let analytic_target = analytic_inverse_work()?;
+                    #[cfg(feature = "dispatch-trace")]
+                    let analytic_inverse_trace = hyperreal::dispatch_trace::take_trace();
+                    let Classification::Decided(analytic_target) = analytic_target else {
+                        panic!(
+                            "the nested chord-mapped cut must invert on the analytic overlap: {analytic_target:?}"
+                        );
+                    };
+                    assert_eq!(
+                        analytic_target.same_value(&expected_target, &policy)?,
+                        Classification::Decided(true),
+                    );
+                    #[cfg(feature = "dispatch-trace")]
+                    assert_eq!(
+                        analytic_inverse_trace.path_count(
+                            "hypercurve",
+                            "mapped-circle-retained-point-inverse",
+                            "exact-analytic-circle-component",
+                        ),
+                        1,
+                    );
                     let Classification::Decided(arc) =
                         BezierAlgebraicCuspSemicircleFragment2::try_new(
                             target.clone(),
