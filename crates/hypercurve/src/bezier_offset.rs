@@ -966,6 +966,27 @@ impl PartialEq for BezierAlgebraicCuspSemicircleMappedOverlap2 {
     }
 }
 
+fn ascending_second_curve_region_overlap_range(
+    ranges: Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>> {
+    let Classification::Decided(Some((first, second))) = ranges else {
+        return Ok(ranges);
+    };
+    let order = match second.start().cmp_by_refinement(second.end(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(match order {
+        std::cmp::Ordering::Less => Classification::Decided(Some((first, second))),
+        std::cmp::Ordering::Greater => Classification::Decided(Some((
+            first,
+            CurveRegionParameterRange2::new_validated(second.end().clone(), second.start().clone()),
+        ))),
+        std::cmp::Ordering::Equal => return Err(CurveError::DegenerateOverlapRange),
+    })
+}
+
 impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
     pub(crate) const fn other_range(&self) -> &BezierParameterRange2 {
         &self.other_range
@@ -981,6 +1002,75 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
 
     pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    fn curve_region_ranges(&self) -> (CurveRegionParameterRange2, CurveRegionParameterRange2) {
+        (
+            CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_cusp(self.cusp_start_parameter()),
+                CurveRegionParameter2::from_algebraic_cusp(self.cusp_end_parameter()),
+            ),
+            CurveRegionParameterRange2::from_bezier_range(self.other_range.clone()),
+        )
+    }
+
+    fn map_curve_region_parameter(
+        &self,
+        parameter: &CurveRegionParameter2,
+        cusp_to_other: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        if cusp_to_other {
+            let Some(parameter) = parameter.as_algebraic_cusp() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .other_parameter_for_cusp(parameter, policy)?
+                .map(|parameter| Some(CurveRegionParameter2::from_bezier(parameter))));
+        }
+        let Some(parameter) = parameter.as_bezier_parameter() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(self
+            .cusp_parameter_for_other(parameter, policy)?
+            .map(|parameter| Some(CurveRegionParameter2::from_algebraic_cusp(parameter))))
+    }
+
+    pub(crate) fn has_positive_curve_region_overlap(
+        &self,
+        cusp_fragment: &CurveRegionParameterRange2,
+        other_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+            &cusp_overlap,
+            &other_overlap,
+            cusp_fragment,
+            other_fragment,
+            policy,
+            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+        )
+    }
+
+    pub(crate) fn clipped_curve_region_ranges(
+        &self,
+        cusp_fragment: &CurveRegionParameterRange2,
+        other_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
+        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        let clipped = crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+            &cusp_overlap,
+            &other_overlap,
+            cusp_fragment,
+            other_fragment,
+            policy,
+            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+            |parameter| self.map_curve_region_parameter(parameter, false, policy),
+        )?;
+        ascending_second_curve_region_overlap_range(clipped, policy)
     }
 
     fn cusp_parameter_at_other_endpoint(
@@ -29836,6 +29926,78 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
 
     pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.orientation
+    }
+
+    fn curve_region_ranges(&self) -> (CurveRegionParameterRange2, CurveRegionParameterRange2) {
+        (
+            CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_cusp(self.cusp_start_parameter()),
+                CurveRegionParameter2::from_algebraic_cusp(self.cusp_end_parameter()),
+            ),
+            CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_selected_fiber(self.other_start_parameter()),
+                CurveRegionParameter2::from_selected_fiber(self.other_end_parameter()),
+            ),
+        )
+    }
+
+    fn map_curve_region_parameter(
+        &self,
+        parameter: &CurveRegionParameter2,
+        cusp_to_other: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>> {
+        if cusp_to_other {
+            let Some(parameter) = parameter.as_algebraic_cusp() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(self
+                .other_parameter_for_cusp(parameter, policy)?
+                .map(|parameter| Some(CurveRegionParameter2::from_selected_fiber(parameter))));
+        }
+        let Some(parameter) = parameter.as_selected_fiber() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        Ok(self
+            .cusp_parameter_for_other(parameter, policy)?
+            .map(|parameter| Some(CurveRegionParameter2::from_algebraic_cusp(parameter))))
+    }
+
+    pub(crate) fn has_positive_curve_region_overlap(
+        &self,
+        cusp_fragment: &CurveRegionParameterRange2,
+        other_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+            &cusp_overlap,
+            &other_overlap,
+            cusp_fragment,
+            other_fragment,
+            policy,
+            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+        )
+    }
+
+    pub(crate) fn clipped_curve_region_ranges(
+        &self,
+        cusp_fragment: &CurveRegionParameterRange2,
+        other_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
+        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        let clipped = crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+            &cusp_overlap,
+            &other_overlap,
+            cusp_fragment,
+            other_fragment,
+            policy,
+            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+            |parameter| self.map_curve_region_parameter(parameter, false, policy),
+        )?;
+        ascending_second_curve_region_overlap_range(clipped, policy)
     }
 
     fn endpoint_location(
@@ -111958,6 +112120,36 @@ mod conversion_tests {
             let selected_carrier_range = crate::CurveRegionParameterRange2::new_validated(
                 crate::CurveRegionParameter2::from_selected_fiber(selected_start.clone()),
                 crate::CurveRegionParameter2::from_selected_fiber(selected_end.clone()),
+            );
+            let cusp_range = |start, end| {
+                CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_algebraic_cusp(start),
+                    CurveRegionParameter2::from_algebraic_cusp(end),
+                )
+            };
+            assert_eq!(
+                overlap
+                    .has_positive_curve_region_overlap(
+                        &cusp_range(
+                            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                            first_cut.clone(),
+                        ),
+                        &selected_carrier_range,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(false),
+                "independently nonempty trims that correspond only at one endpoint must not become a fillet overlap",
+            );
+            assert_eq!(
+                overlap
+                    .has_positive_curve_region_overlap(
+                        &cusp_range(first_cut.clone(), second_cut.clone()),
+                        &selected_carrier_range,
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(true),
             );
             let unit = BezierParameterRange2::new_validated(
                 BezierParameter2::Exact(Real::zero()),

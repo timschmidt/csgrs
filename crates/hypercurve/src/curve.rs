@@ -5455,115 +5455,20 @@ struct RetainedFilletCuspRationalContacts2 {
     coincident: bool,
 }
 
-fn retained_fillet_cusp_parameter_order(
-    first: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-    second: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<std::cmp::Ordering> {
-    match first
-        .cmp_by_refinement(second, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(order) => Ok(order),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            reason,
-        )),
-    }
+fn retained_fillet_cusp_fragment_range(
+    fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+) -> crate::CurveRegionParameterRange2 {
+    crate::CurveRegionParameterRange2::new_validated(
+        CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+        CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+    )
 }
 
-fn retained_fillet_cusp_overlap_range(
-    cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
-    overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2,
+fn retained_fillet_positive_overlap(
+    result: crate::CurveResult<Classification<bool>>,
     family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<BezierParameterRange2>> {
-    let overlap_start = overlap.cusp_start_parameter();
-    let overlap_end = overlap.cusp_end_parameter();
-    let clipped_start = if retained_fillet_cusp_parameter_order(
-        &overlap_start,
-        cusp.start_parameter(),
-        family,
-        policy,
-    )?
-    .is_lt()
-    {
-        cusp.start_parameter().clone()
-    } else {
-        overlap_start
-    };
-    let clipped_end = if retained_fillet_cusp_parameter_order(
-        &overlap_end,
-        cusp.end_parameter(),
-        family,
-        policy,
-    )?
-    .is_gt()
-    {
-        cusp.end_parameter().clone()
-    } else {
-        overlap_end
-    };
-    if !retained_fillet_cusp_parameter_order(&clipped_start, &clipped_end, family, policy)?.is_lt()
-    {
-        return Ok(None);
-    }
-    let map_endpoint = |parameter| match overlap
-        .other_parameter_for_cusp(parameter, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(parameter) => Ok(parameter),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            reason,
-        )),
-    };
-    let first = map_endpoint(&clipped_start)?;
-    let second = map_endpoint(&clipped_end)?;
-    let order = match first
-        .cmp_by_refinement(&second, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
-    };
-    Ok(match order {
-        std::cmp::Ordering::Less => Some(BezierParameterRange2::new_validated(first, second)),
-        std::cmp::Ordering::Greater => Some(BezierParameterRange2::new_validated(second, first)),
-        std::cmp::Ordering::Equal => {
-            return Err(ExactCurveError::invalid(
-                CurveOperation2::Fillet,
-                family,
-                CurveError::DegenerateOverlapRange,
-            ));
-        }
-    })
-}
-
-fn retained_fillet_cusp_pair_overlap_is_positive(
-    first: &crate::BezierAlgebraicCuspSemicircleFragment2,
-    second: &crate::BezierAlgebraicCuspSemicircleFragment2,
-    overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicirclePairOverlap2,
-    family: CurveFamily2,
-    policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let range = |fragment: &crate::BezierAlgebraicCuspSemicircleFragment2| {
-        crate::CurveRegionParameterRange2::new_validated(
-            CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-            CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
-        )
-    };
-    match overlap
-        .has_positive_curve_region_overlap(&range(first), &range(second), policy)
+    match result
         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
     {
         Classification::Decided(positive) => Ok(positive),
@@ -5573,6 +5478,40 @@ fn retained_fillet_cusp_pair_overlap_is_positive(
             reason,
         )),
     }
+}
+
+fn retained_fillet_cusp_mapped_overlap_is_positive(
+    cusp: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2,
+    other_range: &crate::CurveRegionParameterRange2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    retained_fillet_positive_overlap(
+        overlap.has_positive_curve_region_overlap(
+            &retained_fillet_cusp_fragment_range(cusp),
+            other_range,
+            policy,
+        ),
+        family,
+    )
+}
+
+fn retained_fillet_cusp_pair_overlap_is_positive(
+    first: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    second: &crate::BezierAlgebraicCuspSemicircleFragment2,
+    overlap: &crate::bezier_offset::BezierAlgebraicCuspSemicirclePairOverlap2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<bool> {
+    retained_fillet_positive_overlap(
+        overlap.has_positive_curve_region_overlap(
+            &retained_fillet_cusp_fragment_range(first),
+            &retained_fillet_cusp_fragment_range(second),
+            policy,
+        ),
+        family,
+    )
 }
 
 /// Publishes a compact one-field center when one side of a direct circle pair
@@ -5643,88 +5582,35 @@ fn retained_fillet_pair_contact_rational_point(
     Ok(None)
 }
 
-fn retained_fillet_bezier_range_overlaps_curve_region_range(
-    first: &BezierParameterRange2,
-    second: &crate::CurveRegionParameterRange2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    let first_start = CurveRegionParameter2::from_bezier(first.start().clone());
-    let first_end = CurveRegionParameter2::from_bezier(first.end().clone());
-    Ok(
-        retained_fillet_curve_region_parameter_order(&first_end, second.start(), family, policy)?
-            .is_gt()
-            && retained_fillet_curve_region_parameter_order(
-                second.end(),
-                &first_start,
-                family,
-                policy,
-            )?
-            .is_gt(),
-    )
-}
-
-fn retained_fillet_range_overlaps_incident_domain(
-    range: &BezierParameterRange2,
+fn retained_fillet_incident_overlap_range(
+    overlap: &crate::CurveRegionParameterRange2,
     domain: &crate::bezier_offset::BezierParallelIncidentDomain2,
     family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    let order_to_endpoint = |parameter: &BezierParameter2| {
-        retained_fillet_curve_region_parameter_order(
-            &CurveRegionParameter2::from_bezier(parameter.clone()),
-            domain.endpoint(),
-            family,
-            policy,
-        )
+) -> ExactCurveResult<Option<crate::CurveRegionParameterRange2>> {
+    let barrier = || {
+        domain
+            .barrier()
+            .map(|parameter| CurveRegionParameter2::from_bezier(parameter.clone()))
     };
-    Ok(match domain.direction() {
-        crate::BezierParameterRayDirection2::Decreasing => {
-            order_to_endpoint(range.start())?.is_lt()
-                && match domain.barrier() {
-                    Some(barrier) => retained_fillet_bezier_parameter_order(
-                        range.end(),
-                        barrier,
-                        family,
-                        policy,
-                    )?
-                    .is_gt(),
-                    None => true,
-                }
-        }
-        crate::BezierParameterRayDirection2::Increasing => {
-            order_to_endpoint(range.end())?.is_gt()
-                && match domain.barrier() {
-                    Some(barrier) => retained_fillet_bezier_parameter_order(
-                        range.start(),
-                        barrier,
-                        family,
-                        policy,
-                    )?
-                    .is_lt(),
-                    None => true,
-                }
-        }
-    })
-}
-
-fn retained_fillet_bezier_parameter_order(
-    first: &BezierParameter2,
-    second: &BezierParameter2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<std::cmp::Ordering> {
-    match first
-        .cmp_by_refinement(second, policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(order) => Ok(order),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            reason,
-        )),
-    }
+    let (start, end) = match domain.direction() {
+        crate::BezierParameterRayDirection2::Decreasing => (
+            barrier().unwrap_or_else(|| overlap.start().clone()),
+            domain.endpoint().clone(),
+        ),
+        crate::BezierParameterRayDirection2::Increasing => (
+            domain.endpoint().clone(),
+            barrier().unwrap_or_else(|| overlap.end().clone()),
+        ),
+    };
+    Ok(
+        match retained_fillet_curve_region_parameter_order(&start, &end, family, policy)? {
+            std::cmp::Ordering::Equal => None,
+            std::cmp::Ordering::Less | std::cmp::Ordering::Greater => {
+                Some(crate::CurveRegionParameterRange2::new_validated(start, end))
+            }
+        },
+    )
 }
 
 fn retained_fillet_curve_region_parameter_order(
@@ -5953,7 +5839,16 @@ fn retained_fillet_cusp_rational_contacts(
             overlaps,
         ) => {
             for overlap in overlaps {
-                if retained_fillet_cusp_overlap_range(cusp, &overlap, family, policy)?.is_some() {
+                let other_range = crate::CurveRegionParameterRange2::from_bezier_range(
+                    overlap.other_range().clone(),
+                );
+                if retained_fillet_cusp_mapped_overlap_is_positive(
+                    cusp,
+                    &overlap,
+                    &other_range,
+                    family,
+                    policy,
+                )? {
                     return Ok(RetainedFilletCuspRationalContacts2 {
                         contacts: Vec::new(),
                         coincident: true,
@@ -6094,80 +5989,29 @@ fn retained_selected_fillet_overlap_is_positive(
     cusp_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let selected_order =
-        |parameter: &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
-         boundary: &CurveRegionParameter2| {
-            CurveRegionParameter2::from_selected_fiber(parameter.clone())
-                .cmp_by_refinement(boundary, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, analytic_family, cause)
-                })
-                .and_then(|order| match order {
-                    Classification::Decided(order) => Ok(order),
-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        analytic_family,
-                        reason,
-                    )),
-                })
-        };
-    let other_start = overlap.other_start_parameter();
-    let other_end = overlap.other_end_parameter();
-    let overlaps_authored = selected_order(&other_end, analytic_range.start())?.is_gt()
-        && selected_order(&other_start, analytic_range.end())?.is_lt();
-    let overlaps_extension = if let Some(domain) = incident_domain {
-        match domain.direction() {
-            crate::BezierParameterRayDirection2::Decreasing => {
-                selected_order(&other_start, domain.endpoint())?.is_lt()
-                    && match domain.barrier() {
-                        Some(barrier) => selected_order(
-                            &other_end,
-                            &CurveRegionParameter2::from_bezier(barrier.clone()),
-                        )?
-                        .is_gt(),
-                        None => true,
-                    }
-            }
-            crate::BezierParameterRayDirection2::Increasing => {
-                selected_order(&other_end, domain.endpoint())?.is_gt()
-                    && match domain.barrier() {
-                        Some(barrier) => selected_order(
-                            &other_start,
-                            &CurveRegionParameter2::from_bezier(barrier.clone()),
-                        )?
-                        .is_lt(),
-                        None => true,
-                    }
-            }
-        }
-    } else {
-        false
-    };
-    if !overlaps_authored && !overlaps_extension {
-        return Ok(false);
+    let cusp_range = retained_fillet_cusp_fragment_range(cusp_source);
+    let overlaps_authored = retained_fillet_positive_overlap(
+        overlap.has_positive_curve_region_overlap(&cusp_range, analytic_range, policy),
+        cusp_family,
+    )?;
+    if overlaps_authored {
+        return Ok(true);
     }
-    let cusp_order =
-        |parameter: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-         boundary: &crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2| {
-            parameter
-                .cmp_by_refinement(boundary, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
-                })
-                .and_then(|order| match order {
-                    Classification::Decided(order) => Ok(order),
-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        cusp_family,
-                        reason,
-                    )),
-                })
-        };
-    Ok(
-        cusp_order(&overlap.cusp_end_parameter(), cusp_source.start_parameter())?
-            == std::cmp::Ordering::Greater
-            && cusp_order(&overlap.cusp_start_parameter(), cusp_source.end_parameter())?
-                == std::cmp::Ordering::Less,
+    let Some(domain) = incident_domain else {
+        return Ok(false);
+    };
+    let other_overlap = crate::CurveRegionParameterRange2::new_validated(
+        CurveRegionParameter2::from_selected_fiber(overlap.other_start_parameter()),
+        CurveRegionParameter2::from_selected_fiber(overlap.other_end_parameter()),
+    );
+    let Some(incident_range) =
+        retained_fillet_incident_overlap_range(&other_overlap, domain, analytic_family, policy)?
+    else {
+        return Ok(false);
+    };
+    retained_fillet_positive_overlap(
+        overlap.has_positive_curve_region_overlap(&cusp_range, &incident_range, policy),
+        cusp_family,
     )
 }
 
@@ -7371,29 +7215,33 @@ fn fillet_offset_centers(
                     }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps) => {
                         for overlap in overlaps {
-                            let Some(mapped_range) = retained_fillet_cusp_overlap_range(
+                            let overlaps_authored = retained_fillet_cusp_mapped_overlap_is_positive(
                                 cusp_source,
                                 &overlap,
-                                cusp_family,
-                                policy,
-                            )? else {
-                                continue;
-                            };
-                            let overlaps_authored =
-                                retained_fillet_bezier_range_overlaps_curve_region_range(
-                                &mapped_range,
                                 &analytic_authored_range,
-                                analytic_family,
+                                cusp_family,
                                 policy,
                             )?;
                             let overlaps_incident = if let Some(domain) = incident_domain.as_ref() {
-                                retained_fillet_range_overlaps_incident_domain(
-                                    &mapped_range,
+                                let other_overlap = crate::CurveRegionParameterRange2::from_bezier_range(
+                                    overlap.other_range().clone(),
+                                );
+                                let incident_range = retained_fillet_incident_overlap_range(
+                                    &other_overlap,
                                     domain,
                                     analytic_family,
                                     policy,
-                                )
-                                ?
+                                )?;
+                                match incident_range {
+                                    Some(incident_range) => retained_fillet_cusp_mapped_overlap_is_positive(
+                                        cusp_source,
+                                        &overlap,
+                                        &incident_range,
+                                        cusp_family,
+                                        policy,
+                                    )?,
+                                    None => false,
+                                }
                             } else {
                                 false
                             };

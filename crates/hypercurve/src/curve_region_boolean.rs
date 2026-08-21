@@ -247,43 +247,20 @@ enum RegionCuspMappedOverlapRef<'a> {
 }
 
 impl RegionCuspMappedOverlapRef<'_> {
-    fn other_parameter_for_cusp(
+    fn clipped_curve_region_ranges(
         self,
-        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+        cusp_fragment: &CurveRegionParameterRange2,
+        other_fragment: &CurveRegionParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveRegionParameter2>> {
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
         match self {
-            Self::Bezier(source) => Ok(source
-                .other_parameter_for_cusp(parameter, policy)?
-                .map(CurveRegionParameter2::from_bezier)),
-            Self::Selected(source) => Ok(source
-                .other_parameter_for_cusp(parameter, policy)?
-                .map(CurveRegionParameter2::from_selected_fiber)),
-        }
-    }
-
-    fn cusp_parameter_for_other(
-        self,
-        parameter: &CurveRegionParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
-        match self {
-            Self::Bezier(source) => source.cusp_parameter_for_other(
-                parameter.as_bezier_parameter().ok_or_else(|| {
-                    CurveError::Topology(
-                        "non-Bezier cut reached a Bezier-mapped cusp overlap".into(),
-                    )
-                })?,
-                policy,
-            ),
-            Self::Selected(source) => source.cusp_parameter_for_other(
-                parameter.as_selected_fiber().ok_or_else(|| {
-                    CurveError::Topology(
-                        "non-selected cut reached a selected-fiber cusp overlap".into(),
-                    )
-                })?,
-                policy,
-            ),
+            Self::Bezier(source) => {
+                source.clipped_curve_region_ranges(cusp_fragment, other_fragment, policy)
+            }
+            Self::Selected(source) => {
+                source.clipped_curve_region_ranges(cusp_fragment, other_fragment, policy)
+            }
         }
     }
 }
@@ -5555,128 +5532,39 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ),
             ));
         }
-        let (
-            cusp_range,
-            parallel_range,
-            cusp_carrier,
-            parallel_carrier,
-            cusp_carrier_index,
-            parallel_carrier_index,
-        ) = if first_is_cusp {
+        let (cusp_carrier, other_carrier, cusp_carrier_index) = if first_is_cusp {
             (
-                &overlap.first_range,
-                &overlap.second_range,
                 &self.data.carriers[pair.first_carrier_index],
                 &self.data.carriers[pair.second_carrier_index],
                 pair.first_carrier_index,
-                pair.second_carrier_index,
             )
         } else {
             (
-                &overlap.second_range,
-                &overlap.first_range,
                 &self.data.carriers[pair.second_carrier_index],
                 &self.data.carriers[pair.first_carrier_index],
                 pair.second_carrier_index,
-                pair.first_carrier_index,
             )
         };
-
-        let (cusp_overlap_start, cusp_overlap_end) =
-            ascending_range(cusp_range, &self.data.policy)?;
-        let cusp_start = extreme_region_parameter(
-            [cusp_overlap_start, &cusp_carrier.start],
-            Ordering::Less,
-            cusp_carrier.family,
-            &self.data.policy,
-        )?;
-        let cusp_end = extreme_region_parameter(
-            [cusp_overlap_end, &cusp_carrier.end],
-            Ordering::Greater,
-            cusp_carrier.family,
-            &self.data.policy,
-        )?;
-        match decided_parameter_cmp(&cusp_start, &cusp_end, &self.data.policy)? {
-            Ordering::Less => {}
-            Ordering::Equal | Ordering::Greater => return Ok(None),
-        }
-
-        let map_to_parallel = |parameter: &CurveRegionParameter2| {
-            let Some(parameter) = parameter.as_algebraic_cusp() else {
-                return Err(self.blocked(cusp_carrier_index, UncertaintyReason::Unsupported));
-            };
-            match source
-                .other_parameter_for_cusp(parameter, &self.data.policy)
-                .map_err(|cause| self.invalid(cusp_carrier_index, cause))?
-            {
-                Classification::Decided(parameter) => Ok(parameter),
-                Classification::Uncertain(reason) => Err(self.blocked(cusp_carrier_index, reason)),
-            }
+        let range = |carrier: &RegionCarrier| {
+            CurveRegionParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
         };
-        let mapped_start = map_to_parallel(&cusp_start)?;
-        let mapped_end = map_to_parallel(&cusp_end)?;
-        let mapped_order = decided_parameter_cmp(&mapped_start, &mapped_end, &self.data.policy)?;
-        let (mapped_low, mapped_high) = match mapped_order {
-            Ordering::Less => (&mapped_start, &mapped_end),
-            Ordering::Greater => (&mapped_end, &mapped_start),
-            Ordering::Equal => return Ok(None),
-        };
-
-        let (parallel_overlap_start, parallel_overlap_end) =
-            ascending_range(parallel_range, &self.data.policy)?;
-        let parallel_low = extreme_region_parameter(
-            [mapped_low, parallel_overlap_start, &parallel_carrier.start],
-            Ordering::Less,
-            parallel_carrier.family,
-            &self.data.policy,
-        )?;
-        let parallel_high = extreme_region_parameter(
-            [mapped_high, parallel_overlap_end, &parallel_carrier.end],
-            Ordering::Greater,
-            parallel_carrier.family,
-            &self.data.policy,
-        )?;
-        match decided_parameter_cmp(&parallel_low, &parallel_high, &self.data.policy)? {
-            Ordering::Less => {}
-            Ordering::Equal | Ordering::Greater => return Ok(None),
-        }
-
-        let (final_cusp_start, final_cusp_end) =
-            if decided_parameter_cmp(&parallel_low, mapped_low, &self.data.policy)?
-                == Ordering::Equal
-                && decided_parameter_cmp(&parallel_high, mapped_high, &self.data.policy)?
-                    == Ordering::Equal
-            {
-                (cusp_start, cusp_end)
-            } else {
-                let map_to_cusp = |parameter: &CurveRegionParameter2| match source
-                    .cusp_parameter_for_other(parameter, &self.data.policy)
-                    .map_err(|cause| self.invalid(parallel_carrier_index, cause))?
-                {
-                    Classification::Decided(parameter) => {
-                        Ok(CurveRegionParameter2::from_algebraic_cusp(parameter))
-                    }
-                    Classification::Uncertain(reason) => {
-                        Err(self.blocked(parallel_carrier_index, reason))
-                    }
-                };
-                let first = map_to_cusp(&parallel_low)?;
-                let second = map_to_cusp(&parallel_high)?;
-                match decided_parameter_cmp(&first, &second, &self.data.policy)? {
-                    Ordering::Less => (first, second),
-                    Ordering::Greater => (second, first),
-                    Ordering::Equal => return Ok(None),
+        let clipped = source
+            .clipped_curve_region_ranges(
+                &range(cusp_carrier),
+                &range(other_carrier),
+                &self.data.policy,
+            )
+            .map_err(|cause| self.invalid(cusp_carrier_index, cause))?;
+        match clipped {
+            Classification::Decided(ranges) => Ok(ranges.map(|(cusp, other)| {
+                if first_is_cusp {
+                    (cusp, other)
+                } else {
+                    (other, cusp)
                 }
-            };
-        let cusp_result =
-            CurveRegionParameterRange2::new_validated(final_cusp_start, final_cusp_end);
-        let parallel_result =
-            CurveRegionParameterRange2::new_validated(parallel_low, parallel_high);
-        Ok(Some(if first_is_cusp {
-            (cusp_result, parallel_result)
-        } else {
-            (parallel_result, cusp_result)
-        }))
+            })),
+            Classification::Uncertain(reason) => Err(self.blocked(cusp_carrier_index, reason)),
+        }
     }
 
     fn build_split_topology(&self) -> ExactCurveResult<CurveRegionSplitTopology> {

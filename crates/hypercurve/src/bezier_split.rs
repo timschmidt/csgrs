@@ -674,12 +674,26 @@ fn intersect_curve_region_parameter_ranges(
     };
     let low = match first_low.cmp_by_refinement(&second_low, policy)? {
         Classification::Decided(Ordering::Less) => second_low,
-        Classification::Decided(Ordering::Equal | Ordering::Greater) => first_low,
+        Classification::Decided(Ordering::Equal) => {
+            if !first_low.is_selected_fiber() && second_low.is_selected_fiber() {
+                second_low
+            } else {
+                first_low
+            }
+        }
+        Classification::Decided(Ordering::Greater) => first_low,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let high = match first_high.cmp_by_refinement(&second_high, policy)? {
         Classification::Decided(Ordering::Greater) => second_high,
-        Classification::Decided(Ordering::Equal | Ordering::Less) => first_high,
+        Classification::Decided(Ordering::Equal) => {
+            if !first_high.is_selected_fiber() && second_high.is_selected_fiber() {
+                second_high
+            } else {
+                first_high
+            }
+        }
+        Classification::Decided(Ordering::Less) => first_high,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     Ok(match low.cmp_by_refinement(&high, policy)? {
