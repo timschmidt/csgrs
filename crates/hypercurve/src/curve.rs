@@ -3583,13 +3583,19 @@ impl ExactCornerArc2<'_> {
         }
     }
 
-    fn source_parameter_at_point(
+    /// Returns the authored rational circle in its original low-degree
+    /// parameterization and attaches the already-certified circular support.
+    ///
+    /// Preserving mixed weights is important for a regular major quadratic:
+    /// its denominator is pole-free even though the middle Bernstein weight
+    /// has the opposite sign. Keeping degree two lets the shared incidence
+    /// kernels reuse the authored parameter without a larger elimination.
+    fn retained_rational_evaluator(
         &self,
-        point: &Point2,
         operation: CurveOperation2,
         family: CurveFamily2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Real>> {
+    ) -> ExactCurveResult<Option<RationalBezier2>> {
         let Self::RetainedRational(retained) = self else {
             return Ok(None);
         };
@@ -3605,6 +3611,51 @@ impl ExactCornerArc2<'_> {
                 ),
             ));
         };
+        let evaluator = if evaluator.retained_circular_conic().is_some()
+            || matches!(
+                evaluator.common_weight_sign(policy),
+                Classification::Decided(RealSign::Positive | RealSign::Negative)
+            ) {
+            evaluator.clone()
+        } else {
+            let center = self.support().center();
+            let two = Real::from(2_i8);
+            RationalBezier2::try_new_with_implicit_quadratic_conic(
+                evaluator.control_points().to_vec(),
+                evaluator.weights().to_vec(),
+                Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    -(&two * center.x()),
+                    -(&two * center.y()),
+                    center.x() * center.x() + center.y() * center.y()
+                        - self.support().radius_squared_ref(),
+                ]),
+                Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                    center: center.clone(),
+                    radius_squared: self.support().radius_squared(),
+                    tangent_contacts: None,
+                })),
+            )
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        };
+        Ok(Some(evaluator))
+    }
+
+    fn source_parameter_at_point(
+        &self,
+        point: &Point2,
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Real>> {
+        let Self::RetainedRational(retained) = self else {
+            return Ok(None);
+        };
+        let evaluator = self
+            .retained_rational_evaluator(operation, family, policy)?
+            .expect("a retained rational arc supplies its authored evaluator");
         let parameters = match evaluator
             .retained_circle_point_parameters(point, policy)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
@@ -3683,14 +3734,24 @@ impl ExactCornerArc2<'_> {
                 return Err(ExactCurveError::blocked(operation, family, reason));
             }
         };
-        let [span] = decomposition.spans() else {
+        let canonical_source = if let [span] = decomposition.spans() {
+            // A canonical minor conic is both the smallest evaluator and the
+            // established selected-circle carrier. It also avoids retaining
+            // an authored high-degree elevation in every center witness.
+            span.curve().clone().into()
+        } else if let Some(source) = self.retained_rational_evaluator(operation, family, policy)? {
+            // A regular authored major conic cannot be replaced by one minor
+            // span without changing its finite domain. Preserve its compact
+            // original parameterization; extension enumerates the remaining
+            // canonical circle cells separately.
+            source
+        } else {
             return Err(ExactCurveError::blocked(
                 operation,
                 family,
                 crate::UncertaintyReason::Unsupported,
             ));
         };
-        let canonical_source: RationalBezier2 = span.curve().clone().into();
         let scale = (signed_radius / source_radius)
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause.into()))?;
         let center = self.support().center();
@@ -8383,13 +8444,6 @@ fn fillet_offset_centers(
                 arc_family,
                 policy,
             )?;
-            let center_parallel =
-                offset_arc
-                    .offset
-                    .parallel_left(Real::zero())
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, arc_family, cause)
-                    })?;
             let canonical_chord;
             let (intersection_chord, chord_tangent_reversed) = if chord_support.is_reversed() {
                 canonical_chord = chord_support.reversed();
@@ -8398,69 +8452,93 @@ fn fillet_offset_centers(
                 (chord_support, false)
             };
             let arc_is_previous = !chord_is_previous;
-            let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
-                let (endpoint, direction) = if arc_is_previous {
-                    (Real::one(), crate::BezierParameterRayDirection2::Increasing)
+            let mut contacts = Vec::new();
+            let mut intersect_arc_cell = |cell: RationalBezier2,
+                                          include_start: bool,
+                                          include_end: bool,
+                                          complement_span: Option<usize>|
+             -> ExactCurveResult<()> {
+                let center_parallel = cell.parallel_left(Real::zero()).map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Fillet, arc_family, cause)
+                })?;
+                let intersection_result = if mode == CurveCornerMode2::TrimOrExtend {
+                    intersection_chord.parallel_support_intersections(&center_parallel, policy)
                 } else {
-                    (
-                        Real::zero(),
-                        crate::BezierParameterRayDirection2::Decreasing,
-                    )
+                    intersection_chord.parallel_intersections(&center_parallel, policy)
                 };
-                let endpoint = BezierParameter2::Exact(endpoint);
-                Some(
-                    match center_parallel
-                        .incident_domain_from_parameter(&endpoint, direction, policy)
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(CurveOperation2::Fillet, arc_family, cause)
-                        })? {
-                        Classification::Decided(domain) => domain,
+                let cell_contacts = match intersection_result.map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
+                    })? {
+                        Classification::Decided(
+                            crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
+                                contacts,
+                            ),
+                        ) => contacts,
+                        Classification::Decided(
+                            crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                        ) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                chord_family,
+                                crate::UncertaintyReason::Boundary,
+                            ));
+                        }
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
                                 CurveOperation2::Fillet,
-                                arc_family,
+                                chord_family,
                                 reason,
                             ));
                         }
-                    },
-                )
-            } else {
-                None
+                    };
+                let zero = BezierParameter2::Exact(Real::zero());
+                let one = BezierParameter2::Exact(Real::one());
+                for contact in cell_contacts {
+                    let at_boundary = |boundary: &BezierParameter2| {
+                        contact
+                            .parallel_parameter()
+                            .cmp_by_refinement(boundary, policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(CurveOperation2::Fillet, arc_family, cause)
+                            })
+                            .and_then(|order| match order {
+                                Classification::Decided(order) => {
+                                    Ok(order == std::cmp::Ordering::Equal)
+                                }
+                                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                                    CurveOperation2::Fillet,
+                                    arc_family,
+                                    reason,
+                                )),
+                            })
+                    };
+                    if (!include_start && at_boundary(&zero)?)
+                        || (!include_end && at_boundary(&one)?)
+                    {
+                        continue;
+                    }
+                    contacts.push((contact, center_parallel.clone(), complement_span));
+                }
+                Ok(())
             };
-            let intersection_result = if let Some(domain) = incident_domain.as_ref() {
-                intersection_chord.parallel_intersections_with_incident_ray(
-                    &center_parallel,
-                    domain,
+            intersect_arc_cell(offset_arc.offset.clone(), true, true, None)?;
+            if mode == CurveCornerMode2::TrimOrExtend {
+                let complement_spans = retained_arc_complement_projective_spans(
+                    &offset_arc.support,
+                    CurveOperation2::Fillet,
+                    arc_family,
                     policy,
-                )
-            } else {
-                intersection_chord.parallel_intersections(&center_parallel, policy)
-            };
-            let contacts = match intersection_result.map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
-                })? {
-                Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::Contacts(
-                        contacts,
-                    ),
-                ) => contacts,
-                Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
-                ) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        chord_family,
-                        crate::UncertaintyReason::Boundary,
-                    ));
+                )?;
+                let complement_count = complement_spans.len();
+                for (index, span) in complement_spans.into_iter().enumerate() {
+                    intersect_arc_cell(
+                        RationalBezier2::from(span),
+                        false,
+                        index + 1 != complement_count,
+                        Some(index),
+                    )?;
                 }
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        chord_family,
-                        reason,
-                    ));
-                }
-            };
+            }
             let signed_radius_sign = match crate::classify::real_sign(signed_radius, policy) {
                 Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
                 Some(RealSign::Zero) => {
@@ -8474,7 +8552,7 @@ fn fillet_offset_centers(
                     ));
                 }
             };
-            for contact in contacts {
+            for (contact, center_parallel, complement_span) in contacts {
                 let mut cross = contact.tangent_cross_sign();
                 let mut dot = contact.tangent_dot_sign();
                 if chord_tangent_reversed {
@@ -8488,9 +8566,9 @@ fn fillet_offset_centers(
                 let arc_parameter =
                     CurveRegionParameter2::from_bezier(contact.parallel_parameter().clone());
                 let (previous_parameter, next_parameter) = if chord_is_previous {
-                    (None, Some(arc_parameter))
+                    (None, Some(arc_parameter.clone()))
                 } else {
-                    (Some(arc_parameter), None)
+                    (Some(arc_parameter.clone()), None)
                 };
                 centers.push(FilletCenterWitness2 {
                     point: contact.point().clone(),
@@ -8502,12 +8580,25 @@ fn fillet_offset_centers(
                         cross: Some(reverse_fillet_sign(cross)),
                         dot: Some(dot),
                         center_parallel: Some(RetainedFilletCenterParallel2 {
-                            support: center_parallel.clone(),
+                            support: center_parallel,
                             parameter: None,
                         }),
                         source_direction: None,
-                        canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
-                        deferred_arc_contact: None,
+                        canonical_anchor_curve: complement_span
+                            .is_none()
+                            .then(|| offset_arc.canonical_source.clone()),
+                        deferred_arc_contact: complement_span.map(|complement_span| {
+                            RetainedDeferredArcFilletContact2 {
+                                support: arc.support().clone(),
+                                source_radius: source_radius.clone(),
+                                signed_center_radius: signed_radius.clone(),
+                                arc_is_previous,
+                                contact_seed: Some(RetainedArcFilletContactSeed2 {
+                                    complement_span: Some(complement_span),
+                                    parameter: arc_parameter,
+                                }),
+                            }
+                        }),
                     }),
                 });
             }
@@ -9386,14 +9477,11 @@ fn fillet_cut_from_center(
                     })?;
                 match translated_pair_interior {
                     Some(Classification::Decided(interior)) => Classification::Decided(interior),
-                    Some(Classification::Uncertain(_)) | None => {
-                        let interior = support
-                            .certified_incident_point_evidence_is_strict_interior(center, policy)
-                            .map_err(|cause| {
-                                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                            })?;
-                        interior
-                    }
+                    Some(Classification::Uncertain(_)) | None => support
+                        .certified_incident_point_evidence_is_strict_interior(center, policy)
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })?,
                 }
             };
             let placement = if complementary {

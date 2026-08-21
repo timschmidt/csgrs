@@ -51465,7 +51465,9 @@ impl BezierAlgebraicChord2 {
         parallel: &BezierParallel2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
-        self.represented_endpoint_parallel_intersections_with_frame(parallel, None, None, policy)
+        self.represented_endpoint_parallel_intersections_with_frame(
+            parallel, None, None, true, policy,
+        )
     }
 
     fn represented_endpoint_parallel_intersections_with_frame(
@@ -51473,6 +51475,7 @@ impl BezierAlgebraicChord2 {
         parallel: &BezierParallel2,
         frame_tangent: Option<Arc<BezierAnalyticParallelTangentField2>>,
         derivative_scale_sign: Option<RealSign>,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         let start = match represented_point_evidence_coordinates(self.start(), policy)? {
@@ -51636,35 +51639,41 @@ impl BezierAlgebraicChord2 {
                     BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy)
                 },
             );
-            let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => continue,
-                Classification::Uncertain(reason) => {
-                    let mut endpoint = None;
-                    let mut endpoint_reason = reason;
-                    for (at_end, authored) in [(false, self.start()), (true, self.end())] {
-                        match authored.same_point(&point, policy) {
-                            Classification::Decided(true) if endpoint.is_none() => {
-                                endpoint = Some(if at_end {
-                                    self.end_parameter()
-                                } else {
-                                    self.start_parameter()
-                                });
-                            }
-                            Classification::Decided(true) => {
-                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(next_reason) => {
-                                endpoint_reason = next_reason;
+            let chord_parameter = if clip_to_finite_chord {
+                match self.parameter_at_certified_point(point.clone(), policy)? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        let mut endpoint = None;
+                        let mut endpoint_reason = reason;
+                        for (at_end, authored) in [(false, self.start()), (true, self.end())] {
+                            match authored.same_point(&point, policy) {
+                                Classification::Decided(true) if endpoint.is_none() => {
+                                    endpoint = Some(if at_end {
+                                        self.end_parameter()
+                                    } else {
+                                        self.start_parameter()
+                                    });
+                                }
+                                Classification::Decided(true) => {
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    ));
+                                }
+                                Classification::Decided(false) => {}
+                                Classification::Uncertain(next_reason) => {
+                                    endpoint_reason = next_reason;
+                                }
                             }
                         }
+                        let Some(parameter) = endpoint else {
+                            return Ok(Classification::Uncertain(endpoint_reason));
+                        };
+                        parameter
                     }
-                    let Some(parameter) = endpoint else {
-                        return Ok(Classification::Uncertain(endpoint_reason));
-                    };
-                    parameter
                 }
+            } else {
+                self.parameter_at_certified_support_point(point.clone(), policy)?
             };
             let source_cross = match dense_polynomial_tuple_sign(&tangent_cross, &selected, policy)?
             {
@@ -51785,6 +51794,7 @@ impl BezierAlgebraicChord2 {
                     parallel,
                     Some(frame),
                     Some(derivative_scale_sign),
+                    true,
                     policy,
                 );
             }
@@ -51797,6 +51807,36 @@ impl BezierAlgebraicChord2 {
             &system,
             SelectedThirdAxisDomain2::UnitInterval,
             true,
+            policy,
+        )
+    }
+
+    /// Replays the finite analytic span against this chord's complete affine
+    /// support. This is the exact building block for a bounded conic chart in
+    /// `TrimOrExtend`: conic extension is enumerated as adjacent pole-free
+    /// charts while the straight carrier remains unbounded.
+    pub(crate) fn parallel_support_intersections(
+        &self,
+        parallel: &BezierParallel2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
+        self.validate_policy(policy)?;
+        let system = match self.independent_parallel_incidence_system(parallel, policy)? {
+            Classification::Decided(system) => system,
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return self.represented_endpoint_parallel_intersections_with_frame(
+                    parallel, None, None, false, policy,
+                );
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.parallel_intersections_in_domain(
+            parallel,
+            &system,
+            SelectedThirdAxisDomain2::UnitInterval,
+            false,
             policy,
         )
     }

@@ -26514,14 +26514,13 @@ mod tests {
         region: &CurveRegion2,
         selected_radius: &Real,
     ) -> (usize, usize) {
-        let selected_circle = |fragment: &BezierSplitFragment2| match fragment {
-            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
-                if fragment.semicircle().uses_selected_radial_frame()
-                    && fragment.semicircle().radial_distance().abs() == *selected_radius =>
-            {
-                true
-            }
-            _ => false,
+        let selected_circle = |fragment: &BezierSplitFragment2| {
+            matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
+                    if fragment.semicircle().uses_selected_radial_frame()
+                        && fragment.semicircle().radial_distance().abs() == *selected_radius
+            )
         };
         let retained_line = |fragment: &BezierSplitFragment2| {
             matches!(
@@ -28684,6 +28683,7 @@ mod tests {
     fn nonrepresented_chord_rational_arc_corner_region(
         policy: &CurveContext,
         reversed: bool,
+        major_arc: bool,
     ) -> CurveRegion2 {
         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
         let diagonal =
@@ -28735,14 +28735,30 @@ mod tests {
             arc_control,
             arc_end.clone(),
             Real::one(),
-            selected_coordinate,
+            if major_arc {
+                -selected_coordinate
+            } else {
+                selected_coordinate
+            },
             Real::one(),
         )
         .unwrap();
-        assert!(matches!(
-            crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy),
-            Ok(Classification::Decided(Some(_)))
-        ));
+        let Classification::Decided(Some(recognized)) =
+            crate::arc_bezier::rational_quadratic_circular_arc(&arc, policy).unwrap()
+        else {
+            panic!("the pole-free authored circular conic must retain arc support")
+        };
+        if major_arc {
+            assert_eq!(
+                recognized
+                    .rational_bezier_decomposition(policy)
+                    .unwrap()
+                    .into_value()
+                    .spans()
+                    .len(),
+                2,
+            );
+        }
         let Classification::Decided(closing) = crate::BezierAlgebraicChord2::try_new(
             RationalBezierIntersectionPointEvidence2::Exact(arc_end),
             previous.start().clone(),
@@ -29341,7 +29357,8 @@ mod tests {
             let radius_squared = &radius * &radius;
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 for reversed in [false, true] {
-                    let region = nonrepresented_chord_rational_arc_corner_region(&policy, reversed);
+                    let region =
+                        nonrepresented_chord_rational_arc_corner_region(&policy, reversed, false);
                     let mut trim_count = None;
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let outcome = region
@@ -29451,7 +29468,8 @@ mod tests {
         let radius = (Real::one() / Real::from(100_i16)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
-                let region = nonrepresented_chord_rational_arc_corner_region(&policy, reversed);
+                let region =
+                    nonrepresented_chord_rational_arc_corner_region(&policy, reversed, false);
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
@@ -29524,6 +29542,34 @@ mod tests {
                         assert!(chord_adjacencies > 0);
                         assert!(retained_tangent_relations > 0);
                     });
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn major_retained_rational_arc_and_general_chord_share_the_fillet_kernel() {
+        let radius = (Real::one() / Real::from(100_i16)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let region =
+                    nonrepresented_chord_rational_arc_corner_region(&policy, reversed, true);
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    let outcome = region
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            if reversed { 1 } else { 2 },
+                            radius.clone(),
+                            mode,
+                            &policy,
+                        )
+                        .unwrap_or_else(|error| {
+                            panic!(
+                                "major rational-arc/chord fillet: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
+                            )
+                        });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(outcome.value.candidate_count() > 0);
                 }
             }
         }

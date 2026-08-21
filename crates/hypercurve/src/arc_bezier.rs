@@ -414,16 +414,47 @@ pub(crate) fn rational_quadratic_circular_arc(
     curve: &RationalQuadraticBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
-    if curve.common_nonzero_weight_sign(policy).is_none() {
-        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    let start_weight_sign = match crate::classify::real_sign(curve.start_weight(), policy) {
+        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    let end_weight_sign = match crate::classify::real_sign(curve.end_weight(), policy) {
+        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    if start_weight_sign != end_weight_sign {
+        return Ok(Classification::Decided(None));
+    }
+    let control_weight_sign = match crate::classify::real_sign(curve.control_weight(), policy) {
+        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    if control_weight_sign != start_weight_sign {
+        // Mixed Bernstein weights can still define a regular major circular
+        // arc. With equal-sign endpoint weights, the quadratic denominator
+        // has its only interior minimum at the control-weight sign change;
+        // `w0*w2-w1^2 > 0` is exactly the pole-free certificate.
+        let denominator_minimum = curve.start_weight() * curve.end_weight()
+            - curve.control_weight() * curve.control_weight();
+        match crate::classify::real_sign(&denominator_minimum, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
+                return Ok(Classification::Decided(None));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
     }
     if let Some(circle) = curve.retained_circular_conic() {
         let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
         let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
         let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+        let tangent_reversed = control_weight_sign != start_weight_sign;
         let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
-            Some(RealSign::Positive) => false,
-            Some(RealSign::Negative) => true,
+            Some(RealSign::Positive) => tangent_reversed,
+            Some(RealSign::Negative) => !tangent_reversed,
             Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
@@ -509,10 +540,14 @@ pub(crate) fn rational_quadratic_circular_arc(
     }
     let (radial_x, radial_y) = curve.start().delta_from(&center);
     let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());
+    // The endpoint derivative is `2*w1/w0*(P1-P0)`. Common-sign weights made
+    // the old control-edge shortcut sufficient; a regular major arc reverses
+    // that edge because its middle weight has the opposite sign.
     let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
+    let tangent_reversed = control_weight_sign != start_weight_sign;
     let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
-        Some(RealSign::Positive) => false,
-        Some(RealSign::Negative) => true,
+        Some(RealSign::Positive) => tangent_reversed,
+        Some(RealSign::Negative) => !tangent_reversed,
         Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
@@ -633,5 +668,55 @@ mod tests {
         assert_eq!(arc.center(), &point(0, 0));
         assert_eq!(arc.radius_squared_ref(), &Real::one());
         assert!(!arc.is_clockwise());
+    }
+
+    #[test]
+    fn mixed_weight_major_circle_is_recognized_without_a_projective_pole() {
+        let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+        let curve = RationalQuadraticBezier2::try_unit_end_weights(
+            point(1, 0),
+            point(1, 1),
+            point(0, 1),
+            -half_sqrt_two,
+        )
+        .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(Some(arc)) =
+                rational_quadratic_circular_arc(&curve, &policy).unwrap()
+            else {
+                panic!("the pole-free mixed-weight major circle must be recognized")
+            };
+            assert_eq!(arc.center(), &point(0, 0));
+            assert_eq!(arc.radius_squared_ref(), &Real::one());
+            assert!(arc.is_clockwise());
+            assert_eq!(
+                arc.rational_bezier_decomposition(&policy)
+                    .unwrap()
+                    .into_value()
+                    .spans()
+                    .len(),
+                2,
+            );
+        }
+    }
+
+    #[test]
+    fn mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc() {
+        for middle_weight in [-Real::one(), -Real::from(2_i8)] {
+            let curve = RationalQuadraticBezier2::try_unit_end_weights(
+                point(1, 0),
+                point(1, 1),
+                point(0, 1),
+                middle_weight,
+            )
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                assert!(matches!(
+                    rational_quadratic_circular_arc(&curve, &policy).unwrap(),
+                    Classification::Decided(None)
+                ));
+            }
+        }
     }
 }
