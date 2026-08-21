@@ -40492,12 +40492,14 @@ struct TrivariatePolynomial2 {
     coefficients: Vec<Vec<Vec<Real>>>,
 }
 
-const MAX_TRIVARIATE_BERNSTEIN_CONTROLS: usize = 16_384;
+/// The specialized symbolic factor replay remains a bounded fast path. Larger
+/// tensors continue through the rank-independent Hypersolve image authority;
+/// this threshold is never a construction or correctness limit.
+const MAX_TRIVARIATE_BOUNDED_FAST_PATH_CONTROLS: usize = 16_384;
 
-/// A balanced product of 24 multi-affine factors occupies 25^3 controls,
-/// while degree 25 would exceed `MAX_TRIVARIATE_BERNSTEIN_CONTROLS`. The same
-/// ceiling also bounds recursion for unbalanced tensors whose raw control
-/// count alone would permit a much higher single-axis degree.
+/// A balanced product of 24 multi-affine factors occupies 25^3 controls. Keep
+/// that measured-safe symbolic recursion envelope while sending larger exact
+/// products to the complete rank-independent projection below.
 const MAX_TRIVARIATE_EXACT_FACTOR_SPLITS: usize = 24;
 
 const MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS + 1;
@@ -40512,6 +40514,42 @@ const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 /// be accepted by exact division, so exhaustion loses capability rather than
 /// exactness.
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
+
+fn try_zero_bivariate_coefficients(
+    first_count: usize,
+    second_count: usize,
+) -> Option<Vec<Vec<Real>>> {
+    first_count.checked_mul(second_count)?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(first_count).ok()?;
+    for _ in 0..first_count {
+        let mut row = Vec::new();
+        row.try_reserve_exact(second_count).ok()?;
+        row.resize_with(second_count, Real::zero);
+        coefficients.push(row);
+    }
+    Some(coefficients)
+}
+
+fn try_zero_trivariate_coefficients(dimensions: [usize; 3]) -> Option<Vec<Vec<Vec<Real>>>> {
+    dimensions[0]
+        .checked_mul(dimensions[1])?
+        .checked_mul(dimensions[2])?;
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(dimensions[0]).ok()?;
+    for _ in 0..dimensions[0] {
+        let mut rows = Vec::new();
+        rows.try_reserve_exact(dimensions[1]).ok()?;
+        for _ in 0..dimensions[1] {
+            let mut row = Vec::new();
+            row.try_reserve_exact(dimensions[2]).ok()?;
+            row.resize_with(dimensions[2], Real::zero);
+            rows.push(row);
+        }
+        coefficients.push(rows);
+    }
+    Some(coefficients)
+}
 
 impl TrivariatePolynomial2 {
     fn ab_ac_determinant(
@@ -40544,11 +40582,7 @@ impl TrivariatePolynomial2 {
             .map(Vec::len)
             .max()
             .unwrap_or(0);
-        let control_count = a_count.checked_mul(b_count)?.checked_mul(c_count)?;
-        if control_count > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-            return None;
-        }
-        let mut coefficients = vec![vec![vec![Real::zero(); c_count]; b_count]; a_count];
+        let mut coefficients = try_zero_trivariate_coefficients([a_count, b_count, c_count])?;
         for (ab, ac, sign) in [
             (positive_ab, positive_ac, 1_i8),
             (negative_ab, negative_ac, -1_i8),
@@ -40587,8 +40621,7 @@ impl TrivariatePolynomial2 {
         }
         let dimensions: [usize; 3] =
             std::array::from_fn(|index| if index == axis { coefficients.len() } else { 1 });
-        let mut tensor =
-            vec![vec![vec![Real::zero(); dimensions[2]]; dimensions[1]]; dimensions[0]];
+        let mut tensor = try_zero_trivariate_coefficients(dimensions)?;
         for (power, coefficient) in coefficients.iter().enumerate() {
             let mut index = [0; 3];
             index[axis] = power;
@@ -40619,8 +40652,17 @@ impl TrivariatePolynomial2 {
             return None;
         }
         for rows in &mut coefficients {
-            rows.resize_with(second_count, || vec![Real::zero(); third_count]);
+            rows.try_reserve(second_count.saturating_sub(rows.len()))
+                .ok()?;
+            while rows.len() < second_count {
+                let mut row = Vec::new();
+                row.try_reserve_exact(third_count).ok()?;
+                row.resize_with(third_count, Real::zero);
+                rows.push(row);
+            }
             for row in rows.iter_mut() {
+                row.try_reserve(third_count.saturating_sub(row.len()))
+                    .ok()?;
                 row.resize(third_count, Real::zero());
             }
         }
@@ -40656,11 +40698,11 @@ impl TrivariatePolynomial2 {
                 row.truncate(third_count);
             }
         }
-        let control_count = coefficients
+        coefficients
             .len()
             .checked_mul(second_count)?
             .checked_mul(third_count)?;
-        (control_count <= MAX_TRIVARIATE_BERNSTEIN_CONTROLS).then_some(Self { coefficients })
+        Some(Self { coefficients })
     }
 
     fn coefficient(&self, first: usize, second: usize, third: usize) -> Option<&Real> {
@@ -40686,14 +40728,8 @@ impl TrivariatePolynomial2 {
             first.1.max(second.1),
             first.2.max(second.2),
         );
-        dimensions
-            .0
-            .checked_mul(dimensions.1)?
-            .checked_mul(dimensions.2)?
-            .le(&MAX_TRIVARIATE_BERNSTEIN_CONTROLS)
-            .then_some(())?;
         let mut coefficients =
-            vec![vec![vec![Real::zero(); dimensions.2]; dimensions.1]; dimensions.0];
+            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
         for (first_index, rows) in coefficients.iter_mut().enumerate() {
             for (second_index, row) in rows.iter_mut().enumerate() {
                 for (third_index, coefficient) in row.iter_mut().enumerate() {
@@ -40714,16 +40750,17 @@ impl TrivariatePolynomial2 {
     }
 
     fn scale(&self, scale: &Real) -> Option<Self> {
-        Self::from_coefficients(
-            self.coefficients
-                .iter()
-                .map(|rows| {
-                    rows.iter()
-                        .map(|row| row.iter().map(|coefficient| coefficient * scale).collect())
-                        .collect()
-                })
-                .collect(),
-        )
+        let dimensions = self.dimensions();
+        let mut coefficients =
+            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
+        for (target_rows, source_rows) in coefficients.iter_mut().zip(&self.coefficients) {
+            for (target_row, source_row) in target_rows.iter_mut().zip(source_rows) {
+                for (target, source) in target_row.iter_mut().zip(source_row) {
+                    *target = source * scale;
+                }
+            }
+        }
+        Self::from_coefficients(coefficients)
     }
 
     /// Forms an exact weighted sum with one rectangular tensor allocation.
@@ -40731,7 +40768,7 @@ impl TrivariatePolynomial2 {
     /// Predicate replay frequently needs a short affine combination of the
     /// retained contact polynomials.  Building each scaled term and then
     /// combining them materializes several dense temporary tensors; direct
-    /// accumulation keeps the same coefficient arithmetic and cap while
+    /// accumulation keeps the same coefficient arithmetic while
     /// allocating only the result.
     fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
         let dimensions = terms.iter().fold((0, 0, 0), |dimensions, (term, _)| {
@@ -40745,14 +40782,8 @@ impl TrivariatePolynomial2 {
         if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
             return None;
         }
-        dimensions
-            .0
-            .checked_mul(dimensions.1)?
-            .checked_mul(dimensions.2)?
-            .le(&MAX_TRIVARIATE_BERNSTEIN_CONTROLS)
-            .then_some(())?;
         let mut coefficients =
-            vec![vec![vec![Real::zero(); dimensions.2]; dimensions.1]; dimensions.0];
+            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
         for (term, scale) in terms {
             if scale.zero_status() == ZeroStatus::Zero {
                 continue;
@@ -40797,14 +40828,8 @@ impl TrivariatePolynomial2 {
         if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
             return None;
         }
-        dimensions
-            .0
-            .checked_mul(dimensions.1)?
-            .checked_mul(dimensions.2)?
-            .le(&MAX_TRIVARIATE_BERNSTEIN_CONTROLS)
-            .then_some(())?;
         let mut coefficients =
-            vec![vec![vec![Real::zero(); dimensions.2]; dimensions.1]; dimensions.0];
+            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
         for (first, second, subtract) in terms {
             for (first_a, first_rows) in first.coefficients.iter().enumerate() {
                 for (second_a, first_row) in first_rows.iter().enumerate() {
@@ -40827,6 +40852,29 @@ impl TrivariatePolynomial2 {
             }
         }
         Self::from_coefficients(coefficients)
+    }
+
+    /// Adds a singleton output axis without changing the authored tensor.
+    /// Hypersolve consumes this as the exact value relation
+    /// `z - P(a,b,c) = 0` after adjoining its output coordinate.
+    fn to_dense_value_polynomial(&self) -> Option<DenseTensorPolynomial> {
+        let dimensions = self.dimensions();
+        let counts = [dimensions.0, dimensions.1, dimensions.2];
+        let coefficient_count = counts.into_iter().try_fold(1_usize, usize::checked_mul)?;
+        let mut coefficients = Vec::new();
+        coefficients.try_reserve_exact(coefficient_count).ok()?;
+        for first in 0..counts[0] {
+            for second in 0..counts[1] {
+                for third in 0..counts[2] {
+                    coefficients.push(
+                        self.coefficient(first, second, third)
+                            .cloned()
+                            .unwrap_or_else(Real::zero),
+                    );
+                }
+            }
+        }
+        DenseTensorPolynomial::try_new(vec![counts[0], counts[1], counts[2], 1], coefficients)
     }
 }
 
@@ -43599,13 +43647,7 @@ fn trivariate_reduce_axis_mod_defining(
     }
     let (first_count, second_count, third_count) = polynomial.dimensions();
     let counts = [first_count, second_count, third_count];
-    if counts.into_iter().any(|count| count == 0)
-        || counts[axis] <= degree
-        || first_count
-            .checked_mul(second_count)?
-            .checked_mul(third_count)?
-            > MAX_TRIVARIATE_BERNSTEIN_CONTROLS
-    {
+    if counts.into_iter().any(|count| count == 0) || counts[axis] <= degree {
         return None;
     }
 
@@ -43615,8 +43657,17 @@ fn trivariate_reduce_axis_mod_defining(
         .map(|coefficient| ((-coefficient.clone()) / leading.clone()).ok())
         .collect::<Option<Vec<_>>>()?;
     for rows in &mut polynomial.coefficients {
-        rows.resize_with(second_count, || vec![Real::zero(); third_count]);
+        rows.try_reserve(second_count.saturating_sub(rows.len()))
+            .ok()?;
+        while rows.len() < second_count {
+            let mut row = Vec::new();
+            row.try_reserve_exact(third_count).ok()?;
+            row.resize_with(third_count, Real::zero);
+            rows.push(row);
+        }
         for row in rows {
+            row.try_reserve(third_count.saturating_sub(row.len()))
+                .ok()?;
             row.resize(third_count, Real::zero());
         }
     }
@@ -43842,11 +43893,7 @@ fn trivariate_divide_axis_content(
         _ => unreachable!(),
     };
     counts[axis] = counts[axis].checked_sub(content.len())?.checked_add(1)?;
-    if counts[0].checked_mul(counts[1])?.checked_mul(counts[2])? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS
-    {
-        return None;
-    }
-    let mut coefficients = vec![vec![vec![Real::zero(); counts[2]]; counts[1]]; counts[0]];
+    let mut coefficients = try_zero_trivariate_coefficients(counts)?;
     for first_other in 0..counts[remaining[0]] {
         for second_other in 0..counts[remaining[1]] {
             let fiber = trivariate_axis_fiber(polynomial, axis, first_other, second_other)?;
@@ -44089,9 +44136,6 @@ fn trivariate_substitute_sum_axis(
     }
     let first_count = left_count.checked_add(sum_count)?.checked_sub(1)?;
     let second_count = right_count.checked_add(sum_count)?.checked_sub(1)?;
-    if first_count.checked_mul(second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-        return None;
-    }
     let mut binomials = Vec::with_capacity(sum_count);
     binomials.push(vec![Real::one()]);
     for power in 1..sum_count {
@@ -44102,7 +44146,7 @@ fn trivariate_substitute_sum_axis(
         }
         binomials.push(row);
     }
-    let mut reduced = vec![vec![Real::zero(); second_count]; first_count];
+    let mut reduced = try_zero_bivariate_coefficients(first_count, second_count)?;
     for (first, rows) in polynomial.coefficients.iter().enumerate() {
         for (second, row) in rows.iter().enumerate() {
             for (third, coefficient) in row.iter().enumerate() {
@@ -44141,10 +44185,7 @@ fn trivariate_substitute_product_axis(
     }
     let first_count = left_count.checked_add(product_count)?.checked_sub(1)?;
     let second_count = right_count.checked_add(product_count)?.checked_sub(1)?;
-    if first_count.checked_mul(second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-        return None;
-    }
-    let mut reduced = vec![vec![Real::zero(); second_count]; first_count];
+    let mut reduced = try_zero_bivariate_coefficients(first_count, second_count)?;
     for (first, rows) in polynomial.coefficients.iter().enumerate() {
         for (second, row) in rows.iter().enumerate() {
             for (third, coefficient) in row.iter().enumerate() {
@@ -44250,11 +44291,8 @@ fn trivariate_substitute_affine_axis(
     let combined_count = retained_count
         .checked_add(substituted_count)?
         .checked_sub(1)?;
-    if combined_count.checked_mul(remaining_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-        return None;
-    }
     let affine_powers = polynomial_powers(&[offset.clone(), scale.clone()], substituted_count - 1);
-    let mut reduced = vec![vec![Real::zero(); remaining_count]; combined_count];
+    let mut reduced = try_zero_bivariate_coefficients(combined_count, remaining_count)?;
     for (first, rows) in polynomial.coefficients.iter().enumerate() {
         for (second, row) in rows.iter().enumerate() {
             for (third, coefficient) in row.iter().enumerate() {
@@ -44332,7 +44370,11 @@ fn trivariate_axis_bivariate_coefficients(
     if first_count == 0 || second_count == 0 {
         return None;
     }
-    let mut coefficients = vec![vec![vec![Real::zero(); second_count]; first_count]; counts[axis]];
+    let mut coefficients = Vec::new();
+    coefficients.try_reserve_exact(counts[axis]).ok()?;
+    for _ in 0..counts[axis] {
+        coefficients.push(try_zero_bivariate_coefficients(first_count, second_count)?);
+    }
     for (first, rows) in polynomial.coefficients.iter().enumerate() {
         for (second, row) in rows.iter().enumerate() {
             for (third, coefficient) in row.iter().enumerate() {
@@ -44452,13 +44494,10 @@ fn bivariate_exact_square_root(polynomial: &BivariatePolynomial) -> Option<Bivar
     }
     let root_first_count = first_degree / 2 + 1;
     let root_second_count = second_degree / 2 + 1;
-    if root_first_count.checked_mul(root_second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-        return None;
-    }
-    let mut residual = BivariatePolynomial::new(vec![
-        vec![Real::zero(); second_degree + 1];
-        first_degree + 1
-    ]);
+    let mut residual = BivariatePolynomial::new(try_zero_bivariate_coefficients(
+        first_degree + 1,
+        second_degree + 1,
+    )?);
     for (target, source) in residual
         .coefficients
         .iter_mut()
@@ -44468,10 +44507,10 @@ fn bivariate_exact_square_root(polynomial: &BivariatePolynomial) -> Option<Bivar
             *target = source.clone();
         }
     }
-    let mut root = BivariatePolynomial::new(vec![
-        vec![Real::zero(); root_second_count];
-        root_first_count
-    ]);
+    let mut root = BivariatePolynomial::new(try_zero_bivariate_coefficients(
+        root_first_count,
+        root_second_count,
+    )?);
     let leading = leading_square.clone().sqrt().ok()?;
     if real_sign(
         &(&leading * &leading - leading_square),
@@ -44593,11 +44632,7 @@ fn trivariate_from_axis_bivariate_coefficients(
     counts[axis] = coefficients.len();
     counts[remaining[0]] = first_count;
     counts[remaining[1]] = second_count;
-    if counts[0].checked_mul(counts[1])?.checked_mul(counts[2])? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS
-    {
-        return None;
-    }
-    let mut result = vec![vec![vec![Real::zero(); counts[2]]; counts[1]]; counts[0]];
+    let mut result = try_zero_trivariate_coefficients(counts)?;
     for (power, coefficient) in coefficients.iter().enumerate() {
         for (first, row) in coefficient.coefficients.iter().enumerate() {
             for (second, value) in row.iter().enumerate() {
@@ -44634,18 +44669,14 @@ fn trivariate_divide_linear_axis_factor(
         } else {
             bivariate_subtract(
                 &coefficients[power],
-                &bivariate_multiply_bounded(
-                    &factor[0],
-                    &quotient[power],
-                    MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-                )?,
+                &try_bivariate_multiply(&factor[0], &quotient[power])?,
             )
         };
         quotient[power - 1] = divide_bivariate_polynomial_exact(&numerator, &factor[1])?;
     }
     let remainder = bivariate_subtract(
         &coefficients[0],
-        &bivariate_multiply_bounded(&factor[0], &quotient[0], MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?,
+        &try_bivariate_multiply(&factor[0], &quotient[0])?,
     );
     if bivariate_exact_nonzero_metadata(&remainder)?.is_some() {
         return None;
@@ -44681,10 +44712,8 @@ fn trivariate_quadratic_axis_factorizations(
 ) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     let [constant, linear, quadratic]: [BivariatePolynomial; 3] = coefficients.try_into().ok()?;
-    let linear_square =
-        bivariate_multiply_bounded(&linear, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
-    let constant_quadratic =
-        bivariate_multiply_bounded(&constant, &quadratic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+    let linear_square = try_bivariate_multiply(&linear, &linear)?;
+    let constant_quadratic = try_bivariate_multiply(&constant, &quadratic)?;
     let discriminant = bivariate_subtract(
         &linear_square,
         &bivariate_scale(constant_quadratic, &Real::from(4_i8)),
@@ -44779,10 +44808,8 @@ fn trivariate_repeated_cubic_axis_factorizations(
         return None;
     }
 
-    let quadratic_square =
-        bivariate_multiply_bounded(&quadratic, &quadratic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
-    let cubic_linear =
-        bivariate_multiply_bounded(&cubic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+    let quadratic_square = try_bivariate_multiply(&quadratic, &quadratic)?;
+    let cubic_linear = try_bivariate_multiply(&cubic, &linear)?;
     let delta_zero = bivariate_subtract(
         &quadratic_square,
         &bivariate_scale(cubic_linear.clone(), &Real::from(3_i8)),
@@ -44790,23 +44817,10 @@ fn trivariate_repeated_cubic_axis_factorizations(
     let raw = if bivariate_exact_nonzero_metadata(&delta_zero)?.is_none() {
         // Delta-one vanishes exactly for a triple root once delta-zero does.
         // Reject x^3+d and related square-free cubics before component work.
-        let quadratic_cube = bivariate_multiply_bounded(
-            &quadratic_square,
-            &quadratic,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
-        let cubic_quadratic_linear = bivariate_multiply_bounded(
-            &cubic_linear,
-            &quadratic,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
-        let cubic_square =
-            bivariate_multiply_bounded(&cubic, &cubic, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
-        let cubic_square_constant = bivariate_multiply_bounded(
-            &cubic_square,
-            &constant,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
+        let quadratic_cube = try_bivariate_multiply(&quadratic_square, &quadratic)?;
+        let cubic_quadratic_linear = try_bivariate_multiply(&cubic_linear, &quadratic)?;
+        let cubic_square = try_bivariate_multiply(&cubic, &cubic)?;
+        let cubic_square_constant = try_bivariate_multiply(&cubic_square, &constant)?;
         let delta_one = bivariate_add(
             &bivariate_subtract(
                 &bivariate_scale(quadratic_cube, &Real::from(2_i8)),
@@ -44822,10 +44836,8 @@ fn trivariate_repeated_cubic_axis_factorizations(
         drop(linear);
         [quadratic, bivariate_scale(cubic, &Real::from(3_i8))]
     } else {
-        let quadratic_linear =
-            bivariate_multiply_bounded(&quadratic, &linear, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
-        let cubic_constant =
-            bivariate_multiply_bounded(&cubic, &constant, MAX_TRIVARIATE_BERNSTEIN_CONTROLS)?;
+        let quadratic_linear = try_bivariate_multiply(&quadratic, &linear)?;
+        let cubic_constant = try_bivariate_multiply(&cubic, &constant)?;
         let factor_constant = bivariate_subtract(
             &quadratic_linear,
             &bivariate_scale(cubic_constant, &Real::from(9_i8)),
@@ -44834,45 +44846,21 @@ fn trivariate_repeated_cubic_axis_factorizations(
         // At x=-factor_constant/factor_linear, the derivative numerator
         // must vanish for a repeated root. This cheap structural rejection
         // keeps square-free cubics out of general component extraction.
-        let constant_square = bivariate_multiply_bounded(
-            &factor_constant,
-            &factor_constant,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
-        let constant_linear = bivariate_multiply_bounded(
-            &factor_constant,
-            &factor_linear,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
-        let linear_square = bivariate_multiply_bounded(
-            &factor_linear,
-            &factor_linear,
-            MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-        )?;
+        let constant_square = try_bivariate_multiply(&factor_constant, &factor_constant)?;
+        let constant_linear = try_bivariate_multiply(&factor_constant, &factor_linear)?;
+        let linear_square = try_bivariate_multiply(&factor_linear, &factor_linear)?;
         let derivative_remainder = bivariate_add(
             &bivariate_subtract(
                 &bivariate_scale(
-                    bivariate_multiply_bounded(
-                        &cubic,
-                        &constant_square,
-                        MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-                    )?,
+                    try_bivariate_multiply(&cubic, &constant_square)?,
                     &Real::from(3_i8),
                 ),
                 &bivariate_scale(
-                    bivariate_multiply_bounded(
-                        &quadratic,
-                        &constant_linear,
-                        MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-                    )?,
+                    try_bivariate_multiply(&quadratic, &constant_linear)?,
                     &Real::from(2_i8),
                 ),
             ),
-            &bivariate_multiply_bounded(
-                &linear,
-                &linear_square,
-                MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-            )?,
+            &try_bivariate_multiply(&linear, &linear_square)?,
         );
         if bivariate_exact_nonzero_metadata(&derivative_remainder)?.is_some() {
             return None;
@@ -45089,11 +45077,7 @@ fn bivariate_attach_second_parameter_content(
         .into_iter()
         .filter_map(|root| {
             let content_factor = BivariatePolynomial::new(vec![vec![-root, Real::one()]]);
-            let expanded = bivariate_trim_exact(bivariate_multiply_bounded(
-                factor,
-                &content_factor,
-                MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-            )?)?;
+            let expanded = bivariate_trim_exact(try_bivariate_multiply(factor, &content_factor)?)?;
             let quotient = divide_bivariate_polynomial_exact(polynomial, &expanded)?;
             Some((expanded, quotient))
         })
@@ -45335,11 +45319,7 @@ fn rational_multi_affine_lift_scale(
     top_factor: &BivariatePolynomial,
     anchor_quotient: &BivariatePolynomial,
 ) -> Option<Real> {
-    let base = bivariate_multiply_bounded(
-        top_factor,
-        anchor_quotient,
-        MAX_TRIVARIATE_BERNSTEIN_CONTROLS,
-    )?;
+    let base = try_bivariate_multiply(top_factor, anchor_quotient)?;
     for retained in [0_i8, 1, -1, 2, -2, 3, -3].map(Real::from) {
         let constant = polynomial_evaluate(&anchor_factor.coefficients[0], &retained);
         let linear = polynomial_evaluate(&anchor_factor.coefficients[1], &retained);
@@ -45665,7 +45645,7 @@ fn bivariate_add_scaled_assign(
     target: &mut BivariatePolynomial,
     source: &BivariatePolynomial,
     scale: &Real,
-) {
+) -> Option<()> {
     let first_count = target.coefficients.len().max(source.coefficients.len());
     let second_count = target
         .coefficients
@@ -45676,8 +45656,17 @@ fn bivariate_add_scaled_assign(
         .unwrap_or(0);
     target
         .coefficients
-        .resize_with(first_count, || vec![Real::zero(); second_count]);
+        .try_reserve(first_count.saturating_sub(target.coefficients.len()))
+        .ok()?;
+    while target.coefficients.len() < first_count {
+        let mut row = Vec::new();
+        row.try_reserve_exact(second_count).ok()?;
+        row.resize_with(second_count, Real::zero);
+        target.coefficients.push(row);
+    }
     for row in &mut target.coefficients {
+        row.try_reserve(second_count.saturating_sub(row.len()))
+            .ok()?;
         row.resize(second_count, Real::zero());
     }
     for (target, source) in target.coefficients.iter_mut().zip(&source.coefficients) {
@@ -45685,6 +45674,7 @@ fn bivariate_add_scaled_assign(
             *target += source * scale;
         }
     }
+    Some(())
 }
 
 /// Returns `linear^degree * defining(-constant / linear)`, whose zero set is
@@ -45698,36 +45688,15 @@ fn bivariate_linear_root_resultant(
     if degree == 0 {
         return None;
     }
-    let dimensions = |polynomial: &BivariatePolynomial| {
-        (
-            polynomial.coefficients.len(),
-            polynomial
-                .coefficients
-                .iter()
-                .map(Vec::len)
-                .max()
-                .unwrap_or(0),
-        )
-    };
-    let (constant_first, constant_second) = dimensions(constant);
-    let (linear_first, linear_second) = dimensions(linear);
-    let first_degree = constant_first.max(linear_first).checked_sub(1)?;
-    let second_degree = constant_second.max(linear_second).checked_sub(1)?;
-    let first_count = degree.checked_mul(first_degree)?.checked_add(1)?;
-    let second_count = degree.checked_mul(second_degree)?.checked_add(1)?;
-    if first_count.checked_mul(second_count)? > MAX_TRIVARIATE_BERNSTEIN_CONTROLS {
-        return None;
-    }
-
     // Homogeneous Horner evaluation retains only the current result and power
     // of `linear`; no table of every bivariate power is materialized.
     let mut result = BivariatePolynomial::new(vec![vec![defining[degree].clone()]]);
     let mut linear_power = BivariatePolynomial::new(vec![vec![Real::one()]]);
     let negative_constant = bivariate_scale(constant.clone(), &(-Real::one()));
     for coefficient in defining[..degree].iter().rev() {
-        linear_power = bivariate_multiply(&linear_power, linear);
-        result = bivariate_multiply(&negative_constant, &result);
-        bivariate_add_scaled_assign(&mut result, &linear_power, coefficient);
+        linear_power = try_bivariate_multiply(&linear_power, linear)?;
+        result = try_bivariate_multiply(&negative_constant, &result)?;
+        bivariate_add_scaled_assign(&mut result, &linear_power, coefficient)?;
     }
     Some(result)
 }
@@ -45839,7 +45808,9 @@ fn trivariate_linear_axis_resultant_sign(
         let (lower, upper) = parameter_bounds(parameters[axis]);
         let lower_sign = {
             let mut value = constant.clone();
-            bivariate_add_scaled_assign(&mut value, &linear, lower);
+            if bivariate_add_scaled_assign(&mut value, &linear, lower).is_none() {
+                return Ok(None);
+            }
             signed_bivariate_at_parameter_pair_refinement_first(
                 &value,
                 first_remaining,
@@ -45848,7 +45819,9 @@ fn trivariate_linear_axis_resultant_sign(
         };
         let upper_sign = {
             let mut value = constant.clone();
-            bivariate_add_scaled_assign(&mut value, &linear, upper);
+            if bivariate_add_scaled_assign(&mut value, &linear, upper).is_none() {
+                return Ok(None);
+            }
             signed_bivariate_at_parameter_pair_refinement_first(
                 &value,
                 first_remaining,
@@ -46227,6 +46200,120 @@ fn trivariate_content_and_bounded_factor_sign(
     Ok(factor_sign.map(|factor_sign| product_sign(factor_sign, sign)))
 }
 
+fn trivariate_exceeds_bounded_symbolic_schedule(polynomial: &TrivariatePolynomial2) -> bool {
+    let dimensions = polynomial.dimensions();
+    [dimensions.0, dimensions.1, dimensions.2]
+        .into_iter()
+        .any(|count| count > MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS)
+        || dimensions
+            .0
+            .checked_mul(dimensions.1)
+            .and_then(|count| count.checked_mul(dimensions.2))
+            .is_none_or(|count| count > MAX_TRIVARIATE_BOUNDED_FAST_PATH_CONTROLS)
+}
+
+/// Signs a large selected-root tensor through Hypersolve's rank-independent
+/// exact image construction. The three selected roots stay independent until
+/// quotient reduction and constrained-axis resultants produce the one scalar
+/// image. Its isolating interval, not a sampled value, selects the sign.
+fn represented_trivariate_parameter_triple_sign(
+    polynomial: &TrivariatePolynomial2,
+    parameters: [&BezierParameter2; 3],
+) -> Classification<RealSign> {
+    let Some(polynomial) = polynomial.to_dense_value_polynomial() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let sources = parameters.map(|parameter| match parameter {
+        BezierParameter2::Exact(parameter) => exact_real_algebraic_representation(parameter),
+        BezierParameter2::Algebraic(parameter) => {
+            parameter_representation(parameter, &CurveContext::STRICT)
+        }
+    });
+    let value = match represented_dense_value(&polynomial, &sources) {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    if let Some(value) = value.exact_rational_witness() {
+        return match real_sign(value, &CurveContext::STRICT) {
+            Some(sign) => Classification::Decided(sign),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        };
+    }
+    let zero = Real::zero();
+    if compare_reals(&value.interval.lower, &zero, &CurveContext::STRICT)
+        == Some(std::cmp::Ordering::Greater)
+    {
+        return Classification::Decided(RealSign::Positive);
+    }
+    if compare_reals(&value.interval.upper, &zero, &CurveContext::STRICT)
+        == Some(std::cmp::Ordering::Less)
+    {
+        return Classification::Decided(RealSign::Negative);
+    }
+    let contains_zero = matches!(
+        compare_reals(&value.interval.lower, &zero, &CurveContext::STRICT),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+    ) && matches!(
+        compare_reals(&zero, &value.interval.upper, &CurveContext::STRICT),
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+    );
+    if contains_zero
+        && real_sign(
+            &polynomial_evaluate(&value.polynomial_coefficients, &zero),
+            &CurveContext::STRICT,
+        ) == Some(RealSign::Zero)
+    {
+        return Classification::Decided(RealSign::Zero);
+    }
+    Classification::Uncertain(UncertaintyReason::Predicate)
+}
+
+fn rank_independent_trivariate_parameter_triple_sign_by_refinement(
+    polynomial: &TrivariatePolynomial2,
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    third: &BezierParameter2,
+    policy: &CurveContext,
+) -> Classification<RealSign> {
+    let strict = CurveContext::STRICT;
+    let mut first_refinement = BezierParameterRefinement2::new(first, &strict);
+    let mut second_refinement = BezierParameterRefinement2::new(second, &strict);
+    let mut third_refinement = BezierParameterRefinement2::new(third, &strict);
+    let mut previous = None;
+    let mut target_steps = 512_usize;
+    loop {
+        let refined = [
+            first_refinement.refine_to(target_steps).clone(),
+            second_refinement.refine_to(target_steps).clone(),
+            third_refinement.refine_to(target_steps).clone(),
+        ];
+        if previous.as_ref() == Some(&refined) {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        }
+        previous = Some(refined.clone());
+        match represented_trivariate_parameter_triple_sign(
+            polynomial,
+            [&refined[0], &refined[1], &refined[2]],
+        ) {
+            Classification::Decided(sign) => return Classification::Decided(sign),
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            Classification::Uncertain(_) => {}
+        }
+        // STRICT may continue shrinking a valid algebraic enclosure until the
+        // exact image separates. APPROXIMATE_512 has reached its one terminal
+        // equality evaluation here; let the caller consume and record it.
+        if target_steps == 512 && policy.permits_approximate_512() {
+            return Classification::Uncertain(UncertaintyReason::Predicate);
+        }
+        let Some(next_steps) = target_steps.checked_mul(2) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        target_steps = next_steps;
+    }
+}
+
 #[cold]
 fn trivariate_parameter_triple_sign_by_refinement(
     polynomial: &TrivariatePolynomial2,
@@ -46253,6 +46340,32 @@ fn trivariate_parameter_triple_sign_by_refinement(
             parameters[remaining_axes[0]],
             parameters[remaining_axes[1]],
             policy,
+        );
+    }
+    if trivariate_exceeds_bounded_symbolic_schedule(polynomial) {
+        let reduced = trivariate_reduce_selected_root_relations(polynomial, first, second, third);
+        let projection_source = reduced.as_ref().unwrap_or(polynomial);
+        if trivariate_structurally_zero(projection_source, &CurveContext::STRICT) {
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
+        return Ok(
+            match rank_independent_trivariate_parameter_triple_sign_by_refinement(
+                projection_source,
+                first,
+                second,
+                third,
+                policy,
+            ) {
+                Classification::Decided(sign) => Classification::Decided(sign),
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                Classification::Uncertain(_) if policy.permits_approximate_512() => {
+                    policy.observe_approximate_512();
+                    Classification::Decided(RealSign::Zero)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
         );
     }
     let mut first_refinement = BezierParameterRefinement2::new(first, policy);
@@ -46530,8 +46643,7 @@ fn quadrivariate_specialize_axis_trivariate(
         _ => unreachable!(),
     };
     let dimensions = remaining.map(|remaining| polynomial.dimensions[remaining]);
-    let mut coefficients =
-        vec![vec![vec![Real::zero(); dimensions[2]]; dimensions[1]]; dimensions[0]];
+    let mut coefficients = try_zero_trivariate_coefficients(dimensions)?;
     for (first, planes) in coefficients.iter_mut().enumerate() {
         for (second, row) in planes.iter_mut().enumerate() {
             for (third, coefficient) in row.iter_mut().enumerate() {
@@ -90496,10 +90608,9 @@ fn bivariate_multiply(
     BivariatePolynomial::new(coefficients)
 }
 
-fn bivariate_multiply_bounded(
+fn try_bivariate_multiply(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
-    max_controls: usize,
 ) -> Option<BivariatePolynomial> {
     let first_count = first
         .coefficients
@@ -90511,8 +90622,18 @@ fn bivariate_multiply_bounded(
     let second_count = first_second_count
         .checked_add(second_second_count)?
         .checked_sub(1)?;
-    (first_count.checked_mul(second_count)? <= max_controls)
-        .then(|| bivariate_multiply(first, second))
+    let mut coefficients = try_zero_bivariate_coefficients(first_count, second_count)?;
+    for (first_power, first_row) in first.coefficients.iter().enumerate() {
+        for (second_power, second_row) in second.coefficients.iter().enumerate() {
+            for (first_column, first_coefficient) in first_row.iter().enumerate() {
+                for (second_column, second_coefficient) in second_row.iter().enumerate() {
+                    coefficients[first_power + second_power][first_column + second_column] +=
+                        first_coefficient * second_coefficient;
+                }
+            }
+        }
+    }
+    Some(BivariatePolynomial::new(coefficients))
 }
 
 fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> BivariatePolynomial {
@@ -108873,6 +108994,64 @@ mod conversion_tests {
             .unwrap(),
             Some(RealSign::Zero)
         );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                trivariate_parameter_triple_sign_by_refinement(
+                    &polynomial,
+                    &parameters[0],
+                    &parameters[1],
+                    &parameters[2],
+                    attempt,
+                )
+                .unwrap()
+            });
+            assert_eq!(outcome.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        }
+    }
+
+    #[test]
+    fn rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let parameters = [
+            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
+            algebraic_parameter(vec![-half, Real::zero(), Real::one()]),
+            algebraic_parameter(vec![-third, Real::zero(), Real::one()]),
+        ];
+        let mut primitive_coefficients = vec![vec![vec![Real::zero(); 1]; 2]; 2];
+        primitive_coefficients[1][0][0] = Real::one();
+        primitive_coefficients[0][1][0] = -Real::one();
+        let primitive = TrivariatePolynomial2 {
+            coefficients: primitive_coefficients,
+        };
+        let mut positive_coefficients = try_zero_trivariate_coefficients([26, 26, 26]).unwrap();
+        positive_coefficients[0][0][0] = Real::one();
+        positive_coefficients[25][0][0] = Real::one();
+        positive_coefficients[0][25][0] = Real::one();
+        positive_coefficients[0][0][25] = Real::one();
+        let positive = TrivariatePolynomial2 {
+            coefficients: positive_coefficients,
+        };
+        let polynomial = trivariate_multiply(&primitive, &positive);
+        let dimensions = polynomial.dimensions();
+        assert_eq!(dimensions, (27, 27, 26));
+        assert!(
+            dimensions.0 * dimensions.1 * dimensions.2 > MAX_TRIVARIATE_BOUNDED_FAST_PATH_CONTROLS
+        );
+        let polynomial = TrivariatePolynomial2::from_coefficients(polynomial.coefficients)
+            .expect("a host-representable exact tensor must not hit an artificial control cap");
+        let reduced = trivariate_reduce_selected_root_relations(
+            &polynomial,
+            &parameters[0],
+            &parameters[1],
+            &parameters[2],
+        )
+        .expect("the large tensor must reduce in each selected quotient ring");
+        assert!(!trivariate_structurally_zero(
+            &reduced,
+            &CurveContext::STRICT
+        ));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
                 trivariate_parameter_triple_sign_by_refinement(
