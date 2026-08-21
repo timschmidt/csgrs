@@ -57,9 +57,9 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs(
 
             let relation =
                 segments[first_index].intersect_segment(&segments[second_index], policy)?;
-            let connectivity_point =
-                connected_segments_vertex(segments, first_index, second_index, closed);
-            match segment_relation_has_contact(&relation, connectivity_point, policy) {
+            let connectivity_vertices =
+                connected_segments_vertices(segments, first_index, second_index, closed);
+            match segment_relation_has_contact(&relation, connectivity_vertices, policy) {
                 Classification::Decided(true) => {
                     return Ok(Classification::Decided(true));
                 }
@@ -151,18 +151,33 @@ impl SelfContactXSchedule {
     }
 }
 
-fn connected_segments_vertex(
+#[derive(Clone, Copy)]
+struct ConnectivityVertices<'a> {
+    // A closed two-segment contour has the same pair on both sides of the
+    // cyclic seam, so both of its shared endpoints are adjacency vertices.
+    first: &'a Point2,
+    second: Option<&'a Point2>,
+}
+
+fn connected_segments_vertices(
     segments: &[Segment2],
     first: usize,
     second: usize,
     closed: bool,
-) -> Option<&Point2> {
+) -> Option<ConnectivityVertices<'_>> {
     if first + 1 == second {
-        return Some(segments[first].end());
+        return Some(ConnectivityVertices {
+            first: segments[first].end(),
+            second: (closed && first == 0 && second + 1 == segments.len())
+                .then(|| segments[first].start()),
+        });
     }
 
     if closed && first == 0 && second + 1 == segments.len() {
-        return Some(segments[first].start());
+        return Some(ConnectivityVertices {
+            first: segments[first].start(),
+            second: None,
+        });
     }
 
     None
@@ -170,32 +185,32 @@ fn connected_segments_vertex(
 
 fn segment_relation_has_contact(
     relation: &SegmentIntersection,
-    connectivity_point: Option<&Point2>,
+    connectivity_vertices: Option<ConnectivityVertices<'_>>,
     policy: &CurveContext,
 ) -> Classification<bool> {
     match relation {
         SegmentIntersection::LineLine(result) => {
-            line_line_has_contact(result, connectivity_point, policy)
+            line_line_has_contact(result, connectivity_vertices, policy)
         }
         SegmentIntersection::LineArc { result, .. } => {
-            line_arc_has_contact(result, connectivity_point, policy)
+            line_arc_has_contact(result, connectivity_vertices, policy)
         }
         SegmentIntersection::ArcArc(result) => {
-            arc_arc_has_contact(result, connectivity_point, policy)
+            arc_arc_has_contact(result, connectivity_vertices, policy)
         }
     }
 }
 
 fn line_line_has_contact(
     result: &LineLineIntersection,
-    connectivity_point: Option<&Point2>,
+    connectivity_vertices: Option<ConnectivityVertices<'_>>,
     policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         LineLineIntersection::None => Classification::Decided(false),
         LineLineIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
         LineLineIntersection::Point { point, .. } => {
-            contact_is_non_connectivity(point, connectivity_point, policy)
+            contact_is_non_connectivity(point, connectivity_vertices, policy)
         }
         LineLineIntersection::Overlap { .. } => Classification::Decided(true),
     }
@@ -203,36 +218,36 @@ fn line_line_has_contact(
 
 fn line_arc_has_contact(
     result: &LineArcIntersection,
-    connectivity_point: Option<&Point2>,
+    connectivity_vertices: Option<ConnectivityVertices<'_>>,
     policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         LineArcIntersection::None => Classification::Decided(false),
         LineArcIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
         LineArcIntersection::Point(hit) => {
-            contact_is_non_connectivity(&hit.point, connectivity_point, policy)
+            contact_is_non_connectivity(&hit.point, connectivity_vertices, policy)
         }
         LineArcIntersection::TwoPoints { first, second } => either_contact_is_non_connectivity(
-            contact_is_non_connectivity(&first.point, connectivity_point, policy),
-            contact_is_non_connectivity(&second.point, connectivity_point, policy),
+            contact_is_non_connectivity(&first.point, connectivity_vertices, policy),
+            contact_is_non_connectivity(&second.point, connectivity_vertices, policy),
         ),
     }
 }
 
 fn arc_arc_has_contact(
     result: &ArcArcIntersection,
-    connectivity_point: Option<&Point2>,
+    connectivity_vertices: Option<ConnectivityVertices<'_>>,
     policy: &CurveContext,
 ) -> Classification<bool> {
     match result {
         ArcArcIntersection::None => Classification::Decided(false),
         ArcArcIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
         ArcArcIntersection::Point(hit) => {
-            contact_is_non_connectivity(&hit.point, connectivity_point, policy)
+            contact_is_non_connectivity(&hit.point, connectivity_vertices, policy)
         }
         ArcArcIntersection::TwoPoints { first, second } => either_contact_is_non_connectivity(
-            contact_is_non_connectivity(&first.point, connectivity_point, policy),
-            contact_is_non_connectivity(&second.point, connectivity_point, policy),
+            contact_is_non_connectivity(&first.point, connectivity_vertices, policy),
+            contact_is_non_connectivity(&second.point, connectivity_vertices, policy),
         ),
         ArcArcIntersection::Overlap { .. } => Classification::Decided(true),
     }
@@ -240,16 +255,38 @@ fn arc_arc_has_contact(
 
 fn contact_is_non_connectivity(
     point: &Point2,
-    connectivity_point: Option<&Point2>,
+    connectivity_vertices: Option<ConnectivityVertices<'_>>,
     policy: &CurveContext,
 ) -> Classification<bool> {
-    let Some(connectivity_point) = connectivity_point else {
+    let Some(connectivity_vertices) = connectivity_vertices else {
         return Classification::Decided(true);
     };
 
+    let mut uncertainty = None;
+    for connectivity_point in [
+        Some(connectivity_vertices.first),
+        connectivity_vertices.second,
+    ]
+    .into_iter()
+    .flatten()
+    {
+        match point_matches_connectivity(point, connectivity_point, policy) {
+            Classification::Decided(true) => return Classification::Decided(false),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => uncertainty = Some(reason),
+        }
+    }
+    uncertainty.map_or(Classification::Decided(true), Classification::Uncertain)
+}
+
+fn point_matches_connectivity(
+    point: &Point2,
+    connectivity_point: &Point2,
+    policy: &CurveContext,
+) -> Classification<bool> {
     let distance = point.distance_squared(connectivity_point);
     match is_zero(&distance, policy) {
-        Some(equal) => return Classification::Decided(!equal),
+        Some(equal) => return Classification::Decided(equal),
         None if !policy.is_edge_preview() => {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         }
@@ -261,7 +298,7 @@ fn contact_is_non_connectivity(
     {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         if distance.is_finite() {
-            return Classification::Decided(distance > tolerance * tolerance);
+            return Classification::Decided(distance <= tolerance * tolerance);
         }
     }
 
@@ -288,7 +325,14 @@ fn either_contact_is_non_connectivity(
 #[cfg(test)]
 mod tests {
     use super::either_contact_is_non_connectivity;
-    use crate::{Classification, UncertaintyReason};
+    use crate::{
+        CircularArc2, Classification, Contour2, CurveContext, Point2, Segment2, UncertaintyReason,
+    };
+    use hyperreal::Real;
+
+    fn point(x: i8, y: i8) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
 
     #[test]
     fn unresolved_connectivity_is_not_relabelled_as_a_decided_contact() {
@@ -305,6 +349,26 @@ mod tests {
                 Classification::Decided(true),
             ),
             Classification::Decided(true),
+        );
+    }
+
+    #[test]
+    fn two_segment_closed_contour_accepts_both_connectivity_vertices() {
+        let right = point(1, 0);
+        let left = point(-1, 0);
+        let center = point(0, 0);
+        let contour = Contour2::try_new(vec![
+            Segment2::Arc(
+                CircularArc2::try_from_center(right.clone(), left.clone(), center.clone(), false)
+                    .unwrap(),
+            ),
+            Segment2::Arc(CircularArc2::try_from_center(left, right, center, false).unwrap()),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            contour.has_self_contacts(&CurveContext::STRICT).unwrap(),
+            Classification::Decided(false),
         );
     }
 }

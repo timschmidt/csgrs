@@ -37,6 +37,20 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> Contour2 {
     .unwrap()
 }
 
+fn circle(center_x: i64, center_y: i64, radius: i64) -> Contour2 {
+    let right = p(center_x + radius, center_y);
+    let left = p(center_x - radius, center_y);
+    let center = p(center_x, center_y);
+    Contour2::try_new(vec![
+        Segment2::Arc(
+            CircularArc2::try_from_center(right.clone(), left.clone(), center.clone(), false)
+                .unwrap(),
+        ),
+        Segment2::Arc(CircularArc2::try_from_center(left, right, center, false).unwrap()),
+    ])
+    .unwrap()
+}
+
 fn reversed(contour: &Contour2) -> Contour2 {
     Contour2::try_new_with_fill_rule(
         contour
@@ -5822,6 +5836,136 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
         certified(expanded.classify_point(&p(10, 10), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
+}
+
+#[test]
+fn unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_contours(
+            vec![square(0, 0, 12, 4)],
+            vec![square(5, 1, 7, 3)],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let split = source
+            .offset(-Real::one(), &sharp_offset(), &policy)
+            .expect("the exact material/hole contact event must split the erosion");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(split.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ]),
+        );
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        for (point, expected) in [
+            (p(2, 2), RegionPointLocation::Inside),
+            (p(10, 2), RegionPointLocation::Inside),
+            (p(6, 2), RegionPointLocation::Outside),
+            (p(4, 2), RegionPointLocation::Boundary),
+            (p(8, 2), RegionPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                certified(split.value.classify_point(&point, &policy).unwrap()),
+                Classification::Decided(expected),
+            );
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_opens_a_hole_through_the_material_boundary() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_contours(
+            vec![circle(0, 0, 5)],
+            vec![circle(3, 0, 1)],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::reset();
+        let offset = || source.offset(-Real::one(), &sharp_offset(), &policy);
+        #[cfg(feature = "dispatch-trace")]
+        let opened = hyperreal::dispatch_trace::with_recording(offset);
+        #[cfg(not(feature = "dispatch-trace"))]
+        let opened = offset();
+        let opened = opened.unwrap_or_else(|error| {
+            #[cfg(feature = "dispatch-trace")]
+            panic!(
+                "intersecting exact circular wavefronts must open the hole: {error:?}; trace={:?}",
+                hyperreal::dispatch_trace::take_trace()
+            );
+            #[cfg(not(feature = "dispatch-trace"))]
+            panic!("intersecting exact circular wavefronts must open the hole: {error:?}");
+        });
+        assert_eq!(opened.certainty, CurveCertainty::Certified);
+        assert_eq!(
+            certified(opened.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![CurveRegionLoopRole::Material]),
+        );
+        assert_eq!(opened.value.boundary_loops().len(), 1);
+        for (point, expected) in [
+            (p(-4, 0), RegionPointLocation::Boundary),
+            (p(-3, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(1, 0), RegionPointLocation::Boundary),
+            (p(2, 0), RegionPointLocation::Outside),
+            (p(4, 0), RegionPointLocation::Outside),
+        ] {
+            let location = opened.value.classify_point(&point, &policy).unwrap();
+            if policy == CurveContext::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_retains_the_exact_hole_boundary_contact() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_contours(
+            vec![circle(0, 0, 5)],
+            vec![circle(3, 0, 1)],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let tangent = source
+            .offset(-q(1, 2), &sharp_offset(), &policy)
+            .expect("the exact circular material/hole tangency must remain representable");
+        assert_eq!(tangent.certainty, CurveCertainty::Certified);
+        assert_eq!(tangent.value.boundary_loops().len(), 2);
+        assert_eq!(
+            certified(tangent.value.loop_roles(&policy).unwrap()),
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Hole,
+            ]),
+        );
+        for (point, expected) in [
+            (p(-4, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(2, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(q(3, 2), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(q(9, 2), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            let location = tangent.value.classify_point(&point, &policy).unwrap();
+            assert_eq!(location.value, Classification::Decided(expected));
+        }
+    }
 }
 
 #[test]
