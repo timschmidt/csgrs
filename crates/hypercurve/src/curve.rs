@@ -6,7 +6,8 @@ use std::sync::OnceLock;
 use hyperreal::RealSign;
 
 use crate::arc_bezier::{
-    decompose_circular_arc, rational_bezier_circular_arc, rational_quadratic_circular_arc,
+    circular_conic_provenance, decompose_circular_arc, rational_bezier_circular_arc,
+    rational_quadratic_circular_arc,
 };
 use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
@@ -3624,29 +3625,30 @@ impl ExactCornerArc2<'_> {
             ) {
             evaluator.clone()
         } else {
-            let center = self.support().center();
-            let two = Real::from(2_i8);
+            let (implicit_conic, circular_conic) = circular_conic_provenance(self.support());
             RationalBezier2::try_new_with_implicit_quadratic_conic(
                 evaluator.control_points().to_vec(),
                 evaluator.weights().to_vec(),
-                Arc::new([
-                    Real::one(),
-                    Real::zero(),
-                    Real::one(),
-                    -(&two * center.x()),
-                    -(&two * center.y()),
-                    center.x() * center.x() + center.y() * center.y()
-                        - self.support().radius_squared_ref(),
-                ]),
-                Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-                    center: center.clone(),
-                    radius_squared: self.support().radius_squared(),
-                    tangent_contacts: None,
-                })),
+                implicit_conic,
+                Some(circular_conic),
             )
             .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
         };
-        Ok(Some(evaluator))
+        // Degree elevation preserves the parameter but multiplies every
+        // circle-incidence equation by structural zero factors. Collapse it
+        // before root isolation so one geometric contact has one parameter,
+        // independent of the authored degree. The retained quadratic frame is
+        // exact and keeps mixed-weight major charts pole-free.
+        match evaluator
+            .retained_quadratic_representative(policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(Some(quadratic)) => Ok(Some(RationalBezier2::from(quadratic))),
+            Classification::Decided(None) => Ok(Some(evaluator)),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, family, reason))
+            }
+        }
     }
 
     fn source_parameter_at_point(
@@ -3750,13 +3752,7 @@ impl ExactCornerArc2<'_> {
             // span without changing its finite domain. Preserve its compact
             // original parameterization; extension enumerates the remaining
             // canonical circle cells separately.
-            match source
-                .retained_quadratic_representative(policy)
-                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
-            {
-                Classification::Decided(Some(source)) => RationalBezier2::from(source),
-                Classification::Decided(None) | Classification::Uncertain(_) => source,
-            }
+            source
         } else {
             return Err(ExactCurveError::blocked(
                 operation,

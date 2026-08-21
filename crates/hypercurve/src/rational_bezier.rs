@@ -512,11 +512,6 @@ impl RationalQuadraticBezier2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
-        match self.weights_known_same_nonzero_sign(policy) {
-            Some(true) => {}
-            Some(false) => return Classification::Uncertain(UncertaintyReason::Boundary),
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
         if let (Some(implicit_conic), Some(circular_conic)) = (
             self.retained_implicit_quadratic_conic(),
             self.retained_circular_conic(),
@@ -531,6 +526,11 @@ impl RationalQuadraticBezier2 {
                 Ok(promoted) => promoted.relation_to_line_with_contacts(line, policy),
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
+        }
+        match self.weights_known_same_nonzero_sign(policy) {
+            Some(true) => {}
+            Some(false) => return Classification::Uncertain(UncertaintyReason::Boundary),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
         }
         let weighted_distances = self.weighted_line_distances(line);
         if weighted_distances
@@ -2829,6 +2829,41 @@ fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurveContext) -> 
     common
 }
 
+/// Returns endpoint/control signs when a quadratic Bernstein denominator is
+/// certified nonzero throughout `[0, 1]`.
+///
+/// Equal-sign endpoints and an opposite-sign middle coefficient are regular
+/// exactly when `w0*w2-w1^2 > 0`. Keeping this certificate here gives circle
+/// recognition and general rational predicates one projective-pole authority.
+pub(crate) fn pole_free_quadratic_weight_signs(
+    weights: [&Real; 3],
+    policy: &CurveContext,
+) -> Classification<Option<(RealSign, RealSign)>> {
+    let endpoint_sign = match real_sign(weights[0], policy) {
+        Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+        Some(RealSign::Zero) => return Classification::Decided(None),
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    match real_sign(weights[2], policy) {
+        Some(sign) if sign == endpoint_sign => {}
+        Some(_) => return Classification::Decided(None),
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+    let control_sign = match real_sign(weights[1], policy) {
+        Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+        Some(RealSign::Zero) => return Classification::Decided(None),
+        None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    };
+    if control_sign == endpoint_sign {
+        return Classification::Decided(Some((endpoint_sign, control_sign)));
+    }
+    match real_sign(&(weights[0] * weights[2] - weights[1] * weights[1]), policy) {
+        Some(RealSign::Positive) => Classification::Decided(Some((endpoint_sign, control_sign))),
+        Some(RealSign::Zero | RealSign::Negative) => Classification::Decided(None),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
 fn strict_rational_graph_order_from_weighted_signs(
     values: &[Real; 3],
     weight_sign: RealSign,
@@ -3824,6 +3859,43 @@ mod tests {
                 Real::one()
             ]
         );
+    }
+
+    #[test]
+    fn retained_mixed_weight_circle_decides_disjoint_line_relations() {
+        let half_sqrt_two = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let conic = RationalQuadraticBezier2::try_new(
+            point(-1, 0),
+            point(0, 0),
+            point(0, 1),
+            Real::one(),
+            -half_sqrt_two,
+            Real::one(),
+        )
+        .unwrap();
+        let Classification::Decided(Some(support)) =
+            crate::arc_bezier::rational_quadratic_circular_arc(&conic, &CurveContext::STRICT)
+                .unwrap()
+        else {
+            panic!("the pole-free mixed-weight conic must be recognized as a major circle");
+        };
+        assert_eq!(support.center(), &point(-1, 1));
+        assert_eq!(support.radius_squared_ref(), &Real::one());
+        let (implicit, circular) = crate::arc_bezier::circular_conic_provenance(&support);
+        let conic = conic.with_retained_conic_provenance(Some(implicit), Some(circular));
+        let promoted = RationalBezier2::from(conic.clone());
+        let disjoint = LineSeg2::try_new(point(-2, 3), point(2, 3)).unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                conic.relation_to_line_with_contacts(&disjoint, &policy),
+                Classification::Decided(BezierLineContactRelation::NoContact),
+            );
+            assert_eq!(
+                promoted.relation_to_line_with_contacts(&disjoint, &policy),
+                Classification::Decided(BezierLineContactRelation::NoContact),
+            );
+        }
     }
 
     #[test]

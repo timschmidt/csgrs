@@ -10503,12 +10503,31 @@ fn subcurve_certified_outer_bounds(
     curve: &BezierSubcurve2,
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
-    match curve {
+    let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
         BezierSubcurve2::Cubic(curve) => curve.control_hull_box(policy),
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+    };
+    if matches!(bounds, Classification::Decided(_)) {
+        return bounds;
     }
+    let Some((_, circle)) = retained_circular_support(curve) else {
+        return bounds;
+    };
+    // Mixed-weight major-circle charts are finite even though their rational
+    // control hull is not convex. Retained circular provenance certifies the
+    // complete image lies in this exact full-circle envelope, which is a
+    // conservative broad-phase fallback when quotient-extremum isolation did
+    // not produce a tighter box.
+    let radius = match circle.radius_squared.clone().sqrt() {
+        Ok(radius) => radius,
+        Err(_) => return bounds,
+    };
+    Classification::Decided(Aabb2::new_unchecked(
+        crate::Point2::new(circle.center.x() - &radius, circle.center.y() - &radius),
+        crate::Point2::new(circle.center.x() + &radius, circle.center.y() + &radius),
+    ))
 }
 
 fn build_region_carriers(

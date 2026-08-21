@@ -149,21 +149,7 @@ fn compute_circular_arc_decomposition(
     };
     let span_count = points.len() - 1;
     let denominator = Real::from(span_count as u8);
-    let two = Real::from(2_i8);
-    let implicit_quadratic_conic = Arc::new([
-        Real::one(),
-        Real::zero(),
-        Real::one(),
-        -(&two * arc.center().x()),
-        -(&two * arc.center().y()),
-        arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
-            - arc.radius_squared_ref(),
-    ]);
-    let circular_conic = Arc::new(RationalQuadraticCircle2 {
-        center: arc.center().clone(),
-        radius_squared: arc.radius_squared_ref().clone(),
-        tangent_contacts: None,
-    });
+    let (implicit_quadratic_conic, circular_conic) = circular_conic_provenance(arc);
     let mut spans = Vec::with_capacity(span_count);
     for (span_index, endpoints) in points.windows(2).enumerate() {
         let parameter_start = (Real::from(span_index as u8) / &denominator)
@@ -366,6 +352,32 @@ fn full_circle_quarter_points(arc: &CircularArc2) -> Vec<Point2> {
     ]
 }
 
+/// Builds the normalized implicit and metric certificates for one exact circle.
+///
+/// Recognition, decomposition, and retained-curve admission all use this one
+/// representation so a circle does not acquire operation-specific provenance.
+pub(crate) fn circular_conic_provenance(
+    arc: &CircularArc2,
+) -> (Arc<[Real; 6]>, Arc<RationalQuadraticCircle2>) {
+    let two = Real::from(2_i8);
+    (
+        Arc::new([
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            -(&two * arc.center().x()),
+            -(&two * arc.center().y()),
+            arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
+                - arc.radius_squared_ref(),
+        ]),
+        Arc::new(RationalQuadraticCircle2 {
+            center: arc.center().clone(),
+            radius_squared: arc.radius_squared_ref().clone(),
+            tangent_contacts: None,
+        }),
+    )
+}
+
 pub(crate) fn rational_bezier_circular_arc(
     curve: &RationalBezier2,
     policy: &CurveContext,
@@ -414,39 +426,21 @@ pub(crate) fn rational_quadratic_circular_arc(
     curve: &RationalQuadraticBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
-    let start_weight_sign = match crate::classify::real_sign(curve.start_weight(), policy) {
-        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-    let end_weight_sign = match crate::classify::real_sign(curve.end_weight(), policy) {
-        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-    if start_weight_sign != end_weight_sign {
-        return Ok(Classification::Decided(None));
-    }
-    let control_weight_sign = match crate::classify::real_sign(curve.control_weight(), policy) {
-        Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-    };
-    if control_weight_sign != start_weight_sign {
-        // Mixed Bernstein weights can still define a regular major circular
-        // arc. With equal-sign endpoint weights, the quadratic denominator
-        // has its only interior minimum at the control-weight sign change;
-        // `w0*w2-w1^2 > 0` is exactly the pole-free certificate.
-        let denominator_minimum = curve.start_weight() * curve.end_weight()
-            - curve.control_weight() * curve.control_weight();
-        match crate::classify::real_sign(&denominator_minimum, policy) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Zero | RealSign::Negative) => {
-                return Ok(Classification::Decided(None));
+    let (start_weight_sign, control_weight_sign) =
+        match crate::rational_bezier::pole_free_quadratic_weight_signs(
+            [
+                curve.start_weight(),
+                curve.control_weight(),
+                curve.end_weight(),
+            ],
+            policy,
+        ) {
+            Classification::Decided(Some(signs)) => signs,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-    }
+        };
     if let Some(circle) = curve.retained_circular_conic() {
         let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
         let (tangent_x, tangent_y) = curve.control().delta_from(curve.start());

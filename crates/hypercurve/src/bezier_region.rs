@@ -912,6 +912,10 @@ impl CurveRegionNestingRoleEvidence2 {
 impl BezierBoundaryLoop2 {
     /// Constructs a closed boundary loop from native Bezier/conic fragments.
     pub fn new(fragments: Vec<BezierSubcurve2>, policy: &CurveContext) -> CurveResult<Self> {
+        let fragments = fragments
+            .into_iter()
+            .map(|curve| canonicalize_rational_circle_subcurve(curve, policy))
+            .collect::<Vec<_>>();
         validate_native_boundary_loop(&fragments, policy)?;
         Ok(Self { fragments })
     }
@@ -1105,11 +1109,88 @@ impl BezierSubcurve2 {
             Self::Rational(curve) => (curve.start(), curve.end()),
         }
     }
+
+    /// Collapses an exact rational circle to its quadratic parameter frame and
+    /// attaches the one normalized circle certificate used by every kernel.
+    pub(crate) fn canonical_rational_circle_quadratic(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalQuadraticBezier2>>> {
+        let quadratic = match self {
+            Self::RationalQuadratic(curve) => curve.clone(),
+            Self::Rational(curve) => match curve.retained_quadratic_representative(policy)? {
+                Classification::Decided(Some(curve)) => curve,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+            Self::Quadratic(_) | Self::Cubic(_) => {
+                return Ok(Classification::Decided(None));
+            }
+        };
+        let retained_implicit = quadratic.retained_implicit_quadratic_conic().cloned();
+        let retained_circular = quadratic.retained_circular_conic().cloned();
+        if retained_implicit.is_some() && retained_circular.is_some() {
+            return Ok(Classification::Decided(Some(quadratic)));
+        }
+        let support = match crate::arc_bezier::rational_quadratic_circular_arc(&quadratic, policy)?
+        {
+            Classification::Decided(Some(support)) => support,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (implicit, circular) = crate::arc_bezier::circular_conic_provenance(&support);
+        Ok(Classification::Decided(Some(
+            quadratic.with_retained_conic_provenance(
+                Some(retained_implicit.unwrap_or(implicit)),
+                Some(retained_circular.unwrap_or(circular)),
+            ),
+        )))
+    }
+}
+
+fn canonicalize_rational_circle_subcurve(
+    curve: BezierSubcurve2,
+    policy: &CurveContext,
+) -> BezierSubcurve2 {
+    // Canonicalization may only consume a STRICT proof. APPROXIMATE_512 is a
+    // terminal predicate policy and must never become reusable construction
+    // provenance.
+    let strict = policy.strict_counterpart();
+    match curve.canonical_rational_circle_quadratic(&strict) {
+        Ok(Classification::Decided(Some(quadratic))) => {
+            BezierSubcurve2::RationalQuadratic(quadratic)
+        }
+        Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => curve,
+    }
+}
+
+fn canonicalize_retained_circle_fragment(
+    fragment: BezierSplitFragment2,
+    policy: &CurveContext,
+) -> BezierSplitFragment2 {
+    let BezierSplitFragment2::Materialized { start, end, curve } = fragment else {
+        return fragment;
+    };
+    BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: canonicalize_rational_circle_subcurve(curve, policy),
+    }
 }
 
 impl CurveRegionBoundaryLoop2 {
     /// Constructs a retained boundary loop from accepted split fragments.
     pub fn new(fragments: Vec<BezierSplitFragment2>, policy: &CurveContext) -> CurveResult<Self> {
+        let fragments = fragments
+            .into_iter()
+            .map(|fragment| canonicalize_retained_circle_fragment(fragment, policy))
+            .collect::<Vec<_>>();
         validate_retained_boundary_loop(&fragments, policy)?;
         Ok(Self {
             fragments,
@@ -1123,6 +1204,10 @@ impl CurveRegionBoundaryLoop2 {
         arrangement_sources: Vec<CurveRegionFragmentSource2>,
         policy: &CurveContext,
     ) -> CurveResult<Self> {
+        let fragments = fragments
+            .into_iter()
+            .map(|fragment| canonicalize_retained_circle_fragment(fragment, policy))
+            .collect::<Vec<_>>();
         validate_retained_boundary_loop(&fragments, policy)?;
         if fragments.len() != arrangement_sources.len() {
             return Err(CurveError::Topology(
@@ -11576,21 +11661,35 @@ impl CurveRegion2 {
             {
                 return Ok(None);
             }
-            let previous_replacement =
-                match (previous_retained_arc.as_ref(), previous_cut.placement) {
-                    (Some(support), CornerPlacement2::Extension) => {
-                        Some(Self::retained_arc_chamfer_extension_fragments(
-                            support,
-                            &previous_cut,
-                            true,
-                            policy,
-                        )?)
-                    }
-                    _ => None,
-                };
-            let next_replacement = match (next_retained_arc.as_ref(), next_cut.placement) {
-                (Some(support), CornerPlacement2::Extension) => {
-                    Some(Self::retained_arc_chamfer_extension_fragments(
+            // A recognized rational circle is one geometric carrier regardless
+            // of how its authored chart was weighted or elevated. Rebuild both
+            // trims and extensions from that carrier so every retained piece
+            // keeps the same exact circle certificate. This also avoids making
+            // downstream topology depend on whether an authored major chart
+            // happened to carry cached provenance before it was split.
+            let distinct_fragments = previous_cut_index != next_cut_index;
+            let previous_replacement = match (
+                distinct_fragments,
+                previous_retained_arc.as_ref(),
+                previous_cut.placement,
+            ) {
+                (true, Some(support), CornerPlacement2::Trim | CornerPlacement2::Extension) => {
+                    Some(Self::retained_arc_chamfer_fragments(
+                        support,
+                        &previous_cut,
+                        true,
+                        policy,
+                    )?)
+                }
+                _ => None,
+            };
+            let next_replacement = match (
+                distinct_fragments,
+                next_retained_arc.as_ref(),
+                next_cut.placement,
+            ) {
+                (true, Some(support), CornerPlacement2::Trim | CornerPlacement2::Extension) => {
+                    Some(Self::retained_arc_chamfer_fragments(
                         support, &next_cut, false, policy,
                     )?)
                 }
@@ -11715,7 +11814,7 @@ impl CurveRegion2 {
         )
     }
 
-    fn retained_arc_chamfer_extension_fragments(
+    fn retained_arc_chamfer_fragments(
         support: &CircularArc2,
         cut: &CornerTrimCut2,
         previous: bool,
@@ -20994,7 +21093,23 @@ fn subcurve_relation_to_line_with_contacts(
         BezierSubcurve2::RationalQuadratic(curve) => {
             curve.relation_to_line_with_contacts(line, policy)
         }
-        BezierSubcurve2::Rational(curve) => curve.relation_to_line_with_contacts(line, policy),
+        BezierSubcurve2::Rational(curve) => {
+            if curve.retained_circular_conic().is_some() {
+                match curve.retained_quadratic_representative(policy) {
+                    Ok(Classification::Decided(Some(quadratic))) => {
+                        return quadratic.relation_to_line_with_contacts(line, policy);
+                    }
+                    Ok(Classification::Decided(None)) => {}
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                }
+            }
+            curve.relation_to_line_with_contacts(line, policy)
+        }
     }
 }
 
@@ -24618,26 +24733,60 @@ mod tests {
         );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for homogeneous_scale in [1_i8, 2_i8] {
-                for elevated in [false, true] {
-                    for reversed in [false, true] {
-                        let neighbor = if elevated {
-                            SelectedCircleFilletNeighbor2::ElevatedRationalArc(homogeneous_scale)
-                        } else {
-                            SelectedCircleFilletNeighbor2::RationalArc(homogeneous_scale)
-                        };
-                        let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
-                        let corner = selected_circle_rational_arc_corner(&region);
-                        let trim = region
-                            .chamfer_loop_vertex_by_setbacks(
-                                0,
-                                corner,
-                                q(1, 10),
-                                q(1, 10),
-                                CurveCornerMode2::TrimOnly,
-                                &policy,
-                            )
-                            .expect("the mixed circular corner has a finite chamfer");
-                        let extended = region
+                for major in [false, true] {
+                    for elevated in [false, true] {
+                        for reversed in [false, true] {
+                            let neighbor = match (major, elevated) {
+                                (false, false) => {
+                                    SelectedCircleFilletNeighbor2::RationalArc(homogeneous_scale)
+                                }
+                                (false, true) => {
+                                    SelectedCircleFilletNeighbor2::ElevatedRationalArc(
+                                        homogeneous_scale,
+                                    )
+                                }
+                                (true, false) => SelectedCircleFilletNeighbor2::MajorRationalArc(
+                                    homogeneous_scale,
+                                ),
+                                (true, true) => {
+                                    SelectedCircleFilletNeighbor2::ElevatedMajorRationalArc(
+                                        homogeneous_scale,
+                                    )
+                                }
+                            };
+                            let region =
+                                selected_circle_neighbor_region(&policy, neighbor, reversed);
+                            if major && homogeneous_scale == 1 && !reversed {
+                                let authored_replay = region
+                                    .boolean_regions(
+                                        &selected_fillet_disjoint_square(&policy),
+                                        &policy,
+                                    )
+                                    .unwrap_or_else(|error| {
+                                        panic!(
+                                            "the authored major circular region must enter the Boolean kernel: policy={policy:?}, elevated={elevated}, error={error:?}"
+                                        )
+                                    });
+                                assert_eq!(authored_replay.certainty, CurveCertainty::Certified);
+                                assert_eq!(authored_replay.value.union().boundary_loops().len(), 2);
+                                assert!(authored_replay.value.intersection().is_empty());
+                            }
+                            let corner = selected_circle_rational_arc_corner(&region);
+                            let trim = region
+                                .chamfer_loop_vertex_by_setbacks(
+                                    0,
+                                    corner,
+                                    q(1, 10),
+                                    q(1, 10),
+                                    CurveCornerMode2::TrimOnly,
+                                    &policy,
+                                )
+                                .unwrap_or_else(|error| {
+                                    panic!(
+                                        "the mixed circular corner has a finite chamfer: policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, error={error:?}"
+                                    )
+                                });
+                            let extended = region
                             .chamfer_loop_vertex_by_setbacks(
                                 0,
                                 corner,
@@ -24648,56 +24797,92 @@ mod tests {
                             )
                             .unwrap_or_else(|error| {
                                 panic!(
-                                    "the mixed circular chamfer must extend exactly: policy={policy:?}, scale={homogeneous_scale}, elevated={elevated}, reversed={reversed}, error={error:?}"
+                                    "the mixed circular chamfer must extend exactly: policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, error={error:?}"
                                 )
                             });
-                        assert_eq!(extended.certainty, CurveCertainty::Certified);
-                        assert!(
-                            extended.value.candidate_count() > trim.value.candidate_count(),
-                            "both full circular supports must contribute exterior chamfer cuts"
-                        );
-                        let mut retained_rational_extension = false;
-                        for_each_corner_region(&extended.value, |chamfered| {
-                            assert_eq!(
-                                chamfered
-                                    .classify_point(&p(0, 0), &policy)
-                                    .expect("the extended mixed chamfer remains classifiable")
-                                    .into_value(),
-                                Classification::Decided(RegionPointLocation::Inside),
+                            assert_eq!(extended.certainty, CurveCertainty::Certified);
+                            assert!(
+                                extended.value.candidate_count() > trim.value.candidate_count(),
+                                "both full circular supports must contribute exterior chamfer cuts"
                             );
-                            retained_rational_extension |= chamfered.boundary_loops()[0]
-                                .fragments()
-                                .iter()
-                                .any(|fragment| match fragment {
-                                    BezierSplitFragment2::Materialized { curve, .. } => {
-                                        [curve.start(), curve.end()].iter().any(|point| {
-                                            point
-                                                .distance_squared(&rational_extension)
-                                                .certified_eq_until(&Real::zero(), -4096)
-                                                .as_bool()
-                                                == Some(true)
-                                        })
+                            let mut retained_rational_extension = false;
+                            let mut candidate_index = 0;
+                            for_each_corner_region(&extended.value, |chamfered| {
+                                if !major {
+                                    assert_eq!(
+                                        chamfered
+                                            .classify_point(&p(0, 0), &policy)
+                                            .expect(
+                                                "the extended mixed chamfer remains classifiable",
+                                            )
+                                            .into_value(),
+                                        Classification::Decided(RegionPointLocation::Inside),
+                                        "policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, candidate={candidate_index}",
+                                    );
+                                }
+                                assert!(
+                                    chamfered.boundary_loops()[0].fragments().iter().any(
+                                        |fragment| matches!(
+                                            fragment,
+                                            BezierSplitFragment2::Materialized {
+                                                curve: BezierSubcurve2::RationalQuadratic(curve),
+                                                ..
+                                            } if curve.retained_circular_conic().is_some()
+                                        )
+                                    ),
+                                    "the canonical chamfer must retain exact circle provenance: policy={policy:?}, scale={homogeneous_scale}, major={major}, elevated={elevated}, reversed={reversed}, candidate={candidate_index}",
+                                );
+                                retained_rational_extension |= chamfered.boundary_loops()[0]
+                                    .fragments()
+                                    .iter()
+                                    .any(|fragment| match fragment {
+                                        BezierSplitFragment2::Materialized { curve, .. } => {
+                                            [curve.start(), curve.end()].iter().any(|point| {
+                                                point
+                                                    .distance_squared(&rational_extension)
+                                                    .certified_eq_until(&Real::zero(), -4096)
+                                                    .as_bool()
+                                                    == Some(true)
+                                            })
+                                        }
+                                        _ => false,
+                                    });
+                                if homogeneous_scale == 1 && !reversed {
+                                    if major {
+                                        for probe in [p(5, 4), p(6, 5), p(5, 6), p(4, 5)] {
+                                            assert_eq!(
+                                                chamfered
+                                                    .classify_point(&probe, &policy)
+                                                    .expect("the distant Boolean probe is finite")
+                                                    .into_value(),
+                                                Classification::Decided(
+                                                    RegionPointLocation::Outside,
+                                                ),
+                                                "policy={policy:?}, elevated={elevated}, candidate={candidate_index}, probe={probe:?}",
+                                            );
+                                        }
                                     }
-                                    _ => false,
-                                });
-                            if homogeneous_scale == 1 && !elevated && !reversed {
-                                let replay = chamfered
-                                    .boolean_regions(
-                                        &selected_fillet_disjoint_square(&policy),
+                                    let replay = chamfered
+                                        .boolean_regions(
+                                            &selected_fillet_disjoint_square(&policy),
                                         &policy,
                                     )
-                                    .expect(
-                                        "the retained circular chamfer re-enters the Boolean kernel",
-                                    );
-                                assert_eq!(replay.certainty, CurveCertainty::Certified);
-                                assert_eq!(replay.value.union().boundary_loops().len(), 2);
-                                assert!(replay.value.intersection().is_empty());
-                            }
-                        });
-                        assert!(
-                            retained_rational_extension,
-                            "an exact candidate must retain the rational-circle extension"
-                        );
+                                    .unwrap_or_else(|error| {
+                                        panic!(
+                                            "the retained circular chamfer must re-enter the Boolean kernel: policy={policy:?}, major={major}, elevated={elevated}, candidate={candidate_index}, error={error:?}"
+                                        )
+                                    });
+                                    assert_eq!(replay.certainty, CurveCertainty::Certified);
+                                    assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                                    assert!(replay.value.intersection().is_empty());
+                                }
+                                candidate_index += 1;
+                            });
+                            assert!(
+                                retained_rational_extension,
+                                "an exact candidate must retain the rational-circle extension"
+                            );
+                        }
                     }
                 }
             }

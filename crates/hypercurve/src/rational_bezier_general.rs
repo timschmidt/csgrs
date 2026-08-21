@@ -2616,22 +2616,39 @@ impl RationalBezier2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
-        let weight_sign = match self.common_weight_sign(policy) {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        let weight_sign = self.common_weight_sign(policy);
+        let retained_regular_circle = if self.degree() == 2 {
+            self.data
+                .lineage
+                .root
+                .circular_conic
+                .get()
+                .and_then(|circle| {
+                    if matches!(&weight_sign, Classification::Decided(_)) {
+                        return Some(circle);
+                    }
+                    match self.quadratic_denominator_is_certified_nonzero_on_unit(policy) {
+                        Classification::Decided(true) => Some(circle),
+                        Classification::Decided(false) | Classification::Uncertain(_) => None,
+                    }
+                })
+        } else {
+            None
         };
         let control_sides = self
             .control_points()
             .iter()
             .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
             .collect::<Vec<_>>();
-        for side in [LineSide::Left, LineSide::Right] {
-            if control_sides.iter().all(
-                |candidate| matches!(candidate, Classification::Decided(value) if *value == side),
-            ) {
-                return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
-                    side,
-                });
+        if matches!(&weight_sign, Classification::Decided(_)) {
+            for side in [LineSide::Left, LineSide::Right] {
+                if control_sides.iter().all(
+                    |candidate| matches!(candidate, Classification::Decided(value) if *value == side),
+                ) {
+                    return Classification::Decided(
+                        BezierLineContactRelation::ControlHullDisjoint { side },
+                    );
+                }
             }
         }
         if control_sides
@@ -2640,9 +2657,7 @@ impl RationalBezier2 {
         {
             return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
         }
-        if self.degree() == 2
-            && let Some(circle) = self.data.lineage.root.circular_conic.get()
-        {
+        if let Some(circle) = retained_regular_circle {
             let (line_dx, line_dy) = line.delta();
             let (from_center_x, from_center_y) = line.start().delta_from(&circle.center);
             let quadratic = Real::dot2_refs([&line_dx, &line_dy], [&line_dx, &line_dy]);
@@ -2760,6 +2775,10 @@ impl RationalBezier2 {
                 BezierLineContactRelation::Contacts { contacts }
             });
         }
+        let weight_sign = match weight_sign {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
         let weighted_distances = self
             .control_points()
             .iter()
@@ -2785,6 +2804,28 @@ impl RationalBezier2 {
             .collect::<Vec<_>>();
 
         exact_line_contact_relation_from_bernstein_distances(weighted_distances, policy)
+    }
+
+    /// Certifies a finite quadratic projective chart without requiring every
+    /// Bernstein weight to have one sign.
+    ///
+    /// Equal-sign endpoint weights and an opposite-sign middle weight have no
+    /// unit-interval denominator root exactly when `w0*w2-w1^2 > 0`.
+    fn quadratic_denominator_is_certified_nonzero_on_unit(
+        &self,
+        policy: &CurveContext,
+    ) -> Classification<bool> {
+        if self.degree() != 2 {
+            return Classification::Decided(false);
+        }
+        let weights = self.weights();
+        match crate::rational_bezier::pole_free_quadratic_weight_signs(
+            [&weights[0], &weights[1], &weights[2]],
+            policy,
+        ) {
+            Classification::Decided(signs) => Classification::Decided(signs.is_some()),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        }
     }
 
     pub(crate) fn relation_to_line_with_certified_crossing(
