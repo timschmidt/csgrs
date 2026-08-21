@@ -1023,6 +1023,47 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         self.orientation
     }
 
+    fn clipped_to_other_range(
+        &self,
+        range: &BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let Some([other_start, other_end]) =
+            (match intersect_bezier_parameter_ranges(&self.other_range, range, policy)? {
+                Classification::Decided(intersection) => intersection,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            })
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let cusp_at_other_start = match self.cusp_parameter_for_other(&other_start, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let cusp_at_other_end = match self.cusp_parameter_for_other(&other_end, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let (cusp_start, cusp_end) = match self.orientation {
+            RationalBezierOverlapOrientation2::Same => (cusp_at_other_start, cusp_at_other_end),
+            RationalBezierOverlapOrientation2::Reversed => (cusp_at_other_end, cusp_at_other_start),
+        };
+        Ok(Classification::Decided(Some(Self {
+            other_range: BezierParameterRange2::new_validated(other_start, other_end),
+            cusp_start,
+            cusp_end,
+            orientation: self.orientation,
+            parameter_map: self.parameter_map.clone(),
+            map_reversed: self.map_reversed,
+        })))
+    }
+
     fn curve_region_ranges(&self) -> (CurveRegionParameterRange2, CurveRegionParameterRange2) {
         (
             CurveRegionParameterRange2::new_validated(
@@ -18492,6 +18533,91 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 
+    fn finite_parallel_intersections_from_rational_component(
+        &self,
+        curve: &RationalBezier2,
+        range: Option<&BezierParameterRange2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleParallelIntersections2>>>
+    {
+        Ok(match self.rational_intersections(curve, policy)? {
+            Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            ) => {
+                let mut retained = Vec::with_capacity(contacts.len());
+                for contact in contacts {
+                    if let Some(range) = range {
+                        match overlap_parameter_is_in_range(
+                            &contact.other_parameter,
+                            range,
+                            true,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {}
+                            Classification::Decided(false) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    retained.push(BezierAlgebraicCuspSemicircleParallelContact2 {
+                        parallel_parameter: contact.other_parameter,
+                        tangent_cross_sign: Some(contact.tangent_cross_sign),
+                        location: contact.location,
+                        correlated: true,
+                    });
+                }
+                Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(retained),
+                ))
+            }
+            Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+            ) => {
+                let overlaps = if let Some(range) = range {
+                    let mut retained = Vec::with_capacity(overlaps.len());
+                    for overlap in overlaps {
+                        match overlap.clipped_to_other_range(range, policy)? {
+                            Classification::Decided(Some(overlap)) => retained.push(overlap),
+                            Classification::Decided(None) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    retained
+                } else {
+                    overlaps
+                };
+                Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                ))
+            }
+            Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                    contacts,
+                ),
+            ) => Classification::Decided(Some(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                    contacts,
+                ),
+            )),
+            Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                    overlaps,
+                ),
+            ) => Classification::Decided(Some(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
+                    overlaps,
+                ),
+            )),
+            Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+            )
+            | Classification::Uncertain(_) => Classification::Decided(None),
+        })
+    }
+
     fn parallel_intersections_with_domain(
         &self,
         other: &BezierParallel2,
@@ -18645,76 +18771,24 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ));
             }
         }
-        // A finite analytic request is already represented most compactly by
-        // the direct circle/parallel system below.  Materializing a rational
-        // offset component first both loses the supplied clip and can make a
-        // rational-frame selected center appear as an unrelated algebraic
-        // fiber. General parallel-normal frames are different: their rational
-        // component solver preserves selected-fiber authority and remains the
-        // complete positive-dimensional fast path.
+        // A finite analytic request is normally represented most compactly by
+        // the direct circle/parallel system below. General parallel-normal
+        // frames instead retain selected-fiber authority through their exact
+        // rational component. Rational materialization is only a fast path;
+        // an inconclusive replay falls through to the analytic authority.
         if incident.is_none() && (self.uses_selected_parallel_normal_frame() || range.is_none()) {
             match other.exact_rational_parallel_component(policy)? {
                 Classification::Decided(Some(curve)) => {
-                    match self.rational_intersections(&curve, policy)? {
-                        Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
-                        ) => {
-                            return Ok(Classification::Decided(
-                                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
-                                    contacts
-                                        .into_iter()
-                                        .map(|contact| {
-                                            BezierAlgebraicCuspSemicircleParallelContact2 {
-                                                parallel_parameter: contact.other_parameter,
-                                                tangent_cross_sign: Some(contact.tangent_cross_sign),
-                                                location: contact.location,
-                                                correlated: true,
-                                            }
-                                        })
-                                        .collect(),
-                                ),
-                            ));
+                    match self.finite_parallel_intersections_from_rational_component(
+                        &curve, range, policy,
+                    )? {
+                        Classification::Decided(Some(intersections)) => {
+                            return Ok(Classification::Decided(intersections));
                         }
-                        Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
-                        ) if range.is_none() => {
-                            return Ok(Classification::Decided(
-                                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                                    overlaps,
-                                ),
-                            ));
+                        Classification::Decided(None) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
                         }
-                        Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_)
-                            | BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                        ) => {}
-                        Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                                contacts,
-                            ),
-                        ) => {
-                            return Ok(Classification::Decided(
-                                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                                    contacts,
-                                ),
-                            ));
-                        }
-                        Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                                overlaps,
-                            ),
-                        ) => {
-                            return Ok(Classification::Decided(
-                                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                                    overlaps,
-                                ),
-                            ));
-                        }
-                        // Rational materialization is only a fast path. A
-                        // selected parallel-normal frame retains a direct exact
-                        // two-normal system, so an inconclusive component replay
-                        // must fall through to that authoritative kernel.
-                        Classification::Uncertain(_) => {}
                     }
                 }
                 Classification::Decided(None) => {}
@@ -18892,6 +18966,34 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             match projected {
                 Classification::Decided(projection) => projection,
+                Classification::Uncertain(UncertaintyReason::Unsupported) if incident.is_none() => {
+                    // An exactly recognized rational circle is the one supported
+                    // coefficient-field collapse: it preserves the source
+                    // parameter and constructs no approximate geometry. Keep
+                    // every other unsupported projection explicit.
+                    if let Classification::Decided(Some(curve)) =
+                        other.exact_circular_parallel_component(&policy.strict_counterpart())?
+                    {
+                        match self.finite_parallel_intersections_from_rational_component(
+                            &curve, range, policy,
+                        )? {
+                            Classification::Decided(Some(intersections)) => {
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-circle-parallel-kernel",
+                                    "exact-circular-component-fallback",
+                                );
+                                return Ok(Classification::Decided(intersections));
+                            }
+                            Classification::Decided(None) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
@@ -82259,6 +82361,64 @@ impl BezierParallel2 {
         ))
     }
 
+    /// Materializes an exactly recognized rational-circle parallel without
+    /// reconstructing its homogeneous speed polynomial.
+    ///
+    /// The shared circular-conic recognizer supplies the exact supporting-circle
+    /// and traversal certificate used by rational intersection and decomposition.
+    /// Scaling the original homogeneous controls about that center preserves
+    /// its parameter exactly, including negative-radius continuation.
+    fn exact_circular_parallel_component(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
+        let Some(source) = self.rational_source() else {
+            return Ok(Classification::Decided(None));
+        };
+        let arc = match crate::arc_bezier::rational_bezier_circular_arc(source, policy)? {
+            Classification::Decided(Some(arc)) => arc,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let radius_scale = arc.left_offset_radius_scale(self.distance())?;
+        let controls = source
+            .control_points()
+            .iter()
+            .map(|point| crate::offset::scale_from_center(point, arc.center(), &radius_scale))
+            .collect();
+        let weights = source.weights().to_vec();
+        let curve = if matches!(
+            real_sign(&radius_scale, &CurveContext::STRICT),
+            Some(RealSign::Positive | RealSign::Negative)
+        ) {
+            let radius_squared = arc.radius_squared_ref() * &radius_scale * &radius_scale;
+            let two = Real::from(2_i8);
+            RationalBezier2::try_new_with_implicit_quadratic_conic(
+                controls,
+                weights,
+                Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    -(&two * arc.center().x()),
+                    -(&two * arc.center().y()),
+                    arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
+                        - &radius_squared,
+                ]),
+                Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                    center: arc.center().clone(),
+                    radius_squared,
+                    tangent_contacts: None,
+                })),
+            )?
+        } else {
+            RationalBezier2::try_new(controls, weights)?
+        };
+        Ok(Classification::Decided(Some(curve)))
+    }
+
     /// Materializes this parallel exactly when the homogeneous hodograph is Pythagorean.
     ///
     /// For a rational source `(X/W, Y/W)`, let
@@ -82380,46 +82540,13 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(None));
         }
 
-        if let Some(source) = rational_source
-            && let Classification::Decided(Some(arc)) =
-                crate::arc_bezier::rational_bezier_circular_arc(source, policy)?
-        {
-            let radius_scale = arc.left_offset_radius_scale(self.distance())?;
-            let controls = source
-                .control_points()
-                .iter()
-                .map(|point| crate::offset::scale_from_center(point, arc.center(), &radius_scale))
-                .collect();
-            let weights = source.weights().to_vec();
-            let curve = if matches!(
-                real_sign(&radius_scale, &CurveContext::STRICT),
-                Some(RealSign::Positive | RealSign::Negative)
-            ) {
-                let two = Real::from(2_i8);
-                let radius_squared = arc.radius_squared_ref() * &radius_scale * &radius_scale;
-                let implicit = Arc::new([
-                    Real::one(),
-                    Real::zero(),
-                    Real::one(),
-                    -(&two * arc.center().x()),
-                    -(&two * arc.center().y()),
-                    arc.center().x() * arc.center().x() + arc.center().y() * arc.center().y()
-                        - &radius_squared,
-                ]);
-                let circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-                    center: arc.center().clone(),
-                    radius_squared,
-                    tangent_contacts: None,
-                });
-                RationalBezier2::try_new_with_implicit_quadratic_conic(
-                    controls,
-                    weights,
-                    implicit,
-                    Some(circle),
-                )?
-            } else {
-                RationalBezier2::try_new(controls, weights)?
-            };
+        let circular_component = match self.exact_circular_parallel_component(policy)? {
+            Classification::Decided(component) => component,
+            // Circle recognition is a specialization. The already-certified
+            // PH speed below remains the complete construction authority.
+            Classification::Uncertain(_) => None,
+        };
+        if let Some(curve) = circular_component {
             let source_degree = self.source_degree();
             return Ok(Classification::Decided(Some(
                 CertifiedPythagoreanHodographOffset2 {
@@ -101714,6 +101841,127 @@ mod conversion_tests {
         (center_x, quarter)
     }
 
+    fn nonrepresented_center_analytic_quarter_source(center_x: &Real) -> RationalBezier2 {
+        RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(center_x + Real::from(2_i8), Real::zero()),
+                Point2::new(center_x + Real::from(2_i8), Real::from(2_i8)),
+                Point2::new(center_x.clone(), Real::from(2_i8)),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        )
+    }
+
+    #[test]
+    fn independently_encoded_nonrepresented_analytic_circle_publishes_overlap() {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let center_x = third.sqrt().unwrap();
+        let algebraic_target = algebraic_parameter(vec![
+            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let source = nonrepresented_center_analytic_quarter_source(&center_x);
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let semicircle = synthetic_independent_unit_cusp_semicircle_with_center_x(
+                vec![Real::zero(), Real::one()],
+                &policy,
+            );
+            let parallel = source.parallel_left(Real::one()).unwrap();
+            assert!(parallel.data.certified_ph_offset.set(None).is_ok());
+            let intersections = semicircle
+                .parallel_intersections(&parallel, &policy)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+            ) = intersections
+            else {
+                panic!(
+                    "the independently encoded nonrepresented circle must publish overlap evidence: {intersections:?}"
+                );
+            };
+            let [overlap] = overlaps.as_slice() else {
+                panic!("the independently encoded quarter must publish one overlap cell");
+            };
+            assert!(matches!(
+                overlap.parameter_map,
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(_)
+            ));
+            let Classification::Decided(cusp_cut) = overlap
+                .cusp_parameter_for_other(&algebraic_target, &policy)
+                .unwrap()
+            else {
+                panic!("the nonrepresented analytic cut must map onto the selected circle");
+            };
+            assert_eq!(
+                cusp_cut.represented_rational_value(&policy).unwrap(),
+                Classification::Decided(None),
+            );
+            let Classification::Decided(round_trip) = overlap
+                .other_parameter_for_cusp(&cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the nonrepresented selected-circle cut must invert analytically");
+            };
+            assert_eq!(
+                round_trip.same_value(&algebraic_target, &policy).unwrap(),
+                Classification::Decided(true),
+            );
+
+            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let partial_range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(quarter.clone()),
+                BezierParameter2::Exact(Real::one() - &quarter),
+            );
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(partial_overlaps),
+            ) = semicircle
+                .parallel_intersections_in_range(&parallel, &partial_range, &policy)
+                .unwrap()
+            else {
+                panic!("the independently encoded circle overlap must retain an authored clip");
+            };
+            let [partial_overlap] = partial_overlaps.as_slice() else {
+                panic!("the clipped independently encoded quarter must remain one overlap");
+            };
+            assert_eq!(partial_overlap.other_range(), &partial_range);
+
+            let reversed = parallel.reversed();
+            assert!(reversed.data.certified_ph_offset.set(None).is_ok());
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(reversed_overlaps),
+            ) = semicircle
+                .parallel_intersections(&reversed, &policy)
+                .unwrap()
+            else {
+                panic!("reversing the independently encoded circle must preserve its overlap");
+            };
+            let [reversed_overlap] = reversed_overlaps.as_slice() else {
+                panic!("the reversed independently encoded quarter must remain one overlap");
+            };
+            assert_eq!(
+                reversed_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed,
+            );
+            let Classification::Decided(reversed_cut) = reversed_overlap
+                .other_parameter_for_cusp(&cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the selected-circle cut must invert through analytic reversal");
+            };
+            assert_eq!(
+                reversed_cut
+                    .same_value(&algebraic_target.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(true),
+            );
+        }
+    }
+
     #[test]
     fn nonrepresented_center_transverse_chamfer_inverts_by_correlated_point() {
         let (center_x, quarter) = nonrepresented_center_rational_quarter();
@@ -101832,6 +102080,10 @@ mod conversion_tests {
                 <= std::mem::size_of::<(BezierParameter2, Option<Real>)>(),
         );
         let (center_x, quarter) = nonrepresented_center_rational_quarter();
+        let analytic_parallel = nonrepresented_center_analytic_quarter_source(&center_x)
+            .parallel_left(Real::one())
+            .unwrap();
+        assert!(analytic_parallel.data.certified_ph_offset.set(None).is_ok());
         let algebraic_target = algebraic_parameter(vec![
             (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
             Real::zero(),
@@ -101953,6 +102205,56 @@ mod conversion_tests {
                     chamfer_cut.order_to_real(&represented, &policy).unwrap(),
                 );
             }
+
+            let analytic_overlap_result = target_semicircle
+                .parallel_intersections(&analytic_parallel, &policy)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(analytic_overlaps),
+            ) = analytic_overlap_result
+            else {
+                panic!(
+                    "the independently encoded shifted analytic circle must retain its overlap: {analytic_overlap_result:?}"
+                );
+            };
+            let [shifted_analytic_overlap] = analytic_overlaps.as_slice() else {
+                panic!("the shifted analytic quarter must retain one monotone overlap");
+            };
+            assert!(matches!(
+                shifted_analytic_overlap.parameter_map,
+                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(_)
+            ));
+            let shifted_analytic_source_owners = Arc::strong_count(chamfer_authority);
+            let shifted_analytic_inversion = shifted_analytic_overlap
+                .other_parameter_for_cusp(&chamfer_cut, &policy)
+                .unwrap();
+            assert_eq!(
+                Arc::strong_count(chamfer_authority),
+                shifted_analytic_source_owners,
+            );
+            let Classification::Decided(shifted_analytic_target) = shifted_analytic_inversion
+            else {
+                panic!(
+                    "the nonrepresented chamfer must invert directly through the shifted analytic overlap: {shifted_analytic_inversion:?}"
+                );
+            };
+            let Classification::Decided(shifted_analytic_round_trip) = shifted_analytic_overlap
+                .cusp_parameter_for_other(&shifted_analytic_target, &policy)
+                .unwrap()
+            else {
+                panic!("the shifted analytic target must return the multi-field chamfer cut");
+            };
+            assert!(shifted_analytic_round_trip.shares_exact_evidence(&chamfer_cut));
+            for numerator in 0_i8..=8_i8 {
+                let represented =
+                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                assert_eq!(
+                    shifted_analytic_round_trip
+                        .order_to_real(&represented, &policy)
+                        .unwrap(),
+                    chamfer_cut.order_to_real(&represented, &policy).unwrap(),
+                );
+            }
             let Classification::Decided(chamfer_fragment) =
                 BezierAlgebraicCuspSemicircleFragment2::try_new(
                     target_semicircle.clone(),
@@ -102055,6 +102357,7 @@ mod conversion_tests {
                     )
             ));
             drop(round_trip);
+            drop(shifted_analytic_round_trip);
             drop(chamfer_cut);
             assert!(matches!(
                 target
