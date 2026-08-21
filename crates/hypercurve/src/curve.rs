@@ -5556,51 +5556,23 @@ fn retained_fillet_cusp_pair_overlap_is_positive(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let maximum = |parameters: [&crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2;
-                       2]| {
-        if retained_fillet_cusp_parameter_order(parameters[0], parameters[1], family, policy)?
-            .is_lt()
-        {
-            Ok(parameters[1].clone())
-        } else {
-            Ok(parameters[0].clone())
-        }
+    let range = |fragment: &crate::BezierAlgebraicCuspSemicircleFragment2| {
+        crate::CurveRegionParameterRange2::new_validated(
+            CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+            CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+        )
     };
-    let minimum = |parameters: [&crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2;
-                       2]| {
-        if retained_fillet_cusp_parameter_order(parameters[0], parameters[1], family, policy)?
-            .is_gt()
-        {
-            Ok(parameters[1].clone())
-        } else {
-            Ok(parameters[0].clone())
-        }
-    };
-    let first_overlap_start = overlap.first_start_parameter();
-    let first_overlap_end = overlap.first_end_parameter();
-    let first_start = maximum([&first_overlap_start, first.start_parameter()])?;
-    let first_end = minimum([&first_overlap_end, first.end_parameter()])?;
-    if !retained_fillet_cusp_parameter_order(&first_start, &first_end, family, policy)?.is_lt() {
-        return Ok(false);
+    match overlap
+        .has_positive_curve_region_overlap(&range(first), &range(second), policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
+        Classification::Decided(positive) => Ok(positive),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            family,
+            reason,
+        )),
     }
-
-    let mapped_first = overlap.map_parameter(&first_start, true);
-    let mapped_second = overlap.map_parameter(&first_end, true);
-    let (mapped_low, mapped_high) =
-        if retained_fillet_cusp_parameter_order(&mapped_first, &mapped_second, family, policy)?
-            .is_lt()
-        {
-            (mapped_first, mapped_second)
-        } else {
-            (mapped_second, mapped_first)
-        };
-    let second_overlap_start = overlap.second_start_parameter();
-    let second_overlap_end = overlap.second_end_parameter();
-    let second_start = maximum([&mapped_low, &second_overlap_start])?;
-    let second_start = maximum([&second_start, second.start_parameter()])?;
-    let second_end = minimum([&mapped_high, &second_overlap_end])?;
-    let second_end = minimum([&second_end, second.end_parameter()])?;
-    Ok(retained_fillet_cusp_parameter_order(&second_start, &second_end, family, policy)?.is_lt())
 }
 
 /// Publishes a compact one-field center when one side of a direct circle pair

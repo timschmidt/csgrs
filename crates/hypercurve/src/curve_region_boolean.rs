@@ -5266,14 +5266,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
             };
         }
         if let Some(RegionPairOverlapSource::AlgebraicCusp(source)) = overlap.source.as_ref() {
-            return clip_cusp_parameter_overlap(
-                &overlap.first_range,
-                &overlap.second_range,
-                source,
-                first_carrier,
-                second_carrier,
-                &self.data.policy,
+            let first_range = CurveRegionParameterRange2::new_validated(
+                first_carrier.start.clone(),
+                first_carrier.end.clone(),
             );
+            let second_range = CurveRegionParameterRange2::new_validated(
+                second_carrier.start.clone(),
+                second_carrier.end.clone(),
+            );
+            return match source
+                .clipped_curve_region_ranges(&first_range, &second_range, &self.data.policy)
+                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+            {
+                Classification::Decided(ranges) => Ok(ranges),
+                Classification::Uncertain(reason) => {
+                    Err(self.blocked(pair.first_carrier_index, reason))
+                }
+            };
         }
         if let Some(RegionPairOverlapSource::AlgebraicCuspMapped(source)) = overlap.source.as_ref()
         {
@@ -13301,141 +13310,6 @@ fn range_inside_carrier(
     )
 }
 
-fn clip_cusp_parameter_overlap(
-    first_range: &CurveRegionParameterRange2,
-    second_range: &CurveRegionParameterRange2,
-    correspondence: &BezierAlgebraicCuspSemicirclePairOverlap2,
-    first_carrier: &RegionCarrier,
-    second_carrier: &RegionCarrier,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let (first_overlap_start, first_overlap_end) = ascending_range(first_range, policy)?;
-    let first_start = extreme_region_parameter(
-        [first_overlap_start, &first_carrier.start],
-        Ordering::Less,
-        first_carrier.family,
-        policy,
-    )?;
-    let first_end = extreme_region_parameter(
-        [first_overlap_end, &first_carrier.end],
-        Ordering::Greater,
-        first_carrier.family,
-        policy,
-    )?;
-    match decided_parameter_cmp(&first_start, &first_end, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    let mapped_start =
-        mapped_cusp_overlap_parameter(correspondence, true, &first_start, first_carrier.family)?;
-    let mapped_end =
-        mapped_cusp_overlap_parameter(correspondence, true, &first_end, first_carrier.family)?;
-    let mapped_order = decided_parameter_cmp(&mapped_start, &mapped_end, policy)?;
-    let (mapped_low, mapped_high) = match mapped_order {
-        Ordering::Less => (&mapped_start, &mapped_end),
-        Ordering::Greater => (&mapped_end, &mapped_start),
-        Ordering::Equal => return Ok(None),
-    };
-    let (second_overlap_start, second_overlap_end) = ascending_range(second_range, policy)?;
-    let second_low = extreme_region_parameter(
-        [mapped_low, second_overlap_start, &second_carrier.start],
-        Ordering::Less,
-        second_carrier.family,
-        policy,
-    )?;
-    let second_high = extreme_region_parameter(
-        [mapped_high, second_overlap_end, &second_carrier.end],
-        Ordering::Greater,
-        second_carrier.family,
-        policy,
-    )?;
-    match decided_parameter_cmp(&second_low, &second_high, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => return Ok(None),
-    }
-    if decided_parameter_cmp(&second_low, mapped_low, policy)? == Ordering::Equal
-        && decided_parameter_cmp(&second_high, mapped_high, policy)? == Ordering::Equal
-    {
-        return Ok(Some((
-            CurveRegionParameterRange2::new_validated(first_start, first_end),
-            CurveRegionParameterRange2::new_validated(mapped_start, mapped_end),
-        )));
-    }
-    let (second_start, second_end) = if mapped_order == Ordering::Less {
-        (second_low, second_high)
-    } else {
-        (second_high, second_low)
-    };
-    let first_start =
-        mapped_cusp_overlap_parameter(correspondence, false, &second_start, second_carrier.family)?;
-    let first_end =
-        mapped_cusp_overlap_parameter(correspondence, false, &second_end, second_carrier.family)?;
-    Ok(Some((
-        CurveRegionParameterRange2::new_validated(first_start, first_end),
-        CurveRegionParameterRange2::new_validated(second_start, second_end),
-    )))
-}
-
-#[cfg(test)]
-pub(crate) fn clip_cusp_overlap_for_test(
-    correspondence: &BezierAlgebraicCuspSemicirclePairOverlap2,
-    first_fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
-    second_fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>> {
-    let carrier = |fragment: &crate::BezierAlgebraicCuspSemicircleFragment2, operand| {
-        let geometry = RegionCarrierGeometry::AlgebraicCuspSemicircle(fragment.clone());
-        RegionCarrier {
-            operand,
-            loop_index: 0,
-            fragment_index: 0,
-            family: geometry.family(),
-            geometry,
-            start: CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
-            end: CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
-            reversed: fragment.is_reversed(),
-            filled_side_is_left: true,
-            selected_fiber_endpoint_points: None,
-            image_is_injective: OnceLock::new(),
-            bounds: OnceLock::new(),
-        }
-    };
-    let first_carrier = carrier(first_fragment, CurveRegionBooleanOperand2::First);
-    let second_carrier = carrier(second_fragment, CurveRegionBooleanOperand2::Second);
-    clip_cusp_parameter_overlap(
-        &CurveRegionParameterRange2::new_validated(
-            CurveRegionParameter2::from_algebraic_cusp(correspondence.first_start_parameter()),
-            CurveRegionParameter2::from_algebraic_cusp(correspondence.first_end_parameter()),
-        ),
-        &CurveRegionParameterRange2::new_validated(
-            CurveRegionParameter2::from_algebraic_cusp(correspondence.second_start_parameter()),
-            CurveRegionParameter2::from_algebraic_cusp(correspondence.second_end_parameter()),
-        ),
-        correspondence,
-        &first_carrier,
-        &second_carrier,
-        policy,
-    )
-}
-
-fn mapped_cusp_overlap_parameter(
-    correspondence: &BezierAlgebraicCuspSemicirclePairOverlap2,
-    first_to_second: bool,
-    parameter: &CurveRegionParameter2,
-    family: CurveFamily2,
-) -> ExactCurveResult<CurveRegionParameter2> {
-    let Some(parameter) = parameter.as_algebraic_cusp() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Boolean,
-            family,
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    Ok(CurveRegionParameter2::from_algebraic_cusp(
-        correspondence.map_parameter(parameter, first_to_second),
-    ))
-}
-
 fn extreme_region_parameter<const N: usize>(
     parameters: [&CurveRegionParameter2; N],
     replace_when: Ordering,
@@ -17487,24 +17361,22 @@ mod certified_successor_tests {
                     CurveRegionBooleanOperand2::Second,
                     &policy,
                 );
-                let clipped = clip_cusp_parameter_overlap(
-                    &CurveRegionParameterRange2::new_validated(
-                        CurveRegionParameter2::from_algebraic_cusp(overlap.first_start_parameter()),
-                        CurveRegionParameter2::from_algebraic_cusp(overlap.first_end_parameter()),
-                    ),
-                    &CurveRegionParameterRange2::new_validated(
-                        CurveRegionParameter2::from_algebraic_cusp(
-                            overlap.second_start_parameter(),
+                let Classification::Decided(Some(clipped)) = overlap
+                    .clipped_curve_region_ranges(
+                        &CurveRegionParameterRange2::new_validated(
+                            first_carrier.start.clone(),
+                            first_carrier.end.clone(),
                         ),
-                        CurveRegionParameter2::from_algebraic_cusp(overlap.second_end_parameter()),
-                    ),
-                    &overlap,
-                    &first_carrier,
-                    &second_carrier,
-                    &policy,
-                )
-                .unwrap()
-                .expect("the carrier fragments retain a positive shared span");
+                        &CurveRegionParameterRange2::new_validated(
+                            second_carrier.start.clone(),
+                            second_carrier.end.clone(),
+                        ),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the carrier fragments retain a positive shared span");
+                };
                 assert_eq!(
                     clipped.0.exact_endpoints(),
                     Some((&expected_first.0, &expected_first.1)),

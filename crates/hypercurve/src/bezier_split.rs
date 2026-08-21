@@ -454,13 +454,16 @@ impl CurveRegionParameterRange2 {
     }
 }
 
-/// Clips one exact parameter correspondence to two retained carrier ranges.
-///
-/// The supplied maps own only the mathematical parameter relation. Range
-/// intersection, orientation, inverse clipping, and preservation of unchanged
-/// selected-fiber boundaries live here so Boolean and corner editing cannot
-/// disagree about the same retained overlap.
-pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
+struct ForwardCorrespondingCurveRegionClip2 {
+    first_start: CurveRegionParameter2,
+    first_end: CurveRegionParameter2,
+    mapped_start: CurveRegionParameter2,
+    mapped_end: CurveRegionParameter2,
+    second_start: CurveRegionParameter2,
+    second_end: CurveRegionParameter2,
+}
+
+fn forward_corresponding_curve_region_parameter_ranges(
     first_overlap: &CurveRegionParameterRange2,
     second_overlap: &CurveRegionParameterRange2,
     first_fragment: &CurveRegionParameterRange2,
@@ -470,11 +473,7 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
         &CurveRegionParameter2,
     )
         -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
-    mut map_second_to_first: impl FnMut(
-        &CurveRegionParameter2,
-    )
-        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
-) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>> {
+) -> CurveResult<Classification<Option<ForwardCorrespondingCurveRegionClip2>>> {
     let [first_start, first_end] =
         match intersect_curve_region_parameter_ranges(first_fragment, first_overlap, policy)? {
             Classification::Decided(Some(bounds)) => bounds,
@@ -526,6 +525,80 @@ pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
         (second_low, second_high)
     } else {
         (second_high, second_low)
+    };
+    Ok(Classification::Decided(Some(
+        ForwardCorrespondingCurveRegionClip2 {
+            first_start,
+            first_end,
+            mapped_start,
+            mapped_end,
+            second_start,
+            second_end,
+        },
+    )))
+}
+
+/// Decides whether one exact correspondence retains a positive span without
+/// constructing inverse cuts that no caller will publish.
+pub(crate) fn corresponding_curve_region_parameter_ranges_are_positive(
+    first_overlap: &CurveRegionParameterRange2,
+    second_overlap: &CurveRegionParameterRange2,
+    first_fragment: &CurveRegionParameterRange2,
+    second_fragment: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+    map_first_to_second: impl FnMut(
+        &CurveRegionParameter2,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+) -> CurveResult<Classification<bool>> {
+    Ok(forward_corresponding_curve_region_parameter_ranges(
+        first_overlap,
+        second_overlap,
+        first_fragment,
+        second_fragment,
+        policy,
+        map_first_to_second,
+    )?
+    .map(|clipped| clipped.is_some()))
+}
+
+/// Clips one exact parameter correspondence to two retained carrier ranges.
+///
+/// The supplied maps own only the mathematical parameter relation. Range
+/// intersection, orientation, inverse clipping, and preservation of unchanged
+/// selected-fiber boundaries live here so Boolean and corner editing cannot
+/// disagree about the same retained overlap.
+pub(crate) fn clip_corresponding_curve_region_parameter_ranges(
+    first_overlap: &CurveRegionParameterRange2,
+    second_overlap: &CurveRegionParameterRange2,
+    first_fragment: &CurveRegionParameterRange2,
+    second_fragment: &CurveRegionParameterRange2,
+    policy: &CurveContext,
+    map_first_to_second: impl FnMut(
+        &CurveRegionParameter2,
+    ) -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+    mut map_second_to_first: impl FnMut(
+        &CurveRegionParameter2,
+    )
+        -> CurveResult<Classification<Option<CurveRegionParameter2>>>,
+) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>> {
+    let ForwardCorrespondingCurveRegionClip2 {
+        first_start,
+        first_end,
+        mapped_start,
+        mapped_end,
+        second_start,
+        second_end,
+    } = match forward_corresponding_curve_region_parameter_ranges(
+        first_overlap,
+        second_overlap,
+        first_fragment,
+        second_fragment,
+        policy,
+        map_first_to_second,
+    )? {
+        Classification::Decided(Some(clipped)) => clipped,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let mut lift = |second: &CurveRegionParameter2,
                     mapped: &CurveRegionParameter2,

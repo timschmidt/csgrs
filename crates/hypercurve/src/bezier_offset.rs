@@ -37771,6 +37771,77 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         ))
     }
 
+    fn curve_region_ranges(&self) -> (CurveRegionParameterRange2, CurveRegionParameterRange2) {
+        (
+            CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_cusp(self.first_start_parameter()),
+                CurveRegionParameter2::from_algebraic_cusp(self.first_end_parameter()),
+            ),
+            CurveRegionParameterRange2::new_validated(
+                CurveRegionParameter2::from_algebraic_cusp(self.second_start_parameter()),
+                CurveRegionParameter2::from_algebraic_cusp(self.second_end_parameter()),
+            ),
+        )
+    }
+
+    /// Decides positive retained overlap without constructing unused inverse
+    /// cuts for fillet coincidence classification.
+    pub(crate) fn has_positive_curve_region_overlap(
+        &self,
+        first_fragment: &CurveRegionParameterRange2,
+        second_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let (first_overlap, second_overlap) = self.curve_region_ranges();
+        crate::bezier_split::corresponding_curve_region_parameter_ranges_are_positive(
+            &first_overlap,
+            &second_overlap,
+            first_fragment,
+            second_fragment,
+            policy,
+            |parameter| {
+                let Some(parameter) = parameter.as_algebraic_cusp() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                Ok(Classification::Decided(Some(
+                    CurveRegionParameter2::from_algebraic_cusp(self.map_parameter(parameter, true)),
+                )))
+            },
+        )
+    }
+
+    /// Clips this certified coincident-circle correspondence to two retained
+    /// cusp fragments. The shared region clipper owns orientation, inverse
+    /// clipping, and exact boundary preservation for Boolean publication.
+    pub(crate) fn clipped_curve_region_ranges(
+        &self,
+        first_fragment: &CurveRegionParameterRange2,
+        second_fragment: &CurveRegionParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveRegionParameterRange2, CurveRegionParameterRange2)>>>
+    {
+        let (first_overlap, second_overlap) = self.curve_region_ranges();
+        let map = |parameter: &CurveRegionParameter2, source_first| {
+            let Some(parameter) = parameter.as_algebraic_cusp() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            Ok(Classification::Decided(Some(
+                CurveRegionParameter2::from_algebraic_cusp(
+                    self.map_parameter(parameter, source_first),
+                ),
+            )))
+        };
+        crate::bezier_split::clip_corresponding_curve_region_parameter_ranges(
+            &first_overlap,
+            &second_overlap,
+            first_fragment,
+            second_fragment,
+            policy,
+            |parameter| map(parameter, true),
+            |parameter| map(parameter, false),
+        )
+    }
+
     /// Recognizes two local parameters joined by this exact coincident-circle
     /// map. This is structural endpoint evidence: no scalar or point equality
     /// predicate is needed when a retained boundary crosses independent circle
@@ -99789,15 +99860,22 @@ mod conversion_tests {
             else {
                 panic!("the represented second cusp subfragment must be ordered");
             };
-            let (first_clipped, second_clipped) =
-                crate::curve_region_boolean::clip_cusp_overlap_for_test(
-                    &overlap,
-                    &first_fragment,
-                    &second_fragment,
+            let range = |fragment: &BezierAlgebraicCuspSemicircleFragment2| {
+                CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_algebraic_cusp(fragment.start_parameter().clone()),
+                    CurveRegionParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
+                )
+            };
+            let Classification::Decided(Some((first_clipped, second_clipped))) = overlap
+                .clipped_curve_region_ranges(
+                    &range(&first_fragment),
+                    &range(&second_fragment),
                     &policy,
                 )
                 .unwrap()
-                .expect("the partial cusp carriers must retain their shared subarc");
+            else {
+                panic!("the partial cusp carriers must retain their shared subarc");
+            };
             for (actual, expected) in [
                 (first_clipped.start(), &two_thirds),
                 (first_clipped.end(), &four_fifths),
