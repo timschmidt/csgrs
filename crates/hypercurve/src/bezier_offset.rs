@@ -26508,6 +26508,24 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.rational_intersections_internal(other, true, policy)
     }
 
+    /// Returns the lower-degree predicate whose sign at every finite incidence
+    /// contact is the oriented tangent cross sign.
+    fn rational_incidence_tangent_cross_sign_polynomial(
+        &self,
+        incidence: &BivariatePolynomial,
+    ) -> BivariatePolynomial {
+        // On `incidence = 0`, differentiating in the rational parameter gives
+        // `2 * dot(Q-C,Q') * D / W`. The stored tangent cross is that dot
+        // product times `-turn * D * W`, so the two expressions differ only
+        // by the strictly positive factor `W^2 / 2` at a finite contact. The
+        // derivative is both smaller and directly correlated with the
+        // isolated incidence root.
+        bivariate_scale(
+            bivariate_parameter_derivative(incidence, CurveResultantParameter::Second),
+            &(-self.turn_sign()),
+        )
+    }
+
     /// Retains a rational-frame circle contact in the selected center fiber
     /// when global resultant projection cannot sign its coefficients.
     ///
@@ -26540,6 +26558,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             },
             self.cusp_parameter().clone(),
             None,
+            Some(self.rational_incidence_tangent_cross_sign_polynomial(&system.incidence)),
             policy,
         )
     }
@@ -26550,6 +26569,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         system: BezierSelectedParallelNormalCircleRationalSystem2,
         center_parameter: BezierAlgebraicParameter2,
         candidate: Option<BezierSelectedParallelNormalRationalTangentCandidate2>,
+        tangent_cross_sign_predicate: Option<BivariatePolynomial>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
         let tangent_candidates = candidate.is_some();
@@ -26692,6 +26712,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let tangent_cross_sign = if tangent_candidates {
                 RealSign::Zero
+            } else if let Some(predicate) = &tangent_cross_sign_predicate {
+                match other_parameter.predicate_sign(predicate, policy)? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             } else {
                 match other_parameter.radical_sum_sign(
                     &system.tangent_cross,
@@ -27377,6 +27404,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     },
                     selected_center,
                     tangent_certificate,
+                    None,
                     policy,
                 )?
                 .map(|intersections| (intersections, None)));
@@ -29034,12 +29062,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let tangent_cross = match reduce(&system.tangent_cross)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let tangent_cross = self.rational_incidence_tangent_cross_sign_polynomial(&incidence);
         let mut diameter_side = None;
         // Root enumeration is construction evidence. Exhaust it with the
         // requested policy's terminal approximation suppressed; only later
@@ -65100,6 +65123,14 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        let retained_cross_only = |tangent_cross_sign| {
+            (real_sign(dot_scale, &CurveContext::STRICT) == Some(RealSign::Zero)).then(|| {
+                real_sign(cross_scale, policy).map_or(
+                    Classification::Uncertain(UncertaintyReason::RealSign),
+                    |scale| Classification::Decided(product_sign(scale, tangent_cross_sign)),
+                )
+            })
+        };
         let sign = match data.as_ref() {
             BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => map
                 .tangent_cross_dot_linear_combination_sign(
@@ -65111,23 +65142,31 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                 map,
                 other_parameter,
+                tangent_cross_sign,
                 ..
-            } => map.tangent_cross_dot_linear_combination_sign(
-                other_parameter,
-                cross_scale,
-                dot_scale,
-                policy,
-            )?,
+            } => match retained_cross_only(*tangent_cross_sign) {
+                Some(sign) => sign,
+                None => map.tangent_cross_dot_linear_combination_sign(
+                    other_parameter,
+                    cross_scale,
+                    dot_scale,
+                    policy,
+                )?,
+            },
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberParallel {
                 map,
                 other_parameter,
+                tangent_cross_sign,
                 ..
-            } => map.tangent_cross_dot_linear_combination_sign(
-                other_parameter,
-                cross_scale,
-                dot_scale,
-                policy,
-            )?,
+            } => match retained_cross_only(*tangent_cross_sign) {
+                Some(sign) => sign,
+                None => map.tangent_cross_dot_linear_combination_sign(
+                    other_parameter,
+                    cross_scale,
+                    dot_scale,
+                    policy,
+                )?,
+            },
             BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => map
                 .data
                 .semicircle
@@ -94514,6 +94553,51 @@ mod conversion_tests {
                     Classification::Decided(false),
                 );
             }
+        }
+    }
+
+    #[test]
+    fn rational_incidence_derivative_is_the_exact_tangent_cross_sign_authority() {
+        let policy = CurveContext::STRICT;
+        let circle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+        let target = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(-2, -1),
+                Point2::from_values(0, 2),
+                Point2::from_values(3, -1),
+            ],
+            vec![Real::one(), Real::from(2_i8), Real::from(3_i8)],
+        )
+        .unwrap();
+        let target_power = target.homogeneous_power_basis().unwrap();
+        let weight_squared = polynomial_multiply(&target_power.weight, &target_power.weight);
+        let twice_weight_derivative = polynomial_scale(
+            &polynomial_multiply(
+                &target_power.weight,
+                &polynomial_derivative(&target_power.weight),
+            ),
+            &Real::from(2_i8),
+        );
+
+        for circle in [circle.clone(), circle.reversed()] {
+            let system = circle.rational_system(&target).unwrap();
+            let tangent_sign =
+                circle.rational_incidence_tangent_cross_sign_polynomial(&system.incidence);
+            let residual = bivariate_subtract(
+                &bivariate_scale(system.tangent_cross, &Real::from(2_i8)),
+                &bivariate_multiply(
+                    &tangent_sign,
+                    &bivariate_outer_product(&[Real::one()], &weight_squared),
+                ),
+            );
+            let expected = bivariate_scale(
+                bivariate_multiply(
+                    &system.incidence,
+                    &bivariate_outer_product(&[Real::one()], &twice_weight_derivative),
+                ),
+                &circle.turn_sign(),
+            );
+            assert_eq!(residual, expected);
         }
     }
 
