@@ -572,21 +572,26 @@ struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
     curve: RationalBezier2,
     system: BezierAlgebraicCuspSemicircleRationalParameterMapSystem2,
     policy: CurveContext,
-    parameter_cache: Mutex<Vec<BezierAlgebraicCuspSemicircleRationalParameterCacheEntry2>>,
+    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2,
 }
 
-type BezierAlgebraicCuspSemicircleRationalParameterCacheEntry2 = (
+type BezierAlgebraicCuspSemicircleParameterCacheEntry2 = (
     BezierParameter2,
-    BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2,
+    BezierAlgebraicCuspSemicircleParameterCacheEvidence2,
 );
 
 #[derive(Clone, Debug)]
-enum BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2 {
+enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
     RepresentedRational(Option<Real>),
     /// Fast replay of a just-certified cross-map inverse. Weak ownership
     /// prevents equivalent parameter maps from retaining each other; expiry
     /// falls back to the overlap's exact correlated incidence.
     RetainedCusp(Weak<BezierAlgebraicCuspSemicircleMappedParameterData2>),
+}
+
+#[derive(Debug, Default)]
+struct BezierAlgebraicCuspSemicircleParameterCache2 {
+    entries: Mutex<Vec<BezierAlgebraicCuspSemicircleParameterCacheEntry2>>,
 }
 
 /// Exact parameter-order authority behind the common rational-contact result.
@@ -885,7 +890,7 @@ struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
     parallel: BezierParallel2,
     system: BezierAlgebraicCuspSemicircleParallelParameterMapSystem2,
     policy: CurveContext,
-    represented_rational_values: Mutex<Vec<(BezierParameter2, Option<Real>)>>,
+    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2,
 }
 
 /// Exact parameter-order authority behind a common analytic-parallel contact.
@@ -1117,19 +1122,23 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         }
     }
 
-    fn retain_rational_inverse_authority(
+    fn retain_inverse_authority(
         &self,
         retained: &Classification<BezierParameter2>,
         source: &BezierAlgebraicCuspSemicircleParameter2,
     ) {
-        let (
-            Classification::Decided(target_parameter),
-            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target),
-        ) = (retained, &self.parameter_map)
-        else {
+        let Classification::Decided(target_parameter) = retained else {
             return;
         };
-        target.retain_cusp_parameter(target_parameter.clone(), source);
+        let cache = match &self.parameter_map {
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
+                &target.data.parameter_cache
+            }
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                &target.data.parameter_cache
+            }
+        };
+        cache.retain_cusp_parameter(target_parameter.clone(), source);
     }
 
     /// Maps one parameter on this published overlap to its compact
@@ -1160,18 +1169,26 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 }
             }
         }
-        let rational_correlation =
-            if let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(map) =
-                &self.parameter_map
-            {
-                match map.retained_cusp_parameter(parameter, policy) {
-                    Some(Some(cusp)) => return Ok(Classification::Decided(cusp)),
-                    Some(None) => BezierAlgebraicCuspSemicircleRationalCorrelation2::Map,
-                    None => BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent,
-                }
-            } else {
-                BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent
-            };
+        let retained = match &self.parameter_map {
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(map) => map
+                .data
+                .parameter_cache
+                .retained_cusp_parameter(parameter, policy),
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(map) => map
+                .data
+                .parameter_cache
+                .retained_cusp_parameter(parameter, policy),
+        };
+        let correlated = match retained {
+            Some(Some(cusp)) => return Ok(Classification::Decided(cusp)),
+            Some(None) => true,
+            None => false,
+        };
+        let rational_correlation = if correlated {
+            BezierAlgebraicCuspSemicircleRationalCorrelation2::Map
+        } else {
+            BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent
+        };
         let map_parameter = if self.map_reversed {
             parameter.unit_complement()
         } else {
@@ -1190,7 +1207,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     parallel_parameter: map_parameter,
                     tangent_cross_sign: None,
                     location: BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                    correlated: false,
+                    correlated,
                 };
                 map.contact_parameter(&contact)
             }
@@ -1531,7 +1548,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                             policy,
                             |_| Ok(Classification::Decided(RealSign::Zero)),
                         )?;
-                        self.retain_rational_inverse_authority(&retained, parameter);
+                        self.retain_inverse_authority(&retained, parameter);
                         return Ok(retained);
                     }
                     Classification::Uncertain(reason) => {
@@ -1580,7 +1597,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     policy,
                     |_| Ok(Classification::Decided(RealSign::Zero)),
                 )?;
-                self.retain_rational_inverse_authority(&retained, parameter);
+                self.retain_inverse_authority(&retained, parameter);
                 return Ok(retained);
             }
 
@@ -1594,7 +1611,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         policy,
                         |_| Ok(Classification::Decided(RealSign::Zero)),
                     )?;
-                    self.retain_rational_inverse_authority(&retained, parameter);
+                    self.retain_inverse_authority(&retained, parameter);
                     return Ok(retained);
                 }
                 Classification::Decided(None) => {}
@@ -1719,7 +1736,9 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+            map.data
+                .parameter_cache
+                .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
         }
         return Ok(retained);
     }
@@ -1797,7 +1816,9 @@ fn rational_overlap_parameter_for_exact_cusp(
         } else {
             candidate.clone()
         };
-        map.retain_represented_rational_value(map_parameter, Some(parameter.clone()));
+        map.data
+            .parameter_cache
+            .retain_represented_rational_value(map_parameter, Some(parameter.clone()));
     }
     Ok(retained)
 }
@@ -1910,7 +1931,11 @@ fn rational_mapped_cusp_represented_rational(
     contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
-    if let Some(value) = map.cached_represented_rational_value(&contact.other_parameter) {
+    if let Some(value) = map
+        .data
+        .parameter_cache
+        .cached_represented_rational_value(&contact.other_parameter)
+    {
         return Ok(Classification::Decided(value));
     }
     let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField {
@@ -1980,7 +2005,9 @@ fn rational_mapped_cusp_represented_rational(
         |parameter| map.mapped_contact_order_to_real(contact, parameter),
     )?;
     if let Classification::Decided(value) = &result {
-        map.retain_represented_rational_value(contact.other_parameter.clone(), value.clone());
+        map.data
+            .parameter_cache
+            .retain_represented_rational_value(contact.other_parameter.clone(), value.clone());
     }
     Ok(result)
 }
@@ -1990,15 +2017,12 @@ fn parallel_mapped_cusp_represented_rational(
     contact: &BezierAlgebraicCuspSemicircleParallelContact2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Real>>> {
-    if let Some((_, value)) = map
+    if let Some(value) = map
         .data
-        .represented_rational_values
-        .lock()
-        .expect("cusp/parallel value cache mutex poisoned")
-        .iter()
-        .find(|(parameter, _)| parameter == &contact.parallel_parameter)
+        .parameter_cache
+        .cached_represented_rational_value(&contact.parallel_parameter)
     {
-        return Ok(Classification::Decided(value.clone()));
+        return Ok(Classification::Decided(value));
     }
     let Some((cusp_parameter, _, diameter, radius_squared_denominator, speed_squared)) =
         map.data.one_field_system()
@@ -2051,10 +2075,8 @@ fn parallel_mapped_cusp_represented_rational(
     )?;
     if let Classification::Decided(value) = &result {
         map.data
-            .represented_rational_values
-            .lock()
-            .expect("cusp/parallel value cache mutex poisoned")
-            .push((contact.parallel_parameter.clone(), value.clone()));
+            .parameter_cache
+            .retain_represented_rational_value(contact.parallel_parameter.clone(), value.clone());
     }
     Ok(result)
 }
@@ -19660,7 +19682,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                 system,
                             },
                         policy: policy.retained_object_policy(),
-                        represented_rational_values: Mutex::new(Vec::new()),
+                        parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                     }),
                 },
             ));
@@ -19755,7 +19777,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     speed_squared,
                 },
                 policy: policy.retained_object_policy(),
-                represented_rational_values: Mutex::new(Vec::new()),
+                parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         }
     }
@@ -28831,7 +28853,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     angular_tangent: angular_tangent.clone(),
                 },
                 policy: policy.retained_object_policy(),
-                parameter_cache: Mutex::new(Vec::new()),
+                parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         };
         let expression_sign = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
@@ -29198,7 +29220,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         radius_squared_denominator,
                     },
                     policy: policy.retained_object_policy(),
-                    parameter_cache: Mutex::new(Vec::new()),
+                    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                 }),
             })
         } else {
@@ -29997,7 +30019,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         system: system.rational_parameter_map_system(),
                     },
                 policy: policy.retained_object_policy(),
-                parameter_cache: Mutex::new(Vec::new()),
+                parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         };
         self.publish_partitioned_rational_circle_component(
@@ -30112,7 +30134,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                             system: system.rational_parameter_map_system(),
                         },
                     policy: policy.retained_object_policy(),
-                    parameter_cache: Mutex::new(Vec::new()),
+                    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                 }),
             })
         } else {
@@ -30228,7 +30250,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         frame: system.frame,
                     },
                     policy: policy.retained_object_policy(),
-                    parameter_cache: Mutex::new(Vec::new()),
+                    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                 }),
             })
         } else {
@@ -30537,7 +30559,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                 angular_tangent: system.angular_tangent,
                             },
                         policy: policy.retained_object_policy(),
-                        parameter_cache: Mutex::new(Vec::new()),
+                        parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                     }),
                 })
             } else {
@@ -30904,7 +30926,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         radius_squared_denominator,
                     },
                     policy: policy.retained_object_policy(),
-                    parameter_cache: Mutex::new(Vec::new()),
+                    parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
                 }),
             })
         } else {
@@ -31313,7 +31335,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     radius_squared_denominator,
                 },
                 policy: policy.retained_object_policy(),
-                parameter_cache: Mutex::new(Vec::new()),
+                parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         };
 
@@ -32569,45 +32591,41 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     }
 }
 
-impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+impl BezierAlgebraicCuspSemicircleParameterCache2 {
     fn cached_represented_rational_value(
         &self,
         parameter: &BezierParameter2,
     ) -> Option<Option<Real>> {
-        self.data
-            .parameter_cache
+        self.entries
             .lock()
-            .expect("cusp/rational parameter cache mutex poisoned")
+            .expect("cusp parameter cache mutex poisoned")
             .iter()
-            .find_map(|(cached, evidence)| {
-                match evidence {
-                BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RepresentedRational(
+            .find_map(|(cached, evidence)| match evidence {
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(
                     value,
                 ) if cached == parameter => Some(value.clone()),
                 _ => None,
-            }
             })
     }
 
-    fn retain_parameter_cache_evidence(
+    fn retain_evidence(
         &self,
         parameter: BezierParameter2,
-        evidence: BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2,
+        evidence: BezierAlgebraicCuspSemicircleParameterCacheEvidence2,
     ) {
         let mut cache = self
-            .data
-            .parameter_cache
+            .entries
             .lock()
-            .expect("cusp/rational parameter cache mutex poisoned");
+            .expect("cusp parameter cache mutex poisoned");
         let represented = matches!(
             &evidence,
-            BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RepresentedRational(_)
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_)
         );
         if let Some((_, retained)) = cache.iter_mut().find(|(cached, retained)| {
             cached == &parameter
                 && matches!(
                     retained,
-                    BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RepresentedRational(_)
+                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_)
                 ) == represented
         }) {
             *retained = evidence;
@@ -32617,11 +32635,9 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     }
 
     fn retain_represented_rational_value(&self, parameter: BezierParameter2, value: Option<Real>) {
-        self.retain_parameter_cache_evidence(
+        self.retain_evidence(
             parameter,
-            BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RepresentedRational(
-                value,
-            ),
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(value),
         );
     }
 
@@ -32631,15 +32647,16 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         policy: &CurveContext,
     ) -> Option<Option<BezierAlgebraicCuspSemicircleParameter2>> {
         let cusp = self
-            .data
-            .parameter_cache
+            .entries
             .lock()
-            .expect("cusp/rational parameter cache mutex poisoned")
+            .expect("cusp parameter cache mutex poisoned")
             .iter()
             .find_map(|(cached, evidence)| match evidence {
-                BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RetainedCusp(
-                    cusp,
-                ) if cached == parameter => Some(cusp.clone()),
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp(cusp)
+                    if cached == parameter =>
+                {
+                    Some(cusp.clone())
+                }
                 _ => None,
             })?;
         Some(cusp.upgrade().and_then(|cusp| {
@@ -32656,14 +32673,16 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(cusp) = cusp else {
             return;
         };
-        self.retain_parameter_cache_evidence(
+        self.retain_evidence(
             parameter,
-            BezierAlgebraicCuspSemicircleRationalParameterCacheEvidence2::RetainedCusp(
-                Arc::downgrade(cusp),
-            ),
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RetainedCusp(Arc::downgrade(
+                cusp,
+            )),
         );
     }
+}
 
+impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     /// Replays one exact angular linear form at a retained rational contact.
     ///
     /// The ordinary one-field intersection map already owns the correlated
@@ -32960,6 +32979,8 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             return Ok(order);
         }
         let represented = self
+            .data
+            .parameter_cache
             .cached_represented_rational_value(&contact.other_parameter)
             .flatten();
         if let Some(represented) = represented {
@@ -101807,10 +101828,10 @@ mod conversion_tests {
     #[test]
     fn nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority() {
         assert!(
-            std::mem::size_of::<BezierAlgebraicCuspSemicircleRationalParameterCacheEntry2>()
+            std::mem::size_of::<BezierAlgebraicCuspSemicircleParameterCacheEntry2>()
                 <= std::mem::size_of::<(BezierParameter2, Option<Real>)>(),
         );
-        let (_, quarter) = nonrepresented_center_rational_quarter();
+        let (center_x, quarter) = nonrepresented_center_rational_quarter();
         let algebraic_target = algebraic_parameter(vec![
             (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
             Real::zero(),
@@ -101932,10 +101953,114 @@ mod conversion_tests {
                     chamfer_cut.order_to_real(&represented, &policy).unwrap(),
                 );
             }
+            let Classification::Decided(chamfer_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    target_semicircle.clone(),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    chamfer_cut.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the multi-field chamfer must bound a selected-circle fragment");
+            };
+            let to_origin = Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                -center_x.clone(),
+                Real::zero(),
+            )
+            .unwrap();
+            let transformed = chamfer_fragment.transform_similarity(&to_origin).unwrap();
+            let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
+            let BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(analytic_map) =
+                &analytic_overlap.parameter_map
+            else {
+                panic!("the general analytic overlap must retain its analytic parameter map");
+            };
+            let BezierAlgebraicCuspSemicircleParameter2::Mapped(analytic_authority) =
+                transformed.end_parameter()
+            else {
+                panic!("the transformed multi-field chamfer must retain mapped authority");
+            };
+            let analytic_source_owners = Arc::strong_count(analytic_authority);
+            let analytic_inversion = analytic_overlap
+                .other_parameter_for_cusp(transformed.end_parameter(), &policy)
+                .unwrap();
+            assert_eq!(
+                Arc::strong_count(analytic_authority),
+                analytic_source_owners,
+            );
+            let Classification::Decided(analytic_target) = analytic_inversion else {
+                panic!(
+                    "the multi-field chamfer must invert through the analytic overlap: {analytic_inversion:?}"
+                );
+            };
+            let Classification::Decided(analytic_round_trip) = analytic_overlap
+                .cusp_parameter_for_other(&analytic_target, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic target must return the multi-field chamfer cut");
+            };
+            assert!(
+                analytic_round_trip.shares_exact_evidence(transformed.end_parameter()),
+                "the analytic inverse cache must return the certified source authority",
+            );
+            for numerator in 0_i8..=8_i8 {
+                let represented =
+                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                assert_eq!(
+                    analytic_round_trip
+                        .order_to_real(&represented, &policy)
+                        .unwrap(),
+                    transformed
+                        .end_parameter()
+                        .order_to_real(&represented, &policy)
+                        .unwrap(),
+                );
+            }
+            let expired_analytic_target = analytic_target.clone();
+            drop(analytic_round_trip);
+            drop(analytic_target);
+            drop(transformed);
+            drop(chamfer_fragment);
+            assert!(matches!(
+                analytic_map
+                    .data
+                    .parameter_cache
+                    .retained_cusp_parameter(&expired_analytic_target, &policy),
+                Some(None),
+            ));
+            let Classification::Decided(expired_analytic_round_trip) = analytic_overlap
+                .cusp_parameter_for_other(&expired_analytic_target, &policy)
+                .unwrap()
+            else {
+                panic!("expired analytic inverse authority must replay exact map correlation");
+            };
+            assert!(matches!(
+                expired_analytic_round_trip,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel {
+                            contact: BezierAlgebraicCuspSemicircleParallelContact2 {
+                                correlated: true,
+                                ..
+                            },
+                            ..
+                        }
+                    )
+            ));
             drop(round_trip);
             drop(chamfer_cut);
             assert!(matches!(
-                target.retained_cusp_parameter(&target_cut, &policy),
+                target
+                    .data
+                    .parameter_cache
+                    .retained_cusp_parameter(&target_cut, &policy),
                 Some(None),
             ));
             let Classification::Decided(expired_round_trip) = rebuilt
