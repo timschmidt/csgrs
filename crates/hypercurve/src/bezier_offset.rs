@@ -323,7 +323,6 @@ pub struct BezierParallel2 {
 /// of these five vectors. Keeping the frame once avoids rebuilding the same
 /// high-degree products for a cusp join's center and both endpoints.
 #[derive(Clone, Debug)]
-#[allow(dead_code)] // Admitted only after its complete arrangement operations land.
 pub(crate) struct BezierParallelAlgebraicCuspFrame2 {
     data: Arc<BezierParallelAlgebraicCuspFrameData2>,
 }
@@ -390,7 +389,6 @@ struct BezierSelectedRadialFrameData2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierParallelAlgebraicCuspFrameData2 {
     /// Analytic source provenance when this frame was built at a parallel
     /// cusp. A direct retained-center frame has no source parallel; all circle
@@ -476,7 +474,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircle2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleData2 {
     frame: BezierSelectedCircleFrame2,
     radial_distance: Real,
@@ -493,7 +490,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircle2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspCircleRationalSystem2 {
     /// Circle incidence, equal to zero at every contact.
     pub(crate) incidence: BivariatePolynomial,
@@ -514,7 +510,6 @@ pub(crate) struct BezierAlgebraicCuspCircleRationalSystem2 {
 /// A certified rational bracket or represented witness for one semicircle
 /// contact parameter.
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParameterBracket2 {
     Exact(Real),
     Interval(BezierParameterInterval),
@@ -523,7 +518,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleParameterBracket2 {
 /// Pair-shared local-field map from rational-curve contacts to the algebraic
 /// semicircle's monotone parameter.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicircleRationalParameterMapData2>,
 }
@@ -573,7 +567,6 @@ struct BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMapData2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
     /// Stable exact carrier identity for comparisons against contacts replayed
     /// through a correlated retained chord.
@@ -649,7 +642,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMapData2 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleContactLocation2 {
     Interior,
     Start,
@@ -657,7 +649,6 @@ pub(crate) enum BezierAlgebraicCuspSemicircleContactLocation2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleRationalContact2 {
     pub(crate) other_parameter: BezierParameter2,
     pub(crate) point: RationalBezierIntersectionPointEvidence2,
@@ -706,7 +697,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 enum BezierAlgebraicCuspSemicircleRationalCorrelation2 {
     /// Use the relation retained by the pair-shared parameter map.
     Map,
@@ -739,7 +729,6 @@ struct BezierAlgebraicCuspSemicircleRationalComponentBoundary2 {
 /// point and tangent evidence stay on the transient contact instead of being
 /// duplicated in every range endpoint.
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleRationalMapContact2 {
     other_parameter: BezierParameter2,
     location: BezierAlgebraicCuspSemicircleContactLocation2,
@@ -747,7 +736,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalMapContact2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
     Contacts(Vec<BezierAlgebraicCuspSemicircleRationalContact2>),
     SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
@@ -774,7 +762,6 @@ enum BezierAlgebraicCuspParallelComponentReplay2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspTwoTermExpression2 {
     /// Rational term `A`.
     rational: BivariatePolynomial,
@@ -853,7 +840,6 @@ struct BezierSelectedParallelNormalRationalTangentCandidate2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleParallelSystem2 {
     /// Squared circle incidence used only for complete candidate projection.
     incidence: BivariatePolynomial,
@@ -875,13 +861,11 @@ struct BezierAlgebraicCuspSemicircleParallelSystem2 {
 }
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleParallelParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicircleParallelParameterMapData2>,
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
     /// Stable exact carrier identity for rejecting mapped point evidence that
     /// was retained across a transform without transforming this correlation.
@@ -944,7 +928,6 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMapData2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleParallelContact2 {
     pub(crate) parallel_parameter: BezierParameter2,
     pub(crate) tangent_cross_sign: Option<RealSign>,
@@ -953,7 +936,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleParallelContact2 {
 }
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 enum BezierAlgebraicCuspSemicircleMappedOverlapMap2 {
     Rational(BezierAlgebraicCuspSemicircleRationalParameterMap2),
     Parallel(BezierAlgebraicCuspSemicircleParallelParameterMap2),
@@ -968,7 +950,6 @@ enum BezierAlgebraicCuspSemicircleMappedOverlapMap2 {
 /// increasing parameters on the two supporting carriers, independently of
 /// either boundary fragment's traversal bit.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicircleMappedOverlap2 {
     other_range: BezierParameterRange2,
     cusp_start: BezierAlgebraicCuspSemicircleParameter2,
@@ -987,7 +968,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircleMappedOverlap2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
     pub(crate) const fn other_range(&self) -> &BezierParameterRange2 {
         &self.other_range
@@ -2920,7 +2900,6 @@ fn mapped_circle_tangent_parameter_candidates(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
     Contacts(Vec<BezierAlgebraicCuspSemicircleParallelContact2>),
     SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
@@ -2937,13 +2916,11 @@ pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
 /// One-word pair-shared maps from a retained circle-circle contact to both
 /// algebraic semicircle parameters.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicirclePairParameterMap2 {
     data: Arc<BezierAlgebraicCuspSemicirclePairParameterMapData2>,
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicirclePairParameterMapData2 {
     first_semicircle: BezierAlgebraicCuspSemicircle2,
     second_semicircle: BezierAlgebraicCuspSemicircle2,
@@ -2986,7 +2963,6 @@ enum BezierRepresentedCircleContactParameterData2 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicirclePairContact2 {
     /// `-1` and `+1` select the two transverse circle intersections; zero is
     /// the unique tangent branch.
@@ -7219,7 +7195,6 @@ impl PartialEq for BezierAlgebraicCuspDerivedPointSource2 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicirclePairEndpoint2 {
     FirstStart,
     FirstEnd,
@@ -7230,7 +7205,6 @@ pub(crate) enum BezierAlgebraicCuspSemicirclePairEndpoint2 {
 /// One-word exact positive-length overlap between two selected algebraic
 /// semicircles on the same supporting circle.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) struct BezierAlgebraicCuspSemicirclePairOverlap2 {
     data: Arc<BezierAlgebraicCuspSemicirclePairOverlapData2>,
 }
@@ -7242,7 +7216,6 @@ pub(crate) struct BezierAlgebraicCuspSemicirclePairOverlap2 {
 /// primitive element for the independent selected roots. Exact values remain
 /// inline, while mapped values share their larger proof through one pointer.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParameter2 {
     Exact(Real),
     Mapped(Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>),
@@ -7265,7 +7238,6 @@ pub(crate) enum BezierSelectedChordNormalAnchor2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     Rational {
         map: BezierAlgebraicCuspSemicircleRationalParameterMap2,
@@ -9877,7 +9849,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircleFragment2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicircleFragmentData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
     start: BezierAlgebraicCuspSemicircleParameter2,
@@ -9924,7 +9895,6 @@ pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
     parameter_map: BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2,
     first_boundaries: [BezierAlgebraicCuspSemicirclePairEndpoint2; 2],
@@ -9934,7 +9904,6 @@ struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 enum BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2 {
     ExactEndpoints {
         first_semicircle: BezierAlgebraicCuspSemicircle2,
@@ -10590,7 +10559,6 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
 }
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) enum BezierAlgebraicCuspSemicirclePairIntersections2 {
     NoContacts,
     Contacts {
@@ -10601,7 +10569,6 @@ pub(crate) enum BezierAlgebraicCuspSemicirclePairIntersections2 {
     Overlap(BezierAlgebraicCuspSemicirclePairOverlap2),
 }
 
-#[allow(dead_code)]
 impl BezierSelectedCircleFrame2 {
     fn shares_storage(&self, other: &Self) -> bool {
         match (self, other) {
@@ -10722,36 +10689,6 @@ impl BezierSelectedCircleFrame2 {
             .point_numerators_at_parallel_distance(distance))
     }
 
-    fn point_image_from_frame_scales(
-        &self,
-        source_scale: &Real,
-        normal_scale: &Real,
-        tangent_scale: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
-        self.rational_required()?.point_image_from_frame_scales(
-            source_scale,
-            normal_scale,
-            tangent_scale,
-            policy,
-        )
-    }
-
-    fn tangent_image_from_frame_scales(
-        &self,
-        normal_scale: &Real,
-        tangent_scale: &Real,
-        denominator_scale: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
-        self.rational_required()?.tangent_image_from_frame_scales(
-            normal_scale,
-            tangent_scale,
-            denominator_scale,
-            policy,
-        )
-    }
-
     fn point_image_at_parallel_distance(
         &self,
         distance: &Real,
@@ -10776,7 +10713,6 @@ impl BezierSelectedCircleFrame2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierParallelAlgebraicCuspFrame2 {
     #[inline]
     fn center_parallel_distance(&self) -> Real {
@@ -29860,7 +29796,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberContact2 {
         )
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     fn point_coordinate_order_to_real(
         &self,
         axis: Axis2,
@@ -30297,7 +30233,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
             }))
     }
 
-    #[allow(dead_code)]
     fn point_coordinate_order_to_real(
         &self,
         other_parameter: &BezierAlgebraicSelectedFiberParameter2,
@@ -30594,6 +30529,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
         )
     }
 
+    #[cfg(test)]
     fn point_coordinate_order_to_real(
         &self,
         other_parameter: &BezierAlgebraicSelectedFiberParameter2,
@@ -30625,7 +30561,6 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     /// Replays one exact linear combination of the selected-circle tangent
     /// crossed and dotted with a retained rational-line tangent.
@@ -31005,6 +30940,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
 
     /// Refines one contact to a represented witness or a certified rational
     /// bracket in the semicircle's parameter domain.
+    #[cfg(test)]
     pub(crate) fn contact_parameter_bracket(
         &self,
         contact: &BezierAlgebraicCuspSemicircleRationalContact2,
@@ -31072,7 +31008,6 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
     fn selected_radial_tangent_cross_dot_source_sign(
         &self,
@@ -31316,7 +31251,6 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
     fn compact_source_parameters(&self) -> Option<[BezierParameter2; 2]> {
         let first = self.data.first_semicircle.data.frame.rational()?;
@@ -37662,16 +37596,17 @@ impl PartialEq for BezierAlgebraicCuspChordDerivedPoint2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicirclePairOverlap2 {
     pub(crate) fn orientation(&self) -> RationalBezierOverlapOrientation2 {
         self.data.orientation
     }
 
+    #[cfg(test)]
     pub(crate) fn first_boundaries(&self) -> [BezierAlgebraicCuspSemicirclePairEndpoint2; 2] {
         self.data.first_boundaries
     }
 
+    #[cfg(test)]
     pub(crate) fn second_boundaries(&self) -> [BezierAlgebraicCuspSemicirclePairEndpoint2; 2] {
         self.data.second_boundaries
     }
@@ -38272,6 +38207,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         )
     }
 
+    #[cfg(test)]
     pub(crate) fn first_start_parameter_bracket(
         &self,
         refinement_steps: usize,
@@ -38279,6 +38215,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         self.endpoint_parameter_bracket(self.data.first_boundaries[0], true, refinement_steps)
     }
 
+    #[cfg(test)]
     pub(crate) fn first_end_parameter_bracket(
         &self,
         refinement_steps: usize,
@@ -38286,6 +38223,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         self.endpoint_parameter_bracket(self.data.first_boundaries[1], true, refinement_steps)
     }
 
+    #[cfg(test)]
     pub(crate) fn second_start_parameter_bracket(
         &self,
         refinement_steps: usize,
@@ -38293,6 +38231,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         self.endpoint_parameter_bracket(self.data.second_boundaries[0], false, refinement_steps)
     }
 
+    #[cfg(test)]
     pub(crate) fn second_end_parameter_bracket(
         &self,
         refinement_steps: usize,
@@ -38301,7 +38240,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
     }
 }
 
-#[allow(dead_code)]
 impl BezierAlgebraicCuspSemicircleParameter2 {
     pub(crate) fn retains_pair_contact(&self) -> bool {
         matches!(
@@ -77808,7 +77746,7 @@ impl BezierParallel2 {
         }
     }
 
-    #[allow(dead_code)] // Shared by the staged algebraic cusp-join carrier.
+    #[cfg(test)]
     fn algebraic_parallel_cusp_frame(
         &self,
         parameter: &BezierAlgebraicParameter2,
@@ -77907,7 +77845,7 @@ impl BezierParallel2 {
     /// `None` certifies that the supplied algebraic parameter is not a regular
     /// cusp on the selected signed-curvature branch. Predicate uncertainty is
     /// preserved separately in [`Classification`].
-    #[allow(dead_code)] // Shared by the staged algebraic cusp-join carrier.
+    #[cfg(test)]
     pub(crate) fn algebraic_parallel_cusp_point_image(
         &self,
         parameter: &BezierAlgebraicParameter2,
@@ -77925,7 +77863,7 @@ impl BezierParallel2 {
         )
     }
 
-    #[allow(dead_code)] // Admitted once every arrangement operation is complete.
+    #[cfg(test)]
     pub(crate) fn algebraic_cusp_semicircle(
         &self,
         parameter: &BezierAlgebraicParameter2,
