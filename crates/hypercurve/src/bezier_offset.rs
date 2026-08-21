@@ -58,8 +58,8 @@ use crate::{
 use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge as ZeroStatus};
 use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberProjectionStatus,
-    AlgebraicFiberRootCountStatus, AlgebraicFiberRootIsolationConfig,
-    AlgebraicFiberRootIsolationStatus, PredicateCertainty,
+    AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
+    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
@@ -67,6 +67,7 @@ use hypersolve::{
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
     isolate_bivariate_fiber_roots_at_algebraic_parameter,
     project_bivariate_fiber_at_algebraic_parameter_with_max_degree,
+    reduce_bivariate_rational_function_at_algebraic_parameter,
 };
 use hypersolve::{
     AlgebraicRootAffineTransformStatus, AlgebraicRootComparisonStatus, AlgebraicRootKind,
@@ -3306,6 +3307,57 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     /// Returns the represented scalar when exact fiber isolation recovered one.
     pub(crate) fn represented_value(&self) -> Option<&Real> {
         self.data.root.exact_root.as_ref()
+    }
+
+    /// Materializes a rational function of this selected scalar when its
+    /// exact fiber residue belongs to the retained base field.
+    ///
+    /// If `u` is selected by `F(alpha, u) = 0`, Hypersolve first reduces the
+    /// numerator and denominator in `Q(alpha)[u] / (F)`. A fiber-independent
+    /// residue is then represented directly as a rational image of `alpha`,
+    /// avoiding both the global projection of `u` and subsequent degree
+    /// multiplication by the source expression.
+    fn represented_retained_field_rational_value(
+        &self,
+        numerator: &[Real],
+        denominator: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<AlgebraicRootRepresentation>>> {
+        self.validate_policy(policy)?;
+        let retained_root = policy.strict_predicate_pass(|| {
+            parameter_representation(&self.data.authority.data.retained_parameter, policy)
+        });
+        let report = policy.strict_predicate_pass(|| {
+            reduce_bivariate_rational_function_at_algebraic_parameter(
+                &self.data.authority.data.incidence,
+                &bivariate_outer_product(&[Real::one()], numerator),
+                &bivariate_outer_product(&[Real::one()], denominator),
+                CurveResultantParameter::First,
+                &retained_root,
+                policy.predicate_policy(),
+            )
+        });
+        if report.certainty == PredicateCertainty::Approximate
+            || report.status != AlgebraicFiberRationalReductionStatus::ReducedToRetainedField
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let (Some(numerator), Some(denominator)) = (
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &report.numerator_coefficients),
+            DenseTensorPolynomial::from_axis_polynomial(2, 0, &report.denominator_coefficients),
+        ) else {
+            return Ok(Classification::Decided(None));
+        };
+        Ok(
+            match represented_tensor_ratio(
+                &numerator,
+                &denominator,
+                std::slice::from_ref(&retained_root),
+            ) {
+                Classification::Decided(value) => Classification::Decided(Some(value)),
+                Classification::Uncertain(_) => Classification::Decided(None),
+            },
+        )
     }
 
     /// Promotes this compact local scalar only when an exact construction
@@ -61235,6 +61287,63 @@ impl BezierAnalyticParallelPoint2 {
                     .into(),
             ));
         }
+        let source = self.data.parallel.source_power_basis()?;
+        let unit = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit);
+        let zero_frame = self.data.parallel.distance().zero_status() == ZeroStatus::Zero
+            && self.data.tangent_distance.zero_status() == ZeroStatus::Zero;
+        let translated_coordinates =
+            |x: AlgebraicRootRepresentation, y: AlgebraicRootRepresentation| {
+                let x =
+                    represented_affine_coordinate(&[(&x, &Real::one())], &self.data.translation_x);
+                let y =
+                    represented_affine_coordinate(&[(&y, &Real::one())], &self.data.translation_y);
+                match (x, y) {
+                    (Classification::Decided(x), Classification::Decided(y)) => {
+                        Classification::Decided([x, y])
+                    }
+                    (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+                    | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                    _ => Classification::Uncertain(UncertaintyReason::Predicate),
+                }
+            };
+        if zero_frame
+            && let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
+                &self.data.parameter
+        {
+            // Construction may use the retained-field reduction only after an
+            // exact predicate proves that this rational chart is finite at the
+            // selected root. APPROXIMATE_512 remains terminal equality policy,
+            // never construction evidence.
+            let denominator_predicate = bivariate_outer_product(&[Real::one()], weight);
+            let denominator_nonzero = match policy.strict_predicate_pass(|| {
+                parameter.predicate_sign(&denominator_predicate, policy)
+            })? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => true,
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => false,
+            };
+            if denominator_nonzero {
+                let x = parameter.represented_retained_field_rational_value(
+                    source.x_numerator,
+                    weight,
+                    policy,
+                )?;
+                let y = parameter.represented_retained_field_rational_value(
+                    source.y_numerator,
+                    weight,
+                    policy,
+                )?;
+                if let (Classification::Decided(Some(x)), Classification::Decided(Some(y))) = (x, y)
+                {
+                    return Ok(translated_coordinates(x, y));
+                }
+            }
+        }
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
@@ -61247,45 +61356,50 @@ impl BezierAnalyticParallelPoint2 {
             }
         };
         let parameter = bezier_parameter_root_representation(&parameter);
-        let source = self.data.parallel.source_power_basis()?;
-        let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
-        let unit = [Real::one()];
-        let weight = source.weight.unwrap_or(&unit);
         let tensor =
             |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(2, 0, coefficients);
-        let (
-            Some(x_numerator),
-            Some(y_numerator),
-            Some(weight_tensor),
-            Some(tangent_x),
-            Some(tangent_y),
-        ) = (
+        let (Some(x_numerator), Some(y_numerator), Some(weight_tensor)) = (
             tensor(source.x_numerator),
             tensor(source.y_numerator),
             tensor(weight),
-            tensor(frame_tangent_x),
-            tensor(frame_tangent_y),
-        )
-        else {
+        ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let selected = std::slice::from_ref(&parameter);
         let source_x = represented_tensor_ratio(&x_numerator, &weight_tensor, selected);
         let source_y = represented_tensor_ratio(&y_numerator, &weight_tensor, selected);
-        let tangent_x = represented_dense_value_refined(&tangent_x, selected);
-        let tangent_y = represented_dense_value_refined(&tangent_y, selected);
-        let reason = [&source_x, &source_y, &tangent_x, &tangent_y]
+        let reason = [&source_x, &source_y]
             .into_iter()
             .find_map(|value| match value {
                 Classification::Decided(_) => None,
                 Classification::Uncertain(reason) => Some(*reason),
             });
-        let (
-            Classification::Decided(source_x),
-            Classification::Decided(source_y),
-            Classification::Decided(tangent_x),
-            Classification::Decided(tangent_y),
-        ) = (source_x, source_y, tangent_x, tangent_y)
+        let (Classification::Decided(source_x), Classification::Decided(source_y)) =
+            (source_x, source_y)
+        else {
+            return Ok(Classification::Uncertain(
+                reason.unwrap_or(UncertaintyReason::Unsupported),
+            ));
+        };
+        if zero_frame {
+            return Ok(translated_coordinates(source_x, source_y));
+        }
+
+        let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
+        let (Some(tangent_x), Some(tangent_y)) = (tensor(frame_tangent_x), tensor(frame_tangent_y))
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let tangent_x = represented_dense_value_refined(&tangent_x, selected);
+        let tangent_y = represented_dense_value_refined(&tangent_y, selected);
+        let reason = [&tangent_x, &tangent_y]
+            .into_iter()
+            .find_map(|value| match value {
+                Classification::Decided(_) => None,
+                Classification::Uncertain(reason) => Some(*reason),
+            });
+        let (Classification::Decided(tangent_x), Classification::Decided(tangent_y)) =
+            (tangent_x, tangent_y)
         else {
             return Ok(Classification::Uncertain(
                 reason.unwrap_or(UncertaintyReason::Unsupported),
@@ -110504,6 +110618,76 @@ mod conversion_tests {
             assert_eq!(
                 compare_reals(&x.interval.upper, &Real::one(), &CurveContext::STRICT,),
                 Some(std::cmp::Ordering::Less)
+            );
+        }
+    }
+
+    #[test]
+    fn correlated_degree_fifteen_selected_point_reduces_before_materialization() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
+        let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+        let mut control_points = vec![Point2::new(three_fifths.clone(), four_fifths.clone()); 15];
+        control_points.push(Point2::new(
+            &three_fifths + Real::from(32_768_i32),
+            four_fifths.clone(),
+        ));
+        let parallel = RationalBezier2::try_new(control_points, vec![Real::one(); 16])
+            .unwrap()
+            .parallel_left(Real::zero())
+            .unwrap();
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter =
+                degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
+            assert!(matches!(
+                parameter.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let retained_root = parameter_representation(
+                &parameter.data.authority.data.retained_parameter,
+                &policy,
+            );
+            let point = BezierAnalyticParallelPoint2::new_selected_fiber(
+                parallel.clone(),
+                parameter,
+                &policy,
+            );
+            let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                point.represented_coordinates(attempt)
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            let Classification::Decided([x, y]) = outcome.value else {
+                panic!("the correlated source image must materialize exactly");
+            };
+            assert_eq!(x.polynomial_coefficients.len() - 1, 9);
+            assert_eq!(y.exact_rational_witness(), Some(&four_fifths));
+
+            let Classification::Decided(expected_x) =
+                represented_affine_coordinate(&[(&retained_root, &Real::one())], &three_fifths)
+            else {
+                panic!("the retained affine image must materialize");
+            };
+            let equality = compare_algebraic_root_representations_with_refinement(
+                &x,
+                &expected_x,
+                AlgebraicRootRefinementComparisonConfig {
+                    policy: hypersolve::PredicatePolicy::STRICT,
+                    ..AlgebraicRootRefinementComparisonConfig::default()
+                },
+            );
+            assert!(
+                matches!(
+                    equality.comparison.status,
+                    AlgebraicRootComparisonStatus::Compared
+                        | AlgebraicRootComparisonStatus::SameRepresentation
+                ),
+                "comparison={equality:?}; x={x:?}; expected={expected_x:?}"
+            );
+            assert_eq!(
+                equality.comparison.ordering,
+                Some(std::cmp::Ordering::Equal)
             );
         }
     }
