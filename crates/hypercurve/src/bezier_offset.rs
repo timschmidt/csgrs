@@ -3292,6 +3292,38 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
             distinct_root_count: 1,
         })
     }
+
+    /// Retains an ordinary exact scalar as one root in the selected base
+    /// field without constructing a compositum or degree-multiplied norm.
+    ///
+    /// The univariate root relation is independent of `alpha`, but keeping it
+    /// under the selected authority lets later point and tangent predicates
+    /// evaluate the scalar together with the already-selected circle frame.
+    fn from_bezier_parameter(
+        retained_parameter: BezierAlgebraicParameter2,
+        parameter: BezierParameter2,
+        policy: &CurveContext,
+    ) -> BezierAlgebraicSelectedFiberParameter2 {
+        match parameter {
+            BezierParameter2::Exact(value) => {
+                Self::exact_parameter(retained_parameter, value, policy)
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                let root = IsolatedRootInterval {
+                    lower: parameter.interval().start().clone(),
+                    upper: parameter.interval().end().clone(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                };
+                Self::new(
+                    bivariate_outer_product(&[Real::one()], parameter.polynomial().coefficients()),
+                    retained_parameter,
+                    policy,
+                )
+                .parameter(root)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -30369,6 +30401,74 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
+        }
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter
+            && let Some((source_parameter, source_tangent, source_policy)) =
+                data.coincident_tangent_power_source(policy)?
+        {
+            if !policy.accepts_retained_policy(source_policy) {
+                return Err(CurveError::Topology(
+                    "selected overlap tangent source used a different predicate policy".into(),
+                ));
+            }
+            let target_tangent = rational_parametric_tangent_numerator(
+                self.map.data.curve.homogeneous_power_basis()?,
+            );
+            let candidates = match mapped_circle_tangent_parameter_candidates(
+                &source_parameter,
+                &source_tangent,
+                &target_tangent,
+                policy,
+            )? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let retained_parameter = self
+                .other_start
+                .data
+                .authority
+                .data
+                .retained_parameter
+                .clone();
+            let mut retained = None;
+            for candidate in candidates {
+                let candidate = BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
+                    retained_parameter.clone(),
+                    candidate,
+                    policy,
+                );
+                match self.contains_other_parameter(&candidate, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                if retained.is_some() {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                retained = Some(candidate);
+            }
+            return retained.map_or(
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+                |parameter| Ok(Classification::Decided(parameter)),
+            );
+        }
+        if matches!(
+            parameter,
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
+        ) {
+            match parameter.represented_rational_value(policy)? {
+                Classification::Decided(Some(parameter)) => {
+                    return self.other_parameter_for_exact_cusp(&parameter, policy);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
         let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = parameter else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -92106,6 +92206,73 @@ mod conversion_tests {
         (semicircle, parallel, overlap.clone())
     }
 
+    fn selected_fiber_rational_quarter_overlap(
+        policy: &CurveContext,
+    ) -> (
+        BezierAlgebraicCuspSemicircle2,
+        RationalBezier2,
+        BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2,
+    ) {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let support = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(2, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let quarter = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::new(half.clone(), Real::one()),
+                Point2::new(-half.clone(), Real::one()),
+                Point2::new(-half.clone(), Real::zero()),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-half.clone(), Real::one(), Real::one()],
+            policy,
+        )
+        .unwrap() else {
+            panic!("the selected-center polynomial must construct");
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), half, policy).unwrap()
+        else {
+            panic!("the selected-center interval must construct");
+        };
+        let Classification::Decided(center_parameter) =
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap()
+        else {
+            panic!("the selected center must isolate");
+        };
+        let Classification::Decided(Some(circle)) =
+            BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                support,
+                BezierParameter2::Algebraic(center_parameter),
+                Real::one(),
+                false,
+                policy,
+            )
+            .unwrap()
+        else {
+            panic!("the algebraic selected circle must construct");
+        };
+        let Classification::Decided(
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(overlaps),
+        ) = circle.rational_intersections(&quarter, policy).unwrap()
+        else {
+            panic!("the rational quarter must remain in the selected fiber");
+        };
+        let [overlap] = overlaps.as_slice() else {
+            panic!("the selected rational quarter must retain one overlap");
+        };
+        (circle, quarter, overlap.clone())
+    }
+
     fn incident_domain(
         parallel: &BezierParallel2,
         anchor: Real,
@@ -98999,6 +99166,95 @@ mod conversion_tests {
             };
             assert!(complementary);
             assert_inverts(overlap, &diameter_cut);
+        }
+    }
+
+    #[test]
+    fn selected_fiber_overlap_inverts_transported_mapped_cusp_cut() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (source_semicircle, _, source_overlap) = general_analytic_circle_overlap(&policy);
+            let analytic_cut = algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let Classification::Decided(source_cut) = source_overlap
+                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic cut must retain its compact cusp parameter");
+            };
+            let Classification::Decided(source_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    source_semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    source_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the mapped cut must bound a retained circle fragment");
+            };
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let quarter_turn = Similarity2::try_from_real_affine(
+                Real::zero(),
+                Real::from(-1_i8),
+                Real::one(),
+                Real::zero(),
+                half,
+                Real::zero(),
+            )
+            .unwrap();
+            let transformed = source_fragment.transform_similarity(&quarter_turn).unwrap();
+            let (target_circle, target_curve, target_overlap) =
+                selected_fiber_rational_quarter_overlap(&policy);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                    reversed_overlaps,
+                ),
+            ) = target_circle
+                .rational_intersections(&target_curve.reversed(), &policy)
+                .unwrap()
+            else {
+                panic!("the reversed rational quarter must remain in the selected fiber");
+            };
+            let [reversed_overlap] = reversed_overlaps.as_slice() else {
+                panic!("the reversed selected quarter must retain one overlap");
+            };
+
+            for (target_overlap, expected) in [
+                (&target_overlap, analytic_cut.clone()),
+                (reversed_overlap, analytic_cut.unit_complement()),
+            ] {
+                let Classification::Decided(target_cut) = target_overlap
+                    .other_parameter_for_cusp(transformed.end_parameter(), &policy)
+                    .unwrap()
+                else {
+                    panic!("the transported cut must invert into the selected rational fiber");
+                };
+                assert_eq!(
+                    target_cut.cmp_bezier_parameter(&expected, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                );
+                let Classification::Decided(round_trip) = target_overlap
+                    .cusp_parameter_for_other(&target_cut, &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected-fiber cut must map back to the selected circle");
+                };
+                for numerator in 0_i8..=8_i8 {
+                    let represented =
+                        (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                    assert_eq!(
+                        round_trip.order_to_real(&represented, &policy).unwrap(),
+                        transformed
+                            .end_parameter()
+                            .order_to_real(&represented, &policy)
+                            .unwrap(),
+                    );
+                }
+            }
         }
     }
 
