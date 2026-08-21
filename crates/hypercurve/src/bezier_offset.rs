@@ -12312,9 +12312,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         point: RationalBezierIntersectionPointEvidence2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameter2>> {
-        if !self.uses_selected_parallel_normal_frame() && !self.uses_selected_chord_normal_frame() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
         if source_direction == RealSign::Zero || radial_product_sign == RealSign::Zero {
             return Err(CurveError::Topology(
                 "a retained round contact supplied a zero orientation factor".into(),
@@ -26507,6 +26504,42 @@ impl BezierAlgebraicCuspSemicircle2 {
         self.rational_intersections_internal(other, true, policy)
     }
 
+    /// Retains a rational-frame circle contact in the selected center fiber
+    /// when global resultant projection cannot sign its coefficients.
+    ///
+    /// Every expression here is the zero-radical specialization of the
+    /// general selected-parallel-normal system. Reusing that local authority
+    /// avoids a duplicate solver and keeps the contact as one shared root
+    /// allocation rather than a degree-multiplied global scalar.
+    fn rational_frame_selected_fiber_intersections(
+        &self,
+        other: &RationalBezier2,
+        system: &BezierAlgebraicCuspCircleRationalSystem2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
+        let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
+        let pure = |rational: &BivariatePolynomial| BezierAlgebraicCuspTwoTermExpression2 {
+            rational: rational.clone(),
+            radical: zero.clone(),
+        };
+        self.selected_parallel_normal_rational_selected_fiber_intersections(
+            other,
+            BezierSelectedParallelNormalCircleRationalSystem2 {
+                incidence: system.incidence.clone(),
+                circle: pure(&system.incidence),
+                selected_half_plane: system.selected_half_plane.clone(),
+                diameter: pure(&system.diameter_side),
+                radius_squared_denominator: system.radius_squared_denominator.clone(),
+                speed_squared: BivariatePolynomial::new(vec![vec![Real::one()]]),
+                tangent_cross: pure(&system.tangent_cross),
+                angular_tangent: pure(&system.angular_tangent),
+            },
+            self.cusp_parameter().clone(),
+            None,
+            policy,
+        )
+    }
+
     fn selected_parallel_normal_rational_selected_fiber_intersections(
         &self,
         other: &RationalBezier2,
@@ -29004,52 +29037,71 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let mut diameter_side = None;
-        let candidates =
-            match algebraic_selected_fiber_parameters(&incidence, self.cusp_parameter(), policy)? {
-                Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
-                    parameters,
-                )) => parameters,
-                Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-                    let diameter_side = match reduce(&system.diameter_side)? {
-                        Classification::Decided(polynomial) => polynomial,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let radius_squared_denominator =
-                        match reduce(&system.radius_squared_denominator)? {
-                            Classification::Decided(polynomial) => polynomial,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
-                    let angular_tangent = match reduce(&system.angular_tangent)? {
-                        Classification::Decided(polynomial) => polynomial,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    return Ok(self
-                        .replay_rational_circle_component(
-                            other,
-                            selected_half_plane,
-                            diameter_side,
-                            radius_squared_denominator,
-                            angular_tangent,
-                            policy,
-                        )?
-                        .map(|intersections| (intersections, None)));
-                }
-                Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
-                    return Ok(Classification::Decided((
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-                        None,
-                    )));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        // Root enumeration is construction evidence. Exhaust it with the
+        // requested policy's terminal approximation suppressed; only later
+        // contact/equality predicates may consume APPROXIMATE_512. If the
+        // degree-multiplied projection cannot sign its `Real` coefficients,
+        // the compact selected-fiber authority below remains exact.
+        let projection = policy.strict_predicate_pass(|| {
+            algebraic_selected_fiber_parameters(&incidence, self.cusp_parameter(), policy)
+        })?;
+        let candidates = match projection {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+                parameters
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
+                let diameter_side = match reduce(&system.diameter_side)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let angular_tangent = match reduce(&system.angular_tangent)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return Ok(self
+                    .replay_rational_circle_component(
+                        other,
+                        selected_half_plane,
+                        diameter_side,
+                        radius_squared_denominator,
+                        angular_tangent,
+                        policy,
+                    )?
+                    .map(|intersections| (intersections, None)));
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => {
+                return Ok(Classification::Decided((
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
+                    None,
+                )));
+            }
+            Classification::Uncertain(UncertaintyReason::RealSign) => {
+                // The degree-multiplied projection can leave every
+                // resultant coefficient as an unresolved `Real` even
+                // though the original bivariate fiber is regular. Keep
+                // the target root in the selected cusp field and let the
+                // local Hypersolve isolator operate on the unreduced
+                // incidence instead of flattening that field.
+                return Ok(policy
+                    .strict_predicate_pass(|| {
+                        self.rational_frame_selected_fiber_intersections(other, &system, policy)
+                    })?
+                    .map(|intersections| (intersections, None)));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let cusp_parameter = BezierParameter2::Algebraic(self.cusp_parameter().clone());
         let mut contacts =
             Vec::with_capacity(candidates.len() + usize::from(diagonal_location.is_some()));
@@ -30722,6 +30774,100 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberParallelParameterMap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
+    /// Replays one exact angular linear form at a retained rational contact.
+    ///
+    /// The ordinary one-field intersection map already owns the correlated
+    /// circle/rational incidence. Rebuilding only the two tangent
+    /// polynomials and reducing them into that same field is substantially
+    /// smaller than a second circle-pair solve, and preserves the contact's
+    /// original root correlation for recursive round construction.
+    fn tangent_cross_dot_linear_combination_sign(
+        &self,
+        contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        if !policy.accepts_retained_policy(self.data.policy) {
+            return Err(CurveError::Topology(
+                "a rational circle-contact tangent map crossed predicate policies".into(),
+            ));
+        }
+        let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField {
+            cusp_parameter,
+            incidence,
+            ..
+        } = &self.data.system
+        else {
+            return self.selected_radial_tangent_cross_dot_linear_combination_sign(
+                contact,
+                cross_scale,
+                dot_scale,
+                policy,
+            );
+        };
+        let system = self.data.semicircle.rational_system(&self.data.curve)?;
+        let reduce = |polynomial: &BivariatePolynomial| {
+            bivariate_reduce_axis(
+                polynomial,
+                self.data.semicircle.cusp_parameter().polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )
+        };
+        let tangent_cross = match reduce(&system.tangent_cross)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let angular_tangent = match reduce(&system.angular_tangent)? {
+            Classification::Decided(polynomial) => polynomial,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // The stored angular expression is the circle radius crossed with
+        // the rational tangent. Convert it to the circle-tangent dot product
+        // with the same convention as the selected-fiber map.
+        let tangent_dot_scale = dot_scale
+            * Real::from(if self.data.semicircle.is_clockwise() {
+                1_i8
+            } else {
+                -1_i8
+            });
+        let predicate = bivariate_add(
+            &bivariate_scale(tangent_cross, cross_scale),
+            &bivariate_scale(angular_tangent, &tangent_dot_scale),
+        );
+        let correlated_incidence = match &contact.correlation {
+            BezierAlgebraicCuspSemicircleRationalCorrelation2::Map
+            | BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent { .. } => {
+                Some(incidence)
+            }
+            BezierAlgebraicCuspSemicircleRationalCorrelation2::Independent => None,
+            BezierAlgebraicCuspSemicircleRationalCorrelation2::Relation(incidence) => {
+                Some(incidence.as_ref())
+            }
+        };
+        if let Some(incidence) = correlated_incidence {
+            algebraic_selected_correlated_predicate_sign(
+                incidence,
+                &predicate,
+                cusp_parameter,
+                &contact.other_parameter,
+                policy,
+            )
+        } else {
+            signed_bivariate_at_parameter_pair(
+                &predicate,
+                cusp_parameter,
+                &contact.other_parameter,
+                policy,
+            )
+        }
+    }
+
     /// Replays one exact linear combination of the selected-circle tangent
     /// crossed and dotted with a retained rational-line tangent.
     ///
@@ -38472,6 +38618,36 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
 }
 
 impl BezierAlgebraicCuspSemicircleParameter2 {
+    /// Replays the exact tangent relation retained by a rational-contact
+    /// parameter. This is the compact authority used when a later fillet
+    /// needs the dot predicate only for a parallel-tangent center.
+    pub(crate) fn rational_contact_tangent_cross_dot_linear_combination_sign(
+        &self,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        let Self::Mapped(data) = self else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => map
+                .tangent_cross_dot_linear_combination_sign(contact, cross_scale, dot_scale, policy),
+            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
+                map,
+                other_parameter,
+                ..
+            } => map.tangent_cross_dot_linear_combination_sign(
+                other_parameter,
+                cross_scale,
+                dot_scale,
+                policy,
+            ),
+            _ => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        }
+    }
+
     pub(crate) fn retains_pair_contact(&self) -> bool {
         matches!(
             self,
@@ -64709,6 +64885,13 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         let sign = match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => map
+                .tangent_cross_dot_linear_combination_sign(
+                    contact,
+                    cross_scale,
+                    dot_scale,
+                    policy,
+                )?,
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational {
                 map,
                 other_parameter,

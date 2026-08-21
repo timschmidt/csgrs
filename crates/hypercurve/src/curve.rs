@@ -3361,10 +3361,16 @@ pub(crate) struct RetainedDeferredArcFilletContact2 {
 
 #[derive(Clone, Debug)]
 pub(crate) struct RetainedArcFilletContactSeed2 {
-    /// `None` names the authored circular span; `Some(i)` names complement
-    /// projective cell `i` in traversal order.
-    pub(crate) complement_span: Option<usize>,
+    pub(crate) cell: RetainedArcFilletContactCell2,
     pub(crate) parameter: CurveRegionParameter2,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RetainedArcFilletContactCell2 {
+    /// One canonical projective cell of the authored circular sweep.
+    Authored(usize),
+    /// One canonical projective cell of the complementary sweep.
+    Complement(usize),
 }
 
 impl FilletCorner2 {
@@ -4905,10 +4911,64 @@ impl FilletOffsetCarrier2<'_, '_> {
                 } else {
                     (-signed_radius.clone(), signed_radius - *source_radius)
                 };
-                let radial_frame = if matches!(
-                    crate::classify::real_sign(signed_radius, &CurveContext::STRICT),
-                    Some(RealSign::Positive)
+                let signed_radius_sign =
+                    crate::classify::real_sign(signed_radius, &CurveContext::STRICT);
+                let radial_frame = if let (Some(center_frame), Some(center_parameter)) = (
+                    anchor_evidence
+                        .as_ref()
+                        .and_then(|evidence| evidence.center_parallel.as_ref()),
+                    anchor_parameter.and_then(CurveRegionParameter2::as_selected_fiber),
                 ) {
+                    let anchor = match crate::BezierAlgebraicChord2::from_certified_selected_parallel_unit_tangent(
+                        center_frame.support.clone(),
+                        center_parameter.clone(),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })? {
+                        Classification::Decided(anchor) => anchor,
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                family,
+                                reason,
+                            ));
+                        }
+                    };
+                    // Positive concentric scaling preserves the offset cell's
+                    // left normal. Past-center scaling reverses it. Never
+                    // choose an orientation when that nonzero sign was not
+                    // proved by the center construction.
+                    let source_direction = anchor_evidence
+                        .as_ref()
+                        .and_then(|evidence| evidence.source_direction)
+                        .or(signed_radius_sign);
+                    let anchor = match source_direction {
+                        Some(RealSign::Positive) => anchor,
+                        Some(RealSign::Negative) => anchor.reversed(),
+                        Some(RealSign::Zero) => {
+                            return Err(ExactCurveError::invalid(
+                                CurveOperation2::Fillet,
+                                family,
+                                CurveError::Topology(
+                                    "a retained arc fillet frame had zero center radius".into(),
+                                ),
+                            ));
+                        }
+                        None => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                family,
+                                crate::UncertaintyReason::RealSign,
+                            ));
+                        }
+                    };
+                    RetainedFilletRadialFrame2::ChordNormal {
+                        anchor,
+                        policy: *policy,
+                    }
+                } else if signed_radius_sign == Some(RealSign::Positive) {
                     match (
                         anchor_evidence
                             .as_ref()
@@ -5514,6 +5574,8 @@ fn solve_carrier_fillet_corner(
 struct RetainedFilletCuspRationalContact2 {
     other_parameter: CurveRegionParameter2,
     cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+    tangent_cross_sign: RealSign,
+    tangent_dot_sign: Option<RealSign>,
     point: RationalBezierIntersectionPointEvidence2,
 }
 
@@ -5783,6 +5845,8 @@ fn retained_fillet_cusp_rational_contacts(
     let mut retain_contact =
         |other_parameter: CurveRegionParameter2,
          cusp_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+         tangent_cross_sign: RealSign,
+         mut tangent_dot_sign: Option<RealSign>,
          point: RationalBezierIntersectionPointEvidence2| {
             let other_at_boundary = |boundary: &CurveRegionParameter2| {
                 other_parameter
@@ -5814,9 +5878,33 @@ fn retained_fillet_cusp_rational_contacts(
                 .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
             {
                 Classification::Decided(true) => {
+                    if tangent_cross_sign == RealSign::Zero && tangent_dot_sign.is_none() {
+                        tangent_dot_sign = Some(
+                            match cusp_parameter
+                                .rational_contact_tangent_cross_dot_linear_combination_sign(
+                                    &Real::zero(),
+                                    &Real::one(),
+                                    policy,
+                                )
+                                .map_err(|cause| {
+                                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                                })? {
+                                Classification::Decided(sign) => sign,
+                                Classification::Uncertain(reason) => {
+                                    return Err(ExactCurveError::blocked(
+                                        CurveOperation2::Fillet,
+                                        family,
+                                        reason,
+                                    ));
+                                }
+                            },
+                        );
+                    }
                     retained.push(RetainedFilletCuspRationalContact2 {
                         other_parameter,
                         cusp_parameter,
+                        tangent_cross_sign,
+                        tangent_dot_sign,
                         point,
                     });
                     Ok(())
@@ -5861,6 +5949,8 @@ fn retained_fillet_cusp_rational_contacts(
                 retain_contact(
                     CurveRegionParameter2::from_bezier(contact.other_parameter),
                     cusp_parameter,
+                    contact.tangent_cross_sign,
+                    contact.tangent_dot_sign,
                     contact.point,
                 )?;
             }
@@ -5869,11 +5959,14 @@ fn retained_fillet_cusp_rational_contacts(
             contacts,
         ) => {
             for contact in contacts {
+                let tangent_cross_sign = contact.tangent_cross_sign();
                 retain_contact(
                     CurveRegionParameter2::from_selected_fiber(
                         contact.other_parameter().clone(),
                     ),
                     contact.cusp_parameter(),
+                    tangent_cross_sign,
+                    None,
                     contact.point_evidence(),
                 )?;
             }
@@ -7334,26 +7427,46 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
         | (FilletOffsetCarrier2::AlgebraicCusp { .. }, FilletOffsetCarrier2::Arc { .. }) => {
-            let (arc, source_radius, signed_radius, cusp, arc_is_previous) = match (previous, next)
-            {
-                (
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        source_radius,
+            let (arc, source_radius, signed_radius, cusp_source, cusp, arc_is_previous) =
+                match (previous, next) {
+                    (
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            source_radius,
+                            signed_radius,
+                        },
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source: cusp_source,
+                            support,
+                        },
+                    ) => (
+                        (*source),
+                        *source_radius,
                         signed_radius,
-                    },
-                    FilletOffsetCarrier2::AlgebraicCusp { support, .. },
-                ) => ((*source), *source_radius, signed_radius, support, true),
-                (
-                    FilletOffsetCarrier2::AlgebraicCusp { support, .. },
-                    FilletOffsetCarrier2::Arc {
-                        source,
-                        source_radius,
+                        *cusp_source,
+                        support,
+                        true,
+                    ),
+                    (
+                        FilletOffsetCarrier2::AlgebraicCusp {
+                            source: cusp_source,
+                            support,
+                        },
+                        FilletOffsetCarrier2::Arc {
+                            source,
+                            source_radius,
+                            signed_radius,
+                        },
+                    ) => (
+                        (*source),
+                        *source_radius,
                         signed_radius,
-                    },
-                ) => ((*source), *source_radius, signed_radius, support, false),
-                _ => unreachable!(),
-            };
+                        *cusp_source,
+                        support,
+                        false,
+                    ),
+                    _ => unreachable!(),
+                };
             let arc_family = if arc_is_previous {
                 previous_family
             } else {
@@ -7371,143 +7484,184 @@ fn fillet_offset_centers(
                 arc_family,
                 policy,
             )?;
+            let signed_radius_sign = match crate::classify::real_sign(signed_radius, policy) {
+                Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Some(RealSign::Zero) => unreachable!("collapsed arc offsets use the point carrier"),
+                None => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        arc_family,
+                        crate::UncertaintyReason::RealSign,
+                    ));
+                }
+            };
+            let cusp_support_reverses_source = retained_fillet_cusp_support_reverses_source(
+                cusp_source,
+                cusp,
+                cusp_family,
+                policy,
+            )?;
+            let mut cusp_charts = Vec::with_capacity(if mode == CurveCornerMode2::TrimOrExtend {
+                2
+            } else {
+                1
+            });
             if mode == CurveCornerMode2::TrimOrExtend {
                 let complementary_cusp = cusp.semicircle().complementary_half();
-                let cusp_charts = [
-                    (
-                        crate::BezierAlgebraicCuspSemicircleFragment2::full(
-                            cusp.semicircle().clone(),
-                            policy,
-                        ),
-                        false,
-                        true,
-                        true,
+                cusp_charts.push((
+                    crate::BezierAlgebraicCuspSemicircleFragment2::full(
+                        cusp.semicircle().clone(),
+                        policy,
                     ),
-                    (
-                        crate::BezierAlgebraicCuspSemicircleFragment2::full(
-                            complementary_cusp,
-                            policy,
-                        ),
-                        true,
-                        false,
-                        false,
-                    ),
-                ];
-                let complement_spans = retained_arc_complement_projective_spans(
+                    false,
+                    true,
+                    true,
+                ));
+                cusp_charts.push((
+                    crate::BezierAlgebraicCuspSemicircleFragment2::full(complementary_cusp, policy),
+                    true,
+                    false,
+                    false,
+                ));
+            } else {
+                cusp_charts.push((cusp.clone(), false, false, false));
+            }
+            let authored_decomposition = match offset_arc
+                .support
+                .rational_bezier_decomposition_with_policy(policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Fillet))?
+            {
+                Classification::Decided(decomposition) => decomposition,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        arc_family,
+                        reason,
+                    ));
+                }
+            };
+            let complement_spans = if mode == CurveCornerMode2::TrimOrExtend {
+                retained_arc_complement_projective_spans(
                     &offset_arc.support,
                     CurveOperation2::Fillet,
                     arc_family,
                     policy,
-                )?;
-                let mut arc_cells = Vec::with_capacity(complement_spans.len() + 1);
-                arc_cells.push((offset_arc.offset.clone(), true, true, None));
-                let complement_count = complement_spans.len();
-                arc_cells.extend(
-                    complement_spans
-                        .into_iter()
-                        .enumerate()
-                        .map(|(index, span)| {
-                            (
-                                RationalBezier2::from(span),
-                                false,
-                                index + 1 != complement_count,
-                                Some(index),
-                            )
-                        }),
-                );
-                for (cusp_chart, complementary, include_cusp_start, include_cusp_end) in
-                    &cusp_charts
-                {
-                    for (arc_cell, include_arc_start, include_arc_end, complement_span) in
-                        &arc_cells
-                    {
-                        let contacts = retained_fillet_cusp_rational_contacts(
-                            cusp_chart,
-                            arc_cell,
-                            *include_cusp_start,
-                            *include_cusp_end,
-                            *include_arc_start,
-                            *include_arc_end,
-                            cusp_family,
-                            policy,
-                        )?;
-                        if contacts.coincident {
-                            centers.coincident = true;
-                            return Ok(centers);
+                )?
+            } else {
+                Vec::new()
+            };
+            let authored_count = authored_decomposition.spans().len();
+            let complement_count = complement_spans.len();
+            let mut arc_cells = Vec::with_capacity(authored_count + complement_count);
+            arc_cells.extend(authored_decomposition.spans().iter().enumerate().map(
+                |(index, span)| {
+                    (
+                        RationalBezier2::from(span.curve().clone()),
+                        index == 0,
+                        true,
+                        RetainedArcFilletContactCell2::Authored(index),
+                    )
+                },
+            ));
+            arc_cells.extend(
+                complement_spans
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, span)| {
+                        (
+                            RationalBezier2::from(span),
+                            false,
+                            index + 1 != complement_count,
+                            RetainedArcFilletContactCell2::Complement(index),
+                        )
+                    }),
+            );
+            for (cusp_chart, complementary, include_cusp_start, include_cusp_end) in &cusp_charts {
+                for (arc_cell, include_arc_start, include_arc_end, cell) in &arc_cells {
+                    let contacts = retained_fillet_cusp_rational_contacts(
+                        cusp_chart,
+                        arc_cell,
+                        *include_cusp_start,
+                        *include_cusp_end,
+                        *include_arc_start,
+                        *include_arc_end,
+                        cusp_family,
+                        policy,
+                    )?;
+                    if contacts.coincident {
+                        centers.coincident = true;
+                        return Ok(centers);
+                    }
+                    for contact in contacts.contacts {
+                        let mut tangent_cross = contact.tangent_cross_sign;
+                        let mut tangent_dot = contact.tangent_dot_sign;
+                        if cusp_support_reverses_source {
+                            tangent_cross = reverse_fillet_sign(tangent_cross);
+                            tangent_dot = tangent_dot.map(reverse_fillet_sign);
                         }
-                        for contact in contacts.contacts {
-                            let cusp_parameter = if *complementary {
-                                CurveRegionParameter2::from_algebraic_cusp_complement(
-                                    contact.cusp_parameter,
-                                )
-                            } else {
-                                CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter)
-                            };
-                            let (previous_parameter, next_parameter) = if arc_is_previous {
-                                (None, Some(cusp_parameter))
-                            } else {
-                                (Some(cusp_parameter), None)
-                            };
-                            centers.push(FilletCenterWitness2 {
-                                point: contact.point,
-                                previous_parameter,
-                                next_parameter,
-                                retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-                                    cross: None,
-                                    dot: None,
-                                    center_parallel: None,
-                                    source_direction: None,
-                                    canonical_anchor_curve: None,
-                                    deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
-                                        support: arc.support().clone(),
-                                        source_radius: source_radius.clone(),
-                                        signed_center_radius: signed_radius.clone(),
-                                        arc_is_previous,
-                                        contact_seed: Some(RetainedArcFilletContactSeed2 {
-                                            complement_span: *complement_span,
-                                            parameter: contact.other_parameter,
-                                        }),
+                        if signed_radius_sign == RealSign::Negative {
+                            tangent_cross = reverse_fillet_sign(tangent_cross);
+                            tangent_dot = tangent_dot.map(reverse_fillet_sign);
+                        }
+                        let arc_parameter = contact.other_parameter;
+                        // A local selected root already owns the exact offset
+                        // cell tangent. Retain its zero-distance analytic
+                        // carrier so the reconstruction frame can use a lazy
+                        // unit-tangent chord without global root promotion.
+                        let center_parallel = if arc_parameter.is_selected_fiber() {
+                            Some(RetainedFilletCenterParallel2 {
+                                support: arc_cell.parallel_left(Real::zero()).map_err(|cause| {
+                                    ExactCurveError::invalid(
+                                        CurveOperation2::Fillet,
+                                        arc_family,
+                                        cause,
+                                    )
+                                })?,
+                                parameter: Some(arc_parameter.clone()),
+                            })
+                        } else {
+                            None
+                        };
+                        let cusp_parameter = if *complementary {
+                            CurveRegionParameter2::from_algebraic_cusp_complement(
+                                contact.cusp_parameter,
+                            )
+                        } else {
+                            CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter)
+                        };
+                        let (previous_parameter, next_parameter) = if arc_is_previous {
+                            (Some(arc_parameter.clone()), Some(cusp_parameter))
+                        } else {
+                            (Some(cusp_parameter), Some(arc_parameter.clone()))
+                        };
+                        centers.push(FilletCenterWitness2 {
+                            point: contact.point,
+                            previous_parameter,
+                            next_parameter,
+                            retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                                // The rational contact map reports selected
+                                // cusp x offset arc. Reconstruction anchors
+                                // on the source arc, so reverse the cross and
+                                // retain both concentric orientation factors.
+                                cross: Some(reverse_fillet_sign(tangent_cross)),
+                                dot: tangent_dot,
+                                center_parallel,
+                                source_direction: Some(signed_radius_sign),
+                                canonical_anchor_curve: None,
+                                deferred_arc_contact: Some(RetainedDeferredArcFilletContact2 {
+                                    support: arc.support().clone(),
+                                    source_radius: source_radius.clone(),
+                                    signed_center_radius: signed_radius.clone(),
+                                    arc_is_previous,
+                                    contact_seed: Some(RetainedArcFilletContactSeed2 {
+                                        cell: *cell,
+                                        parameter: arc_parameter,
                                     }),
                                 }),
-                            });
-                        }
+                            }),
+                        });
                     }
                 }
-                return Ok(centers);
-            }
-            let contacts = retained_fillet_cusp_rational_contacts(
-                cusp,
-                &offset_arc.offset,
-                false,
-                false,
-                true,
-                true,
-                cusp_family,
-                policy,
-            )?;
-            centers.coincident |= contacts.coincident;
-            for contact in contacts.contacts {
-                let arc_parameter = contact.other_parameter;
-                let cusp_parameter =
-                    CurveRegionParameter2::from_algebraic_cusp(contact.cusp_parameter);
-                let (previous_parameter, next_parameter) = if arc_is_previous {
-                    (Some(arc_parameter), Some(cusp_parameter))
-                } else {
-                    (Some(cusp_parameter), Some(arc_parameter))
-                };
-                centers.push(FilletCenterWitness2 {
-                    point: contact.point,
-                    previous_parameter,
-                    next_parameter,
-                    retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-                        cross: None,
-                        dot: None,
-                        center_parallel: None,
-                        source_direction: None,
-                        canonical_anchor_curve: Some(offset_arc.canonical_source.clone()),
-                        deferred_arc_contact: None,
-                    }),
-                });
             }
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::AlgebraicCusp { .. })
@@ -8600,7 +8754,9 @@ fn fillet_offset_centers(
                                 signed_center_radius: signed_radius.clone(),
                                 arc_is_previous,
                                 contact_seed: Some(RetainedArcFilletContactSeed2 {
-                                    complement_span: Some(complement_span),
+                                    cell: RetainedArcFilletContactCell2::Complement(
+                                        complement_span,
+                                    ),
                                     parameter: arc_parameter,
                                 }),
                             }
