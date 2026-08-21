@@ -8909,6 +8909,56 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             )));
         }
         match self {
+            Self::SelectedFiberRational {
+                map,
+                other_parameter,
+                tangent_cross_sign,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                if *tangent_cross_sign != RealSign::Zero {
+                    return Ok(None);
+                }
+                let parameter = match policy.strict_predicate_pass(|| {
+                    other_parameter.promoted_bezier_parameter_complete(policy)
+                })? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(_) => return Ok(None),
+                };
+                Ok(Some((
+                    parameter,
+                    rational_parametric_tangent_numerator(
+                        map.data.curve.homogeneous_power_basis()?,
+                    ),
+                    map.data.policy,
+                )))
+            }
+            Self::SelectedFiberParallel {
+                map,
+                other_parameter,
+                tangent_cross_sign,
+                ..
+            } => {
+                map.validate_policy(policy)?;
+                if *tangent_cross_sign != RealSign::Zero {
+                    return Ok(None);
+                }
+                let parameter = match policy.strict_predicate_pass(|| {
+                    other_parameter.promoted_bezier_parameter_complete(policy)
+                })? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(_) => return Ok(None),
+                };
+                let differential = map.data.parallel.differential()?;
+                Ok(Some((
+                    parameter,
+                    [
+                        differential.tangent_x.clone(),
+                        differential.tangent_y.clone(),
+                    ],
+                    map.data.policy,
+                )))
+            }
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
                     return Ok(None);
@@ -9022,8 +9072,6 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 Ok(Some((parameter, transformed, *transport_policy)))
             }
             Self::Rational { .. }
-            | Self::SelectedFiberRational { .. }
-            | Self::SelectedFiberParallel { .. }
             | Self::Parallel { .. }
             | Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
@@ -99254,6 +99302,147 @@ mod conversion_tests {
                             .unwrap(),
                     );
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_mapped_cut_inverts_on_analytic_overlap() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (analytic_semicircle, analytic_parallel, analytic_overlap) =
+                general_analytic_circle_overlap(&policy);
+            let analytic_cut = algebraic_parameter(vec![
+                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let Classification::Decided(analytic_cusp_cut) = analytic_overlap
+                .cusp_parameter_for_other(&analytic_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic cut must retain its compact cusp parameter");
+            };
+            let Classification::Decided(analytic_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    analytic_semicircle.clone(),
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    analytic_cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the analytic cut must bound a retained circle fragment");
+            };
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let to_selected = Similarity2::try_from_real_affine(
+                Real::zero(),
+                Real::from(-1_i8),
+                Real::one(),
+                Real::zero(),
+                half.clone(),
+                Real::zero(),
+            )
+            .unwrap();
+            let selected_image = analytic_fragment
+                .transform_similarity(&to_selected)
+                .unwrap();
+            let (selected_semicircle, selected_curve, selected_overlap) =
+                selected_fiber_rational_quarter_overlap(&policy);
+            let Classification::Decided(selected_parameter) = selected_overlap
+                .other_parameter_for_cusp(selected_image.end_parameter(), &policy)
+                .unwrap()
+            else {
+                panic!("the analytic cut must enter the selected rational fiber");
+            };
+            let Classification::Decided(selected_cusp_cut) = selected_overlap
+                .cusp_parameter_for_other(&selected_parameter, &policy)
+                .unwrap()
+            else {
+                panic!("the selected rational parameter must retain its cusp map");
+            };
+            assert!(matches!(
+                selected_cusp_cut,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(ref data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedFiberRational { .. }
+                    )
+            ));
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                    reversed_selected_overlaps,
+                ),
+            ) = selected_semicircle
+                .rational_intersections(&selected_curve.reversed(), &policy)
+                .unwrap()
+            else {
+                panic!("the reversed selected quarter must retain its overlap");
+            };
+            let [reversed_selected_overlap] = reversed_selected_overlaps.as_slice() else {
+                panic!("the reversed selected quarter must retain one overlap");
+            };
+            let Classification::Decided(reversed_selected_parameter) = reversed_selected_overlap
+                .other_parameter_for_cusp(&selected_cusp_cut, &policy)
+                .unwrap()
+            else {
+                panic!("the selected-fiber cut must invert into a second selected map");
+            };
+            assert_eq!(
+                reversed_selected_parameter
+                    .cmp_bezier_parameter(&analytic_cut.unit_complement(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            let Classification::Decided(selected_fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    selected_semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    selected_cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the selected-fiber cut must bound a retained circle fragment");
+            };
+            let from_selected = Similarity2::try_from_real_affine(
+                Real::zero(),
+                Real::one(),
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::zero(),
+                half,
+            )
+            .unwrap();
+            let analytic_image = selected_fragment
+                .transform_similarity(&from_selected)
+                .unwrap();
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(reversed_overlaps),
+            ) = analytic_semicircle
+                .parallel_intersections(&analytic_parallel.reversed(), &policy)
+                .unwrap()
+            else {
+                panic!("the reversed analytic quarter must retain its circle overlap");
+            };
+            let [reversed_overlap] = reversed_overlaps.as_slice() else {
+                panic!("the reversed analytic quarter must retain one overlap");
+            };
+            for (overlap, expected) in [
+                (&analytic_overlap, analytic_cut.clone()),
+                (reversed_overlap, analytic_cut.unit_complement()),
+            ] {
+                let Classification::Decided(round_trip) = overlap
+                    .other_parameter_for_cusp(analytic_image.end_parameter(), &policy)
+                    .unwrap()
+                else {
+                    panic!("the selected-fiber cut must invert on the analytic overlap");
+                };
+                assert_eq!(
+                    round_trip.same_value(&expected, &policy).unwrap(),
+                    Classification::Decided(true),
+                );
             }
         }
     }
