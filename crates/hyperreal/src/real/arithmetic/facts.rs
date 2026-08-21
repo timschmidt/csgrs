@@ -92,6 +92,25 @@ impl Real {
         }
     }
 
+    /// Return an exact sign available without walking the computable graph.
+    ///
+    /// Exact rationals, certified symbolic classes, and facts already retained
+    /// at an opaque expression's root can decide immediately. `None` means only
+    /// that a graph walk, bounded refinement, or higher exact predicate is
+    /// required. This makes the query suitable for constant-work accelerators
+    /// that have a complete fallback.
+    #[inline]
+    pub fn immediate_sign(&self) -> Option<RealSign> {
+        let scale_sign = real_sign_from_num(self.rational.sign());
+        if scale_sign == RealSign::Zero {
+            return Some(RealSign::Zero);
+        }
+        if !matches!(self.class, Irrational) {
+            return Some(scale_sign);
+        }
+        multiply_public_sign(Some(scale_sign), self.computable_ref().immediate_sign())
+    }
+
     /// Return the dominant component and its sign for `(b - a) × (c - a)`
     /// when all coordinates fit the checked word-sized exact-rational path.
     #[doc(hidden)]

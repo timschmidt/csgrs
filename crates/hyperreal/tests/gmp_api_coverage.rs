@@ -73,6 +73,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "has_integer_grid_schedule",
     "has_shared_denominator_schedule",
     "has_signed_unit_schedule",
+    "immediate_sign",
     "is_exact_dyadic_rational",
     "is_nonempty_exact_rational",
     "is_rational",

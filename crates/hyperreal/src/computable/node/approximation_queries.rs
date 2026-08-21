@@ -32,6 +32,22 @@ impl<T, const N: usize> InlineStack<T, N> {
 }
 
 impl Computable {
+    /// Return an exact sign already retained at this expression's root.
+    ///
+    /// Unlike [`Self::structural_facts`], this query never walks the expression
+    /// graph and never evaluates an approximation. It is intended for bounded
+    /// accelerators whose inconclusive result has an authoritative fallback.
+    pub(crate) fn immediate_sign(&self) -> Option<RealSign> {
+        let (bound, sign) = self.internal.facts.snapshot();
+        match sign {
+            ExactSignCache::Valid(sign) => Some(public_sign(sign)),
+            ExactSignCache::Invalid | ExactSignCache::Unknown => match bound {
+                BoundCache::Valid(bound) => bound.known_sign().map(public_sign),
+                BoundCache::Invalid => None,
+            },
+        }
+    }
+
     /// An approximation of this Computable scaled to a specific precision.
     ///
     /// Since the value is scaled, the approximation is roughly `value * 2^p`.

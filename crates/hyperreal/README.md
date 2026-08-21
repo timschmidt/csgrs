@@ -175,7 +175,7 @@ as a general-purpose special-function library.
 
 | Task | API |
 | --- | --- |
-| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `structural_facts`, `detailed_facts` |
+| Cheap object-independent facts | `definitely_zero`, `definitely_one`, `zero_or_one`, `zero_one_or_minus_one`, `immediate_sign`, `structural_facts`, `detailed_facts` |
 | Recover exact content | `exact_rational`, `exact_rational_ref`, `is_exact_dyadic_rational`, `exact_set_facts` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
 | Refine a sign | `zero_status`, `refine_sign_until`, `certified_sign_until` |

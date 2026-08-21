@@ -1163,6 +1163,22 @@ mod tests {
     }
 
     #[test]
+    fn immediate_sign_never_walks_or_refines_an_opaque_expression() {
+        assert_eq!(Real::from(-7).immediate_sign(), Some(RealSign::Negative));
+        assert_eq!(Real::zero().immediate_sign(), Some(RealSign::Zero));
+        assert_eq!(Real::pi().immediate_sign(), Some(RealSign::Positive));
+
+        let value = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(value.immediate_sign(), None);
+        assert_eq!(
+            value.certified_sign_until(-64).sign(),
+            Some(RealSign::Positive)
+        );
+        assert_eq!(value.immediate_sign(), Some(RealSign::Positive));
+        assert_eq!((-value).immediate_sign(), Some(RealSign::Negative));
+    }
+
+    #[test]
     fn cycloidal_root_angles_compare_in_geometric_order() {
         let generating_radius = Real::new(Rational::fraction(3, 4).unwrap());
         let root_phase = Real::new(Rational::fraction(-121, 174).unwrap())
