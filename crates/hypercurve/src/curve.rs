@@ -3657,7 +3657,7 @@ impl ExactCornerArc2<'_> {
         operation: CurveOperation2,
         family: CurveFamily2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Real>> {
+    ) -> ExactCurveResult<Option<BezierParameter2>> {
         let Self::RetainedRational(retained) = self else {
             return Ok(None);
         };
@@ -3686,17 +3686,25 @@ impl ExactCornerArc2<'_> {
                 ExactCurveError::blocked(operation, family, crate::UncertaintyReason::Boundary)
             });
         };
-        let Some(parameter) = parameter.as_exact() else {
-            return Err(ExactCurveError::blocked(
-                operation,
-                family,
-                crate::UncertaintyReason::Unsupported,
-            ));
-        };
         let domain = retained.source.parameter_domain();
-        Ok(Some(
-            domain.start() + (domain.end() - domain.start()) * parameter,
-        ))
+        if let Some(parameter) = parameter.as_exact() {
+            // Preserve the established source-domain expression order on the
+            // represented hot path. Besides avoiding an algebraic-map setup,
+            // this keeps retained circle/circle construction witnesses
+            // structurally identical to their authored corner parameters.
+            return Ok(Some(BezierParameter2::Exact(
+                domain.start() + (domain.end() - domain.start()) * parameter,
+            )));
+        }
+        match parameter
+            .affine_image_unbounded(&(domain.end() - domain.start()), domain.start(), policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+        {
+            Classification::Decided(parameter) => Ok(Some(parameter)),
+            Classification::Uncertain(reason) => {
+                Err(ExactCurveError::blocked(operation, family, reason))
+            }
+        }
     }
 
     fn corner_parameter(&self, previous: bool) -> Real {
@@ -11369,7 +11377,7 @@ fn arc_corner_cut_from_incident_point(
                     parameter: match arc
                         .source_parameter_at_point(&point, operation, family, policy)?
                     {
-                        Some(parameter) => exact_corner_parameter(parameter),
+                        Some(parameter) => Some(CurveRegionParameter2::from_bezier(parameter)),
                         None => exact_corner_parameter(sweep_fraction),
                     },
                     point: point.into(),
@@ -11413,7 +11421,7 @@ fn arc_fillet_cut_from_incident_point(
                 exact_corner_parameter(arc.corner_parameter(previous))
             } else {
                 arc.source_parameter_at_point(&point, CurveOperation2::Fillet, family, policy)?
-                    .and_then(exact_corner_parameter)
+                    .map(CurveRegionParameter2::from_bezier)
             };
             Ok(Some(CornerCut2 {
                 parameter,

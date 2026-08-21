@@ -24968,6 +24968,232 @@ mod tests {
     }
 
     #[test]
+    fn nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts() {
+        // Compose the unit quarter circle's tan-half-angle parameter with the
+        // regular nonlinear bijection t=(s+s^2)/2.  Its homogeneous power
+        // basis is (1-t^2, 2t, 1+t^2), so this degree-four carrier is neither
+        // an affine/Mobius reparameterization nor a homogeneous degree
+        // elevation of the canonical conic.  The point (3/5, 4/5) has t=1/2
+        // and native parameter s^2+s-1=0, which must remain an isolated exact
+        // parameter until the retained circle sweep is rebuilt.
+        let support = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false)
+            .expect("the unit quarter circle is valid");
+        let (implicit, circular) = crate::arc_bezier::circular_conic_provenance(&support);
+        let nonlinear = RationalBezier2::try_new_with_implicit_quadratic_conic(
+            vec![
+                p(1, 0),
+                Point2::new(Real::one(), q(1, 4)),
+                Point2::new(q(23, 25), q(16, 25)),
+                Point2::new(q(3, 5), Real::one()),
+                p(0, 1),
+            ],
+            vec![
+                Real::one(),
+                Real::one(),
+                q(25, 24),
+                q(5, 4),
+                Real::from(2_i8),
+            ],
+            implicit,
+            Some(circular),
+        )
+        .expect("the nonlinear quarter-circle chart is finite");
+        let nonlinear = Curve2::from(nonlinear);
+        let next_line = Curve2::from(LineSeg2::try_new(p(0, 1), p(0, 0)).unwrap());
+        let path = CurvePath2::try_new(vec![
+            nonlinear.clone(),
+            next_line.clone(),
+            Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap()),
+        ])
+        .expect("the nonlinear quarter-disk boundary closes");
+        let arc_setback = (Real::from(10_i8).sqrt().unwrap() / Real::from(5_i8)).unwrap();
+        let line_setback = q(1, 5);
+        let fillet_radius = q(3, 8);
+        let arc_cut = Point2::new(q(3, 5), q(4, 5));
+        let line_cut = Point2::new(Real::zero(), q(4, 5));
+        let line_fillet_cut = Point2::new(Real::zero(), q(1, 2));
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let previous_carrier = crate::curve::exact_corner_carrier(
+                &nonlinear,
+                true,
+                CurveOperation2::Chamfer,
+                &policy,
+            )
+            .unwrap()
+            .unwrap();
+            assert!(matches!(
+                &previous_carrier,
+                crate::curve::ExactCornerCarrier2::RetainedRationalArc(_)
+            ));
+            let direct = crate::curve::solve_exact_chamfer_corner(
+                previous_carrier,
+                crate::curve::exact_corner_carrier(
+                    &next_line,
+                    false,
+                    CurveOperation2::Chamfer,
+                    &policy,
+                )
+                .unwrap()
+                .unwrap(),
+                &arc_setback,
+                &line_setback,
+                RealSign::Positive,
+                RealSign::Positive,
+                CurveCornerMode2::TrimOnly,
+                false,
+                false,
+                CurveFamily2::RationalBezier,
+                CurveFamily2::Line,
+                &policy,
+            )
+            .unwrap_or_else(|error| panic!("the shared carrier solve failed: {error:?}"));
+            let CurveCornerSolutions2::Unique(direct) = direct else {
+                panic!("the direct retained-circle chamfer solve must be unique");
+            };
+            let (direct_arc_cut, direct_line_cut) = direct
+                .into_retained_cut_evidence()
+                .expect("both direct chamfer cuts retain their parameters");
+            assert!(matches!(
+                direct_arc_cut.parameter.as_bezier_parameter(),
+                Some(BezierParameter2::Algebraic(_))
+            ));
+            assert!(matches!(
+                direct_line_cut.parameter.as_bezier_parameter(),
+                Some(BezierParameter2::Exact(_))
+            ));
+            for reversed in [false, true] {
+                let source_path = if reversed {
+                    path.reversed(&policy)
+                        .expect("the nonlinear circle boundary reverses")
+                        .into_value()
+                } else {
+                    path.clone()
+                };
+                let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                    std::slice::from_ref(&source_path),
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                    &[if reversed {
+                        CurveBoundaryInteriorSide2::Right
+                    } else {
+                        CurveBoundaryInteriorSide2::Left
+                    }],
+                    &policy,
+                )
+                .expect("the nonlinear retained circle enters CurveRegion2")
+                .into_value();
+                assert!(
+                    region.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::Materialized {
+                                curve: BezierSubcurve2::Rational(curve),
+                                ..
+                            } if curve.degree() == 4 && curve.retained_circular_conic().is_some()
+                        ))
+                );
+
+                let (corner, previous_setback, next_setback) = if reversed {
+                    (2, line_setback.clone(), arc_setback.clone())
+                } else {
+                    (1, arc_setback.clone(), line_setback.clone())
+                };
+                let edited = region
+                    .chamfer_loop_vertex_by_setbacks(
+                        0,
+                        corner,
+                        previous_setback,
+                        next_setback,
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the nonlinear retained-circle chamfer must retain its algebraic source cut: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(edited.certainty, CurveCertainty::Certified);
+                let CurveCornerSolutions2::Unique(edited) = edited.value else {
+                    panic!(
+                        "the nonlinear retained-circle corner must have one chamfer: policy={policy:?}, reversed={reversed}"
+                    );
+                };
+                let has_endpoint = |edited: &CurveRegion2, expected: &Point2| {
+                    let expected =
+                        RationalBezierIntersectionPointEvidence2::Exact(expected.clone());
+                    edited.boundary_loops()[0]
+                        .fragments()
+                        .iter()
+                        .any(|fragment| {
+                            [true, false].into_iter().any(|start_endpoint| {
+                                retained_fragment_endpoint_evidence(
+                                    fragment,
+                                    start_endpoint,
+                                    &policy,
+                                )
+                                .ok()
+                                .and_then(|evidence| evidence.retained_point)
+                                .is_some_and(|point| {
+                                    point.same_point(&expected, &policy)
+                                        == Classification::Decided(true)
+                                })
+                            })
+                        })
+                };
+                assert!(
+                    has_endpoint(&edited, &arc_cut),
+                    "the rebuilt circular sweep must end at the algebraic source cut"
+                );
+                assert!(
+                    has_endpoint(&edited, &line_cut),
+                    "the chamfer must meet the exact line setback"
+                );
+                assert_eq!(
+                    edited
+                        .classify_point(&Point2::new(q(1, 10), q(1, 10)), &policy)
+                        .expect("the rebuilt nonlinear-circle chamfer remains classifiable")
+                        .into_value(),
+                    Classification::Decided(RegionPointLocation::Inside),
+                );
+
+                let filleted = region
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        corner,
+                        fillet_radius.clone(),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "the nonlinear retained-circle fillet must retain its algebraic source cut: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(filleted.certainty, CurveCertainty::Certified);
+                let mut found_expected_fillet = false;
+                for_each_corner_region(&filleted.value, |candidate| {
+                    found_expected_fillet |= has_endpoint(candidate, &arc_cut)
+                        && has_endpoint(candidate, &line_fillet_cut);
+                    assert_eq!(
+                        candidate
+                            .classify_point(&Point2::new(q(1, 10), q(1, 10)), &policy)
+                            .expect("the rebuilt nonlinear-circle fillet remains classifiable")
+                            .into_value(),
+                        Classification::Decided(RegionPointLocation::Inside),
+                    );
+                });
+                assert!(
+                    found_expected_fillet,
+                    "one retained fillet must meet both exact algebraic-source contacts"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn collapsed_rational_arc_offset_tests_selected_circle_incidence_exactly() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
