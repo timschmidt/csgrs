@@ -28684,6 +28684,7 @@ mod tests {
         policy: &CurveContext,
         reversed: bool,
         major_arc: bool,
+        elevated: bool,
     ) -> CurveRegion2 {
         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
         let diagonal =
@@ -28767,12 +28768,21 @@ mod tests {
         .unwrap() else {
             panic!("the selected chord/arc closing chord must construct");
         };
+        let arc = if elevated {
+            BezierSubcurve2::Rational(
+                RationalBezier2::from(arc)
+                    .elevated_to_degree(5)
+                    .expect("the authored circular conic elevates exactly"),
+            )
+        } else {
+            BezierSubcurve2::RationalQuadratic(arc)
+        };
         let mut fragments = vec![
             BezierSplitFragment2::AlgebraicChord(previous),
             BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(Real::zero()),
                 end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::RationalQuadratic(arc),
+                curve: arc,
             },
             BezierSplitFragment2::AlgebraicChord(closing),
         ];
@@ -29357,8 +29367,9 @@ mod tests {
             let radius_squared = &radius * &radius;
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 for reversed in [false, true] {
-                    let region =
-                        nonrepresented_chord_rational_arc_corner_region(&policy, reversed, false);
+                    let region = nonrepresented_chord_rational_arc_corner_region(
+                        &policy, reversed, false, false,
+                    );
                     let mut trim_count = None;
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let outcome = region
@@ -29468,8 +29479,9 @@ mod tests {
         let radius = (Real::one() / Real::from(100_i16)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
-                let region =
-                    nonrepresented_chord_rational_arc_corner_region(&policy, reversed, false);
+                let region = nonrepresented_chord_rational_arc_corner_region(
+                    &policy, reversed, false, false,
+                );
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
@@ -29552,24 +29564,27 @@ mod tests {
         let radius = (Real::one() / Real::from(100_i16)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
-                let region =
-                    nonrepresented_chord_rational_arc_corner_region(&policy, reversed, true);
-                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    let outcome = region
-                        .fillet_loop_vertex_by_radius(
-                            0,
-                            if reversed { 1 } else { 2 },
-                            radius.clone(),
-                            mode,
-                            &policy,
-                        )
-                        .unwrap_or_else(|error| {
-                            panic!(
-                                "major rational-arc/chord fillet: policy={policy:?}, reversed={reversed}, mode={mode:?}, error={error:?}"
+                for elevated in [false, true] {
+                    let region = nonrepresented_chord_rational_arc_corner_region(
+                        &policy, reversed, true, elevated,
+                    );
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let outcome = region
+                            .fillet_loop_vertex_by_radius(
+                                0,
+                                if reversed { 1 } else { 2 },
+                                radius.clone(),
+                                mode,
+                                &policy,
                             )
-                        });
-                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(outcome.value.candidate_count() > 0);
+                            .unwrap_or_else(|error| {
+                                panic!(
+                                    "major rational-arc/chord fillet: policy={policy:?}, reversed={reversed}, elevated={elevated}, mode={mode:?}, error={error:?}"
+                                )
+                            });
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        assert!(outcome.value.candidate_count() > 0);
+                    }
                 }
             }
         }

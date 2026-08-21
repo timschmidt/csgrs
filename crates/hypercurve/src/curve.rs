@@ -3744,7 +3744,13 @@ impl ExactCornerArc2<'_> {
             // span without changing its finite domain. Preserve its compact
             // original parameterization; extension enumerates the remaining
             // canonical circle cells separately.
-            source
+            match source
+                .retained_quadratic_representative(policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            {
+                Classification::Decided(Some(source)) => RationalBezier2::from(source),
+                Classification::Decided(None) | Classification::Uncertain(_) => source,
+            }
         } else {
             return Err(ExactCurveError::blocked(
                 operation,
