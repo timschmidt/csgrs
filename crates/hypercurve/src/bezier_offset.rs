@@ -1416,12 +1416,16 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 match tangent_cross {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                        let Some(source) = data.ordinary_point_source(policy)? else {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                        let candidates = if let Some(source) = data.ordinary_point_source(policy)? {
+                            source
+                                .point_parameter_candidates_on_target(&self.parameter_map, policy)?
+                        } else {
+                            data.retained_point_parameter_candidates_on_target(
+                                &self.parameter_map,
+                                policy,
+                            )?
                         };
-                        let candidates = match source
-                            .point_parameter_candidates_on_target(&self.parameter_map, policy)?
-                        {
+                        let candidates = match candidates {
                             Classification::Decided(Some(candidates)) => candidates,
                             Classification::Decided(None) => {
                                 return Ok(Classification::Uncertain(
@@ -1487,6 +1491,23 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     policy,
                     |_| Ok(Classification::Decided(RealSign::Zero)),
                 );
+            }
+
+            match data.retained_point_parameter_candidates_on_target(&self.parameter_map, policy)? {
+                Classification::Decided(Some(candidates)) => {
+                    return retain_unique_overlap_parameter(
+                        candidates,
+                        &self.other_range,
+                        self.map_reversed,
+                        true,
+                        policy,
+                        |_| Ok(Classification::Decided(RealSign::Zero)),
+                    );
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
             }
 
             match parameter.represented_rational_value(policy)? {
@@ -8081,6 +8102,204 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
     ))
 }
 
+/// Recovers every common zero at one parameter already represented in a
+/// single selected algebraic field.
+///
+/// Either equation is a complete candidate projection. The other is replayed
+/// in the same correlated fiber, rejecting conjugate and repeated-coordinate
+/// roots without constructing a Cartesian primitive element. An optional
+/// positive branch predicate selects one sheet of an implicit carrier.
+fn one_field_common_zero_parameter_candidates(
+    parameter: &BezierParameter2,
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    positive_branch: Option<&BivariatePolynomial>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let mut last_reason = UncertaintyReason::Unsupported;
+    for (incidence, replay) in [(first, second), (second, first)] {
+        let candidates = match selected_parameter_fiber_parameters(
+            incidence,
+            parameter,
+            MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+            MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => continue,
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                continue;
+            }
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        let mut retry_reason = None;
+        for candidate in candidates {
+            match algebraic_selected_correlated_predicate_sign(
+                incidence, replay, parameter, &candidate, policy,
+            )? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Negative | RealSign::Positive) => continue,
+                Classification::Uncertain(reason) => {
+                    retry_reason = Some(reason);
+                    break;
+                }
+            }
+            if let Some(branch) = positive_branch {
+                match algebraic_selected_correlated_predicate_sign(
+                    incidence, branch, parameter, &candidate, policy,
+                )? {
+                    Classification::Decided(RealSign::Positive) => {}
+                    Classification::Decided(RealSign::Negative) => continue,
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "implicit carrier branch vanished at a certified regular incidence"
+                                .to_owned(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        retry_reason = Some(reason);
+                        break;
+                    }
+                }
+            }
+            retained.push(candidate);
+        }
+        if let Some(reason) = retry_reason {
+            last_reason = reason;
+            continue;
+        }
+        return Ok(Classification::Decided(retained));
+    }
+    Ok(Classification::Uncertain(last_reason))
+}
+
+/// Recovers every finite rational-target parameter at one point already
+/// represented in a single selected algebraic field.
+fn one_field_point_parameter_candidates_on_rational_target(
+    point: &RationalBezierAlgebraicPointImage2,
+    target: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let parameter = match algebraic_chord_image_parameter(point, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let [point_x, point_y, point_weight] =
+        match algebraic_chord_owned_coordinate_polynomials(point, policy)? {
+            Classification::Decided(coordinates) => coordinates,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let target = target.homogeneous_power_basis()?;
+    let target_equation = |point_coordinate: &[Real], target_coordinate: &[Real]| {
+        bivariate_subtract(
+            &bivariate_outer_product(&point_weight, target_coordinate),
+            &bivariate_outer_product(point_coordinate, &target.weight),
+        )
+    };
+    let x = target_equation(&point_x, &target.x_numerator);
+    let y = target_equation(&point_y, &target.y_numerator);
+    let point_parameter = BezierParameter2::Algebraic(parameter.clone());
+    one_field_common_zero_parameter_candidates(&point_parameter, &x, &y, None, policy)
+}
+
+/// Recovers every parameter of one analytic parallel at a singly-selected
+/// point. The two offset incidence equations are kept bivariate so the point
+/// and target parameters remain correlated; the signed normal predicate then
+/// removes the opposite implicit offset sheet.
+fn one_field_point_parameter_candidates_on_parallel_target(
+    point: &RationalBezierAlgebraicPointImage2,
+    target: &BezierParallel2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+    let evidence = RationalBezierIntersectionPointEvidence2::Algebraic(point.clone());
+    let point = match algebraic_axis_point_coordinates(&evidence, policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let distance_sign = match real_sign(target.distance(), policy) {
+        Some(sign) => sign,
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    let source = target.source_power_basis()?;
+    let differential = target.differential()?;
+    if let Classification::Uncertain(reason) =
+        BezierParallel2::certify_finite_source(&source, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+    if distance_sign != RealSign::Zero
+        && let Classification::Uncertain(reason) =
+            BezierParallel2::certify_regular_differential(differential, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+
+    let unit_weight = [Real::one()];
+    let source_weight = source.weight.unwrap_or(&unit_weight);
+    let delta_x = bivariate_subtract(
+        &bivariate_outer_product(&point.x, source_weight),
+        &bivariate_outer_product(&point.denominator, source.x_numerator),
+    );
+    let delta_y = bivariate_subtract(
+        &bivariate_outer_product(&point.y, source_weight),
+        &bivariate_outer_product(&point.denominator, source.y_numerator),
+    );
+    let tangent_x = bivariate_outer_product(&[Real::one()], &differential.tangent_x);
+    let tangent_y = bivariate_outer_product(&[Real::one()], &differential.tangent_y);
+    let orthogonality = bivariate_add(
+        &bivariate_multiply(&delta_x, &tangent_x),
+        &bivariate_multiply(&delta_y, &tangent_y),
+    );
+    let common_weight = bivariate_outer_product(&point.denominator, source_weight);
+    let distance_squared = target.distance() * target.distance();
+    let distance_relation = bivariate_subtract(
+        &bivariate_add(
+            &bivariate_multiply(&delta_x, &delta_x),
+            &bivariate_multiply(&delta_y, &delta_y),
+        ),
+        &bivariate_scale(
+            bivariate_multiply(&common_weight, &common_weight),
+            &distance_squared,
+        ),
+    );
+    let branch = if distance_sign == RealSign::Zero {
+        None
+    } else {
+        let orientation = bivariate_subtract(
+            &bivariate_multiply(&delta_y, &tangent_x),
+            &bivariate_multiply(&delta_x, &tangent_y),
+        );
+        let orientation = if source.weight.is_some() {
+            bivariate_multiply(
+                &orientation,
+                &bivariate_outer_product(&[Real::one()], source_weight),
+            )
+        } else {
+            orientation
+        };
+        Some(bivariate_scale(orientation, target.distance()))
+    };
+    one_field_common_zero_parameter_candidates(
+        &point.parameter,
+        &orthogonality,
+        &distance_relation,
+        branch.as_ref(),
+        policy,
+    )
+}
+
 impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// Returns the selected semicircle on which this retained parameter was
     /// authored. This identity prevents a genuinely mapped point from being
@@ -9335,6 +9554,290 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::PairOverlap { .. }
             | Self::Chamfer { .. } => Ok(None),
         }
+    }
+
+    /// Recovers target-carrier parameters from a point retained directly on
+    /// this selected circle. The probe is exact retained geometry, and every
+    /// carrier contact is replayed against the authored point before its
+    /// parameter is admitted.
+    fn retained_point_parameter_candidates_on_target(
+        &self,
+        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        match self.retained_one_field_circle_tangent_source(policy)? {
+            Classification::Decided(Some((parameter, tangent))) => {
+                let target_tangent = match target {
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
+                        rational_parametric_tangent_numerator(
+                            target.data.curve.homogeneous_power_basis()?,
+                        )
+                    }
+                    BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                        let differential = target.data.parallel.differential()?;
+                        [
+                            differential.tangent_x.clone(),
+                            differential.tangent_y.clone(),
+                        ]
+                    }
+                };
+                return Ok(mapped_circle_tangent_parameter_candidates(
+                    &parameter,
+                    &tangent,
+                    &target_tangent,
+                    policy,
+                )?
+                .map(Some));
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        match target {
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => self
+                .retained_point_parameter_candidates_on_rational_target(&target.data.curve, policy),
+            BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
+                if let Some(point) = self.retained_one_field_point_image(policy)? {
+                    return Ok(one_field_point_parameter_candidates_on_parallel_target(
+                        &point,
+                        &target.data.parallel,
+                        policy,
+                    )?
+                    .map(Some));
+                }
+                let (chord, point) = match self.retained_point_probe_chord(policy)? {
+                    Classification::Decided(Some(probe)) => probe,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let contacts = match chord.parallel_intersections(&target.data.parallel, policy)? {
+                    Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                    ) => contacts,
+                    Classification::Decided(
+                        BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    ) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let mut candidates = Vec::with_capacity(contacts.len());
+                for contact in contacts {
+                    match point.same_point(contact.point(), policy) {
+                        Classification::Decided(true) => {
+                            candidates.push(contact.parallel_parameter().clone());
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Ok(Classification::Decided(Some(candidates)))
+            }
+        }
+    }
+
+    fn retained_point_parameter_candidates_on_rational_target(
+        &self,
+        target: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        if let Some(point) = self.retained_one_field_point_image(policy)? {
+            return Ok(one_field_point_parameter_candidates_on_rational_target(
+                &point, target, policy,
+            )?
+            .map(Some));
+        }
+        let (chord, point) = match self.retained_point_probe_chord(policy)? {
+            Classification::Decided(Some(probe)) => probe,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let intersections = chord.rational_intersections(target, None, policy)?;
+        let contacts = match intersections {
+            Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                contacts,
+            )) => contacts,
+            Classification::Decided(
+                BezierAlgebraicChordRationalIntersections2::Overlaps(_)
+                | BezierAlgebraicChordRationalIntersections2::ContactsAndOverlaps { .. }
+                | BezierAlgebraicChordRationalIntersections2::DegenerateProjection
+                | BezierAlgebraicChordRationalIntersections2::NotSourceRelated,
+            ) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let mut candidates = Vec::with_capacity(contacts.len());
+        for contact in contacts {
+            let same_point = point.same_point(contact.point(), policy);
+            match same_point {
+                Classification::Decided(true) => {
+                    candidates.push(contact.other_parameter().clone());
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Ok(Classification::Decided(Some(candidates)))
+    }
+
+    fn retained_one_field_point_image(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {
+        Ok(match self.retained_point_evidence() {
+            Some(RationalBezierIntersectionPointEvidence2::Algebraic(point)) => Some(point.clone()),
+            Some(RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point)) => {
+                point.exact_one_field_point_image(policy)?
+            }
+            Some(
+                RationalBezierIntersectionPointEvidence2::Exact(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordPair(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicCuspChord(_)
+                | RationalBezierIntersectionPointEvidence2::AlgebraicChordParallel(_)
+                | RationalBezierIntersectionPointEvidence2::AnalyticParallel(_)
+                | RationalBezierIntersectionPointEvidence2::Similarity(_),
+            )
+            | None => None,
+        })
+    }
+
+    /// Recovers the supporting-circle tangent at a point whose coordinates
+    /// and exact center already inhabit one selected algebraic field. A circle
+    /// overlap needs only this line: the antipodal solution lies outside an
+    /// interior half-circle overlap range.
+    fn retained_one_field_circle_tangent_source(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(BezierParameter2, [Vec<Real>; 2])>>> {
+        let Some(point) = self.retained_one_field_point_image(policy)? else {
+            return Ok(Classification::Decided(None));
+        };
+        let parameter = match algebraic_chord_image_parameter(&point, policy)? {
+            Classification::Decided(parameter) => BezierParameter2::Algebraic(parameter),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let [x, y, denominator] =
+            match algebraic_chord_owned_coordinate_polynomials(&point, policy)? {
+                Classification::Decided(coordinates) => coordinates,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let Some(center) = self
+            .semicircle_carrier()
+            .center_point_image(policy)?
+            .exact_rational_point(&CurveContext::STRICT)
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        let radial_x = polynomial_subtract(&x, &polynomial_scale(&denominator, center.x()));
+        let radial_y = polynomial_subtract(&y, &polynomial_scale(&denominator, center.y()));
+        Ok(Classification::Decided(Some((
+            parameter,
+            [polynomial_scale(&radial_y, &Real::from(-1_i8)), radial_x],
+        ))))
+    }
+
+    fn retained_point_probe_chord(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Classification<
+            Option<(
+                BezierAlgebraicChord2,
+                RationalBezierIntersectionPointEvidence2,
+            )>,
+        >,
+    > {
+        let Some(point) = self.retained_point_evidence().cloned() else {
+            return Ok(Classification::Decided(None));
+        };
+        if let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(derived) = &point
+        {
+            if let Some(image) = derived.exact_one_field_point_image(policy)? {
+                let point = RationalBezierIntersectionPointEvidence2::Algebraic(image);
+                let start = match BezierAlgebraicChord2::translated_endpoint(
+                    &point,
+                    &Real::zero(),
+                    &Real::from(-1_i8),
+                    policy,
+                )? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let end = match BezierAlgebraicChord2::translated_endpoint(
+                    &point,
+                    &Real::zero(),
+                    &Real::one(),
+                    policy,
+                )? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return Ok(Classification::Decided(Some((
+                    BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                        start,
+                        end,
+                        BezierAlgebraicChordAxisDirection2::PositiveY,
+                        policy,
+                    ),
+                    point,
+                ))));
+            }
+            let start = RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                derived.translated(&Real::zero(), &Real::from(-1_i8)),
+            );
+            let end = RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(
+                derived.translated(&Real::zero(), &Real::one()),
+            );
+            return Ok(Classification::Decided(Some((
+                BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                    start,
+                    end,
+                    BezierAlgebraicChordAxisDirection2::PositiveY,
+                    policy,
+                ),
+                point,
+            ))));
+        }
+        let center = match self.semicircle_carrier().center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // Every mapped circle point is separated from its center by the
+        // carrier's certified nonzero radius. Preserve that construction fact
+        // instead of replaying a cross-field Cartesian equality.
+        let retained_point = point.clone();
+        Ok(
+            BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                center, point, policy,
+            )?
+            .map(|chord| Some((chord, retained_point))),
+        )
     }
 
     /// Returns the exact circle-tangent/source-tangent cross sign for an
@@ -31012,13 +31515,18 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             match tangent_cross {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                    let Some(source) = data.ordinary_point_source(policy)? else {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    let candidates = if let Some(source) = data.ordinary_point_source(policy)? {
+                        source.point_parameter_candidates_on_rational_target(
+                            &self.map.data.curve,
+                            policy,
+                        )?
+                    } else {
+                        data.retained_point_parameter_candidates_on_rational_target(
+                            &self.map.data.curve,
+                            policy,
+                        )?
                     };
-                    let candidates = match source.point_parameter_candidates_on_rational_target(
-                        &self.map.data.curve,
-                        policy,
-                    )? {
+                    let candidates = match candidates {
                         Classification::Decided(Some(candidates)) => candidates,
                         Classification::Decided(None) => {
                             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -31058,6 +31566,20 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 }
             };
             return self.retain_unique_other_parameter(candidates, policy);
+        }
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter {
+            match data.retained_point_parameter_candidates_on_rational_target(
+                &self.map.data.curve,
+                policy,
+            )? {
+                Classification::Decided(Some(candidates)) => {
+                    return self.retain_unique_other_parameter(candidates, policy);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
         }
         if matches!(
             parameter,
@@ -99769,6 +100291,113 @@ mod conversion_tests {
             };
             assert!(complementary);
             assert_inverts(overlap, &diameter_cut);
+        }
+    }
+
+    #[test]
+    fn transverse_chamfer_cut_inverts_by_radial_incidence() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let cutter = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), half.clone()),
+                Point2::new(Real::one(), half),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let rational_quarter = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+                Real::one(),
+                Real::one(),
+                Real::from(2_i8),
+            )
+            .unwrap(),
+        );
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (semicircle, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
+            let Classification::Decided(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(rational_overlaps),
+            ) = semicircle
+                .rational_intersections(&rational_quarter, &policy)
+                .unwrap()
+            else {
+                panic!("the rational quarter must retain its circle overlap");
+            };
+            let [rational_overlap] = rational_overlaps.as_slice() else {
+                panic!("the rational quarter must retain one overlap");
+            };
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                Some(map),
+            )) = semicircle
+                .rational_intersections_with_parameter_map(&cutter, &policy)
+                .unwrap()
+            else {
+                panic!("the transverse cutter must retain its circle contact map");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the finite cutter must meet the selected quarter once");
+            };
+            assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+            assert!(matches!(
+                contact.other_parameter,
+                BezierParameter2::Algebraic(_)
+            ));
+            let cusp_cut = map.contact_parameter(contact);
+            let Classification::Decided(fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the transverse cut must bound a retained circle fragment");
+            };
+            let setback = (Real::one() / Real::from(4_i8)).unwrap();
+            let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
+                .endpoint_chord_setback_cut(false, &setback, false, &policy)
+                .unwrap()
+            else {
+                panic!("the transverse endpoint must retain its inward chamfer cut");
+            };
+            assert!(matches!(
+                chamfer_cut,
+                BezierAlgebraicCuspSemicircleParameter2::Mapped(ref data)
+                    if matches!(
+                        data.as_ref(),
+                        BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { .. }
+                    )
+            ));
+
+            for overlap in [rational_overlap, &analytic_overlap] {
+                let inversion = overlap
+                    .other_parameter_for_cusp(&chamfer_cut, &policy)
+                    .unwrap();
+                let Classification::Decided(target_cut) = inversion else {
+                    panic!("the transverse chamfer cut must invert by radial incidence");
+                };
+                let Classification::Decided(round_trip) = overlap
+                    .cusp_parameter_for_other(&target_cut, &policy)
+                    .unwrap()
+                else {
+                    panic!("the target parameter must return to the chamfer cut");
+                };
+                for numerator in 0_i8..=8_i8 {
+                    let represented =
+                        (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                    assert_eq!(
+                        round_trip.order_to_real(&represented, &policy).unwrap(),
+                        chamfer_cut.order_to_real(&represented, &policy).unwrap(),
+                    );
+                }
+            }
         }
     }
 
