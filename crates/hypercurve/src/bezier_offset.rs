@@ -1416,31 +1416,60 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 match tangent_cross {
                     Classification::Decided(RealSign::Zero) => {}
                     Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                        let candidates = if let Some(source) = data.ordinary_point_source(policy)? {
-                            let tangent_candidates =
-                                if let Some(point) = source.algebraic_point_image(policy)? {
-                                    data.one_field_circle_tangent_parameter_candidates_on_target(
-                                        &point,
-                                        &self.parameter_map,
-                                        policy,
-                                    )?
+                        let direct_candidates = match data.chamfer_exact_point(policy)? {
+                            Classification::Decided(Some(point)) => data
+                                .exact_point_circle_tangent_parameter_candidates_on_target(
+                                    &point,
+                                    &self.parameter_map,
+                                    policy,
+                                )?,
+                            Classification::Decided(None) => Classification::Decided(None),
+                            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                        };
+                        let candidates = match direct_candidates {
+                            decided @ Classification::Decided(Some(_)) => decided,
+                            Classification::Decided(None) | Classification::Uncertain(_) => {
+                                if let Some(source) = data.ordinary_point_source(policy)? {
+                                    let tangent_candidates = if let Some(point) =
+                                        source.algebraic_point_image(policy)?
+                                    {
+                                        data.one_field_circle_tangent_parameter_candidates_on_target(
+                                            &point,
+                                            &self.parameter_map,
+                                            policy,
+                                        )?
+                                    } else {
+                                        match source.exact_point(policy)? {
+                                            Classification::Decided(Some(point)) => data
+                                                .exact_point_circle_tangent_parameter_candidates_on_target(
+                                                    &point,
+                                                    &self.parameter_map,
+                                                    policy,
+                                                )?,
+                                            Classification::Decided(None) => {
+                                                Classification::Decided(None)
+                                            }
+                                            Classification::Uncertain(reason) => {
+                                                Classification::Uncertain(reason)
+                                            }
+                                        }
+                                    };
+                                    match tangent_candidates {
+                                        decided @ Classification::Decided(Some(_)) => decided,
+                                        Classification::Decided(None)
+                                        | Classification::Uncertain(_) => source
+                                            .point_parameter_candidates_on_target(
+                                                &self.parameter_map,
+                                                policy,
+                                            )?,
+                                    }
                                 } else {
-                                    Classification::Decided(None)
-                                };
-                            match tangent_candidates {
-                                decided @ Classification::Decided(Some(_)) => decided,
-                                Classification::Decided(None) | Classification::Uncertain(_) => {
-                                    source.point_parameter_candidates_on_target(
+                                    data.retained_point_parameter_candidates_on_target(
                                         &self.parameter_map,
                                         policy,
                                     )?
                                 }
                             }
-                        } else {
-                            data.retained_point_parameter_candidates_on_target(
-                                &self.parameter_map,
-                                policy,
-                            )?
                         };
                         let candidates = match candidates {
                             Classification::Decided(Some(candidates)) => candidates,
@@ -5275,7 +5304,7 @@ fn represented_affine_coordinate(
             return Classification::Decided(source.clone());
         }
         let report = transform_algebraic_root_affine(
-            source,
+            &source,
             scale.clone(),
             offset.clone(),
             hypersolve::PredicatePolicy::STRICT,
@@ -7705,25 +7734,25 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 "mapped point carrier crossed predicate policies".into(),
             ));
         }
-        let (curve, parameter) = match self {
-            Self::Rational {
-                curve, parameter, ..
-            } => (Some(curve.clone()), parameter),
-            Self::Parallel {
-                parallel,
-                parameter,
-                ..
-            } => {
+        let parameter = match self {
+            Self::Rational { parameter, .. } | Self::Parallel { parameter, .. } => parameter,
+        };
+        let BezierParameter2::Algebraic(parameter) = parameter else {
+            return Ok(None);
+        };
+        let curve = match self {
+            Self::Rational { curve, .. } => Some(curve.clone()),
+            Self::Parallel { parallel, .. } => {
                 let curve = match policy
                     .strict_predicate_pass(|| parallel.exact_rational_parallel_component(policy))?
                 {
                     Classification::Decided(curve) => curve,
                     Classification::Uncertain(_) => None,
                 };
-                (curve, parameter)
+                curve
             }
         };
-        let (Some(curve), BezierParameter2::Algebraic(parameter)) = (curve, parameter) else {
+        let Some(curve) = curve else {
             return Ok(None);
         };
         Ok(Some(
@@ -7733,6 +7762,41 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 policy,
             ),
         ))
+    }
+
+    fn exact_point(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Point2>>> {
+        let (parameter, source_policy) = match self {
+            Self::Rational {
+                parameter, policy, ..
+            }
+            | Self::Parallel {
+                parameter, policy, ..
+            } => (parameter, *policy),
+        };
+        if !policy.accepts_retained_policy(source_policy) {
+            return Err(CurveError::Topology(
+                "mapped point carrier crossed predicate policies".into(),
+            ));
+        }
+        let parameter = match parameter {
+            BezierParameter2::Exact(parameter) => parameter.clone(),
+            BezierParameter2::Algebraic(parameter) => {
+                match policy
+                    .strict_predicate_pass(|| parameter.represented_rational_root(policy))?
+                {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) | Classification::Uncertain(_) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                }
+            }
+        };
+        match self {
+            Self::Rational { curve, .. } => {
+                Ok(curve.point_at_classified(&parameter, policy).map(Some))
+            }
+            Self::Parallel { parallel, .. } => Ok(parallel.point_at(&parameter, policy)?.map(Some)),
+        }
     }
 
     fn point_parameter_candidates_on_target(
@@ -9513,6 +9577,102 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
     }
 
+    /// Returns the exact source and unit rotation retained by a chamfer cut.
+    fn chamfer_rotation_source<'a>(
+        &'a self,
+        policy: &CurveContext,
+    ) -> CurveResult<
+        Option<(
+            &'a Arc<BezierAlgebraicCuspSemicircleMappedParameterData2>,
+            Similarity2,
+        )>,
+    > {
+        let Self::Chamfer {
+            semicircle,
+            source,
+            point,
+            policy: transport_policy,
+            ..
+        } = self
+        else {
+            return Ok(None);
+        };
+        if !policy.accepts_retained_policy(*transport_policy) {
+            return Err(CurveError::Topology(
+                "mapped chamfer point used a different predicate policy".into(),
+            ));
+        }
+        let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+            return Ok(None);
+        };
+        let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) = point
+        else {
+            return Err(CurveError::Topology(
+                "mapped chamfer point lost its exact rotation provenance".into(),
+            ));
+        };
+        let BezierAlgebraicCuspDerivedPointSource2::Mapped {
+            parameter: point_source,
+            ..
+        } = &point.data.source
+        else {
+            return Err(CurveError::Topology(
+                "mapped chamfer rotation lost its source parameter".into(),
+            ));
+        };
+        if !Arc::ptr_eq(point_source, source) {
+            return Err(CurveError::Topology(
+                "mapped chamfer rotation changed its source parameter".into(),
+            ));
+        }
+        let Some(center) = semicircle.exact_rational_center(policy)? else {
+            return Ok(None);
+        };
+        let radial = &point.data.radial_scale;
+        let perpendicular = &point.data.perpendicular_scale;
+        let transform = Similarity2::try_from_real_affine(
+            radial.clone(),
+            -perpendicular,
+            perpendicular.clone(),
+            radial.clone(),
+            (Real::one() - radial) * center.x() + perpendicular * center.y(),
+            (Real::one() - radial) * center.y() - perpendicular * center.x(),
+        )?;
+        Ok(Some((source, transform)))
+    }
+
+    /// Evaluates a represented ordinary source point before applying its
+    /// chamfer rotation. This avoids rebuilding and reclassifying an entire
+    /// analytic parallel when only one exact point is required.
+    fn chamfer_exact_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Point2>>> {
+        let Self::Chamfer { source, .. } = self else {
+            return Ok(Classification::Decided(None));
+        };
+        let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+            return Ok(Classification::Decided(None));
+        };
+        let Some(source) = source.ordinary_point_source(policy)? else {
+            return Ok(Classification::Decided(None));
+        };
+        if !matches!(
+            &source,
+            BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
+                parameter: BezierParameter2::Exact(_),
+                ..
+            }
+        ) {
+            return Ok(Classification::Decided(None));
+        }
+        let point = source.exact_point(policy)?;
+        let Some((_, transform)) = self.chamfer_rotation_source(policy)? else {
+            return Ok(Classification::Decided(None));
+        };
+        Ok(point.map(|point| point.map(|point| transform.transform_point(&point))))
+    }
+
     /// Recovers an owned ordinary carrier for exact point correspondence.
     /// Similarity transport transforms the carrier itself while preserving
     /// its parameter. A chamfer rotation does the same when its selected
@@ -9549,11 +9709,15 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 ..
             } => {
                 map.validate_policy(policy)?;
-                let parameter = match policy.strict_predicate_pass(|| {
-                    other_parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(_) => return Ok(None),
+                let parameter = if let Some(parameter) = other_parameter.represented_value() {
+                    BezierParameter2::Exact(parameter.clone())
+                } else {
+                    match policy.strict_predicate_pass(|| {
+                        other_parameter.promoted_bezier_parameter_complete(policy)
+                    })? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    }
                 };
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
@@ -9569,11 +9733,15 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 ..
             } => {
                 map.validate_policy(policy)?;
-                let parameter = match policy.strict_predicate_pass(|| {
-                    other_parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(_) => return Ok(None),
+                let parameter = if let Some(parameter) = other_parameter.represented_value() {
+                    BezierParameter2::Exact(parameter.clone())
+                } else {
+                    match policy.strict_predicate_pass(|| {
+                        other_parameter.promoted_bezier_parameter_complete(policy)
+                    })? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    }
                 };
                 Ok(Some(
                     BezierAlgebraicCuspSemicircleMappedPointSource2::Parallel {
@@ -9618,58 +9786,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 Ok(Some(source.transform_similarity(&point.data.transform)?))
             }
-            Self::Chamfer {
-                semicircle,
-                source,
-                point,
-                policy: transport_policy,
-                ..
-            } => {
-                if !policy.accepts_retained_policy(*transport_policy) {
-                    return Err(CurveError::Topology(
-                        "mapped chamfer point used a different predicate policy".into(),
-                    ));
-                }
+            Self::Chamfer { .. } => {
                 if self.retained_one_field_point_image(policy)?.is_some() {
                     return Ok(None);
                 }
-                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                let Some((source, transform)) = self.chamfer_rotation_source(policy)? else {
                     return Ok(None);
                 };
-                let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) =
-                    point
-                else {
-                    return Err(CurveError::Topology(
-                        "mapped chamfer point lost its exact rotation provenance".into(),
-                    ));
-                };
-                let BezierAlgebraicCuspDerivedPointSource2::Mapped {
-                    parameter: point_source,
-                    ..
-                } = &point.data.source
-                else {
-                    return Err(CurveError::Topology(
-                        "mapped chamfer rotation lost its source parameter".into(),
-                    ));
-                };
-                if !Arc::ptr_eq(point_source, source) {
-                    return Err(CurveError::Topology(
-                        "mapped chamfer rotation changed its source parameter".into(),
-                    ));
-                }
-                let Some(center) = semicircle.exact_rational_center(policy)? else {
-                    return Ok(None);
-                };
-                let radial = &point.data.radial_scale;
-                let perpendicular = &point.data.perpendicular_scale;
-                let transform = Similarity2::try_from_real_affine(
-                    radial.clone(),
-                    -perpendicular,
-                    perpendicular.clone(),
-                    radial.clone(),
-                    (Real::one() - radial) * center.x() + perpendicular * center.y(),
-                    (Real::one() - radial) * center.y() - perpendicular * center.x(),
-                )?;
                 let Some(source) = source.ordinary_point_source(policy)? else {
                     return Ok(None);
                 };
@@ -9842,6 +9965,52 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        self.circle_tangent_parameter_candidates_on_target(&parameter, &tangent, target, policy)
+    }
+
+    fn exact_point_circle_tangent_parameter_candidates_on_target(
+        &self,
+        point: &Point2,
+        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
+        let Some(center) = self.semicircle_carrier().exact_rational_center(policy)? else {
+            return Ok(Classification::Decided(None));
+        };
+        let radial_x = point.x() - center.x();
+        let radial_y = point.y() - center.y();
+        match real_sign(
+            &(&radial_x * &radial_x + &radial_y * &radial_y),
+            &CurveContext::STRICT,
+        ) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                return Err(CurveError::Topology(
+                    "a retained circle point coincided with its nonzero-radius center".into(),
+                ));
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a retained circle radius squared was negative".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        self.circle_tangent_parameter_candidates_on_target(
+            &BezierParameter2::Exact(Real::zero()),
+            &[vec![-radial_y], vec![radial_x]],
+            target,
+            policy,
+        )
+    }
+
+    fn circle_tangent_parameter_candidates_on_target(
+        &self,
+        parameter: &BezierParameter2,
+        tangent: &[Vec<Real>; 2],
+        target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierParameter2>>>> {
         let target_tangent = match target {
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => {
                 rational_parametric_tangent_numerator(target.data.curve.homogeneous_power_basis()?)
@@ -9854,13 +10023,15 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 ]
             }
         };
-        Ok(mapped_circle_tangent_parameter_candidates(
-            &parameter,
-            &tangent,
-            &target_tangent,
-            policy,
-        )?
-        .map(Some))
+        Ok(
+            mapped_circle_tangent_parameter_candidates(
+                parameter,
+                tangent,
+                &target_tangent,
+                policy,
+            )?
+            .map(Some),
+        )
     }
 
     /// Recovers the supporting-circle tangent at a point whose coordinates
@@ -31690,16 +31861,31 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             match tangent_cross {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                    let candidates = if let Some(source) = data.ordinary_point_source(policy)? {
-                        source.point_parameter_candidates_on_rational_target(
-                            &self.map.data.curve,
-                            policy,
-                        )?
-                    } else {
-                        data.retained_point_parameter_candidates_on_rational_target(
-                            &self.map.data.curve,
-                            policy,
-                        )?
+                    let direct_candidates = match data.chamfer_exact_point(policy)? {
+                        Classification::Decided(Some(point)) => self
+                            .map
+                            .data
+                            .curve
+                            .retained_circle_point_parameters(&point, policy)?
+                            .map(Some),
+                        Classification::Decided(None) => Classification::Decided(None),
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    };
+                    let candidates = match direct_candidates {
+                        decided @ Classification::Decided(Some(_)) => decided,
+                        Classification::Decided(None) | Classification::Uncertain(_) => {
+                            if let Some(source) = data.ordinary_point_source(policy)? {
+                                source.point_parameter_candidates_on_rational_target(
+                                    &self.map.data.curve,
+                                    policy,
+                                )?
+                            } else {
+                                data.retained_point_parameter_candidates_on_rational_target(
+                                    &self.map.data.curve,
+                                    policy,
+                                )?
+                            }
+                        }
                     };
                     let candidates = match candidates {
                         Classification::Decided(Some(candidates)) => candidates,
@@ -101256,6 +101442,50 @@ mod conversion_tests {
                 assert_eq!(
                     round_trip.order_to_real(&represented, &policy).unwrap(),
                     cusp_cut.order_to_real(&represented, &policy).unwrap(),
+                );
+            }
+            let Classification::Decided(fragment) =
+                BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    semicircle,
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+                    cusp_cut,
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the analytic selected cut must bound a circle fragment");
+            };
+            let setback = (Real::one() / Real::from(4_i8)).unwrap();
+            let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
+                .endpoint_chord_setback_cut(false, &setback, false, &policy)
+                .unwrap()
+            else {
+                panic!("the analytic selected endpoint must retain its inward chamfer cut");
+            };
+            let chamfer_target = match selected_overlap
+                .other_parameter_for_cusp(&chamfer_cut, &policy)
+                .unwrap()
+            {
+                Classification::Decided(chamfer_target) => chamfer_target,
+                Classification::Uncertain(reason) => {
+                    panic!("the analytic selected chamfer must invert into its overlap: {reason:?}")
+                }
+            };
+            let Classification::Decided(chamfer_round_trip) = selected_overlap
+                .cusp_parameter_for_other(&chamfer_target, &policy)
+                .unwrap()
+            else {
+                panic!("the selected target must map back to the analytic chamfer cut");
+            };
+            for numerator in 0_i8..=8_i8 {
+                let represented =
+                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                assert_eq!(
+                    chamfer_round_trip
+                        .order_to_real(&represented, &policy)
+                        .unwrap(),
+                    chamfer_cut.order_to_real(&represented, &policy).unwrap(),
                 );
             }
         }
