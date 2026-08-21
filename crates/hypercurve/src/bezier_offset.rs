@@ -7768,6 +7768,17 @@ impl BezierAlgebraicCuspSemicircleMappedTangentSource2<'_> {
                 )? {
                     Classification::Decided(candidates) => candidates,
                     Classification::Uncertain(reason) => {
+                        if let BezierParameter2::Algebraic(parameter) = parameter {
+                            let point = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                (*curve).clone(),
+                                parameter.clone(),
+                                policy,
+                            );
+                            return Ok(one_field_point_parameter_candidates_on_rational_target(
+                                &point, target, policy,
+                            )?
+                            .map(Some));
+                        }
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
@@ -9442,8 +9453,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
 
     /// Recovers an owned ordinary carrier for exact point correspondence.
     /// Similarity transport transforms the carrier itself while preserving
-    /// its parameter; point-specific chamfer rotation has no global carrier
-    /// image and deliberately declines this path.
+    /// its parameter. A chamfer rotation does the same when its selected
+    /// circle center is exactly represented; nonrepresented centers remain
+    /// on the procedural retained-point path.
     fn ordinary_point_source(
         &self,
         policy: &CurveContext,
@@ -9544,6 +9556,63 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 Ok(Some(source.transform_similarity(&point.data.transform)?))
             }
+            Self::Chamfer {
+                semicircle,
+                source,
+                point,
+                policy: transport_policy,
+                ..
+            } => {
+                if !policy.accepts_retained_policy(*transport_policy) {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer point used a different predicate policy".into(),
+                    ));
+                }
+                if self.retained_one_field_point_image(policy)?.is_some() {
+                    return Ok(None);
+                }
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
+                    return Ok(None);
+                };
+                let RationalBezierIntersectionPointEvidence2::AlgebraicCuspChordDerived(point) =
+                    point
+                else {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer point lost its exact rotation provenance".into(),
+                    ));
+                };
+                let BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                    parameter: point_source,
+                    ..
+                } = &point.data.source
+                else {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer rotation lost its source parameter".into(),
+                    ));
+                };
+                if !Arc::ptr_eq(point_source, source) {
+                    return Err(CurveError::Topology(
+                        "mapped chamfer rotation changed its source parameter".into(),
+                    ));
+                }
+                let Some(center) = semicircle.exact_rational_center(policy)? else {
+                    return Ok(None);
+                };
+                let radial = &point.data.radial_scale;
+                let perpendicular = &point.data.perpendicular_scale;
+                let transform = Similarity2::try_from_real_affine(
+                    radial.clone(),
+                    -perpendicular,
+                    perpendicular.clone(),
+                    radial.clone(),
+                    (Real::one() - radial) * center.x() + perpendicular * center.y(),
+                    (Real::one() - radial) * center.y() - perpendicular * center.x(),
+                )?;
+                let Some(source) = source.ordinary_point_source(policy)? else {
+                    return Ok(None);
+                };
+                Ok(Some(source.transform_similarity(&transform)?))
+            }
             Self::SelectedParallelContact { .. }
             | Self::SelectedCircularTangentContact { .. }
             | Self::SelectedPairContact { .. }
@@ -9551,8 +9620,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             | Self::SelectedChordParallelNormalContact { .. }
             | Self::Pair { .. }
             | Self::Chord { .. }
-            | Self::PairOverlap { .. }
-            | Self::Chamfer { .. } => Ok(None),
+            | Self::PairOverlap { .. } => Ok(None),
         }
     }
 
@@ -13400,6 +13468,41 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Point2>> {
+        if let Some(frame) = self.data.frame.parallel_normal() {
+            if !policy.accepts_retained_policy(frame.policy) {
+                return Err(CurveError::Topology(
+                    "a parallel-normal center crossed predicate policies".into(),
+                ));
+            }
+            return match &frame.center_parameter {
+                BezierParameter2::Exact(parameter) => Ok(
+                    match policy.strict_predicate_pass(|| {
+                        frame.center_support.point_at(parameter, policy)
+                    })? {
+                        Classification::Decided(center) => Some(center),
+                        Classification::Uncertain(_) => None,
+                    },
+                ),
+                BezierParameter2::Algebraic(parameter) => {
+                    let curve = match policy.strict_predicate_pass(|| {
+                        frame
+                            .center_support
+                            .exact_rational_parallel_component(policy)
+                    })? {
+                        Classification::Decided(Some(curve)) => curve,
+                        Classification::Decided(None) | Classification::Uncertain(_) => {
+                            return Ok(None);
+                        }
+                    };
+                    Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(
+                        curve,
+                        parameter.clone(),
+                        policy,
+                    )
+                    .exact_rational_point(&CurveContext::STRICT))
+                }
+            };
+        }
         Ok(match self.center_point_evidence(policy)? {
             Classification::Decided(RationalBezierIntersectionPointEvidence2::Exact(center)) => {
                 Some(center)
@@ -100906,6 +101009,38 @@ mod conversion_tests {
             else {
                 panic!("the selected transverse cut must bound a circle fragment");
             };
+            let setback = (Real::one() / Real::from(4_i8)).unwrap();
+            let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
+                .endpoint_chord_setback_cut(false, &setback, false, &policy)
+                .unwrap()
+            else {
+                panic!("the selected transverse endpoint must retain its inward chamfer cut");
+            };
+            let chamfer_target = match selected_overlap
+                .other_parameter_for_cusp(&chamfer_cut, &policy)
+                .unwrap()
+            {
+                Classification::Decided(chamfer_target) => chamfer_target,
+                Classification::Uncertain(reason) => panic!(
+                    "the selected transverse chamfer must invert into its overlap: {reason:?}"
+                ),
+            };
+            let Classification::Decided(chamfer_round_trip) = selected_overlap
+                .cusp_parameter_for_other(&chamfer_target, &policy)
+                .unwrap()
+            else {
+                panic!("the selected chamfer target must map back to the circle cut");
+            };
+            for numerator in 0_i8..=8_i8 {
+                let represented =
+                    (Real::from(numerator) / Real::from(8_i8)).expect("eight is nonzero");
+                assert_eq!(
+                    chamfer_round_trip
+                        .order_to_real(&represented, &policy)
+                        .unwrap(),
+                    chamfer_cut.order_to_real(&represented, &policy).unwrap(),
+                );
+            }
             let to_origin = Similarity2::try_from_real_affine(
                 Real::zero(),
                 Real::one(),
