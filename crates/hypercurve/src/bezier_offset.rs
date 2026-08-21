@@ -48,7 +48,7 @@ use crate::{
     BezierParameterRayDirection2, Classification, CubicBezier2, Curve2, CurveContext,
     CurveDerivative2, CurveError, CurveGeometry2, CurveOperation2, CurvePath2,
     CurveRegionParameter2, CurveRegionParameterRange2, CurveResult, ExactCurveError,
-    ExactCurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    ExactCurveResult, LineCircleRelation, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
     RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
     RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
@@ -9936,7 +9936,7 @@ impl PartialEq for BezierAlgebraicCuspSemicircleFragment2 {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct BezierAlgebraicCuspSemicircleFragmentData2 {
     semicircle: BezierAlgebraicCuspSemicircle2,
     start: BezierAlgebraicCuspSemicircleParameter2,
@@ -9945,6 +9945,9 @@ struct BezierAlgebraicCuspSemicircleFragmentData2 {
     /// topology, validation, and adjacency consumer of this fragment.
     start_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
     end_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
+    /// Source-parameter endpoint bits whose authored boundary neighbor is
+    /// certified tangent. Bit zero names `start`; bit one names `end`.
+    certified_tangent_endpoints: u8,
     reversed: bool,
     policy: CurveContext,
 }
@@ -23660,7 +23663,9 @@ impl BezierAlgebraicCuspSemicircle2 {
             match real_sign(&residual, policy) {
                 Some(RealSign::Zero) => {}
                 Some(RealSign::Positive | RealSign::Negative) => continue,
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                }
             }
             let radial_product_sign = match real_sign(
                 &(self.radial_distance() * &radial_distance),
@@ -23672,7 +23677,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                         "a radial displaced tangent contact retained a zero radius".into(),
                     ));
                 }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                None => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                }
             };
             let (frame_cross, frame_dot) =
                 match frame.center_support.vector_tangent_cross_and_dot_signs(
@@ -23862,10 +23869,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(Some(intersections)) => {
                 return Ok(Classification::Decided(intersections));
             }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
         if clip_to_finite_chord {
             // Bounds only reject work; they never decide an overlapping
@@ -50862,7 +50866,9 @@ impl BezierAlgebraicChord2 {
                 Classification::Decided(Some(_)) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Boundary))
                 }
-                Classification::Decided(None) => Ok(Classification::Decided(0)),
+                Classification::Decided(None) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+                }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
@@ -51008,11 +51014,20 @@ impl BezierAlgebraicChord2 {
                 }
             };
             if origin_side == crate::classify::LineSide::On {
+                // A ray collinear with any retained boundary chord is not a
+                // generic winding ray, even when its origin lies outside the
+                // finite chord. An adjacent curved fragment can meet the ray
+                // at either chord endpoint; deciding zero here would let the
+                // curve's half-open parameter rule retain only one side of a
+                // tangential vertex pair. Let the region classifier select a
+                // different exact ray direction instead.
                 return Ok(match line.contains_point(origin, policy) {
                     Classification::Decided(true) => {
                         Classification::Uncertain(UncertaintyReason::Boundary)
                     }
-                    Classification::Decided(false) => Classification::Decided(0),
+                    Classification::Decided(false) => {
+                        Classification::Uncertain(UncertaintyReason::Predicate)
+                    }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 });
             }
@@ -51092,7 +51107,7 @@ impl BezierAlgebraicChord2 {
                             (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
                                 | (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater)
                         ) {
-                            Classification::Decided(0)
+                            Classification::Uncertain(UncertaintyReason::Predicate)
                         } else {
                             Classification::Uncertain(UncertaintyReason::Boundary)
                         },
@@ -51299,7 +51314,9 @@ impl BezierAlgebraicChord2 {
                     Classification::Decided(Some(_)) => {
                         Ok(Classification::Uncertain(UncertaintyReason::Boundary))
                     }
-                    Classification::Decided(None) => Ok(Classification::Decided(0)),
+                    Classification::Decided(None) => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+                    }
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 };
             }
@@ -52434,6 +52451,94 @@ impl BezierAlgebraicChord2 {
     /// replayed against the selected root triple before the current finite
     /// boundary admits it as topology evidence. One optional source parameter
     /// may be omitted when authored adjacency already owns it.
+    fn exact_line_retained_circle_intersections(
+        &self,
+        line: &LineSeg2,
+        source: &RationalBezier2,
+        excluded_source_parameter: Option<&BezierParameter2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<BezierAlgebraicChordRationalIntersections2>>> {
+        if source.retained_circular_conic().is_none() {
+            return Ok(None);
+        }
+        let arc = match crate::arc_bezier::rational_bezier_circular_arc(source, policy)? {
+            Classification::Decided(Some(arc)) => arc,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        // A provenance line may be only a short directed witness for the
+        // infinite support.  Classify that support first and let the retained
+        // arc and this finite chord perform the two authoritative domain
+        // filters; `intersect_arc` would incorrectly clip to the witness.
+        let hits = match line.supporting_line_circle_relation(&arc, policy)? {
+            LineCircleRelation::Disjoint => Vec::new(),
+            LineCircleRelation::Tangent { point, .. } => vec![point],
+            LineCircleRelation::Secant {
+                first_point,
+                second_point,
+                ..
+            } => vec![first_point, second_point],
+            LineCircleRelation::Uncertain { reason } => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        };
+        let (chord_dx, chord_dy) = line.delta();
+        let mut contacts = Vec::with_capacity(hits.len());
+        for hit in hits {
+            match arc.contains_sweep_point(&hit, policy) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+            let point = RationalBezierIntersectionPointEvidence2::Exact(hit.clone());
+            let chord_parameter = match self.parameter_at_certified_point(point.clone(), policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let source_parameters = match source.retained_circle_point_parameters(&hit, policy)? {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let (radial_x, radial_y) = hit.delta_from(arc.center());
+            let (source_dx, source_dy) = if arc.is_clockwise() {
+                (radial_y, -radial_x)
+            } else {
+                (-radial_y, radial_x)
+            };
+            let tangent_cross =
+                Real::diff_of_products(&chord_dx, &source_dy, &chord_dy, &source_dx);
+            let Some(tangent_cross_sign) = real_sign(&tangent_cross, policy) else {
+                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
+            };
+            for source_parameter in source_parameters {
+                if let Some(excluded) = excluded_source_parameter {
+                    match source_parameter.cmp_by_refinement(excluded, policy)? {
+                        Classification::Decided(std::cmp::Ordering::Equal) => continue,
+                        Classification::Decided(_) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    }
+                }
+                contacts.push(BezierAlgebraicChordRationalContact2 {
+                    chord_parameter: chord_parameter.clone(),
+                    other_parameter: source_parameter,
+                    point: point.clone(),
+                    tangent_cross_sign,
+                });
+            }
+        }
+        Ok(Some(Classification::Decided(
+            BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+        )))
+    }
+
     pub(crate) fn rational_intersections(
         &self,
         source: &RationalBezier2,
@@ -52444,6 +52549,14 @@ impl BezierAlgebraicChord2 {
             .exact_line()
             .or_else(|| self.strict_provenance_support_line(policy))
         {
+            if let Some(intersections) = self.exact_line_retained_circle_intersections(
+                &line,
+                source,
+                excluded_source_parameter,
+                policy,
+            )? {
+                return Ok(intersections);
+            }
             let line_relation = source.relation_to_line_with_contacts(&line, policy);
             let line_contacts = match line_relation {
                 Classification::Decided(
@@ -58807,7 +58920,9 @@ impl BezierAlgebraicChordAlgebraicRay2 {
                 Classification::Decided(true) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Boundary))
                 }
-                Classification::Decided(false) => Ok(Classification::Decided(0)),
+                Classification::Decided(false) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+                }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
             };
         }
@@ -58942,6 +59057,34 @@ impl BezierAlgebraicChord2 {
         };
         if let (Some(first), Some(second)) = (strict_unit_tangent(self), strict_unit_tangent(other))
         {
+            let structural_orientation = if first.0 == second.0 && first.1 == second.1 {
+                Some(false)
+            } else if first.0 == -second.0.clone() && first.1 == -second.1.clone() {
+                Some(true)
+            } else {
+                None
+            };
+            if let Some(reversed) = structural_orientation {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-tangent-relation",
+                    if reversed {
+                        "equal-represented-unit-tangents-reversed"
+                    } else {
+                        "equal-represented-unit-tangents-forward"
+                    },
+                );
+                let value = if reversed {
+                    -dot_scale.clone()
+                } else {
+                    dot_scale.clone()
+                };
+                return Ok(real_sign(&value, &CurveContext::STRICT).map_or(
+                    Classification::Uncertain(UncertaintyReason::RealSign),
+                    Classification::Decided,
+                ));
+            }
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -63623,6 +63766,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end: BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
                 start_point_image: OnceLock::new(),
                 end_point_image: OnceLock::new(),
+                certified_tangent_endpoints: 0,
                 reversed: false,
                 policy: *policy,
             }),
@@ -63688,6 +63832,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end,
                 start_point_image: OnceLock::new(),
                 end_point_image: OnceLock::new(),
+                certified_tangent_endpoints: 0,
                 reversed,
                 policy: *policy,
             }),
@@ -63715,10 +63860,52 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end,
                 start_point_image: OnceLock::new(),
                 end_point_image: OnceLock::new(),
+                certified_tangent_endpoints: 0,
                 reversed,
                 policy: *policy,
             }),
         }
+    }
+
+    /// Marks both traversal endpoints as tangential to their authored
+    /// boundary neighbors.
+    ///
+    /// Fillet and round-join construction proves this topology before either
+    /// endpoint is split into independent selected fields.  Retaining two
+    /// bits lets later unary regularization consume that proof directly
+    /// instead of reconstructing a circle/line resultant.
+    pub(crate) fn with_certified_tangent_endpoints(mut self) -> Self {
+        Arc::make_mut(&mut self.data).certified_tangent_endpoints = 0b11;
+        self
+    }
+
+    pub(crate) fn without_certified_tangent_endpoints(mut self) -> Self {
+        Arc::make_mut(&mut self.data).certified_tangent_endpoints = 0;
+        self
+    }
+
+    pub(crate) fn certified_tangent_endpoint(&self, start_endpoint: bool) -> bool {
+        let source_start = start_endpoint != self.data.reversed;
+        self.data.certified_tangent_endpoints & if source_start { 1 } else { 2 } != 0
+    }
+
+    /// Preserves only the authored outer-endpoint certificates retained by a
+    /// selected-circle subrange.  Interior arrangement cuts deliberately gain
+    /// no tangent claim.
+    pub(crate) fn inherit_certified_tangent_endpoints(mut self, source: &Self) -> Self {
+        let inherited = |parameter: &BezierAlgebraicCuspSemicircleParameter2| {
+            u8::from(
+                source.data.certified_tangent_endpoints & 1 != 0
+                    && parameter.shares_exact_evidence(&source.data.start),
+            ) | (u8::from(
+                source.data.certified_tangent_endpoints & 2 != 0
+                    && parameter.shares_exact_evidence(&source.data.end),
+            ) << 1)
+        };
+        let bits = (inherited(&self.data.start) != 0) as u8
+            | (((inherited(&self.data.end) != 0) as u8) << 1);
+        Arc::make_mut(&mut self.data).certified_tangent_endpoints = bits;
+        self
     }
 
     pub(crate) fn semicircle(&self) -> &BezierAlgebraicCuspSemicircle2 {
@@ -64018,6 +64205,35 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 )))
             }
         }
+    }
+
+    /// Retains the endpoint traversal tangent as one certified finite chord.
+    ///
+    /// This is the common directional authority for selected-circle relation
+    /// predicates.  Keeping the endpoint and its rotated support point in the
+    /// native retained fields avoids materializing a normalized tangent or a
+    /// compositum of independently selected coordinates.
+    pub(crate) fn endpoint_tangent_chord(
+        &self,
+        start_endpoint: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChord2>>> {
+        let point = match self.endpoint_point_evidence(start_endpoint, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let support = match self.endpoint_tangent_support_point(start_endpoint, policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(point, support, policy)
+            .map(|classification| classification.map(Some))
     }
 
     /// Proves that these finite selected-circle fragments share exactly one
@@ -65717,18 +65933,87 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         self.validate_policy(policy)?;
         chord.validate_policy(policy)?;
 
-        if let Classification::Decided(Some((reference, reference_cross))) = self
-            .endpoint_chord_tangent_relation(start_endpoint, policy)?
-            .map(|relation| relation.map(|(chord, cross, _)| (chord, cross)))
-            && let Classification::Decided(RealSign::Zero) =
-                reference.tangent_cross_sign(chord, policy)?
-            && let Classification::Decided(factor @ (RealSign::Negative | RealSign::Positive)) =
-                reference.tangent_dot_sign(chord, policy)?
+        let endpoint_relation = self.endpoint_chord_tangent_relation(start_endpoint, policy)?;
+        if let Classification::Decided(Some((reference, reference_cross))) =
+            endpoint_relation.map(|relation| relation.map(|(chord, cross, _)| (chord, cross)))
         {
-            return Ok(Classification::Decided(product_sign(
-                reference_cross,
-                factor,
-            )));
+            if let Some(reversed) = chord.retained_normal_offset_tangent_reversal_to(&reference) {
+                return Ok(Classification::Decided(product_sign(
+                    reference_cross,
+                    if reversed {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    },
+                )));
+            }
+            let reference_relation = policy.strict_predicate_pass(|| -> CurveResult<_> {
+                Ok((
+                    reference.tangent_cross_sign(chord, policy)?,
+                    reference.tangent_dot_sign(chord, policy)?,
+                ))
+            })?;
+            if let (
+                Classification::Decided(RealSign::Zero),
+                Classification::Decided(factor @ (RealSign::Negative | RealSign::Positive)),
+            ) = reference_relation
+            {
+                return Ok(Classification::Decided(product_sign(
+                    reference_cross,
+                    factor,
+                )));
+            }
+        }
+
+        // Every retained selected-circle endpoint can publish a distinct
+        // point on its traversal tangent.  When an adjacent chord has been
+        // rebuilt through a different selected field, comparing the two
+        // affine supports recovers exact tangency without asking interval
+        // boxes to prove a correlated zero or invoking the full circle/line
+        // intersection resultant.
+        let tangent = self.endpoint_tangent_chord(start_endpoint, policy)?;
+        if let Classification::Decided(Some(tangent)) = tangent {
+            let direct =
+                policy.strict_predicate_pass(|| tangent.tangent_cross_sign(chord, policy))?;
+            if let Classification::Decided(cross) = direct {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "selected-circle-chord-tangent",
+                    "endpoint-tangent-direction",
+                );
+                return Ok(Classification::Decided(cross));
+            }
+            match policy.strict_predicate_pass(|| tangent.chord_intersections(chord, policy))? {
+                Classification::Decided(BezierAlgebraicChordPairIntersections2::Contacts(
+                    contacts,
+                )) => {
+                    // Two noncollinear affine chords have one global tangent
+                    // relation, independent of which finite contact owns the
+                    // evidence.  The endpoint construction guarantees at
+                    // least their authored endpoint contact when the finite
+                    // adjacent chord is incident.
+                    if let Some(contact) = contacts.first() {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "selected-circle-chord-tangent",
+                            "endpoint-tangent-contact",
+                        );
+                        return Ok(Classification::Decided(contact.tangent_cross_sign()));
+                    }
+                }
+                Classification::Decided(BezierAlgebraicChordPairIntersections2::Overlaps(_)) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "selected-circle-chord-tangent",
+                        "endpoint-tangent-overlap",
+                    );
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
 
         let point = match self.endpoint_point_evidence(start_endpoint, policy)? {
@@ -65814,11 +66099,208 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 }));
             }
         }
+        // Interval refinement cannot prove an exact zero shared across
+        // independently retained circle and chord fields. Replay the complete
+        // selected-circle/chord kernel before APPROXIMATE_512 is allowed to
+        // terminate that equality; its mapped contact owns both the finite
+        // endpoint identity and the oriented tangent sign.
+        let retained_intersections = self.data.semicircle.chord_intersections(chord, policy)?;
+        if let Classification::Decided(
+            BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
+        ) = retained_intersections
+        {
+            let endpoint = self.endpoint_parameter(start_endpoint);
+            for contact in contacts {
+                let order = contact.cusp_parameter.cmp_by_refinement(endpoint, policy)?;
+                match order {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "selected-circle-chord-tangent",
+                            "complete-intersection-replay",
+                        );
+                        return Ok(Classification::Decided(if self.data.reversed {
+                            product_sign(contact.tangent_cross_sign, RealSign::Negative)
+                        } else {
+                            contact.tangent_cross_sign
+                        }));
+                    }
+                    Classification::Decided(_) | Classification::Uncertain(_) => {}
+                }
+            }
+        }
         if permit_terminal_approximation && terminal_refined && policy.permits_approximate_512() {
             policy.observe_approximate_512();
             Ok(Classification::Decided(RealSign::Zero))
         } else {
             Ok(Classification::Uncertain(UncertaintyReason::Predicate))
+        }
+    }
+
+    /// Signs this selected-circle traversal tangent dotted with one retained
+    /// algebraic-chord direction.
+    ///
+    /// Tangent incidence is handled structurally above because an exact zero
+    /// may span independent selected fields.  Once parallelism is known, the
+    /// nonzero orientation is obtained either from the authored chord contact
+    /// or from the common endpoint tangent chord; its dot interval separates
+    /// without a circle/line resultant.
+    pub(crate) fn endpoint_tangent_dot_algebraic_chord(
+        &self,
+        start_endpoint: bool,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        chord.validate_policy(policy)?;
+
+        if let Classification::Decided(Some((reference, _, Some(reference_dot)))) =
+            self.endpoint_chord_tangent_relation(start_endpoint, policy)?
+        {
+            if let Some(reversed) = chord.retained_normal_offset_tangent_reversal_to(&reference) {
+                return Ok(Classification::Decided(product_sign(
+                    reference_dot,
+                    if reversed {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    },
+                )));
+            }
+            if reference.tangent_cross_sign(chord, policy)?
+                == Classification::Decided(RealSign::Zero)
+                && let Classification::Decided(factor @ (RealSign::Negative | RealSign::Positive)) =
+                    reference.tangent_dot_sign(chord, policy)?
+            {
+                return Ok(Classification::Decided(product_sign(reference_dot, factor)));
+            }
+        }
+
+        let tangent = match self.endpoint_tangent_chord(start_endpoint, policy)? {
+            Classification::Decided(Some(tangent)) => tangent,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        tangent.tangent_dot_sign(chord, policy)
+    }
+
+    /// Replays this concentric offset's endpoint tangent through the source
+    /// circle before comparing it with an adjacent chord direction.
+    ///
+    /// The chord tangent belongs to the source boundary and need not pass
+    /// through the offset circle's new endpoint.  Source incidence supplies
+    /// the exact cross sign; the two retained signed-radius/reversal factors
+    /// transport that sign without rebuilding either selected point field.
+    pub(crate) fn endpoint_tangent_cross_algebraic_chord_from_source(
+        &self,
+        source: &Self,
+        start_endpoint: bool,
+        chord: &BezierAlgebraicChord2,
+        permit_terminal_approximation: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        source.validate_policy(policy)?;
+        let target_factor =
+            match self.tangent_orientation_factor_from(&source.data.semicircle, policy)? {
+                Classification::Decided(Some(factor)) => factor,
+                Classification::Decided(None) | Classification::Uncertain(_) => {
+                    return self.endpoint_tangent_cross_algebraic_chord(
+                        start_endpoint,
+                        chord,
+                        permit_terminal_approximation,
+                        policy,
+                    );
+                }
+            };
+        // The offset kernel invokes this predicate only for neighboring
+        // source fragments.  Their authored adjacency is stronger than two
+        // independently reconstructed direction fields: once the source
+        // circle and chord certify their unique tangent endpoint, a
+        // concentric target circle has the same tangent line.  Consume that
+        // exact topology before attempting a selected-field zero predicate.
+        if source.certified_adjacent_chord_is_endpoint_only(chord, start_endpoint, policy)?
+            == Classification::Decided(true)
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "selected-circle-chord-tangent",
+                "concentric-authored-adjacency",
+            );
+            return Ok(Classification::Decided(RealSign::Zero));
+        }
+        let source_factor =
+            match source.tangent_orientation_factor_from(&source.data.semicircle, policy)? {
+                Classification::Decided(Some(factor)) => factor,
+                Classification::Decided(None) | Classification::Uncertain(_) => {
+                    return self.endpoint_tangent_cross_algebraic_chord(
+                        start_endpoint,
+                        chord,
+                        permit_terminal_approximation,
+                        policy,
+                    );
+                }
+            };
+        match source.endpoint_tangent_cross_algebraic_chord(
+            start_endpoint,
+            chord,
+            permit_terminal_approximation,
+            policy,
+        )? {
+            Classification::Decided(sign) => Ok(Classification::Decided(product_sign(
+                sign,
+                product_sign(target_factor, source_factor),
+            ))),
+            Classification::Uncertain(_) => self.endpoint_tangent_cross_algebraic_chord(
+                start_endpoint,
+                chord,
+                permit_terminal_approximation,
+                policy,
+            ),
+        }
+    }
+
+    /// Transports an endpoint tangent-dot sign from a concentric source
+    /// circle to this offset circle without moving the adjacent source chord.
+    pub(crate) fn endpoint_tangent_dot_algebraic_chord_from_source(
+        &self,
+        source: &Self,
+        start_endpoint: bool,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        self.validate_policy(policy)?;
+        source.validate_policy(policy)?;
+        let target_factor = match self
+            .tangent_orientation_factor_from(&source.data.semicircle, policy)?
+        {
+            Classification::Decided(Some(factor)) => factor,
+            Classification::Decided(None) | Classification::Uncertain(_) => {
+                return self.endpoint_tangent_dot_algebraic_chord(start_endpoint, chord, policy);
+            }
+        };
+        let source_factor = match source
+            .tangent_orientation_factor_from(&source.data.semicircle, policy)?
+        {
+            Classification::Decided(Some(factor)) => factor,
+            Classification::Decided(None) | Classification::Uncertain(_) => {
+                return self.endpoint_tangent_dot_algebraic_chord(start_endpoint, chord, policy);
+            }
+        };
+        match source.endpoint_tangent_dot_algebraic_chord(start_endpoint, chord, policy)? {
+            Classification::Decided(sign) => Ok(Classification::Decided(product_sign(
+                sign,
+                product_sign(target_factor, source_factor),
+            ))),
+            Classification::Uncertain(_) => {
+                self.endpoint_tangent_dot_algebraic_chord(start_endpoint, chord, policy)
+            }
         }
     }
 
@@ -65934,6 +66416,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end: self.data.end.clone(),
                 start_point_image: cloned_once_lock(&self.data.start_point_image),
                 end_point_image: cloned_once_lock(&self.data.end_point_image),
+                certified_tangent_endpoints: self.data.certified_tangent_endpoints,
                 reversed: !self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -65963,6 +66446,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end,
                 start_point_image: OnceLock::new(),
                 end_point_image: OnceLock::new(),
+                certified_tangent_endpoints: self.data.certified_tangent_endpoints,
                 reversed: self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -66005,6 +66489,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end: self.data.end.clone(),
                 start_point_image: OnceLock::new(),
                 end_point_image: OnceLock::new(),
+                certified_tangent_endpoints: self.data.certified_tangent_endpoints,
                 reversed: self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -66577,17 +67062,25 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         // support has exactly one contact.  This remains a structural exact
         // proof even when independently rebuilt point images cannot be
         // compared without adjoining their algebraic fields.
-        if let Classification::Decided(Some((reference, circle_cross, circle_dot))) =
-            self.endpoint_chord_tangent_relation(shared_circle_start, policy)?
-            && circle_cross == RealSign::Zero
-            && matches!(circle_dot, Some(RealSign::Negative | RealSign::Positive))
-            && reference.tangent_cross_sign(chord, policy)?
+        let shared_tangent_authority = policy.strict_predicate_pass(|| -> CurveResult<bool> {
+            let Classification::Decided(Some((reference, circle_cross, circle_dot))) =
+                self.endpoint_chord_tangent_relation(shared_circle_start, policy)?
+            else {
+                return Ok(false);
+            };
+            if circle_cross != RealSign::Zero
+                || !matches!(circle_dot, Some(RealSign::Negative | RealSign::Positive))
+            {
+                return Ok(false);
+            }
+            Ok(reference.tangent_cross_sign(chord, policy)?
                 == Classification::Decided(RealSign::Zero)
-            && matches!(
-                reference.tangent_dot_sign(chord, policy)?,
-                Classification::Decided(RealSign::Negative | RealSign::Positive)
-            )
-        {
+                && matches!(
+                    reference.tangent_dot_sign(chord, policy)?,
+                    Classification::Decided(RealSign::Negative | RealSign::Positive)
+                ))
+        })?;
+        if shared_tangent_authority {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -66602,6 +67095,84 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         // radius is the source chord's unit left normal, while every point of
         // the adjacent chord has the source tangent direction; a nonzero
         // circle and that line therefore meet only at the authored endpoint.
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(parameter) =
+            self.endpoint_parameter(shared_circle_start)
+        {
+            if let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
+                parallel,
+                parameter: source_parameter,
+                ..
+            } = parameter.as_ref()
+            {
+                let retained_contact =
+                    source_parameter.as_exact().is_some_and(|source_parameter| {
+                        chord.parallel_tangent_contacts().iter().any(|contact| {
+                            contact.parallel().source() == parallel.source()
+                                && compare_reals(
+                                    contact.parameter(),
+                                    source_parameter,
+                                    &CurveContext::STRICT,
+                                ) == Some(std::cmp::Ordering::Equal)
+                        })
+                    });
+                if retained_contact {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "selected-parallel-authored-tangent-leg",
+                    );
+                    return Ok(Classification::Decided(true));
+                }
+                let represented_tangent = chord.certified_unit_tangent();
+                let represented_parallel = match represented_tangent.as_ref() {
+                    Some((x, y)) => policy.strict_predicate_pass(|| {
+                        parallel.vector_tangent_cross_and_dot_signs(source_parameter, x, y, policy)
+                    })?,
+                    None => Classification::Uncertain(UncertaintyReason::Unsupported),
+                };
+                if matches!(
+                    represented_parallel,
+                    Classification::Decided((
+                        RealSign::Zero,
+                        RealSign::Negative | RealSign::Positive
+                    ))
+                ) {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-circle-chord-kernel",
+                        "selected-parallel-represented-tangent",
+                    );
+                    return Ok(Classification::Decided(true));
+                }
+            }
+            let source = match parameter.as_ref() {
+                BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
+                    chord,
+                    ..
+                }
+                | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact {
+                    chord,
+                    ..
+                } => Some(chord),
+                _ => None,
+            };
+            if let Some(source) = source
+                && (source.shares_retained_support(chord)
+                    || chord
+                        .retained_normal_offset_tangent_reversal_to(source)
+                        .is_some())
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-chord-kernel",
+                    "selected-chord-normal-offset-tangent",
+                );
+                return Ok(Classification::Decided(true));
+            }
+        }
         for circle_start in [true, false] {
             let BezierAlgebraicCuspSemicircleParameter2::Mapped(parameter) =
                 self.endpoint_parameter(circle_start)
@@ -67023,6 +67594,13 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 cloned_once_lock(&next.data.end_point_image),
             )
         };
+        let certified_tangent_endpoints = if self.data.reversed {
+            (next.data.certified_tangent_endpoints & 1)
+                | (self.data.certified_tangent_endpoints & 2)
+        } else {
+            (self.data.certified_tangent_endpoints & 1)
+                | (next.data.certified_tangent_endpoints & 2)
+        };
         Ok(Some(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleFragmentData2 {
                 semicircle: self.data.semicircle.clone(),
@@ -67030,6 +67608,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 end,
                 start_point_image,
                 end_point_image,
+                certified_tangent_endpoints,
                 reversed: self.data.reversed,
                 policy: self.data.policy,
             }),
@@ -75905,25 +76484,6 @@ impl BezierParallel2 {
         )
     }
 
-    pub(crate) fn relation_to_supporting_line_with_certified_tangencies(
-        &self,
-        line: &LineSeg2,
-        certified_tangencies: &[Real],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierLineContactRelation>> {
-        self.relation_to_supporting_line_with_certified_contacts(
-            line,
-            None,
-            None,
-            certified_tangencies,
-            false,
-            None,
-            None,
-            None,
-            policy,
-        )
-    }
-
     /// Uses a caller-certified direction plus one exact transverse contact
     /// and any exact tangencies on the same supporting line.  The certified
     /// crossing is divided from the squared incidence before isolation and
@@ -82396,9 +82956,11 @@ fn parallel_candidate_system_from_parameter_components(
 /// `[0, 1]^2`, so controls with one strict sign certify that the polynomial has
 /// that sign everywhere. A mixed, zero, or undecidable control merely declines
 /// this acceleration and leaves the complete resultant path authoritative.
+/// Inspect only already-retained scalar facts here: walking or refining a large
+/// lazy expression graph would make this optional shortcut unbounded.
 fn bivariate_unit_square_strict_bernstein_sign(
     polynomial: &BivariatePolynomial,
-    policy: &CurveContext,
+    _policy: &CurveContext,
 ) -> CurveResult<Option<RealSign>> {
     let first_degree = polynomial.coefficients.len().saturating_sub(1);
     let second_degree = polynomial
@@ -82424,8 +82986,7 @@ fn bivariate_unit_square_strict_bernstein_sign(
             .map(|row| row[second_index].clone())
             .collect::<Vec<_>>();
         for control in power_to_bernstein_coefficients(&first_power, first_degree)? {
-            let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
-                real_sign(&control, policy)
+            let Some(sign @ (RealSign::Positive | RealSign::Negative)) = control.immediate_sign()
             else {
                 return Ok(None);
             };
@@ -90992,6 +91553,123 @@ mod conversion_tests {
     };
 
     #[test]
+    fn retained_chord_rejects_collinear_winding_rays_outside_its_finite_extent() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-2, 0)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(-1, 0)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("an exact nonzero chord must construct");
+            };
+            let origin = Point2::from_values(0, 0);
+            for direction_x in [-Real::one(), Real::one()] {
+                assert_eq!(
+                    chord
+                        .forward_ray_winding_delta(&origin, &direction_x, &Real::zero(), &policy,)
+                        .unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Predicate),
+                );
+            }
+            assert_eq!(
+                chord
+                    .forward_ray_winding_delta(&origin, &Real::zero(), &Real::one(), &policy,)
+                    .unwrap(),
+                Classification::Decided(0),
+            );
+        }
+    }
+
+    #[test]
+    fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = CircularArc2::try_from_center(
+                Point2::from_values(2, 0),
+                Point2::from_values(0, 2),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap();
+            let Classification::Decided(decomposition) = arc
+                .rational_bezier_decomposition_with_policy(&policy)
+                .unwrap()
+            else {
+                panic!("an exact quarter circle must decompose");
+            };
+            let [span] = decomposition.spans() else {
+                panic!("an exact quarter circle must have one rational span");
+            };
+            let source = RationalBezier2::from(span.curve().clone());
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 0)),
+                RationalBezierIntersectionPointEvidence2::Exact(Point2::from_values(0, 2)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("an exact radial chord must construct");
+            };
+            let support_witness =
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
+                    .expect("valid short support witness");
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                witness_contacts,
+            )) = chord
+                .exact_line_retained_circle_intersections(&support_witness, &source, None, &policy)
+                .unwrap()
+                .expect("the retained circle path applies")
+            else {
+                panic!("a short support witness must retain its external circle contact");
+            };
+            assert_eq!(witness_contacts.len(), 1);
+            assert!(matches!(
+                witness_contacts[0].point(),
+                RationalBezierIntersectionPointEvidence2::Exact(point)
+                    if point == &Point2::from_values(0, 2)
+            ));
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                contacts,
+            )) = chord
+                .rational_intersections(&source, None, &policy)
+                .unwrap()
+            else {
+                panic!("the radial chord contact must be decided");
+            };
+            let [contact] = contacts.as_slice() else {
+                panic!("the finite radial chord must retain one circle contact");
+            };
+            assert_eq!(contact.tangent_cross_sign(), RealSign::Positive);
+            assert_eq!(
+                contact
+                    .chord_parameter()
+                    .cmp_by_refinement(&chord.end_parameter(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal),
+            );
+            assert!(matches!(
+                contact.other_parameter(),
+                BezierParameter2::Exact(parameter) if parameter == &Real::one()
+            ));
+            assert!(matches!(
+                contact.point(),
+                RationalBezierIntersectionPointEvidence2::Exact(point)
+                    if point == &Point2::from_values(0, 2)
+            ));
+
+            let excluded = BezierParameter2::Exact(Real::one());
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
+                excluded_contacts,
+            )) = chord
+                .rational_intersections(&source, Some(&excluded), &policy)
+                .unwrap()
+            else {
+                panic!("excluding the authored endpoint must remain decided");
+            };
+            assert!(excluded_contacts.is_empty());
+        }
+    }
+
+    #[test]
     fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let two_thirds = &third * Real::from(2_i8);
@@ -91317,6 +91995,45 @@ mod conversion_tests {
         assert_eq!(reversed.end(), &start);
         assert!(reversed.is_reversed());
         assert_eq!(reversed.reversed(), chord);
+    }
+
+    #[test]
+    fn independent_represented_unit_tangents_keep_exact_forward_and_reverse_relations() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let chord = |start, end| {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    RationalBezierIntersectionPointEvidence2::Exact(start),
+                    RationalBezierIntersectionPointEvidence2::Exact(end),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("a 3-4-5 chord must construct");
+                };
+                chord
+            };
+            let first = chord(Point2::from_values(0, 0), Point2::from_values(3, 4));
+            let forward = chord(Point2::from_values(10, 0), Point2::from_values(13, 4));
+            let reverse = chord(Point2::from_values(13, 4), Point2::from_values(10, 0));
+
+            assert!(first.shared_tangent_orientation(&forward).is_none());
+            assert!(first.shared_tangent_orientation(&reverse).is_none());
+            assert_eq!(
+                first.tangent_cross_sign(&forward, &policy).unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+            assert_eq!(
+                first.tangent_dot_sign(&forward, &policy).unwrap(),
+                Classification::Decided(RealSign::Positive),
+            );
+            assert_eq!(
+                first.tangent_cross_sign(&reverse, &policy).unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+            assert_eq!(
+                first.tangent_dot_sign(&reverse, &policy).unwrap(),
+                Classification::Decided(RealSign::Negative),
+            );
+        }
     }
 
     #[test]
@@ -100559,6 +101276,37 @@ mod conversion_tests {
                 cut,
                 BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
             );
+            let authored = BezierAlgebraicCuspSemicircleFragment2::full(upper.clone(), &policy)
+                .with_certified_tangent_endpoints();
+            let certified_first = first.clone().inherit_certified_tangent_endpoints(&authored);
+            let certified_second = second
+                .clone()
+                .inherit_certified_tangent_endpoints(&authored);
+            assert!(certified_first.certified_tangent_endpoint(true));
+            assert!(!certified_first.certified_tangent_endpoint(false));
+            assert!(!certified_second.certified_tangent_endpoint(true));
+            assert!(certified_second.certified_tangent_endpoint(false));
+            let reversed_certificate = certified_first.reversed();
+            assert!(!reversed_certificate.certified_tangent_endpoint(true));
+            assert!(reversed_certificate.certified_tangent_endpoint(false));
+            let transformed_certificate = certified_first
+                .transform_similarity(&scale_rotate_translate)
+                .unwrap();
+            assert!(transformed_certificate.certified_tangent_endpoint(true));
+            assert!(!transformed_certificate.certified_tangent_endpoint(false));
+            let Classification::Decided(Some(offset_certificate)) =
+                certified_first.offset_left(&Real::zero(), &policy).unwrap()
+            else {
+                panic!("a zero concentric offset must retain the selected circle");
+            };
+            assert!(offset_certificate.certified_tangent_endpoint(true));
+            assert!(!offset_certificate.certified_tangent_endpoint(false));
+            let certified_merged = certified_first
+                .coalesced_with_next(&certified_second, &policy)
+                .unwrap()
+                .expect("certified correlated partitions must coalesce");
+            assert!(certified_merged.certified_tangent_endpoint(true));
+            assert!(certified_merged.certified_tangent_endpoint(false));
             let merged = first
                 .coalesced_with_next(&second, &policy)
                 .unwrap()
@@ -100626,9 +101374,12 @@ mod conversion_tests {
                                 BezierAlgebraicCuspSemicircleFragment2::full(
                                     upper.clone(),
                                     &policy,
-                                ),
+                                )
+                                .with_certified_tangent_endpoints(),
                             ),
-                            BezierSplitFragment2::AlgebraicCuspSemicircle(lower),
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(
+                                lower.with_certified_tangent_endpoints(),
+                            ),
                         ],
                         &policy,
                     )
@@ -100642,6 +101393,21 @@ mod conversion_tests {
             let unsplit = unsplit_source
                 .offset(half.clone(), &crate::OffsetCornerStyle2::Round, &policy)
                 .unwrap();
+            let published_circles = unsplit
+                .value
+                .boundary_loops()
+                .iter()
+                .flat_map(|boundary| boundary.fragments())
+                .filter_map(|fragment| match fragment {
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(circle) => Some(circle),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            assert!(!published_circles.is_empty());
+            assert!(published_circles.iter().all(|circle| {
+                !circle.certified_tangent_endpoint(true)
+                    && !circle.certified_tangent_endpoint(false)
+            }));
             let transformed_unsplit = unsplit_source
                 .transform_affine(
                     &Real::zero(),
@@ -118222,6 +118988,10 @@ mod conversion_tests {
             vec![Real::zero(), Real::from(-1_i8)],
             vec![Real::one()],
         ]);
+        let unresolved_positive =
+            Real::pi() - (Real::from(103_993_i32) / Real::from(33_102_i32)).unwrap();
+        assert_eq!(unresolved_positive.immediate_sign(), None);
+        let unresolved = BivariatePolynomial::new(vec![vec![unresolved_positive.clone()]]);
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert!(bivariate_unit_square_has_strict_bernstein_sign(&positive, &policy).unwrap());
@@ -118232,7 +119002,16 @@ mod conversion_tests {
             assert!(
                 !bivariate_unit_square_has_strict_bernstein_sign(&sign_change, &policy).unwrap()
             );
+            assert!(
+                !bivariate_unit_square_has_strict_bernstein_sign(&unresolved, &policy).unwrap(),
+                "an optional Bernstein shortcut must not walk or refine an opaque scalar graph",
+            );
         }
+        assert_eq!(
+            real_sign(&unresolved_positive, &CurveContext::STRICT),
+            Some(RealSign::Positive),
+            "declining the bounded shortcut leaves a later exact predicate authoritative",
+        );
     }
 
     #[test]

@@ -51,6 +51,24 @@ fn circle(center_x: i64, center_y: i64, radius: i64) -> Contour2 {
     .unwrap()
 }
 
+fn curved_dumbbell() -> Contour2 {
+    let left_top = p(-1, 3);
+    let right_top = p(1, 3);
+    let right_bottom = p(1, -3);
+    let left_bottom = p(-1, -3);
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(left_top.clone(), right_top.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(right_top, right_bottom.clone(), p(5, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(right_bottom, left_bottom.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(left_bottom, left_top, p(-5, 0), true).unwrap(),
+        ),
+    ])
+    .unwrap()
+}
+
 fn reversed(contour: &Contour2) -> Contour2 {
     Contour2::try_new_with_fill_rule(
         contour
@@ -6053,6 +6071,51 @@ fn unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies() {
             (p(3, 0), RegionPointLocation::Outside),
             (p(-4, 0), RegionPointLocation::Boundary),
             (p(4, 0), RegionPointLocation::Boundary),
+        ] {
+            let location = split.value.classify_point(&point, &policy).unwrap();
+            if policy == CurveContext::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source =
+            CurveRegion2::try_from_native_material_contours(vec![curved_dumbbell()], &policy)
+                .unwrap()
+                .into_value();
+        let split = source
+            .offset(-Real::from(4), &sharp_offset(), &policy)
+            .expect("a collapsed mixed line/arc neck must regularize into two components");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        let roles = split.value.loop_roles(&policy).unwrap();
+        if policy == CurveContext::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ]),
+        );
+        for (point, expected) in [
+            (p(-5, 0), RegionPointLocation::Inside),
+            (p(5, 0), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(q(-15, 4), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(q(15, 4), Real::zero()),
+                RegionPointLocation::Boundary,
+            ),
         ] {
             let location = split.value.classify_point(&point, &policy).unwrap();
             if policy == CurveContext::STRICT {

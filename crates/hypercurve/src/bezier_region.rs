@@ -4279,6 +4279,19 @@ fn append_exact_algebraic_line_join(
     match endpoint_equality {
         Classification::Decided(true) => Ok(Classification::Decided(())),
         Classification::Decided(false) => {
+            if let (Some(from), Some(to)) = (from.as_exact(), to.as_exact()) {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "curve-region-exact-line-join",
+                    "represented-endpoints",
+                );
+                let line = LineSeg2::try_new(from.clone(), to.clone())?;
+                fragments.push(materialized_offset_fragment(BezierSubcurve2::Quadratic(
+                    QuadraticBezier2::from_line_segment(line),
+                )));
+                return Ok(Classification::Decided(()));
+            }
             let chord = match certified_direction {
                 Some(direction) => {
                     crate::BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
@@ -7323,7 +7336,8 @@ fn append_retained_parallel_round_join(
                     contact_parameter,
                     false,
                     policy,
-                ),
+                )
+                .with_certified_tangent_endpoints(),
             ]
         } else {
             vec![
@@ -7333,14 +7347,16 @@ fn append_retained_parallel_round_join(
                     exact_one,
                     false,
                     policy,
-                ),
+                )
+                .with_certified_tangent_endpoints(),
                 crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
                     terminal_circle,
                     exact_zero,
                     contact_parameter,
                     false,
                     policy,
-                ),
+                )
+                .with_certified_tangent_endpoints(),
             ]
         };
         if !anchor_is_previous {
@@ -7667,7 +7683,9 @@ fn append_exact_round_join(
                     }
                 }
             }
-            fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment));
+            fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                fragment.with_certified_tangent_endpoints(),
+            ));
             return Ok(Classification::Decided(()));
         }
     }
@@ -7775,7 +7793,9 @@ fn append_selected_chord_pair_round_join(
         "curve-region-exact-offset-join",
         "selected-chord-pair-round",
     );
-    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment));
+    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+        fragment.with_certified_tangent_endpoints(),
+    ));
     Ok(Classification::Decided(()))
 }
 
@@ -7857,7 +7877,9 @@ fn append_selected_chord_normal_round_join(
             }
         }
     }
-    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment));
+    fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+        fragment.with_certified_tangent_endpoints(),
+    ));
     Ok(Classification::Decided(()))
 }
 
@@ -8937,35 +8959,13 @@ fn exact_selected_circle_pair_tangent_cross_and_dot_by_chords(
     second_start: bool,
     policy: &CurveContext,
 ) -> Classification<Option<(RealSign, Option<RealSign>)>> {
-    let tangent_chord = |fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
-                         at_start: bool|
-     -> CurveResult<Classification<Option<crate::BezierAlgebraicChord2>>> {
-        let point = match fragment.endpoint_point_evidence(at_start, policy)? {
-            Classification::Decided(Some(point)) => point,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let support = match fragment.endpoint_tangent_support_point(at_start, policy)? {
-            Classification::Decided(Some(point)) => point,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            point, support, policy,
-        )
-        .map(|classification| classification.map(Some))
-    };
-    let first = match tangent_chord(first, first_start) {
+    let first = match first.endpoint_tangent_chord(first_start, policy) {
         Ok(Classification::Decided(Some(chord))) => chord,
         Ok(Classification::Decided(None)) => return Classification::Decided(None),
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let second = match tangent_chord(second, second_start) {
+    let second = match second.endpoint_tangent_chord(second_start, policy) {
         Ok(Classification::Decided(Some(chord))) => chord,
         Ok(Classification::Decided(None)) => return Classification::Decided(None),
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
@@ -9367,7 +9367,9 @@ fn exact_offset_tangent_cross_sign(
         }
         (
             ExactOffsetTangent2::SelectedCircularEndpoint {
-                fragment, at_start, ..
+                source_fragment,
+                fragment,
+                at_start,
             },
             ExactOffsetTangent2::AlgebraicChord(second),
         ) => {
@@ -9378,13 +9380,21 @@ fn exact_offset_tangent_cross_sign(
                 "selected-circle-algebraic-chord",
             );
             fragment
-                .endpoint_tangent_cross_algebraic_chord(*at_start, second, true, policy)
+                .endpoint_tangent_cross_algebraic_chord_from_source(
+                    source_fragment,
+                    *at_start,
+                    second,
+                    true,
+                    policy,
+                )
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
         (
             ExactOffsetTangent2::AlgebraicChord(first),
             ExactOffsetTangent2::SelectedCircularEndpoint {
-                fragment, at_start, ..
+                source_fragment,
+                fragment,
+                at_start,
             },
         ) => {
             #[cfg(feature = "dispatch-trace")]
@@ -9394,7 +9404,13 @@ fn exact_offset_tangent_cross_sign(
                 "algebraic-chord-selected-circle",
             );
             fragment
-                .endpoint_tangent_cross_algebraic_chord(*at_start, first, true, policy)
+                .endpoint_tangent_cross_algebraic_chord_from_source(
+                    source_fragment,
+                    *at_start,
+                    first,
+                    true,
+                    policy,
+                )
                 .map(|cross| cross.map(exact_sign_reverse))
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
@@ -9697,6 +9713,37 @@ fn exact_offset_tangents_are_opposite(
         ) => {
             let perpendicular = (-vector.1.clone(), vector.0.clone());
             match fragment.endpoint_tangent_cross_vector(*at_start, &perpendicular, policy) {
+                Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
+                Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
+                Ok(Classification::Decided(RealSign::Zero)) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            }
+        }
+        (
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                source_fragment,
+                fragment,
+                at_start,
+            },
+            ExactOffsetTangent2::AlgebraicChord(chord),
+        )
+        | (
+            ExactOffsetTangent2::AlgebraicChord(chord),
+            ExactOffsetTangent2::SelectedCircularEndpoint {
+                source_fragment,
+                fragment,
+                at_start,
+            },
+        ) => {
+            match fragment.endpoint_tangent_dot_algebraic_chord_from_source(
+                source_fragment,
+                *at_start,
+                chord,
+                policy,
+            ) {
                 Ok(Classification::Decided(RealSign::Negative)) => Classification::Decided(true),
                 Ok(Classification::Decided(RealSign::Positive)) => Classification::Decided(false),
                 Ok(Classification::Decided(RealSign::Zero)) => {
@@ -10762,9 +10809,18 @@ impl CurveRegion2 {
                     BezierSplitFragment2::Materialized { .. }
                     | BezierSplitFragment2::AlgebraicEndpointImages { .. }
                     | BezierSplitFragment2::AnalyticParallel(_)
-                    | BezierSplitFragment2::AlgebraicChord(_)
-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
+                    | BezierSplitFragment2::AlgebraicChord(_) => {
                         fragments.push(fragment.fragment().clone());
+                    }
+                    BezierSplitFragment2::AlgebraicCuspSemicircle(circle) => {
+                        // Authored tangent bits are valid only while the
+                        // original input-loop adjacency is intact. An
+                        // arrangement traversal may reconnect the endpoint to
+                        // another carrier, so never publish that transient
+                        // certificate into a later Boolean or offset.
+                        fragments.push(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                            circle.clone().without_certified_tangent_endpoints(),
+                        ));
                     }
                     BezierSplitFragment2::SelectedFiber(_) => {
                         fragments.push(fragment.fragment().clone());
@@ -13168,6 +13224,7 @@ impl CurveRegion2 {
         }
         Ok(fragments
             .into_iter()
+            .map(|fragment| fragment.with_certified_tangent_endpoints())
             .map(BezierSplitFragment2::AlgebraicCuspSemicircle)
             .collect())
     }
@@ -15449,6 +15506,9 @@ impl CurveRegion2 {
                 .segments()
                 .iter()
                 .all(|segment| matches!(segment, Segment2::Line(_)));
+            if !component_expands && !all_line_source {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
             if !component_expands && all_line_source {
                 let use_line_wavefront = match contour
                     .offset_left_uses_line_wavefront_joins(

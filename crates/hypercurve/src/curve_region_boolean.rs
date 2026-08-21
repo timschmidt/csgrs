@@ -1450,9 +1450,61 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .clone()
     }
 
+    fn authored_parallel_support_contact(
+        &self,
+        pair: &RegionCarrierPair,
+        parallel: &BezierParallel2,
+        parallel_index: usize,
+        direction_x: &Real,
+        direction_y: &Real,
+        regular_range: Option<&CurveRegionParameterRange2>,
+    ) -> ExactCurveResult<Option<(Real, RealSign)>> {
+        let Some((first_at_start, second_at_start)) = self.authored_carrier_shared_endpoints(pair)
+        else {
+            return Ok(None);
+        };
+        let parallel_at_start = if parallel_index == pair.first_carrier_index {
+            first_at_start
+        } else {
+            second_at_start
+        };
+        let Some(parameter) = (if parallel_at_start {
+            carrier_traversal_start(&self.data.carriers[parallel_index])
+        } else {
+            carrier_traversal_end(&self.data.carriers[parallel_index])
+        })
+        .as_bezier_parameter()
+        .and_then(BezierParameter2::as_exact)
+        .cloned() else {
+            return Ok(None);
+        };
+        let tangent_relation = match regular_range {
+            Some(range) => parallel.vector_tangent_cross_and_dot_signs_on_regular_range(
+                &BezierParameter2::Exact(parameter.clone()),
+                direction_x,
+                direction_y,
+                range,
+                &self.data.policy,
+            ),
+            None => parallel.vector_tangent_cross_and_dot_signs(
+                &BezierParameter2::Exact(parameter.clone()),
+                direction_x,
+                direction_y,
+                &self.data.policy,
+            ),
+        }
+        .map_err(|cause| self.invalid(parallel_index, cause))?;
+        let Classification::Decided((cross, dot)) = tangent_relation else {
+            return Ok(None);
+        };
+        Ok((cross != RealSign::Zero || dot != RealSign::Zero).then_some((parameter, cross)))
+    }
+
     fn parallel_line_pair_result(
         &self,
+        pair: &RegionCarrierPair,
         parallel: &BezierParallel2,
+        parallel_index: usize,
         curve: &BezierSubcurve2,
         parallel_is_first: bool,
         regular_range: Option<&CurveRegionParameterRange2>,
@@ -1486,23 +1538,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | BezierSubcurve2::RationalQuadratic(_)
             | BezierSubcurve2::Rational(_) => Vec::new(),
         };
-        let certified_tangent_parameters = certified_tangent_contacts
+        // The loop topology already owns its shared adjacent endpoint. Feed
+        // that authored root and its exact first-order kind to the univariate
+        // support kernel, which can divide it before isolating every residual
+        // contact. This avoids asking independently materialized endpoint
+        // expressions to rediscover their equality while preserving complete
+        // detection of any later crossing of the finite line segment.
+        let (direction_x, direction_y) = line.delta();
+        let authored_contact = self.authored_parallel_support_contact(
+            pair,
+            parallel,
+            parallel_index,
+            &direction_x,
+            &direction_y,
+            regular_range,
+        )?;
+        let certified_crossing = authored_contact.as_ref().and_then(|(parameter, cross)| {
+            let direction = match cross {
+                RealSign::Positive => BezierLineCrossingDirection::NegativeToPositive,
+                RealSign::Negative => BezierLineCrossingDirection::PositiveToNegative,
+                RealSign::Zero => return None,
+            };
+            Some((parameter, direction))
+        });
+        let mut certified_tangent_parameters = certified_tangent_contacts
             .iter()
             .map(|contact| contact.parameter().clone())
             .collect::<Vec<_>>();
+        if let Some((parameter, RealSign::Zero)) = &authored_contact
+            && !certified_tangent_parameters.contains(parameter)
+        {
+            certified_tangent_parameters.push(parameter.clone());
+        }
         let relation = match match regular_range {
             Some(range) => parallel
                 .relation_to_supporting_line_on_regular_range_with_certified_contacts(
                     &line,
                     range,
-                    None,
+                    certified_crossing,
                     &certified_tangent_parameters,
                     false,
                     &self.data.policy,
                 ),
-            None => parallel.relation_to_supporting_line_with_certified_tangencies(
+            None => parallel.relation_to_supporting_line_with_direction_and_certified_contacts(
                 &line,
+                &direction_x,
+                &direction_y,
+                certified_crossing,
                 &certified_tangent_parameters,
+                false,
                 &self.data.policy,
             ),
         }
@@ -1532,6 +1616,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut retained_parameters = Vec::with_capacity(contacts.len());
         let mut retained_certified_tangencies = Vec::new();
         for contact in contacts {
+            if contact.parameter().as_exact().is_some_and(|parameter| {
+                authored_contact
+                    .as_ref()
+                    .is_some_and(|(authored, _)| parameter == authored)
+            }) {
+                continue;
+            }
             if let Some(certified) = contact.parameter().as_exact().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
@@ -2750,7 +2841,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
             });
         match self.parallel_line_pair_result(
+            pair,
             parallel,
+            parallel_index,
             &line_curve,
             parallel_is_first,
             regular_range.as_ref(),
@@ -2939,72 +3032,42 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .translated(direction_x.clone(), direction_y.clone()),
         )
         .map_err(|cause| self.invalid(chord_index, cause))?;
-        let authored_crossing = self.authored_carrier_shared_endpoints(pair).and_then(
-            |(first_at_start, second_at_start)| {
-                let parallel_at_start = if parallel_index == pair.first_carrier_index {
-                    first_at_start
-                } else {
-                    second_at_start
-                };
-                let chord_at_start = if chord_index == pair.first_carrier_index {
-                    first_at_start
-                } else {
-                    second_at_start
-                };
-                let parameter = if parallel_at_start {
-                    carrier_traversal_start(&self.data.carriers[parallel_index])
-                } else {
-                    carrier_traversal_end(&self.data.carriers[parallel_index])
-                }
-                .as_bezier_parameter()?
-                .as_exact()?
-                .clone();
-                let tangent_relation = match regular_range.as_ref() {
-                    Some(range) => parallel.vector_tangent_cross_and_dot_signs_on_regular_range(
-                        &BezierParameter2::Exact(parameter.clone()),
-                        &direction_x,
-                        &direction_y,
-                        range,
-                        &self.data.policy,
-                    ),
-                    None => parallel.vector_tangent_cross_and_dot_signs(
-                        &BezierParameter2::Exact(parameter.clone()),
-                        &direction_x,
-                        &direction_y,
-                        &self.data.policy,
-                    ),
-                };
-                let Classification::Decided((cross, dot)) = tangent_relation.ok()? else {
-                    return None;
-                };
-                if dot == RealSign::Zero {
-                    return None;
-                }
-                let crossing = match cross {
-                    RealSign::Positive => BezierLineCrossingDirection::NegativeToPositive,
-                    RealSign::Negative => BezierLineCrossingDirection::PositiveToNegative,
-                    RealSign::Zero => return None,
-                };
-                Some((parameter, crossing, chord_at_start))
-            },
-        );
+        let authored_contact = self.authored_parallel_support_contact(
+            pair,
+            parallel,
+            parallel_index,
+            &direction_x,
+            &direction_y,
+            regular_range.as_ref(),
+        )?;
+        let authored_crossing = authored_contact.as_ref().and_then(|(parameter, cross)| {
+            let direction = match cross {
+                RealSign::Positive => BezierLineCrossingDirection::NegativeToPositive,
+                RealSign::Negative => BezierLineCrossingDirection::PositiveToNegative,
+                RealSign::Zero => return None,
+            };
+            Some((parameter, direction))
+        });
         let certified_tangent_contacts = chord
             .parallel_tangent_contacts()
             .iter()
             .filter(|contact| contact.parallel() == parallel)
             .collect::<Vec<_>>();
-        let certified_tangent_parameters = certified_tangent_contacts
+        let mut certified_tangent_parameters = certified_tangent_contacts
             .iter()
             .map(|contact| contact.parameter().clone())
             .collect::<Vec<_>>();
+        if let Some((parameter, RealSign::Zero)) = &authored_contact
+            && !certified_tangent_parameters.contains(parameter)
+        {
+            certified_tangent_parameters.push(parameter.clone());
+        }
         let relation_on_retained_range = |deep_branch_refinement| match regular_range.as_ref() {
             Some(range) => parallel
                 .relation_to_supporting_line_on_regular_range_with_certified_contacts(
                     &directed_line,
                     range,
-                    authored_crossing
-                        .as_ref()
-                        .map(|(parameter, direction, _)| (parameter, *direction)),
+                    authored_crossing,
                     &certified_tangent_parameters,
                     deep_branch_refinement,
                     &self.data.policy,
@@ -3013,9 +3076,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 &directed_line,
                 &direction_x,
                 &direction_y,
-                authored_crossing
-                    .as_ref()
-                    .map(|(parameter, direction, _)| (parameter, *direction)),
+                authored_crossing,
                 &certified_tangent_parameters,
                 deep_branch_refinement,
                 &self.data.policy,
@@ -3128,27 +3189,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let chord_is_first = chord_index == pair.first_carrier_index;
         let mut contacts = Vec::with_capacity(line_contacts.len());
         for contact in line_contacts {
-            let certified_crossing_endpoint =
-                contact.parameter().as_exact().and_then(|parameter| {
-                    authored_crossing.as_ref().and_then(
-                        |(certified_parameter, _, chord_at_start)| {
-                            (parameter == certified_parameter).then_some(*chord_at_start)
-                        },
-                    )
-                });
+            if contact.parameter().as_exact().is_some_and(|parameter| {
+                authored_contact
+                    .as_ref()
+                    .is_some_and(|(authored, _)| parameter == authored)
+            }) {
+                continue;
+            }
             let certified = contact.parameter().as_exact().and_then(|parameter| {
                 certified_tangent_contacts
                     .iter()
                     .find(|certified| certified.parameter() == parameter)
             });
-            let (point, chord_parameter) = if let Some(chord_at_start) = certified_crossing_endpoint
-            {
-                if chord_at_start {
-                    (chord.start().clone(), chord.start_parameter())
-                } else {
-                    (chord.end().clone(), chord.end_parameter())
-                }
-            } else if let Some(certified) = certified {
+            let (point, chord_parameter) = if let Some(certified) = certified {
                 match certified.line_endpoint() {
                     BezierEndpoint::Start => (chord.start().clone(), chord.start_parameter()),
                     BezierEndpoint::End => (chord.end().clone(), chord.end_parameter()),
@@ -3557,10 +3610,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 })
             }
             RegionCarrierPairContext::ParallelRational { parallel_is_first } => {
-                let (parallel_carrier, parallel, curve) = if *parallel_is_first {
-                    (first, first.geometry.parallel(), second.geometry.bezier())
+                let (parallel_carrier, parallel, parallel_index, curve) = if *parallel_is_first {
+                    (
+                        first,
+                        first.geometry.parallel(),
+                        pair.first_carrier_index,
+                        second.geometry.bezier(),
+                    )
                 } else {
-                    (second, second.geometry.parallel(), first.geometry.bezier())
+                    (
+                        second,
+                        second.geometry.parallel(),
+                        pair.second_carrier_index,
+                        first.geometry.bezier(),
+                    )
                 };
                 let retained_range = match (
                     parallel_carrier.start.as_bezier_parameter(),
@@ -3591,7 +3654,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .cloned()
                     .map(CurveRegionParameterRange2::from_bezier_range);
                 match self.parallel_line_pair_result(
+                    pair,
                     parallel,
+                    parallel_index,
                     curve,
                     *parallel_is_first,
                     regular_range.as_ref(),
@@ -3853,6 +3918,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         } else {
                             second_at_start
                         };
+                        if cusp.certified_tangent_endpoint(cusp_at_start) {
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "algebraic-circle-chord-pair",
+                                "adjacent-authored-tangent",
+                            );
+                            return Ok(RegionPairResult::empty());
+                        }
                         let certificate = cusp
                             .certified_adjacent_chord_is_endpoint_only(
                                 chord,
@@ -11159,7 +11233,8 @@ fn split_algebraic_cusp_carrier(
                     "algebraic cusp split construction remained uncertain: {reason:?}"
                 )));
             }
-        };
+        }
+        .inherit_certified_tangent_endpoints(fragment);
         output.push(SplitCarrierFragment {
             fragment: BezierSplitFragment2::AlgebraicCuspSemicircle(retained),
             start_topology_vertex: pair[0].topology_vertex,
@@ -15891,6 +15966,105 @@ mod certified_successor_tests {
             assert!(disjoint.contacts.is_empty(), "{disjoint:?}");
             assert!(disjoint.overlaps.is_empty(), "{disjoint:?}");
             assert!(disjoint.blockers.is_empty(), "{disjoint:?}");
+        }
+    }
+
+    #[test]
+    fn authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0))
+                    .expect("valid horizontal source"),
+            );
+            let parallel = BezierParallel2::from_source(
+                crate::BezierParallelSource2::Quadratic(source),
+                Real::zero(),
+            );
+            let analytic = BezierSplitFragment2::AnalyticParallel(
+                BezierParallelFragment2::from_certified_range(
+                    parallel.clone(),
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    false,
+                ),
+            );
+            let line = |start_x, start_y, end_x, end_y| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(
+                        Point2::from_values(start_x, start_y),
+                        Point2::from_values(end_x, end_y),
+                    )
+                    .expect("valid rectangle edge"),
+                )),
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    analytic,
+                    line(1, 0, 1, 1),
+                    line(1, 1, 0, 1),
+                    line(0, 1, 0, 0),
+                ],
+                &policy,
+            )
+            .expect("analytic rectangle must close");
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![crate::CurveBoundaryInteriorSide2::Left],
+            )
+            .expect("valid analytic rectangle");
+            let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
+                .expect("valid unary context");
+            let parallel_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| {
+                    matches!(carrier.geometry, RegionCarrierGeometry::AnalyticParallel(_))
+                })
+                .expect("the analytic carrier must be retained");
+            let line_index = context
+                .data
+                .carriers
+                .iter()
+                .position(|carrier| carrier.fragment_index == 1)
+                .expect("the following line carrier must be retained");
+            let pair = RegionCarrierPair {
+                first_carrier_index: parallel_index,
+                second_carrier_index: line_index,
+                context: RegionCarrierPairContext::ParallelPair,
+            };
+            let parallel_carrier = &context.data.carriers[parallel_index];
+            let range = CurveRegionParameterRange2::new_validated(
+                parallel_carrier.start.clone(),
+                parallel_carrier.end.clone(),
+            );
+            let perpendicular = context
+                .authored_parallel_support_contact(
+                    &pair,
+                    &parallel,
+                    parallel_index,
+                    &Real::zero(),
+                    &Real::one(),
+                    Some(&range),
+                )
+                .expect("the perpendicular relation must decide")
+                .expect("the perpendicular authored contact must be retained");
+            assert_eq!(perpendicular, (Real::one(), RealSign::Negative));
+            let tangent = context
+                .authored_parallel_support_contact(
+                    &pair,
+                    &parallel,
+                    parallel_index,
+                    &Real::one(),
+                    &Real::zero(),
+                    Some(&range),
+                )
+                .expect("the tangent relation must decide")
+                .expect("the tangent authored contact must be retained");
+            assert_eq!(tangent, (Real::one(), RealSign::Zero));
         }
     }
 
