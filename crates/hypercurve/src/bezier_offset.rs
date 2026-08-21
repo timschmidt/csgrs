@@ -61309,9 +61309,8 @@ impl BezierAnalyticParallelPoint2 {
                     _ => Classification::Uncertain(UncertaintyReason::Predicate),
                 }
             };
-        if zero_frame
-            && let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
-                &self.data.parameter
+        if let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
+            &self.data.parameter
         {
             // Construction may use the retained-field reduction only after an
             // exact predicate proves that this rational chart is finite at the
@@ -61328,19 +61327,90 @@ impl BezierAnalyticParallelPoint2 {
                 Classification::Uncertain(_) => false,
             };
             if denominator_nonzero {
-                let x = parameter.represented_retained_field_rational_value(
+                let represented_pair = |x_numerator: &[Real],
+                                        y_numerator: &[Real],
+                                        denominator: &[Real]|
+                 -> CurveResult<
+                    Option<[AlgebraicRootRepresentation; 2]>,
+                > {
+                    let x = parameter.represented_retained_field_rational_value(
+                        x_numerator,
+                        denominator,
+                        policy,
+                    )?;
+                    let y = parameter.represented_retained_field_rational_value(
+                        y_numerator,
+                        denominator,
+                        policy,
+                    )?;
+                    Ok(match (x, y) {
+                        (Classification::Decided(Some(x)), Classification::Decided(Some(y))) => {
+                            Some([x, y])
+                        }
+                        _ => None,
+                    })
+                };
+                let translated_x = polynomial_add(
                     source.x_numerator,
-                    weight,
-                    policy,
-                )?;
-                let y = parameter.represented_retained_field_rational_value(
+                    &polynomial_scale(weight, &self.data.translation_x),
+                );
+                let translated_y = polynomial_add(
                     source.y_numerator,
-                    weight,
-                    policy,
-                )?;
-                if let (Classification::Decided(Some(x)), Classification::Decided(Some(y))) = (x, y)
-                {
-                    return Ok(translated_coordinates(x, y));
+                    &polynomial_scale(weight, &self.data.translation_y),
+                );
+                if zero_frame {
+                    if let Some(coordinates) =
+                        represented_pair(&translated_x, &translated_y, weight)?
+                    {
+                        return Ok(Classification::Decided(coordinates));
+                    }
+                } else {
+                    let (frame_tangent_x, frame_tangent_y) = self.frame_tangent_power_basis()?;
+                    let speed_squared = polynomial_add(
+                        &polynomial_multiply(frame_tangent_x, frame_tangent_x),
+                        &polynomial_multiply(frame_tangent_y, frame_tangent_y),
+                    );
+                    let speed = policy
+                        .strict_predicate_pass(|| polynomial_square_root(&speed_squared, policy))?;
+                    if let Classification::Decided(Some(speed)) = speed {
+                        let speed_predicate = bivariate_outer_product(&[Real::one()], &speed);
+                        let speed = match policy.strict_predicate_pass(|| {
+                            parameter.predicate_sign(&speed_predicate, policy)
+                        })? {
+                            Classification::Decided(RealSign::Positive) => Some(speed),
+                            Classification::Decided(RealSign::Negative) => {
+                                Some(polynomial_scale(&speed, &Real::from(-1_i8)))
+                            }
+                            Classification::Decided(RealSign::Zero) => {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                            }
+                            Classification::Uncertain(_) => None,
+                        };
+                        if let Some(speed) = speed {
+                            let frame_x = polynomial_subtract(
+                                &polynomial_scale(frame_tangent_x, &self.data.tangent_distance),
+                                &polynomial_scale(frame_tangent_y, self.data.parallel.distance()),
+                            );
+                            let frame_y = polynomial_add(
+                                &polynomial_scale(frame_tangent_x, self.data.parallel.distance()),
+                                &polynomial_scale(frame_tangent_y, &self.data.tangent_distance),
+                            );
+                            let denominator = polynomial_multiply(weight, &speed);
+                            let numerator_x = polynomial_add(
+                                &polynomial_multiply(&translated_x, &speed),
+                                &polynomial_multiply(weight, &frame_x),
+                            );
+                            let numerator_y = polynomial_add(
+                                &polynomial_multiply(&translated_y, &speed),
+                                &polynomial_multiply(weight, &frame_y),
+                            );
+                            if let Some(coordinates) =
+                                represented_pair(&numerator_x, &numerator_y, &denominator)?
+                            {
+                                return Ok(Classification::Decided(coordinates));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -110623,7 +110693,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn correlated_degree_fifteen_selected_point_reduces_before_materialization() {
+    fn correlated_degree_fifteen_selected_square_speed_points_reduce_locally() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
         let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
@@ -110632,10 +110702,7 @@ mod conversion_tests {
             &three_fifths + Real::from(32_768_i32),
             four_fifths.clone(),
         ));
-        let parallel = RationalBezier2::try_new(control_points, vec![Real::one(); 16])
-            .unwrap()
-            .parallel_left(Real::zero())
-            .unwrap();
+        let source = RationalBezier2::try_new(control_points, vec![Real::one(); 16]).unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let parameter =
@@ -110648,47 +110715,63 @@ mod conversion_tests {
                 &parameter.data.authority.data.retained_parameter,
                 &policy,
             );
-            let point = BezierAnalyticParallelPoint2::new_selected_fiber(
-                parallel.clone(),
-                parameter,
-                &policy,
-            );
-            let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
-                point.represented_coordinates(attempt)
-            })
-            .unwrap();
-            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-            let Classification::Decided([x, y]) = outcome.value else {
-                panic!("the correlated source image must materialize exactly");
-            };
-            assert_eq!(x.polynomial_coefficients.len() - 1, 9);
-            assert_eq!(y.exact_rational_witness(), Some(&four_fifths));
-
-            let Classification::Decided(expected_x) =
-                represented_affine_coordinate(&[(&retained_root, &Real::one())], &three_fifths)
-            else {
-                panic!("the retained affine image must materialize");
-            };
-            let equality = compare_algebraic_root_representations_with_refinement(
-                &x,
-                &expected_x,
-                AlgebraicRootRefinementComparisonConfig {
-                    policy: hypersolve::PredicatePolicy::STRICT,
-                    ..AlgebraicRootRefinementComparisonConfig::default()
-                },
-            );
-            assert!(
-                matches!(
-                    equality.comparison.status,
-                    AlgebraicRootComparisonStatus::Compared
-                        | AlgebraicRootComparisonStatus::SameRepresentation
+            for (distance, tangent_distance, translation_x, translation_y) in [
+                (Real::zero(), Real::zero(), Real::zero(), Real::zero()),
+                (
+                    (Real::from(2_i8) / Real::from(7_i8)).unwrap(),
+                    (Real::one() / Real::from(3_i8)).unwrap(),
+                    (Real::one() / Real::from(11_i8)).unwrap(),
+                    (Real::from(-1_i8) / Real::from(13_i8)).unwrap(),
                 ),
-                "comparison={equality:?}; x={x:?}; expected={expected_x:?}"
-            );
-            assert_eq!(
-                equality.comparison.ordering,
-                Some(std::cmp::Ordering::Equal)
-            );
+            ] {
+                let point = BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
+                    source.clone().parallel_left(distance.clone()).unwrap(),
+                    BezierAnalyticParallelPointParameter2::SelectedFiber(parameter.clone()),
+                    tangent_distance.clone(),
+                    &policy,
+                )
+                .translated(&translation_x, &translation_y, &policy)
+                .unwrap();
+                let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                    point.represented_coordinates(attempt)
+                })
+                .unwrap();
+                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                let Classification::Decided([x, y]) = outcome.value else {
+                    panic!("the correlated square-speed image must materialize exactly");
+                };
+                assert_eq!(x.polynomial_coefficients.len() - 1, 9);
+                let expected_y = &(&four_fifths + &distance) + &translation_y;
+                assert_eq!(y.exact_rational_witness(), Some(&expected_y));
+
+                let expected_x_constant = &(&three_fifths + &tangent_distance) + &translation_x;
+                let Classification::Decided(expected_x) = represented_affine_coordinate(
+                    &[(&retained_root, &Real::one())],
+                    &expected_x_constant,
+                ) else {
+                    panic!("the retained affine image must materialize");
+                };
+                let equality = compare_algebraic_root_representations_with_refinement(
+                    &x,
+                    &expected_x,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy: hypersolve::PredicatePolicy::STRICT,
+                        ..AlgebraicRootRefinementComparisonConfig::default()
+                    },
+                );
+                assert!(
+                    matches!(
+                        equality.comparison.status,
+                        AlgebraicRootComparisonStatus::Compared
+                            | AlgebraicRootComparisonStatus::SameRepresentation
+                    ),
+                    "comparison={equality:?}; x={x:?}; expected={expected_x:?}"
+                );
+                assert_eq!(
+                    equality.comparison.ordering,
+                    Some(std::cmp::Ordering::Equal)
+                );
+            }
         }
     }
 
