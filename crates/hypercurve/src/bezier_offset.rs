@@ -111136,6 +111136,8 @@ mod conversion_tests {
 
             // The reversed endpoint-projective chart is decreasing and
             // self-inverse, so it also exercises isolating-bound reversal.
+            // This selected root is strictly below 1/2, hence its image is
+            // strictly above the chart value 2/3 at 1/2.
             let Classification::Decided(reversed) = parameter
                 .projective_image_unbounded(
                     &[Real::from(2_i8), Real::from(-2_i8)],
@@ -111150,7 +111152,7 @@ mod conversion_tests {
                 reversed
                     .order_to_real(&(Real::from(2_i8) / Real::from(3_i8)).unwrap(), &policy,)
                     .unwrap(),
-                Classification::Decided(std::cmp::Ordering::Equal),
+                Classification::Decided(std::cmp::Ordering::Greater),
             );
             let Classification::Decided(reversed_round_trip) = reversed
                 .projective_image_unbounded(
