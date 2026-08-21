@@ -341,9 +341,6 @@ impl CurveEnvelopeAccumulator {
                     }
                 }
             }
-            BezierSplitFragment2::Unresolved { .. } => {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
-            }
         };
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&curve_box, policy) {
@@ -768,9 +765,6 @@ impl EndpointEnvelopeAccumulator {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }
             BezierSplitFragment2::SelectedFiber(_) => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-            BezierSplitFragment2::Unresolved { .. } => {
                 Classification::Uncertain(UncertaintyReason::Boundary)
             }
         }

@@ -657,8 +657,7 @@ fn project_curve_region_loop_to_curve_path(
             }
             BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicChord(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-            | BezierSplitFragment2::Unresolved { .. } => return Ok(None),
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Ok(None),
             BezierSplitFragment2::SelectedFiber(_) => return Ok(None),
         };
         subcurves.push(curve);
@@ -837,12 +836,6 @@ fn project_curve_region_loop(
                     subcurve
                 };
                 append_bezier_subcurve_samples(&mut points, &subcurve, options, policy, 0)?;
-            }
-            BezierSplitFragment2::Unresolved { .. } => {
-                return Err(CurveError::Topology(
-                    "finite projection requires a retained source curve for algebraic fragments"
-                        .into(),
-                ));
             }
             BezierSplitFragment2::AnalyticParallel(fragment) => {
                 append_analytic_parallel_samples(&mut points, fragment, options, policy)?;

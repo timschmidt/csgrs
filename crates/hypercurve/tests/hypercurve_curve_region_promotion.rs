@@ -4203,7 +4203,6 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
                 BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-                BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
         let corners = (0..fragment_count)
@@ -4344,7 +4343,6 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensi
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
                 BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-                BezierSplitFragment2::Unresolved { .. } => "unresolved",
             })
             .collect::<Vec<_>>();
         let corners = (0..fragment_count)
@@ -4460,7 +4458,6 @@ fn analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensi
                         BezierSplitFragment2::AlgebraicChord(_) => "chord",
                         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
                         BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-                        BezierSplitFragment2::Unresolved { .. } => "unresolved",
                     })
                     .collect::<Vec<_>>();
                 let reoffset = filleted

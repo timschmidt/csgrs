@@ -7471,8 +7471,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         | BezierSplitFragment2::AlgebraicEndpointImages { .. }
                         | BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::SelectedFiber(_)
-                        | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                        | BezierSplitFragment2::Unresolved { .. } => None,
+                        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
                     })
                     .collect::<Vec<_>>();
                 'probe: for target in targets {
@@ -7841,7 +7840,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         | BezierSplitFragment2::AlgebraicEndpointImages { .. } => 3,
                         BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::SelectedFiber(_) => 4,
-                        BezierSplitFragment2::Unresolved { .. } => 5,
                     };
                     (rank, carrier_index, split_index)
                 })
@@ -8028,8 +8026,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | BezierSplitFragment2::AlgebraicEndpointImages { .. }
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicChord(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-            | BezierSplitFragment2::Unresolved { .. } => None,
+            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
             BezierSplitFragment2::SelectedFiber(_) => None,
         };
         // Retained circular-conic provenance is a construction certificate for
@@ -10714,13 +10711,6 @@ fn build_region_carrier(
             CurveRegionParameter2::from_bezier(end.clone()),
             *reversed,
         ),
-        BezierSplitFragment2::Unresolved { .. } => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Boolean,
-                CurveFamily2::RationalBezier,
-                UncertaintyReason::Unsupported,
-            ));
-        }
         BezierSplitFragment2::AnalyticParallel(fragment) => (
             RegionCarrierGeometry::AnalyticParallel(fragment.parallel().clone()),
             CurveRegionParameter2::from_bezier(fragment.range().start().clone()),
@@ -13908,8 +13898,7 @@ fn fragment_range(
 ) -> Option<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => Some((start, end)),
+        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => Some((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Some((fragment.range().start(), fragment.range().end()))
         }

@@ -6,7 +6,7 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
     Classification, CubicBezier2, CurveContext, CurveError, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -517,7 +517,6 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(!materialization.has_unresolved_fragments());
     assert!(materialization.has_algebraic_endpoint_images());
     assert_eq!(materialization.fragments().len(), 4);
     assert!(matches!(
@@ -624,7 +623,6 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(!materialization.has_unresolved_fragments());
     assert!(materialization.has_algebraic_endpoint_images());
     let BezierSplitFragment2::AlgebraicEndpointImages {
         source_curve,
@@ -659,23 +657,17 @@ fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
 }
 
 #[test]
-fn rational_algebraic_boundary_with_zero_denominator_stays_unresolved() {
+fn rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 1), p(2, 0), r(-1)).unwrap();
-    let materialization = match curve
-        .split_at_parameters(&[algebraic_cubic_midpoint_interval()], &policy())
-        .unwrap()
-    {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
-    };
-
-    assert!(materialization.has_unresolved_fragments());
-    assert!(!materialization.has_algebraic_endpoint_images());
-    assert!(matches!(
-        materialization.fragments()[0],
-        BezierSplitFragment2::Unresolved { .. }
-    ));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert!(matches!(
+            curve
+                .split_at_parameters(&[algebraic_cubic_midpoint_interval()], &policy)
+                .unwrap(),
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        ));
+    }
 }
 
 #[test]
@@ -690,7 +682,6 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
             panic!("validated nonroot domain endpoints must order the singleton isolator");
         };
         assert_eq!(split.fragments().len(), 2);
-        assert!(!split.has_unresolved_fragments());
         assert!(split.has_algebraic_endpoint_images());
 
         let BezierSplitFragment2::AlgebraicEndpointImages {

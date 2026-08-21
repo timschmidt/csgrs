@@ -1469,29 +1469,6 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
 }
 
 #[test]
-fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
-    let graph = graph(vec![BezierArrangementFragment2::new(
-        0,
-        0,
-        BezierSplitFragment2::Unresolved {
-            start: parameter.clone(),
-            end: parameter,
-        },
-    )]);
-    let traversal = hypercurve::BezierArrangementTraversal2::new(vec![
-        hypercurve::BezierArrangementChain2::new(vec![0], true).unwrap(),
-    ])
-    .unwrap();
-
-    assert_eq!(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
-}
-
-#[test]
 fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let source = line_midpoint_curve(-1, 0, 1);

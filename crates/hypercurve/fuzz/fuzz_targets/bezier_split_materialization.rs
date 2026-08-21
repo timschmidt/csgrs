@@ -103,9 +103,6 @@ fuzz_target!(|data: &[u8]| {
                         );
                     }
                 }
-                BezierSplitFragment2::Unresolved { start, end } => {
-                    assert!(!start.is_exact() || !end.is_exact());
-                }
                 BezierSplitFragment2::AnalyticParallel(_)
                 | BezierSplitFragment2::AlgebraicChord(_)
                 | BezierSplitFragment2::AlgebraicCuspSemicircle(_)

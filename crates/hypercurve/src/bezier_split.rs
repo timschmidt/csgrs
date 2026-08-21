@@ -561,13 +561,6 @@ pub enum BezierSplitFragment2 {
     AlgebraicCuspSemicircle(BezierAlgebraicCuspSemicircleFragment2),
     /// Exact rational or analytic carrier restricted by selected-fiber scalar roots.
     SelectedFiber(BezierSelectedFiberFragment2),
-    /// At least one boundary is algebraic and must be carried forward.
-    Unresolved {
-        /// Start split boundary in the original parameter space.
-        start: BezierParameter2,
-        /// End split boundary in the original parameter space.
-        end: BezierParameter2,
-    },
 }
 
 /// Ordered split result for one Bezier segment.
@@ -600,13 +593,6 @@ impl BezierSplitMaterialization2 {
             .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
     }
 
-    /// Returns true when at least one algebraic-boundary fragment remains.
-    pub fn has_unresolved_fragments(&self) -> bool {
-        self.fragments
-            .iter()
-            .any(|fragment| matches!(fragment, BezierSplitFragment2::Unresolved { .. }))
-    }
-
     /// Returns true when at least one algebraic-boundary fragment carries
     /// exact endpoint point/tangent images.
     pub fn has_algebraic_endpoint_images(&self) -> bool {
@@ -624,8 +610,7 @@ impl BezierSplitFragment2 {
     pub const fn parameter_range(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
         match self {
             Self::Materialized { start, end, .. }
-            | Self::AlgebraicEndpointImages { start, end, .. }
-            | Self::Unresolved { start, end } => Some((start, end)),
+            | Self::AlgebraicEndpointImages { start, end, .. } => Some((start, end)),
             Self::AnalyticParallel(fragment) => {
                 Some((fragment.range.start(), fragment.range.end()))
             }
@@ -637,11 +622,12 @@ impl BezierSplitFragment2 {
     pub(crate) fn curve_region_parameter_range(&self) -> CurveRegionParameterRange2 {
         match self {
             Self::Materialized { start, end, .. }
-            | Self::AlgebraicEndpointImages { start, end, .. }
-            | Self::Unresolved { start, end } => CurveRegionParameterRange2::new_validated(
-                CurveRegionParameter2::from_bezier(start.clone()),
-                CurveRegionParameter2::from_bezier(end.clone()),
-            ),
+            | Self::AlgebraicEndpointImages { start, end, .. } => {
+                CurveRegionParameterRange2::new_validated(
+                    CurveRegionParameter2::from_bezier(start.clone()),
+                    CurveRegionParameter2::from_bezier(end.clone()),
+                )
+            }
             Self::AnalyticParallel(fragment) => CurveRegionParameterRange2::new_validated(
                 CurveRegionParameter2::from_bezier(fragment.range.start().clone()),
                 CurveRegionParameter2::from_bezier(fragment.range.end().clone()),
@@ -1320,9 +1306,6 @@ impl BezierSplitFragment2 {
                 };
                 Ok(source_curve.point_at(&parameter, policy))
             }
-            Self::Unresolved { .. } => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
         }
     }
 
@@ -1360,10 +1343,6 @@ impl BezierSplitFragment2 {
                 Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
             }
             Self::SelectedFiber(fragment) => Ok(Self::SelectedFiber(fragment.reversed())),
-            Self::Unresolved { .. } => Err(CurveError::Topology(
-                "reversing an unresolved Bezier split fragment requires endpoint evidence"
-                    .to_owned(),
-            )),
         }
     }
 }
@@ -1485,13 +1464,6 @@ fn validate_bezier_split_fragment(
                     .into(),
             ));
         }
-        BezierSplitFragment2::Unresolved { start, end } => {
-            if start.is_exact() && end.is_exact() {
-                return Err(CurveError::Topology(
-                    "unresolved Bezier split fragment must have an algebraic range boundary".into(),
-                ));
-            }
-        }
     }
 
     Ok(())
@@ -1537,8 +1509,7 @@ fn bezier_split_fragment_range(
 ) -> CurveResult<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. }
-        | BezierSplitFragment2::Unresolved { start, end } => Ok((start, end)),
+        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => Ok((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Ok((fragment.range().start(), fragment.range().end()))
         }
@@ -2049,7 +2020,7 @@ where
                         end_image,
                     });
                 } else {
-                    fragments.push(BezierSplitFragment2::Unresolved { start, end });
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
             }
         }
