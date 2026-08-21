@@ -5969,6 +5969,101 @@ fn unified_curved_erosion_retains_the_exact_hole_boundary_contact() {
 }
 
 #[test]
+fn unified_curved_erosion_composes_merging_holes_and_material_crossings() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_contours(
+            vec![circle(0, 0, 5)],
+            vec![circle(-2, 0, 1), circle(2, 0, 1)],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let split = source
+            .offset(-q(3, 2), &sharp_offset(), &policy)
+            .expect("merging circular holes must split the contracting material exactly");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 2);
+        let roles = split.value.loop_roles(&policy).unwrap();
+        if policy == CurveContext::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Material,
+            ]),
+        );
+        for (point, expected) in [
+            (p(0, 3), RegionPointLocation::Inside),
+            (p(0, -3), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Outside),
+            (p(3, 0), RegionPointLocation::Outside),
+            (
+                Point2::new(Real::zero(), q(3, 2)),
+                RegionPointLocation::Boundary,
+            ),
+            (
+                Point2::new(Real::zero(), -q(3, 2)),
+                RegionPointLocation::Boundary,
+            ),
+        ] {
+            let location = split.value.classify_point(&point, &policy).unwrap();
+            if policy == CurveContext::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurveRegion2::try_from_native_contours(
+            vec![circle(0, 0, 5)],
+            vec![circle(-2, 0, 1), circle(2, 0, 1)],
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+
+        let split = source
+            .offset(-Real::one(), &sharp_offset(), &policy)
+            .expect("simultaneous exact circular tangencies must retain regularized topology");
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        assert_eq!(split.value.boundary_loops().len(), 3);
+        let roles = split.value.loop_roles(&policy).unwrap();
+        if policy == CurveContext::STRICT {
+            assert_eq!(roles.certainty, CurveCertainty::Certified);
+        }
+        assert_eq!(
+            roles.value,
+            Classification::Decided(vec![
+                CurveRegionLoopRole::Material,
+                CurveRegionLoopRole::Hole,
+                CurveRegionLoopRole::Hole,
+            ]),
+        );
+        for (point, expected) in [
+            (p(0, 3), RegionPointLocation::Inside),
+            (p(0, -3), RegionPointLocation::Inside),
+            (p(0, 0), RegionPointLocation::Boundary),
+            (p(3, 0), RegionPointLocation::Outside),
+            (p(-4, 0), RegionPointLocation::Boundary),
+            (p(4, 0), RegionPointLocation::Boundary),
+        ] {
+            let location = split.value.classify_point(&point, &policy).unwrap();
+            if policy == CurveContext::STRICT {
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+            }
+            assert_eq!(location.value, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
 fn unified_native_arrangement_exposes_immediate_evidence() {
     let source = square(0, 0, 4, 4).segments().to_vec();
     let result =
